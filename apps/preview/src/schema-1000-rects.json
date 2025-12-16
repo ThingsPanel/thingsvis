@@ -1,0 +1,12 @@
+{
+  "id": "demo-page",
+  "version": "1.0.0",
+  "type": "canvas",
+  "nodes": [
+    { "id": "rect-1", "type": "rect", "position": { "x": 10, "y": 10 }, "size": { "width": 50, "height": 30 }, "props": {}, "style": {} },
+    { "id": "rect-2", "type": "rect", "position": { "x": 80, "y": 20 }, "size": { "width": 50, "height": 30 }, "props": {}, "style": {} },
+    { "id": "rect-3", "type": "rect", "position": { "x": 150, "y": 30 }, "size": { "width": 50, "height": 30 }, "props": {}, "style": {} }
+  ]
+}
+
+

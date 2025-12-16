@@ -1,9 +1,12 @@
+export type { IPage as PageSchemaType } from './page';
+export { NodeSchema } from './node-schema';
+export type { NodeSchemaType } from './node-schema';
+
 // Export page schemas and types
 export {
   PageMetaSchema,
   PageConfigSchema,
   PageContentSchema,
-  PageSchema,
   type IPageMeta,
   type IPageConfig,
   type IPageContent,
