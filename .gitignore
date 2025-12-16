@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.turbo/
+.pnpm-store/
+.DS_Store
+Thumbs.db
+*.log
+.env*
+.idea/
+.vscode/
+
