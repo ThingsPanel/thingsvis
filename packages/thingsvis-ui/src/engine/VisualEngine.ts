@@ -57,10 +57,33 @@ export class VisualEngine {
         const rect = new Rect(this.toRectProps(node.schemaRef));
         this.root.add(rect);
         this.instanceMap.set(node.schemaRef.id, rect);
+        this.attachInteractionHandlers(rect, node);
         return;
       }
 
       existing.set(this.toRectProps(node.schemaRef));
+    });
+  }
+
+  private attachInteractionHandlers(rect: Rect, node: NodeState) {
+    const nodeId = node.id;
+
+    // Selection on click/tap
+    rect.on('tap', () => {
+      const { selectNode } = this.store.getState();
+      if (selectNode) {
+        selectNode(nodeId);
+      }
+    });
+
+    // Persist final position on drag end to kernel store
+    rect.on('drag.end', () => {
+      const { updateNode } = this.store.getState() as KernelState & {
+        updateNode?: (id: string, changes: { position?: { x: number; y: number } }) => void;
+      };
+      if (!updateNode) return;
+      const { x, y } = rect;
+      updateNode(nodeId, { position: { x, y } });
     });
   }
 
@@ -70,7 +93,15 @@ export class VisualEngine {
     const { x, y } = schema.position;
     const fill = (schema.props as { fill?: string } | undefined)?.fill;
 
-    return { x, y, width, height, fill };
+    return {
+      x,
+      y,
+      width,
+      height,
+      fill,
+      draggable: true,
+      cursor: 'pointer'
+    };
   }
 }
 

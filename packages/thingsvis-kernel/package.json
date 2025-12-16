@@ -22,7 +22,8 @@
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/utils": "workspace:*",
     "immer": "^10.0.0",
-    "zustand": "^4.5.0"
+    "zustand": "^4.5.0",
+    "zundo": "^2.0.0"
   },
   "devDependencies": {
     "@rspack/cli": "^1.0.0",

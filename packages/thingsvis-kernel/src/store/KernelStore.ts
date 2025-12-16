@@ -1,7 +1,7 @@
 import { createStore } from 'zustand/vanilla';
 import { immer } from 'zustand/middleware/immer';
+import { temporal } from 'zundo';
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema';
-import { Command, HistoryManager } from '../history/HistoryManager';
 
 export type SelectionState = {
   nodeIds: string[];
@@ -26,32 +26,32 @@ export type KernelState = {
   nodesById: Record<string, NodeState>;
   selection: SelectionState;
   canvas: CanvasState;
-  history: {
-    past: Command[];
-    future: Command[];
-  };
 };
 
 export type KernelActions = {
   loadPage: (page: PageSchemaType) => void;
   addNodes: (nodes: NodeSchemaType[]) => void;
   selectNode: (nodeId: string) => void;
-  addCommand: (command: Command) => void;
-  undo: () => void;
-  redo: () => void;
+  updateNode: (
+    nodeId: string,
+    changes: {
+      position?: { x: number; y: number };
+      props?: Record<string, unknown>;
+    }
+  ) => void;
   setNodeError: (nodeId: string, error: string) => void;
 };
 
 const defaultCanvas: CanvasState = { zoom: 1, offsetX: 0, offsetY: 0 };
 
 export const createKernelStore = () =>
-  createStore<KernelState & KernelActions>()(
-    immer((set, get) => ({
+  createStore(
+    temporal(
+      immer<KernelState & KernelActions>((set, get) => ({
       page: undefined,
       nodesById: {},
       selection: { nodeIds: [] },
       canvas: defaultCanvas,
-      history: { past: [], future: [] },
 
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
@@ -67,7 +67,6 @@ export const createKernelStore = () =>
           state.nodesById = nodesById;
           state.selection = { nodeIds: [] };
           state.canvas = { ...defaultCanvas };
-          state.history = { past: [], future: [] };
         });
       },
 
@@ -88,48 +87,34 @@ export const createKernelStore = () =>
 
       selectNode: nodeId => {
         if (!get().nodesById[nodeId]) return;
-        const command: Command = {
-          id: `select-${nodeId}-${Date.now()}`,
-          type: 'node.select',
-          payload: { nodeId, previous: get().selection.nodeIds },
-          execute: state => {
-            state.selection = { nodeIds: [nodeId] };
-            return state;
-          },
-          undo: state => {
-            state.selection = { nodeIds: get().history.past.at(-1)?.payload.previous ?? [] };
-            return state;
+        set(state => {
+          state.selection = { nodeIds: [nodeId] };
+        });
+      },
+
+      updateNode: (nodeId, changes) => {
+        const current = get().nodesById[nodeId];
+        if (!current) return;
+        set(state => {
+          const target = state.nodesById[nodeId];
+          if (!target) return;
+
+          if (changes.position) {
+            // Merge into existing position
+            const prevPos = (target.schemaRef as NodeSchemaType).position ?? { x: 0, y: 0 };
+            (target.schemaRef as NodeSchemaType).position = {
+              ...prevPos,
+              ...changes.position
+            };
           }
-        };
-        get().addCommand(command);
-      },
 
-      addCommand: command => {
-        set(state => {
-          // apply
-          command.execute(state as KernelState);
-          state.history.past.push(command);
-          state.history.future = [];
-        });
-      },
-
-      undo: () => {
-        const { history } = get();
-        const command = history.past.pop();
-        if (!command) return;
-        set(state => {
-          command.undo(state as KernelState);
-          state.history.future.push(command);
-        });
-      },
-
-      redo: () => {
-        const { history } = get();
-        const command = history.future.pop();
-        if (!command) return;
-        set(state => {
-          command.execute(state as KernelState);
-          state.history.past.push(command);
+          if (changes.props) {
+            const prevProps = ((target.schemaRef as NodeSchemaType).props ?? {}) as Record<string, unknown>;
+            (target.schemaRef as NodeSchemaType).props = {
+              ...prevProps,
+              ...changes.props
+            };
+          }
         });
       },
 
@@ -139,7 +124,11 @@ export const createKernelStore = () =>
           state.nodesById[nodeId].error = error;
         });
       }
-    }))
+      })),
+      {
+        limit: 200
+      }
+    )
   );
 
 export type KernelStore = ReturnType<typeof createKernelStore>;

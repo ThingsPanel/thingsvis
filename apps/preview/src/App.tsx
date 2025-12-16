@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useSyncExternalStore, useMemo } from 'react';
 import type { NodeSchemaType, PageSchemaType } from '@thingsvis/schema';
 import { createKernelStore } from '@thingsvis/kernel';
 import { CanvasView, HeadlessErrorBoundary } from '@thingsvis/ui';
@@ -9,6 +9,28 @@ const randomColor = () => `#${Math.floor(Math.random() * 0xffffff).toString(16).
 const randomBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const App: React.FC = () => {
+  const temporalSnapshot = useSyncExternalStore(
+    useCallback(
+      subscribe => {
+        // Subscribe to temporal history changes
+        const unsub = store.temporal.subscribe(subscribe);
+        return unsub;
+      },
+      []
+    ),
+    () => store.temporal.getState(),
+    () => store.temporal.getState()
+  );
+
+  const { canUndo, canRedo } = useMemo(() => {
+    const past = temporalSnapshot.pastStates ?? [];
+    const future = temporalSnapshot.futureStates ?? [];
+    return {
+      canUndo: past.length > 0,
+      canRedo: future.length > 0
+    };
+  }, [temporalSnapshot]);
+
   useEffect(() => {
     const emptyPage: PageSchemaType = {
       id: 'perf-demo',
@@ -48,9 +70,29 @@ const App: React.FC = () => {
   return (
     <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-        <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, display: 'flex', gap: 8 }}>
-          <button onClick={handleGenerate}>Generate 1000 Nodes</button>
-          <button onClick={handleClear}>Clear</button>
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8
+          }}
+        >
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={handleGenerate}>Generate 1000 Nodes</button>
+            <button onClick={handleClear}>Clear</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => store.temporal.getState().undo()} disabled={!canUndo}>
+              Undo
+            </button>
+            <button onClick={() => store.temporal.getState().redo()} disabled={!canRedo}>
+              Redo
+            </button>
+          </div>
         </div>
         <CanvasView store={store} />
       </div>

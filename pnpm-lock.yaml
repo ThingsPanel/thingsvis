@@ -109,6 +109,9 @@ importers:
       immer:
         specifier: ^10.0.0
         version: 10.2.0
+      zundo:
+        specifier: ^2.0.0
+        version: 2.3.0(zustand@4.5.7)
       zustand:
         specifier: ^4.5.0
         version: 4.5.7(immer@10.2.0)(react@18.3.1)
@@ -3647,6 +3650,14 @@ packages:
 
   /zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+    dev: false
+
+  /zundo@2.3.0(zustand@4.5.7):
+    resolution: {integrity: sha512-4GXYxXA17SIKYhVbWHdSEU04P697IMyVGXrC2TnzoyohEAWytFNOKqOp5gTGvaW93F/PM5Y0evbGtOPF0PWQwQ==}
+    peerDependencies:
+      zustand: ^4.3.0 || ^5.0.0
+    dependencies:
+      zustand: 4.5.7(immer@10.2.0)(react@18.3.1)
     dev: false
 
   /zustand@4.5.7(immer@10.2.0)(react@18.3.1):
