@@ -1,29 +1,35 @@
 {
   "name": "@thingsvis/kernel",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
-  "module": "dist/index.js",
+  "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "require": "./dist/index.cjs",
       "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --dts",
-    "dev": "tsup src/index.ts --dts --watch",
-    "typecheck": "tsc --noEmit"
+    "build": "rspack build",
+    "dev": "rspack build --watch",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@thingsvis/schema": "workspace:*"
+    "@thingsvis/schema": "workspace:*",
+    "@thingsvis/utils": "workspace:*",
+    "immer": "^10.0.0",
+    "zustand": "^4.5.0",
+    "zundo": "^2.0.0"
   },
   "devDependencies": {
-    "tsup": "^7.2.0",
-    "typescript": "^5.3.3"
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "typescript": "^5.3.3",
+    "ts-loader": "^9.5.1"
   }
 }
 

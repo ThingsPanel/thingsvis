@@ -1,37 +1,24 @@
 {
-  "name": "@thingsvis/ui",
+  "name": "@thingsvis/utils",
   "version": "0.0.1",
   "private": false,
-  "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
-    }
-  },
   "scripts": {
     "build": "rspack build",
     "dev": "rspack build --watch",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@thingsvis/kernel": "workspace:*",
-    "@thingsvis/schema": "workspace:*",
-    "leafer-ui": "^1.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "@thingsvis/schema": "workspace:*"
   },
   "devDependencies": {
     "@rspack/cli": "^1.0.0",
     "@rspack/core": "^1.0.0",
-    "@types/react": "^18.2.41",
-    "@types/react-dom": "^18.2.17",
     "typescript": "^5.3.3",
     "ts-loader": "^9.5.1"
   }
 }
+
 
