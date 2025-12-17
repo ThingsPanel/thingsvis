@@ -14,6 +14,12 @@
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
+    "basic/switch": {
+      "remoteName": "thingsvis_plugin_basic_switch",
+      "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
+    },
     "media/image": {
       "remoteName": "thingsvis_plugin_media_image",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",

@@ -13,7 +13,7 @@ export const Spec: React.FC = () => {
     const img = new Image({
       x: 10,
       y: 10,
-      url: 'https://picsum.photos/240/140',
+      url: 'https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/1f795d27941d4552a51dc6d9c43e1e59preview.jpeg~tplv-a9rns2rl98-downsize_watermark_1_6_b.png?rcl=20251217161907E5350F9BA6BDB7096D74&rk3s=8e244e95&rrcfp=ddbb2dc7&x-expires=2081319563&x-signature=AmrTpiYvQ0EApV32cQzbVyfgKbw%3D',
       width: 240,
       height: 140
     });

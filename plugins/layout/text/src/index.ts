@@ -8,7 +8,7 @@ export function create() {
   return new Text({
     text: 'Hello ThingsVis',
     fontSize: 24,
-    fill: '#ffffff'
+    fill: '#000'
   });
 }
 
