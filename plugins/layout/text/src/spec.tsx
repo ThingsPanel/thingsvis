@@ -10,7 +10,7 @@ export const Spec: React.FC = () => {
   useEffect(() => {
     if (!ref.current) return;
     const app = new App({ view: ref.current, tree: {} });
-    const text = new Text({ x: 20, y: 20, text: 'Hello ThingsVis 文字组件', fontSize: 28, fill: '#000' });
+    const text = new Text({ x: 20, y: 20, text: 'Hello 文字组件', fontSize: 28, fill: '#000' });
     (app.tree as any).add(text);
     return () => {
       app.destroy?.();
