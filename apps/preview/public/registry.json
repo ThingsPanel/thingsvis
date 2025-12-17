@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2025-12-17T00:00:00.000Z",
+  "components": {
+    "basic/rect": {
+      "remoteName": "thingsvis_plugin_basic_rect",
+      "remoteEntryUrl": "http://localhost:3101/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
+    },
+    "layout/text": {
+      "remoteName": "thingsvis_plugin_layout_text",
+      "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
+    },
+    "media/image": {
+      "remoteName": "thingsvis_plugin_media_image",
+      "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
+    },
+    "custom/cyber-clock": {
+      "remoteName": "thingsvis_plugin_custom_cyber_clock",
+      "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
+    }
+  }
+}
+
+

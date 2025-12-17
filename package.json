@@ -7,9 +7,15 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js"
   },
   "devDependencies": {
+    "@module-federation/enhanced": "^0.6.0",
+    "@module-federation/rspack": "^0.6.0",
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "vis-cli": "workspace:*",
     "turbo": "^1.12.3",
     "typescript": "^5.3.3",
     "@types/node": "^20.10.6"

@@ -1,21 +1,33 @@
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
-import type { NodeSchemaType } from '@thingsvis/schema';
+import type { NodeSchemaType, PluginMainModule } from '@thingsvis/schema';
 import { App, Rect, Group } from 'leafer-ui';
+import type { RendererFactory } from './renderers/types';
+import { createPluginRenderer } from './renderers/pluginRenderer';
+import { errorRenderer } from './renderers/errorRenderer';
 
 export class VisualEngine {
   private app?: App;
-  private instanceMap = new Map<string, Rect>();
+  private instanceMap = new Map<string, { instance: any; renderer: RendererFactory }>();
   private root?: Group;
   private unsubscribe?: () => void;
 
-  constructor(private store: KernelStore) {}
+  private rendererByType = new Map<string, RendererFactory>();
+  private pendingRendererLoad = new Map<string, Promise<void>>();
+  private errorMessageByType = new Map<string, string>();
+
+  constructor(
+    private store: KernelStore,
+    private opts?: {
+      resolvePlugin?: (type: string) => Promise<PluginMainModule>;
+    }
+  ) {}
 
   mount(container: HTMLElement) {
     this.app = new App({
       view: container,
       tree: {}
     });
-    this.root = this.app.tree as Group;
+    this.root = this.app.tree as unknown as Group;
 
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(() => {
@@ -38,12 +50,13 @@ export class VisualEngine {
 
   sync(nodes: Record<string, NodeState>) {
     if (!this.app || !this.root) return;
+    const root = this.root;
 
     // Remove nodes that no longer exist or are hidden
-    for (const [id, instance] of Array.from(this.instanceMap.entries())) {
+    for (const [id, entry] of Array.from(this.instanceMap.entries())) {
       const nextNode = nodes[id];
       if (!nextNode || !nextNode.visible) {
-        instance.remove();
+        entry.renderer.destroy(entry.instance);
         this.instanceMap.delete(id);
       }
     }
@@ -52,20 +65,75 @@ export class VisualEngine {
     Object.values(nodes).forEach(node => {
       if (!node.visible) return;
       const existing = this.instanceMap.get(node.schemaRef.id);
+      const type = node.schemaRef.type;
 
       if (!existing) {
-        const rect = new Rect(this.toRectProps(node.schemaRef));
-        this.root.add(rect);
-        this.instanceMap.set(node.schemaRef.id, rect);
-        this.attachInteractionHandlers(rect, node);
+        const renderer = this.getRendererOrScheduleLoad(type);
+        if (!renderer) {
+          // not ready yet; will be created on next sync
+          return;
+        }
+
+        // If renderer is the errorRenderer, surface a non-fatal error into kernel state for visibility.
+        const errMsg = this.errorMessageByType.get(type);
+        if (errMsg) {
+          const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+          setNodeError?.(node.id, errMsg);
+        }
+        const instance = renderer.create(node);
+        root.add(instance as any);
+        this.instanceMap.set(node.schemaRef.id, { instance, renderer });
+        this.attachInteractionHandlers(instance as Rect, node);
         return;
       }
 
-      existing.set(this.toRectProps(node.schemaRef));
+      existing.renderer.update(existing.instance, node);
     });
   }
 
-  private attachInteractionHandlers(rect: Rect, node: NodeState) {
+  private getRendererOrScheduleLoad(type: string): RendererFactory | undefined {
+    const existing = this.rendererByType.get(type);
+    if (existing) return existing;
+
+    // Built-in fallback for legacy "rect" nodes
+    if (type === 'rect') {
+      const builtIn: RendererFactory = {
+        create: node => new Rect(this.toRectProps(node.schemaRef)),
+        update: (inst: any, node) => inst.set?.(this.toRectProps(node.schemaRef)),
+        destroy: inst => inst.remove?.()
+      };
+      this.rendererByType.set(type, builtIn);
+      return builtIn;
+    }
+
+    // Schedule async plugin resolve
+    if (this.opts?.resolvePlugin && !this.pendingRendererLoad.get(type)) {
+      const p = (async () => {
+        try {
+          const plugin = await this.opts!.resolvePlugin!(type);
+          this.rendererByType.set(type, createPluginRenderer(plugin));
+          this.errorMessageByType.delete(type);
+        } catch (e) {
+          // Fail closed: render error placeholder for this type
+          this.rendererByType.set(type, errorRenderer);
+          this.errorMessageByType.set(type, e instanceof Error ? e.message : String(e));
+          // eslint-disable-next-line no-console
+          console.error('[VisualEngine] failed to resolve plugin renderer:', type, e);
+        }
+      })();
+      this.pendingRendererLoad.set(type, p);
+      p.finally(() => {
+        this.pendingRendererLoad.delete(type);
+        // 关键：插件 renderer 加载完成后立刻触发一次同步渲染（不依赖 store 状态变化）
+        const state = this.store.getState() as KernelState;
+        this.sync(state.nodesById);
+      }).catch(() => void 0);
+    }
+
+    return undefined;
+  }
+
+  private attachInteractionHandlers(rect: any, node: NodeState) {
     const nodeId = node.id;
 
     // Selection on click/tap

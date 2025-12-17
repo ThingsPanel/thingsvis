@@ -121,7 +121,9 @@ export const createKernelStore = () =>
       setNodeError: (nodeId, error) => {
         if (!get().nodesById[nodeId]) return;
         set(state => {
-          state.nodesById[nodeId].error = error;
+          const target = state.nodesById[nodeId];
+          if (!target) return;
+          target.error = error;
         });
       }
       })),

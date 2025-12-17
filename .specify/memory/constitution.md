@@ -57,6 +57,7 @@ Rationale: Resilient operator experiences; Kernel stability does not depend on U
 - **Spec-driven**: Define `NodeSchema` in Zod before implementing Renderers.
 - **Headless Check**: PRs to `thingsvis-ui` MUST be rejected if they contain CSS/Tailwind classes.
 - **Sandbox Check**: New features must demonstrate they do not crash the app when they fail (try-catch or ErrorBoundary).
+- **Code Comments**: Critical logic, complex algorithms, and necessary code locations MUST include Chinese comments
 - **Testing**: Contract tests for kernel ↔ plugin interfaces.
 
 ## Governance
