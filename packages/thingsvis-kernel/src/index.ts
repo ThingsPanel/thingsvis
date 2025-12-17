@@ -11,6 +11,7 @@ export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';
 export { safeExecute } from './executor/SafeExecutor';
 export { ResourceLoader } from './loader/ResourceLoader';
+export { UniversalLoader } from './loader/UniversalLoader';
 
 // Export event bus
 export { EventBus, type EventHandler } from './event-bus';

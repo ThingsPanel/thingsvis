@@ -4,13 +4,21 @@ export type SafeResult<T> = {
   error?: unknown;
 };
 
-export function safeExecute<T>(fn: () => T): SafeResult<T> {
+/**
+ * Execute arbitrary logic in a basic "sandbox" boundary.
+ *
+ * - Wraps execution in try/catch
+ * - Logs errors to console for now (future: route to ErrorStore)
+ * - Returns a safe fallback value when execution fails
+ */
+export function safeExecute<T>(fn: () => T, fallback: T): T {
   try {
-    const value = fn();
-    return { ok: true, value };
+    return fn();
   } catch (error) {
-    return { ok: false, error };
+    // Minimal logging for now; can be replaced with ErrorStore later.
+    // eslint-disable-next-line no-console
+    console.error('[SafeExecutor] execution error:', error);
+    return fallback;
   }
 }
-
 
