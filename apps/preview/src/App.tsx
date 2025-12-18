@@ -3,6 +3,7 @@ import type { NodeSchemaType, PageSchemaType } from '@thingsvis/schema';
 import { createKernelStore } from '@thingsvis/kernel';
 import { CanvasView, HeadlessErrorBoundary } from '@thingsvis/ui';
 import { loadPlugin } from './plugins/pluginResolver';
+import { extractDefaults } from './plugins/schemaUtils';
 
 const store = createKernelStore();
 
@@ -73,12 +74,48 @@ const App: React.FC = () => {
     store.getState().loadPage(emptyPage);
   }, []);
 
+  /**
+   * 从当前选中的插件 Schema 中创建一个标准节点
+   * - 验证 Schema 是否存在
+   * - 利用 Schema 默认值生成 props
+   */
+  const handleAddNodeFromSchema = useCallback(async () => {
+    try {
+      const { entry } = await loadPlugin(specComponentId);
+      if (!entry.schema) {
+        // 仅告警，不中断交互，方便调试不完整的插件
+        // eslint-disable-next-line no-console
+        console.warn('⚠️ 该组件缺少 schema 定义，不符合 Phase 3 默认值注入约定:', specComponentId);
+      }
+      const defaultProps = extractDefaults(entry.schema);
+      const now = Date.now();
+      const node: NodeSchemaType = {
+        id: `node-${specComponentId}-${now}`,
+        type: specComponentId,
+        position: { x: 100, y: 100 },
+        // Phase 3 这里只给一个兜底尺寸，具体含义由各插件 renderer 自行解释
+        size: { width: 200, height: 80 },
+        props: defaultProps
+      };
+      store.getState().addNodes([node]);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('[preview] failed to add node from schema', e);
+    }
+  }, [specComponentId]);
 
   const handleLoadSpec = useCallback(async () => {
     setSpecError(null);
     setSpecComp(null);
     try {
       const plugin = await loadPlugin(specComponentId);
+      if (!plugin.entry.schema) {
+        // eslint-disable-next-line no-console
+        console.warn('⚠️ 警告：该组件缺少 Schema 定义，不符合 Phase 3 交付标准', specComponentId);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('✅ Schema Loaded:', plugin.entry.schema);
+      }
       const Spec = plugin.entry.Spec as React.ComponentType | undefined;
       if (!Spec) {
         throw new Error('Plugin does not export Spec');
@@ -122,8 +159,10 @@ const App: React.FC = () => {
               <option value="media/image">media/image</option>
               <option value="custom/cyber-clock">custom/cyber-clock</option>
               <option value="basic/switch">basic/switch</option>
+              <option value="chart/echarts-bar">chart/echarts-bar</option>
             </select>
             <button onClick={handleLoadSpec}>Load Spec</button>
+            <button onClick={handleAddNodeFromSchema}>Add Node from Schema</button>
           </div>
           {specError ? <div style={{ color: 'crimson' }}>{specError}</div> : null}
           {specComp ? (

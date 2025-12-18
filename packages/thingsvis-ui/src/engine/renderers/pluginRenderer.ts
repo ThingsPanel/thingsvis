@@ -1,4 +1,4 @@
-import type { PluginMainModule } from '@thingsvis/schema';
+import type { PluginMainModule, PluginOverlayContext } from '@thingsvis/schema';
 import type { NodeState } from '@thingsvis/kernel';
 import type { LeaferDisplayObject, RendererFactory } from './types';
 
@@ -17,6 +17,15 @@ function nodeToLeaferProps(node: NodeState): Record<string, unknown> {
   };
 }
 
+function nodeToOverlayContext(node: NodeState): PluginOverlayContext {
+  const schema = node.schemaRef as any;
+  return {
+    position: schema.position,
+    size: schema.size,
+    props: schema.props
+  };
+}
+
 export function createPluginRenderer(plugin: PluginMainModule): RendererFactory {
   return {
     create(node: NodeState): LeaferDisplayObject {
@@ -29,7 +38,23 @@ export function createPluginRenderer(plugin: PluginMainModule): RendererFactory 
     },
     destroy(instance: LeaferDisplayObject) {
       instance.remove?.();
-    }
+    },
+    createOverlay: plugin.createOverlay
+      ? (node: NodeState) => {
+          const overlay = plugin.createOverlay!(nodeToOverlayContext(node));
+          return {
+            element: overlay.element,
+            update: overlay.update
+              ? (nextNode: NodeState) => overlay.update?.(nodeToOverlayContext(nextNode))
+              : undefined,
+            destroy: overlay.destroy
+          };
+        }
+      : undefined,
+    updateOverlay: plugin.createOverlay
+      ? (overlay, node) => overlay.update?.(node)
+      : undefined,
+    destroyOverlay: plugin.createOverlay ? overlay => overlay.destroy?.() : undefined
   };
 }
 

@@ -15,7 +15,27 @@ export function create() {
 export const Main: PluginMainModule = {
   componentId,
   create,
-  Spec
+  Spec,
+  // 图片组件的 props Schema
+  schema: {
+    props: {
+      url: {
+        type: 'string',
+        default: 'https://picsum.photos/200/120',
+        description: '图片地址'
+      },
+      width: {
+        type: 'number',
+        default: 200,
+        description: '宽度（像素）'
+      },
+      height: {
+        type: 'number',
+        default: 120,
+        description: '高度（像素）'
+      }
+    }
+  }
 };
 
 export default Main;

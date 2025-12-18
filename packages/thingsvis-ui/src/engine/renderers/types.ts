@@ -8,10 +8,22 @@ export type LeaferDisplayObject = {
   y?: number;
 };
 
+export type OverlayInstance = {
+  element: HTMLElement;
+  update?: (node: NodeState) => void;
+  destroy?: () => void;
+};
+
 export type RendererFactory = {
   create: (node: NodeState) => LeaferDisplayObject;
   update: (instance: LeaferDisplayObject, node: NodeState) => void;
   destroy: (instance: LeaferDisplayObject) => void;
+  /**
+   * 可选：提供 DOM overlay，用于 ECharts 等纯 DOM 渲染场景
+   */
+  createOverlay?: (node: NodeState) => OverlayInstance;
+  updateOverlay?: (overlay: OverlayInstance, node: NodeState) => void;
+  destroyOverlay?: (overlay: OverlayInstance) => void;
 };
 
 

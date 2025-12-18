@@ -48,7 +48,22 @@ export function create() {
 export const Main: PluginMainModule = {
   componentId,
   create,
-  Spec
+  Spec,
+  // AI 示例插件的 Schema，用于验证 CLI 生成的结构是否能被 Host 正确消费
+  schema: {
+    props: {
+      fontSize: {
+        type: 'number',
+        default: 32,
+        description: '时间文本字号'
+      },
+      color: {
+        type: 'string',
+        default: '#00e5ff',
+        description: '时间文本颜色'
+      }
+    }
+  }
 };
 
 export default Main;

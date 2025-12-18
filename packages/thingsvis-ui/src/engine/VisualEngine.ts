@@ -7,13 +7,19 @@ import { errorRenderer } from './renderers/errorRenderer';
 
 export class VisualEngine {
   private app?: App;
-  private instanceMap = new Map<string, { instance: any; renderer: RendererFactory }>();
+  private instanceMap = new Map<
+    string,
+    { instance: any; renderer: RendererFactory; overlayBox?: HTMLDivElement; overlayInst?: { destroy?: () => void } }
+  >();
   private root?: Group;
   private unsubscribe?: () => void;
+  private overlayRoot?: HTMLDivElement;
+  private containerEl?: HTMLElement;
 
   private rendererByType = new Map<string, RendererFactory>();
   private pendingRendererLoad = new Map<string, Promise<void>>();
   private errorMessageByType = new Map<string, string>();
+  private errorMessageByNode = new Map<string, string>();
 
   constructor(
     private store: KernelStore,
@@ -23,6 +29,16 @@ export class VisualEngine {
   ) {}
 
   mount(container: HTMLElement) {
+    this.containerEl = container;
+    // DOM overlay 根节点（用于 ECharts/HTML 叠加）
+    const overlayRoot = document.createElement('div');
+    overlayRoot.style.position = 'absolute';
+    overlayRoot.style.inset = '0';
+    overlayRoot.style.pointerEvents = 'none';
+    overlayRoot.style.zIndex = '5';
+    container.appendChild(overlayRoot);
+    this.overlayRoot = overlayRoot;
+
     this.app = new App({
       view: container,
       tree: {}
@@ -42,10 +58,16 @@ export class VisualEngine {
   unmount() {
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
+    if (this.overlayRoot && this.overlayRoot.parentElement) {
+      this.overlayRoot.parentElement.removeChild(this.overlayRoot);
+    }
+    this.overlayRoot = undefined;
+    this.containerEl = undefined;
     this.app?.destroy?.();
     this.app = undefined;
     this.root = undefined;
     this.instanceMap.clear();
+    this.errorMessageByNode.clear();
   }
 
   sync(nodes: Record<string, NodeState>) {
@@ -57,6 +79,10 @@ export class VisualEngine {
       const nextNode = nodes[id];
       if (!nextNode || !nextNode.visible) {
         entry.renderer.destroy(entry.instance);
+        if (entry.renderer.destroyOverlay && entry.overlayInst) {
+          entry.renderer.destroyOverlay(entry.overlayInst as any);
+        }
+        if (entry.overlayBox?.parentElement) entry.overlayBox.parentElement.removeChild(entry.overlayBox);
         this.instanceMap.delete(id);
       }
     }
@@ -74,20 +100,71 @@ export class VisualEngine {
           return;
         }
 
+        let rendererToUse = renderer;
+        let instance: any;
+        try {
+          instance = renderer.create(node);
+        } catch (e) {
+          rendererToUse = errorRenderer;
+          this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
+          instance = errorRenderer.create(node);
+        }
+
         // If renderer is the errorRenderer, surface a non-fatal error into kernel state for visibility.
-        const errMsg = this.errorMessageByType.get(type);
+        const errMsg = this.errorMessageByNode.get(node.id) ?? this.errorMessageByType.get(type);
         if (errMsg) {
           const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
           setNodeError?.(node.id, errMsg);
         }
-        const instance = renderer.create(node);
         root.add(instance as any);
-        this.instanceMap.set(node.schemaRef.id, { instance, renderer });
+
+        // DOM overlay（仅当 renderer 支持且 overlayRoot 存在）
+        let overlayBox: HTMLDivElement | undefined;
+        let overlayInst: { destroy?: () => void } | undefined;
+        if (rendererToUse.createOverlay && this.overlayRoot) {
+          overlayBox = document.createElement('div');
+          overlayBox.style.position = 'absolute';
+          overlayBox.style.pointerEvents = 'auto';
+          overlayBox.style.overflow = 'hidden';
+          this.overlayRoot.appendChild(overlayBox);
+          this.positionOverlayBox(overlayBox, node);
+          try {
+            const ov = rendererToUse.createOverlay(node);
+            overlayInst = ov;
+            overlayBox.appendChild(ov.element);
+          } catch (e) {
+            // overlay 失败不影响主渲染
+            // eslint-disable-next-line no-console
+            console.error('[VisualEngine] overlay creation failed:', e);
+            if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
+            overlayBox = undefined;
+          }
+        }
+
+        this.instanceMap.set(node.schemaRef.id, { instance, renderer: rendererToUse, overlayBox, overlayInst });
         this.attachInteractionHandlers(instance as Rect, node);
         return;
       }
 
-      existing.renderer.update(existing.instance, node);
+      try {
+        existing.renderer.update(existing.instance, node);
+        this.errorMessageByNode.delete(node.id);
+      } catch (e) {
+        // 单节点降级为 errorRenderer，不影响同类型其他节点
+        this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
+        existing.renderer.destroy(existing.instance);
+        existing.renderer = errorRenderer;
+        existing.instance = errorRenderer.create(node);
+        root.add(existing.instance as any);
+      }
+
+      // 更新 overlay
+      if (existing.overlayBox) {
+        this.positionOverlayBox(existing.overlayBox, node);
+      }
+      if (existing.renderer.updateOverlay && existing.overlayInst) {
+        existing.renderer.updateOverlay(existing.overlayInst as any, node);
+      }
     });
   }
 
@@ -153,6 +230,17 @@ export class VisualEngine {
       const { x, y } = rect;
       updateNode(nodeId, { position: { x, y } });
     });
+  }
+
+  private positionOverlayBox(box: HTMLDivElement, node: NodeState) {
+    const schema = node.schemaRef as any;
+    const { x, y } = schema.position ?? { x: 0, y: 0 };
+    const width = schema.size?.width ?? 0;
+    const height = schema.size?.height ?? 0;
+    box.style.left = `${x}px`;
+    box.style.top = `${y}px`;
+    box.style.width = `${width}px`;
+    box.style.height = `${height}px`;
   }
 
   private toRectProps(schema: NodeSchemaType) {

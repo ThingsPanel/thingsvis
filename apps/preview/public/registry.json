@@ -31,6 +31,12 @@
       "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1"
+    },
+    "chart/echarts-bar": {
+      "remoteName": "thingsvis_plugin_chart_echarts_bar",
+      "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "0.0.1"
     }
   }
 }

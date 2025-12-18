@@ -15,7 +15,27 @@ export function create() {
 export const Main: PluginMainModule = {
   componentId,
   create,
-  Spec
+  Spec,
+  // Layout 文本组件的 props Schema
+  schema: {
+    props: {
+      text: {
+        type: 'string',
+        default: 'Hello ThingsVis',
+        description: '显示的文本内容'
+      },
+      fontSize: {
+        type: 'number',
+        default: 24,
+        description: '字号（像素）'
+      },
+      fill: {
+        type: 'string',
+        default: '#000000',
+        description: '文字颜色'
+      }
+    }
+  }
 };
 
 export default Main;

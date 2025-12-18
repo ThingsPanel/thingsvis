@@ -28,7 +28,9 @@ export async function loadPlugin(componentId: string): Promise<LoadedPlugin> {
     }
 
     // 开发阶段：直接使用远程 URL 注册 remote，避免 Blob/ObjectURL → manifest 解析导致的 RUNTIME-003。
-    // 后续如果要启用 IndexedDB 缓存，再切回 UniversalLoader.registerRemoteCached。
+    // 说明：当前 @module-federation/runtime 会为 remoteEntry 生成独立 manifest.json；
+    // 如果我们通过 Blob URL 注入 JS 源码，runtime 会把该 blob 当作 manifest 去解析 JSON，最终报错。
+    // 因此 preview 应用暂时关闭 IndexedDB 缓存，待后续升级为“缓存 manifest + 远程 JS”再重新启用。
     await UniversalLoader.registerRemote(entry.remoteName, entry.remoteEntryUrl);
     const loaded = await UniversalLoader.loadComponent<any>(entry.remoteName, entry.exposedModule);
 
