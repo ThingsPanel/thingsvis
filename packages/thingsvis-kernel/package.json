@@ -23,6 +23,7 @@
     "@thingsvis/utils": "workspace:*",
     "@module-federation/enhanced": "^0.6.0",
     "@module-federation/runtime": "^0.6.0",
+    "idb-keyval": "^6.2.1",
     "immer": "^10.0.0",
     "zustand": "^4.5.0",
     "zundo": "^2.0.0"

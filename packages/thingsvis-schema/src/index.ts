@@ -1,4 +1,4 @@
-export type { IPage as PageSchemaType } from './page';
+export type { PageSchemaType } from './page-schema';
 export { NodeSchema } from './node-schema';
 export type { NodeSchemaType } from './node-schema';
 
@@ -7,6 +7,7 @@ export {
   PageMetaSchema,
   PageConfigSchema,
   PageContentSchema,
+  PageSchema,
   type IPageMeta,
   type IPageConfig,
   type IPageContent,
@@ -28,4 +29,15 @@ export {
   type IComponentProps,
   type IVisualComponent,
 } from './component';
+
+// Export plugin registry schemas and types (L1 plugin layer)
+export {
+  ComponentRegistrySchema,
+  ComponentRegistryEntrySchema,
+  type ComponentRegistry,
+  type ComponentRegistryEntry
+} from './component-registry';
+
+// Export plugin remote module contract types (L1 plugin layer)
+export { type PluginMainModule, type PluginComponentId } from './plugin-module';
 
