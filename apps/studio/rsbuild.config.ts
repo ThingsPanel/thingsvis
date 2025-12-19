@@ -6,6 +6,9 @@ export default defineConfig({
   source: {
     entry: {
       main: './src/main.tsx'
+    },
+    alias: {
+      '@': './src',
     }
   },
   server: {
@@ -17,7 +20,10 @@ export default defineConfig({
   tools: {
     rspack: {
       resolve: {
-        extensions: ['.ts', '.tsx', '.js', '.jsx']
+        extensions: ['.ts', '.tsx', '.js', '.jsx'],
+        alias: {
+          '@': './src',
+        }
       }
     }
   }

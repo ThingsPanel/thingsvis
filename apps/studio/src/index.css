@@ -2,3 +2,121 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Light theme with clean, minimal Zen-like aesthetic */
+  --background: 0 0% 99%;
+  --foreground: 0 0% 25%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 25%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 25%;
+  /* Updated primary color to #6965db */
+  --primary: 270 15% 55%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 240 1% 92%;
+  --secondary-foreground: 0 0% 25%;
+  --muted: 240 1% 95%;
+  --muted-foreground: 240 2% 55%;
+  --accent: 240 1% 92%;
+  --accent-foreground: 0 0% 25%;
+  --destructive: 25 23% 58%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 240 1% 88%;
+  --input: 240 1% 88%;
+  /* Updated ring color to match primary */
+  --ring: 270 15% 55%;
+  --radius: 0.75rem;
+
+  /* Canvas background */
+  --canvas-dot: 240 1% 80%;
+  --chart-1: 41.116 22.2% 64.6%;
+  --chart-2: 184.704 11.8% 60%;
+  --chart-3: 227.392 7% 39.8%;
+  --chart-4: 84.429 18.9% 82.8%;
+  --chart-5: 70.08 18.8% 76.9%;
+}
+
+.dark {
+  /* Dark theme with slate blue-gray tones, not pitch black */
+  --background: 240 1% 18%;
+  --foreground: 240 1% 92%;
+  --card: 240 1% 22%;
+  --card-foreground: 240 1% 92%;
+  --popover: 240 1% 22%;
+  --popover-foreground: 240 1% 92%;
+  /* Updated primary color to #6965db for dark mode */
+  --primary: 270 15% 60%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 240 1% 25%;
+  --secondary-foreground: 240 1% 92%;
+  --muted: 240 1% 25%;
+  --muted-foreground: 240 2% 60%;
+  --accent: 240 1% 28%;
+  --accent-foreground: 240 1% 92%;
+  --destructive: 25 23% 62%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 240 1% 30%;
+  --input: 240 1% 30%;
+  /* Updated ring color to match primary */
+  --ring: 270 15% 60%;
+
+  /* Canvas background */
+  --canvas-dot: 240 1% 35%;
+  --chart-1: 264.376 24.3% 48.8%;
+  --chart-2: 162.48 17% 69.6%;
+  --chart-3: 70.08 18.8% 76.9%;
+  --chart-4: 303.9 26.5% 62.7%;
+  --chart-5: 16.439 24.6% 64.5%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /* Remove all default focus-visible outlines/rings in the studio app */
+  *:focus-visible {
+    @apply outline-none ring-0;
+  }
+}
+
+/* Dot grid pattern for canvas background */
+.dot-grid {
+  background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Glassmorphism effect for floating islands */
+.glass {
+  background: hsl(var(--card) / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}

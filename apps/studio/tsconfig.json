@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
+      "@/*": ["./src/*"],
       "@thingsvis/schema": ["../../packages/thingsvis-schema/src"],
       "@thingsvis/kernel": ["../../packages/thingsvis-kernel/src"],
       "@thingsvis/ui": ["../../packages/thingsvis-ui/src"]
