@@ -76,6 +76,11 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Remove all default focus-visible outlines/rings in the studio app */
+  *:focus-visible {
+    @apply outline-none ring-0;
+  }
 }
 
 /* Dot grid pattern for canvas background */

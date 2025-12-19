@@ -335,7 +335,7 @@ export default function Editor() {
   ]
 
   return (
-    <div className={isDarkMode ? "dark" : ""}>
+    <div className={isDarkMode ? "dark relative min-h-screen overflow-hidden" : "relative min-h-screen overflow-hidden"}>
       {/* Canvas Background with Dot Grid */}
       <div className="absolute inset-0 bg-background dot-grid" />
 
