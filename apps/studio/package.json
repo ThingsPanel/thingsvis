@@ -11,11 +11,24 @@
   "dependencies": {
     "@rsbuild/core": "^0.4.1",
     "@rsbuild/plugin-react": "^0.4.1",
+    "@radix-ui/react-accordion": "1.2.2",
+    "@radix-ui/react-alert-dialog": "1.1.4",
+    "@radix-ui/react-dialog": "1.1.4",
+    "@radix-ui/react-dropdown-menu": "2.1.4",
+    "@radix-ui/react-label": "2.1.1",
+    "@radix-ui/react-popover": "1.1.4",
+    "@radix-ui/react-separator": "1.1.1",
+    "@radix-ui/react-slot": "1.1.1",
+    "@radix-ui/react-tabs": "1.1.2",
     "@thingsvis/kernel": "workspace:*",
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/ui": "workspace:*",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.454.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.41",
@@ -23,6 +36,7 @@
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",
     "tailwindcss": "^3.4.1",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.3.3"
   }
 }
