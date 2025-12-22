@@ -22,3 +22,16 @@ export function safeExecute<T>(fn: () => T, fallback: T): T {
   }
 }
 
+/**
+ * Execute arbitrary async logic in a basic "sandbox" boundary.
+ */
+export async function safeExecuteAsync<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('[SafeExecutor] async execution error:', error);
+    return fallback;
+  }
+}
+

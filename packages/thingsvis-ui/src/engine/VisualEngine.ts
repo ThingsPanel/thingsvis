@@ -1,6 +1,6 @@
-import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
+import type { KernelStore, KernelState, NodeState, ConnectionState } from '@thingsvis/kernel';
 import type { NodeSchemaType, PluginMainModule } from '@thingsvis/schema';
-import { App, Rect, Group } from 'leafer-ui';
+import { App, Rect, Group, Line } from 'leafer-ui';
 import type { RendererFactory } from './renderers/types';
 import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
@@ -11,7 +11,9 @@ export class VisualEngine {
     string,
     { instance: any; renderer: RendererFactory; overlayBox?: HTMLDivElement; overlayInst?: { destroy?: () => void } }
   >();
+  private connectionMap = new Map<string, Line>();
   private root?: Group;
+  private connRoot?: Group;
   private unsubscribe?: () => void;
   private overlayRoot?: HTMLDivElement;
   private containerEl?: HTMLElement;
@@ -44,15 +46,19 @@ export class VisualEngine {
       tree: {}
     });
     this.root = this.app.tree as unknown as Group;
+    
+    // Create a dedicated layer for connections (rendered below nodes)
+    this.connRoot = new Group();
+    this.root.addAt(this.connRoot, 0);
 
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(() => {
       const state = this.store.getState() as KernelState;
-      this.sync(state.nodesById);
+      this.sync(state.nodesById, state.connections);
     });
     // Initial sync
     const state = this.store.getState() as KernelState;
-    this.sync(state.nodesById);
+    this.sync(state.nodesById, state.connections);
   }
 
   unmount() {
@@ -66,14 +72,17 @@ export class VisualEngine {
     this.app?.destroy?.();
     this.app = undefined;
     this.root = undefined;
+    this.connRoot = undefined;
     this.instanceMap.clear();
+    this.connectionMap.clear();
     this.errorMessageByNode.clear();
   }
 
-  sync(nodes: Record<string, NodeState>) {
+  sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = []) {
     if (!this.app || !this.root) return;
     const root = this.root;
 
+    // 1. Sync Nodes
     // Remove nodes that no longer exist or are hidden
     for (const [id, entry] of Array.from(this.instanceMap.entries())) {
       const nextNode = nodes[id];
@@ -166,7 +175,57 @@ export class VisualEngine {
         existing.renderer.updateOverlay(existing.overlayInst as any, node);
       }
     });
+
+    // 2. Sync Connections
+    this.syncConnections(nodes, connections);
   }
+
+  private syncConnections(nodes: Record<string, NodeState>, connections: ConnectionState[]) {
+    if (!this.connRoot) return;
+
+    const currentConnIds = new Set(connections.map(c => c.id));
+    
+    // Remove old connections
+    for (const [id, line] of Array.from(this.connectionMap.entries())) {
+      if (!currentConnIds.has(id)) {
+        line.remove();
+        this.connectionMap.delete(id);
+      }
+    }
+
+    // Add or update connections
+    connections.forEach(conn => {
+      const source = nodes[conn.sourceNodeId];
+      const target = nodes[conn.targetNodeId];
+      if (!source || !target) return;
+
+      const sp = source.schemaRef.position;
+      const ss = (source.schemaRef as any).size ?? { width: 0, height: 0 };
+      const tp = target.schemaRef.position;
+      const ts = (target.schemaRef as any).size ?? { width: 0, height: 0 };
+
+      // Simple center-to-center for MVP
+      const x1 = sp.x + ss.width / 2;
+      const y1 = sp.y + ss.height / 2;
+      const x2 = tp.x + ts.width / 2;
+      const y2 = tp.y + ts.height / 2;
+
+      let line = this.connectionMap.get(conn.id);
+      if (!line) {
+        line = new Line({
+          points: [x1, y1, x2, y2],
+          stroke: conn.props?.stroke as string ?? '#6965db',
+          strokeWidth: conn.props?.strokeWidth as number ?? 2,
+          opacity: 0.6
+        });
+        this.connRoot!.add(line);
+        this.connectionMap.set(conn.id, line);
+      } else {
+        line.set({ points: [x1, y1, x2, y2] });
+      }
+    });
+  }
+
 
   private getRendererOrScheduleLoad(type: string): RendererFactory | undefined {
     const existing = this.rendererByType.get(type);

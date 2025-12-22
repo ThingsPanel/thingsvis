@@ -64,10 +64,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createKernelStore } from '@thingsvis/kernel'
+import { createKernelStore, type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
+import PropsPanel from './RightPanel/PropsPanel'
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 
@@ -130,9 +131,15 @@ export default function Editor() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [leftPanelTab, setLeftPanelTab] = useState<"components" | "layers">("components")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
+
+  const kernelState = useSyncExternalStore(
+    useCallback(subscribe => store.subscribe(subscribe), []),
+    () => store.getState() as KernelState
+  );
+
+  const selectedElement = kernelState.selection.nodeIds[0] || null;
 
   // Sync dark mode state with html class on mount
   useEffect(() => {
@@ -154,26 +161,6 @@ export default function Editor() {
     () => store.temporal.getState(),
     () => store.temporal.getState()
   )
-
-  const { canUndo, canRedo } = useMemo(() => {
-    const past = temporalSnapshot.pastStates ?? []
-    const future = temporalSnapshot.futureStates ?? []
-    return {
-      canUndo: past.length > 0,
-      canRedo: future.length > 0
-    }
-  }, [temporalSnapshot])
-
-  // Initialize page on mount
-  useEffect(() => {
-    const emptyPage: PageSchemaType = {
-      id: 'studio-page',
-      type: 'page',
-      version: '1.0.0',
-      nodes: []
-    }
-    store.getState().loadPage(emptyPage)
-  }, [])
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>({
     // Meta - 基础身份
@@ -207,6 +194,25 @@ export default function Editor() {
     background: "#1a1a1a",
     gridEnabled: true,
   })
+
+  useEffect(() => {
+    // Sync canvas state to kernel store when config changes
+    console.log('[Editor] Syncing canvas config to store:', canvasConfig.mode, canvasConfig.width, canvasConfig.height);
+    store.getState().updateCanvas({
+      mode: canvasConfig.mode,
+      width: canvasConfig.width,
+      height: canvasConfig.height
+    })
+  }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height])
+
+  const { canUndo, canRedo } = useMemo(() => {
+    const past = temporalSnapshot.pastStates ?? []
+    const future = temporalSnapshot.futureStates ?? []
+    return {
+      canUndo: past.length > 0,
+      canRedo: future.length > 0
+    }
+  }, [temporalSnapshot])
 
   const [layers, setLayers] = useState<Layer[]>([
     {
@@ -345,6 +351,11 @@ export default function Editor() {
         <CanvasView
           pageId={canvasConfig.id}
           store={store}
+          activeTool={activeTool}
+          resolvePlugin={async (type) => {
+            const { entry } = await loadPlugin(type);
+            return entry;
+          }}
         />
       </div>
 
@@ -702,67 +713,17 @@ export default function Editor() {
         <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
-            <button className="p-1 hover:bg-accent rounded" onClick={() => setSelectedElement(null)}>
+            <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {selectedElement ? (
-              <>
-                {/* Element Properties */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                    {language === "zh" ? "名称" : "Name"}
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                    defaultValue={language === "zh" ? "矩形 1" : "Rectangle 1"}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">X</label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">Y</label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      {language === "zh" ? "宽度" : "Width"}
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={200}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      {language === "zh" ? "高度" : "Height"}
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                </div>
-              </>
+              <PropsPanel 
+                nodeId={selectedElement} 
+                kernelStore={store} 
+                language={language} 
+              />
             ) : (
               <>
                 {/* Canvas Settings */}

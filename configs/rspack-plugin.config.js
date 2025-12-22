@@ -99,6 +99,10 @@ function createPluginConfig(pluginDir, opts = {}) {
       new ModuleFederationPlugin({
         name: mfName,
         filename: 'remoteEntry.js',
+        dts: false,
+        dev: {
+          dts: false
+        },
         exposes: {
           './Main': './src/index'
         },

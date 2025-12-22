@@ -1,4 +1,4 @@
-export { CanvasView } from "./CanvasView";
+export { CanvasView } from "./components/CanvasView";
 export { VisualEngine } from "./engine/VisualEngine";
 export { HeadlessErrorBoundary } from "./components/HeadlessErrorBoundary";
 export { Button } from "./Button";
