@@ -240,7 +240,7 @@ export const CanvasView: React.FC<Props> = ({
         style={{ 
           width: '100%', 
           height: '100%',
-          transform: mode === 'fixed' ? `translate(${vOffset.x}px, ${vOffset.y}px) scale(${vZoom})` : 'none',
+          transform: `translate(${vOffset.x}px, ${vOffset.y}px) scale(${vZoom})`,
           transformOrigin: '0 0'
         }} 
         id="visual-engine-mount" 

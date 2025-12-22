@@ -36,8 +36,24 @@ export function create() {
     fill: '#00e5ff'
   });
 
+  const updateTime = () => {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    label.text = `${h}:${m}:${s}`;
+  };
+
+  updateTime();
+  const timer = setInterval(updateTime, 1000);
+
   (root as any).add(panel);
   (root as any).add(label);
+
+  // Clean up timer when the node is destroyed/removed
+  root.on('remove', () => {
+    clearInterval(timer);
+  });
 
   // Store the text node so the host can update via .set({ ...props }) if desired.
   (root as any).__clockText = label;
