@@ -7,7 +7,7 @@ export const CanvasView: React.FC<{ pageId: string; className?: string }> = ({ p
 
   useEffect(() => {
     engineRef.current = new VisualEngine(pageId);
-    engineRef.current.start();
+    engineRef.current.start(containerRef.current ?? undefined);
     return () => {
       engineRef.current?.stop();
     };

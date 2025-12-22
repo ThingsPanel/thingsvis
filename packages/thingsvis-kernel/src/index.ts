@@ -16,9 +16,29 @@ export type { Command } from './history/HistoryManager';
 export { safeExecute } from './executor/SafeExecutor';
 export { ResourceLoader } from './loader/ResourceLoader';
 export { UniversalLoader } from './loader/UniversalLoader';
+export { CmdStack } from './history/CmdStack';
+export { createNodeDropCommand } from './commands/nodeDrop';
+export { action, subscribeToPatches } from './store';
+export { actionStack } from './history/ActionStack';
 
 // Export event bus
 export { EventBus, type EventHandler } from './event-bus';
+export { eventBus } from './event-bus';
+export * from './events/pluginEvents';
+// expose kernel eventBus to host apps via globalThis for loose coupling (used by UI loader)
+try {
+  if (typeof globalThis !== 'undefined' && !(globalThis as any).__thingsvis_kernel_eventbus__) {
+    (globalThis as any).__thingsvis_kernel_eventbus__ = eventBus;
+  }
+} catch (e) {}
+
+// expose subscribeToPatches for UI runtime via globalThis to avoid static package imports
+try {
+  const sub = require("./store").subscribeToPatches;
+  if (sub && typeof globalThis !== "undefined") {
+    (globalThis as any).__thingsvis_subscribeToPatches__ = sub;
+  }
+} catch (e) {}
 
 // Export kernel interfaces
 export { type IVisualComponent } from './interfaces/visual-component';

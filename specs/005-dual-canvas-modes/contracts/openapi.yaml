@@ -1,0 +1,134 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Editor - Minimal Contracts for Canvas
+  version: "1.0.0"
+paths:
+  /registry:
+    get:
+      summary: List available registry components
+      responses:
+        "200":
+          description: registry list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RegistryEntry'
+  /nodes:
+    post:
+      summary: Create a node instance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeCreation'
+      responses:
+        "201":
+          description: node created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Node'
+  /nodes/{nodeId}:
+    put:
+      summary: Update a node
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NodeUpdate'
+      responses:
+        "200":
+          description: updated
+    delete:
+      summary: Delete a node
+      parameters:
+        - name: nodeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: deleted
+  /cmds/undo:
+    post:
+      summary: Undo last command
+      responses:
+        "200":
+          description: undone
+  /cmds/redo:
+    post:
+      summary: Redo last undone command
+      responses:
+        "200":
+          description: redone
+components:
+  schemas:
+    Transform:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        width:
+          type: number
+        height:
+          type: number
+        rotation:
+          type: number
+        zIndex:
+          type: number
+      required: [x,y,width,height]
+    Node:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        props:
+          type: object
+        transform:
+          $ref: '#/components/schemas/Transform'
+      required: [id,type,transform]
+    NodeCreation:
+      type: object
+      properties:
+        type:
+          type: string
+        props:
+          type: object
+        transform:
+          $ref: '#/components/schemas/Transform'
+      required: [type,transform]
+    NodeUpdate:
+      type: object
+      properties:
+        props:
+          type: object
+        transform:
+          $ref: '#/components/schemas/Transform'
+    RegistryEntry:
+      type: object
+      properties:
+        key:
+          type: string
+        displayName:
+          type: string
+        defaultProps:
+          type: object
+        propsSchema:
+          type: object
+      required: [key,displayName]
+

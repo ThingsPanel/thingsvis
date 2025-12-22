@@ -66,7 +66,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { createKernelStore } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
-import { CanvasView } from '@thingsvis/ui'
+import CanvasView from './CanvasView'
+import ComponentsList from './LeftPanel/ComponentsList'
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 
@@ -341,9 +342,9 @@ export default function Editor() {
 
       {/* Canvas View */}
       <div className="absolute inset-0 pt-14">
-        <CanvasView 
-          store={store} 
-          resolvePlugin={async (type: string) => (await loadPlugin(type)).entry} 
+        <CanvasView
+          pageId={canvasConfig.id}
+          store={store}
         />
       </div>
 
@@ -581,114 +582,10 @@ export default function Editor() {
           </div>
 
           <div className="flex-1 overflow-y-auto p-3">
-            {leftPanelTab === "components" ? (
-              <Accordion type="multiple" defaultValue={["basic", "charts"]} className="space-y-2">
-                {/* 1. 基础组件 */}
-                <AccordionItem value="basic" className="border-0">
-                  <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline">
-                    {language === "zh" ? "基础组件" : "Basic"}
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-1 px-2">
-                    <div className="space-y-3">
-                      {/* 文本 */}
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground mb-1.5 pl-0.5">
-                          {language === "zh" ? "文本" : "Text"}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            onClick={() => handleAddNode("layout/text")}
-                            className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
-                          >
-                            <Type className="h-6 w-6 text-foreground" />
-                            <span className="text-xs text-foreground font-medium">
-                              {language === "zh" ? "标题" : "Title"}
-                            </span>
-                          </button>
-                          <button className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2">
-                            <Repeat className="h-6 w-6 text-foreground" />
-                            <span className="text-xs text-foreground font-medium">
-                              {language === "zh" ? "跑马灯" : "Marquee"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* 交互控制 */}
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground mb-1.5 pl-0.5">
-                          {language === "zh" ? "交互控制" : "Controls"}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            onClick={() => handleAddNode("basic/switch")}
-                            className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
-                          >
-                            <ToggleLeft className="h-6 w-6 text-foreground" />
-                            <span className="text-xs text-foreground font-medium">
-                              {language === "zh" ? "开关" : "Switch"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* 2. 图表组件 */}
-                <AccordionItem value="charts" className="border-0">
-                  <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline">
-                    {language === "zh" ? "图表组件" : "Charts"}
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-1 px-2">
-                    <div className="space-y-3">
-                      {/* ECharts */}
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground mb-1.5 pl-0.5">ECharts</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            onClick={() => handleAddNode("chart/echarts-bar")}
-                            className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
-                          >
-                            <BarChart3 className="h-6 w-6 text-foreground" />
-                            <span className="text-xs text-foreground font-medium">
-                              {language === "zh" ? "柱状图" : "Bar"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-
-                {/* 3. 媒体展示 */}
-                <AccordionItem value="media" className="border-0">
-                  <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline">
-                    {language === "zh" ? "媒体展示" : "Media"}
-                  </AccordionTrigger>
-                  <AccordionContent className="pt-2 pb-1 px-2">
-                    <div className="space-y-3">
-                      {/* 图片 */}
-                      <div>
-                        <div className="text-xs font-medium text-muted-foreground mb-1.5 pl-0.5">
-                          {language === "zh" ? "图片" : "Image"}
-                        </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            onClick={() => handleAddNode("media/image")}
-                            className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
-                          >
-                            <ImageIcon className="h-6 w-6 text-foreground" />
-                            <span className="text-xs text-foreground font-medium">
-                              {language === "zh" ? "静态图" : "Image"}
-                            </span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+          {leftPanelTab === "components" ? (
+            <div>
+              <ComponentsList onInsert={handleAddNode} language={language} />
+            </div>
             ) : (
               <div className="space-y-1">
                 {layers.map((layer) => (

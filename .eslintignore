@@ -2,5 +2,12 @@ node_modules/
 dist/
 build/
 coverage/
+*.min.js
+*.log
+
+node_modules/
+dist/
+build/
+coverage/
 
 

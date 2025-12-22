@@ -19,3 +19,6 @@ export class EventBus {
   }
 }
 
+// singleton bus for cross-package eventing (headless, in-memory)
+export const eventBus = new EventBus();
+

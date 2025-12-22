@@ -1,26 +1,36 @@
 import type { CanvasNode, CanvasPage } from "@thingsvis/schema/contracts/canvas-contracts";
 import { subscribeToPatches } from "../../../thingsvis-kernel/src/store";
+import { startRenderLoop } from "./render-loop";
+import { LeaferAdapter } from "../visual/leaferAdapter";
 
 export class VisualEngine {
   private running = false;
-  private unsub?: () => void;
+  private stopLoop?: () => void;
+  private adapter?: LeaferAdapter;
 
   constructor(private pageId: string) {}
 
-  start() {
+  start(containerEl?: HTMLDivElement) {
     if (this.running) return;
     this.running = true;
-    this.unsub = subscribeToPatches((patches) => {
-      // For MVP, simply log patches — real engine applies to leafer/three instances
+    // Initialize visual adapter (Leafer)
+    this.adapter = new LeaferAdapter();
+    if (containerEl) {
+      this.adapter.init(containerEl);
+    }
+
+    this.stopLoop = startRenderLoop((patches) => {
+      // For MVP, forward basic patches to adapter (real mapping later)
       // eslint-disable-next-line no-console
-      console.log("[VisualEngine] patches:", patches.length);
+      console.log("[VisualEngine] onFrame patches:", patches.length);
+      // TODO: translate patches into adapter.addNode/update/removeNode calls
     });
   }
 
   stop() {
     if (!this.running) return;
     this.running = false;
-    if (this.unsub) this.unsub();
+    if (this.stopLoop) this.stopLoop();
   }
 }
 
