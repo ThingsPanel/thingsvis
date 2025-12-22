@@ -1,3 +1,6 @@
+export * from "./canvas-schema";
+export * from "./contracts/canvas-contracts";
+
 export type { PageSchemaType } from './page-schema';
 export { NodeSchema } from './node-schema';
 export type { NodeSchemaType } from './node-schema';

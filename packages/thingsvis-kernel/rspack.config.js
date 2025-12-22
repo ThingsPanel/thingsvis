@@ -19,6 +19,10 @@ export default defineConfig({
     },
     clean: true
   },
+  externals: {
+    // Prevent bundler trying to resolve Node-only modules when building web-targeted bundles.
+    worker_threads: 'commonjs2 worker_threads'
+  },
   resolve: {
     extensions: ['.ts', '.js', '.json']
   },
