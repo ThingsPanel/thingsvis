@@ -187,7 +187,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
                   height: schema.size?.height ?? 0,
                   pointerEvents: "auto",
                   cursor: "pointer",
-                  border: state.selection.nodeIds.includes(node.id) ? "1px solid #6965db" : "none"
+                  border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"
                 }}
               />
             );
