@@ -9,9 +9,15 @@ module.exports = defineConfig({
   },
   target: ['web', 'es2020'],
   devServer: {
-    static: {
-      directory: path.join(__dirname, 'public')
-    }
+    static: [
+      {
+        directory: path.join(__dirname, 'public'),
+      },
+      {
+        directory: path.resolve(__dirname, '../../plugins'),
+        publicPath: '/plugins',
+      }
+    ]
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

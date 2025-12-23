@@ -1,6 +1,7 @@
 import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { ModuleFederationPlugin } from '@module-federation/rspack';
+import path from 'path';
 
 export default defineConfig({
   plugins: [pluginReact()],
@@ -13,7 +14,37 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000
+    port: 3000,
+    publicDir: {
+      name: 'public',
+      copyOnBuild: true,
+    },
+  },
+  dev: {
+    setupMiddlewares: [
+      (middlewares, server) => {
+        // Serve plugins directory at /plugins path
+        const sirv = require('sirv');
+        const pluginsDir = path.resolve(__dirname, '../../plugins');
+        const pluginsHandler = sirv(pluginsDir, { dev: true, etag: true });
+        middlewares.unshift(
+          (req: any, res: any, next: any) => {
+            if (req.url?.startsWith('/plugins/')) {
+              // Strip /plugins prefix for sirv to find the file
+              const originalUrl = req.url;
+              req.url = req.url.replace('/plugins', '');
+              pluginsHandler(req, res, () => {
+                // Restore original URL if not handled
+                req.url = originalUrl;
+                next();
+              });
+            } else {
+              next();
+            }
+          }
+        );
+      },
+    ],
   },
   output: {
     cleanDistPath: true

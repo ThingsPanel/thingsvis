@@ -341,6 +341,11 @@ export default function Editor() {
     { key: "?", action: language === "zh" ? "快捷键帮助" : "Keyboard Shortcuts" },
   ]
 
+  const resolvePlugin = useCallback(async (type: string) => {
+    const { entry } = await loadPlugin(type);
+    return entry;
+  }, []);
+
   return (
     <div className={isDarkMode ? "dark relative min-h-screen overflow-hidden" : "relative min-h-screen overflow-hidden"}>
       {/* Canvas Background with Dot Grid */}
@@ -352,14 +357,11 @@ export default function Editor() {
           pageId={canvasConfig.id}
           store={store}
           activeTool={activeTool}
-          resolvePlugin={async (type) => {
-            const { entry } = await loadPlugin(type);
-            return entry;
-          }}
+          resolvePlugin={resolvePlugin}
         />
       </div>
 
-      {!selectedElement && (
+      {Object.keys(kernelState.nodesById).length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center space-y-6">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>

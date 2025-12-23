@@ -126,6 +126,11 @@ const App: React.FC = () => {
     }
   }, [specComponentId]);
 
+  const resolvePlugin = useCallback(async (type: string) => {
+    const { entry } = await loadPlugin(type);
+    return entry;
+  }, []);
+
   return (
     <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -140,6 +145,7 @@ const App: React.FC = () => {
             gap: 8
           }}
         >
+          {/* ... existing content ... */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleGenerate}>Generate 1000 Nodes</button>
             <button onClick={handleClear}>Clear</button>
@@ -171,7 +177,7 @@ const App: React.FC = () => {
             </div>
           ) : null}
         </div>
-        <CanvasView store={store} resolvePlugin={async (type: string) => (await loadPlugin(type)).entry} />
+        <CanvasView store={store} resolvePlugin={resolvePlugin} />
       </div>
     </HeadlessErrorBoundary>
   );

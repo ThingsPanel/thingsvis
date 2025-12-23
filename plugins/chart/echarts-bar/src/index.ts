@@ -39,7 +39,8 @@ export const Main: PluginMainModule = {
     // pointer-events 允许交互
     el.style.pointerEvents = 'auto';
 
-    const chart = echarts.init(el);
+    // 延迟初始化 ECharts，等待元素有实际尺寸
+    let chart: echarts.ECharts | null = null;
     const baseOption = {
       title: {
         text: (ctx.props?.title as string) ?? 'ECharts Bar Demo',
@@ -68,11 +69,29 @@ export const Main: PluginMainModule = {
         }
       ]
     };
-    chart.setOption(baseOption);
+
+    // 使用 ResizeObserver 监听容器尺寸变化
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          if (!chart) {
+            // 首次初始化：容器已有尺寸
+            chart = echarts.init(el);
+            chart.setOption(baseOption);
+          } else {
+            // 尺寸变化时 resize
+            chart.resize();
+          }
+        }
+      }
+    });
+    resizeObserver.observe(el);
 
     return {
       element: el,
       update: next => {
+        if (!chart) return;
         const nextTitle = (next.props?.title as string) ?? baseOption.title.text;
         chart.setOption({
           ...baseOption,
@@ -81,7 +100,9 @@ export const Main: PluginMainModule = {
         chart.resize();
       },
       destroy: () => {
-        chart.dispose();
+        resizeObserver.disconnect();
+        chart?.dispose();
+        chart = null;
       }
     };
   }

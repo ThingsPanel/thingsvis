@@ -49,16 +49,30 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
         if (!mounted) return;
         // If we got a raw registry object (from previewRegistry), map to array format expected by the UI
         if (res && (res as any).components && !Array.isArray(res)) {
-          const arr = Object.keys((res as any).components).map((key) => {
+          const arr: ComponentRegistryEntry[] = [];
+          Object.keys((res as any).components).forEach((key) => {
             const entry = (res as any).components[key];
-            return {
+            const baseEntry = {
               remoteName: entry.remoteName ?? key,
               remoteEntryUrl: entry.remoteEntryUrl,
+              localEntryUrl: entry.localEntryUrl,
+              staticEntryUrl: entry.staticEntryUrl,
+              debugSource: entry.debugSource,
               exposedModule: entry.exposedModule,
               version: entry.version,
               displayName: key,
               iconUrl: (entry as any).iconUrl ?? ""
             } as ComponentRegistryEntry;
+            
+            arr.push(baseEntry);
+
+            // 如果配置了本地地址，则额外增加一个“(Local)”条目方便对比调试
+            if (entry.localEntryUrl) {
+              arr.push({
+                ...baseEntry,
+                displayName: `${key} (Local)`,
+              } as any);
+            }
           });
           setEntries(arr);
         } else {
@@ -84,6 +98,8 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
       type: (entry as any).displayName ?? entry.remoteName,
       remoteName: entry.remoteName,
       remoteEntryUrl: entry.remoteEntryUrl,
+      localEntryUrl: entry.localEntryUrl,
+      staticEntryUrl: entry.staticEntryUrl,
       exposedModule: entry.exposedModule,
     });
     e.dataTransfer.setData("application/thingsvis-plugin", payload);

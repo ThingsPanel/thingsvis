@@ -5,40 +5,51 @@
     "basic/rect": {
       "remoteName": "thingsvis_plugin_basic_rect",
       "remoteEntryUrl": "http://localhost:3101/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/rect/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
     "layout/text": {
       "remoteName": "thingsvis_plugin_layout_text",
       "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
+      "staticEntryUrl": "/plugins/layout/text/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
     "basic/switch": {
       "remoteName": "thingsvis_plugin_basic_switch",
       "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/switch/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
     "media/image": {
       "remoteName": "thingsvis_plugin_media_image",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "staticEntryUrl": "/plugins/media/image/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
     "custom/cyber-clock": {
       "remoteName": "thingsvis_plugin_custom_cyber_clock",
       "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "localEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "staticEntryUrl": "/plugins/custom/cyber-clock/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     },
     "chart/echarts-bar": {
       "remoteName": "thingsvis_plugin_chart_echarts_bar",
       "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
+      "staticEntryUrl": "/plugins/chart/echarts-bar/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1"
     }
   }
 }
-
-

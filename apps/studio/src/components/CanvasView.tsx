@@ -56,6 +56,20 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
     };
   }, []);
 
+  // Click on empty canvas to clear selection
+  function handleCanvasClick(e: React.MouseEvent) {
+    // Only clear selection if clicking directly on the canvas container, not on a node
+    const target = e.target as HTMLElement;
+    // Check if clicked on a node proxy target
+    if (target.closest('.node-proxy-target')) {
+      return;
+    }
+    // Clear selection
+    if (store.getState().selectNode) {
+      store.getState().selectNode(null);
+    }
+  }
+
   // Drop handlers for studio: compute coords and dispatch node add via store
   function handleDragOver(e: React.DragEvent) {
     e.preventDefault();
@@ -113,6 +127,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
   return (
     <div 
       ref={containerRef as any} 
+      onClick={handleCanvasClick}
       onDragOver={handleDragOver} 
       onDrop={handleDrop} 
       style={{ width: "100%", height: "100%", position: "relative" }}
@@ -158,6 +173,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
                 key={node.id}
                 data-node-id={node.id}
                 className="node-proxy-target"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (store.getState().selectNode) {
+                    store.getState().selectNode(node.id);
+                  }
+                }}
                 style={{
                   position: "absolute",
                   left: schema.position.x,
@@ -165,6 +186,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
                   width: schema.size?.width ?? 0,
                   height: schema.size?.height ?? 0,
                   pointerEvents: "auto",
+                  cursor: "pointer",
                   border: state.selection.nodeIds.includes(node.id) ? "1px solid #6965db" : "none"
                 }}
               />
