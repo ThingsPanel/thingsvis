@@ -1,4 +1,4 @@
-import type { ComponentRegistryEntry } from "../../../specs/004-load-registry-components/data-model";
+import type { ComponentRegistryEntry } from "@thingsvis/schema";
 
 // Lightweight cross-package event bridge:
 // - If kernel has injected a global event bus (`globalThis.__thingsvis_kernel_eventbus__`), use it.
@@ -53,6 +53,9 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
         return {
           remoteName: entry.remoteName,
           remoteEntryUrl: entry.remoteEntryUrl,
+          localEntryUrl: entry.localEntryUrl,
+          staticEntryUrl: entry.staticEntryUrl,
+          debugSource: entry.debugSource,
           exposedModule: entry.exposedModule,
           version: entry.version,
           displayName: key,
@@ -80,6 +83,9 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
       return {
         remoteName: entry.remoteName,
         remoteEntryUrl: entry.remoteEntryUrl,
+        localEntryUrl: entry.localEntryUrl,
+        staticEntryUrl: entry.staticEntryUrl,
+        debugSource: entry.debugSource,
         exposedModule: entry.exposedModule,
         version: entry.version,
         displayName: key,

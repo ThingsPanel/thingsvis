@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
+    "build:plugins": "turbo run build --filter=\"thingsvis-plugin-*\"",
+    "dev:plugins": "turbo run dev --filter=\"thingsvis-plugin-*\"",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js"

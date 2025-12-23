@@ -1,6 +1,6 @@
-import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
+import type { KernelStore, KernelState, NodeState, ConnectionState } from '@thingsvis/kernel';
 import type { NodeSchemaType, PluginMainModule } from '@thingsvis/schema';
-import { App, Rect, Group } from 'leafer-ui';
+import { App, Rect, Group, Line } from 'leafer-ui';
 import type { RendererFactory } from './renderers/types';
 import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
@@ -11,13 +11,16 @@ export class VisualEngine {
     string,
     { instance: any; renderer: RendererFactory; overlayBox?: HTMLDivElement; overlayInst?: { destroy?: () => void } }
   >();
+  private connectionMap = new Map<string, Line>();
   private root?: Group;
+  private connRoot?: Group;
   private unsubscribe?: () => void;
   private overlayRoot?: HTMLDivElement;
   private containerEl?: HTMLElement;
 
   private rendererByType = new Map<string, RendererFactory>();
   private pendingRendererLoad = new Map<string, Promise<void>>();
+  private failedRendererTypes = new Set<string>();
   private errorMessageByType = new Map<string, string>();
   private errorMessageByNode = new Map<string, string>();
 
@@ -44,15 +47,19 @@ export class VisualEngine {
       tree: {}
     });
     this.root = this.app.tree as unknown as Group;
+    
+    // Create a dedicated layer for connections (rendered below nodes)
+    this.connRoot = new Group();
+    this.root.addAt(this.connRoot, 0);
 
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(() => {
       const state = this.store.getState() as KernelState;
-      this.sync(state.nodesById);
+      this.sync(state.nodesById, state.connections);
     });
     // Initial sync
     const state = this.store.getState() as KernelState;
-    this.sync(state.nodesById);
+    this.sync(state.nodesById, state.connections);
   }
 
   unmount() {
@@ -66,107 +73,193 @@ export class VisualEngine {
     this.app?.destroy?.();
     this.app = undefined;
     this.root = undefined;
+    this.connRoot = undefined;
     this.instanceMap.clear();
+    this.connectionMap.clear();
     this.errorMessageByNode.clear();
   }
 
-  sync(nodes: Record<string, NodeState>) {
-    if (!this.app || !this.root) return;
-    const root = this.root;
+  private isSyncing = false;
 
-    // Remove nodes that no longer exist or are hidden
-    for (const [id, entry] of Array.from(this.instanceMap.entries())) {
-      const nextNode = nodes[id];
-      if (!nextNode || !nextNode.visible) {
-        entry.renderer.destroy(entry.instance);
-        if (entry.renderer.destroyOverlay && entry.overlayInst) {
-          entry.renderer.destroyOverlay(entry.overlayInst as any);
+  sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = []) {
+    if (!this.app || !this.root || this.isSyncing) return;
+    this.isSyncing = true;
+    
+    try {
+      const root = this.root;
+
+      // 1. Sync Nodes
+      // Remove nodes that no longer exist or are hidden
+      for (const [id, entry] of Array.from(this.instanceMap.entries())) {
+        const nextNode = nodes[id];
+        if (!nextNode || !nextNode.visible) {
+          entry.renderer.destroy(entry.instance);
+          if (entry.renderer.destroyOverlay && entry.overlayInst) {
+            entry.renderer.destroyOverlay(entry.overlayInst as any);
+          }
+          if (entry.overlayBox?.parentElement) entry.overlayBox.parentElement.removeChild(entry.overlayBox);
+          this.instanceMap.delete(id);
         }
-        if (entry.overlayBox?.parentElement) entry.overlayBox.parentElement.removeChild(entry.overlayBox);
-        this.instanceMap.delete(id);
       }
-    }
 
-    // Add or update visible nodes
-    Object.values(nodes).forEach(node => {
-      if (!node.visible) return;
-      const existing = this.instanceMap.get(node.schemaRef.id);
-      const type = node.schemaRef.type;
-
-      if (!existing) {
-        const renderer = this.getRendererOrScheduleLoad(type);
-        if (!renderer) {
-          // not ready yet; will be created on next sync
-          return;
-        }
-
-        let rendererToUse = renderer;
-        let instance: any;
+      // Add or update visible nodes
+      Object.values(nodes).forEach(node => {
+        // Wrap each node's sync in try-catch to isolate errors
         try {
-          instance = renderer.create(node);
+          this.syncSingleNode(node, root);
         } catch (e) {
-          rendererToUse = errorRenderer;
+          // Log error but don't let it break other nodes
+          console.error(`[VisualEngine] Error syncing node ${node.id}:`, e);
           this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
-          instance = errorRenderer.create(node);
-        }
-
-        // If renderer is the errorRenderer, surface a non-fatal error into kernel state for visibility.
-        const errMsg = this.errorMessageByNode.get(node.id) ?? this.errorMessageByType.get(type);
-        if (errMsg) {
-          const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
-          setNodeError?.(node.id, errMsg);
-        }
-        root.add(instance as any);
-
-        // DOM overlay（仅当 renderer 支持且 overlayRoot 存在）
-        let overlayBox: HTMLDivElement | undefined;
-        let overlayInst: { destroy?: () => void } | undefined;
-        if (rendererToUse.createOverlay && this.overlayRoot) {
-          overlayBox = document.createElement('div');
-          overlayBox.style.position = 'absolute';
-          overlayBox.style.pointerEvents = 'auto';
-          overlayBox.style.overflow = 'hidden';
-          this.overlayRoot.appendChild(overlayBox);
-          this.positionOverlayBox(overlayBox, node);
+          
+          // Try to create an error placeholder for this node
           try {
-            const ov = rendererToUse.createOverlay(node);
-            overlayInst = ov;
-            overlayBox.appendChild(ov.element);
-          } catch (e) {
-            // overlay 失败不影响主渲染
-            // eslint-disable-next-line no-console
-            console.error('[VisualEngine] overlay creation failed:', e);
-            if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
-            overlayBox = undefined;
+            if (!this.instanceMap.has(node.id)) {
+              const instance = errorRenderer.create(node);
+              root.add(instance as any);
+              this.instanceMap.set(node.id, { instance, renderer: errorRenderer });
+            }
+          } catch (placeholderError) {
+            console.error(`[VisualEngine] Failed to create error placeholder for node ${node.id}:`, placeholderError);
           }
         }
+      });
 
-        this.instanceMap.set(node.schemaRef.id, { instance, renderer: rendererToUse, overlayBox, overlayInst });
-        this.attachInteractionHandlers(instance as Rect, node);
+      // 2. Sync Connections
+      this.syncConnections(nodes, connections);
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+
+  /**
+   * Sync a single node - extracted to isolate error handling per node
+   */
+  private syncSingleNode(node: NodeState, root: Group) {
+    if (!node.visible) return;
+    
+    const existing = this.instanceMap.get(node.id);
+    const type = node.schemaRef.type;
+
+    if (!existing) {
+      const renderer = this.getRendererOrScheduleLoad(type);
+      if (!renderer) {
+        // not ready yet; will be created on next sync
         return;
       }
 
+      let rendererToUse = renderer;
+      let instance: any;
       try {
-        existing.renderer.update(existing.instance, node);
-        this.errorMessageByNode.delete(node.id);
+        instance = renderer.create(node);
       } catch (e) {
-        // 单节点降级为 errorRenderer，不影响同类型其他节点
+        rendererToUse = errorRenderer;
         this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
-        existing.renderer.destroy(existing.instance);
-        existing.renderer = errorRenderer;
-        existing.instance = errorRenderer.create(node);
-        root.add(existing.instance as any);
+        instance = errorRenderer.create(node);
       }
 
-      // 更新 overlay
-      if (existing.overlayBox) {
-        this.positionOverlayBox(existing.overlayBox, node);
+      // If renderer is the errorRenderer, surface a non-fatal error into kernel state for visibility.
+      const errMsg = this.errorMessageByNode.get(node.id) ?? this.errorMessageByType.get(type);
+      if (errMsg && node.error !== errMsg) {
+        const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+        setNodeError?.(node.id, errMsg);
       }
-      if (existing.renderer.updateOverlay && existing.overlayInst) {
-        existing.renderer.updateOverlay(existing.overlayInst as any, node);
+      root.add(instance as any);
+
+      // DOM overlay（仅当 renderer 支持且 overlayRoot 存在）
+      let overlayBox: HTMLDivElement | undefined;
+      let overlayInst: { destroy?: () => void } | undefined;
+      if (rendererToUse.createOverlay && this.overlayRoot) {
+        overlayBox = document.createElement('div');
+        overlayBox.style.position = 'absolute';
+        overlayBox.style.pointerEvents = 'auto';
+        overlayBox.style.overflow = 'hidden';
+        this.overlayRoot.appendChild(overlayBox);
+        this.positionOverlayBox(overlayBox, node);
+        try {
+          const ov = rendererToUse.createOverlay(node);
+          overlayInst = ov;
+          overlayBox.appendChild(ov.element);
+        } catch (e) {
+          // overlay 失败不影响主渲染
+          console.error('[VisualEngine] overlay creation failed:', e);
+          if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
+          overlayBox = undefined;
+        }
+      }
+
+      this.instanceMap.set(node.id, { instance, renderer: rendererToUse, overlayBox, overlayInst });
+      this.attachInteractionHandlers(instance as Rect, node);
+      return;
+    }
+
+    try {
+      existing.renderer.update(existing.instance, node);
+      this.errorMessageByNode.delete(node.id);
+    } catch (e) {
+      // 单节点降级为 errorRenderer，不影响同类型其他节点
+      this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
+      existing.renderer.destroy(existing.instance);
+      existing.renderer = errorRenderer;
+      existing.instance = errorRenderer.create(node);
+      root.add(existing.instance as any);
+    }
+
+    // 更新 overlay
+    if (existing.overlayBox) {
+      this.positionOverlayBox(existing.overlayBox, node);
+    }
+    if (existing.renderer.updateOverlay && existing.overlayInst) {
+      existing.renderer.updateOverlay(existing.overlayInst as any, node);
+    }
+  }
+
+  private syncConnections(nodes: Record<string, NodeState>, connections: ConnectionState[]) {
+    if (!this.connRoot) return;
+
+    const currentConnIds = new Set(connections.map(c => c.id));
+    
+    // Remove old connections
+    for (const [id, line] of Array.from(this.connectionMap.entries())) {
+      if (!currentConnIds.has(id)) {
+        line.remove();
+        this.connectionMap.delete(id);
+      }
+    }
+
+    // Add or update connections
+    connections.forEach(conn => {
+      const source = nodes[conn.sourceNodeId];
+      const target = nodes[conn.targetNodeId];
+      if (!source || !target) return;
+
+      const sp = source.schemaRef.position;
+      const ss = (source.schemaRef as any).size ?? { width: 0, height: 0 };
+      const tp = target.schemaRef.position;
+      const ts = (target.schemaRef as any).size ?? { width: 0, height: 0 };
+
+      // Simple center-to-center for MVP
+      const x1 = sp.x + ss.width / 2;
+      const y1 = sp.y + ss.height / 2;
+      const x2 = tp.x + ts.width / 2;
+      const y2 = tp.y + ts.height / 2;
+
+      let line = this.connectionMap.get(conn.id);
+      if (!line) {
+        line = new Line({
+          points: [x1, y1, x2, y2],
+          stroke: conn.props?.stroke as string ?? '#6965db',
+          strokeWidth: conn.props?.strokeWidth as number ?? 2,
+          opacity: 0.6
+        });
+        this.connRoot!.add(line);
+        this.connectionMap.set(conn.id, line);
+      } else {
+        line.set({ points: [x1, y1, x2, y2] });
       }
     });
   }
+
 
   private getRendererOrScheduleLoad(type: string): RendererFactory | undefined {
     const existing = this.rendererByType.get(type);
@@ -183,6 +276,10 @@ export class VisualEngine {
       return builtIn;
     }
 
+    if (this.failedRendererTypes.has(type)) {
+      return errorRenderer;
+    }
+
     // Schedule async plugin resolve
     if (this.opts?.resolvePlugin && !this.pendingRendererLoad.get(type)) {
       const p = (async () => {
@@ -190,9 +287,11 @@ export class VisualEngine {
           const plugin = await this.opts!.resolvePlugin!(type);
           this.rendererByType.set(type, createPluginRenderer(plugin));
           this.errorMessageByType.delete(type);
+          this.failedRendererTypes.delete(type);
         } catch (e) {
           // Fail closed: render error placeholder for this type
           this.rendererByType.set(type, errorRenderer);
+          this.failedRendererTypes.add(type);
           this.errorMessageByType.set(type, e instanceof Error ? e.message : String(e));
           // eslint-disable-next-line no-console
           console.error('[VisualEngine] failed to resolve plugin renderer:', type, e);
@@ -260,5 +359,3 @@ export class VisualEngine {
     };
   }
 }
-
-

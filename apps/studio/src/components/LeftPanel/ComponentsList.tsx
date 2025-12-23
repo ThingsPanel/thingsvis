@@ -49,16 +49,30 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
         if (!mounted) return;
         // If we got a raw registry object (from previewRegistry), map to array format expected by the UI
         if (res && (res as any).components && !Array.isArray(res)) {
-          const arr = Object.keys((res as any).components).map((key) => {
+          const arr: ComponentRegistryEntry[] = [];
+          Object.keys((res as any).components).forEach((key) => {
             const entry = (res as any).components[key];
-            return {
+            const baseEntry = {
               remoteName: entry.remoteName ?? key,
               remoteEntryUrl: entry.remoteEntryUrl,
+              localEntryUrl: entry.localEntryUrl,
+              staticEntryUrl: entry.staticEntryUrl,
+              debugSource: entry.debugSource,
               exposedModule: entry.exposedModule,
               version: entry.version,
               displayName: key,
               iconUrl: (entry as any).iconUrl ?? ""
             } as ComponentRegistryEntry;
+            
+            arr.push(baseEntry);
+
+            // 如果配置了本地地址，则额外增加一个“(Local)”条目方便对比调试
+            if (entry.localEntryUrl) {
+              arr.push({
+                ...baseEntry,
+                displayName: `${key} (Local)`,
+              } as any);
+            }
           });
           setEntries(arr);
         } else {
@@ -81,8 +95,11 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
 
   function handleDragStart(e: React.DragEvent, entry: ComponentRegistryEntry) {
     const payload = JSON.stringify({
+      type: (entry as any).displayName ?? entry.remoteName,
       remoteName: entry.remoteName,
       remoteEntryUrl: entry.remoteEntryUrl,
+      localEntryUrl: entry.localEntryUrl,
+      staticEntryUrl: entry.staticEntryUrl,
       exposedModule: entry.exposedModule,
     });
     e.dataTransfer.setData("application/thingsvis-plugin", payload);
@@ -149,7 +166,7 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
                             key={entry.remoteName}
                             draggable
                             onDragStart={(e) => handleDragStart(e, entry)}
-                            onClick={() => onInsert(entry.remoteName)}
+                            onClick={() => onInsert((entry as any).displayName ?? entry.remoteName)}
                             className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
                           >
                             <div className="h-6 w-6 text-foreground mb-1">

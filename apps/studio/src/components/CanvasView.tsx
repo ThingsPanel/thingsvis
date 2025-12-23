@@ -1,7 +1,10 @@
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState, useCallback } from "react";
+import { useSyncExternalStore } from "react";
 import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
-import StudioCmdStack from "../lib/StudioCmdStack";
-import { action as kernelAction, actionStack, createNodeDropCommand } from "@thingsvis/kernel";
+import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
+import TransformControls from "./tools/TransformControls";
+import ConnectionTool from "./tools/ConnectionTool";
+
 function generateId(prefix = "node") {
   try {
     // @ts-ignore
@@ -19,14 +22,25 @@ export type StudioCanvasHandle = {
   unmount: () => void;
 };
 
-const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store?: any; resolvePlugin?: (t:string)=>Promise<any> }>(function CanvasView(
-  { pageId, store },
+const CanvasView = forwardRef<StudioCanvasHandle, { 
+  pageId: string; 
+  store: any; 
+  resolvePlugin?: (t:string)=>Promise<any>; 
+  activeTool: string;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
+}>(function CanvasView(
+  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange },
   ref
 ) {
   const mountedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cmdStackRef = useRef<StudioCmdStack | null>(null);
   const vpRef = useRef({ width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 });
+
+  const state = useSyncExternalStore(
+    useCallback(subscribe => store.subscribe(subscribe), [store]),
+    () => store.getState() as KernelState
+  );
 
   useImperativeHandle(ref, () => ({
     dispatchToKernel: (payload: unknown) => {
@@ -49,10 +63,19 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store?: any;
     };
   }, []);
 
-  useEffect(() => {
-    // prefer kernel-level actionStack when available
-    if (!cmdStackRef.current) cmdStackRef.current = new StudioCmdStack(50);
-  }, []);
+  // Click on empty canvas to clear selection
+  function handleCanvasClick(e: React.MouseEvent) {
+    // Only clear selection if clicking directly on the canvas container, not on a node
+    const target = e.target as HTMLElement;
+    // Check if clicked on a node proxy target
+    if (target.closest('.node-proxy-target')) {
+      return;
+    }
+    // Clear selection
+    if (store.getState().selectNode) {
+      store.getState().selectNode(null);
+    }
+  }
 
   // Drop handlers for studio: compute coords and dispatch node add via store
   function handleDragOver(e: React.DragEvent) {
@@ -73,85 +96,124 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store?: any;
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
     const localX = e.clientX - rect.left;
     const localY = e.clientY - rect.top;
-    const vpState = vpRef.current && vpRef.current.width > 0 ? vpRef.current : { width: rect.width, height: rect.height, zoom: 1, offsetX: 0, offsetY: 0 };
-    const canvasConfig = { id: pageId, mode: "infinite", width: 1920, height: 1080, gridSize: 20, zoom: vpState.zoom, offsetX: vpState.offsetX, offsetY: vpState.offsetY };
-    const world = screenToCanvas({ x: localX, y: localY }, canvasConfig as any, vpState);
+    
+    // Correctly use current viewport state for coordinate conversion
+    const vpState = vpRef.current && vpRef.current.width > 0 
+      ? vpRef.current 
+      : { width: rect.width, height: rect.height, zoom: 1, offsetX: 0, offsetY: 0 };
+    
+    // Convert screen coords to world coords taking zoom and offset into account
+    const worldX = (localX - vpState.offsetX) / vpState.zoom;
+    const worldY = (localY - vpState.offsetY) / vpState.zoom;
 
     const nodeId = generateId("node");
     const node = {
       id: nodeId,
-      type: entry?.remoteName ?? "layout/text",
-      position: { x: world.x, y: world.y },
+      type: entry?.type ?? entry?.remoteName ?? "layout/text",
+      position: { x: worldX, y: worldY },
+      size: { width: 200, height: 100 }, // Default size for new nodes
       props: entry?.defaultProps ?? {}
     };
 
     // Prefer kernel actionStack if available (records undo/redo globally)
     try {
-      const actionCmd = createNodeDropCommand
-        ? createNodeDropCommand({
-            componentType: node.type,
-            position: node.position,
-            initialProps: node.props
-          })
-        : null;
-
-      if ((window as any).__thingsvis_actionStack__ || actionStack) {
-        // if kernel actionStack exists, push an action-style wrapper that calls kernel.action API
-        const act = {
-          id: node.id,
-          type: "node.drop.action",
-          execute: () => {
-            // use kernel action API to persist
-            kernelAction.addNode(pageId, node);
-            return node.id;
-          },
-          undo: () => {
-            kernelAction.removeNode(pageId, node.id);
-            return node.id;
-          }
-        };
-        try {
-          // prefer actionStack when imported
-          (actionStack as any)?.push(act);
-        } catch {
-          // fallback to local cmd stack
-          cmdStackRef.current?.push({ id: node.id, do: act.execute, undo: act.undo } as any);
-        }
-      } else if (actionCmd && cmdStackRef.current) {
-        // fallback: push local do/undo via StudioCmdStack
-        cmdStackRef.current.push({
-          id: node.id,
-          do: () => kernelAction.addNode(pageId, node),
-          undo: () => kernelAction.removeNode(pageId, node.id)
-        } as any);
+      if (store.getState().addNodes) {
+        store.getState().addNodes([node as any]);
       } else {
-        kernelAction.addNode(pageId, node);
+        kernelAction.addNode(pageId, node as any);
       }
     } catch (e) {
-      if (store && store.getState && store.getState().addNodes) {
-        store.getState().addNodes([node]);
-      } else {
-        // eslint-disable-next-line no-console
-        console.warn("[CanvasView] store not provided; drop will not persist", node);
-      }
+      // eslint-disable-next-line no-console
+      console.error("[CanvasView] drop failed", e);
     }
   }
 
-  // Use the shared CanvasView from thingsvis-ui for now; studio-specific
-  // behaviors (drop handlers, ghost layers) are attached to wrapper.
+  const nodes = Object.values(state.nodesById);
+  const vp = vpRef.current;
+
   return (
-    <div ref={containerRef as any} onDragOver={handleDragOver} onDrop={handleDrop} style={{ width: "100%", height: "100%" }}>
+    <div 
+      ref={containerRef as any} 
+      onClick={handleCanvasClick}
+      onDragOver={handleDragOver} 
+      onDrop={handleDrop} 
+      style={{ width: "100%", height: "100%", position: "relative" }}
+    >
       <UI_CanvasView
         store={store}
-        mode="infinite"
-        width={1920}
-        height={1080}
+        resolvePlugin={resolvePlugin}
+        mode={state.canvas.mode}
+        width={state.canvas.width}
+        height={state.canvas.height}
         gridSize={20}
         snapToGrid={true}
-        centeredMask={false}
+        centeredMask={true}
+        zoom={zoom}
         onViewportChange={(vp) => {
           vpRef.current = vp;
+          if (vp.zoom !== zoom) {
+            onZoomChange?.(vp.zoom);
+          }
         }}
+      />
+
+      {/* Proxy Layer for Moveable targets */}
+      <div 
+        className="proxy-layer"
+        style={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          overflow: "hidden"
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            left: vp.offsetX,
+            top: vp.offsetY,
+            transform: `scale(${vp.zoom})`,
+            transformOrigin: "0 0"
+          }}
+        >
+          {nodes.map(node => {
+            const schema = node.schemaRef as any;
+            if (!node.visible) return null;
+            return (
+              <div
+                key={node.id}
+                data-node-id={node.id}
+                className="node-proxy-target"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (store.getState().selectNode) {
+                    store.getState().selectNode(node.id);
+                  }
+                }}
+                style={{
+                  position: "absolute",
+                  left: schema.position.x,
+                  top: schema.position.y,
+                  width: schema.size?.width ?? 0,
+                  height: schema.size?.height ?? 0,
+                  pointerEvents: "auto",
+                  cursor: "pointer",
+                  border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"
+                }}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      <TransformControls 
+        containerRef={containerRef} 
+        kernelStore={store} 
+      />
+
+      <ConnectionTool 
+        kernelStore={store} 
+        activeTool={activeTool} 
       />
     </div>
   );

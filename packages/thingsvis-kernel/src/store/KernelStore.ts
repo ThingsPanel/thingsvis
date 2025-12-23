@@ -1,13 +1,16 @@
 import { createStore } from 'zustand/vanilla';
 import { immer } from 'zustand/middleware/immer';
 import { temporal } from 'zundo';
-import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema';
+import type { PageSchemaType, NodeSchemaType, IPage } from '@thingsvis/schema';
 
 export type SelectionState = {
   nodeIds: string[];
 };
 
 export type CanvasState = {
+  mode: 'fixed' | 'infinite' | 'reflow';
+  width: number;
+  height: number;
   zoom: number;
   offsetX: number;
   offsetY: number;
@@ -17,32 +20,55 @@ export type NodeState = {
   id: string;
   schemaRef: NodeSchemaType;
   visible: boolean;
+  locked: boolean;
   runtimeData?: Record<string, unknown>;
   error?: string;
 };
 
+export type ConnectionState = {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  sourceAnchor?: string;
+  targetAnchor?: string;
+  props?: Record<string, unknown>;
+};
+
 export type KernelState = {
-  page?: PageSchemaType;
+  page?: IPage | PageSchemaType;
   nodesById: Record<string, NodeState>;
+  connections: ConnectionState[];
   selection: SelectionState;
   canvas: CanvasState;
 };
 
 export type KernelActions = {
-  loadPage: (page: PageSchemaType) => void;
+  loadPage: (page: IPage | PageSchemaType) => void;
   addNodes: (nodes: NodeSchemaType[]) => void;
-  selectNode: (nodeId: string) => void;
+  selectNode: (nodeId: string | null) => void;
   updateNode: (
     nodeId: string,
     changes: {
       position?: { x: number; y: number };
+      size?: { width: number; height: number };
       props?: Record<string, unknown>;
+      locked?: boolean;
     }
   ) => void;
   setNodeError: (nodeId: string, error: string) => void;
+  addConnection: (conn: Omit<ConnectionState, 'id'>) => void;
+  removeConnection: (connId: string) => void;
+  updateCanvas: (changes: Partial<CanvasState>) => void;
 };
 
-const defaultCanvas: CanvasState = { zoom: 1, offsetX: 0, offsetY: 0 };
+const defaultCanvas: CanvasState = { 
+  mode: 'infinite',
+  width: 1920,
+  height: 1080,
+  zoom: 1, 
+  offsetX: 0, 
+  offsetY: 0 
+};
 
 export const createKernelStore = () =>
   createStore(
@@ -50,23 +76,36 @@ export const createKernelStore = () =>
       immer<KernelState & KernelActions>((set, get) => ({
       page: undefined,
       nodesById: {},
+      connections: [],
       selection: { nodeIds: [] },
       canvas: defaultCanvas,
 
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
-        page.nodes.forEach(node => {
+        const nodes = 'content' in page ? page.content.nodes : (page as any).nodes || [];
+        
+        nodes.forEach((node: NodeSchemaType) => {
           nodesById[node.id] = {
             id: node.id,
             schemaRef: node,
-            visible: true
+            visible: true,
+            locked: false
           };
         });
+
+        const config = 'config' in page ? page.config : (page as any).config || {};
+
         set(state => {
           state.page = page;
           state.nodesById = nodesById;
+          state.connections = (page as any).connections || [];
           state.selection = { nodeIds: [] };
-          state.canvas = { ...defaultCanvas };
+          state.canvas = { 
+            ...defaultCanvas,
+            mode: config.mode || (page as any).mode || 'infinite',
+            width: config.width || (page as any).width || 1920,
+            height: config.height || (page as any).height || 1080,
+          };
         });
       },
 
@@ -78,6 +117,7 @@ export const createKernelStore = () =>
               id: node.id,
               schemaRef: node,
               visible: existing?.visible ?? true,
+              locked: existing?.locked ?? false,
               runtimeData: existing?.runtimeData,
               error: undefined
             };
@@ -86,9 +126,9 @@ export const createKernelStore = () =>
       },
 
       selectNode: nodeId => {
-        if (!get().nodesById[nodeId]) return;
+        if (nodeId && !get().nodesById[nodeId]) return;
         set(state => {
-          state.selection = { nodeIds: [nodeId] };
+          state.selection = { nodeIds: nodeId ? [nodeId] : [] };
         });
       },
 
@@ -108,12 +148,24 @@ export const createKernelStore = () =>
             };
           }
 
+          if (changes.size) {
+            const prevSize = (target.schemaRef as NodeSchemaType).size ?? { width: 0, height: 0 };
+            (target.schemaRef as NodeSchemaType).size = {
+              ...prevSize,
+              ...changes.size
+            };
+          }
+
           if (changes.props) {
             const prevProps = ((target.schemaRef as NodeSchemaType).props ?? {}) as Record<string, unknown>;
             (target.schemaRef as NodeSchemaType).props = {
               ...prevProps,
               ...changes.props
             };
+          }
+
+          if (changes.locked !== undefined) {
+            target.locked = changes.locked;
           }
         });
       },
@@ -125,10 +177,41 @@ export const createKernelStore = () =>
           if (!target) return;
           target.error = error;
         });
+      },
+
+      addConnection: conn => {
+        set(state => {
+          state.connections.push({
+            ...conn,
+            id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+          });
+        });
+      },
+
+      removeConnection: connId => {
+        set(state => {
+          state.connections = state.connections.filter(c => c.id !== connId);
+        });
+      },
+
+      updateCanvas: changes => {
+        set(state => {
+          state.canvas = {
+            ...state.canvas,
+            ...changes
+          };
+        });
       }
       })),
       {
-        limit: 200
+        limit: 200,
+        filter: (state, delta) => {
+          // Ignore selection changes in history
+          if (delta && Object.keys(delta).length === 1 && delta.selection) {
+            return false;
+          }
+          return true;
+        }
       }
     )
   );

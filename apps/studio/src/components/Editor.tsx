@@ -56,6 +56,8 @@ import {
   EyeOff,
   Lock,
   X,
+  Minus,
+  Plus,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -64,10 +66,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createKernelStore } from '@thingsvis/kernel'
+import { createKernelStore, type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
+import PropsPanel from './RightPanel/PropsPanel'
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 
@@ -130,9 +133,15 @@ export default function Editor() {
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [leftPanelTab, setLeftPanelTab] = useState<"components" | "layers">("components")
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
+
+  const kernelState = useSyncExternalStore(
+    useCallback(subscribe => store.subscribe(subscribe), []),
+    () => store.getState() as KernelState
+  );
+
+  const selectedElement = kernelState.selection.nodeIds[0] || null;
 
   // Sync dark mode state with html class on mount
   useEffect(() => {
@@ -154,26 +163,6 @@ export default function Editor() {
     () => store.temporal.getState(),
     () => store.temporal.getState()
   )
-
-  const { canUndo, canRedo } = useMemo(() => {
-    const past = temporalSnapshot.pastStates ?? []
-    const future = temporalSnapshot.futureStates ?? []
-    return {
-      canUndo: past.length > 0,
-      canRedo: future.length > 0
-    }
-  }, [temporalSnapshot])
-
-  // Initialize page on mount
-  useEffect(() => {
-    const emptyPage: PageSchemaType = {
-      id: 'studio-page',
-      type: 'page',
-      version: '1.0.0',
-      nodes: []
-    }
-    store.getState().loadPage(emptyPage)
-  }, [])
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>({
     // Meta - 基础身份
@@ -207,6 +196,25 @@ export default function Editor() {
     background: "#1a1a1a",
     gridEnabled: true,
   })
+
+  useEffect(() => {
+    // Sync canvas state to kernel store when config changes
+    console.log('[Editor] Syncing canvas config to store:', canvasConfig.mode, canvasConfig.width, canvasConfig.height);
+    store.getState().updateCanvas({
+      mode: canvasConfig.mode,
+      width: canvasConfig.width,
+      height: canvasConfig.height
+    })
+  }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height])
+
+  const { canUndo, canRedo } = useMemo(() => {
+    const past = temporalSnapshot.pastStates ?? []
+    const future = temporalSnapshot.futureStates ?? []
+    return {
+      canUndo: past.length > 0,
+      canRedo: future.length > 0
+    }
+  }, [temporalSnapshot])
 
   const [layers, setLayers] = useState<Layer[]>([
     {
@@ -335,20 +343,29 @@ export default function Editor() {
     { key: "?", action: language === "zh" ? "快捷键帮助" : "Keyboard Shortcuts" },
   ]
 
+  const resolvePlugin = useCallback(async (type: string) => {
+    const { entry } = await loadPlugin(type);
+    return entry;
+  }, []);
+
   return (
     <div className={isDarkMode ? "dark relative min-h-screen overflow-hidden" : "relative min-h-screen overflow-hidden"}>
       {/* Canvas Background with Dot Grid */}
       <div className="absolute inset-0 bg-background dot-grid" />
 
       {/* Canvas View */}
-      <div className="absolute inset-0 pt-14">
+      <div className="absolute inset-0">
         <CanvasView
           pageId={canvasConfig.id}
           store={store}
+          activeTool={activeTool}
+          resolvePlugin={resolvePlugin}
+          zoom={zoom / 100}
+          onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
         />
       </div>
 
-      {!selectedElement && (
+      {Object.keys(kernelState.nodesById).length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-center space-y-6">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
@@ -391,37 +408,95 @@ export default function Editor() {
       )}
 
       {/* Top Navigation Bar */}
-      <nav className="absolute top-0 left-0 right-0 z-50 h-14 bg-[#121212] dark:bg-[#121212] border-b border-border/50 flex items-center justify-between px-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#6965db] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">TV</span>
-            </div>
-            <span className="text-white font-semibold">ThingsVis</span>
-          </div>
-
-          <Separator orientation="vertical" className="h-6" />
+      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+        {/* Left Side: Logo (Menu), Title, Status */}
+        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-4 px-4 py-2 pointer-events-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                <div className="w-8 h-8 bg-[#6965db] rounded-lg flex items-center justify-center shadow-lg shadow-[#6965db]/20">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-foreground font-bold tracking-tight">ThingsVis</span>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 mt-2">
+              <DropdownMenuItem className="gap-2" onClick={() => {}}>
+                <FolderOpen className="h-4 w-4" />
+                {language === "zh" ? "打开项目" : "Open Project"}
+                <span className="ml-auto text-xs text-muted-foreground">Ctrl+O</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => {}}>
+                <Save className="h-4 w-4" />
+                {language === "zh" ? "保存" : "Save"}
+                <span className="ml-auto text-xs text-muted-foreground">Ctrl+S</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <FileUp className="h-4 w-4" />
+                {language === "zh" ? "导入配置" : "Import Config"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <FileDown className="h-4 w-4" />
+                {language === "zh" ? "导出配置" : "Export Config"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <Settings className="h-4 w-4" />
+                {language === "zh" ? "设置" : "Settings"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <HelpCircle className="h-4 w-4" />
+                {language === "zh" ? "帮助" : "Help"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           <Input
             placeholder="未命名项目"
-            className="w-56 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-white"
+            className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
             defaultValue="My Visualization"
           />
 
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 rounded-full bg-green-500" />
+          <div className="flex items-center gap-2 text-[12px] text-muted-foreground/60 ml-1 pr-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
             <span>{language === "zh" ? "所有更改已保存" : "All changes saved"}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Center Side: Tools */}
+        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
+          {tools.map((tool) => {
+            const Icon = tool.icon
+            const isActive = activeTool === tool.id
+            return (
+              <Button
+                key={tool.id}
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 rounded-xl transition-all focus:ring-0 focus:outline-none ${
+                  isActive 
+                    ? "bg-[#6965db]/10 text-[#6965db] shadow-sm" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
+                onClick={() => setActiveTool(tool.id)}
+                title={tool.label}
+              >
+                <Icon className={`h-4.5 w-4.5 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />
+              </Button>
+            )
+          })}
+        </div>
+
+        {/* Right Side: Language, Theme, Preview, Publish */}
+        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md">
-                <Languages className="h-4 w-4 text-white" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none">
+                <Languages className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="mt-2">
               <DropdownMenuItem onClick={() => setLanguage("zh")}>
                 <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
               </DropdownMenuItem>
@@ -431,114 +506,24 @@ export default function Editor() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md" onClick={toggleTheme}>
-            {isDarkMode ? <Sun className="h-4 w-4 text-white" /> : <Moon className="h-4 w-4 text-white" />}
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none" onClick={toggleTheme}>
+            {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
-          <Separator orientation="vertical" className="h-6" />
-          <Button variant="ghost" size="sm" className="h-8 gap-2 text-white rounded-md">
+          
+          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-full px-4 hover:bg-accent focus:ring-0 focus:outline-none">
             <Eye className="h-4 w-4" />
-            {language === "zh" ? "预览" : "Preview"}
+            <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
           </Button>
-          <Button variant="ghost" size="sm" className="h-8 gap-2 text-white rounded-md">
-            <Share2 className="h-4 w-4" />
-            {language === "zh" ? "分享" : "Share"}
-          </Button>
-          <Button size="sm" className="h-8 gap-2 rounded-md bg-[#6965db] hover:bg-[#5854c7]">
+
+          <Button size="sm" className="h-8 gap-2 rounded-full bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20 focus:ring-0 focus:outline-none">
             <Upload className="h-4 w-4" />
-            {language === "zh" ? "发布" : "Publish"}
+            <span className="text-sm font-bold">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
-        </div>
-      </nav>
-
-      {/* Main Menu Button */}
-      <div className="absolute top-16 left-4 z-50">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="glass rounded-md shadow-md h-9 w-9">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem className="gap-2">
-              <FolderOpen className="h-4 w-4" />
-              {language === "zh" ? "打开项目" : "Open Project"}
-              <span className="ml-auto text-xs text-muted-foreground">Ctrl+O</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
-              <Save className="h-4 w-4" />
-              {language === "zh" ? "保存" : "Save"}
-              <span className="ml-auto text-xs text-muted-foreground">Ctrl+S</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2">
-              <FileUp className="h-4 w-4" />
-              {language === "zh" ? "导入配置" : "Import Config"}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
-              <FileDown className="h-4 w-4" />
-              {language === "zh" ? "导出配置" : "Export Config"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2">
-              <Settings className="h-4 w-4" />
-              {language === "zh" ? "设置" : "Settings"}
-            </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">
-              <HelpCircle className="h-4 w-4" />
-              {language === "zh" ? "帮助" : "Help"}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-      {/* Toolbar with Undo/Redo */}
-      <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50">
-        <div className="glass rounded-md shadow-lg px-2 py-1.5 flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md"
-            disabled={!canUndo}
-            onClick={handleUndo}
-            title={language === "zh" ? "撤销" : "Undo"}
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md"
-            disabled={!canRedo}
-            onClick={handleRedo}
-            title={language === "zh" ? "重做" : "Redo"}
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
-
-          <Separator orientation="vertical" className="h-6 mx-1" />
-
-          {tools.map((tool) => {
-            const Icon = tool.icon
-            return (
-              <Button
-                key={tool.id}
-                variant="ghost"
-                size="icon"
-                className={`h-9 w-9 rounded-md transition-colors ${
-                  activeTool === tool.id ? "bg-[#6965db]/20 text-[#6965db]" : ""
-                }`}
-                onClick={() => setActiveTool(tool.id)}
-                title={tool.label}
-              >
-                <Icon className="h-4 w-4" />
-              </Button>
-            )
-          })}
         </div>
       </div>
 
       {/* Left Panel: Assets & Layers */}
-      <aside className="absolute left-4 top-28 bottom-4 z-40 w-72">
+      <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
         <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
           <div className="flex border-b border-border">
             <button
@@ -590,12 +575,12 @@ export default function Editor() {
               <div className="space-y-1">
                 {layers.map((layer) => (
                   <div key={layer.id}>
-                    <div
-                      className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
-                        selectedElement === layer.id ? "bg-accent" : ""
-                      }`}
-                      onClick={() => setSelectedElement(layer.id)}
-                    >
+                      <div
+                        className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
+                          selectedElement === layer.id ? "bg-accent" : ""
+                        }`}
+                        onClick={() => store.getState().selectNode(layer.id)}
+                      >
                       {layer.type === "group" && (
                         <button
                           onClick={(e) => {
@@ -655,7 +640,7 @@ export default function Editor() {
                             className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
                               selectedElement === child.id ? "bg-accent" : ""
                             }`}
-                            onClick={() => setSelectedElement(child.id)}
+                            onClick={() => store.getState().selectNode(child.id)}
                           >
                             <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                             <span className="text-sm flex-1 truncate">{child.name}</span>
@@ -697,72 +682,72 @@ export default function Editor() {
         </div>
       </aside>
 
+      {/* Bottom Left Controls: Zoom & Undo/Redo */}
+      <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
+        {/* Zoom Controls */}
+        <div className="glass rounded-xl shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
+            onClick={() => setZoom(Math.max(10, zoom - 10))}
+          >
+            <Minus className="h-4 w-4" />
+          </Button>
+          <div className="px-3 min-w-[60px] text-center">
+            <span className="text-sm font-medium tabular-nums">{zoom}%</span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
+            onClick={() => setZoom(Math.min(500, zoom + 10))}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Undo/Redo Controls */}
+        <div className="glass rounded-xl shadow-sm border border-border/50 flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+            disabled={!canUndo}
+            onClick={handleUndo}
+            title={language === "zh" ? "撤销" : "Undo"}
+          >
+            <Undo2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+            disabled={!canRedo}
+            onClick={handleRedo}
+            title={language === "zh" ? "重做" : "Redo"}
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {/* Right Panel - Properties */}
-      <aside className="absolute right-4 top-28 bottom-4 w-80 z-40">
+      <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
         <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
-            <button className="p-1 hover:bg-accent rounded" onClick={() => setSelectedElement(null)}>
+            <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>
               <X className="h-4 w-4" />
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {selectedElement ? (
-              <>
-                {/* Element Properties */}
-                <div>
-                  <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                    {language === "zh" ? "名称" : "Name"}
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                    defaultValue={language === "zh" ? "矩形 1" : "Rectangle 1"}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">X</label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">Y</label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      {language === "zh" ? "宽度" : "Width"}
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={200}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                      {language === "zh" ? "高度" : "Height"}
-                    </label>
-                    <input
-                      type="number"
-                      className="w-full px-2 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#6965db] focus:border-[#6965db]"
-                      defaultValue={100}
-                    />
-                  </div>
-                </div>
-              </>
+              <PropsPanel 
+                nodeId={selectedElement} 
+                kernelStore={store} 
+                language={language} 
+              />
             ) : (
               <>
                 {/* Canvas Settings */}

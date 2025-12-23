@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import type { KernelStore } from '@thingsvis/kernel';
+import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useSyncExternalStore } from 'react';
+import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { VisualEngine } from '../engine/VisualEngine';
 import { snapPointToGrid } from '../utils/snapping';
 import type { Point } from '../utils/coords';
+import { calculateScaleToFit } from '../modes/mode-controller';
 
 type Mode = 'fixed' | 'infinite' | 'reflow';
 
@@ -15,15 +17,84 @@ type Props = {
   gridSize?: number;
   snapToGrid?: boolean;
   centeredMask?: boolean;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
   onViewportChange?: (vp: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }) => void;
 };
 
-export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infinite', width = 1920, height = 1080, gridSize = 16, snapToGrid = false, centeredMask = true, onViewportChange }) => {
+export const CanvasView: React.FC<Props> = ({ 
+  store, 
+  resolvePlugin, 
+  mode: propsMode, 
+  width: propsWidth, 
+  height: propsHeight, 
+  gridSize = 16, 
+  snapToGrid = false, 
+  centeredMask = true, 
+  zoom: propsZoom,
+  onZoomChange,
+  onViewportChange 
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [zoom, setZoom] = useState(1);
+  
+  // Sync with store state
+  const kernelState = useSyncExternalStore(
+    useCallback((subscribe) => store.subscribe(subscribe), [store]),
+    () => store.getState() as KernelState,
+    () => store.getState() as KernelState
+  );
+  
+  const mode = propsMode || kernelState.canvas.mode || 'infinite';
+  const width = propsWidth || kernelState.canvas.width || 1920;
+  const height = propsHeight || kernelState.canvas.height || 1080;
+
+  const [internalZoom, setInternalZoom] = useState(1);
+  const zoom = propsZoom !== undefined ? propsZoom : internalZoom;
+  const setZoom = onZoomChange || setInternalZoom;
+
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
+
+  // Update container dimensions on mount and resize
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const r = containerRef.current.getBoundingClientRect();
+        setContainerDimensions({ width: r.width, height: r.height });
+      }
+    };
+    updateDimensions();
+    const observer = new ResizeObserver(updateDimensions);
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // Initial auto-fit for fixed mode
+  const [hasAutoFit, setHasAutoFit] = useState(false);
+  useEffect(() => {
+    if (mode === 'fixed' && containerDimensions.width > 0 && !hasAutoFit && propsZoom === undefined) {
+      const initialZoom = calculateScaleToFit(containerDimensions.width, containerDimensions.height, width, height, 40);
+      setInternalZoom(initialZoom);
+      setHasAutoFit(true);
+    }
+  }, [mode, containerDimensions, width, height, hasAutoFit, propsZoom]);
+
+  const viewportInfo = useMemo(() => {
+    let currentZoom = zoom;
+    let currentOffset = offset;
+
+    if (mode === 'fixed' && containerDimensions.width > 0) {
+      currentOffset = {
+        x: (containerDimensions.width - width * currentZoom) / 2,
+        y: (containerDimensions.height - height * currentZoom) / 2
+      };
+    }
+
+    return { zoom: currentZoom, offset: currentOffset };
+  }, [mode, width, height, zoom, offset, containerDimensions]);
 
   const drawGrid = useCallback(() => {
     const canvas = gridCanvasRef.current;
@@ -41,13 +112,15 @@ export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infi
     ctx.scale(dpr, dpr);
     ctx.strokeStyle = 'rgba(0,0,0,0.06)';
     ctx.lineWidth = 1;
-    const step = gridSize * zoom;
+    
+    const { zoom: vZoom, offset: vOffset } = viewportInfo;
+    const step = gridSize * vZoom;
     if (step <= 0) return;
     const rectW = rect.width;
     const rectH = rect.height;
     // compute origin for infinite pan
-    const originX = offset.x % step;
-    const originY = offset.y % step;
+    const originX = vOffset.x % step;
+    const originY = vOffset.y % step;
     for (let x = originX; x < rectW; x += step) {
       ctx.beginPath();
       ctx.moveTo(x + 0.5, 0);
@@ -60,18 +133,16 @@ export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infi
       ctx.lineTo(rectW, y + 0.5);
       ctx.stroke();
     }
-  }, [gridSize, zoom, offset]);
+  }, [gridSize, viewportInfo]);
 
   useEffect(() => {
     drawGrid();
   }, [drawGrid]);
 
   useEffect(() => {
-    function onResize() {
-      drawGrid();
-    }
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    const handleResize = () => drawGrid();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [drawGrid]);
 
   useEffect(() => {
@@ -106,10 +177,7 @@ export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infi
       const dy = e.clientY - lastY;
       lastX = e.clientX;
       lastY = e.clientY;
-      setOffset((o) => {
-        const next = { x: o.x + dx, y: o.y + dy };
-        return next;
-      });
+      setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
     }
     function onPointerUp(e: PointerEvent) {
       isPanning = false;
@@ -117,16 +185,24 @@ export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infi
     }
 
     function onWheel(e: WheelEvent) {
-      if (mode !== 'infinite') return;
-      const delta = -e.deltaY;
-      const factor = delta > 0 ? 1.05 : 0.95;
-      setZoom((z) => Math.max(0.1, Math.min(10, z * factor)));
+      if (mode !== 'infinite' && mode !== 'fixed') return;
+      
+      // If Ctrl/Meta is pressed, it's a zoom action
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = -e.deltaY;
+        const factor = delta > 0 ? 1.1 : 0.9;
+        setZoom((z) => Math.max(0.1, Math.min(10, z * factor)));
+      } else if (mode === 'infinite') {
+        // Panning via wheel (standard scroll)
+        setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
+      }
     }
 
     el.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
-    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
       el.removeEventListener('pointerdown', onPointerDown);
@@ -138,40 +214,78 @@ export const CanvasView: React.FC<Props> = ({ store, resolvePlugin, mode = 'infi
 
   // redraw grid when viewport changes
   useEffect(() => {
-    drawGrid();
-    onViewportChange?.({ width, height, zoom, offsetX: offset.x, offsetY: offset.y });
-  }, [zoom, offset, drawGrid, onViewportChange, width, height]);
+    const { zoom: vZoom, offset: vOffset } = viewportInfo;
+    onViewportChange?.({ 
+      width, 
+      height, 
+      zoom: vZoom, 
+      offsetX: vOffset.x, 
+      offsetY: vOffset.y 
+    });
+  }, [viewportInfo, onViewportChange, width, height]);
 
   // helper to convert screen -> world (used by parent if needed)
   function screenToWorld(screenPoint: Point): Point {
-    if (mode === 'fixed') {
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return { x: 0, y: 0 };
-      const originX = (rect.width - width * zoom) / 2;
-      const originY = (rect.height - height * zoom) / 2;
-      return { x: (screenPoint.x - originX) / zoom, y: (screenPoint.y - originY) / zoom };
-    }
-    // infinite
-    return { x: (screenPoint.x - offset.x) / zoom, y: (screenPoint.y - offset.y) / zoom };
+    const { zoom: vZoom, offset: vOffset } = viewportInfo;
+    return { 
+      x: (screenPoint.x - vOffset.x) / vZoom, 
+      y: (screenPoint.y - vOffset.y) / vZoom 
+    };
   }
+
+  const maskStyle: React.CSSProperties = {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    pointerEvents: 'none',
+    zIndex: 10
+  };
+
+  const { zoom: vZoom, offset: vOffset } = viewportInfo;
+
+  // Fixed mode border/shadow
+  const canvasOutlineStyle: React.CSSProperties = mode === 'fixed' ? {
+    position: 'absolute',
+    left: vOffset.x,
+    top: vOffset.y,
+    width: width * vZoom,
+    height: height * vZoom,
+    boxShadow: '0 0 10px rgba(0,0,0,0.2)',
+    pointerEvents: 'none',
+    zIndex: 11
+  } : {};
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       {/* background grid canvas */}
       <canvas ref={gridCanvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
+      
       {/* main engine mount point */}
-      <div style={{ width: '100%', height: '100%' }} id="visual-engine-mount" />
+      <div 
+        style={{ 
+          width: '100%', 
+          height: '100%',
+          transform: `translate(${vOffset.x}px, ${vOffset.y}px) scale(${vZoom})`,
+          transformOrigin: '0 0'
+        }} 
+        id="visual-engine-mount" 
+      />
+
+      {/* Canvas border for fixed mode */}
+      {mode === 'fixed' && <div style={canvasOutlineStyle} />}
+
       {/* centered mask for fixed mode */}
       {mode === 'fixed' && centeredMask && (
-        <>
-          <div style={{ position: 'absolute', pointerEvents: 'none', inset: 0, display: 'block' }}>
-            {/* compute centered area and draw four masks */}
-            <div style={{ position: 'absolute', left: 0, top: 0, right: 0, bottom: 0 }} />
-          </div>
-        </>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {/* Top */}
+          <div style={{ ...maskStyle, top: 0, left: 0, right: 0, height: Math.max(0, vOffset.y) }} />
+          {/* Bottom */}
+          <div style={{ ...maskStyle, bottom: 0, left: 0, right: 0, height: Math.max(0, containerDimensions.height - (vOffset.y + height * vZoom)) }} />
+          {/* Left */}
+          <div style={{ ...maskStyle, top: vOffset.y, left: 0, width: Math.max(0, vOffset.x), height: height * vZoom }} />
+          {/* Right */}
+          <div style={{ ...maskStyle, top: vOffset.y, right: 0, width: Math.max(0, containerDimensions.width - (vOffset.x + width * vZoom)), height: height * vZoom }} />
+        </div>
       )}
     </div>
   );
 };
-
-
