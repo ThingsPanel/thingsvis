@@ -22,8 +22,15 @@ export type StudioCanvasHandle = {
   unmount: () => void;
 };
 
-const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; resolvePlugin?: (t:string)=>Promise<any>; activeTool: string }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin },
+const CanvasView = forwardRef<StudioCanvasHandle, { 
+  pageId: string; 
+  store: any; 
+  resolvePlugin?: (t:string)=>Promise<any>; 
+  activeTool: string;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
+}>(function CanvasView(
+  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -111,9 +118,9 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
     // Prefer kernel actionStack if available (records undo/redo globally)
     try {
       if (store.getState().addNodes) {
-        store.getState().addNodes([node]);
+        store.getState().addNodes([node as any]);
       } else {
-        kernelAction.addNode(pageId, node);
+        kernelAction.addNode(pageId, node as any);
       }
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -141,8 +148,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, { pageId: string; store: any; 
         gridSize={20}
         snapToGrid={true}
         centeredMask={true}
+        zoom={zoom}
         onViewportChange={(vp) => {
           vpRef.current = vp;
+          if (vp.zoom !== zoom) {
+            onZoomChange?.(vp.zoom);
+          }
         }}
       />
 

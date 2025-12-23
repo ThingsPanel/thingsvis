@@ -360,6 +360,8 @@ export default function Editor() {
           store={store}
           activeTool={activeTool}
           resolvePlugin={resolvePlugin}
+          zoom={zoom / 100}
+          onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
         />
       </div>
 
@@ -472,7 +474,7 @@ export default function Editor() {
                 key={tool.id}
                 variant="ghost"
                 size="icon"
-                className={`h-9 w-9 rounded-xl transition-all ${
+                className={`h-9 w-9 rounded-xl transition-all focus:ring-0 focus:outline-none ${
                   isActive 
                     ? "bg-[#6965db]/10 text-[#6965db] shadow-sm" 
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -490,7 +492,7 @@ export default function Editor() {
         <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none">
                 <Languages className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -504,16 +506,16 @@ export default function Editor() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={toggleTheme}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none" onClick={toggleTheme}>
             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
           
-          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-full px-4 hover:bg-accent">
+          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-full px-4 hover:bg-accent focus:ring-0 focus:outline-none">
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
           </Button>
 
-          <Button size="sm" className="h-8 gap-2 rounded-full bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20">
+          <Button size="sm" className="h-8 gap-2 rounded-full bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20 focus:ring-0 focus:outline-none">
             <Upload className="h-4 w-4" />
             <span className="text-sm font-bold">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
@@ -573,12 +575,12 @@ export default function Editor() {
               <div className="space-y-1">
                 {layers.map((layer) => (
                   <div key={layer.id}>
-                    <div
-                      className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
-                        selectedElement === layer.id ? "bg-accent" : ""
-                      }`}
-                      onClick={() => setSelectedElement(layer.id)}
-                    >
+                      <div
+                        className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
+                          selectedElement === layer.id ? "bg-accent" : ""
+                        }`}
+                        onClick={() => store.getState().selectNode(layer.id)}
+                      >
                       {layer.type === "group" && (
                         <button
                           onClick={(e) => {
@@ -638,7 +640,7 @@ export default function Editor() {
                             className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
                               selectedElement === child.id ? "bg-accent" : ""
                             }`}
-                            onClick={() => setSelectedElement(child.id)}
+                            onClick={() => store.getState().selectNode(child.id)}
                           >
                             <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                             <span className="text-sm flex-1 truncate">{child.name}</span>
@@ -681,13 +683,13 @@ export default function Editor() {
       </aside>
 
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
-      <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3">
+      <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
         {/* Zoom Controls */}
         <div className="glass rounded-xl shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
             onClick={() => setZoom(Math.max(10, zoom - 10))}
           >
             <Minus className="h-4 w-4" />
@@ -698,7 +700,7 @@ export default function Editor() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
             onClick={() => setZoom(Math.min(500, zoom + 10))}
           >
             <Plus className="h-4 w-4" />
@@ -710,7 +712,7 @@ export default function Editor() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
             disabled={!canUndo}
             onClick={handleUndo}
             title={language === "zh" ? "撤销" : "Undo"}
@@ -720,7 +722,7 @@ export default function Editor() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30"
+            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
             disabled={!canRedo}
             onClick={handleRedo}
             title={language === "zh" ? "重做" : "Redo"}

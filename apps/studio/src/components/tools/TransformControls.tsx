@@ -107,17 +107,29 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
     };
   }, [containerRef, kernelStore]);
 
-  // Update Moveable target when selection changes
+  // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
     if (!moveableRef.current || !containerRef.current) return;
     
     const selectedIds = state.selection.nodeIds;
-    const targets = selectedIds
+    // Only select nodes that actually exist in the current state
+    const validSelectedIds = selectedIds.filter(id => !!state.nodesById[id]);
+    
+    const targets = validSelectedIds
       .map(id => containerRef.current?.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
     
     moveableRef.current.target = targets;
-  }, [state.selection.nodeIds, containerRef]);
+    
+    // Recalculate the position of the handles to match the DOM elements.
+    // This is crucial when nodes are moved/restored via Undo/Redo.
+    if (targets.length > 0) {
+      // Use requestAnimationFrame to ensure DOM has updated before recalculating
+      requestAnimationFrame(() => {
+        moveableRef.current?.updateRect();
+      });
+    }
+  }, [state.selection.nodeIds, state.nodesById, containerRef]);
 
   return null;
 }

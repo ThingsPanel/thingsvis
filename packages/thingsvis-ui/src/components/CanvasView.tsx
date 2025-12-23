@@ -17,6 +17,8 @@ type Props = {
   gridSize?: number;
   snapToGrid?: boolean;
   centeredMask?: boolean;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
   onViewportChange?: (vp: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }) => void;
 };
 
@@ -29,6 +31,8 @@ export const CanvasView: React.FC<Props> = ({
   gridSize = 16, 
   snapToGrid = false, 
   centeredMask = true, 
+  zoom: propsZoom,
+  onZoomChange,
   onViewportChange 
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -46,7 +50,10 @@ export const CanvasView: React.FC<Props> = ({
   const width = propsWidth || kernelState.canvas.width || 1920;
   const height = propsHeight || kernelState.canvas.height || 1080;
 
-  const [zoom, setZoom] = useState(1);
+  const [internalZoom, setInternalZoom] = useState(1);
+  const zoom = propsZoom !== undefined ? propsZoom : internalZoom;
+  const setZoom = onZoomChange || setInternalZoom;
+
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
 
@@ -65,12 +72,21 @@ export const CanvasView: React.FC<Props> = ({
     return () => observer.disconnect();
   }, []);
 
+  // Initial auto-fit for fixed mode
+  const [hasAutoFit, setHasAutoFit] = useState(false);
+  useEffect(() => {
+    if (mode === 'fixed' && containerDimensions.width > 0 && !hasAutoFit && propsZoom === undefined) {
+      const initialZoom = calculateScaleToFit(containerDimensions.width, containerDimensions.height, width, height, 40);
+      setInternalZoom(initialZoom);
+      setHasAutoFit(true);
+    }
+  }, [mode, containerDimensions, width, height, hasAutoFit, propsZoom]);
+
   const viewportInfo = useMemo(() => {
     let currentZoom = zoom;
     let currentOffset = offset;
 
     if (mode === 'fixed' && containerDimensions.width > 0) {
-      currentZoom = calculateScaleToFit(containerDimensions.width, containerDimensions.height, width, height, 40);
       currentOffset = {
         x: (containerDimensions.width - width * currentZoom) / 2,
         y: (containerDimensions.height - height * currentZoom) / 2
@@ -169,16 +185,24 @@ export const CanvasView: React.FC<Props> = ({
     }
 
     function onWheel(e: WheelEvent) {
-      if (mode !== 'infinite') return;
-      const delta = -e.deltaY;
-      const factor = delta > 0 ? 1.05 : 0.95;
-      setZoom((z) => Math.max(0.1, Math.min(10, z * factor)));
+      if (mode !== 'infinite' && mode !== 'fixed') return;
+      
+      // If Ctrl/Meta is pressed, it's a zoom action
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = -e.deltaY;
+        const factor = delta > 0 ? 1.1 : 0.9;
+        setZoom((z) => Math.max(0.1, Math.min(10, z * factor)));
+      } else if (mode === 'infinite') {
+        // Panning via wheel (standard scroll)
+        setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
+      }
     }
 
     el.addEventListener('pointerdown', onPointerDown);
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
-    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
       el.removeEventListener('pointerdown', onPointerDown);
