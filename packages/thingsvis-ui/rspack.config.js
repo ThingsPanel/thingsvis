@@ -20,7 +20,10 @@ export default defineConfig({
     clean: true
   },
   resolve: {
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
+    alias: {
+      '@thingsvis/utils': path.resolve(__dirname, '../thingsvis-utils/src')
+    }
   },
   module: {
     rules: [

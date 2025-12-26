@@ -44,6 +44,9 @@ importers:
       '@thingsvis/ui':
         specifier: workspace:*
         version: link:../../packages/thingsvis-ui
+      '@thingsvis/utils':
+        specifier: workspace:*
+        version: link:../../packages/thingsvis-utils
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -120,6 +123,9 @@ importers:
       '@thingsvis/ui':
         specifier: workspace:*
         version: link:../../packages/thingsvis-ui
+      '@thingsvis/utils':
+        specifier: workspace:*
+        version: link:../../packages/thingsvis-utils
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -240,6 +246,9 @@ importers:
       '@thingsvis/schema':
         specifier: workspace:*
         version: link:../thingsvis-schema
+      '@thingsvis/utils':
+        specifier: workspace:*
+        version: link:../thingsvis-utils
       leafer-ui:
         specifier: ^1.0.0
         version: 1.12.0
@@ -288,7 +297,7 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  plugins/basic/rect:
+  plugins/basic/text:
     dependencies:
       '@thingsvis/schema':
         specifier: workspace:*
@@ -302,213 +311,9 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/basic/switch:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/chart/echarts-bar:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      echarts:
-        specifier: ^5.5.0
-        version: 5.6.0
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/custom/cyber-clock:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/custom/panel:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/layout/text:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7
-      '@types/react':
-        specifier: ^18.2.41
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.17
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  plugins/media/image:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../packages/thingsvis-schema
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
     devDependencies:
       '@rspack/cli':
         specifier: ^1.0.0
@@ -3247,13 +3052,6 @@ packages:
     resolution: {integrity: sha512-jtD6YG370ZCIi/9GTaJKQxWTZD045+4R4hTk/x1UyoqadyJ9x9CgSi1RlVDQF8U2sxLLSnFkCaMihqljHIWgMg==}
     dev: true
 
-  /echarts@5.6.0:
-    resolution: {integrity: sha512-oTbVTsXfKuEhxftHqL5xprgLoc0k7uScAwtryCgWF6hPYFLRwOUHiFmHGCBKP5NPFNkDVopOieyUqYGH8Fa3kA==}
-    dependencies:
-      tslib: 2.3.0
-      zrender: 5.6.1
-    dev: true
-
   /ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
@@ -5169,10 +4967,6 @@ packages:
       webpack: 5.103.0
     dev: true
 
-  /tslib@2.3.0:
-    resolution: {integrity: sha512-N82ooyxVNm6h1riLCoyS9e3fuJ3AMG2zIZs2Gd1ATcSFjSA23Q0fzjjZeh0jbJvWVDZ0cJT8yaNNaaXHzueNjg==}
-    dev: true
-
   /tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
@@ -5420,7 +5214,7 @@ packages:
       compression: 1.8.1
       connect-history-api-fallback: 2.0.0
       express: 4.22.1
-      graceful-fs: 4.2.11
+      graceful-fs: 4.2.10
       http-proxy-middleware: 2.0.9(@types/express@4.17.25)
       ipaddr.js: 2.3.0
       launch-editor: 2.12.0
@@ -5468,7 +5262,7 @@ packages:
       compression: 1.8.1
       connect-history-api-fallback: 2.0.0
       express: 4.22.1
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       http-proxy-middleware: 2.0.9(@types/express@4.17.25)
       ipaddr.js: 2.3.0
       launch-editor: 2.12.0
@@ -5619,12 +5413,6 @@ packages:
   /zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
     dev: false
-
-  /zrender@5.6.1:
-    resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
-    dependencies:
-      tslib: 2.3.0
-    dev: true
 
   /zundo@2.3.0(zustand@4.5.7):
     resolution: {integrity: sha512-4GXYxXA17SIKYhVbWHdSEU04P697IMyVGXrC2TnzoyohEAWytFNOKqOp5gTGvaW93F/PM5Y0evbGtOPF0PWQwQ==}

@@ -23,6 +23,7 @@
     "@thingsvis/kernel": "workspace:*",
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/ui": "workspace:*",
+    "@thingsvis/utils": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",

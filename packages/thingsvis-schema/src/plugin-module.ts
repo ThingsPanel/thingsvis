@@ -57,25 +57,23 @@ export type PluginOverlayInstance = {
 };
 
 export type PluginMainModule = {
-  componentId: PluginComponentId;
+  id: string; // e.g. "basic-text"
+  name?: string;
+  category?: string;
+  icon?: string;
+  version?: string;
   /**
    * Create a Leafer-compatible renderer instance (usually a Leafer UI node).
    * The host is responsible for mounting/updating/destroying it.
    */
   create: () => unknown;
   /**
-   * Visual test entry for isolation rendering.
-   * Kept as unknown to avoid React types in schema package.
+   * Zod Schema for props validation and UI generation.
+   * Host treats it as any to avoid strict zod dependency in all consumers.
    */
-  Spec?: unknown;
-  /**
-   * 可选的组件 Schema（元数据/默认值）
-   * - Host 可以用它来生成默认 props，而不是在编辑器中硬编码
-   */
-  schema?: PluginSchema;
+  schema?: any;
   /**
    * 可选：创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
-   * - Host 负责定位/尺寸，插件负责渲染内容
    */
   createOverlay?: (ctx: PluginOverlayContext) => PluginOverlayInstance;
 };

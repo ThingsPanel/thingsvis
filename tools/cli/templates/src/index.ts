@@ -1,19 +1,24 @@
-import type { PluginMainModule } from '@thingsvis/schema';
-import { Spec } from './spec';
+import { Rect } from 'leafer-ui';
+import { entry } from './spec';
 
-export const componentId = '{{COMPONENT_ID}}';
-
-export function create(): unknown {
-  // TODO: replace with a real Leafer element (Rect/Text/Image/etc)
-  return {};
+/**
+ * 创建组件渲染实例
+ */
+export function create() {
+  return new Rect({
+    width: 100,
+    height: 100,
+    fill: '#6965db',
+    draggable: true,
+  });
 }
 
-export const Main: PluginMainModule = {
-  componentId,
+/**
+ * 插件导出入口
+ */
+export const Main = {
+  ...entry,
   create,
-  Spec
 };
 
 export default Main;
-
-

@@ -1,20 +1,24 @@
 import type { PluginMainModule, PluginOverlayContext } from '@thingsvis/schema';
-import type { NodeState } from '@thingsvis/kernel';
+import type { NodeState, KernelStore } from '@thingsvis/kernel';
 import type { LeaferDisplayObject, RendererFactory } from './types';
 import { Rect } from 'leafer-ui';
+import { PropertyResolver } from '../PropertyResolver';
 
-function nodeToLeaferProps(node: NodeState): Record<string, unknown> {
+function nodeToLeaferProps(node: NodeState, store: KernelStore): Record<string, unknown> {
   const schema = node.schemaRef as any;
   const width = schema.size?.width ?? 0;
   const height = schema.size?.height ?? 0;
   const { x, y } = schema.position ?? { x: 0, y: 0 };
-  const extra = (schema.props ?? {}) as Record<string, unknown>;
+  
+  // Use PropertyResolver to get final props
+  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
+  
   return {
     x,
     y,
     width,
     height,
-    ...extra
+    ...resolvedProps
   };
 }
 
@@ -39,14 +43,14 @@ function nodeToOverlayContext(node: NodeState): PluginOverlayContext {
   };
 }
 
-export function createPluginRenderer(plugin: PluginMainModule): RendererFactory {
+export function createPluginRenderer(plugin: PluginMainModule, store: KernelStore): RendererFactory {
   return {
     create(node: NodeState): LeaferDisplayObject {
       const raw = plugin.create();
       
       // If the plugin returned a valid Leafer object, use it
       if (isLeaferDisplayObject(raw)) {
-        raw.set?.(nodeToLeaferProps(node));
+        raw.set?.(nodeToLeaferProps(node, store));
         return raw;
       }
       
@@ -54,18 +58,18 @@ export function createPluginRenderer(plugin: PluginMainModule): RendererFactory 
       // The actual DOM rendering should be done via createOverlay
       if (raw instanceof HTMLElement) {
         console.warn(
-          `[pluginRenderer] Plugin "${plugin.componentId}" returned a DOM element from create(). ` +
+          `[pluginRenderer] Plugin "${plugin.id}" returned a DOM element from create(). ` +
           `Please use createOverlay() for DOM-based rendering. Using placeholder.`
         );
       } else {
         console.warn(
-          `[pluginRenderer] Plugin "${plugin.componentId}" returned an invalid object from create(). ` +
+          `[pluginRenderer] Plugin "${plugin.id}" returned an invalid object from create(). ` +
           `Expected a Leafer display object. Using placeholder.`
         );
       }
       
       // Create a placeholder Rect as fallback
-      const props = nodeToLeaferProps(node);
+      const props = nodeToLeaferProps(node, store);
       const placeholder = new Rect({
         x: props.x as number,
         y: props.y as number,
@@ -81,7 +85,7 @@ export function createPluginRenderer(plugin: PluginMainModule): RendererFactory 
       return placeholder as unknown as LeaferDisplayObject;
     },
     update(instance: LeaferDisplayObject, node: NodeState) {
-      instance.set?.(nodeToLeaferProps(node));
+      instance.set?.(nodeToLeaferProps(node, store));
     },
     destroy(instance: LeaferDisplayObject) {
       instance.remove?.();

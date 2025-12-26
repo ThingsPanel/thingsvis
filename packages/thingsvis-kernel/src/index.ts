@@ -44,3 +44,8 @@ try {
 export { type IVisualComponent } from './interfaces/visual-component';
 export { type IPluginFactory } from './interfaces/plugin-factory';
 
+// Export DataSource Management
+export { dataSourceManager, DataSourceManager } from './datasources/DataSourceManager';
+export { BaseAdapter } from './datasources/BaseAdapter';
+export { SafeExecutor } from './sandbox/SafeExecutor';
+

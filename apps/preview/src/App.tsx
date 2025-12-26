@@ -13,7 +13,7 @@ const randomColor = () => `#${Math.floor(Math.random() * 0xffffff).toString(16).
 const randomBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const App: React.FC = () => {
-  const [specComponentId, setSpecComponentId] = useState<string>('basic/rect');
+  const [specComponentId, setSpecComponentId] = useState<string>('basic/text');
   const [specComp, setSpecComp] = useState<React.ComponentType | null>(null);
   const [specError, setSpecError] = useState<string | null>(null);
   const temporalSnapshot = useSyncExternalStore(
@@ -160,12 +160,7 @@ const App: React.FC = () => {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <select value={specComponentId} onChange={e => setSpecComponentId(e.target.value)}>
-              <option value="basic/rect">basic/rect</option>
-              <option value="layout/text">layout/text</option>
-              <option value="media/image">media/image</option>
-              <option value="custom/cyber-clock">custom/cyber-clock</option>
-              <option value="basic/switch">basic/switch</option>
-              <option value="chart/echarts-bar">chart/echarts-bar</option>
+              <option value="basic/text">basic/text</option>
             </select>
             <button onClick={handleLoadSpec}>Load Spec</button>
             <button onClick={handleAddNodeFromSchema}>Add Node from Schema</button>

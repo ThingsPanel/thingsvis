@@ -58,6 +58,7 @@ import {
   X,
   Minus,
   Plus,
+  Database,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -71,6 +72,7 @@ import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
 import PropsPanel from './RightPanel/PropsPanel'
+import { DataSourceDialog } from './Modals/DataSourceDialog'
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 
@@ -78,6 +80,11 @@ import { extractDefaults } from '../plugins/schemaUtils'
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
 const store = createKernelStore()
+
+// Initialize DataSourceManager with kernel store
+import('@thingsvis/kernel').then(m => {
+  m.dataSourceManager.init(store);
+});
 
 type Tool = "select" | "rectangle" | "circle" | "arrow" | "text" | "image" | "pan"
 type Language = "zh" | "en"
@@ -132,6 +139,7 @@ export default function Editor() {
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [leftPanelTab, setLeftPanelTab] = useState<"components" | "layers">("components")
+  const [isDataSourceDialogOpen, setIsDataSourceDialogOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -431,6 +439,10 @@ export default function Editor() {
                 {language === "zh" ? "保存" : "Save"}
                 <span className="ml-auto text-xs text-muted-foreground">Ctrl+S</span>
               </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => setIsDataSourceDialogOpen(true)}>
+                <Database className="h-4 w-4" />
+                {language === "zh" ? "数据源管理" : "Data Sources"}
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="gap-2">
                 <FileUp className="h-4 w-4" />
@@ -528,28 +540,28 @@ export default function Editor() {
           <div className="flex border-b border-border">
             <button
               onClick={() => setLeftPanelTab("components")}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex-1 px-2 py-2.5 text-[11px] font-medium transition-colors ${
                 leftPanelTab === "components"
                   ? "text-foreground border-b-2 border-[#6965db]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <Grid3x3 className="h-4 w-4" />
-                {language === "zh" ? "组件库" : "Components"}
+              <div className="flex flex-col items-center justify-center gap-1">
+                <Grid3x3 className="h-3.5 w-3.5" />
+                {language === "zh" ? "组件" : "Asset"}
               </div>
             </button>
             <button
               onClick={() => setLeftPanelTab("layers")}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex-1 px-2 py-2.5 text-[11px] font-medium transition-colors ${
                 leftPanelTab === "layers"
                   ? "text-foreground border-b-2 border-[#6965db]"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <Layers className="h-4 w-4" />
-                {language === "zh" ? "图层" : "Layers"}
+              <div className="flex flex-col items-center justify-center gap-1">
+                <Layers className="h-3.5 w-3.5" />
+                {language === "zh" ? "图层" : "Layer"}
               </div>
             </button>
           </div>
@@ -571,7 +583,7 @@ export default function Editor() {
             <div>
               <ComponentsList onInsert={handleAddNode} language={language} />
             </div>
-            ) : (
+            ) : leftPanelTab === "layers" ? (
               <div className="space-y-1">
                 {layers.map((layer) => (
                   <div key={layer.id}>
@@ -677,6 +689,8 @@ export default function Editor() {
                   </div>
                 ))}
               </div>
+            ) : (
+              <DataPanel store={store} language={language} />
             )}
           </div>
         </div>
@@ -821,6 +835,13 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+
+      <DataSourceDialog 
+        open={isDataSourceDialogOpen} 
+        onOpenChange={setIsDataSourceDialogOpen}
+        store={store}
+        language={language}
+      />
     </div>
   )
 }

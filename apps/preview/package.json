@@ -11,6 +11,7 @@
     "@thingsvis/kernel": "workspace:*",
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/ui": "workspace:*",
+    "@thingsvis/utils": "workspace:*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

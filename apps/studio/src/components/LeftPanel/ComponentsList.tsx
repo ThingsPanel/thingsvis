@@ -111,16 +111,14 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
     for (const def of CATEGORY_DEFS) map[def.key] = [];
 
     const prefixMap: Record<string, string> = {
+      basic: "basic",
       chart: "charts",
       charts: "charts",
-      basic: "basic",
-      layout: "basic",
       media: "media",
       resource: "resources",
       resources: "resources",
       custom: "custom",
-      geo: "geo",
-      map: "geo"
+      geo: "geo"
     };
 
     for (const entry of entries) {

@@ -21,6 +21,7 @@
   "dependencies": {
     "@thingsvis/kernel": "workspace:*",
     "@thingsvis/schema": "workspace:*",
+    "@thingsvis/utils": "workspace:*",
     "leafer-ui": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

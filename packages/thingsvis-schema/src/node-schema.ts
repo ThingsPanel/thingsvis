@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { DataBindingSchema } from './datasource/index';
 
 export const NodeSchema = z.object({
   id: z.string(),
@@ -15,7 +16,8 @@ export const NodeSchema = z.object({
       height: z.number().positive()
     })
     .optional(),
-  parentId: z.string().optional()
+  parentId: z.string().optional(),
+  data: z.array(DataBindingSchema).optional()
 });
 
 export type NodeSchemaType = z.infer<typeof NodeSchema>;
