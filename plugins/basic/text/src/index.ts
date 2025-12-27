@@ -7,7 +7,7 @@ import { entry } from './spec';
 export function create() {
   // 初始渲染：使用默认值
   return new Text({
-    text: '加载中...',
+    text: '点击输入文字内容',
     fontSize: 16,
     fill: '#000000',
     draggable: true,

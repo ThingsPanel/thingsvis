@@ -151,7 +151,7 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
               </AccordionTrigger>
               <AccordionContent className="pt-2 pb-1 px-2">
                 {items.length === 0 ? (
-                  <div className="text-xs text-muted-foreground px-2 py-1.5">
+                  <div className="text-sm text-muted-foreground px-2 py-1.5">
                     {language === "zh" ? "暂无组件" : "No components"}
                   </div>
                 ) : (
@@ -179,7 +179,7 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
                                 <SubIcon className="h-6 w-6 text-foreground" />
                               )}
                             </div>
-                            <span className="text-xs text-foreground font-medium">
+                            <span className="text-sm text-foreground font-medium">
                               {(entry as any).displayName ?? entry.remoteName.split("/").slice(1).join("/") ?? entry.remoteName}
                             </span>
                           </button>

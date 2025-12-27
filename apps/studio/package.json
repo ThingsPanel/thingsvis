@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@codemirror/lang-json": "^6.0.2",
     "@radix-ui/react-accordion": "1.2.2",
     "@radix-ui/react-alert-dialog": "1.1.4",
     "@radix-ui/react-dialog": "1.1.4",
@@ -24,6 +25,7 @@
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/ui": "workspace:*",
     "@thingsvis/utils": "workspace:*",
+    "@uiw/react-codemirror": "^4.25.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
