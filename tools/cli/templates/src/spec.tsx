@@ -1,11 +1,19 @@
-import React from 'react';
+import { z } from 'zod';
+import { type PluginMainModule } from '@thingsvis/schema';
 
 /**
- * Visual test (MVP)
- * Render this component in isolation to verify the plugin loads and renders.
+ * 组件属性定义
  */
-export const Spec: React.FC = () => {
-  return <div>Spec for {{COMPONENT_ID}}</div>;
+const PropsSchema = z.object({
+  // 定义你的属性，例如:
+  // content: z.string().describe('内容'),
+});
+
+export const entry: PluginMainModule = {
+  id: '{{componentId}}',
+  name: '{{componentName}}',
+  category: 'custom',
+  icon: 'Box',
+  version: '1.0.0',
+  schema: PropsSchema,
 };
-
-

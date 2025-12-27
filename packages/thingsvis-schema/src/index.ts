@@ -44,3 +44,6 @@ export {
 // Export plugin remote module contract types (L1 plugin layer)
 export { type PluginMainModule, type PluginComponentId } from './plugin-module';
 
+// Export datasource schemas and types
+export * from './datasource/index';
+

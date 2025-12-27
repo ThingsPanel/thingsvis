@@ -4,6 +4,7 @@ import { App, Rect, Group, Line } from 'leafer-ui';
 import type { RendererFactory } from './renderers/types';
 import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
+import { PropertyResolver } from './PropertyResolver';
 
 export class VisualEngine {
   private app?: App;
@@ -285,7 +286,7 @@ export class VisualEngine {
       const p = (async () => {
         try {
           const plugin = await this.opts!.resolvePlugin!(type);
-          this.rendererByType.set(type, createPluginRenderer(plugin));
+          this.rendererByType.set(type, createPluginRenderer(plugin, this.store));
           this.errorMessageByType.delete(type);
           this.failedRendererTypes.delete(type);
         } catch (e) {
@@ -342,11 +343,17 @@ export class VisualEngine {
     box.style.height = `${height}px`;
   }
 
-  private toRectProps(schema: NodeSchemaType) {
+  private toRectProps(node: NodeState) {
+    const schema = node.schemaRef;
     const width = schema.size?.width ?? 0;
     const height = schema.size?.height ?? 0;
     const { x, y } = schema.position;
-    const fill = (schema.props as { fill?: string } | undefined)?.fill;
+    
+    // Resolve expressions in props using PropertyResolver
+    const dataSources = this.store.getState().dataSources;
+    const resolvedProps = PropertyResolver.resolve(node, dataSources);
+
+    const fill = resolvedProps.fill;
 
     return {
       x,

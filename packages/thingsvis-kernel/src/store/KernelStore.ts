@@ -34,12 +34,21 @@ export type ConnectionState = {
   props?: Record<string, unknown>;
 };
 
+export type DataSourceRuntimeState = {
+  id: string;
+  data: any;
+  status: 'connected' | 'disconnected' | 'error' | 'loading';
+  error?: string;
+  lastUpdated: number;
+};
+
 export type KernelState = {
   page?: IPage | PageSchemaType;
   nodesById: Record<string, NodeState>;
   connections: ConnectionState[];
   selection: SelectionState;
   canvas: CanvasState;
+  dataSources: Record<string, DataSourceRuntimeState>;
 };
 
 export type KernelActions = {
@@ -53,12 +62,17 @@ export type KernelActions = {
       size?: { width: number; height: number };
       props?: Record<string, unknown>;
       locked?: boolean;
+      data?: any[]; // 新增：支持数据绑定字段更新
     }
   ) => void;
   setNodeError: (nodeId: string, error: string) => void;
   addConnection: (conn: Omit<ConnectionState, 'id'>) => void;
   removeConnection: (connId: string) => void;
   updateCanvas: (changes: Partial<CanvasState>) => void;
+  
+  // Data Source Actions
+  setDataSourceState: (id: string, state: Partial<DataSourceRuntimeState>) => void;
+  updateDataSourceData: (id: string, data: any) => void;
 };
 
 const defaultCanvas: CanvasState = { 
@@ -79,6 +93,7 @@ export const createKernelStore = () =>
       connections: [],
       selection: { nodeIds: [] },
       canvas: defaultCanvas,
+      dataSources: {},
 
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
@@ -167,6 +182,10 @@ export const createKernelStore = () =>
           if (changes.locked !== undefined) {
             target.locked = changes.locked;
           }
+
+          if (changes.data !== undefined) {
+            (target.schemaRef as NodeSchemaType).data = changes.data;
+          }
         });
       },
 
@@ -200,6 +219,36 @@ export const createKernelStore = () =>
             ...state.canvas,
             ...changes
           };
+        });
+      },
+
+      setDataSourceState: (id, partialState) => {
+        set(state => {
+          const existing = state.dataSources[id];
+          state.dataSources[id] = {
+            id,
+            data: existing?.data ?? null,
+            status: existing?.status ?? 'loading',
+            lastUpdated: existing?.lastUpdated ?? Date.now(),
+            ...partialState
+          };
+        });
+      },
+
+      updateDataSourceData: (id, data) => {
+        set(state => {
+          if (!state.dataSources[id]) {
+            state.dataSources[id] = {
+              id,
+              data,
+              status: 'connected',
+              lastUpdated: Date.now()
+            };
+          } else {
+            state.dataSources[id].data = data;
+            state.dataSources[id].lastUpdated = Date.now();
+            state.dataSources[id].status = 'connected';
+          }
         });
       }
       })),

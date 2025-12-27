@@ -2,8 +2,7 @@
   "name": "@thingsvis/schema",
   "version": "0.0.1",
   "private": false,
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "rspack build",

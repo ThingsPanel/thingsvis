@@ -49,7 +49,6 @@ import {
   Play,
   Repeat,
   Globe,
-  Sparkles,
   Frame,
   Folder,
   ChevronRight,
@@ -58,6 +57,7 @@ import {
   X,
   Minus,
   Plus,
+  Database,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -71,6 +71,7 @@ import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
 import PropsPanel from './RightPanel/PropsPanel'
+// Data source management moved to separate page: #/data-sources
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 
@@ -78,6 +79,11 @@ import { extractDefaults } from '../plugins/schemaUtils'
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
 const store = createKernelStore()
+
+// Initialize DataSourceManager with kernel store
+import('@thingsvis/kernel').then(m => {
+  m.dataSourceManager.init(store);
+});
 
 type Tool = "select" | "rectangle" | "circle" | "arrow" | "text" | "image" | "pan"
 type Language = "zh" | "en"
@@ -132,6 +138,7 @@ export default function Editor() {
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
   const [leftPanelTab, setLeftPanelTab] = useState<"components" | "layers">("components")
+  // Data source dialog removed - now uses separate page
   const [searchQuery, setSearchQuery] = useState("")
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -381,7 +388,7 @@ export default function Editor() {
                   <FolderOpen className="h-4 w-4" />
                   <span>{language === "zh" ? "打开" : "Open"}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Ctrl+O</span>
+                <span className="text-sm text-muted-foreground">Ctrl+O</span>
               </button>
               <button
                 onClick={() => setShowShortcuts(true)}
@@ -391,7 +398,7 @@ export default function Editor() {
                   <HelpCircle className="h-4 w-4" />
                   <span>{language === "zh" ? "帮助" : "Help"}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">?</span>
+                <span className="text-sm text-muted-foreground">?</span>
               </button>
               <button
                 onClick={() => {}}
@@ -410,26 +417,30 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-4 px-4 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-4 px-4 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                <div className="w-8 h-8 bg-[#6965db] rounded-lg flex items-center justify-center shadow-lg shadow-[#6965db]/20">
-                  <Sparkles className="h-5 w-5 text-white" />
+                <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
+                  <Menu className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-foreground font-bold tracking-tight">ThingsVis</span>
+                <span className="text-sm text-foreground font-bold tracking-tight">ThingsVis</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 mt-2">
               <DropdownMenuItem className="gap-2" onClick={() => {}}>
                 <FolderOpen className="h-4 w-4" />
                 {language === "zh" ? "打开项目" : "Open Project"}
-                <span className="ml-auto text-xs text-muted-foreground">Ctrl+O</span>
+                <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2" onClick={() => {}}>
                 <Save className="h-4 w-4" />
                 {language === "zh" ? "保存" : "Save"}
-                <span className="ml-auto text-xs text-muted-foreground">Ctrl+S</span>
+                <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
+                <Database className="h-4 w-4" />
+                {language === "zh" ? "数据源管理" : "Data Sources"}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="gap-2">
@@ -458,14 +469,14 @@ export default function Editor() {
             defaultValue="My Visualization"
           />
 
-          <div className="flex items-center gap-2 text-[12px] text-muted-foreground/60 ml-1 pr-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground/60 ml-1 pr-2">
             <div className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
             <span>{language === "zh" ? "所有更改已保存" : "All changes saved"}</span>
           </div>
         </div>
 
         {/* Center Side: Tools */}
-        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
+        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
           {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
@@ -474,7 +485,7 @@ export default function Editor() {
                 key={tool.id}
                 variant="ghost"
                 size="icon"
-                className={`h-9 w-9 rounded-xl transition-all focus:ring-0 focus:outline-none ${
+                className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${
                   isActive 
                     ? "bg-[#6965db]/10 text-[#6965db] shadow-sm" 
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -489,10 +500,10 @@ export default function Editor() {
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className="glass rounded-2xl shadow-sm border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none">
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
                 <Languages className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -506,16 +517,16 @@ export default function Editor() {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full focus:ring-0 focus:outline-none" onClick={toggleTheme}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
           
-          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-full px-4 hover:bg-accent focus:ring-0 focus:outline-none">
+          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none">
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
           </Button>
 
-          <Button size="sm" className="h-8 gap-2 rounded-full bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20 focus:ring-0 focus:outline-none">
+          <Button size="sm" className="h-8 gap-2 rounded-md bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20 focus:ring-0 focus:outline-none">
             <Upload className="h-4 w-4" />
             <span className="text-sm font-bold">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
@@ -528,29 +539,25 @@ export default function Editor() {
           <div className="flex border-b border-border">
             <button
               onClick={() => setLeftPanelTab("components")}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${
                 leftPanelTab === "components"
-                  ? "text-foreground border-b-2 border-[#6965db]"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-foreground border-[#6965db] -mb-px"
+                  : "text-muted-foreground border-transparent hover:text-foreground"
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <Grid3x3 className="h-4 w-4" />
-                {language === "zh" ? "组件库" : "Components"}
-              </div>
+              <Grid3x3 className="h-4 w-4" />
+              {language === "zh" ? "组件库" : "Library"}
             </button>
             <button
               onClick={() => setLeftPanelTab("layers")}
-              className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${
                 leftPanelTab === "layers"
-                  ? "text-foreground border-b-2 border-[#6965db]"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "text-foreground border-[#6965db] -mb-px"
+                  : "text-muted-foreground border-transparent hover:text-foreground"
               }`}
             >
-              <div className="flex items-center justify-center gap-2">
-                <Layers className="h-4 w-4" />
-                {language === "zh" ? "图层" : "Layers"}
-              </div>
+              <Layers className="h-4 w-4" />
+              {language === "zh" ? "图层" : "Layers"}
             </button>
           </div>
 
@@ -571,7 +578,7 @@ export default function Editor() {
             <div>
               <ComponentsList onInsert={handleAddNode} language={language} />
             </div>
-            ) : (
+            ) : leftPanelTab === "layers" ? (
               <div className="space-y-1">
                 {layers.map((layer) => (
                   <div key={layer.id}>
@@ -677,6 +684,8 @@ export default function Editor() {
                   </div>
                 ))}
               </div>
+            ) : (
+              <DataPanel store={store} language={language} />
             )}
           </div>
         </div>
@@ -685,11 +694,11 @@ export default function Editor() {
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
       <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
         {/* Zoom Controls */}
-        <div className="glass rounded-xl shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
             onClick={() => setZoom(Math.max(10, zoom - 10))}
           >
             <Minus className="h-4 w-4" />
@@ -700,7 +709,7 @@ export default function Editor() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 focus:ring-0 focus:outline-none"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
             onClick={() => setZoom(Math.min(500, zoom + 10))}
           >
             <Plus className="h-4 w-4" />
@@ -708,11 +717,11 @@ export default function Editor() {
         </div>
 
         {/* Undo/Redo Controls */}
-        <div className="glass rounded-xl shadow-sm border border-border/50 flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+            className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
             disabled={!canUndo}
             onClick={handleUndo}
             title={language === "zh" ? "撤销" : "Undo"}
@@ -722,7 +731,7 @@ export default function Editor() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 rounded-lg hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+            className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
             disabled={!canRedo}
             onClick={handleRedo}
             title={language === "zh" ? "重做" : "Redo"}
@@ -752,12 +761,12 @@ export default function Editor() {
               <>
                 {/* Canvas Settings */}
                 <div className="space-y-4 pb-4 border-b border-border">
-                  <h3 className="text-xs font-semibold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {language === "zh" ? "基础信息" : "Basic Info"}
                   </h3>
 
                   <div className="space-y-3">
-                    <label className="text-xs font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
+                    <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
                     <Input
                       value={canvasConfig.name}
                       onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
@@ -766,7 +775,7 @@ export default function Editor() {
                   </div>
 
                   <div className="space-y-3">
-                    <label className="text-xs font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
+                    <label className="text-sm font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
                     <Input
                       value={canvasConfig.id}
                       readOnly
@@ -776,12 +785,12 @@ export default function Editor() {
                 </div>
 
                 <div className="space-y-4 pb-4 border-b border-border">
-                  <h3 className="text-xs font-semibold text-foreground">
+                  <h3 className="text-sm font-semibold text-foreground">
                     {language === "zh" ? "画布配置" : "Canvas Config"}
                   </h3>
 
                   <div className="space-y-3">
-                    <label className="text-xs font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
+                    <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
                     <select
                       value={canvasConfig.mode}
                       onChange={(e) =>
@@ -797,7 +806,7 @@ export default function Editor() {
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                      <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
                       <Input
                         type="number"
                         value={canvasConfig.width}
@@ -806,7 +815,7 @@ export default function Editor() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                      <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
                       <Input
                         type="number"
                         value={canvasConfig.height}
@@ -821,6 +830,8 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+
+
     </div>
   )
 }

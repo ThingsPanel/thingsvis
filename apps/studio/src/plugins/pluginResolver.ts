@@ -10,10 +10,11 @@ const pluginCache = new Map<string, Promise<LoadedPlugin>>();
 
 function normalizeMainModule(mod: any): PluginMainModule {
   // Support both default-exported object and named exports
-  if (mod?.default?.componentId && typeof mod.default?.create === 'function') return mod.default as PluginMainModule;
-  if (mod?.Main?.componentId && typeof mod.Main?.create === 'function') return mod.Main as PluginMainModule;
-  if (mod?.componentId && typeof mod?.create === 'function') return mod as PluginMainModule;
-  throw new Error('Invalid plugin module: expected exports to include { componentId, create }');
+  const target = mod?.default || mod?.Main || mod;
+  if (target && typeof target.create === 'function') {
+    return target as PluginMainModule;
+  }
+  throw new Error('Invalid plugin module: expected exports to include { create }');
 }
 
 export async function loadPlugin(componentId: string): Promise<LoadedPlugin> {
