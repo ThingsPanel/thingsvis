@@ -94,7 +94,10 @@ pnpm dev --filter ./apps/preview
 ### Building
 
 ```bash
-# Build all packages and apps
+# Build all packages and apps (recommended)
+pnpm -w build
+
+# Alternative: Build using turbo
 pnpm build
 
 # Build specific package
@@ -122,6 +125,8 @@ pnpm typecheck --filter @thingsvis/kernel
 ## 🔌 Plugin Development
 
 ThingsVis uses a powerful CLI tool to scaffold new plugins quickly.
+
+> 📖 **详细文档**: 查看 [组件开发与数据源配置规范](docs/vis-cli/component-development.md) 获取完整的开发指南，包括目录结构规范、数据绑定、AI 开发指令等。
 
 ### Create a New Plugin
 
@@ -366,7 +371,18 @@ ThingsVis follows strict architectural constraints:
 
 ## 📚 Documentation
 
-Detailed specifications and documentation are available in the `specs/` directory:
+### Developer Guides
+
+开发者指南位于 `docs/` 目录：
+
+- [🚀 新手开发指南](docs/开发必读文档.md) - **新手必读！** 环境配置、AI 辅助开发、Prompt 模板、Git 规范等
+- [🤖 AI SDD 多人协同开发指南](docs/基于AI%20SDD多人协同开发说明文档.md) - 基于 Spec-Driven Development 的 AI 协作开发方法论，包含上下文工程、多智能体协作、自我修复流水线等
+- [组件开发与数据源配置规范](docs/vis-cli/component-development.md) - 完整的插件开发指南
+- [数据源开发文档](docs/datasource/) - 数据源相关开发规范
+
+### Specifications
+
+详细的功能规格文档位于 `specs/` 目录：
 
 - `specs/001-foundation-scaffold/` - Project foundation and setup
 - `specs/001-core-data-protocol/` - Core data structures and protocols
@@ -375,6 +391,7 @@ Detailed specifications and documentation are available in the `specs/` director
 - `specs/003-canvas-kernel/` - Canvas rendering integration
 - `specs/004-load-registry-components/` - Component registry system
 - `specs/005-studio-kernel-integration/` - Studio-kernel integration
+- `specs/006-multi-source-data/` - Multi-source data integration
 
 Each spec includes:
 
