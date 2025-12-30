@@ -7,7 +7,7 @@ export type FieldBindingSelection = {
   fieldPath: string;
 };
 
-const FIELD_BINDING_EXPR_RE = /^\{\{\s*ds\.([^.\s]+)\.data\.(.+?)\s*\}\}$/;
+const FIELD_BINDING_EXPR_RE = /^\{\{\s*ds\.([^.\s]+)\.data(?:\.(.+?))?\s*\}\}$/;
 
 export function isValidExpression(expression: string): boolean {
   return /^\{\{.*\}\}$/.test(expression.trim());
@@ -17,12 +17,16 @@ export function parseFieldBindingExpression(expression: string): FieldBindingSel
   const match = FIELD_BINDING_EXPR_RE.exec(expression.trim());
   if (!match) return null;
   const dataSourceId = match[1];
-  const fieldPath = match[2];
-  if (!dataSourceId || !fieldPath) return null;
+  const fieldPath = match[2] ?? '(root)'; // 没有路径时表示根级别
+  if (!dataSourceId) return null;
   return { dataSourceId, fieldPath };
 }
 
 export function makeFieldBindingExpression(selection: FieldBindingSelection): string {
+  // (root) 表示选择整个数据，不添加字段路径
+  if (selection.fieldPath === '(root)' || !selection.fieldPath) {
+    return `{{ ds.${selection.dataSourceId}.data }}`;
+  }
   return `{{ ds.${selection.dataSourceId}.data.${selection.fieldPath} }}`;
 }
 

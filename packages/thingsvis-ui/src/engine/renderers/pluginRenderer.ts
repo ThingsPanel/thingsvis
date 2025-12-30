@@ -34,19 +34,39 @@ function isLeaferDisplayObject(obj: unknown): obj is LeaferDisplayObject {
          (typeof o.tag === 'string') || (typeof o.__tag === 'string');
 }
 
-function nodeToOverlayContext(node: NodeState): PluginOverlayContext {
+function nodeToOverlayContext(node: NodeState, store: KernelStore): PluginOverlayContext {
   const schema = node.schemaRef as any;
+  // 使用 PropertyResolver 解析绑定表达式
+  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
   return {
     position: schema.position,
     size: schema.size,
-    props: schema.props
+    props: resolvedProps
   };
 }
 
 export function createPluginRenderer(plugin: PluginMainModule, store: KernelStore): RendererFactory {
+  // 判断是否为纯 Overlay 组件（只有 createOverlay，没有 create）
+  const isOverlayOnly = !plugin.create && typeof plugin.createOverlay === 'function';
+  
   return {
     create(node: NodeState): LeaferDisplayObject {
-      const raw = plugin.create();
+      // 对于纯 Overlay 组件，创建一个透明占位 Rect（实际渲染由 Overlay 处理）
+      if (isOverlayOnly) {
+        const props = nodeToLeaferProps(node, store);
+        const placeholder = new Rect({
+          x: props.x as number,
+          y: props.y as number,
+          width: props.width as number || 100,
+          height: props.height as number || 60,
+          fill: 'transparent',
+          draggable: true,
+          cursor: 'pointer'
+        });
+        return placeholder as unknown as LeaferDisplayObject;
+      }
+      
+      const raw = plugin.create!();
       
       // If the plugin returned a valid Leafer object, use it
       if (isLeaferDisplayObject(raw)) {
@@ -92,11 +112,11 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
     },
     createOverlay: plugin.createOverlay
       ? (node: NodeState) => {
-          const overlay = plugin.createOverlay!(nodeToOverlayContext(node));
+          const overlay = plugin.createOverlay!(nodeToOverlayContext(node, store));
           return {
             element: overlay.element,
             update: overlay.update
-              ? (nextNode: NodeState) => overlay.update?.(nodeToOverlayContext(nextNode))
+              ? (nextNode: NodeState) => overlay.update?.(nodeToOverlayContext(nextNode, store))
               : undefined,
             destroy: overlay.destroy
           };

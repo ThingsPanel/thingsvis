@@ -171,13 +171,62 @@ pnpm build
 
 ## 8. 组件分类
 
-| 分类 | 说明 | 渲染方式 |
-|------|------|----------|
-| `basic` | 基础 UI 元素 | Leafer UI |
-| `layout` | 布局容器 | Leafer Group |
-| `media` | 图片、视频 | Leafer Image / Overlay |
-| `chart` | 图表可视化 | DOM Overlay (ECharts) |
-| `custom` | 自定义组件 | 混合 |
+| 分类 | 说明 | 渲染方式 | 模板 |
+|------|------|----------|------|
+| `basic` | 基础 UI 元素 | Leafer UI | Leafer |
+| `layout` | 布局容器 | Leafer Group | Leafer |
+| `media` | 图片、视频 | Leafer Image / Overlay | Overlay |
+| `chart` | 图表可视化 | DOM Overlay (ECharts) | Overlay |
+| `custom` | 自定义组件 | 混合 | 视情况 |
+| `data` | 数据组件 | 无渲染 | Headless |
+| `interaction` | 交互控件 | Leafer + 事件 | Leafer |
+
+## 9. Overlay 模板
+
+用于需要 DOM 容器的组件（ECharts、视频、3D 等）。
+
+### 与 Leafer 模板的区别
+
+| 特性 | Leafer 模板 | Overlay 模板 |
+|------|-------------|--------------|
+| 入口函数 | `create()` | `createOverlay()` |
+| 返回值 | Leafer UI 节点 | `{ element, update, destroy }` |
+| 渲染方式 | Canvas | DOM 容器 |
+| 适用场景 | 基础图形 | ECharts/视频/3D |
+
+### createOverlay 结构
+
+```typescript
+function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
+  // 1. 创建 DOM 容器
+  const element = document.createElement('div');
+  element.style.width = '100%';
+  element.style.height = '100%';
+  
+  // 2. 初始化第三方库
+  const chart = echarts.init(element);
+  chart.setOption(buildOption(ctx.props));
+  
+  return {
+    element,
+    
+    // 3. 属性更新回调
+    update: (newCtx) => {
+      chart.setOption(buildOption(newCtx.props));
+      if (newCtx.size) chart.resize();
+    },
+    
+    // 4. 销毁回调（必须清理资源）
+    destroy: () => {
+      chart.dispose();
+    },
+  };
+}
+```
+
+### 参考示例
+
+- `plugins/chart/echarts-line/` - ECharts 折线图组件
 | `data` | 数据组件 | 无渲染 |
 | `interaction` | 交互控件 | Leafer + 事件 |
 

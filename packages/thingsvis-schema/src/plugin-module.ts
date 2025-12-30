@@ -67,8 +67,12 @@ export type PluginMainModule = {
   /**
    * Create a Leafer-compatible renderer instance (usually a Leafer UI node).
    * The host is responsible for mounting/updating/destroying it.
+   * 
+   * Note: Either `create` or `createOverlay` must be provided.
+   * - Use `create` for Leafer-based components (basic, layout, etc.)
+   * - Use `createOverlay` for DOM-based components (chart, media, 3D, etc.)
    */
-  create: () => unknown;
+  create?: () => unknown;
   /**
    * Zod Schema for props validation and UI generation.
    * Host treats it as any to avoid strict zod dependency in all consumers.
@@ -82,7 +86,9 @@ export type PluginMainModule = {
    */
   controls?: PluginControls;
   /**
-   * 可选：创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
+   * 创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
+   * 
+   * Note: Either `create` or `createOverlay` must be provided.
    */
   createOverlay?: (ctx: PluginOverlayContext) => PluginOverlayInstance;
 };

@@ -23,6 +23,12 @@ export function listFieldPaths(value: unknown, options?: Partial<FieldPathOption
   let nodeCount = 0;
   let truncated = false;
 
+  // 如果根级别是数组或对象，添加 "(root)" 选项让用户可以选择整个数据
+  if (Array.isArray(value) || isPlainObject(value)) {
+    paths.push('(root)');
+    nodeCount += 1;
+  }
+
   const pushPath = (path: string) => {
     if (!path) return;
     nodeCount += 1;
