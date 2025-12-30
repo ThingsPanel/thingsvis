@@ -1,8 +1,12 @@
-import type { CanvasConfig } from "../../../specs/004-load-registry-components/data-model";
+import type { CanvasState } from '@thingsvis/kernel';
 
 export type Point = { x: number; y: number };
 
-export function screenToCanvas(screenPoint: Point, canvasConfig: CanvasConfig, viewportState: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }): Point {
+export function screenToCanvas(
+  screenPoint: Point,
+  canvasConfig: Pick<CanvasState, 'mode' | 'width' | 'height'>,
+  viewportState: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }
+): Point {
   const { mode, width = 1920, height = 1080 } = canvasConfig;
   const { width: vpW, height: vpH, zoom, offsetX, offsetY } = viewportState;
 
@@ -28,7 +32,11 @@ export function screenToCanvas(screenPoint: Point, canvasConfig: CanvasConfig, v
   return { x: fracX * width, y: fracY * height };
 }
 
-export function canvasToScreen(worldPoint: Point, canvasConfig: CanvasConfig, viewportState: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }): Point {
+export function canvasToScreen(
+  worldPoint: Point,
+  canvasConfig: Pick<CanvasState, 'mode' | 'width' | 'height'>,
+  viewportState: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }
+): Point {
   const { mode, width = 1920, height = 1080 } = canvasConfig;
   const { width: vpW, height: vpH, zoom, offsetX, offsetY } = viewportState;
 

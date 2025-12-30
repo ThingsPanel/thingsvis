@@ -1,4 +1,4 @@
-import { PageSchema } from "../../thingsvis-schema/src/canvas-schema";
+import { PageSchema } from "@thingsvis/schema";
 
 // Minimal ETL worker stub. This file is intended to be usable both as:
 // - a Node.js worker (worker_threads), and

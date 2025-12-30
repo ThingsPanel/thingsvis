@@ -52,7 +52,21 @@ export const CanvasView: React.FC<Props> = ({
 
   const [internalZoom, setInternalZoom] = useState(1);
   const zoom = propsZoom !== undefined ? propsZoom : internalZoom;
-  const setZoom = onZoomChange || setInternalZoom;
+  const zoomRef = useRef(zoom);
+  useEffect(() => {
+    zoomRef.current = zoom;
+  }, [zoom]);
+
+  const setZoomValue = useCallback(
+    (nextZoom: number) => {
+      if (onZoomChange) {
+        onZoomChange(nextZoom);
+      } else {
+        setInternalZoom(nextZoom);
+      }
+    },
+    [onZoomChange]
+  );
 
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
@@ -192,7 +206,8 @@ export const CanvasView: React.FC<Props> = ({
         e.preventDefault();
         const delta = -e.deltaY;
         const factor = delta > 0 ? 1.1 : 0.9;
-        setZoom((z) => Math.max(0.1, Math.min(10, z * factor)));
+        const next = Math.max(0.1, Math.min(10, zoomRef.current * factor));
+        setZoomValue(next);
       } else if (mode === 'infinite') {
         // Panning via wheel (standard scroll)
         setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
@@ -210,7 +225,7 @@ export const CanvasView: React.FC<Props> = ({
       window.removeEventListener('pointerup', onPointerUp);
       el.removeEventListener('wheel', onWheel as any);
     };
-  }, [mode]);
+  }, [mode, setZoomValue]);
 
   // redraw grid when viewport changes
   useEffect(() => {

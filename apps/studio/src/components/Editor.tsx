@@ -88,6 +88,10 @@ import('@thingsvis/kernel').then(m => {
 type Tool = "select" | "rectangle" | "circle" | "arrow" | "text" | "image" | "pan"
 type Language = "zh" | "en"
 
+function DataPanel(_props: { store: typeof store; language: Language }) {
+  return null;
+}
+
 // Define Layer types
 type Layer = {
   id: string

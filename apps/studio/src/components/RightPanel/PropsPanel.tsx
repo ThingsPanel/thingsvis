@@ -1,12 +1,17 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSyncExternalStore } from "react";
 import { Plus, Trash2, Database, Link2 } from "lucide-react";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
+import type { PluginMainModule } from "@thingsvis/schema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDataSourceRegistry } from "@thingsvis/ui";
+
+import { loadPlugin } from "@/plugins/pluginResolver";
+import { getPluginControls } from "@/plugins/getPluginControls";
+import ControlFieldRow from "./ControlFieldRow";
 
 type Props = {
   nodeId: string;
@@ -27,6 +32,47 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
 
   const schema = node.schemaRef as any;
   const bindings = schema.data || [];
+
+  const componentType = schema.type as string;
+  const [pluginEntry, setPluginEntry] = useState<PluginMainModule | null>(null);
+  const [pluginError, setPluginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPluginEntry(null);
+    setPluginError(null);
+
+    (async () => {
+      try {
+        const loaded = await loadPlugin(componentType);
+        if (cancelled) return;
+        setPluginEntry(loaded.entry);
+      } catch (e) {
+        if (cancelled) return;
+        setPluginError(e instanceof Error ? e.message : String(e));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [componentType]);
+
+  const controlsParse = useMemo(() => getPluginControls(pluginEntry ?? undefined), [pluginEntry]);
+  const controls = controlsParse.controls;
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    if (!pluginEntry) return;
+    if (controls) return;
+    if (!controlsParse.issues?.length) return;
+
+    // eslint-disable-next-line no-console
+    console.warn('[PropsPanel] Invalid plugin controls; falling back to legacy panel', {
+      pluginId: pluginEntry.id,
+      issues: controlsParse.issues
+    });
+  }, [pluginEntry, controls, controlsParse.issues]);
 
   function updateNode(changes: any) {
     kernelStore.getState().updateNode(nodeId, changes);
@@ -51,7 +97,93 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
     updateNode({ data: newBindings });
   };
 
-  return (
+  const renderGeometry = () => (
+    <div className="space-y-3 px-1">
+      <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+        {labelZh("几何布局", "Geometry")}
+      </h3>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">X</label>
+          <Input
+            type="number"
+            value={schema.position.x}
+            onChange={(e) => updateNode({ position: { x: Number(e.target.value) } })}
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">Y</label>
+          <Input
+            type="number"
+            value={schema.position.y}
+            onChange={(e) => updateNode({ position: { y: Number(e.target.value) } })}
+            className="h-8 text-sm"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">
+            {labelZh("宽度", "Width")}
+          </label>
+          <Input
+            type="number"
+            value={schema.size?.width ?? 0}
+            onChange={(e) => updateNode({ size: { width: Number(e.target.value) } })}
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">
+            {labelZh("高度", "Height")}
+          </label>
+          <Input
+            type="number"
+            value={schema.size?.height ?? 0}
+            onChange={(e) => updateNode({ size: { height: Number(e.target.value) } })}
+            className="h-8 text-sm"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderControlsPanel = () => {
+    if (!controls) return null;
+
+    return (
+      <div className="space-y-4">
+        {renderGeometry()}
+        {controls.groups.map((group) => (
+          <div key={group.id} className="space-y-3 pt-4 border-t border-border px-1">
+            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+              {group.label ?? group.id}
+            </h3>
+            <div className="space-y-3">
+              {group.fields.map((field) => (
+                <ControlFieldRow
+                  key={field.path}
+                  kernelStore={kernelStore}
+                  nodeId={nodeId}
+                  field={field}
+                  propsValue={schema.props?.[field.path]}
+                  bindings={schema.data}
+                  updateNode={updateNode}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {pluginError && (
+          <p className="text-xs text-muted-foreground">{pluginError}</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderLegacyPanel = () => (
     <Tabs defaultValue="style" className="w-full">
       <TabsList className="grid w-full grid-cols-2 mb-4">
         <TabsTrigger value="style" className="text-sm">{labelZh("样式", "Style")}</TabsTrigger>
@@ -59,56 +191,14 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
       </TabsList>
 
       <TabsContent value="style" className="space-y-4">
-        {/* Position */}
-        <div className="space-y-3 px-1">
-          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-            {labelZh("几何布局", "Geometry")}
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">X</label>
-              <Input
-                type="number"
-                value={schema.position.x}
-                onChange={(e) => updateNode({ position: { x: Number(e.target.value) } })}
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">Y</label>
-              <Input
-                type="number"
-                value={schema.position.y}
-                onChange={(e) => updateNode({ position: { x: Number(e.target.value) } })}
-                className="h-8 text-sm"
-              />
-            </div>
+        {process.env.NODE_ENV === 'development' && controlsParse.issues?.length ? (
+          <div className="px-1">
+            <p className="text-xs text-muted-foreground">
+              Controls invalid; using legacy panel.
+            </p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {labelZh("宽度", "Width")}
-              </label>
-              <Input
-                type="number"
-                value={schema.size?.width ?? 0}
-                onChange={(e) => updateNode({ size: { width: Number(e.target.value) } })}
-                className="h-8 text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {labelZh("高度", "Height")}
-              </label>
-              <Input
-                type="number"
-                value={schema.size?.height ?? 0}
-                onChange={(e) => updateNode({ size: { height: Number(e.target.value) } })}
-                className="h-8 text-sm"
-              />
-            </div>
-          </div>
-        </div>
+        ) : null}
+        {renderGeometry()}
 
         {/* Basic Props */}
         <div className="space-y-3 pt-4 border-t border-border px-1">
@@ -120,7 +210,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
             <textarea
               value={schema.props?.text || ''}
               onChange={(e) => updateNode({ props: { text: e.target.value } })}
-              className="w-full h-20 p-2 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none resize-none"
+              className="w-full h-20 p-2 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-none"
               placeholder={labelZh("输入静态文本", "Enter static text")}
             />
             <p className="text-sm text-muted-foreground italic">
@@ -207,7 +297,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                   value={binding.expression} 
                   onChange={(e) => updateBinding(index, 'expression', e.target.value)}
                   placeholder="{{ ds.id.data }}"
-                  className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none resize-none"
+                  className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
                 />
               </div>
             </div>
@@ -242,4 +332,10 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
       </TabsContent>
     </Tabs>
   );
+
+  if (controls) {
+    return renderControlsPanel();
+  }
+
+  return renderLegacyPanel();
 }

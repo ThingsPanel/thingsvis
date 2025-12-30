@@ -6,6 +6,8 @@
  * - Hosts can treat `Spec` as "unknown" and render it if it matches their runner expectations.
  */
 
+import type { PluginControls } from './plugin-controls';
+
 export type PluginComponentId = string; // e.g. "basic/rect"
 
 /**
@@ -72,6 +74,13 @@ export type PluginMainModule = {
    * Host treats it as any to avoid strict zod dependency in all consumers.
    */
   schema?: any;
+
+  /**
+   * Optional serializable Controls definition for Studio property panel generation.
+   *
+   * If missing or invalid, Studio should fall back to its legacy/manual panel.
+   */
+  controls?: PluginControls;
   /**
    * 可选：创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
    */

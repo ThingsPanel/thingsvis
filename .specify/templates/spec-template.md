@@ -82,8 +82,6 @@
   Fill them out with the right functional requirements.
 -->
 
-**Constitution Alignment**: Confirm solutions respect monorepo boundaries (pnpm+Turbo), Rspack+MF2 builds, TS 5.x strict typing, schemas in `packages/thingsvis-schema` validated with Zod, renderer discipline (Leafer/React Three Fiber; no direct DOM), state via zustand+immer, performance targets (<800KB core bundle, ≥50 FPS where applicable), and ErrorBoundary wrapping for plugins/components.
-
 ### Functional Requirements
 
 - **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]

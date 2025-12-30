@@ -1,8 +1,12 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "src",
-    "noEmit": true
+    "rootDir": "../../..",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@thingsvis/schema": ["../../../packages/thingsvis-schema/src"]
+    }
   },
   "include": ["src"]
 }

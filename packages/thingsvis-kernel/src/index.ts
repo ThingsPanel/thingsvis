@@ -8,8 +8,10 @@ export type {
   KernelStore,
   KernelActions,
   NodeState,
+  ConnectionState,
   SelectionState,
-  CanvasState
+  CanvasState,
+  DataSourceRuntimeState
 } from './store/KernelStore';
 export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';
@@ -22,13 +24,13 @@ export { action, subscribeToPatches } from './store';
 export { actionStack } from './history/ActionStack';
 
 // Export event bus
-export { EventBus, type EventHandler } from './event-bus';
-export { eventBus } from './event-bus';
+export { EventBus, type EventHandler, eventBus } from './event-bus';
+import { eventBus as _eventBus } from './event-bus';
 export * from './events/pluginEvents';
 // expose kernel eventBus to host apps via globalThis for loose coupling (used by UI loader)
 try {
   if (typeof globalThis !== 'undefined' && !(globalThis as any).__thingsvis_kernel_eventbus__) {
-    (globalThis as any).__thingsvis_kernel_eventbus__ = eventBus;
+    (globalThis as any).__thingsvis_kernel_eventbus__ = _eventBus;
   }
 } catch (e) {}
 

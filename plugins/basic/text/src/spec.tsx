@@ -17,11 +17,45 @@ const TextPropsSchema = z.object({
   fontFamily: z.string().default('sans-serif').describe('字体'),
 });
 
-export const entry: PluginMainModule = {
+export const entry: Omit<PluginMainModule, 'create'> = {
   id: 'basic-text',
   name: '基础文本',
   category: 'basic',
   icon: 'Type',
   version: '2.0.0',
   schema: TextPropsSchema,
+  controls: {
+    groups: [
+      {
+        id: 'Content',
+        label: '内容',
+        fields: [
+          {
+            path: 'text',
+            label: '文本内容',
+            kind: 'string',
+            binding: { enabled: true, modes: ['static', 'field', 'expr'] }
+          }
+        ]
+      },
+      {
+        id: 'Style',
+        label: '样式',
+        fields: [
+          {
+            path: 'fill',
+            label: '文字颜色',
+            kind: 'color',
+            binding: { enabled: true, modes: ['static', 'field', 'expr'] }
+          },
+          {
+            path: 'fontSize',
+            label: '字号',
+            kind: 'number',
+            binding: { enabled: true, modes: ['static', 'field', 'expr'] }
+          }
+        ]
+      }
+    ]
+  }
 };

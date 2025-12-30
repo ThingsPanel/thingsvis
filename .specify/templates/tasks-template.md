@@ -20,9 +20,10 @@ description: "Task list template for feature implementation"
 
 ## Path Conventions
 
-- **Monorepo (ThingsVis)**: `apps/studio/`, `apps/preview/`, `packages/thingsvis-kernel/`, `packages/thingsvis-schema/`, `packages/thingsvis-ui/`, `packages/plugins/*`
-- **Tests**: colocate per package when possible; integration/contract tests can live under `apps/*/tests/` or `packages/*/tests/`
-- Adjust paths based on plan.md; avoid introducing new top-level apps/packages without constitution justification
+- **Single project**: `src/`, `tests/` at repository root
+- **Web app**: `backend/src/`, `frontend/src/`
+- **Mobile**: `api/src/`, `ios/src/` or `android/src/`
+- Paths shown below assume single project - adjust based on plan.md structure
 
 <!-- 
   ============================================================================

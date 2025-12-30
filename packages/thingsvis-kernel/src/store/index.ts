@@ -50,7 +50,7 @@ export const action = {
     if (!page) return { success: false };
     const idx = page.nodes.findIndex((n) => n.id === nodeId);
     if (idx === -1) return { success: false };
-    page.nodes[idx] = { ...page.nodes[idx], ...patch };
+    page.nodes[idx] = { ...page.nodes[idx], ...patch } as Node;
     emitter.emit("patches", [{ nodeId, patch } as Patch]);
     return { success: true };
   },

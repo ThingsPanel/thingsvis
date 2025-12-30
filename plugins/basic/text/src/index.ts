@@ -1,5 +1,6 @@
 import { Text } from 'leafer-ui';
 import { entry } from './spec';
+import { type PluginMainModule } from '@thingsvis/schema';
 
 /**
  * 创建文本组件实例
@@ -18,6 +19,6 @@ export function create() {
 export const Main = {
   ...entry,
   create,
-};
+} satisfies PluginMainModule;
 
 export default Main;

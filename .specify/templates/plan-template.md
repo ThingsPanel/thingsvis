@@ -31,13 +31,7 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- Monorepo layout uses pnpm workspaces + Turborepo with `apps/studio`, `apps/preview`, `packages/thingsvis-kernel`, `packages/thingsvis-schema`, `packages/thingsvis-ui`.  
-- Kernel remains UI-free (micro-kernel); plugins do not create reverse deps into kernel.  
-- Build strategy uses Rspack + Module Federation 2.0; TS 5.x strict is enabled.  
-- Schemas/types live in `packages/thingsvis-schema` with Zod validation; changes planned before implementation.  
-- Rendering plan adheres to Leafer (2D) or React Three Fiber (3D); no direct DOM access; state flows via zustand + immer.  
-- Performance intent addresses <800KB core bundle and ≥50 FPS targets for relevant surfaces.  
-- Plugins/components wrap with React `ErrorBoundary`; styling via TailwindCSS + `shadcn/ui` or rationale provided.
+[Gates determined based on constitution file]
 
 ## Project Structure
 

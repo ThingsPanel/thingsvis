@@ -1,5 +1,5 @@
-import type { CanvasNode, CanvasPage } from "@thingsvis/schema/contracts/canvas-contracts";
-import { subscribeToPatches } from "../../../thingsvis-kernel/src/store";
+import type { CanvasNode, CanvasPage } from '@thingsvis/schema';
+import { subscribeToPatches } from '@thingsvis/kernel';
 import { startRenderLoop } from "./render-loop";
 import { LeaferAdapter } from "../visual/leaferAdapter";
 
