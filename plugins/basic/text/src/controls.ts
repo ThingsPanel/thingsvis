@@ -25,11 +25,13 @@ export const controls = generateControls(PropsSchema, {
   groups: {
     Content: ['text'],
     Style: ['fill', 'fontSize', 'fontWeight', 'textAlign', 'fontFamily'],
+    Advanced: ['backgroundColor', 'padding', 'lineHeight', 'letterSpacing'],
   },
   
   // 覆盖控件类型
   overrides: {
     fill: { kind: 'color' },
+    backgroundColor: { kind: 'color' },
   },
   
   // 数据绑定配置

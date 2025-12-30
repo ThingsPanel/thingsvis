@@ -170,17 +170,33 @@ export class VisualEngine {
       // DOM overlay（仅当 renderer 支持且 overlayRoot 存在）
       let overlayBox: HTMLDivElement | undefined;
       let overlayInst: { destroy?: () => void } | undefined;
+      const isResizable = rendererToUse.resizable !== false;
+      
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
         overlayBox.style.pointerEvents = 'auto';
-        overlayBox.style.overflow = 'hidden';
         this.overlayRoot.appendChild(overlayBox);
-        this.positionOverlayBox(overlayBox, node);
+        
+        // 根据 resizable 属性决定定位方式
+        this.positionOverlayBox(overlayBox, node, isResizable);
+        
         try {
           const ov = rendererToUse.createOverlay(node);
           overlayInst = ov;
           overlayBox.appendChild(ov.element);
+          
+          // 对于自适应尺寸组件，在下一帧同步占位符尺寸
+          if (!isResizable) {
+            requestAnimationFrame(() => {
+              // 使用 offsetWidth/offsetHeight 获取元素尺寸（不受 CSS transform 影响）
+              const w = ov.element.offsetWidth;
+              const h = ov.element.offsetHeight;
+              if (w > 0 && h > 0) {
+                (instance as any).set?.({ width: w, height: h });
+              }
+            });
+          }
         } catch (e) {
           // overlay 失败不影响主渲染
           console.error('[VisualEngine] overlay creation failed:', e);
@@ -207,8 +223,24 @@ export class VisualEngine {
     }
 
     // 更新 overlay
+    const isResizable = existing.renderer.resizable !== false;
     if (existing.overlayBox) {
-      this.positionOverlayBox(existing.overlayBox, node);
+      this.positionOverlayBox(existing.overlayBox, node, isResizable);
+      
+      // 对于自适应尺寸组件，同步占位符尺寸
+      if (!isResizable && existing.overlayInst) {
+        requestAnimationFrame(() => {
+          // 使用 offsetWidth/offsetHeight 获取元素尺寸（不受 CSS transform 影响）
+          const el = (existing.overlayInst as any)?.element;
+          if (el) {
+            const w = el.offsetWidth;
+            const h = el.offsetHeight;
+            if (w > 0 && h > 0) {
+              (existing.instance as any).set?.({ width: w, height: h });
+            }
+          }
+        });
+      }
     }
     if (existing.renderer.updateOverlay && existing.overlayInst) {
       existing.renderer.updateOverlay(existing.overlayInst as any, node);
@@ -332,15 +364,25 @@ export class VisualEngine {
     });
   }
 
-  private positionOverlayBox(box: HTMLDivElement, node: NodeState) {
+  private positionOverlayBox(box: HTMLDivElement, node: NodeState, isResizable: boolean = true) {
     const schema = node.schemaRef as any;
     const { x, y } = schema.position ?? { x: 0, y: 0 };
-    const width = schema.size?.width ?? 0;
-    const height = schema.size?.height ?? 0;
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
-    box.style.width = `${width}px`;
-    box.style.height = `${height}px`;
+    
+    if (isResizable) {
+      // 固定尺寸组件：使用 schema 中定义的尺寸
+      const width = schema.size?.width ?? 0;
+      const height = schema.size?.height ?? 0;
+      box.style.width = `${width}px`;
+      box.style.height = `${height}px`;
+      box.style.overflow = 'hidden';
+    } else {
+      // 自适应尺寸组件：让内容撑开
+      box.style.width = 'auto';
+      box.style.height = 'auto';
+      box.style.overflow = 'visible';
+    }
   }
 
   private toRectProps(node: NodeState) {

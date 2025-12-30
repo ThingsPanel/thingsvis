@@ -46,6 +46,22 @@ export const PropsSchema = z.object({
   
   /** 字体 */
   fontFamily: z.string().default('sans-serif').describe('字体'),
+
+  // ========================================
+  // 高级样式属性
+  // ========================================
+  
+  /** 背景颜色 */
+  backgroundColor: z.string().default('transparent').describe('背景颜色'),
+  
+  /** 内边距 */
+  padding: z.number().min(0).max(100).default(0).describe('内边距'),
+  
+  /** 行高 */
+  lineHeight: z.number().min(0.5).max(5).default(1.4).describe('行高'),
+  
+  /** 字间距 */
+  letterSpacing: z.number().min(-10).max(50).default(0).describe('字间距'),
 });
 
 /** 属性类型（用于 TypeScript 类型推导） */

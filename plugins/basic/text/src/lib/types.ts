@@ -88,8 +88,8 @@ export type PluginMainModule = {
   icon?: string;
   /** 版本号 */
   version?: string;
-  /** 创建 Leafer UI 节点实例 */
-  create: () => unknown;
+  /** 创建 Leafer UI 节点实例（可选，如果有 createOverlay 可以不提供） */
+  create?: () => unknown;
   /** Zod Schema，用于属性验证和 UI 生成 */
   schema?: z.ZodType<unknown>;
   /** 控件配置，用于 Studio 动态生成属性面板 */
