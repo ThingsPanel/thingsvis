@@ -211,7 +211,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
             <textarea
               value={schema.props?.text || ''}
               onChange={(e) => updateNode({ props: { text: e.target.value } })}
-              className="w-full h-20 p-2 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+              className="w-full h-20 p-2 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-none"
               placeholder={labelZh("输入静态文本", "Enter static text")}
             />
             <p className="text-sm text-muted-foreground italic">
@@ -232,7 +232,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                 type="color"
                 value={schema.props?.fill || '#000000'}
                 onChange={(e) => updateNode({ props: { fill: e.target.value } })}
-                className="w-8 h-8 p-0 border-0 overflow-hidden rounded-md cursor-pointer"
+                className="w-8 h-8 p-0 border-0 overflow-hidden rounded-sm cursor-pointer"
               />
               <Input
                 type="text"
@@ -269,7 +269,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
 
         <div className="space-y-4">
           {bindings.map((binding: any, index: number) => (
-            <div key={index} className="p-3 glass rounded-md border border-border/50 space-y-3 relative group/item">
+            <div key={index} className="p-3 glass rounded-sm border border-border/50 space-y-3 relative group/item">
               <button 
                 onClick={() => removeBinding(index)}
                 className="absolute top-2 right-2 opacity-0 group-hover/item:opacity-100 p-1 hover:bg-destructive/10 text-destructive rounded transition-all"
@@ -298,7 +298,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                   value={binding.expression} 
                   onChange={(e) => updateBinding(index, 'expression', e.target.value)}
                   placeholder="{{ ds.<id>.data.<path> }}"
-                  className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+                  className="w-full h-16 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
                 />
               </div>
             </div>

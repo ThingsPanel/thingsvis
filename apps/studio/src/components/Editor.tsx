@@ -415,7 +415,7 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        <div className="glass rounded-md shadow-md border border-border/50 flex items-center gap-4 px-4 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -474,7 +474,7 @@ export default function Editor() {
         </div>
 
         {/* Center Side: Tools */}
-        <div className="glass rounded-md shadow-md border border-border/50 flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
           {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
@@ -498,7 +498,7 @@ export default function Editor() {
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className="glass rounded-md shadow-md border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
@@ -533,7 +533,7 @@ export default function Editor() {
 
       {/* Left Panel: Assets & Layers */}
       <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
-        <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex border-b border-border">
             <button
               onClick={() => setLeftPanelTab("components")}
@@ -692,7 +692,7 @@ export default function Editor() {
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
       <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
         {/* Zoom Controls */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
@@ -715,7 +715,7 @@ export default function Editor() {
         </div>
 
         {/* Undo/Redo Controls */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
@@ -741,7 +741,7 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
-        <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
             <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>

@@ -48,7 +48,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
             const nextId = e.target.value;
             safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
           }}
-          className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
+          className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
         >
           {dataSourceIds.length === 0 && <option value="">{t('(暂无数据源)', '(no data sources)')}</option>}
           {dataSourceIds.map((id) => (
@@ -67,7 +67,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
             const nextPath = e.target.value;
             safeOnChange(selectedDataSourceId ? { dataSourceId: selectedDataSourceId, fieldPath: nextPath } : null);
           }}
-          className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
+          className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
           disabled={!selectedDataSourceId}
         >
           <option value="">{t('(请选择字段)', '(select a field)')}</option>

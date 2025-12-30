@@ -1,5 +1,39 @@
 import { z } from 'zod';
-import { type PluginMainModule } from '@thingsvis/schema';
+
+/**
+ * Plugin Entry Type (inline definition for plugin independence)
+ * 插件入口类型（内联定义，保证插件独立性）
+ * 
+ * NOTE: Plugins MUST NOT import from @thingsvis/* packages.
+ * This type mirrors the host's expectation but is self-contained.
+ * 注意：插件禁止从 @thingsvis/* 包导入任何内容。
+ * 此类型与宿主期望的结构一致，但完全自包含。
+ */
+type PluginEntry = {
+  id: string;
+  name?: string;
+  category?: string;
+  icon?: string;
+  version?: string;
+  schema?: z.ZodType<any>;
+  controls?: {
+    groups: Array<{
+      id: string;
+      label?: string;
+      fields: Array<{
+        path: string;
+        label: string;
+        kind: 'string' | 'number' | 'boolean' | 'color' | 'select' | 'json';
+        options?: Array<{ label: string; value: string | number }>;
+        default?: unknown;
+        binding?: {
+          enabled: boolean;
+          modes: Array<'static' | 'field' | 'expr' | 'rule'>;
+        };
+      }>;
+    }>;
+  };
+};
 
 /**
  * 文本组件属性定义
@@ -17,7 +51,7 @@ const TextPropsSchema = z.object({
   fontFamily: z.string().default('sans-serif').describe('字体'),
 });
 
-export const entry: Omit<PluginMainModule, 'create'> = {
+export const entry: PluginEntry = {
   id: 'basic-text',
   name: '基础文本',
   category: 'basic',

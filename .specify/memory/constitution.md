@@ -1,8 +1,8 @@
 <!--
 Sync Impact Report
-- Version change: (template) → 1.0.0
+- Version change: 1.0.0 → 1.1.0
 - Modified principles: Filled previously-empty template principles
-- Added sections: Additional Constraints, Development Workflow
+- Added sections: Additional Constraints, Development Workflow, Plugin Independence (VI)
 - Removed sections: N/A
 - Templates requiring updates: ✅ none (plan/spec/tasks templates remain valid)
 -->
@@ -51,6 +51,18 @@ Rationale: Enables rolling upgrades across many dashboards/pages.
 
 Rationale: The editor must remain usable at scale (many nodes, frequent updates).
 
+### VI. Plugin Independence & Third‑Party Development
+
+- Plugins MUST NOT import from `@thingsvis/*` internal packages (kernel, schema, ui, utils). These packages are for host application use only.
+- Plugins MUST define their types inline. The plugin entry interface is a "contract by convention" — the host expects a specific shape, but plugins define it themselves.
+- Plugins MAY only depend on:
+  - Standard npm packages (e.g., `zod`, `lodash`)
+  - Rendering libraries declared as peerDependencies (e.g., `react`, `leafer-ui`)
+  - Their own internal modules
+- The host uses duck typing to validate plugin exports. If a plugin exports an object with the expected shape, it will work.
+
+Rationale: Third-party developers MUST be able to build, test, and distribute plugins independently without access to this monorepo. This enables a healthy plugin ecosystem beyond the core team.
+
 ## Additional Constraints
 
 - Monorepo uses `pnpm` workspaces + Turborepo; new work MUST fit within the existing package/app boundaries.
@@ -78,4 +90,4 @@ Rationale: The editor must remain usable at scale (many nodes, frequent updates)
 	- MINOR: new principle/section added or materially expanded
 	- PATCH: clarifications and non-semantic wording updates
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-30 | **Last Amended**: 2025-12-30
+**Version**: 1.1.0 | **Ratified**: 2025-12-30 | **Last Amended**: 2025-12-30

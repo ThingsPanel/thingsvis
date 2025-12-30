@@ -121,7 +121,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           <select
             value={mode}
             onChange={(e) => handleModeChange(e.target.value as BindingMode)}
-            className="h-7 px-2 text-xs rounded-md border border-input bg-background min-w-20"
+            className="h-7 px-2 text-xs rounded-sm border border-input bg-background min-w-20"
           >
             {modes.map((m) => (
               <option key={m} value={m}>
@@ -157,7 +157,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                 type="color"
                 value={typeof propsValue === 'string' && propsValue ? propsValue : '#000000'}
                 onChange={(e) => setStatic(e.target.value)}
-                className="w-8 h-8 p-0 border-0 overflow-hidden rounded-md cursor-pointer"
+                className="w-8 h-8 p-0 border-0 overflow-hidden rounded-sm cursor-pointer"
               />
               <Input
                 value={typeof propsValue === 'string' ? propsValue : ''}
@@ -202,7 +202,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                 setBindingExpr(next);
               }
             }}
-            className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+            className="w-full h-16 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
             placeholder="{{ ds.<id>.data.<path> }}"
           />
           {!exprIsValid && (

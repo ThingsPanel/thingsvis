@@ -4,7 +4,7 @@
 
 :root {
   /* Light theme with clean, minimal Zen-like aesthetic */
-  --background: 0 0% 96%;
+  --background: 0 0% 93%;
   --foreground: 0 0% 25%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 25%;
@@ -25,7 +25,7 @@
   --input: 240 1% 88%;
   /* Updated ring color to match primary */
   --ring: 270 15% 55%;
-  --radius: 0.75rem;
+  --radius: 0.5rem;
 
   /* Canvas background */
   --canvas-dot: 240 1% 80%;

@@ -1,6 +1,22 @@
 import { Text } from 'leafer-ui';
 import { entry } from './spec';
-import { type PluginMainModule } from '@thingsvis/schema';
+
+/**
+ * Plugin Main Module Type (inline definition for plugin independence)
+ * 插件主模块类型（内联定义，保证插件独立性）
+ * 
+ * NOTE: Plugins MUST NOT import from @thingsvis/* packages.
+ */
+type PluginMainModule = {
+  id: string;
+  name?: string;
+  category?: string;
+  icon?: string;
+  version?: string;
+  create: () => unknown;
+  schema?: any;
+  controls?: any;
+};
 
 /**
  * 创建文本组件实例
