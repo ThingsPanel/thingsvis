@@ -70,6 +70,7 @@ import { type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
+import LayerPanel from './LeftPanel/LayerPanel'
 import PropsPanel from './RightPanel/PropsPanel'
 // Data source management moved to separate page: #/data-sources
 import { loadPlugin } from '../plugins/pluginResolver'
@@ -84,17 +85,6 @@ type Language = "zh" | "en"
 
 function DataPanel(_props: { store: typeof store; language: Language }) {
   return null;
-}
-
-// Define Layer types
-type Layer = {
-  id: string
-  name: string
-  type: "group" | "component"
-  visible: boolean
-  locked: boolean
-  expanded?: boolean // Only for groups
-  children?: Layer[] // Only for groups
 }
 
 // Define CanvasConfigSchema
@@ -221,34 +211,6 @@ export default function Editor() {
     }
   }, [temporalSnapshot])
 
-  const [layers, setLayers] = useState<Layer[]>([
-    {
-      id: "group1",
-      name: "页面组 1",
-      type: "group",
-      visible: true,
-      locked: false,
-      expanded: true,
-      children: [
-        { id: "chart1", name: "折线图", type: "component", visible: true, locked: false },
-        { id: "text1", name: "标题文本", type: "component", visible: true, locked: false },
-      ],
-    },
-    {
-      id: "group2",
-      name: "数据展示",
-      type: "group",
-      visible: true,
-      locked: false,
-      expanded: false,
-      children: [
-        { id: "gauge1", name: "仪表盘", type: "component", visible: true, locked: false },
-        { id: "table1", name: "数据表格", type: "component", visible: false, locked: false },
-      ],
-    },
-    { id: "bg1", name: "背景图片", type: "component", visible: true, locked: true },
-  ])
-
   const handleUndo = useCallback(() => {
     store.temporal.getState().undo()
   }, [])
@@ -274,48 +236,6 @@ export default function Editor() {
       console.error('[Editor] failed to add node', e)
     }
   }, [])
-
-  const toggleLayerVisibility = (id: string) => {
-    setLayers((prev) =>
-      prev.map((layer) => {
-        if (layer.id === id) {
-          return { ...layer, visible: !layer.visible }
-        }
-        if (layer.type === "group" && layer.children) {
-          return {
-            ...layer,
-            children: layer.children.map((child) => (child.id === id ? { ...child, visible: !child.visible } : child)),
-          }
-        }
-        return layer
-      }),
-    )
-  }
-
-  const toggleLayerLock = (id: string) => {
-    setLayers((prev) =>
-      prev.map((layer) => {
-        if (layer.id === id) {
-          return { ...layer, locked: !layer.locked }
-        }
-        if (layer.type === "group" && layer.children) {
-          return {
-            ...layer,
-            children: layer.children.map((child) => (child.id === id ? { ...child, locked: !child.locked } : child)),
-          }
-        }
-        return layer
-      }),
-    )
-  }
-
-  const toggleGroupExpanded = (id: string) => {
-    setLayers((prev) =>
-      prev.map((layer) =>
-        layer.id === id && layer.type === "group" ? { ...layer, expanded: !layer.expanded } : layer,
-      ),
-    )
-  }
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode)
@@ -577,111 +497,7 @@ export default function Editor() {
               <ComponentsList onInsert={handleAddNode} language={language} />
             </div>
             ) : leftPanelTab === "layers" ? (
-              <div className="space-y-1">
-                {layers.map((layer) => (
-                  <div key={layer.id}>
-                      <div
-                        className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
-                          selectedElement === layer.id ? "bg-accent" : ""
-                        }`}
-                        onClick={() => store.getState().selectNode(layer.id)}
-                      >
-                      {layer.type === "group" && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleGroupExpanded(layer.id)
-                          }}
-                          className="p-0.5 hover:bg-muted rounded"
-                        >
-                          <ChevronRight
-                            className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
-                              layer.expanded ? "rotate-90" : ""
-                            }`}
-                          />
-                        </button>
-                      )}
-                      {layer.type === "component" && <div className="w-4" />}
-                      <div className="flex-1 flex items-center gap-2 min-w-0">
-                        {layer.type === "group" ? (
-                          <Folder className="h-4 w-4 text-[#6965db] flex-shrink-0" />
-                        ) : (
-                          <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        )}
-                        <span className="text-sm truncate">{layer.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleLayerVisibility(layer.id)
-                          }}
-                          className="p-0.5 hover:bg-muted rounded"
-                        >
-                          {layer.visible ? (
-                            <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                          ) : (
-                            <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            toggleLayerLock(layer.id)
-                          }}
-                          className="p-0.5 hover:bg-muted rounded"
-                        >
-                          <Lock
-                            className={`h-3.5 w-3.5 ${layer.locked ? "text-[#6965db]" : "text-muted-foreground"}`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                    {layer.type === "group" && layer.expanded && layer.children && (
-                      <div className="ml-5 space-y-1 mt-1">
-                        {layer.children.map((child) => (
-                          <div
-                            key={child.id}
-                            className={`group flex items-center gap-1.5 px-2 py-1.5 rounded hover:bg-accent cursor-pointer ${
-                              selectedElement === child.id ? "bg-accent" : ""
-                            }`}
-                            onClick={() => store.getState().selectNode(child.id)}
-                          >
-                            <Layers className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <span className="text-sm flex-1 truncate">{child.name}</span>
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  toggleLayerVisibility(child.id)
-                                }}
-                                className="p-0.5 hover:bg-muted rounded"
-                              >
-                                {child.visible ? (
-                                  <Eye className="h-3.5 w-3.5 text-muted-foreground" />
-                                ) : (
-                                  <EyeOff className="h-3.5 w-3.5 text-muted-foreground" />
-                                )}
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  toggleLayerLock(child.id)
-                                }}
-                                className="p-0.5 hover:bg-muted rounded"
-                              >
-                                <Lock
-                                  className={`h-3.5 w-3.5 ${child.locked ? "text-[#6965db]" : "text-muted-foreground"}`}
-                                />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <LayerPanel store={store} language={language} searchQuery={searchQuery} />
             ) : (
               <DataPanel store={store} language={language} />
             )}

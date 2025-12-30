@@ -112,12 +112,21 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
     if (!moveableRef.current || !containerRef.current) return;
     
     const selectedIds = state.selection.nodeIds;
-    // Only select nodes that actually exist in the current state
-    const validSelectedIds = selectedIds.filter(id => !!state.nodesById[id]);
+    // Only select nodes that actually exist in the current state and are not locked
+    const validSelectedIds = selectedIds.filter(id => {
+      const node = state.nodesById[id];
+      return !!node && !node.locked;
+    });
     
     const targets = validSelectedIds
       .map(id => containerRef.current?.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
+    
+    // Disable draggable/resizable for locked nodes
+    const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
+    moveableRef.current.draggable = !hasLockedSelection;
+    moveableRef.current.resizable = !hasLockedSelection;
+    moveableRef.current.rotatable = !hasLockedSelection;
     
     moveableRef.current.target = targets;
     
