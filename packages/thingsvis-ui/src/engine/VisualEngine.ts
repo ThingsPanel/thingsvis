@@ -193,7 +193,18 @@ export class VisualEngine {
               const w = ov.element.offsetWidth;
               const h = ov.element.offsetHeight;
               if (w > 0 && h > 0) {
+                // 1) sync Leafer placeholder (visual/interaction bounds)
                 (instance as any).set?.({ width: w, height: h });
+                // 2) sync schema.size so Studio proxy-layer / Moveable uses correct bounds
+                const prev = (node.schemaRef as any)?.size;
+                const prevW = typeof prev?.width === 'number' ? prev.width : undefined;
+                const prevH = typeof prev?.height === 'number' ? prev.height : undefined;
+                if (prevW !== w || prevH !== h) {
+                  const { updateNode } = this.store.getState() as KernelState & {
+                    updateNode?: (id: string, changes: { size?: { width: number; height: number } }) => void;
+                  };
+                  updateNode?.(node.id, { size: { width: w, height: h } });
+                }
               }
             });
           }
@@ -237,6 +248,15 @@ export class VisualEngine {
             const h = el.offsetHeight;
             if (w > 0 && h > 0) {
               (existing.instance as any).set?.({ width: w, height: h });
+              const prev = (node.schemaRef as any)?.size;
+              const prevW = typeof prev?.width === 'number' ? prev.width : undefined;
+              const prevH = typeof prev?.height === 'number' ? prev.height : undefined;
+              if (prevW !== w || prevH !== h) {
+                const { updateNode } = this.store.getState() as KernelState & {
+                  updateNode?: (id: string, changes: { size?: { width: number; height: number } }) => void;
+                };
+                updateNode?.(node.id, { size: { width: w, height: h } });
+              }
             }
           }
         });

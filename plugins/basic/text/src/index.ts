@@ -47,8 +47,9 @@ function applyStyles(element: HTMLDivElement, props: Props) {
   element.style.padding = props.padding ? `${props.padding}px` : '0';
   element.style.lineHeight = props.lineHeight ? String(props.lineHeight) : '1.4';
   element.style.letterSpacing = props.letterSpacing ? `${props.letterSpacing}px` : 'normal';
-  element.style.wordBreak = 'break-word';
-  element.style.whiteSpace = 'pre-wrap';
+  // Auto-size text: keep line breaks but do not auto-wrap.
+  element.style.wordBreak = 'normal';
+  element.style.whiteSpace = 'pre';
 }
 
 /**
@@ -57,15 +58,20 @@ function applyStyles(element: HTMLDivElement, props: Props) {
 function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   // 创建容器元素
   const element = document.createElement('div');
-  element.style.width = '100%';
-  element.style.height = '100%';
-  element.style.display = 'flex';
+  // IMPORTANT:
+  // - For resizable=false components, VisualEngine sets overlayBox to width/height:auto.
+  // - Therefore the overlay root must be fit-content to let the content determine size.
+  element.style.display = 'inline-flex';
   element.style.alignItems = 'center';
   element.style.justifyContent = 'flex-start';
-  element.style.overflow = 'hidden';
+  element.style.width = 'fit-content';
+  element.style.height = 'fit-content';
+  element.style.overflow = 'visible';
   element.style.pointerEvents = 'none'; // 允许点击穿透到 Canvas 进行选择
   element.style.userSelect = 'none';
   element.style.boxSizing = 'border-box';
+  // hint for host-side auto-size implementations/debugging
+  element.dataset.thingsvisOverlay = 'basic-text';
   
   // 合并默认值和传入的 props
   const defaults = getDefaultProps();
@@ -73,7 +79,10 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   
   // 创建内部文本元素
   const textEl = document.createElement('div');
-  textEl.style.width = '100%';
+  textEl.style.width = 'fit-content';
+  textEl.style.height = 'fit-content';
+  textEl.style.boxSizing = 'border-box';
+  textEl.dataset.thingsvisMeasure = '1';
   element.appendChild(textEl);
   
   // 应用初始样式
