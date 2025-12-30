@@ -22,6 +22,7 @@ type Props = {
   propsValue: unknown;
   bindings: DataBinding[] | undefined;
   updateNode: (changes: any) => void;
+  language?: string;
 };
 
 function allowedModes(field: ControlField): BindingMode[] {
@@ -30,7 +31,8 @@ function allowedModes(field: ControlField): BindingMode[] {
   return normalized.length ? normalized : ['static'];
 }
 
-export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode }: Props) {
+export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode, language }: Props) {
+  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
   const modes = useMemo(() => allowedModes(field), [field]);
 
   const persistedMode = useMemo(() => detectBindingMode(bindings, field.path), [bindings, field.path]);
@@ -43,19 +45,28 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
     return null;
   });
 
-  const [exprDraft, setExprDraft] = useState<string>(() => binding?.expression ?? '{{ }}');
+  const [exprDraft, setExprDraft] = useState<string>(() => binding?.expression ?? '{{ ds.<id>.data.<path> }}');
 
   const exprIsValid = useMemo(() => isValidExpression(exprDraft), [exprDraft]);
 
+  // When switching nodes/fields, sync UI mode to persisted mode.
+  // Do NOT continuously force UI mode from bindings; otherwise switching Field -> Expr
+  // will get "snapped back" as long as the expression still matches the field-binding pattern.
   useEffect(() => {
     setMode(persistedMode);
-    if (persistedMode === 'field') {
-      setFieldSelection(binding ? parseFieldBindingExpression(binding.expression) : null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodeId, field.path]);
+
+  // Keep UI drafts in sync with persisted binding expression.
+  useEffect(() => {
+    if (!binding) {
+      setFieldSelection(null);
+      return;
     }
-    if (persistedMode === 'expr') {
-      setExprDraft(binding?.expression ?? '{{ }}');
-    }
-  }, [persistedMode, binding]);
+    const selection = parseFieldBindingExpression(binding.expression);
+    setFieldSelection(selection);
+    setExprDraft(binding.expression);
+  }, [binding?.expression]);
 
   const setStatic = (nextValue: unknown) => {
     updateNode({
@@ -78,16 +89,28 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
     }
 
     if (next === 'expr') {
-      const initial = binding?.expression ?? exprDraft;
-      if (isValidExpression(initial)) {
-        setBindingExpr(initial);
-      }
+      // Switching to Expr should be immediate in the UI.
+      // Persist only when user enters a valid expression in the editor.
+      setExprDraft(binding?.expression ?? exprDraft);
     }
 
     // For 'field', we wait for a concrete FieldPicker selection to persist.
   };
 
   const showOverriddenHint = mode !== 'static' && propsValue !== undefined;
+
+  const modeLabel = (m: BindingMode) => {
+    switch (m) {
+      case 'static':
+        return t('静态', 'static');
+      case 'field':
+        return t('字段', 'field');
+      case 'expr':
+        return t('表达式', 'expr');
+      default:
+        return m;
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -98,11 +121,11 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           <select
             value={mode}
             onChange={(e) => handleModeChange(e.target.value as BindingMode)}
-            className="h-7 px-2 text-xs rounded-md border border-input bg-background"
+            className="h-7 px-2 text-xs rounded-md border border-input bg-background min-w-20"
           >
             {modes.map((m) => (
               <option key={m} value={m}>
-                {m}
+                {modeLabel(m)}
               </option>
             ))}
           </select>
@@ -158,6 +181,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
         <FieldPicker
           kernelStore={kernelStore}
           value={fieldSelection}
+          language={language}
           onChange={(next) => {
             setFieldSelection(next);
             if (next?.dataSourceId && next.fieldPath) {
@@ -179,11 +203,11 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               }
             }}
             className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
-            placeholder="{{ ds.id.data.path }}"
+            placeholder="{{ ds.<id>.data.<path> }}"
           />
           {!exprIsValid && (
             <p className="text-xs text-destructive">
-              Expression must be wrapped in {"{{ }}"}.
+              {t('表达式必须使用 {{ }} 包裹。', 'Expression must be wrapped in {{ }}.')}
             </p>
           )}
         </>
@@ -191,7 +215,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
 
       {showOverriddenHint && (
         <p className="text-xs text-muted-foreground italic">
-          Static value is overridden by binding.
+          {t('静态值已被绑定覆盖。', 'Static value is overridden by binding.')}
         </p>
       )}
     </div>

@@ -4,7 +4,7 @@
 
 :root {
   /* Light theme with clean, minimal Zen-like aesthetic */
-  --background: 0 0% 99%;
+  --background: 0 0% 96%;
   --foreground: 0 0% 25%;
   --card: 0 0% 100%;
   --card-foreground: 0 0% 25%;
@@ -38,9 +38,9 @@
 
 .dark {
   /* Dark theme with slate blue-gray tones, not pitch black */
-  --background: 240 1% 18%;
+  --background: 240 1% 14%;
   --foreground: 240 1% 92%;
-  --card: 240 1% 22%;
+  --card: 240 1% 24%;
   --card-foreground: 240 1% 92%;
   --popover: 240 1% 22%;
   --popover-foreground: 240 1% 92%;
@@ -91,7 +91,7 @@
 
 /* Glassmorphism effect for floating islands */
 .glass {
-  background: hsl(var(--card) / 0.8);
+  background: hsl(var(--card) / 0.9);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }

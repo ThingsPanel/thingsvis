@@ -82,7 +82,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
 
   const addBinding = () => {
     // 默认绑定到 text 属性
-    const newBindings = [...bindings, { targetProp: 'text', expression: '{{ ds. }}' }];
+    const newBindings = [...bindings, { targetProp: 'text', expression: '{{ ds.<id>.data.<path> }}' }];
     updateNode({ data: newBindings });
   };
 
@@ -170,6 +170,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                   propsValue={schema.props?.[field.path]}
                   bindings={schema.data}
                   updateNode={updateNode}
+                  language={language}
                 />
               ))}
             </div>
@@ -283,7 +284,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                 <Input 
                   value={binding.targetProp} 
                   onChange={(e) => updateBinding(index, 'targetProp', e.target.value)}
-                  placeholder="e.content, fill..."
+                  placeholder={labelZh("例如：text / fill / fontSize", "e.g. text / fill / fontSize")}
                   className="h-8 text-sm"
                 />
               </div>
@@ -296,7 +297,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
                 <textarea 
                   value={binding.expression} 
                   onChange={(e) => updateBinding(index, 'expression', e.target.value)}
-                  placeholder="{{ ds.id.data }}"
+                  placeholder="{{ ds.<id>.data.<path> }}"
                   className="w-full h-16 p-2 text-sm font-mono rounded-md border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
                 />
               </div>
