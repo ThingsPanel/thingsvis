@@ -1,4 +1,4 @@
-import { createStore } from 'zustand/vanilla';
+import { createStore, type StoreApi } from 'zustand/vanilla';
 import { immer } from 'zustand/middleware/immer';
 import { temporal } from 'zundo';
 import type { PageSchemaType, NodeSchemaType, IPage } from '@thingsvis/schema';
@@ -75,6 +75,14 @@ export type KernelActions = {
   updateDataSourceData: (id: string, data: any) => void;
 };
 
+export type KernelStoreState = KernelState & KernelActions;
+
+export type KernelStore = StoreApi<KernelStoreState> & {
+  // zundo's temporal middleware augments the store API at runtime.
+  // We keep this loosely typed to avoid coupling to zundo internals.
+  temporal: any;
+};
+
 const defaultCanvas: CanvasState = { 
   mode: 'infinite',
   width: 1920,
@@ -85,8 +93,8 @@ const defaultCanvas: CanvasState = {
 };
 
 export const createKernelStore = () =>
-  createStore(
-    temporal(
+  (createStore<KernelStoreState>()(
+    (temporal as any)(
       immer<KernelState & KernelActions>((set, get) => ({
       page: undefined,
       nodesById: {},
@@ -254,17 +262,15 @@ export const createKernelStore = () =>
       })),
       {
         limit: 200,
-        filter: (state, delta) => {
+        filter: (_state: unknown, delta: any) => {
           // Ignore selection changes in history
           if (delta && Object.keys(delta).length === 1 && delta.selection) {
             return false;
           }
           return true;
         }
-      }
+      } as any
     )
-  );
-
-export type KernelStore = ReturnType<typeof createKernelStore>;
+  ) as unknown as KernelStore);
 
 

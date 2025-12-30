@@ -269,8 +269,8 @@ export class VisualEngine {
     // Built-in fallback for legacy "rect" nodes
     if (type === 'rect') {
       const builtIn: RendererFactory = {
-        create: node => new Rect(this.toRectProps(node.schemaRef)),
-        update: (inst: any, node) => inst.set?.(this.toRectProps(node.schemaRef)),
+        create: node => new Rect(this.toRectProps(node)),
+        update: (inst: any, node) => inst.set?.(this.toRectProps(node)),
         destroy: inst => inst.remove?.()
       };
       this.rendererByType.set(type, builtIn);

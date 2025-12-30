@@ -12,8 +12,9 @@ export class ExpressionEvaluator {
     
     // If the expression is EXACTLY {{ path }}, return the raw value (could be an object/array)
     const singleMatch = /^\{\{(.+?)\}\}$/.exec(expression.trim());
-    if (singleMatch) {
-      return this.get(context, singleMatch[1].trim());
+    const singlePath = singleMatch?.[1];
+    if (singlePath !== undefined) {
+      return this.get(context, singlePath.trim());
     }
 
     // Otherwise, treat as a template string and replace all matches

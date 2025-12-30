@@ -11,10 +11,11 @@ const pluginCache = new Map<string, Promise<LoadedPlugin>>();
 function normalizeMainModule(mod: any): PluginMainModule {
   // Support both default-exported object and named exports
   const target = mod?.default || mod?.Main || mod;
-  if (target && typeof target.create === 'function') {
+  // 支持 Leafer 模板 (create) 和 Overlay 模板 (createOverlay)
+  if (target && (typeof target.create === 'function' || typeof target.createOverlay === 'function')) {
     return target as PluginMainModule;
   }
-  throw new Error('Invalid plugin module: expected exports to include { create }');
+  throw new Error('Invalid plugin module: expected exports to include { create } or { createOverlay }');
 }
 
 export async function loadPlugin(componentId: string): Promise<LoadedPlugin> {

@@ -25,8 +25,13 @@ export const createNodeDropCommand = (payload: {
     payload,
     execute(state: KernelState): KernelState {
       const next = structuredClone(state);
-      const page = next.page;
+      const page = next.page as any;
       if (!page) return next;
+
+      const nodesContainer: any = Array.isArray(page.nodes)
+        ? page
+        : (page.content && Array.isArray(page.content.nodes) ? page.content : null);
+      if (!nodesContainer) return next;
       const nodeSchema = {
         id: nodeId,
         type: payload.componentType,
@@ -34,7 +39,7 @@ export const createNodeDropCommand = (payload: {
         props: payload.initialProps ?? {}
       };
       // append to page nodes
-      (page.nodes as any[]).push(nodeSchema);
+      (nodesContainer.nodes as any[]).push(nodeSchema);
       // update nodesById
       next.nodesById[nodeId] = {
         id: nodeId,
@@ -47,10 +52,15 @@ export const createNodeDropCommand = (payload: {
     },
     undo(state: KernelState): KernelState {
       const next = structuredClone(state);
-      const page = next.page;
+      const page = next.page as any;
       if (!page) return next;
+
+      const nodesContainer: any = Array.isArray(page.nodes)
+        ? page
+        : (page.content && Array.isArray(page.content.nodes) ? page.content : null);
+      if (!nodesContainer) return next;
       // remove from page.nodes
-      page.nodes = (page.nodes as any[]).filter((n: any) => n.id !== nodeId) as any;
+      nodesContainer.nodes = (nodesContainer.nodes as any[]).filter((n: any) => n.id !== nodeId) as any;
       // remove from nodesById
       delete next.nodesById[nodeId];
       // clear selection or restore previous (best-effort: clear)
@@ -85,11 +95,12 @@ export const createNodeDropActionCommand = (pageId: string, payload: {
     execute() {
       const node = {
         id: nodeId,
-        type: payload.componentType,
-        position: payload.position,
+        pluginId: payload.componentType,
+        x: payload.position.x,
+        y: payload.position.y,
         props: payload.initialProps ?? {}
       };
-      action.addNode(pageId, node);
+      action.addNode(pageId, node as any);
       return nodeId;
     },
     undo() {

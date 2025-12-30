@@ -4,8 +4,6 @@
  * Minimal adapter skeleton to mount Leafer Viewport and manage node primitives.
  * This file provides imperative methods used by VisualEngine to keep React out of per-frame updates.
  */
-import type { CanvasInstance } from "../../../specs/004-load-registry-components/data-model";
-
 export class LeaferAdapter {
   private viewport: any = null;
   private nodes: Map<string, any> = new Map();

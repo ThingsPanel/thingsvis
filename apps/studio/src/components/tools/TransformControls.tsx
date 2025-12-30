@@ -51,8 +51,8 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
       selectoRef.current.on("select", (e) => {
         const selectedIds = e.selected.map(el => el.getAttribute("data-node-id")).filter(Boolean) as string[];
         if (selectedIds.length > 0) {
-          kernelStore.getState().selectNode(selectedIds[0]); // MVP: single select
-        } else if (e.isDragStart) {
+          kernelStore.getState().selectNode(selectedIds[0] ?? null); // MVP: single select
+        } else if ((e as any).isDragStartEnd) {
           kernelStore.getState().selectNode(null as any);
         }
       });

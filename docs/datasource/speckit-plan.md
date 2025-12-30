@@ -1,5 +1,12 @@
 # SpecKit Plan: Data Source Integration
 
+> 说明：如果你要做“Superset 风格优先”的组件字段选择/映射 + 动态属性面板（而不仅是数据源接入本身），请直接参考：
+> - docs/superset-style/commands.md
+> - docs/superset-style/speckit-specify.md
+> - docs/superset-style/speckit-plan.md
+> - docs/superset-style/speckit-tasks.md
+> - docs/superset-style/speckit-implement.md
+
 /speckit.specify
 Build a "Multi-type Data Source Integration" feature for the thingsvis visualization project.
 The system must support fetching and displaying data from various sources including REST APIs, Real-time streams (WebSocket/MQTT), and Databases (via API proxies).

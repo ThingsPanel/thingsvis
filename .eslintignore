@@ -5,6 +5,10 @@ coverage/
 *.min.js
 *.log
 
+.turbo/
+.pnpm-store/
+.env*
+
 node_modules/
 dist/
 build/

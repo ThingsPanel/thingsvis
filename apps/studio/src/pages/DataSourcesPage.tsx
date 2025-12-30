@@ -1,9 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity, ArrowLeft } from 'lucide-react';
+import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity, ArrowLeft, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { createKernelStore, type KernelStore, dataSourceManager } from '@thingsvis/kernel';
+import { dataSourceManager } from '@thingsvis/kernel';
 import type { DataSourceType } from '@thingsvis/schema';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { RESTForm } from '../plugins/DataSourceConfig/RESTForm';
@@ -11,18 +11,14 @@ import { WSForm } from '../plugins/DataSourceConfig/WSForm';
 import { TransformationEditor } from '../plugins/DataSourceConfig/TransformationEditor';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
-
-// Create a dedicated store for the data sources page
-const store = createKernelStore();
-
-// Initialize DataSourceManager
-dataSourceManager.init(store);
+import { store } from '../lib/store';
 
 export default function DataSourcesPage() {
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [language] = useState<'zh' | 'en'>('zh');
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
 
   const [staticJsonText, setStaticJsonText] = useState<string>("{}");
   const [staticJsonError, setStaticJsonError] = useState<string | null>(null);
@@ -80,6 +76,9 @@ export default function DataSourcesPage() {
       });
       setIsAdding(false);
       setSelectedId(editingSource.id);
+      // Show success toast
+      setToast({ message: label('数据源保存成功！', 'Data source saved successfully!'), visible: true });
+      setTimeout(() => setToast({ message: '', visible: false }), 3000);
       console.log('[DataSourcesPage] Saved data source:', editingSource.id);
     } catch (e) {
       console.error('[DataSourcesPage] Failed to save source', e);
@@ -346,6 +345,16 @@ export default function DataSourcesPage() {
           )}
         </div>
       </div>
+
+      {/* Success Toast */}
+      {toast.visible && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg shadow-lg shadow-green-500/20">
+            <CheckCircle className="h-5 w-5" />
+            <span className="font-medium">{toast.message}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

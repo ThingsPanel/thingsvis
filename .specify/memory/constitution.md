@@ -1,70 +1,93 @@
 <!--
 Sync Impact Report
-- Version change: N/A → 1.0.0
-- Modified principles: new constitution
-- Added sections: Architecture & Technology Constraints; Development Workflow & Quality Gates
-- Removed sections: none
-- Templates requiring updates: ✅ .specify/templates/plan-template.md | ✅ .specify/templates/spec-template.md | ✅ .specify/templates/tasks-template.md | ⚠️ commands templates (not present)
-- Follow-up TODOs: TODO(RATIFICATION_DATE): original adoption date not provided
-
-Sync Impact Report
-- Version change: N/A → 1.1.0
-- Modified principles: 强调了ui组件必须是无样式文件，组件必须沙盒封装
-- Date: 2025/12/16
+- Version change: 1.0.0 → 1.1.0
+- Modified principles: Filled previously-empty template principles
+- Added sections: Additional Constraints, Development Workflow, Plugin Independence (VI)
+- Removed sections: N/A
+- Templates requiring updates: ✅ none (plan/spec/tasks templates remain valid)
 -->
 
 # ThingsVis Constitution
 
 ## Core Principles
 
-### I. Monorepo & Workspace Discipline
-ThingsVis MUST operate as a pnpm workspace monorepo orchestrated by Turborepo.
-- `packages/thingsvis-kernel`: Pure logic (Store, EventBus). **NO React/DOM dependencies.**
-- `packages/thingsvis-ui`: Headless visual adapters. **NO default styles/CSS.**
-- `packages/thingsvis-schema`: Pure data types (Zod). **Dependency Level 0.**
-- `apps/*` & `plugins/*`: The implementation layer where styles (Tailwind) are applied.
-Rationale: Strict separation of concerns allows the engine to run in diverse environments (e.g., Web Workers, Server-side).
+### I. Micro‑Kernel & Separation of Concerns
 
-### II. Micro-Kernel Isolation
-The kernel (L0) is the "Brain". It owns lifecycle, messaging, and the **Logic Sandbox** (SafeExecutor). It MUST NOT depend on plugins (L1) or the editor (L2). Plugins integrate only through published contracts. Rationale: Preserves extensibility and prevents "God Object" kernels.
+- Kernel logic MUST remain UI‑free. Any React/DOM/UI dependencies belong in apps or UI packages, not `packages/thingsvis-kernel`.
+- Visual rendering MUST remain behind the existing Leafer/Overlay engine boundaries.
+- Components (plugins) MUST be primarily data-driven: they render from props and do not perform network side effects.
 
-### III. Stack Mandates & Type Safety
-Rspack with Module Federation 2.0 is mandatory for builds. TypeScript 5.x runs in strict mode. Runtime validation uses Zod in `packages/thingsvis-schema` as the single source of truth.
+Rationale: This preserves testability, performance, and plugin isolation.
 
-### IV. Rendering & State Pipeline (React Bypass)
-Rendering MUST follow the "React Bypass" pattern for performance:
-1.  **State**: Zustand + Immer (Vanilla store in Kernel).
-2.  **Sync**: `VisualEngine` (in UI package) subscribes to Store and updates LeaferJS/ThreeJS instances directly.
-3.  **React**: Only renders the container `div` and the `CanvasView` wrapper. React Re-renders are minimized.
-Rationale: Supporting 1000+ nodes at 60FPS requires bypassing React's reconciliation for every frame.
+### II. Schema‑First Contracts (Zod)
 
-### V. Sandbox Strategy & UI Discipline
-- **Logic Sandbox**: The Kernel MUST implement a `SafeExecutor` to catch JS errors in user logic/plugins without crashing the main thread.
-- **Visual Sandbox**: The UI package MUST provide a `<HeadlessErrorBoundary>` that accepts a `fallback` prop but applies **NO styles** itself.
-- **Styling Rule**: `packages/thingsvis-ui` components must be unstyled (Headless). `apps/*` and `plugins/*` MUST use TailwindCSS + `shadcn/ui`.
-Rationale: Resilient operator experiences; Kernel stability does not depend on UI correctness.
+- Runtime data structures that are persisted or exchanged across packages MUST have schemas in `packages/thingsvis-schema`.
+- Zod is the source of truth for validation. TypeScript types MUST be derived from schemas where applicable.
+- Public schema APIs MUST remain backward compatible unless a migration plan is provided.
 
-## Architecture & Technology Constraints
+Rationale: Prevents silent runtime drift and supports incremental evolution.
 
-- **Build**: Rspack + Module Federation 2.0.
-- **Data Truth**: All shared shapes, events, and configuration types live in `packages/thingsvis-schema`.
-- **Rendering**: 2D via `leafer-ui`; 3D via `react-three-fiber`.
-- **State**: Centralized stores with zustand/immer; mutations go through typed actions.
-- **Performance**: Core bundle <800KB. Target ≥50 FPS.
+### III. Type Safety & Predictability
 
-## Development Workflow & Quality Gates
+- TypeScript strict mode MUST remain enabled.
+- Avoid `any` in shared contracts. If unavoidable at boundaries, keep it isolated and well‑documented.
+- “Magic strings” used as contracts (e.g., binding paths) MUST be explicitly documented and kept stable.
 
-- **Spec-driven**: Define `NodeSchema` in Zod before implementing Renderers.
-- **Headless Check**: PRs to `thingsvis-ui` MUST be rejected if they contain CSS/Tailwind classes.
-- **Sandbox Check**: New features must demonstrate they do not crash the app when they fail (try-catch or ErrorBoundary).
-- **Documentation Language (Hard Rule)**: All generated or updated project documents (Specs/Plans/Tasks/README/docs) MUST be written in Chinese. English is allowed only for code identifiers, API names, file paths, and unavoidable external proper nouns.
-- **Code Comments**: Critical logic, complex algorithms, and necessary code locations MUST include Chinese comments.
-- **Testing**: Contract tests for kernel ↔ plugin interfaces.
+Rationale: Protects a low‑code system from hard-to-debug configuration regressions.
+
+### IV. Backward Compatibility & Incremental Adoption
+
+- Existing saved pages/projects MUST keep rendering and editing without user action.
+- New capabilities MUST be opt‑in and degrade gracefully (fallback paths for older content and components).
+- Any breaking changes MUST include a migration strategy and validation coverage.
+
+Rationale: Enables rolling upgrades across many dashboards/pages.
+
+### V. Simplicity & Performance
+
+- Prefer the smallest viable feature slice that proves the user workflow.
+- Avoid introducing new global abstractions unless the feature requires them.
+- Keep interactive editing responsive; avoid heavy computation on the UI thread.
+
+Rationale: The editor must remain usable at scale (many nodes, frequent updates).
+
+### VI. Plugin Independence & Third‑Party Development
+
+- Plugins MUST NOT import from `@thingsvis/*` internal packages (kernel, schema, ui, utils). These packages are for host application use only.
+- Plugins MUST define their types inline. The plugin entry interface is a "contract by convention" — the host expects a specific shape, but plugins define it themselves.
+- Plugins MAY only depend on:
+  - Standard npm packages (e.g., `zod`, `lodash`)
+  - Rendering libraries declared as peerDependencies (e.g., `react`, `leafer-ui`)
+  - Their own internal modules
+- The host uses duck typing to validate plugin exports. If a plugin exports an object with the expected shape, it will work.
+
+Rationale: Third-party developers MUST be able to build, test, and distribute plugins independently without access to this monorepo. This enables a healthy plugin ecosystem beyond the core team.
+
+## Additional Constraints
+
+- Monorepo uses `pnpm` workspaces + Turborepo; new work MUST fit within the existing package/app boundaries.
+- Rendering discipline: Leafer/Overlay architecture is authoritative; do not replace or bypass it without an explicit project decision.
+- Property resolution and expression evaluation SHOULD remain centralized (single canonical resolver), to avoid divergent behavior between Studio and runtime.
+
+## Development Workflow
+
+- Use Spec‑Driven Development (`/speckit.*`) for non-trivial features.
+- Update shared contracts first (schemas/types), then UI, then plugin examples.
+- For shared utilities and pure logic, add unit tests where a test harness already exists.
+
+## Quality Gates
+
+- `pnpm typecheck` MUST pass for affected packages/apps.
+- Changes to `packages/thingsvis-schema` MUST not break existing imports.
+- MVP acceptance scenarios in the feature spec MUST be demonstrable in Studio.
 
 ## Governance
 
-- This constitution supersedes conflicting guidelines.
-- **Compliance**: Code reviews block on violations of the "Headless UI" or "React Bypass" rules unless explicitly justified.
-- **Versioning**: v1.1.0 introduces strict Sandbox & Headless separation.
+- This constitution is authoritative for Specs/Plans/Tasks.
+- Amendments MUST be explicit and reviewed; if a principle changes, update dependent templates or feature plans as needed.
+- Versioning policy:
+	- MAJOR: backward-incompatible governance change
+	- MINOR: new principle/section added or materially expanded
+	- PATCH: clarifications and non-semantic wording updates
 
-**Version**: 1.1.0 | **Ratified**: 2025-12-15 | **Last Amended**: 2025-12-15
+**Version**: 1.1.0 | **Ratified**: 2025-12-30 | **Last Amended**: 2025-12-30

@@ -1,5 +1,4 @@
-import type { FederationHost } from '@module-federation/runtime';
-import { init as initRemote, loadRemote } from '@module-federation/runtime';
+import * as mfRuntime from '@module-federation/runtime';
 
 type RemoteScopeConfig = {
   name: string;
@@ -30,7 +29,7 @@ export class Loader {
   private remoteInitPromises = new Map<string, Promise<void>>();
   private moduleCache = new Map<RemoteCacheKey, Promise<unknown>>();
   private remoteEntryFetchPromises = new Map<string, Promise<string>>();
-  private host?: FederationHost;
+  private host?: any;
 
   private constructor() {
     // singleton – use Loader.instance
@@ -73,6 +72,11 @@ export class Loader {
 
     if (!this.host) {
       // 关键：runtime init() 返回 FederationHost（同步），并且是全局单例。
+      const initRemote = (mfRuntime as any).init;
+      if (typeof initRemote !== 'function') {
+        throw new Error('Module Federation runtime is missing init()');
+      }
+
       this.host = initRemote({
         name: 'thingsvis_host',
         remotes: []
@@ -174,8 +178,13 @@ export class Loader {
       await initPromise;
       const expose = module.startsWith('./') ? module.slice(2) : module;
       const id = `${scope}/${expose}`;
-      const remoteModule = (await loadRemote<T>(id)) as T;
-      return remoteModule as T;
+      const loadRemote = (mfRuntime as any).loadRemote;
+      if (typeof loadRemote !== 'function') {
+        throw new Error('Module Federation runtime is missing loadRemote()');
+      }
+
+      const remoteModule = (await loadRemote(id)) as T;
+      return remoteModule;
     })();
 
     this.moduleCache.set(cacheKey, loadPromise as unknown as Promise<unknown>);

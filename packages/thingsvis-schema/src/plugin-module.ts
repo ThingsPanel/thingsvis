@@ -6,6 +6,8 @@
  * - Hosts can treat `Spec` as "unknown" and render it if it matches their runner expectations.
  */
 
+import type { PluginControls } from './plugin-controls';
+
 export type PluginComponentId = string; // e.g. "basic/rect"
 
 /**
@@ -65,15 +67,28 @@ export type PluginMainModule = {
   /**
    * Create a Leafer-compatible renderer instance (usually a Leafer UI node).
    * The host is responsible for mounting/updating/destroying it.
+   * 
+   * Note: Either `create` or `createOverlay` must be provided.
+   * - Use `create` for Leafer-based components (basic, layout, etc.)
+   * - Use `createOverlay` for DOM-based components (chart, media, 3D, etc.)
    */
-  create: () => unknown;
+  create?: () => unknown;
   /**
    * Zod Schema for props validation and UI generation.
    * Host treats it as any to avoid strict zod dependency in all consumers.
    */
   schema?: any;
+
   /**
-   * 可选：创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
+   * Optional serializable Controls definition for Studio property panel generation.
+   *
+   * If missing or invalid, Studio should fall back to its legacy/manual panel.
+   */
+  controls?: PluginControls;
+  /**
+   * 创建 DOM Overlay（用于 ECharts / HTML 容器等非 Leafer 渲染场景）
+   * 
+   * Note: Either `create` or `createOverlay` must be provided.
    */
   createOverlay?: (ctx: PluginOverlayContext) => PluginOverlayInstance;
 };

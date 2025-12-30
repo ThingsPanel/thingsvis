@@ -42,7 +42,10 @@ export {
 } from './component-registry';
 
 // Export plugin remote module contract types (L1 plugin layer)
-export { type PluginMainModule, type PluginComponentId } from './plugin-module';
+export { type PluginMainModule, type PluginComponentId, type PluginOverlayContext } from './plugin-module';
+
+// Export plugin controls contract types/schemas (Studio dynamic panel)
+export * from './plugin-controls';
 
 // Export datasource schemas and types
 export * from './datasource/index';

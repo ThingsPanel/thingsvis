@@ -116,7 +116,7 @@ const App: React.FC = () => {
         // eslint-disable-next-line no-console
         console.log('✅ Schema Loaded:', plugin.entry.schema);
       }
-      const Spec = plugin.entry.Spec as React.ComponentType | undefined;
+      const Spec = (plugin.entry as any).Spec as React.ComponentType | undefined;
       if (!Spec) {
         throw new Error('Plugin does not export Spec');
       }

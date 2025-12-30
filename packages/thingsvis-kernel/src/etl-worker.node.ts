@@ -1,5 +1,5 @@
 import { parentPort } from "worker_threads";
-import { PageSchema } from "../../thingsvis-schema/src/canvas-schema";
+import { PageSchema } from "@thingsvis/schema";
 
 function handleMessage(msg: any) {
   try {

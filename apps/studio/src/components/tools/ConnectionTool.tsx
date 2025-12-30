@@ -50,9 +50,11 @@ export default function ConnectionTool({ kernelStore, activeTool }: Props) {
 
   if (activeTool !== "arrow" || !sourceNodeId) return null;
 
+  const language = (state as any).language as 'zh' | 'en' | undefined;
+
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-[#6965db] text-white px-4 py-2 rounded-full shadow-lg z-[100] text-sm animate-pulse">
-      {state.language === "zh" ? "请选择目标节点完成连线" : "Select target node to connect"}
+      {language === "zh" ? "请选择目标节点完成连线" : "Select target node to connect"}
     </div>
   );
 }

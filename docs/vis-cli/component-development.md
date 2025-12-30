@@ -1,115 +1,232 @@
-# ThingsVis 组件开发与数据源配置规范 (V2)
+# ThingsVis 组件开发规范 (V3)
 
-本指南旨在为开发者（包括 AI 助手）提供开发 ThingsVis 插件的严格标准。所有组件必须遵循此规范以确保在 ThingsVis 生态（Studio、Preview、Kernel）中正常运行。
+本指南为开发者（包括 AI 助手）提供开发 ThingsVis 插件的严格标准。
 
 ## 1. 核心架构原则
 
-- **驱动分离**：组件仅负责渲染（Dumb Component），逻辑与数据解析由 Kernel 层处理。
-- **无样式类依赖**：禁止在 `packages/thingsvis-ui` 中编写样式，所有组件样式应在插件自身的 `src/styles.css` 中定义（支持 Tailwind）。
-- **属性绑定**：组件属性支持 `{{ ds.id.data.path }}` 表达式，实现动态数据驱动。
+- **插件独立性**：插件禁止从 `@thingsvis/*` 包导入任何内容
+- **驱动分离**：组件仅负责渲染（Dumb Component），逻辑与数据解析由 Kernel 层处理
+- **属性绑定**：组件属性支持 `{{ ds.id.data.path }}` 表达式，实现动态数据驱动
+- **Superset 风格**：优先提供结构化的「字段选择/映射」体验
 
 ## 2. 目录结构规范
-
-每个组件插件必须位于 `plugins/[category]/[name]/` 目录下，结构如下：
 
 ```text
 plugins/[category]/[name]/
 ├── src/
-│   ├── index.tsx       # 1. 渲染入口：接收解析后的 props 进行展示
-│   ├── spec.tsx        # 2. 元数据定义：包含组件 ID、名称、图标及 Zod 属性 Schema
-│   ├── data.ts         # 3. 数据契约：定义默认数据绑定和演示用的 Mock 数据
-│   └── styles.css      # 4. 样式文件：组件私有样式
-├── assets/             # 5. 静态资源：组件使用的图标、图片、SVG
-├── preview/            # 6. 预览资源：用于 Studio 组件库展示的缩略图 (thumbnail.png)
-├── package.json        # 7. 模块配置：定义 Module Federation 导出入口
-└── rspack.config.js    # 8. 编译配置：Rspack 构建脚本
+│   ├── index.ts      # 主入口：创建节点 + 导出 Main
+│   ├── schema.ts     # ⭐ 属性定义：开发者重点关注
+│   ├── metadata.ts   # 组件元数据：id/name/category/icon
+│   ├── controls.ts   # 面板配置：分组/覆盖/绑定
+│   └── lib/          # 📦 内部库（无需修改）
+│       └── types.ts  # 类型定义和工具函数
+├── README.md         # 组件文档
+├── package.json      # 模块配置
+├── rspack.config.js  # 编译配置
+└── tsconfig.json     # TypeScript 配置
 ```
 
-## 3. 文件详细说明
+## 3. 文件职责说明
 
-### 3.1 `src/spec.tsx` (元数据与属性)
-该文件定义了组件的“身份证”。
-- **必须** 导出一个名为 `entry` 的对象。
-- **必须** 使用 `zod` 定义 `schema`，以便 Studio 生成属性编辑表单。
+### 3.1 `src/schema.ts` ⭐ 开发者重点关注
 
-### 3.2 `src/data.ts` (数据契约 - NEW)
-该文件定义了组件如何与外部数据源联动。
-- **`defaultDataBinding`**: 定义组件创建时默认绑定的属性。
-- **`mockDataSource`**: 提供开发调试用的示例数据。
+使用 Zod 定义组件的所有可配置属性：
 
-### 3.3 `src/index.tsx` (渲染逻辑)
-接收经过 `Kernel` 解析后的属性。如果属性中包含 `{{ }}`，在到达此文件时已被替换为真实值。
-
----
-
-## 4. AI 开发指令 (Prompting Guide)
-
-如果你是 AI 助手，请遵循以下步骤创建组件：
-
-1. **分析需求**：确定组件需要的可配置属性（如颜色、大小、文本内容）。
-2. **定义 Schema**：在 `spec.tsx` 中编写 Zod 对象。
-3. **建立绑定**：在 `data.ts` 中定义哪些属性默认应从数据源获取。
-4. **实现渲染**：在 `index.tsx` 中编写 React 代码，使用 `leafer-ui` 或 `HTML/ECharts` 叠加层。
-
----
-
-## 5. 标准案例：文本组件 (Text Component)
-
-以下是符合规范的完整文本组件实现参考。
-
-### 5.1 `src/spec.tsx` (元数据)
-```tsx
+```typescript
 import { z } from 'zod';
-import { type PluginMainModule } from '@thingsvis/schema';
 
-const TextPropsSchema = z.object({
-  text: z.string().describe('文本内容'),
-  fontSize: z.number().default(16).describe('字号'),
-  fill: z.string().default('#000000').describe('颜色'),
+export const PropsSchema = z.object({
+  // 内容属性（通常需要数据绑定）
+  text: z.string().default('请输入文本').describe('文本内容'),
+  
+  // 样式属性
+  fill: z.string().default('#000000').describe('文字颜色'),
+  fontSize: z.number().min(1).max(999).default(16).describe('字号'),
+  fontWeight: z.enum(['normal', 'bold']).default('normal').describe('字重'),
 });
 
-export const entry: PluginMainModule = {
+export type Props = z.infer<typeof PropsSchema>;
+
+export function getDefaultProps(): Props {
+  return PropsSchema.parse({});
+}
+```
+
+### 3.2 `src/metadata.ts` 组件元数据
+
+```typescript
+export const metadata = {
   id: 'basic-text',
   name: '基础文本',
   category: 'basic',
   icon: 'Type',
-  version: '2.0.0',
-  schema: TextPropsSchema,
-};
+  version: '1.0.0',
+} as const;
 ```
 
-### 5.2 `src/data.ts` (数据绑定)
-```tsx
-import { DataBinding, DataSource } from '@thingsvis/schema';
+### 3.3 `src/controls.ts` 面板配置
 
-export const defaultDataBinding: DataBinding[] = [
-  {
-    targetProp: 'text',
-    expression: '{{ ds.mock_text.data.text }}'
-  }
-];
+```typescript
+import { PropsSchema } from './schema';
+import { generateControls } from './lib/types';
 
-export const mockDataSource: DataSource = {
-  id: 'mock_text',
-  type: 'STATIC',
-  config: { value: { text: 'Hello Dynamic!' } }
-};
+export const controls = generateControls(PropsSchema, {
+  // 属性分组
+  groups: {
+    Content: ['text'],
+    Style: ['fill', 'fontSize', 'fontWeight'],
+  },
+  // 覆盖控件类型
+  overrides: {
+    fill: { kind: 'color' },
+  },
+  // 数据绑定配置
+  bindings: {
+    text: { enabled: true, modes: ['static', 'field', 'expr'] },
+    fill: { enabled: true, modes: ['static', 'field', 'expr'] },
+  },
+});
 ```
 
-### 5.3 `src/index.tsx` (渲染逻辑)
-```tsx
+### 3.4 `src/index.ts` 主入口
+
+```typescript
 import { Text } from 'leafer-ui';
-import { entry } from './spec';
+import { metadata } from './metadata';
+import { PropsSchema, getDefaultProps } from './schema';
+import { controls } from './controls';
+import type { PluginMainModule } from './lib/types';
 
-export function create() {
+function create(): Text {
+  const defaults = getDefaultProps();
   return new Text({
-    text: '占位', 
-    fontSize: 16,
+    text: defaults.text,
+    fontSize: defaults.fontSize,
+    fill: defaults.fill,
     draggable: true,
+    cursor: 'pointer',
   });
 }
 
-export const Main = { ...entry, create };
+export const Main: PluginMainModule = {
+  ...metadata,
+  schema: PropsSchema,
+  controls,
+  create,
+};
+
 export default Main;
 ```
+
+### 3.5 `src/lib/types.ts` 内部类型（无需修改）
+
+包含 `PluginMainModule` 类型定义和 `generateControls` 工具函数。
+由模板生成，保证插件独立性。放在 `lib/` 目录下，开发者无需关注。
+
+## 4. AI 开发指令
+
+如果你是 AI 助手，请遵循以下步骤：
+
+1. **分析需求**：确定组件需要的可配置属性
+2. **定义 Schema**：在 `schema.ts` 中使用 Zod 定义属性
+3. **配置面板**：在 `controls.ts` 中配置分组、控件类型、绑定
+4. **实现渲染**：在 `index.ts` 中创建 Leafer UI 节点
+
+## 5. 控件类型说明
+
+| kind | 说明 | 适用场景 |
+|------|------|----------|
+| `string` | 文本输入 | 普通文本属性 |
+| `number` | 数字输入 | 尺寸、位置等 |
+| `boolean` | 开关 | 布尔标志 |
+| `color` | 颜色选择器 | 颜色属性 |
+| `select` | 下拉选择 | 枚举属性 |
+| `json` | JSON 编辑器 | 复杂对象 |
+
+## 6. 绑定模式说明
+
+| mode | 说明 | 适用用户 |
+|------|------|----------|
+| `static` | 静态值输入 | 所有用户 |
+| `field` | 从数据源字段选择 | 普通用户（Superset 风格） |
+| `expr` | 表达式编辑器 | 高级用户 |
+| `rule` | 条件规则 | 预留 |
+
+## 7. 开发命令
+
+```bash
+# 创建新组件
+pnpm vis-cli create <category> <name>
+
+# 启动开发服务器
+cd plugins/<category>/<name>
+pnpm dev
+
+# 类型检查
+pnpm exec tsc --noEmit
+
+# 构建
+pnpm build
+```
+
+## 8. 组件分类
+
+| 分类 | 说明 | 渲染方式 | 模板 |
+|------|------|----------|------|
+| `basic` | 基础 UI 元素 | Leafer UI | Leafer |
+| `layout` | 布局容器 | Leafer Group | Leafer |
+| `media` | 图片、视频 | Leafer Image / Overlay | Overlay |
+| `chart` | 图表可视化 | DOM Overlay (ECharts) | Overlay |
+| `custom` | 自定义组件 | 混合 | 视情况 |
+| `data` | 数据组件 | 无渲染 | Headless |
+| `interaction` | 交互控件 | Leafer + 事件 | Leafer |
+
+## 9. Overlay 模板
+
+用于需要 DOM 容器的组件（ECharts、视频、3D 等）。
+
+### 与 Leafer 模板的区别
+
+| 特性 | Leafer 模板 | Overlay 模板 |
+|------|-------------|--------------|
+| 入口函数 | `create()` | `createOverlay()` |
+| 返回值 | Leafer UI 节点 | `{ element, update, destroy }` |
+| 渲染方式 | Canvas | DOM 容器 |
+| 适用场景 | 基础图形 | ECharts/视频/3D |
+
+### createOverlay 结构
+
+```typescript
+function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
+  // 1. 创建 DOM 容器
+  const element = document.createElement('div');
+  element.style.width = '100%';
+  element.style.height = '100%';
+  
+  // 2. 初始化第三方库
+  const chart = echarts.init(element);
+  chart.setOption(buildOption(ctx.props));
+  
+  return {
+    element,
+    
+    // 3. 属性更新回调
+    update: (newCtx) => {
+      chart.setOption(buildOption(newCtx.props));
+      if (newCtx.size) chart.resize();
+    },
+    
+    // 4. 销毁回调（必须清理资源）
+    destroy: () => {
+      chart.dispose();
+    },
+  };
+}
+```
+
+### 参考示例
+
+- `plugins/chart/echarts-line/` - ECharts 折线图组件
+| `data` | 数据组件 | 无渲染 |
+| `interaction` | 交互控件 | Leafer + 事件 |
 

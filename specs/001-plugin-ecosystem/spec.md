@@ -66,6 +66,51 @@ A developer can generate a new plugin skeleton for a chosen component category, 
 
 **Constitution Alignment**: Confirm solutions respect the monorepo boundary conventions, strict typing expectations, schema discipline, renderer discipline (no ad-hoc DOM drawing), predictable state management, performance targets for interactive canvas work, and robust error boundaries around third-party/extension code.
 
+### Plugin Independence Principle (Constitutional Rule)
+
+**CRITICAL**: Plugins MUST be fully independent and self-contained. Third-party developers MUST be able to develop plugins without access to or dependency on this monorepo's internal packages.
+
+**Mandatory Rules**:
+
+1. **No Internal Package Imports**: Plugins MUST NOT import from `@thingsvis/*` packages (kernel, schema, ui, utils). These are internal packages for the host application only.
+
+2. **Inline Type Definitions**: Plugins MUST define their own types inline. The plugin entry interface is a "contract by convention" - the host expects a specific shape, but plugins define it themselves:
+
+   ```typescript
+   // ✅ CORRECT: Inline type definition
+   type PluginEntry = {
+     id: string;
+     name?: string;
+     category?: string;
+     icon?: string;
+     version?: string;
+     create: () => unknown;
+     schema?: any;  // Zod schema for props
+     controls?: any; // UI controls definition
+   };
+   
+   // ❌ WRONG: Importing from internal packages
+   import { type PluginMainModule } from '@thingsvis/schema';
+   ```
+
+3. **Allowed Dependencies**: Plugins may only depend on:
+   - Standard npm packages (e.g., `zod`, `lodash`)
+   - Rendering libraries declared as peerDependencies (e.g., `react`, `leafer-ui`)
+   - Their own internal modules
+
+4. **PeerDependencies Contract**: Plugins declare rendering dependencies as peerDependencies. The host provides these at runtime via Module Federation shared scope:
+   - `react`, `react-dom` (if using React)
+   - `leafer-ui` (for canvas rendering)
+   - Other standard libraries as needed
+
+5. **Duck Typing**: The host uses duck typing to validate plugin exports. If a plugin exports an object with the expected shape, it will work. No strict type imports are required or allowed.
+
+**Rationale**: This ensures that:
+- Third-party developers can build plugins in isolation
+- Plugins can be distributed independently (npm, CDN, etc.)
+- Breaking changes in internal packages don't break existing plugins
+- The plugin ecosystem can grow beyond the core team
+
 ### Functional Requirements
 
 - **FR-001**: The product MUST support loading a component implementation dynamically at runtime using a `componentId` resolved from a registry.

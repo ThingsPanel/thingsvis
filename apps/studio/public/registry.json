@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2025-12-26T20:15:00.000Z",
+  "generatedAt": "2025-12-30T08:00:00.000Z",
   "components": {
     "basic/text": {
       "remoteName": "thingsvis_plugin_basic_text",
@@ -8,7 +8,15 @@
       "staticEntryUrl": "/plugins/basic/text/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "2.0.0"
+      "version": "1.0.0"
+    },
+    "chart/曲线": {
+      "remoteName": "thingsvis_plugin_chart_echarts_line",
+      "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
+      "staticEntryUrl": "/plugins/chart/echarts-line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0"
     }
   }
 }

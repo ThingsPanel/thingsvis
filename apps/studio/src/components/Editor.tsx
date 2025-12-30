@@ -66,7 +66,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createKernelStore, type KernelState, type KernelActions } from '@thingsvis/kernel'
+import { type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
@@ -74,19 +74,17 @@ import PropsPanel from './RightPanel/PropsPanel'
 // Data source management moved to separate page: #/data-sources
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
+import { store } from '../lib/store'
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-const store = createKernelStore()
-
-// Initialize DataSourceManager with kernel store
-import('@thingsvis/kernel').then(m => {
-  m.dataSourceManager.init(store);
-});
-
 type Tool = "select" | "rectangle" | "circle" | "arrow" | "text" | "image" | "pan"
 type Language = "zh" | "en"
+
+function DataPanel(_props: { store: typeof store; language: Language }) {
+  return null;
+}
 
 // Define Layer types
 type Layer = {
@@ -417,7 +415,7 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-4 px-4 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -476,7 +474,7 @@ export default function Editor() {
         </div>
 
         {/* Center Side: Tools */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
           {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
@@ -500,7 +498,7 @@ export default function Editor() {
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center gap-2 px-3 py-2 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
@@ -526,16 +524,16 @@ export default function Editor() {
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
           </Button>
 
-          <Button size="sm" className="h-8 gap-2 rounded-md bg-[#6965db] hover:bg-[#0052cc] text-white px-5 shadow-lg shadow-[#6965db]/20 focus:ring-0 focus:outline-none">
-            <Upload className="h-4 w-4" />
-            <span className="text-sm font-bold">{language === "zh" ? "发布" : "Publish"}</span>
+          <Button size="sm" className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all">
+            <Upload className="h-3.5 w-3.5" />
+            <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
         </div>
       </div>
 
       {/* Left Panel: Assets & Layers */}
       <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
-        <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex border-b border-border">
             <button
               onClick={() => setLeftPanelTab("components")}
@@ -694,7 +692,7 @@ export default function Editor() {
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
       <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
         {/* Zoom Controls */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
@@ -717,7 +715,7 @@ export default function Editor() {
         </div>
 
         {/* Undo/Redo Controls */}
-        <div className="glass rounded-md shadow-sm border border-border/50 flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
             variant="ghost"
             size="icon"
@@ -743,7 +741,7 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
-        <div className="glass rounded-md shadow-lg h-full flex flex-col overflow-hidden">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
             <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>
