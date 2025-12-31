@@ -75,8 +75,11 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
     }
   }
 
+  // 验证数据源 ID 格式（只允许字母、数字和下划线）
+  const isValidDataSourceId = (id: string) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(id);
+
   const handleSave = async () => {
-    if (!editingSource.id) return;
+    if (!editingSource.id || !isValidDataSourceId(editingSource.id)) return;
 
     if (editingSource.type === 'STATIC') {
       try {
@@ -214,7 +217,11 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
                         <Input 
                           placeholder="e.g. weather_api"
                           value={editingSource.id}
-                          onChange={(e) => setEditingSource({...editingSource, id: e.target.value})}
+                          onChange={(e) => {
+                            // 只允许输入字母、数字和下划线
+                            const sanitized = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                            setEditingSource({...editingSource, id: sanitized});
+                          }}
                           disabled={!!selectedId && !isAdding}
                           className="font-mono text-sm"
                         />

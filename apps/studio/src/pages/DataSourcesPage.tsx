@@ -72,9 +72,20 @@ export default function DataSourcesPage() {
     }
   };
 
+  // 验证数据源 ID 格式（只允许字母、数字和下划线）
+  const isValidDataSourceId = (id: string) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(id);
+
   const handleSave = async () => {
     if (!editingSource.id) {
       alert(label('请输入数据源 ID', 'Please enter Source ID'));
+      return;
+    }
+
+    if (!isValidDataSourceId(editingSource.id)) {
+      alert(label(
+        '数据源 ID 格式无效。只能包含字母、数字和下划线，且必须以字母或下划线开头。',
+        'Invalid Source ID format. Only letters, numbers and underscores allowed, must start with letter or underscore.'
+      ));
       return;
     }
 
@@ -224,11 +235,15 @@ export default function DataSourcesPage() {
                       <Input 
                         placeholder={label('唯一标识，如 my_data', 'Unique ID, e.g. my_data')}
                         value={editingSource.id}
-                        onChange={(e) => setEditingSource({...editingSource, id: e.target.value})}
+                        onChange={(e) => {
+                          // 只允许输入字母、数字和下划线
+                          const sanitized = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                          setEditingSource({...editingSource, id: sanitized});
+                        }}
                         disabled={!!selectedId && !isAdding}
                         className="font-mono text-sm h-10"
                       />
-                      <p className="text-xs text-muted-foreground">{label('用于在组件中引用数据源，如 {{$my_data.value}}', 'Used to reference data source in components, e.g. {{$my_data.value}}')}</p>
+                      <p className="text-xs text-muted-foreground">{label('只能包含字母、数字和下划线，如 my_data', 'Only letters, numbers and underscores allowed, e.g. my_data')}</p>
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">{label('数据源名称', 'Source Name')}</label>
