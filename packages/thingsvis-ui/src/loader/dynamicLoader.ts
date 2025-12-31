@@ -59,7 +59,8 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
           exposedModule: entry.exposedModule,
           version: entry.version,
           displayName: key,
-          iconUrl: entry.iconUrl
+          iconUrl: entry.iconUrl,
+          icon: entry.icon
         } as ComponentRegistryEntry;
       });
     } else {
@@ -89,7 +90,8 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
         exposedModule: entry.exposedModule,
         version: entry.version,
         displayName: key,
-        iconUrl: entry.iconUrl
+        iconUrl: entry.iconUrl,
+        icon: entry.icon
       } as ComponentRegistryEntry;
     });
   } catch (e) {
