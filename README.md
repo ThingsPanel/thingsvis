@@ -11,6 +11,7 @@
 - **High Performance**: Optimized for ≥50 FPS rendering with support for 1000+ nodes
 - **Type-Safe**: Built with TypeScript 5.x in strict mode with Zod runtime validation
 - **Undo/Redo System**: Full command pattern implementation with history management
+- **Advanced Data Source**: Enterprise-grade REST (Auth/Body) and WebSocket (Heartbeat/Reconnect) support
 
 ## 🏗️ Architecture
 
@@ -37,7 +38,7 @@ thingsvis/
 ├── tools/
 │   └── cli/             # vis-cli for scaffolding plugins
 ├── configs/             # Shared build configurations
-└── specs/               # Feature specifications and documentation
+└── specs/               # Detailed feature specifications (Source of Truth)
 ```
 
 ### Core Technologies
@@ -368,6 +369,13 @@ ThingsVis follows strict architectural constraints:
 - Hot module replacement in development
 
 ## 📚 Documentation
+
+Detailed documentation is available in the `docs/` directory:
+
+-   **[Development Guide](docs/development/guide.md)**: Environment setup, workflow, and git conventions.
+-   **[Spec-Kit Cheatsheet](docs/development/spec-kit.md)**: AI-driven development workflows.
+-   **[Component Development](docs/component/development.md)**: How to build custom plugins.
+-   **[Data Source Configuration](docs/datasource/configuration.md)**: Configuring REST (Auth, Headers), WebSocket (Heartbeat, Reconnect), and MQTT.
 
 ## 🤝 Contributing
 
