@@ -7,6 +7,8 @@
  * - category: 组件分类（chart）
  * - icon: Lucide 图标名称
  * - version: 版本号
+ * - defaultSize: 组件的默认尺寸
+ * - resizable: 是否支持手动调整尺寸
  */
 
 export const metadata = {
@@ -15,4 +17,6 @@ export const metadata = {
   category: 'chart',
   icon: 'LineChart',
   version: '1.0.0',
+  defaultSize: { width: 400, height: 300 },
+  resizable: true, // 图表组件支持调整尺寸
 } as const;

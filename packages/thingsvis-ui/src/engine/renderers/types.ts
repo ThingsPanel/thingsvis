@@ -24,6 +24,11 @@ export type RendererFactory = {
   createOverlay?: (node: NodeState) => OverlayInstance;
   updateOverlay?: (overlay: OverlayInstance, node: NodeState) => void;
   destroyOverlay?: (overlay: OverlayInstance) => void;
+  /**
+   * 是否支持手动调整尺寸（默认 true）
+   * false = 组件根据内容自适应尺寸
+   */
+  resizable?: boolean;
 };
 
 

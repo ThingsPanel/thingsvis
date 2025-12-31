@@ -11,7 +11,8 @@ export type {
   ConnectionState,
   SelectionState,
   CanvasState,
-  DataSourceRuntimeState
+  DataSourceRuntimeState,
+  LayerGroup
 } from './store/KernelStore';
 export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';

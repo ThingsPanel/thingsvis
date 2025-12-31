@@ -97,6 +97,9 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
     updateNode({ data: newBindings });
   };
 
+  // 判断组件是否支持调整尺寸（resizable: false 的组件不显示宽高设置）
+  const isResizable = (pluginEntry as any)?.resizable !== false;
+
   const renderGeometry = () => (
     <div className="space-y-3 px-1">
       <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
@@ -122,30 +125,33 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
           />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">
-            {labelZh("宽度", "Width")}
-          </label>
-          <Input
-            type="number"
-            value={schema.size?.width ?? 0}
-            onChange={(e) => updateNode({ size: { width: Number(e.target.value) } })}
-            className="h-8 text-sm"
-          />
+      {/* 只有 resizable 组件才显示宽高设置 */}
+      {isResizable && (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">
+              {labelZh("宽度", "Width")}
+            </label>
+            <Input
+              type="number"
+              value={schema.size?.width ?? 0}
+              onChange={(e) => updateNode({ size: { width: Number(e.target.value) } })}
+              className="h-8 text-sm"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">
+              {labelZh("高度", "Height")}
+            </label>
+            <Input
+              type="number"
+              value={schema.size?.height ?? 0}
+              onChange={(e) => updateNode({ size: { height: Number(e.target.value) } })}
+              className="h-8 text-sm"
+            />
+          </div>
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium text-muted-foreground">
-            {labelZh("高度", "Height")}
-          </label>
-          <Input
-            type="number"
-            value={schema.size?.height ?? 0}
-            onChange={(e) => updateNode({ size: { height: Number(e.target.value) } })}
-            className="h-8 text-sm"
-          />
-        </div>
-      </div>
+      )}
     </div>
   );
 

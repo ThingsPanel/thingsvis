@@ -107,11 +107,16 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     const worldY = (localY - vpState.offsetY) / vpState.zoom;
 
     const nodeId = generateId("node");
+    // 对于 resizable: false 的组件，不设置 size（由内容撑开）
+    const isResizable = (entry as any)?.resizable !== false;
+    const pluginDefaultSize = (entry as any)?.defaultSize;
+    
     const node = {
       id: nodeId,
       type: entry?.type ?? entry?.remoteName ?? "layout/text",
       position: { x: worldX, y: worldY },
-      size: { width: 200, height: 100 }, // Default size for new nodes
+      // 只有可调整尺寸的组件才设置 size
+      ...(isResizable ? { size: pluginDefaultSize || { width: 200, height: 100 } } : {}),
       props: entry?.defaultProps ?? {}
     };
 

@@ -48,6 +48,7 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore): PluginOverla
 export function createPluginRenderer(plugin: PluginMainModule, store: KernelStore): RendererFactory {
   // 判断是否为纯 Overlay 组件（只有 createOverlay，没有 create）
   const isOverlayOnly = !plugin.create && typeof plugin.createOverlay === 'function';
+  const resizable = (plugin as any).resizable as boolean | undefined;
   
   return {
     create(node: NodeState): LeaferDisplayObject {
@@ -126,6 +127,9 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
       ? (overlay, node) => overlay.update?.(node)
       : undefined,
     destroyOverlay: plugin.createOverlay ? overlay => overlay.destroy?.() : undefined
+    ,
+    // If plugin metadata defines resizable=false, let VisualEngine treat it as auto-size.
+    resizable
   };
 }
 

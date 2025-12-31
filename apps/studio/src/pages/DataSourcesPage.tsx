@@ -25,11 +25,13 @@ export default function DataSourcesPage() {
   
   const [editingSource, setEditingSource] = useState<{
     id: string;
+    name: string;
     type: DataSourceType;
     config: any;
     transformation: string;
   }>({
     id: '',
+    name: '',
     type: 'STATIC',
     config: { value: {} },
     transformation: ''
@@ -69,7 +71,7 @@ export default function DataSourcesPage() {
     try {
       await dataSourceManager.registerDataSource({
         id: editingSource.id,
-        name: editingSource.id,
+        name: editingSource.name || editingSource.id,
         type: editingSource.type,
         config: editingSource.config,
         transformation: editingSource.transformation || undefined
@@ -89,7 +91,7 @@ export default function DataSourcesPage() {
   const startAdding = () => {
     setIsAdding(true);
     setSelectedId(null);
-    setEditingSource({ id: '', type: 'STATIC', config: { value: {} }, transformation: '' });
+    setEditingSource({ id: '', name: '', type: 'STATIC', config: { value: {} }, transformation: '' });
     syncStaticJsonTextFromConfig({});
   };
 
@@ -100,6 +102,7 @@ export default function DataSourcesPage() {
       setSelectedId(id);
       setEditingSource({
         id: config.id,
+        name: config.name || '',
         type: config.type,
         config: config.config,
         transformation: config.transformation || ''
@@ -123,7 +126,7 @@ export default function DataSourcesPage() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-foreground">
+    <div className="h-screen w-screen flex flex-col bg-card text-foreground">
       {/* Header */}
       <header className="p-4 border-b border-border bg-muted/30 flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={goBack} className="h-9 w-9">
@@ -184,7 +187,7 @@ export default function DataSourcesPage() {
         </div>
 
         {/* Main Editor */}
-        <div className="flex-1 flex flex-col bg-background relative overflow-hidden">
+        <div className="flex-1 flex flex-col bg-card relative overflow-hidden">
           {(isAdding || selectedId) ? (
             <div className="flex-1 overflow-y-auto p-8">
               <div className="max-w-5xl mx-auto space-y-8">
@@ -198,13 +201,25 @@ export default function DataSourcesPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">{label('标识 ID', 'Source ID')}</label>
                       <Input 
-                        placeholder="e.g. weather_api"
+                        placeholder={label('唯一标识，如 my_data', 'Unique ID, e.g. my_data')}
                         value={editingSource.id}
                         onChange={(e) => setEditingSource({...editingSource, id: e.target.value})}
                         disabled={!!selectedId && !isAdding}
                         className="font-mono text-sm h-10"
                       />
+                      <p className="text-xs text-muted-foreground">{label('用于在组件中引用数据源，如 {{$my_data.value}}', 'Used to reference data source in components, e.g. {{$my_data.value}}')}</p>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">{label('数据源名称', 'Source Name')}</label>
+                      <Input 
+                        placeholder={label('便于识别的名称', 'Display name for easy identification')}
+                        value={editingSource.name || ''}
+                        onChange={(e) => setEditingSource({...editingSource, name: e.target.value})}
+                        className="text-sm h-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">{label('连接协议', 'Protocol')}</label>
                       <div className="flex gap-1 p-1 bg-muted rounded-md h-10">
@@ -258,7 +273,7 @@ export default function DataSourcesPage() {
                               value={staticJsonText}
                               height="280px"
                               extensions={jsonExtensions}
-                              className="text-sm [&_.cm-content]:text-sm [&_.cm-line]:text-sm [&_.cm-gutters]:text-sm"
+                              className="text-sm font-mono [&_.cm-content]:font-mono [&_.cm-content]:text-sm [&_.cm-line]:text-sm [&_.cm-gutters]:text-sm [&_.cm-gutters]:font-mono"
                               onChange={(value) => {
                                 setStaticJsonText(value);
                                 try {
@@ -326,7 +341,7 @@ export default function DataSourcesPage() {
               </div>
 
               {/* Footer Actions */}
-              <div className="fixed bottom-0 left-72 right-0 p-4 bg-background/90 backdrop-blur-md border-t border-border flex justify-end gap-3">
+              <div className="fixed bottom-0 left-72 right-0 p-4 bg-card/90 backdrop-blur-md border-t border-border flex justify-end gap-3">
                 <Button variant="outline" onClick={goBack} className="h-10 px-6 rounded-md">{label('返回编辑器', 'Back to Editor')}</Button>
                 <Button 
                   onClick={handleSave} 
