@@ -55,7 +55,7 @@ export const RESTForm: React.FC<RESTFormProps> = ({ config, onChange, language }
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm uppercase font-bold text-muted-foreground">
-              {label('轮询间隔 (ms)', 'Polling (ms)')}
+              {label('轮询间隔 (s)', 'Polling (s)')}
             </Label>
             <Input 
               type="number"

@@ -27,7 +27,7 @@ export class RESTAdapter extends BaseAdapter {
     if (restConfig.pollingInterval && restConfig.pollingInterval > 0) {
       this.timer = setInterval(() => {
         this.fetchData(restConfig);
-      }, restConfig.pollingInterval);
+      }, restConfig.pollingInterval * 1000);
     }
   }
 

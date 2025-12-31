@@ -82,9 +82,19 @@ function createPluginConfig(pluginDir, opts = {}) {
           test: /\.(ts|tsx)$/,
           use: [
             {
-              loader: 'ts-loader',
+              loader: 'builtin:swc-loader',
               options: {
-                transpileOnly: true
+                jsc: {
+                  parser: {
+                    syntax: 'typescript',
+                    tsx: true
+                  },
+                  transform: {
+                    react: {
+                      runtime: 'automatic'
+                    }
+                  }
+                }
               }
             }
           ]

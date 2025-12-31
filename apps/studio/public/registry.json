@@ -10,6 +10,15 @@
       "exposedModule": "./Main",
       "version": "1.0.0"
     },
+    "basic/pm25-card": {
+      "remoteName": "thingsvis_plugin_basic_pm25_card",
+      "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/pm25-card/dist/remoteEntry.js",
+      "debugSource": "local",
+      "localEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "1.0.0"
+    },
     "chart/曲线": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
       "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",

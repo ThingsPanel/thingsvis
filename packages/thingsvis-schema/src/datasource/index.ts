@@ -21,7 +21,7 @@ export const RESTConfigSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).default('GET'),
   headers: z.record(z.string()).optional().default({}),
   params: z.record(z.any()).optional().default({}),
-  pollingInterval: z.number().min(0).optional().default(0), // 0 means no polling
+  pollingInterval: z.number().min(0).optional().default(0), // seconds, 0 means no polling
   
   // New fields (all optional with defaults for backward compatibility)
   body: z.string().optional(), // JSON string for POST/PUT requests

@@ -38,15 +38,28 @@ export class SafeExecutor {
       });
 
       // Wrap code in a function. 'with' statement redirects all variable lookups to the proxy.
-      const fn = new Function('sandbox', `
+      const createFn = (body: string) => new Function('sandbox', `
         with (sandbox) {
           try {
-            ${code.includes('return') ? code : `return (${code})`}
+            ${body}
           } catch (err) {
             throw err;
           }
         }
       `);
+
+      let fn;
+      try {
+        // Try to treat as expression first if no explicit return
+        fn = createFn(code.includes('return') ? code : `return (${code})`);
+      } catch (e) {
+        // If expression parsing failed (e.g. user wrote statements like "let x = 1;"), try as statements
+        if (e instanceof SyntaxError && !code.includes('return')) {
+          fn = createFn(code);
+        } else {
+          throw e;
+        }
+      }
 
       return fn(proxy);
     } catch (error) {

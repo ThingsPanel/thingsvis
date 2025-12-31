@@ -157,7 +157,7 @@
 | method | `'GET' \| 'POST' \| 'PUT' \| 'DELETE'` | No | `'GET'` | HTTP 方法 |
 | headers | `Record<string, string>` | No | `{}` | 自定义请求头 |
 | params | `Record<string, any>` | No | `{}` | URL 查询参数 |
-| pollingInterval | `number` | No | `0` | 轮询间隔 (ms, 0=不轮询) |
+| pollingInterval | `number` | No | `0` | 轮询间隔 (s, 0=不轮询) |
 | **body** | `string` | No | - | 请求体 (JSON 字符串) |
 | **timeout** | `number` | No | `30` | 超时时间 (秒) |
 | **auth** | `AuthConfig` | No | `{ type: 'none' }` | 认证配置 |

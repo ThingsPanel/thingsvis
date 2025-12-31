@@ -9,6 +9,15 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "2.0.0"
+    },
+    "basic/pm25-card": {
+      "remoteName": "thingsvis_plugin_basic_pm25_card",
+      "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/pm25-card/dist/remoteEntry.js",
+      "debugSource": "local",
+      "localEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "1.0.0"
     }
   }
 }
