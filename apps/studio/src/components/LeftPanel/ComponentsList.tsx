@@ -22,8 +22,35 @@ import {
   Sparkles,
   Frame,
   Circle,
+  Wind,
+  LucideIcon,
 } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+
+// Lucide 图标名称到组件的映射
+const ICON_MAP: Record<string, LucideIcon> = {
+  Box,
+  BarChart3,
+  Film,
+  Folder,
+  Globe,
+  Map,
+  Columns3,
+  Type,
+  Repeat,
+  Activity,
+  Clock,
+  Table2,
+  ToggleLeft,
+  SlidersHorizontal,
+  ImageIcon,
+  Video,
+  Play,
+  Sparkles,
+  Frame,
+  Circle,
+  Wind,
+};
 
 // Match v0code top-level accordion keys/labels exactly
 const CATEGORY_DEFS = [
@@ -61,7 +88,8 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
               exposedModule: entry.exposedModule,
               version: entry.version,
               displayName: key,
-              iconUrl: (entry as any).iconUrl ?? ""
+              iconUrl: (entry as any).iconUrl ?? "",
+              icon: (entry as any).icon ?? ""
             } as ComponentRegistryEntry;
             
             arr.push(baseEntry);
@@ -158,7 +186,9 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-2">
                       {items.map((entry) => {
-                        const SubIcon = Box;
+                        // 根据 icon 字段获取对应的 Lucide 图标组件，默认使用 Box
+                        const iconName = (entry as any).icon as string;
+                        const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
                         return (
                           <button
                             key={entry.remoteName}
@@ -176,11 +206,11 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
                                   className="w-6 h-6 object-contain"
                                 />
                               ) : (
-                                <SubIcon className="h-6 w-6 text-foreground" />
+                                <IconComponent className="h-6 w-6 text-foreground" />
                               )}
                             </div>
                             <span className="text-sm text-foreground font-medium">
-                              {(entry as any).displayName ?? entry.remoteName.split("/").slice(1).join("/") ?? entry.remoteName}
+                              {((entry as any).displayName ?? entry.remoteName).split("/").slice(-1)[0] || entry.remoteName}
                             </span>
                           </button>
                         );

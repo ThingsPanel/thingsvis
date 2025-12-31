@@ -8,7 +8,8 @@
       "staticEntryUrl": "/plugins/basic/text/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "icon": "Type"
     },
     "basic/pm25-card": {
       "remoteName": "thingsvis_plugin_basic_pm25_card",
@@ -17,7 +18,8 @@
       "debugSource": "local",
       "localEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "icon": "Wind"
     },
     "chart/曲线": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
@@ -25,7 +27,8 @@
       "staticEntryUrl": "/plugins/chart/echarts-line/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "icon": "BarChart3"
     }
   }
 }
