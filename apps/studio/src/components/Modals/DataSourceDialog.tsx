@@ -5,13 +5,34 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { type KernelStore, dataSourceManager } from '@thingsvis/kernel';
-import type { DataSourceType } from '@thingsvis/schema';
+import type { DataSourceType, RESTConfig, WSConfig } from '@thingsvis/schema';
+import { DEFAULT_AUTH_CONFIG, DEFAULT_RECONNECT_POLICY, DEFAULT_HEARTBEAT_CONFIG } from '@thingsvis/schema';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { RESTForm } from '../../plugins/DataSourceConfig/RESTForm';
 import { WSForm } from '../../plugins/DataSourceConfig/WSForm';
 import { TransformationEditor } from '../../plugins/DataSourceConfig/TransformationEditor';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
+
+// Default configurations for new data sources
+const DEFAULT_REST_CONFIG: RESTConfig = {
+  url: '',
+  method: 'GET',
+  headers: {},
+  params: {},
+  pollingInterval: 0,
+  timeout: 30,
+  auth: DEFAULT_AUTH_CONFIG,
+};
+
+const DEFAULT_WS_CONFIG: WSConfig = {
+  url: '',
+  protocols: [],
+  reconnectAttempts: 5, // Backward compatibility - deprecated but required
+  reconnect: DEFAULT_RECONNECT_POLICY,
+  heartbeat: DEFAULT_HEARTBEAT_CONFIG,
+  initMessages: [],
+};
 
 interface DataSourceDialogProps {
   open: boolean;
@@ -54,8 +75,11 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
     }
   }
 
+  // 验证数据源 ID 格式（只允许字母、数字和下划线）
+  const isValidDataSourceId = (id: string) => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(id);
+
   const handleSave = async () => {
-    if (!editingSource.id) return;
+    if (!editingSource.id || !isValidDataSourceId(editingSource.id)) return;
 
     if (editingSource.type === 'STATIC') {
       try {
@@ -193,7 +217,11 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
                         <Input 
                           placeholder="e.g. weather_api"
                           value={editingSource.id}
-                          onChange={(e) => setEditingSource({...editingSource, id: e.target.value})}
+                          onChange={(e) => {
+                            // 只允许输入字母、数字和下划线
+                            const sanitized = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                            setEditingSource({...editingSource, id: sanitized});
+                          }}
                           disabled={!!selectedId && !isAdding}
                           className="font-mono text-sm"
                         />
@@ -209,13 +237,25 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
                             <button
                               key={t.id}
                               onClick={() => {
+                                let newConfig: any;
+                                if (t.id === 'STATIC') {
+                                  newConfig = { value: {} };
+                                  syncStaticJsonTextFromConfig({});
+                                } else if (t.id === 'REST') {
+                                  newConfig = { ...DEFAULT_REST_CONFIG };
+                                  setStaticJsonError(null);
+                                } else if (t.id === 'WS') {
+                                  newConfig = { ...DEFAULT_WS_CONFIG };
+                                  setStaticJsonError(null);
+                                } else {
+                                  newConfig = {};
+                                  setStaticJsonError(null);
+                                }
                                 setEditingSource({
                                   ...editingSource,
                                   type: t.id as DataSourceType,
-                                  config: t.id === 'STATIC' ? { value: {} } : {}
-                                })
-                                if (t.id === 'STATIC') syncStaticJsonTextFromConfig({})
-                                else setStaticJsonError(null)
+                                  config: newConfig
+                                });
                               }}
                               className={`flex-1 flex items-center justify-center gap-2 rounded-md transition-all text-sm font-semibold ${
                                 editingSource.type === t.id 
