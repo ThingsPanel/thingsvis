@@ -11,6 +11,7 @@ This guide details how to develop custom components (plugins) for ThingsVis usin
 - [Plugin Entry (`index.ts`)](#plugin-entry-indexts)
 - [Metadata (`metadata.ts`)](#metadata-metadatats)
 - [Property Schema (`schema.ts`)](#property-schema-schemats)
+- [Editor Controls (`controls.ts`)](#editor-controls-controlsts)
 - [Lifecycle Methods](#lifecycle-methods)
 
 ---
@@ -106,6 +107,48 @@ export const PropsSchema = z.object({
 
 export type Props = z.infer<typeof PropsSchema>;
 ```
+
+---
+
+## Editor Controls (`controls.ts`)
+
+Defines how your properties appear in the property panel and how data binding behaves.
+
+```typescript
+import { PropsSchema } from './schema';
+import { generateControls } from './lib/types';
+
+export const controls = generateControls(PropsSchema, {
+  // 1. Group properties
+  groups: {
+    Content: ['text'],
+    Style: ['fill', 'fontSize'],
+    Advanced: ['padding'],
+  },
+  
+  // 2. Override control types
+  overrides: {
+    fill: { kind: 'color' }, // Render a color picker
+  },
+  
+  // 3. Configure Data Binding (Superset-style)
+  bindings: {
+    text: { 
+      enabled: true, 
+      modes: ['static', 'field', 'expr'] 
+      // static: Manual input
+      // field: Select field from Data Source (No expressions!)
+      // expr: {{ ... }} fallback
+    },
+    fill: { enabled: true, modes: ['static', 'field'] },
+  },
+});
+```
+
+### Binding Modes
+-   **Static**: User inputs a fixed value.
+-   **Field**: User picks a Data Source + Field. **Zero code**.
+-   **Expression**: Advanced users use `{{ ... }}` syntax.
 
 ---
 

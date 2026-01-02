@@ -40,25 +40,30 @@ Ideal for quick testing without a backend.
     ```
 
 ### 2. REST API
+Connect to external APIs with enterprise-grade features.
 
-Connect to external APIs.
-
--   **Fields**:
-    -   `URL`: The endpoint URL (e.g., `https://api.example.com/data`).
-    -   `Method`: GET, POST, etc.
-    -   `Headers`: Custom headers (e.g., Authorization).
-    -   `Polling Interval`: Time in milliseconds to auto-refresh data (optional).
+-   **Authentication**:
+    -   `None`: No auth.
+    -   `Bearer Token`: Adds `Authorization: Bearer <token>`.
+    -   `Basic Auth`: Adds `Authorization: Basic <base64>`.
+    -   `API Key`: Adds Key via Header or Query Param.
+-   **Request**:
+    -   `Method`: GET, POST, PUT, DELETE, etc.
+    -   `Headers`: Dynamic Key-Value pairs.
+    -   `Body`: JSON editor (available for POST/PUT).
+    -   `Timeout`: Request timeout in seconds (1-300s).
 
 ### 3. WebSocket / MQTT
+For robust real-time data streaming.
 
-For real-time data streaming.
-
--   **Fields**:
-    -   `URL`: `ws://` or `wss://` address.
-    -   `Topic` (MQTT only): The subscription topic.
--   **Behavior**:
-    -   Automatic reconnection on connection loss.
-    -   Status indicator shows "Connected" or "Disconnected".
+-   **Connection**:
+    -   `URL`: `ws://`, `wss://`, `mqtt://`, `mqtts://`.
+    -   `Subprotocols`: WebSocket subprotocols (e.g., `graphql-ws`).
+-   **Resilience**:
+    -   `Reconnect Policy`: Configurable retries, interval, and exponential backoff.
+    -   `Heartbeat`: Keep-alive messages (interval + content).
+-   **Workflow**:
+    -   `Initial Subscription`: Messages sent automatically upon successful connection (e.g., specific topic subscription commands).
 
 ---
 

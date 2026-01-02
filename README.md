@@ -1,5 +1,7 @@
 # ThingsVis
 
+**English | [中文](README_ZH.md)**
+
 **ThingsVis** is an industrial-grade, low-code visualization platform built as a canvas-based editor for creating interactive visualizations. Designed for desktop consoles, it provides a powerful plugin ecosystem and micro-kernel architecture for building scalable visualization applications.
 
 ## 🌟 Features
