@@ -7,7 +7,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { Rect } from 'leafer-ui';
 import { ClipboardList } from 'lucide-react';
 import { metadata } from './metadata';
-import { PropsSchema, type Props } from './schema';
+import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import type { PluginMainModule, PluginOverlayContext, PluginOverlayInstance } from './lib/types';
 
@@ -95,7 +95,8 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   let root: Root | null = null;
 
   const update = (ctx: PluginOverlayContext) => {
-    const props = ctx.props as Props;
+    const defaults = getDefaultProps();
+    const props: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
     if (!root) {
       root = createRoot(element);
     }

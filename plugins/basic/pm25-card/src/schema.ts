@@ -38,3 +38,8 @@ export const PropsSchema = z.object({
 });
 
 export type Props = z.infer<typeof PropsSchema>;
+
+/** 获取所有属性的默认值 */
+export function getDefaultProps(): Props {
+  return PropsSchema.parse({});
+}
