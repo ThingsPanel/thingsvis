@@ -27,7 +27,20 @@ function create(): Rect {
 /**
  * React 组件
  */
+/**
+ * 判断状态是否在线
+ * 支持: true, 1, 'online', 'true', '1' 等值表示在线
+ */
+function isOnline(status: boolean | number | string): boolean {
+  if (typeof status === 'boolean') return status;
+  if (typeof status === 'number') return status === 1;
+  const s = String(status).toLowerCase();
+  return s === 'online' || s === 'true' || s === '1';
+}
+
 const PM25Card: React.FC<Props> = (props) => {
+  const online = isOnline(props.status);
+  
   return (
     <div style={{
       width: '100%',
@@ -42,13 +55,34 @@ const PM25Card: React.FC<Props> = (props) => {
       fontFamily: props.fontFamily,
       boxSizing: 'border-box',
     }}>
-      {/* Title */}
+      {/* Title & Status */}
       <div style={{
-        fontSize: '18px',
-        color: props.titleColor,
-        fontWeight: 500,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        {props.title}
+        <span style={{
+          fontSize: '18px',
+          color: props.titleColor,
+          fontWeight: 500,
+        }}>
+          {props.title}
+        </span>
+        <span style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          fontSize: '12px',
+          color: online ? '#52c41a' : '#999',
+        }}>
+          <span style={{
+            width: '6px',
+            height: '6px',
+            borderRadius: '50%',
+            backgroundColor: online ? '#52c41a' : '#999',
+            marginRight: '4px',
+          }} />
+          {online ? '在线' : '离线'}
+        </span>
       </div>
 
       {/* Content */}

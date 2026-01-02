@@ -13,6 +13,7 @@ This guide details how to develop custom components (plugins) for ThingsVis usin
 - [Property Schema (`schema.ts`)](#property-schema-schemats)
 - [Editor Controls (`controls.ts`)](#editor-controls-controlsts)
 - [Lifecycle Methods](#lifecycle-methods)
+- [Debugging & Registration](#debugging--registration)
 
 ---
 
@@ -163,6 +164,49 @@ Called whenever the component's properties or data binding values change.
 
 ### `destroy()`
 Cleanup resources like timers, global event listeners, or third-party library instances to prevent memory leaks.
+
+
+---
+
+## Debugging & Registration
+
+To debug your component in the host application, you need to configure `registry.json` (typically located in `apps/preview/public/registry.json` or similar).
+
+### Registry Configuration (`registry.json`)
+
+This file tells the host application where to load your component from.
+
+```json
+{
+  "components": {
+    "my-category/my-component": {
+      "remoteName": "thingsvis_plugin_my_category_my_component",
+      "version": "1.0.0",
+      "exposedModule": "./Main",
+      
+      "debugSource": "local", 
+      "localEntryUrl": "http://localhost:3000/remoteEntry.js",
+      "staticEntryUrl": "/plugins/my-category/my-component/dist/remoteEntry.js"
+    }
+  }
+}
+```
+
+### Debugging Modes
+
+You can switch between debugging modes by changing the `debugSource` field:
+
+#### 1. Local Debugging (`local`)
+Use this mode during development (`npm run dev`).
+-   **Config**: Set `"debugSource": "local"`
+-   **URL**: Uses `localEntryUrl` pointing to your local dev server (e.g., `http://localhost:3000/...`).
+-   **Benefit**: Supports Hot Module Replacement (HMR) for instant updates.
+
+#### 2. Compiled Debugging (`static`)
+Use this mode to test the production build (`npm run build`).
+-   **Config**: Set `"debugSource": "static"`
+-   **URL**: Uses `staticEntryUrl` pointing to the built files served by the host (e.g., `/plugins/...`).
+-   **Benefit**: Verifies that your production build works correctly in the real environment.
 
 ---
 

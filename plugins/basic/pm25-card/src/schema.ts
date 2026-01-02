@@ -13,6 +13,9 @@ export const PropsSchema = z.object({
   
   /** 单位 */
   unit: z.string().default('ug/m3').describe('单位'),
+  
+  /** 状态（true/1/'online' 表示在线，false/0/'offline' 表示离线） */
+  status: z.union([z.boolean(), z.number(), z.string()]).default(true).describe('状态'),
 
   // ========================================
   // 样式属性
