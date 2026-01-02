@@ -381,6 +381,8 @@ Detailed documentation is available in the `docs/` directory:
 
 ## 🤝 Contributing
 
+**Please read our [Contributing Guide](CONTRIBUTING.md) before starting.**
+
 ### Development Setup
 
 1. Fork and clone the repository
