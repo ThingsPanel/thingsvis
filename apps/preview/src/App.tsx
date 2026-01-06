@@ -4,6 +4,9 @@ import { createKernelStore } from '@thingsvis/kernel';
 import { CanvasView, HeadlessErrorBoundary } from '@thingsvis/ui';
 import { loadPlugin } from './plugins/pluginResolver';
 import { extractDefaults } from './plugins/schemaUtils';
+import { usePreviewMode } from './hooks/usePreviewMode';
+import { UserToolbar } from './components/UserToolbar';
+import { KioskView } from './components/KioskView';
 
 const store = createKernelStore();
 
@@ -13,6 +16,9 @@ const randomColor = () => `#${Math.floor(Math.random() * 0xffffff).toString(16).
 const randomBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const App: React.FC = () => {
+  // Preview mode detection from URL
+  const previewState = usePreviewMode()
+  
   const [specComponentId, setSpecComponentId] = useState<string>('basic/text');
   const [specComp, setSpecComp] = useState<React.ComponentType | null>(null);
   const [specError, setSpecError] = useState<string | null>(null);
@@ -37,6 +43,16 @@ const App: React.FC = () => {
       canRedo: future.length > 0
     };
   }, [temporalSnapshot]);
+
+  // Load project from session if in user/kiosk mode
+  useEffect(() => {
+    if (previewState.projectId && previewState.sessionConsumed) {
+      // Load project from IndexedDB (cross-app via broadcast channel or storage API)
+      // For now, we need to fetch project data via a shared mechanism
+      console.log('[preview] Loading project from session:', previewState.projectId)
+      // TODO: Implement cross-app project loading
+    }
+  }, [previewState.projectId, previewState.sessionConsumed])
 
   useEffect(() => {
     const emptyPage: PageSchemaType = {
@@ -131,6 +147,40 @@ const App: React.FC = () => {
     return entry;
   }, []);
 
+  // Handle going back to studio
+  const handleBackToStudio = useCallback(() => {
+    // Navigate back to studio (or close window if opened as popup)
+    if (window.opener) {
+      window.close()
+    } else {
+      window.location.href = '/studio'
+    }
+  }, [])
+
+  // Kiosk mode: fullscreen wrapper
+  if (previewState.mode === 'kiosk') {
+    return (
+      <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
+        <KioskView>
+          <CanvasView store={store} resolvePlugin={resolvePlugin} />
+        </KioskView>
+      </HeadlessErrorBoundary>
+    )
+  }
+
+  // User mode: minimal toolbar with back button
+  if (previewState.mode === 'user') {
+    return (
+      <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
+        <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+          <UserToolbar onBack={handleBackToStudio} />
+          <CanvasView store={store} resolvePlugin={resolvePlugin} />
+        </div>
+      </HeadlessErrorBoundary>
+    )
+  }
+
+  // Dev mode: full development UI with controls
   return (
     <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -145,7 +195,7 @@ const App: React.FC = () => {
             gap: 8
           }}
         >
-          {/* ... existing content ... */}
+          {/* Development controls */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleGenerate}>Generate 1000 Nodes</button>
             <button onClick={handleClear}>Clear</button>
