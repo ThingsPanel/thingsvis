@@ -87,6 +87,27 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   // 初始化 ECharts
   const chart = echarts.init(element);
   chart.setOption(buildOption(currentProps));
+
+  const scheduleResize = () => {
+    // ECharts 在容器初始为 0x0 时会渲染空白；需要在元素挂载后/尺寸变化时主动 resize。
+    try {
+      requestAnimationFrame(() => {
+        if (!chart.isDisposed()) chart.resize();
+      });
+    } catch {
+      if (!chart.isDisposed()) chart.resize();
+    }
+  };
+
+  // 首次挂载后触发一次 resize，避免“点一下才展开”的现象
+  scheduleResize();
+
+  // 监听容器尺寸变化，自动 resize
+  let ro: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    ro = new ResizeObserver(() => scheduleResize());
+    ro.observe(element);
+  }
   
   return {
     element,
@@ -100,20 +121,21 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
       
       // 更新背景色
       element.style.backgroundColor = currentProps.backgroundColor;
-      
-      // 更新图表尺寸
-      if (newCtx.size) {
-        chart.resize();
-      }
-      
+
       // 更新图表配置
       chart.setOption(buildOption(currentProps));
+
+      // 更新图表尺寸（例如节点初次测量/缩放/拖拽改变尺寸）
+      if (newCtx.size) {
+        scheduleResize();
+      }
     },
     
     /**
      * 组件销毁时调用
      */
     destroy: () => {
+      ro?.disconnect();
       chart.dispose();
     },
   };

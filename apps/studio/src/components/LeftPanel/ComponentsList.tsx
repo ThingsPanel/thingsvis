@@ -62,11 +62,10 @@ const CATEGORY_DEFS = [
   { key: "custom", labelZh: "自定义", labelEn: "Custom", Icon: Sparkles },
 ] as const;
 
-export default function ComponentsList({ onInsert, language }: { onInsert: (type: string) => void; language: string }) {
+export default function ComponentsList({ onInsert: _onInsert, language }: { onInsert: (type: string) => void; language: string }) {
   const [entries, setEntries] = useState<ComponentRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORY_DEFS[0].key);
 
   useEffect(() => {
     let mounted = true;
@@ -192,9 +191,9 @@ export default function ComponentsList({ onInsert, language }: { onInsert: (type
                         return (
                           <button
                             key={entry.remoteName}
+                            type="button"
                             draggable
                             onDragStart={(e) => handleDragStart(e, entry)}
-                            onClick={() => onInsert((entry as any).displayName ?? entry.remoteName)}
                             className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
                           >
                             <div className="h-6 w-6 text-foreground mb-1">
