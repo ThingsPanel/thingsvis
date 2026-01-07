@@ -8,9 +8,10 @@ type Props = {
   containerRef: React.RefObject<HTMLElement>;
   kernelStore: KernelStore;
   enabled?: boolean;
+  onUserEdit?: () => void;
 };
 
-export default function TransformControls({ containerRef, kernelStore, enabled = true }: Props) {
+export default function TransformControls({ containerRef, kernelStore, enabled = true, onUserEdit }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
 
@@ -115,6 +116,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
 
         if (nodeId) {
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
+          onUserEdit?.();
         }
       });
 
@@ -159,6 +161,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
           const w = parseFloat(target.style.width || '0') || 0;
           const h = parseFloat(target.style.height || '0') || 0;
           kernelStore.getState().updateNode(nodeId, { position: { x, y }, size: { width: w, height: h } });
+          onUserEdit?.();
         }
       });
 

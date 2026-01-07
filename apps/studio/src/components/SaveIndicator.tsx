@@ -19,6 +19,8 @@ export interface SaveIndicatorProps {
   lastSavedAt?: number | null
   /** Error message if status is 'error' */
   error?: string | null
+  /** UI language (optional) */
+  language?: 'zh' | 'en'
   /** Additional CSS classes */
   className?: string
 }
@@ -31,20 +33,23 @@ export function SaveIndicator({
   status,
   lastSavedAt,
   error,
+  language = 'zh',
   className = '',
 }: SaveIndicatorProps) {
+  const t = (zh: string, en: string) => (language === 'zh' ? zh : en)
+
   const getStatusText = (): string => {
     switch (status) {
       case 'idle':
-        return lastSavedAt ? formatLastSaved(lastSavedAt) : ''
+        return lastSavedAt ? t('所有更改已保存', 'All changes saved') : ''
       case 'dirty':
-        return 'Unsaved changes'
+        return t('有未保存的更改', 'Unsaved changes')
       case 'saving':
-        return 'Saving...'
+        return t('正在保存…', 'Saving...')
       case 'saved':
-        return 'Saved'
+        return t('所有更改已保存', 'All changes saved')
       case 'error':
-        return error || 'Save failed'
+        return error || t('保存失败', 'Save failed')
       default:
         return ''
     }
@@ -55,11 +60,13 @@ export function SaveIndicator({
       case 'saving':
         return <SpinnerIcon className="animate-spin" />
       case 'saved':
-        return <CheckIcon className="text-green-500" />
+        return <DotIcon className="text-green-500" />
       case 'error':
         return <ErrorIcon className="text-red-500" />
       case 'dirty':
         return <DotIcon className="text-yellow-500" />
+      case 'idle':
+        return lastSavedAt ? <DotIcon className="text-green-500" /> : null
       default:
         return null
     }
@@ -72,7 +79,7 @@ export function SaveIndicator({
 
   return (
     <div
-      className={`flex items-center gap-1.5 text-sm text-gray-500 ${className}`}
+      className={`flex items-center gap-1.5 text-sm text-muted-foreground ${className}`}
       title={status === 'error' ? error || undefined : undefined}
     >
       {getStatusIcon()}

@@ -32,6 +32,7 @@ interface LayerPanelProps {
   store: any;
   language: 'zh' | 'en';
   searchQuery?: string;
+  onUserEdit?: () => void;
 }
 
 interface LayerItemData {
@@ -57,7 +58,7 @@ type LayerListEntry =
   | { kind: 'group'; data: GroupData }
   | { kind: 'item'; data: LayerItemData };
 
-export default function LayerPanel({ store, language, searchQuery = '' }: LayerPanelProps) {
+export default function LayerPanel({ store, language, searchQuery = '', onUserEdit }: LayerPanelProps) {
   const state = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState
@@ -343,13 +344,14 @@ export default function LayerPanel({ store, language, searchQuery = '' }: LayerP
     if (editingId && editingName.trim()) {
       if (editingType === 'node') {
         store.getState().renameNode(editingId, editingName.trim());
+        onUserEdit?.();
       } else {
         store.getState().renameGroup(editingId, editingName.trim());
       }
     }
     setEditingId(null);
     setEditingName('');
-  }, [store, editingId, editingName, editingType]);
+  }, [store, editingId, editingName, editingType, onUserEdit]);
 
   useEffect(() => {
     if (editingId && inputRef.current) {

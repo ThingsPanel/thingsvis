@@ -69,6 +69,13 @@ export async function saveProject(project: ProjectFile): Promise<void> {
       thumbnail: updatedProject.meta.thumbnail || '',
       updatedAt: updatedProject.meta.updatedAt,
     })
+
+    // Track the last opened project for restore-on-reload
+    try {
+      localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, updatedProject.meta.id)
+    } catch {
+      // ignore storage quota / privacy mode errors
+    }
   } catch (error) {
     throw new StorageError('Failed to save project', error)
   }

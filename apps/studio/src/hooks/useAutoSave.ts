@@ -5,7 +5,7 @@
  * Tracks state changes and triggers auto-save accordingly.
  */
 
-import { useEffect, useCallback, useSyncExternalStore } from 'react'
+import { useEffect, useCallback, useSyncExternalStore, useRef } from 'react'
 import { autoSaveManager } from '../lib/storage/autoSave'
 import { projectStorage } from '../lib/storage/projectStorage'
 import type { SaveState } from '../lib/storage/types'
@@ -35,6 +35,12 @@ export interface UseAutoSaveOptions {
 export function useAutoSave(options: UseAutoSaveOptions) {
   const { projectId, getProjectState, enabled = true } = options
 
+  // Keep latest getter without causing AutoSaveManager re-init (which would cancel debounce timers)
+  const getProjectStateRef = useRef(getProjectState)
+  useEffect(() => {
+    getProjectStateRef.current = getProjectState
+  }, [getProjectState])
+
   // Subscribe to save state changes
   const saveState = useSyncExternalStore(
     useCallback(
@@ -49,12 +55,12 @@ export function useAutoSave(options: UseAutoSaveOptions) {
   useEffect(() => {
     if (!enabled) return
 
-    autoSaveManager.init(projectId, getProjectState)
+    autoSaveManager.init(projectId, () => getProjectStateRef.current())
 
     return () => {
       autoSaveManager.destroy()
     }
-  }, [projectId, enabled, getProjectState])
+  }, [projectId, enabled])
 
   // Mark dirty - call this when state changes
   const markDirty = useCallback(() => {

@@ -17,9 +17,10 @@ type Props = {
   nodeId: string;
   kernelStore: KernelStore;
   language: string;
+  onUserEdit?: () => void;
 };
 
-export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
+export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }: Props) {
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
     () => kernelStore.getState() as KernelState
@@ -76,6 +77,7 @@ export default function PropsPanel({ nodeId, kernelStore, language }: Props) {
 
   function updateNode(changes: any) {
     kernelStore.getState().updateNode(nodeId, changes);
+    onUserEdit?.();
   }
 
   const labelZh = (zh: string, en: string) => language === "zh" ? zh : en;

@@ -29,8 +29,9 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   activeTool: string;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
+  onUserEdit?: () => void;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange },
+  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -128,6 +129,9 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       } else {
         kernelAction.addNode(pageId, node as any);
       }
+
+      // Ensure autosave is scheduled even if this mutation doesn't hit temporal.
+      onUserEdit?.();
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error("[CanvasView] drop failed", e);
@@ -229,6 +233,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         containerRef={containerRef} 
         kernelStore={store} 
         enabled={activeTool !== 'pan'}
+        onUserEdit={onUserEdit}
       />
 
       <ConnectionTool 

@@ -54,6 +54,7 @@ export function ProjectDialog({
 }: ProjectDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   const t = language === 'zh' ? translations.zh : translations.en
 
@@ -120,8 +121,13 @@ export function ProjectDialog({
   }, [onNewProject, onClose])
 
   // Handle removing a project from recents
-  const handleRemoveRecent = useCallback((projectId: string) => {
-    recentProjects.remove(projectId)
+  const handleRemoveRecent = useCallback(async (projectId: string) => {
+    try {
+      await projectStorage.delete(projectId)
+      setRefreshKey(k => k + 1)
+    } catch (error) {
+      console.error('Failed to delete project', error)
+    }
   }, [])
 
   return (
@@ -180,6 +186,7 @@ export function ProjectDialog({
             <RecentProjectsList
               onSelect={handleOpenRecent}
               onRemove={handleRemoveRecent}
+              refreshKey={refreshKey}
               language={language}
               disabled={isLoading}
             />

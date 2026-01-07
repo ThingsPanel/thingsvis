@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Maximize, Minimize, RefreshCcw } from 'lucide-react'
+import { ArrowLeft, Maximize, Minimize, RefreshCw } from 'lucide-react'
 import type { PageSchemaType } from '@thingsvis/schema'
 import { CanvasView } from '@thingsvis/ui'
 
@@ -139,14 +139,8 @@ export default function PreviewPage() {
             disabled={!projectId || isLoading}
             title="Refresh"
           >
-            <RefreshCcw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
           </Button>
-
-          {projectName ? (
-            <div className="px-2 text-sm text-muted-foreground select-none whitespace-nowrap">
-              {projectName}
-            </div>
-          ) : null}
 
           <Button
             variant="ghost"
@@ -157,6 +151,12 @@ export default function PreviewPage() {
           >
             {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
           </Button>
+
+          <div className="w-px h-4 mx-2 bg-neutral-300 dark:bg-neutral-600" />
+
+          <div className="px-3 text-sm font-medium text-muted-foreground select-none whitespace-nowrap">
+            预览模式
+          </div>
         </div>
       </div>
 

@@ -13,6 +13,9 @@ export const STORAGE_CONSTANTS = {
   
   /** localStorage key for recent projects list */
   RECENT_PROJECTS_KEY: 'thingsvis:recent-projects',
+
+  /** localStorage key for last opened project id */
+  CURRENT_PROJECT_ID_KEY: 'thingsvis:current-project-id',
   
   /** sessionStorage key for preview session */
   PREVIEW_SESSION_KEY: 'thingsvis:preview-session',

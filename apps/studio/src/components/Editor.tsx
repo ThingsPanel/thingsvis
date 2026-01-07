@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react"
+import { useState, useCallback, useMemo, useEffect, useRef } from "react"
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -83,6 +83,8 @@ import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
 import { projectStorage } from '../lib/storage/projectStorage'
 import type { ProjectFile } from '../lib/storage/schemas'
+import { recentProjects } from '../lib/storage/recentProjects'
+import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 
 // Generate UUID helper
@@ -168,9 +170,38 @@ export default function Editor() {
     () => store.temporal.getState()
   )
 
-  const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>({
+  // Resolve initial project id from URL/hash, last-opened id, or recents.
+  const resolveInitialProjectId = (): string => {
+    // 1) URL hash query: #/editor?projectId=...
+    try {
+      const hash = window.location.hash || ''
+      const qIndex = hash.indexOf('?')
+      if (qIndex >= 0) {
+        const params = new URLSearchParams(hash.slice(qIndex + 1))
+        const fromHash = params.get('projectId')
+        if (fromHash) return fromHash
+      }
+    } catch {}
+
+    // 2) localStorage last opened project
+    try {
+      const last = localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY)
+      if (last) return last
+    } catch {}
+
+    // 3) first recent project
+    const recent = recentProjects.get()[0]?.id
+    if (recent) return recent
+
+    // 4) new
+    return crypto.randomUUID()
+  }
+
+  const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
+    const initialId = resolveInitialProjectId()
+    return {
     // Meta - 基础身份
-    id: generateId(),
+    id: initialId,
     projectId: "",
     version: "1.0.0",
     name: "My Visualization",
@@ -199,10 +230,13 @@ export default function Editor() {
     // Legacy (保持向后兼容)
     background: "#1a1a1a",
     gridEnabled: true,
+  }
   })
 
-  // Project state for auto-save
-  const [projectId] = useState(() => crypto.randomUUID())
+  // Single source of truth for persistence id
+  const projectId = canvasConfig.id
+  const bootstrappingRef = useRef(true)
+  const [isBootstrapping, setIsBootstrapping] = useState(true)
 
   // Function to get current project state for saving
   const getProjectState = useCallback((): ProjectFile => {
@@ -234,16 +268,89 @@ export default function Editor() {
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
     getProjectState,
-    enabled: true,
+    enabled: !isBootstrapping,
   })
 
-  // Mark dirty when kernel state changes
+  // Bootstrap: load last project into store (or create a new empty page)
   useEffect(() => {
-    const unsubscribe = store.subscribe(() => {
-      markDirty()
-    })
-    return unsubscribe
-  }, [markDirty])
+    let cancelled = false
+    ;(async () => {
+      bootstrappingRef.current = true
+      setIsBootstrapping(true)
+
+      try {
+        const loaded = await projectStorage.load(projectId)
+        if (cancelled) return
+        if (loaded) {
+          // Load project into kernel store
+          store.getState().loadPage({
+            id: loaded.meta.id,
+            type: 'page' as const,
+            version: loaded.meta.version,
+            nodes: loaded.nodes,
+          })
+          // Update canvas config
+          setCanvasConfig(prev => ({
+            ...prev,
+            id: loaded.meta.id,
+            name: loaded.meta.name,
+            createdAt: loaded.meta.createdAt,
+            mode: loaded.canvas.mode,
+            width: loaded.canvas.width,
+            height: loaded.canvas.height,
+            bgValue: loaded.canvas.background,
+            gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
+            gridSize: loaded.canvas.gridSize ?? prev.gridSize,
+            dataSources: (loaded.dataSources as any) ?? prev.dataSources,
+          }))
+
+          // Clear undo history when switching/loading projects (best-effort)
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
+        } else {
+          // Create new empty project page
+          store.getState().loadPage({
+            id: projectId,
+            type: 'page' as const,
+            version: '1.0.0',
+            nodes: [],
+          })
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
+        }
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error('[Editor] bootstrap project failed', e)
+      } finally {
+        if (cancelled) return
+        bootstrappingRef.current = false
+        setIsBootstrapping(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [projectId])
+
+  // Mark dirty on meaningful changes only:
+  // - explicit user edits (node add/move/resize/props/etc.)
+  // - canvas config changes that affect persistence
+  useEffect(() => {
+    if (bootstrappingRef.current) return
+    markDirty()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    canvasConfig.name,
+    canvasConfig.mode,
+    canvasConfig.width,
+    canvasConfig.height,
+    canvasConfig.bgValue,
+    canvasConfig.gridEnabled,
+    canvasConfig.gridSize,
+  ])
 
   // Register default commands with the command registry
   useEffect(() => {
@@ -359,7 +466,7 @@ export default function Editor() {
   return (
     <div className={isDarkMode ? "dark relative min-h-screen overflow-hidden" : "relative min-h-screen overflow-hidden"}>
       {/* Canvas Background with Dot Grid */}
-      <div className="absolute inset-0 bg-background dot-grid" />
+      <div className="absolute inset-0 bg-background" />
 
       {/* Canvas View */}
       <div className="absolute inset-0">
@@ -370,6 +477,7 @@ export default function Editor() {
           resolvePlugin={resolvePlugin}
           zoom={zoom / 100}
           onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
+          onUserEdit={markDirty}
         />
       </div>
 
@@ -425,7 +533,6 @@ export default function Editor() {
                 <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
                   <Menu className="h-4 w-4 text-white" />
                 </div>
-                <span className="text-sm text-foreground font-bold tracking-tight">ThingsVis</span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 mt-2">
@@ -467,13 +574,15 @@ export default function Editor() {
           <Input
             placeholder="未命名项目"
             className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
-            defaultValue="My Visualization"
+            value={canvasConfig.name}
+            onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
           />
 
           <SaveIndicator
             status={saveState.status}
             lastSavedAt={saveState.lastSavedAt}
             error={saveState.error}
+            language={language}
             className="ml-1 pr-2"
           />
         </div>
@@ -594,7 +703,7 @@ export default function Editor() {
               <ComponentsList onInsert={handleAddNode} language={language} />
             </div>
             ) : leftPanelTab === "layers" ? (
-              <LayerPanel store={store} language={language} searchQuery={searchQuery} />
+              <LayerPanel store={store} language={language} searchQuery={searchQuery} onUserEdit={markDirty} />
             ) : (
               <DataPanel store={store} language={language} />
             )}
@@ -603,7 +712,7 @@ export default function Editor() {
       </aside>
 
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
-      <div className="absolute left-[324px] bottom-8 z-40 flex items-center gap-3 select-none">
+      <div className="absolute left-[324px] bottom-4 z-40 flex items-center gap-3 select-none">
         {/* Zoom Controls */}
         <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
@@ -667,6 +776,7 @@ export default function Editor() {
                 nodeId={selectedElement} 
                 kernelStore={store} 
                 language={language} 
+                onUserEdit={markDirty}
               />
             ) : (
               <>
@@ -754,6 +864,11 @@ export default function Editor() {
         open={showProjectDialog}
         onClose={() => setShowProjectDialog(false)}
         onProjectLoad={(project) => {
+          // Persist last opened project id
+          try {
+            localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, project.meta.id)
+          } catch {}
+
           // Load project into kernel store
           const pageData = {
             id: project.meta.id,
@@ -762,28 +877,48 @@ export default function Editor() {
             nodes: project.nodes,
           }
           store.getState().loadPage(pageData)
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
           // Update canvas config
           setCanvasConfig(prev => ({
             ...prev,
             id: project.meta.id,
             name: project.meta.name,
+            createdAt: project.meta.createdAt,
             mode: project.canvas.mode,
             width: project.canvas.width,
             height: project.canvas.height,
             bgValue: project.canvas.background,
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
+            dataSources: (project.dataSources as any) ?? prev.dataSources,
           }))
         }}
         onNewProject={() => {
           // Create new empty project
+          const newId = crypto.randomUUID()
+          try {
+            localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId)
+          } catch {}
           const emptyPage = {
-            id: crypto.randomUUID(),
+            id: newId,
             type: 'page' as const,
             version: '1.0.0',
             nodes: [],
           }
           store.getState().loadPage(emptyPage)
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
+
+          setCanvasConfig(prev => ({
+            ...prev,
+            id: newId,
+            name: 'My Visualization',
+            createdAt: Date.now(),
+            dataSources: [],
+          }))
         }}
         currentProject={getProjectState()}
         language={language}

@@ -20,6 +20,8 @@ export interface RecentProjectsListProps {
   onSelect: (entry: RecentProjectEntry) => void
   /** Callback when a project should be removed from the list */
   onRemove?: (projectId: string) => void
+  /** Checking this prop changes will force list refresh */
+  refreshKey?: number
   /** Whether the list is disabled */
   disabled?: boolean
   /** Language for localization */
@@ -35,13 +37,14 @@ export interface RecentProjectsListProps {
 export function RecentProjectsList({
   onSelect,
   onRemove,
+  refreshKey,
   disabled = false,
   language = 'en',
   maxItems = 10,
 }: RecentProjectsListProps) {
   const projects = useMemo(() => {
     return recentProjects.get().slice(0, maxItems)
-  }, [maxItems])
+  }, [maxItems, refreshKey])
 
   const t = language === 'zh' ? translations.zh : translations.en
 
