@@ -82,7 +82,6 @@ import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
 import { projectStorage } from '../lib/storage/projectStorage'
-import * as previewSession from '../lib/storage/previewSession'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 
@@ -140,12 +139,6 @@ export default function Editor() {
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
-
-  // Setup preview message listener for postMessage communication
-  useEffect(() => {
-    const cleanup = previewSession.setupPreviewMessageListener()
-    return cleanup
-  }, [])
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -272,9 +265,9 @@ export default function Editor() {
       setTool: (tool) => setActiveTool(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
       openPreview: async () => {
-        // Save project before opening preview
+        // Save project before entering in-editor preview
         await saveNow()
-        previewSession.open(projectId, 'user')
+        window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
       },
     })
   }, [saveNow, projectId])
@@ -536,12 +529,8 @@ export default function Editor() {
             size="sm" 
             className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
             onClick={async () => {
-              // Get current project data
-              const projectData = getProjectState()
-              // Set preview data for postMessage transfer
-              previewSession.setPreviewData(projectId, projectData)
-              // Open preview
-              previewSession.openPreview(projectId, 'user')
+              await saveNow()
+              window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
             }}
           >
             <Eye className="h-4 w-4" />
@@ -782,8 +771,8 @@ export default function Editor() {
             width: project.canvas.width,
             height: project.canvas.height,
             bgValue: project.canvas.background,
-            gridEnabled: project.canvas.gridEnabled,
-            gridSize: project.canvas.gridSize,
+            gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
+            gridSize: project.canvas.gridSize ?? prev.gridSize,
           }))
         }}
         onNewProject={() => {

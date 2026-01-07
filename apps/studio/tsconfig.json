@@ -6,7 +6,8 @@
       "@/*": ["./src/*"],
       "@thingsvis/schema": ["../../packages/thingsvis-schema/src"],
       "@thingsvis/kernel": ["../../packages/thingsvis-kernel/src"],
-      "@thingsvis/ui": ["../../packages/thingsvis-ui/src"]
+      "@thingsvis/ui": ["../../packages/thingsvis-ui/src"],
+      "@thingsvis/utils": ["../../packages/thingsvis-utils/src"]
     }
   },
   "include": ["src/**/*", "rsbuild.config.ts", "tailwind.config.ts"]

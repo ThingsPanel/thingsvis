@@ -1,0 +1,184 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSyncExternalStore } from 'react'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Maximize, Minimize, RefreshCcw } from 'lucide-react'
+import type { PageSchemaType } from '@thingsvis/schema'
+import { CanvasView } from '@thingsvis/ui'
+
+import { store } from '../lib/store'
+import { loadPlugin } from '../plugins/pluginResolver'
+import { projectStorage } from '../lib/storage/projectStorage'
+import * as previewSession from '../lib/storage/previewSession'
+
+function getPreviewParamsFromHash(): { projectId: string | null } {
+  const hash = window.location.hash || ''
+  const queryIndex = hash.indexOf('?')
+  if (queryIndex < 0) return { projectId: null }
+
+  const query = hash.slice(queryIndex + 1)
+  const params = new URLSearchParams(query)
+  return { projectId: params.get('projectId') }
+}
+
+export default function PreviewPage() {
+  const [{ projectId }, setParams] = useState(() => getPreviewParamsFromHash())
+  const [projectName, setProjectName] = useState<string | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen())
+
+  // Observe kernel state so we can decide whether to auto-load from storage.
+  const kernelState = useSyncExternalStore(
+    useCallback((subscribe) => store.subscribe(subscribe), []),
+    () => store.getState() as any,
+    () => store.getState() as any
+  )
+
+  const hasAnyNodes = useMemo(() => {
+    const nodesById = kernelState?.nodesById as Record<string, unknown> | undefined
+    return nodesById ? Object.keys(nodesById).length > 0 : false
+  }, [kernelState])
+
+  useEffect(() => {
+    const onHashChange = () => setParams(getPreviewParamsFromHash())
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(previewSession.isFullscreen())
+    document.addEventListener('fullscreenchange', onFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
+  }, [])
+
+  const resolvePlugin = useCallback(async (type: string) => {
+    const { entry } = await loadPlugin(type)
+    return entry
+  }, [])
+
+  const applyProjectToStore = useCallback(async () => {
+    if (!projectId) {
+      setError('Missing projectId')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const project = await projectStorage.load(projectId)
+      if (!project) {
+        setError('Project not found')
+        return
+      }
+
+      setProjectName(project.meta?.name)
+
+      if (project.canvas) {
+        store.getState().updateCanvas({
+          mode: project.canvas.mode || 'infinite',
+          width: project.canvas.width || 1920,
+          height: project.canvas.height || 1080,
+        })
+      }
+
+      const page: PageSchemaType = {
+        id: project.meta?.id || projectId,
+        type: 'page',
+        version: project.meta?.version || '1.0.0',
+        nodes: project.nodes || [],
+      }
+
+      store.getState().loadPage(page)
+    } catch (e: any) {
+      setError(e?.message ?? String(e))
+    } finally {
+      setIsLoading(false)
+    }
+  }, [projectId])
+
+  // If user navigates directly into preview (no editor state), auto-load once.
+  useEffect(() => {
+    if (!projectId) return
+    if (hasAnyNodes) return
+    void applyProjectToStore()
+  }, [projectId, hasAnyNodes, applyProjectToStore])
+
+  const handleBack = useCallback(() => {
+    window.location.hash = '#/'
+  }, [])
+
+  const handleRefresh = useCallback(() => {
+    void applyProjectToStore()
+  }, [applyProjectToStore])
+
+  const handleToggleFullscreen = useCallback(() => {
+    void previewSession.toggleFullscreen(document.documentElement)
+  }, [])
+
+  return (
+    <div className="relative w-screen h-screen bg-background overflow-hidden">
+      {/* Minimal overlay toolbar */}
+      <div className="absolute top-4 left-4 z-50 pointer-events-auto">
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+            onClick={handleBack}
+            title="Back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+            onClick={handleRefresh}
+            disabled={!projectId || isLoading}
+            title="Refresh"
+          >
+            <RefreshCcw className="h-4 w-4" />
+          </Button>
+
+          {projectName ? (
+            <div className="px-2 text-sm text-muted-foreground select-none whitespace-nowrap">
+              {projectName}
+            </div>
+          ) : null}
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+            onClick={handleToggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Errors / loading */}
+      {error ? (
+        <div className="absolute inset-0 z-40 flex items-center justify-center">
+          <div className="glass rounded-md shadow-md border border-border px-4 py-3 text-sm text-destructive">
+            {error}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Preview canvas */}
+      <div className="absolute inset-0">
+        <CanvasView
+          store={store as any}
+          resolvePlugin={resolvePlugin as any}
+          gridSize={0}
+          snapToGrid={false}
+          centeredMask={false}
+        />
+      </div>
+    </div>
+  )
+}
