@@ -10,10 +10,10 @@
       "exposedModule": "./Main",
       "version": "2.0.0"
     },
-    "basic/pm25-card": {
-      "remoteName": "thingsvis_plugin_basic_pm25_card",
+    "basic/indicator": {
+      "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
-      "staticEntryUrl": "/plugins/basic/pm25-card/dist/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/indicator/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0"
@@ -23,6 +23,7 @@
       "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
       "staticEntryUrl": "/plugins/chart/echarts-line/dist/remoteEntry.js",
       "debugSource": "static",
+      "localEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "1.0.0"
     }

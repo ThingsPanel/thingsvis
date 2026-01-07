@@ -1,5 +1,5 @@
 {
-  "name": "thingsvis-plugin-basic-pm25-card",
+  "name": "thingsvis-plugin-basic-indicator",
   "version": "0.0.1",
   "private": true,
   "scripts": {

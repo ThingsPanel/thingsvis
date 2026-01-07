@@ -11,15 +11,15 @@
       "version": "1.0.0",
       "icon": "Type"
     },
-    "basic/pm25-card": {
-      "remoteName": "thingsvis_plugin_basic_pm25_card",
+    "basic/indicator": {
+      "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
-      "staticEntryUrl": "/plugins/basic/pm25-card/dist/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/indicator/dist/remoteEntry.js",
       "debugSource": "local",
       "localEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Wind"
+      "icon": "Activity"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
