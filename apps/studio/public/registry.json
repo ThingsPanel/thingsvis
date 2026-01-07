@@ -15,8 +15,7 @@
       "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
       "staticEntryUrl": "/plugins/basic/indicator/dist/remoteEntry.js",
-      "debugSource": "local",
-      "localEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
       "icon": "Activity"

@@ -1,15 +1,14 @@
 {
-  "name": "thingsvis-plugin-basic-indicator",
+  "name": "thingsvis-plugin-basic-pm25-card",
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "rspack serve --port 3103",
+    "dev": "rspack serve --port 3104",
     "build": "rspack build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "zod": "^3.22.4",
-    "lucide-react": "^0.300.0"
+    "zod": "^3.22.4"
   },
   "peerDependencies": {
     "react": "^18.2.0",
@@ -19,9 +18,6 @@
   "devDependencies": {
     "@rspack/cli": "^1.0.0",
     "@rspack/core": "^1.0.0",
-    "leafer-ui": "^1.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "typescript": "^5.3.3",
     "ts-loader": "^9.5.1",
     "@types/react": "^18.2.41",
