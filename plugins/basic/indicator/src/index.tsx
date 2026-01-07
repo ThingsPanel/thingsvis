@@ -16,8 +16,8 @@ import type { PluginMainModule, PluginOverlayContext, PluginOverlayInstance } fr
  */
 function create(): Rect {
   return new Rect({
-    width: 300,
-    height: 150,
+    width: 200,
+    height: 120,
     fill: 'transparent',
     draggable: true,
     cursor: 'pointer',
@@ -38,15 +38,15 @@ function isOnline(status: boolean | number | string): boolean {
   return s === 'online' || s === 'true' || s === '1';
 }
 
-const PM25Card: React.FC<Props> = (props) => {
+const IndicatorCard: React.FC<Props> = (props) => {
   const online = isOnline(props.status);
-  
+
   return (
     <div style={{
       width: '100%',
       height: '100%',
       backgroundColor: props.backgroundColor,
-      padding: '20px',
+      padding: '16px',
       borderRadius: '8px',
       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
       display: 'flex',
@@ -62,7 +62,7 @@ const PM25Card: React.FC<Props> = (props) => {
         justifyContent: 'space-between',
       }}>
         <span style={{
-          fontSize: '18px',
+          fontSize: '14px',
           color: props.titleColor,
           fontWeight: 500,
         }}>
@@ -90,17 +90,17 @@ const PM25Card: React.FC<Props> = (props) => {
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'space-between',
-        marginTop: '10px',
+        marginTop: '8px',
       }}>
         {/* Icon */}
         <div style={{ color: props.iconColor }}>
-          <ClipboardList size={32} strokeWidth={1.5} />
+          <ClipboardList size={24} strokeWidth={1.5} />
         </div>
 
         {/* Value & Unit */}
         <div style={{ display: 'flex', alignItems: 'baseline' }}>
           <span style={{
-            fontSize: '48px',
+            fontSize: '32px',
             color: props.valueColor,
             fontWeight: 400,
             lineHeight: 1,
@@ -108,10 +108,10 @@ const PM25Card: React.FC<Props> = (props) => {
             {props.value}
           </span>
           <span style={{
-            fontSize: '16px',
+            fontSize: '14px',
             color: props.unitColor,
             marginLeft: '4px',
-            marginBottom: '6px',
+            marginBottom: '4px',
           }}>
             {props.unit}
           </span>
@@ -126,6 +126,10 @@ const PM25Card: React.FC<Props> = (props) => {
  */
 function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   const element = document.createElement('div');
+  element.style.width = '100%';
+  element.style.height = '100%';
+  element.style.boxSizing = 'border-box';
+
   let root: Root | null = null;
 
   const update = (ctx: PluginOverlayContext) => {
@@ -134,7 +138,7 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     if (!root) {
       root = createRoot(element);
     }
-    root.render(<PM25Card {...props} />);
+    root.render(<IndicatorCard {...props} />);
   };
 
   // Initial render
