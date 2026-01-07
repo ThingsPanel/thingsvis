@@ -153,6 +153,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         gridSize={20}
         snapToGrid={true}
         centeredMask={true}
+        panEnabled={activeTool === 'pan'}
+        zoomEnabled={activeTool === 'pan'}
         zoom={zoom}
         onViewportChange={(vp) => {
           vpRef.current = vp;
@@ -214,6 +216,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       <TransformControls 
         containerRef={containerRef} 
         kernelStore={store} 
+        enabled={activeTool !== 'pan'}
       />
 
       <ConnectionTool 

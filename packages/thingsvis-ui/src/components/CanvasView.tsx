@@ -20,6 +20,10 @@ type Props = {
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
   onViewportChange?: (vp: { width: number; height: number; zoom: number; offsetX: number; offsetY: number }) => void;
+  /** Enable panning (dragging the canvas / wheel panning) */
+  panEnabled?: boolean;
+  /** Enable zooming (Ctrl/Meta + wheel zoom) */
+  zoomEnabled?: boolean;
 };
 
 export const CanvasView: React.FC<Props> = ({ 
@@ -33,7 +37,9 @@ export const CanvasView: React.FC<Props> = ({
   centeredMask = true, 
   zoom: propsZoom,
   onZoomChange,
-  onViewportChange 
+  onViewportChange,
+  panEnabled = true,
+  zoomEnabled = true
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
@@ -180,6 +186,7 @@ export const CanvasView: React.FC<Props> = ({
 
     function onPointerDown(e: PointerEvent) {
       if (mode !== 'infinite') return;
+      if (!panEnabled) return;
       isPanning = true;
       lastX = e.clientX;
       lastY = e.clientY;
@@ -203,12 +210,14 @@ export const CanvasView: React.FC<Props> = ({
       
       // If Ctrl/Meta is pressed, it's a zoom action
       if (e.ctrlKey || e.metaKey) {
+        if (!zoomEnabled) return;
         e.preventDefault();
         const delta = -e.deltaY;
         const factor = delta > 0 ? 1.1 : 0.9;
         const next = Math.max(0.1, Math.min(10, zoomRef.current * factor));
         setZoomValue(next);
       } else if (mode === 'infinite') {
+        if (!panEnabled) return;
         // Panning via wheel (standard scroll)
         setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
       }
@@ -225,7 +234,7 @@ export const CanvasView: React.FC<Props> = ({
       window.removeEventListener('pointerup', onPointerUp);
       el.removeEventListener('wheel', onWheel as any);
     };
-  }, [mode, setZoomValue]);
+  }, [mode, setZoomValue, panEnabled, zoomEnabled]);
 
   // redraw grid when viewport changes
   useEffect(() => {

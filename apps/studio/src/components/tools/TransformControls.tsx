@@ -7,9 +7,10 @@ import type { KernelStore, KernelState } from "@thingsvis/kernel";
 type Props = {
   containerRef: React.RefObject<HTMLElement>;
   kernelStore: KernelStore;
+  enabled?: boolean;
 };
 
-export default function TransformControls({ containerRef, kernelStore }: Props) {
+export default function TransformControls({ containerRef, kernelStore, enabled = true }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
 
@@ -19,6 +20,24 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
   );
 
   useEffect(() => {
+    if (!enabled) {
+      try {
+        moveableRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Moveable destroy failed', e);
+      }
+      try {
+        selectoRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Selecto destroy failed', e);
+      }
+      moveableRef.current = null;
+      selectoRef.current = null;
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -102,13 +121,26 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
     }
 
     return () => {
-      moveableRef.current?.destroy();
-      selectoRef.current?.destroy();
+      try {
+        moveableRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Moveable destroy failed', e);
+      }
+      try {
+        selectoRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Selecto destroy failed', e);
+      }
+      moveableRef.current = null;
+      selectoRef.current = null;
     };
-  }, [containerRef, kernelStore]);
+  }, [containerRef, kernelStore, enabled]);
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
+    if (!enabled) return;
     if (!moveableRef.current || !containerRef.current) return;
     
     const selectedIds = state.selection.nodeIds;
@@ -138,7 +170,7 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
         moveableRef.current?.updateRect();
       });
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef]);
+  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled]);
 
   return null;
 }
