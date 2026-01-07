@@ -2,11 +2,14 @@
  * Preview Session Manager
  * 
  * Manages secure data transfer between studio and preview tabs.
- * Uses localStorage for cross-origin compatibility in development.
+ * Uses postMessage for cross-origin communication in development.
  */
 
 import { STORAGE_CONSTANTS } from './constants'
 import type { PreviewSession, PreviewMode } from './types'
+
+// Store project data temporarily for preview window to request
+let pendingPreviewData: { projectId: string; data: any } | null = null
 
 // =============================================================================
 // Session Management
@@ -68,7 +71,29 @@ export function consumeSession(token: string): string | null {
 }
 
 /**
+ * Set project data for preview window to request via postMessage
+ */
+export function setPreviewData(projectId: string, data: any): void {
+  pendingPreviewData = { projectId, data }
+}
+
+/**
+ * Get pending preview data
+ */
+export function getPreviewData(): { projectId: string; data: any } | null {
+  return pendingPreviewData
+}
+
+/**
+ * Clear pending preview data
+ */
+export function clearPreviewData(): void {
+  pendingPreviewData = null
+}
+
+/**
  * Open preview in new tab with session token.
+ * Also sets up postMessage listener for data transfer.
  */
 export function openPreview(projectId: string, mode: PreviewMode = 'user'): void {
   // Create session token
@@ -79,9 +104,44 @@ export function openPreview(projectId: string, mode: PreviewMode = 'user'): void
   const url = new URL(previewPath, window.location.origin)
   url.searchParams.set('session', token)
   url.searchParams.set('mode', mode)
+  url.searchParams.set('projectId', projectId)
   
   // Open in new tab
   window.open(url.toString(), '_blank')
+}
+
+/**
+ * Setup message listener for preview data requests.
+ * Should be called once when studio initializes.
+ */
+export function setupPreviewMessageListener(): () => void {
+  const handler = (event: MessageEvent) => {
+    // Validate origin in production (skip in dev for different ports)
+    const isDevMode = window.location.hostname === 'localhost'
+    if (!isDevMode && event.origin !== window.location.origin) {
+      return
+    }
+    
+    if (event.data?.type === 'THINGSVIS_REQUEST_PROJECT_DATA') {
+      const { projectId } = event.data
+      const previewData = getPreviewData()
+      
+      if (previewData && previewData.projectId === projectId) {
+        // Send data back to preview window
+        event.source?.postMessage({
+          type: 'THINGSVIS_PROJECT_DATA',
+          projectId,
+          data: previewData.data,
+        }, { targetOrigin: '*' })
+        
+        // Clear after sending
+        clearPreviewData()
+      }
+    }
+  }
+  
+  window.addEventListener('message', handler)
+  return () => window.removeEventListener('message', handler)
 }
 
 /**

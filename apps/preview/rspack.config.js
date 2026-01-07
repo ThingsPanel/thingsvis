@@ -4,6 +4,9 @@ const { ModuleFederationPlugin } = require('@module-federation/rspack');
 
 module.exports = defineConfig({
   mode: 'development',
+  experiments: {
+    css: true
+  },
   entry: {
     main: './src/main.tsx'
   },
@@ -47,6 +50,10 @@ module.exports = defineConfig({
             }
           }
         ]
+      },
+      {
+        test: /\.css$/,
+        type: 'css/auto'
       }
     ]
   },

@@ -12,19 +12,20 @@
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/ui": "workspace:*",
     "@thingsvis/utils": "workspace:*",
+    "idb-keyval": "^6.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@rspack/cli": "^1.0.0",
-    "@rspack/core": "^1.0.0",
     "@module-federation/enhanced": "^0.6.0",
     "@module-federation/rspack": "^0.6.0",
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
-    "typescript": "^5.3.3",
-    "ts-loader": "^9.5.1"
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
   }
 }
-
-

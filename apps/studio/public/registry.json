@@ -21,7 +21,7 @@
       "version": "1.0.0",
       "icon": "Wind"
     },
-    "chart/曲线": {
+    "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
       "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
       "staticEntryUrl": "/plugins/chart/echarts-line/dist/remoteEntry.js",

@@ -82,7 +82,7 @@ import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
 import { projectStorage } from '../lib/storage/projectStorage'
-import { previewSession } from '../lib/storage/previewSession'
+import * as previewSession from '../lib/storage/previewSession'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 
@@ -140,6 +140,12 @@ export default function Editor() {
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
+
+  // Setup preview message listener for postMessage communication
+  useEffect(() => {
+    const cleanup = previewSession.setupPreviewMessageListener()
+    return cleanup
+  }, [])
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -208,7 +214,8 @@ export default function Editor() {
   // Function to get current project state for saving
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
-    const nodes = Object.values(state.nodesById)
+    // Extract node schemas from NodeState (schemaRef contains the actual node data)
+    const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
     return {
       meta: {
         version: '1.0.0',
@@ -264,11 +271,13 @@ export default function Editor() {
       showShortcutsPanel: () => setShowShortcuts(true),
       setTool: (tool) => setActiveTool(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
-      openPreview: () => {
+      openPreview: async () => {
+        // Save project before opening preview
+        await saveNow()
         previewSession.open(projectId, 'user')
       },
     })
-  }, [saveNow])
+  }, [saveNow, projectId])
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts({ registry: commandRegistry })
@@ -526,7 +535,14 @@ export default function Editor() {
             variant="ghost" 
             size="sm" 
             className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={() => previewSession.open(projectId, 'user')}
+            onClick={async () => {
+              // Get current project data
+              const projectData = getProjectState()
+              // Set preview data for postMessage transfer
+              previewSession.setPreviewData(projectId, projectData)
+              // Open preview
+              previewSession.openPreview(projectId, 'user')
+            }}
           >
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
