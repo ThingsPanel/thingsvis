@@ -15,13 +15,12 @@
       "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
       "staticEntryUrl": "/plugins/basic/indicator/dist/remoteEntry.js",
-      "debugSource": "local",
-      "localEntryUrl": "http://localhost:3103/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
       "icon": "Activity"
     },
-    "chart/曲线": {
+    "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
       "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
       "staticEntryUrl": "/plugins/chart/echarts-line/dist/remoteEntry.js",

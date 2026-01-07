@@ -72,10 +72,18 @@ import CanvasView from './CanvasView'
 import ComponentsList from './LeftPanel/ComponentsList'
 import LayerPanel from './LeftPanel/LayerPanel'
 import PropsPanel from './RightPanel/PropsPanel'
+import { SaveIndicator } from './SaveIndicator'
+import { ShortcutHelpPanel } from './ShortcutHelpPanel'
+import { ProjectDialog } from './ProjectDialog'
 // Data source management moved to separate page: #/data-sources
 import { loadPlugin } from '../plugins/pluginResolver'
 import { extractDefaults } from '../plugins/schemaUtils'
 import { store } from '../lib/store'
+import { useAutoSave } from '../hooks/useAutoSave'
+import { useHistoryState } from '../hooks/useHistoryState'
+import { projectStorage } from '../lib/storage/projectStorage'
+import type { ProjectFile } from '../lib/storage/schemas'
+import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -130,6 +138,7 @@ export default function Editor() {
   const [searchQuery, setSearchQuery] = useState("")
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [showProjectDialog, setShowProjectDialog] = useState(false)
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -191,6 +200,80 @@ export default function Editor() {
     background: "#1a1a1a",
     gridEnabled: true,
   })
+
+  // Project state for auto-save
+  const [projectId] = useState(() => crypto.randomUUID())
+
+  // Function to get current project state for saving
+  const getProjectState = useCallback((): ProjectFile => {
+    const state = store.getState()
+    // Extract node schemas from NodeState (schemaRef contains the actual node data)
+    const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
+    return {
+      meta: {
+        version: '1.0.0',
+        id: projectId,
+        name: canvasConfig.name,
+        createdAt: canvasConfig.createdAt,
+        updatedAt: Date.now(),
+      },
+      canvas: {
+        mode: canvasConfig.mode,
+        width: canvasConfig.width,
+        height: canvasConfig.height,
+        background: canvasConfig.bgValue,
+        gridEnabled: canvasConfig.gridEnabled,
+        gridSize: canvasConfig.gridSize,
+      },
+      nodes: nodes,
+      dataSources: canvasConfig.dataSources,
+    }
+  }, [projectId, canvasConfig])
+
+  // Auto-save hook
+  const { saveState, markDirty, saveNow } = useAutoSave({
+    projectId,
+    getProjectState,
+    enabled: true,
+  })
+
+  // Mark dirty when kernel state changes
+  useEffect(() => {
+    const unsubscribe = store.subscribe(() => {
+      markDirty()
+    })
+    return unsubscribe
+  }, [markDirty])
+
+  // Register default commands with the command registry
+  useEffect(() => {
+    registerDefaultCommands({
+      saveProject: async () => { await saveNow() },
+      undo: () => store.temporal.getState().undo(),
+      redo: () => store.temporal.getState().redo(),
+      canUndo: () => {
+        const temporal = store.temporal.getState()
+        const past = (temporal.pastStates ?? []) as unknown[]
+        return past.length > 0
+      },
+      canRedo: () => {
+        const temporal = store.temporal.getState()
+        const future = (temporal.futureStates ?? []) as unknown[]
+        return future.length > 0
+      },
+      showShortcutsPanel: () => setShowShortcuts(true),
+      setTool: (tool) => setActiveTool(tool as Tool),
+      openProjectDialog: () => setShowProjectDialog(true),
+      openPreview: async () => {
+        // Save project before entering in-editor preview
+        await saveNow()
+        window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
+      },
+    })
+  }, [saveNow, projectId])
+
+  // Enable keyboard shortcuts
+  useKeyboardShortcuts({ registry: commandRegistry })
 
   useEffect(() => {
     // Sync canvas state to kernel store when config changes
@@ -299,7 +382,7 @@ export default function Editor() {
             </p>
             <div className="space-y-2 text-sm text-muted-foreground pointer-events-auto w-64 mx-auto">
               <button
-                onClick={() => {}}
+                onClick={() => setShowProjectDialog(true)}
                 className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
               >
                 <div className="flex items-center gap-3">
@@ -319,7 +402,7 @@ export default function Editor() {
                 <span className="text-sm text-muted-foreground">?</span>
               </button>
               <button
-                onClick={() => {}}
+                onClick={() => console.log('Login clicked - TODO: implement login')}
                 className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
               >
                 <div className="flex items-center gap-3">
@@ -346,12 +429,12 @@ export default function Editor() {
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 mt-2">
-              <DropdownMenuItem className="gap-2" onClick={() => {}}>
+              <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
                 <FolderOpen className="h-4 w-4" />
                 {language === "zh" ? "打开项目" : "Open Project"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => {}}>
+              <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
                 <Save className="h-4 w-4" />
                 {language === "zh" ? "保存" : "Save"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
@@ -387,10 +470,12 @@ export default function Editor() {
             defaultValue="My Visualization"
           />
 
-          <div className="flex items-center gap-2 text-sm text-muted-foreground/60 ml-1 pr-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
-            <span>{language === "zh" ? "所有更改已保存" : "All changes saved"}</span>
-          </div>
+          <SaveIndicator
+            status={saveState.status}
+            lastSavedAt={saveState.lastSavedAt}
+            error={saveState.error}
+            className="ml-1 pr-2"
+          />
         </div>
 
         {/* Center Side: Tools */}
@@ -439,12 +524,24 @@ export default function Editor() {
             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
           
-          <Button variant="ghost" size="sm" className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+            onClick={async () => {
+              await saveNow()
+              window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
+            }}
+          >
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
           </Button>
 
-          <Button size="sm" className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all">
+          <Button 
+            size="sm" 
+            className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
+            onClick={() => console.log('Publish clicked - TODO: implement publish')}
+          >
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
@@ -645,6 +742,52 @@ export default function Editor() {
         </div>
       </aside>
 
+      {/* Keyboard Shortcuts Help Panel */}
+      <ShortcutHelpPanel
+        open={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
+        language={language}
+      />
+
+      {/* Project Dialog */}
+      <ProjectDialog
+        open={showProjectDialog}
+        onClose={() => setShowProjectDialog(false)}
+        onProjectLoad={(project) => {
+          // Load project into kernel store
+          const pageData = {
+            id: project.meta.id,
+            type: 'page' as const,
+            version: project.meta.version,
+            nodes: project.nodes,
+          }
+          store.getState().loadPage(pageData)
+          // Update canvas config
+          setCanvasConfig(prev => ({
+            ...prev,
+            id: project.meta.id,
+            name: project.meta.name,
+            mode: project.canvas.mode,
+            width: project.canvas.width,
+            height: project.canvas.height,
+            bgValue: project.canvas.background,
+            gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
+            gridSize: project.canvas.gridSize ?? prev.gridSize,
+          }))
+        }}
+        onNewProject={() => {
+          // Create new empty project
+          const emptyPage = {
+            id: crypto.randomUUID(),
+            type: 'page' as const,
+            version: '1.0.0',
+            nodes: [],
+          }
+          store.getState().loadPage(emptyPage)
+        }}
+        currentProject={getProjectState()}
+        language={language}
+      />
 
     </div>
   )

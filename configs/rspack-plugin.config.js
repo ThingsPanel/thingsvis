@@ -38,9 +38,10 @@ function createPluginConfig(pluginDir, opts = {}) {
   const entryAbs = findEntry(pluginDir);
 
   const port = opts.port ?? 3100;
+  const defaultMode = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
   return defineConfig({
-    mode: opts.mode ?? 'development',
+    mode: opts.mode ?? defaultMode,
     context: pluginDir,
     entry: {
       main: entryAbs

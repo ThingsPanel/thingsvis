@@ -7,9 +7,10 @@ import type { KernelStore, KernelState } from "@thingsvis/kernel";
 type Props = {
   containerRef: React.RefObject<HTMLElement>;
   kernelStore: KernelStore;
+  enabled?: boolean;
 };
 
-export default function TransformControls({ containerRef, kernelStore }: Props) {
+export default function TransformControls({ containerRef, kernelStore, enabled = true }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
 
@@ -19,6 +20,24 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
   );
 
   useEffect(() => {
+    if (!enabled) {
+      try {
+        moveableRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Moveable destroy failed', e);
+      }
+      try {
+        selectoRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Selecto destroy failed', e);
+      }
+      moveableRef.current = null;
+      selectoRef.current = null;
+      return;
+    }
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -31,9 +50,11 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
         pinchable: true,
         origin: true,
         keepRatio: false,
-        throttleDrag: 0,
-        throttleResize: 0,
-        throttleRotate: 0,
+        throttleDrag: 1,
+        throttleResize: 1,
+        throttleRotate: 1,
+        useResizeObserver: false,
+        useMutationObserver: false,
       });
 
       selectoRef.current = new Selecto({
@@ -57,42 +78,87 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
         }
       });
 
-      // Drag handling
-      moveableRef.current.on("drag", ({ target, left, top }) => {
-        target.style.left = `${left}px`;
-        target.style.top = `${top}px`;
+      // Drag handling (use transform during drag for perf; commit left/top at end)
+      moveableRef.current.on('dragStart', ({ target }) => {
+        const baseLeft = parseFloat(target.style.left || '0') || 0;
+        const baseTop = parseFloat(target.style.top || '0') || 0;
+        target.dataset.baseLeft = String(baseLeft);
+        target.dataset.baseTop = String(baseTop);
+        target.style.willChange = 'transform';
+        target.style.transform = '';
       });
 
-      moveableRef.current.on("dragEnd", ({ target, isDrag }) => {
-        if (!isDrag) return;
-        const nodeId = target.getAttribute("data-node-id");
+      moveableRef.current.on('drag', ({ target, beforeTranslate }) => {
+        const tx = beforeTranslate?.[0] ?? 0;
+        const ty = beforeTranslate?.[1] ?? 0;
+        target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+      });
+
+      moveableRef.current.on('dragEnd', ({ target, isDrag, lastEvent }) => {
+        target.style.willChange = '';
+        if (!isDrag) {
+          target.style.transform = '';
+          return;
+        }
+
+        const nodeId = target.getAttribute('data-node-id');
+        const baseLeft = parseFloat(target.dataset.baseLeft || '0') || 0;
+        const baseTop = parseFloat(target.dataset.baseTop || '0') || 0;
+        const tx = (lastEvent as any)?.beforeTranslate?.[0] ?? 0;
+        const ty = (lastEvent as any)?.beforeTranslate?.[1] ?? 0;
+
+        const x = baseLeft + tx;
+        const y = baseTop + ty;
+        target.style.left = `${x}px`;
+        target.style.top = `${y}px`;
+        target.style.transform = '';
+
         if (nodeId) {
-          const x = parseFloat(target.style.left);
-          const y = parseFloat(target.style.top);
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
         }
       });
 
-      // Resize handling
-      moveableRef.current.on("resize", ({ target, width, height, drag }) => {
-        target.style.width = `${width}px`;
-        target.style.height = `${height}px`;
-        target.style.left = `${drag.left}px`;
-        target.style.top = `${drag.top}px`;
+      // Resize handling (use transform during resize drag)
+      moveableRef.current.on('resizeStart', ({ target }) => {
+        const baseLeft = parseFloat(target.style.left || '0') || 0;
+        const baseTop = parseFloat(target.style.top || '0') || 0;
+        target.dataset.baseLeft = String(baseLeft);
+        target.dataset.baseTop = String(baseTop);
+        target.style.willChange = 'transform,width,height';
+        target.style.transform = '';
       });
 
-      moveableRef.current.on("resizeEnd", ({ target, isDrag }) => {
-        if (!isDrag) return;
-        const nodeId = target.getAttribute("data-node-id");
+      moveableRef.current.on('resize', ({ target, width, height, drag }) => {
+        target.style.width = `${width}px`;
+        target.style.height = `${height}px`;
+        const tx = drag?.beforeTranslate?.[0] ?? 0;
+        const ty = drag?.beforeTranslate?.[1] ?? 0;
+        target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+      });
+
+      moveableRef.current.on('resizeEnd', ({ target, isDrag, lastEvent }) => {
+        target.style.willChange = '';
+        if (!isDrag) {
+          target.style.transform = '';
+          return;
+        }
+
+        const nodeId = target.getAttribute('data-node-id');
+        const baseLeft = parseFloat(target.dataset.baseLeft || '0') || 0;
+        const baseTop = parseFloat(target.dataset.baseTop || '0') || 0;
+        const tx = (lastEvent as any)?.drag?.beforeTranslate?.[0] ?? 0;
+        const ty = (lastEvent as any)?.drag?.beforeTranslate?.[1] ?? 0;
+        const x = baseLeft + tx;
+        const y = baseTop + ty;
+
+        target.style.left = `${x}px`;
+        target.style.top = `${y}px`;
+        target.style.transform = '';
+
         if (nodeId) {
-          const width = parseFloat(target.style.width);
-          const height = parseFloat(target.style.height);
-          const x = parseFloat(target.style.left);
-          const y = parseFloat(target.style.top);
-          kernelStore.getState().updateNode(nodeId, { 
-            position: { x, y },
-            size: { width, height } 
-          });
+          const w = parseFloat(target.style.width || '0') || 0;
+          const h = parseFloat(target.style.height || '0') || 0;
+          kernelStore.getState().updateNode(nodeId, { position: { x, y }, size: { width: w, height: h } });
         }
       });
 
@@ -102,13 +168,26 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
     }
 
     return () => {
-      moveableRef.current?.destroy();
-      selectoRef.current?.destroy();
+      try {
+        moveableRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Moveable destroy failed', e);
+      }
+      try {
+        selectoRef.current?.destroy();
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn('[TransformControls] Selecto destroy failed', e);
+      }
+      moveableRef.current = null;
+      selectoRef.current = null;
     };
-  }, [containerRef, kernelStore]);
+  }, [containerRef, kernelStore, enabled]);
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
+    if (!enabled) return;
     if (!moveableRef.current || !containerRef.current) return;
     
     const selectedIds = state.selection.nodeIds;
@@ -138,7 +217,7 @@ export default function TransformControls({ containerRef, kernelStore }: Props) 
         moveableRef.current?.updateRect();
       });
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef]);
+  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled]);
 
   return null;
 }

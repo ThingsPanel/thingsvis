@@ -36,6 +36,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   const mountedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const vpRef = useRef({ width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 });
+  const [isPointerDown, setIsPointerDown] = useState(false);
 
   const state = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), [store]),
@@ -135,14 +136,25 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 
   const nodes = Object.values(state.nodesById);
   const vp = vpRef.current;
+  const isPanTool = activeTool === 'pan';
+  const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
 
   return (
     <div 
       ref={containerRef as any} 
       onClick={handleCanvasClick}
+      onMouseDown={() => {
+        if (isPanTool) setIsPointerDown(true);
+      }}
+      onMouseUp={() => {
+        if (isPanTool) setIsPointerDown(false);
+      }}
+      onMouseLeave={() => {
+        if (isPanTool) setIsPointerDown(false);
+      }}
       onDragOver={handleDragOver} 
       onDrop={handleDrop} 
-      style={{ width: "100%", height: "100%", position: "relative" }}
+      style={{ width: "100%", height: "100%", position: "relative", cursor: canvasCursor }}
     >
       <UI_CanvasView
         store={store}
@@ -153,6 +165,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         gridSize={20}
         snapToGrid={true}
         centeredMask={true}
+        panEnabled={activeTool === 'pan'}
+        zoomEnabled={activeTool === 'pan'}
         zoom={zoom}
         onViewportChange={(vp) => {
           vpRef.current = vp;
@@ -201,8 +215,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                   top: schema.position.y,
                   width: schema.size?.width ?? 0,
                   height: schema.size?.height ?? 0,
-                  pointerEvents: "auto",
-                  cursor: "pointer",
+                  pointerEvents: isPanTool ? "none" : "auto",
+                  cursor: isPanTool ? canvasCursor : "pointer",
                   border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"
                 }}
               />
@@ -214,6 +228,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       <TransformControls 
         containerRef={containerRef} 
         kernelStore={store} 
+        enabled={activeTool !== 'pan'}
       />
 
       <ConnectionTool 

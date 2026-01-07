@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import Editor from './components/Editor';
 import DataSourcesPage from './pages/DataSourcesPage';
+import PreviewPage from './pages/PreviewPage';
 import './index.css';
 
-type Route = 'editor' | 'data-sources';
+type Route = 'editor' | 'data-sources' | 'preview';
 
 function getRouteFromHash(): Route {
   const h = (window.location.hash || '').replace(/^#/, '');
   if (h.startsWith('/data-sources')) return 'data-sources';
+  if (h.startsWith('/preview')) return 'preview';
   return 'editor';
 }
 
@@ -21,6 +23,7 @@ export default function App() {
   }, []);
 
   if (route === 'data-sources') return <DataSourcesPage />;
+  if (route === 'preview') return <PreviewPage />;
   return <Editor />;
 }
 

@@ -56,11 +56,11 @@ export class VisualEngine {
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(() => {
       const state = this.store.getState() as KernelState;
-      this.sync(state.nodesById, state.connections);
+      this.sync(state.nodesById, state.connections, state.layerOrder);
     });
     // Initial sync
     const state = this.store.getState() as KernelState;
-    this.sync(state.nodesById, state.connections);
+    this.sync(state.nodesById, state.connections, state.layerOrder);
   }
 
   unmount() {
@@ -82,7 +82,7 @@ export class VisualEngine {
 
   private isSyncing = false;
 
-  sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = []) {
+  sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = [], layerOrder: string[] = []) {
     if (!this.app || !this.root || this.isSyncing) return;
     this.isSyncing = true;
     
@@ -126,11 +126,64 @@ export class VisualEngine {
         }
       });
 
-      // 2. Sync Connections
+      // 2. Apply Layer Order (bottom -> top)
+      this.applyLayerOrder(nodes, layerOrder);
+
+      // 3. Sync Connections
       this.syncConnections(nodes, connections);
     } finally {
       this.isSyncing = false;
     }
+  }
+
+  /**
+   * Reorder rendered nodes (Leafer + DOM overlays) according to kernel layerOrder.
+   * layerOrder is bottom -> top.
+   */
+  private applyLayerOrder(nodes: Record<string, NodeState>, layerOrder: string[]) {
+    if (!this.root) return;
+
+    const visibleIds = Object.values(nodes)
+      .filter(n => n.visible)
+      .map(n => n.id);
+
+    const ordered: string[] = [];
+    const seen = new Set<string>();
+
+    for (const id of layerOrder ?? []) {
+      if (!seen.has(id) && nodes[id]?.visible) {
+        ordered.push(id);
+        seen.add(id);
+      }
+    }
+
+    for (const id of visibleIds) {
+      if (!seen.has(id)) {
+        ordered.push(id);
+        seen.add(id);
+      }
+    }
+
+    // connRoot is at index 0. Nodes should start at index 1.
+    const baseIndex = 1;
+
+    ordered.forEach((id, idx) => {
+      const entry = this.instanceMap.get(id);
+      if (!entry) return;
+
+      try {
+        // Reorder Leafer instance in the root group
+        this.root!.addAt(entry.instance as any, baseIndex + idx);
+        // Some Leafer objects respect zIndex; set it for safety.
+        (entry.instance as any).zIndex = baseIndex + idx;
+      } catch {
+        // Best-effort: don't break sync on ordering issues
+      }
+
+      if (entry.overlayBox) {
+        entry.overlayBox.style.zIndex = String(baseIndex + idx);
+      }
+    });
   }
 
   /**
@@ -355,7 +408,7 @@ export class VisualEngine {
         this.pendingRendererLoad.delete(type);
         // 关键：插件 renderer 加载完成后立刻触发一次同步渲染（不依赖 store 状态变化）
         const state = this.store.getState() as KernelState;
-        this.sync(state.nodesById);
+        this.sync(state.nodesById, state.connections, state.layerOrder);
       }).catch(() => void 0);
     }
 

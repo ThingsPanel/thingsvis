@@ -4,6 +4,10 @@ import { createKernelStore } from '@thingsvis/kernel';
 import { CanvasView, HeadlessErrorBoundary } from '@thingsvis/ui';
 import { loadPlugin } from './plugins/pluginResolver';
 import { extractDefaults } from './plugins/schemaUtils';
+import { usePreviewMode } from './hooks/usePreviewMode';
+import { UserToolbar } from './components/UserToolbar';
+import { KioskView } from './components/KioskView';
+import { loadProject, type ProjectFile } from './lib/projectStorage';
 
 const store = createKernelStore();
 
@@ -13,9 +17,28 @@ const randomColor = () => `#${Math.floor(Math.random() * 0xffffff).toString(16).
 const randomBetween = (min: number, max: number) => Math.random() * (max - min) + min;
 
 const App: React.FC = () => {
+  // Preview mode detection from URL
+  const previewState = usePreviewMode()
+  
   const [specComponentId, setSpecComponentId] = useState<string>('basic/text');
   const [specComp, setSpecComp] = useState<React.ComponentType | null>(null);
   const [specError, setSpecError] = useState<string | null>(null);
+  const [projectLoaded, setProjectLoaded] = useState(false);
+  const [projectError, setProjectError] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string | undefined>(undefined);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+    }
+  }, [])
+  
   const temporalSnapshot = useSyncExternalStore(
     useCallback(
       subscribe => {
@@ -38,14 +61,97 @@ const App: React.FC = () => {
     };
   }, [temporalSnapshot]);
 
+  // Load project via postMessage from opener window (studio)
   useEffect(() => {
-    const emptyPage: PageSchemaType = {
-      id: 'perf-demo',
-      type: 'page',
-      version: '1.0.0',
-      nodes: []
-    };
-    store.getState().loadPage(emptyPage);
+    // Get projectId from URL params
+    const params = new URLSearchParams(window.location.search)
+    const projectId = params.get('projectId')
+    const mode = params.get('mode')
+    
+    if (!projectId || mode === 'dev') {
+      // Dev mode, no project to load
+      return
+    }
+    
+    console.log('[preview] Requesting project data via postMessage:', projectId)
+    
+    // Listen for project data from studio
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'THINGSVIS_PROJECT_DATA' && event.data?.projectId === projectId) {
+        console.log('[preview] Received project data via postMessage')
+        const project = event.data.data
+        
+        if (!project) {
+          setProjectError('No project data received.')
+          return
+        }
+        
+        try {
+          // Load project into kernel store
+          const pageData: PageSchemaType = {
+            id: project.meta?.id || projectId,
+            type: 'page',
+            version: project.meta?.version || '1.0.0',
+            nodes: project.nodes || [],
+          }
+          
+          // Update canvas config in store
+          if (project.canvas) {
+            store.getState().updateCanvas({
+              mode: project.canvas.mode || 'infinite',
+              width: project.canvas.width || 1920,
+              height: project.canvas.height || 1080,
+            })
+          }
+          
+          // Load the page with nodes
+          store.getState().loadPage(pageData)
+          
+          setProjectName(project?.meta?.name)
+          setProjectLoaded(true)
+          console.log('[preview] Project loaded successfully with', project.nodes?.length || 0, 'nodes')
+        } catch (error) {
+          console.error('[preview] Failed to process project data:', error)
+          setProjectError('Failed to process project data.')
+        }
+      }
+    }
+    
+    window.addEventListener('message', handleMessage)
+    
+    // Request project data from opener (studio window)
+    if (window.opener) {
+      // Small delay to ensure studio's message listener is ready
+      setTimeout(() => {
+        window.opener.postMessage({
+          type: 'THINGSVIS_REQUEST_PROJECT_DATA',
+          projectId,
+        }, '*')
+      }, 100)
+    } else {
+      setProjectError('Preview must be opened from the editor.')
+    }
+    
+    return () => {
+      window.removeEventListener('message', handleMessage)
+    }
+  }, [])
+
+  // Initialize empty page only in dev mode (no projectId in URL)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const projectId = params.get('projectId')
+    const mode = params.get('mode')
+    
+    if (mode === 'dev' || !projectId) {
+      const emptyPage: PageSchemaType = {
+        id: 'perf-demo',
+        type: 'page',
+        version: '1.0.0',
+        nodes: []
+      };
+      store.getState().loadPage(emptyPage);
+    }
   }, []);
 
   const handleGenerate = useCallback(() => {
@@ -131,6 +237,118 @@ const App: React.FC = () => {
     return entry;
   }, []);
 
+  // Handle going back to studio
+  const handleBackToStudio = useCallback(() => {
+    // Navigate back to studio (or close window if opened as popup)
+    if (window.opener) {
+      window.close()
+    } else {
+      window.location.href = '/studio'
+    }
+  }, [])
+
+  const handleRefresh = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  const handleToggleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.().catch(console.error)
+      return
+    }
+    document.documentElement.requestFullscreen?.().catch(console.error)
+  }, [])
+
+  // Determine if we need to load a project
+  const params = new URLSearchParams(window.location.search)
+  const urlProjectId = params.get('projectId')
+  const urlMode = params.get('mode') || 'dev'
+  const needsProjectLoad = !!urlProjectId && urlMode !== 'dev'
+
+  // Kiosk mode: fullscreen wrapper
+  if (urlMode === 'kiosk') {
+    // Show loading state
+    if (needsProjectLoad && !projectLoaded && !projectError) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}>Loading...</div>
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>Preparing your visualization</div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Show error state
+    if (projectError) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px', color: '#ef4444' }}>Error</div>
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>{projectError}</div>
+          </div>
+        </div>
+      )
+    }
+    
+    return (
+      <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
+        <KioskView>
+          <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+        </KioskView>
+      </HeadlessErrorBoundary>
+    )
+  }
+
+  // User mode: minimal toolbar with back button
+  if (urlMode === 'user') {
+    // Show loading state
+    if (needsProjectLoad && !projectLoaded && !projectError) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}>Loading...</div>
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>Preparing your visualization</div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Show error state
+    if (projectError) {
+      return (
+        <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1a1a1a', color: '#fff' }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px', color: '#ef4444' }}>Error</div>
+            <div style={{ fontSize: '14px', opacity: 0.7 }}>{projectError}</div>
+            <button 
+              onClick={handleBackToStudio}
+              style={{ marginTop: '16px', padding: '8px 16px', background: '#6965db', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Back to Studio
+            </button>
+          </div>
+        </div>
+      )
+    }
+    
+    return (
+      <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
+        <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+          <UserToolbar
+            onBack={handleBackToStudio}
+            onRefresh={handleRefresh}
+            projectName={projectName}
+            isFullscreen={isFullscreen}
+            onToggleFullscreen={handleToggleFullscreen}
+          />
+          <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+        </div>
+      </HeadlessErrorBoundary>
+    )
+  }
+
+  // Dev mode: full development UI with controls
   return (
     <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
@@ -145,7 +363,7 @@ const App: React.FC = () => {
             gap: 8
           }}
         >
-          {/* ... existing content ... */}
+          {/* Development controls */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={handleGenerate}>Generate 1000 Nodes</button>
             <button onClick={handleClear}>Clear</button>
