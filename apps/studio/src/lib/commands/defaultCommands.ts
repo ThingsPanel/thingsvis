@@ -59,7 +59,7 @@ export interface DefaultCommandsDependencies {
   /** Function to export the current project */
   exportProject?: () => void
   /** Function to open preview */
-  openPreview?: () => void
+  openPreview?: () => void | Promise<void>
   /** Function to show shortcuts help panel */
   showShortcutsPanel?: () => void
   /** Function to set the current tool */
@@ -138,7 +138,9 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.PROJECT_PREVIEW,
         'Preview',
         'project',
-        () => deps.openPreview!(),
+        async () => {
+          await deps.openPreview!()
+        },
         { labelZh: '预览' }
       )
     )
