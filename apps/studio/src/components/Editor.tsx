@@ -378,6 +378,36 @@ export default function Editor() {
         await saveNow()
         window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
       },
+      // Atomic insert nodes + select: ensures undo/redo captures both operations together
+      // We create a partial state update that includes both nodesById and selection changes
+      // This ensures the temporal middleware captures both in a single history entry
+      applyNodeInsertAndSelect: (nodes, selectIds) => {
+        const currentState = store.getState()
+        
+        // Build the new nodesById with added nodes
+        const newNodesById = { ...currentState.nodesById }
+        const newLayerOrder = [...currentState.layerOrder]
+        
+        nodes.forEach(node => {
+          newNodesById[node.id] = {
+            id: node.id,
+            schemaRef: node,
+            visible: true,
+            locked: false, // Pasted/duplicated nodes are always unlocked
+          }
+          // Add to layer order if not already present
+          if (!newLayerOrder.includes(node.id)) {
+            newLayerOrder.push(node.id)
+          }
+        })
+        
+        // Apply the combined state change
+        store.setState({
+          nodesById: newNodesById,
+          layerOrder: newLayerOrder,
+          selection: { nodeIds: selectIds },
+        })
+      },
     })
   }, [saveNow, projectId])
 
