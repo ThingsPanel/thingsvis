@@ -9,16 +9,33 @@ type Props = {
   kernelStore: KernelStore;
   enabled?: boolean;
   onUserEdit?: () => void;
+  getViewport?: () => { width: number; height: number; zoom: number; offsetX: number; offsetY: number };
+  zoom?: number; // Current viewport zoom - triggers re-render when changed
 };
 
-export default function TransformControls({ containerRef, kernelStore, enabled = true, onUserEdit }: Props) {
+export default function TransformControls({ containerRef, kernelStore, enabled = true, onUserEdit, getViewport, zoom = 1 }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
+
+  const baseWorldPositionByIdRef = useRef<Record<string, { x: number; y: number }>>({});
+  const baseWorldSizeByIdRef = useRef<Record<string, { width: number; height: number }>>({});
+  const lastKnownZoomRef = useRef<number>(1);
+  const viewportPollTimerRef = useRef<number | null>(null);
 
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
     () => kernelStore.getState() as KernelState
   );
+
+  // Update Moveable when viewport zoom changes
+  useEffect(() => {
+    if (!moveableRef.current) return;
+    const z = zoom && zoom > 0 ? zoom : 1;
+    console.log('[TransformControls] Zoom changed', { zoom: z });
+    lastKnownZoomRef.current = z;
+    // Just update rect - Moveable will re-read target positions via getBoundingClientRect
+    moveableRef.current.updateRect();
+  }, [zoom]);
 
   useEffect(() => {
     if (!enabled) {
@@ -42,6 +59,30 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     const container = containerRef.current;
     if (!container) return;
 
+    const readViewport = () => {
+      try {
+        return getViewport?.() ?? { width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 };
+      } catch {
+        return { width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 };
+      }
+    };
+
+    // Moveable is inside scaled wrapper, targets are also inside
+    // - All positions and deltas are in world coords, no conversion needed
+
+    // Read initial zoom
+    const initialVp = readViewport();
+    const initialZoom = initialVp.zoom && initialVp.zoom > 0 ? initialVp.zoom : 1;
+    lastKnownZoomRef.current = initialZoom;
+
+    // DEBUG: Log container and viewport info
+    console.log('[TransformControls] Init', {
+      container: container.className,
+      containerRect: container.getBoundingClientRect(),
+      initialVp,
+      initialZoom,
+    });
+
     try {
       moveableRef.current = new Moveable(container, {
         target: [],
@@ -56,6 +97,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         throttleRotate: 1,
         useResizeObserver: false,
         useMutationObserver: false,
+        // No zoom - Moveable is inside scaled container, everything is in world coords
       });
 
       selectoRef.current = new Selecto({
@@ -81,15 +123,23 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
 
       // Drag handling (use transform during drag for perf; commit left/top at end)
       moveableRef.current.on('dragStart', ({ target }) => {
-        const baseLeft = parseFloat(target.style.left || '0') || 0;
-        const baseTop = parseFloat(target.style.top || '0') || 0;
-        target.dataset.baseLeft = String(baseLeft);
-        target.dataset.baseTop = String(baseTop);
+        moveableRef.current?.updateRect();
+
+        const nodeId = target.getAttribute('data-node-id');
+        if (nodeId) {
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const schema = node?.schemaRef as any;
+          if (schema?.position) {
+            baseWorldPositionByIdRef.current[nodeId] = { x: schema.position.x ?? 0, y: schema.position.y ?? 0 };
+          }
+        }
+
         target.style.willChange = 'transform';
         target.style.transform = '';
       });
 
       moveableRef.current.on('drag', ({ target, beforeTranslate }) => {
+        // Moveable is inside scaled wrapper, beforeTranslate is already in world coords
         const tx = beforeTranslate?.[0] ?? 0;
         const ty = beforeTranslate?.[1] ?? 0;
         target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
@@ -103,13 +153,14 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         }
 
         const nodeId = target.getAttribute('data-node-id');
-        const baseLeft = parseFloat(target.dataset.baseLeft || '0') || 0;
-        const baseTop = parseFloat(target.dataset.baseTop || '0') || 0;
-        const tx = (lastEvent as any)?.beforeTranslate?.[0] ?? 0;
-        const ty = (lastEvent as any)?.beforeTranslate?.[1] ?? 0;
+        // Moveable is inside scaled wrapper, beforeTranslate is already in world coords
+        const dx = (lastEvent as any)?.beforeTranslate?.[0] ?? 0;
+        const dy = (lastEvent as any)?.beforeTranslate?.[1] ?? 0;
 
-        const x = baseLeft + tx;
-        const y = baseTop + ty;
+        const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
+
+        const x = (baseWorld?.x ?? (parseFloat(target.style.left || '0') || 0)) + dx;
+        const y = (baseWorld?.y ?? (parseFloat(target.style.top || '0') || 0)) + dy;
         target.style.left = `${x}px`;
         target.style.top = `${y}px`;
         target.style.transform = '';
@@ -122,15 +173,26 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
 
       // Resize handling (use transform during resize drag)
       moveableRef.current.on('resizeStart', ({ target }) => {
-        const baseLeft = parseFloat(target.style.left || '0') || 0;
-        const baseTop = parseFloat(target.style.top || '0') || 0;
-        target.dataset.baseLeft = String(baseLeft);
-        target.dataset.baseTop = String(baseTop);
+        moveableRef.current?.updateRect();
+
+        const nodeId = target.getAttribute('data-node-id');
+        if (nodeId) {
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const schema = node?.schemaRef as any;
+          if (schema?.position) {
+            baseWorldPositionByIdRef.current[nodeId] = { x: schema.position.x ?? 0, y: schema.position.y ?? 0 };
+          }
+          if (schema?.size) {
+            baseWorldSizeByIdRef.current[nodeId] = { width: schema.size.width ?? 0, height: schema.size.height ?? 0 };
+          }
+        }
+
         target.style.willChange = 'transform,width,height';
         target.style.transform = '';
       });
 
       moveableRef.current.on('resize', ({ target, width, height, drag }) => {
+        // Moveable is inside scaled wrapper, width/height are already in world coords
         target.style.width = `${width}px`;
         target.style.height = `${height}px`;
         const tx = drag?.beforeTranslate?.[0] ?? 0;
@@ -146,21 +208,24 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         }
 
         const nodeId = target.getAttribute('data-node-id');
-        const baseLeft = parseFloat(target.dataset.baseLeft || '0') || 0;
-        const baseTop = parseFloat(target.dataset.baseTop || '0') || 0;
-        const tx = (lastEvent as any)?.drag?.beforeTranslate?.[0] ?? 0;
-        const ty = (lastEvent as any)?.drag?.beforeTranslate?.[1] ?? 0;
-        const x = baseLeft + tx;
-        const y = baseTop + ty;
+        // Moveable is inside scaled wrapper, translate is already in world coords
+        const dx = (lastEvent as any)?.drag?.beforeTranslate?.[0] ?? 0;
+        const dy = (lastEvent as any)?.drag?.beforeTranslate?.[1] ?? 0;
+
+        const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
+
+        const x = (baseWorld?.x ?? (parseFloat(target.style.left || '0') || 0)) + dx;
+        const y = (baseWorld?.y ?? (parseFloat(target.style.top || '0') || 0)) + dy;
 
         target.style.left = `${x}px`;
         target.style.top = `${y}px`;
         target.style.transform = '';
 
         if (nodeId) {
-          const w = parseFloat(target.style.width || '0') || 0;
-          const h = parseFloat(target.style.height || '0') || 0;
-          kernelStore.getState().updateNode(nodeId, { position: { x, y }, size: { width: w, height: h } });
+          // width/height from target.style are already in world (we set them above)
+          const width = parseFloat(target.style.width || '0') || 0;
+          const height = parseFloat(target.style.height || '0') || 0;
+          kernelStore.getState().updateNode(nodeId, { position: { x, y }, size: { width, height } });
           onUserEdit?.();
         }
       });
@@ -171,6 +236,10 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     }
 
     return () => {
+      if (viewportPollTimerRef.current !== null) {
+        window.clearInterval(viewportPollTimerRef.current);
+        viewportPollTimerRef.current = null;
+      }
       try {
         moveableRef.current?.destroy();
       } catch (e) {
@@ -186,7 +255,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
       moveableRef.current = null;
       selectoRef.current = null;
     };
-  }, [containerRef, kernelStore, enabled]);
+  }, [containerRef, kernelStore, enabled, getViewport]);
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
@@ -203,6 +272,24 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     const targets = validSelectedIds
       .map(id => containerRef.current?.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
+
+    // DEBUG: Log target selection info
+    if (targets.length > 0) {
+      const vp = getViewport?.() ?? { zoom: 1 };
+      console.log('[TransformControls] Target selected', {
+        selectedIds: validSelectedIds,
+        targetCount: targets.length,
+        targetRect: targets[0]?.getBoundingClientRect(),
+        targetStyle: {
+          left: targets[0]?.style.left,
+          top: targets[0]?.style.top,
+          width: targets[0]?.style.width,
+          height: targets[0]?.style.height,
+        },
+        viewport: vp,
+        moveableZoom: (moveableRef.current as any)?.zoom,
+      });
+    }
     
     // Disable draggable/resizable for locked nodes
     const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
@@ -215,12 +302,36 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     // Recalculate the position of the handles to match the DOM elements.
     // This is crucial when nodes are moved/restored via Undo/Redo.
     if (targets.length > 0) {
+      // Start a lightweight poll so Moveable handle alignment stays correct when the viewport zoom changes.
+      if (viewportPollTimerRef.current === null) {
+        viewportPollTimerRef.current = window.setInterval(() => {
+          const z = (() => {
+            try {
+              return getViewport?.().zoom ?? 1;
+            } catch {
+              return 1;
+            }
+          })();
+          if (Math.abs(z - lastKnownZoomRef.current) > 1e-6) {
+            lastKnownZoomRef.current = z;
+            // Update Moveable's zoom property (1/zoom to keep handles at constant screen size)
+            if (moveableRef.current) {
+              (moveableRef.current as any).zoom = 1 / z;
+              moveableRef.current.updateRect();
+            }
+          }
+        }, 100);
+      }
+
       // Use requestAnimationFrame to ensure DOM has updated before recalculating
       requestAnimationFrame(() => {
         moveableRef.current?.updateRect();
       });
+    } else if (viewportPollTimerRef.current !== null) {
+      window.clearInterval(viewportPollTimerRef.current);
+      viewportPollTimerRef.current = null;
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled]);
+  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled, getViewport]);
 
   return null;
 }
