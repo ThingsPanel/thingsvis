@@ -440,6 +440,9 @@ export class VisualEngine {
   private positionOverlayBox(box: HTMLDivElement, node: NodeState, isResizable: boolean = true) {
     const schema = node.schemaRef as any;
     const { x, y } = schema.position ?? { x: 0, y: 0 };
+    // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
+    const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
+    
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
     
@@ -450,11 +453,17 @@ export class VisualEngine {
       box.style.width = `${width}px`;
       box.style.height = `${height}px`;
       box.style.overflow = 'hidden';
+      // 应用旋转，以中心为原点
+      box.style.transform = rotation !== 0 ? `rotate(${rotation}deg)` : '';
+      box.style.transformOrigin = 'center center';
     } else {
       // 自适应尺寸组件：让内容撑开
       box.style.width = 'auto';
       box.style.height = 'auto';
       box.style.overflow = 'visible';
+      // 应用旋转
+      box.style.transform = rotation !== 0 ? `rotate(${rotation}deg)` : '';
+      box.style.transformOrigin = 'center center';
     }
   }
 
@@ -463,6 +472,8 @@ export class VisualEngine {
     const width = schema.size?.width ?? 0;
     const height = schema.size?.height ?? 0;
     const { x, y } = schema.position;
+    // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
+    const rotation = (schema as any).props?._rotation ?? (schema as any).rotation ?? 0;
     
     // Resolve expressions in props using PropertyResolver
     const dataSources = this.store.getState().dataSources;
@@ -475,6 +486,7 @@ export class VisualEngine {
       y,
       width,
       height,
+      rotation,
       fill,
       draggable: true,
       cursor: 'pointer'

@@ -9,6 +9,7 @@ Auto-generated from all feature plans. Last updated: 2025-12-30
 - N/A (配置持久化复用现有 DataSource 存储机制) (009-datasource-form-config)
 - TypeScript 5.x, React 18.x (010-editor-core-features)
 - IndexedDB via `idb-keyval` (project data) + localStorage (recent projects metadata) (010-editor-core-features)
+- N/A (no new persistence layer; uses existing kernel state) (001-fix-transform-zoom)
 
 - TypeScript 5.x (strict mode) (007-widget-style)
 
@@ -28,9 +29,9 @@ npm test; npm run lint
 TypeScript 5.x (strict mode): Follow standard conventions
 
 ## Recent Changes
+- 001-fix-transform-zoom: Added TypeScript 5.x, React 18.x
 - 010-editor-core-features: Added TypeScript 5.x, React 18.x
 - 009-datasource-form-config: Added TypeScript 5.x (strict mode) + React 18, Zod (schema validation), Zustand + Immer (state), CodeMirror (JSON editor)
-- 007-widget-style: Added TypeScript 5.3.x (strict), React 18 (Studio UI) + pnpm workspaces + Turbo; Zod; Rsbuild/Rspack; Zustand + Immer (+ zundo); Radix UI + Tailwind
 
 
 <!-- MANUAL ADDITIONS START -->

@@ -36,8 +36,14 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 ) {
   const mountedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const vpRef = useRef({ width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 });
+  // Use state for viewport so changes trigger re-render
+  const [vp, setVp] = useState({ width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 });
+  const vpRef = useRef(vp);
+  vpRef.current = vp; // Keep ref in sync for callbacks
   const [isPointerDown, setIsPointerDown] = useState(false);
+  const proxyWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const getViewport = useCallback(() => vpRef.current, []);
 
   const state = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), [store]),
@@ -139,7 +145,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   }
 
   const nodes = Object.values(state.nodesById);
-  const vp = vpRef.current;
+  // vp is now from useState, no need to read from ref
   const isPanTool = activeTool === 'pan';
   const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
 
@@ -172,10 +178,21 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         panEnabled={activeTool === 'pan'}
         zoomEnabled={activeTool === 'pan'}
         zoom={zoom}
-        onViewportChange={(vp) => {
-          vpRef.current = vp;
-          if (vp.zoom !== zoom) {
-            onZoomChange?.(vp.zoom);
+        onViewportChange={(newVp) => {
+          // Only update state if values actually changed to avoid infinite loop
+          const prev = vpRef.current;
+          if (
+            prev.zoom !== newVp.zoom ||
+            prev.offsetX !== newVp.offsetX ||
+            prev.offsetY !== newVp.offsetY ||
+            prev.width !== newVp.width ||
+            prev.height !== newVp.height
+          ) {
+            vpRef.current = newVp;
+            setVp(newVp);
+          }
+          if (newVp.zoom !== zoom) {
+            onZoomChange?.(newVp.zoom);
           }
         }}
       />
@@ -191,17 +208,22 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         }}
       >
         <div
+          ref={proxyWrapperRef}
+          className="proxy-wrapper"
           style={{
             position: "absolute",
             left: vp.offsetX,
             top: vp.offsetY,
             transform: `scale(${vp.zoom})`,
-            transformOrigin: "0 0"
+            transformOrigin: "0 0",
+            pointerEvents: "auto" // Enable pointer events for Moveable handles
           }}
         >
           {nodes.map(node => {
             const schema = node.schemaRef as any;
             if (!node.visible) return null;
+            // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
+            const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
             return (
               <div
                 key={node.id}
@@ -219,6 +241,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                   top: schema.position.y,
                   width: schema.size?.width ?? 0,
                   height: schema.size?.height ?? 0,
+                  transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
+                  transformOrigin: 'center center',
                   pointerEvents: isPanTool ? "none" : "auto",
                   cursor: isPanTool ? canvasCursor : "pointer",
                   border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"
@@ -226,15 +250,18 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
               />
             );
           })}
+
+          {/* TransformControls inside scaled wrapper */}
+          <TransformControls 
+            containerRef={proxyWrapperRef} 
+            kernelStore={store} 
+            enabled={activeTool !== 'pan'}
+            onUserEdit={onUserEdit}
+            getViewport={getViewport}
+            zoom={vp.zoom}
+          />
         </div>
       </div>
-
-      <TransformControls 
-        containerRef={containerRef} 
-        kernelStore={store} 
-        enabled={activeTool !== 'pan'}
-        onUserEdit={onUserEdit}
-      />
 
       <ConnectionTool 
         kernelStore={store} 

@@ -154,6 +154,20 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
           </div>
         </div>
       )}
+      {/* 旋转角度 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-muted-foreground">
+            {labelZh("旋转", "Rotation")}
+          </label>
+          <Input
+            type="number"
+            value={schema.props?._rotation ?? 0}
+            onChange={(e) => updateNode({ props: { ...schema.props, _rotation: Number(e.target.value) } })}
+            className="h-8 text-sm"
+          />
+        </div>
+      </div>
     </div>
   );
 

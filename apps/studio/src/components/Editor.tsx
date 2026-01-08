@@ -825,26 +825,28 @@ export default function Editor() {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
-                      <Input
-                        type="number"
-                        value={canvasConfig.width}
-                        onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
-                        className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
+                  {canvasConfig.mode !== 'infinite' ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                        <Input
+                          type="number"
+                          value={canvasConfig.width}
+                          onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
+                          className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                        <Input
+                          type="number"
+                          value={canvasConfig.height}
+                          onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
+                          className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
-                      <Input
-                        type="number"
-                        value={canvasConfig.height}
-                        onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
-                        className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
-                    </div>
-                  </div>
+                  ) : null}
                 </div>
               </>
             )}
