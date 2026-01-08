@@ -8,6 +8,7 @@
 import type { Command } from './types'
 import { COMMAND_IDS, DEFAULT_SHORTCUTS } from './constants'
 import { commandRegistry } from './CommandRegistry'
+import type { KernelState } from '@thingsvis/kernel'
 
 // =============================================================================
 // Command Factory Helpers
@@ -62,6 +63,12 @@ export interface DefaultCommandsDependencies {
   canUndo?: () => boolean
   /** Function to check if redo is available */
   canRedo?: () => boolean
+
+  /** Read-only access to the current kernel state */
+  getKernelState?: () => KernelState
+
+  /** Delete nodes by id (must participate in undo/redo via the store) */
+  deleteNodes?: (nodeIds: string[]) => void
 }
 
 /**
@@ -188,6 +195,39 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         {
           labelZh: '重做',
           when: deps.canRedo,
+        }
+      )
+    )
+  }
+
+  if (deps.getKernelState && deps.deleteNodes) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_DELETE,
+        'Delete',
+        'edit',
+        () => {
+          const state = deps.getKernelState!()
+          const selectedIds = state.selection.nodeIds
+          if (selectedIds.length === 0) return
+
+          const deletableIds = selectedIds.filter(id => {
+            const node = state.nodesById[id]
+            return !!node && !node.locked
+          })
+
+          if (deletableIds.length === 0) return
+          deps.deleteNodes!(deletableIds)
+        },
+        {
+          labelZh: '删除',
+          when: () => {
+            const state = deps.getKernelState!()
+            return state.selection.nodeIds.some(id => {
+              const node = state.nodesById[id]
+              return !!node && !node.locked
+            })
+          },
         }
       )
     )

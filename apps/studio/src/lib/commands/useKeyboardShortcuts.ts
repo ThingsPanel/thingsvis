@@ -40,6 +40,8 @@ function getEventKey(event: KeyboardEvent): string {
     'arrowdown': 'down',
     'arrowleft': 'left',
     'arrowright': 'right',
+    // macOS "Delete" key commonly reports as Backspace
+    'backspace': 'delete',
   }
   
   return keyMap[key] || key
@@ -156,14 +158,16 @@ export function useKeyboardShortcuts(options: UseKeyboardShortcutsOptions): void
       if (!command.shortcut) continue
       
       if (matchesShortcut(event, command.shortcut)) {
-        // Check if command is enabled
-        if (!registry.isEnabled(command.id)) {
-          continue
-        }
-        
-        // Prevent default browser behavior
+        // Prevent default browser behavior for any matched shortcut.
+        // If the command is disabled, we still want a safe no-op rather than
+        // allowing the browser to handle keys like Backspace/Delete.
         event.preventDefault()
         event.stopPropagation()
+
+        // Check if command is enabled
+        if (!registry.isEnabled(command.id)) {
+          return
+        }
         
         // Execute command
         registry.execute(command.id)
