@@ -9,6 +9,15 @@ import type { Command } from './types'
 import { COMMAND_IDS, DEFAULT_SHORTCUTS } from './constants'
 import { commandRegistry } from './CommandRegistry'
 import type { KernelState } from '@thingsvis/kernel'
+import type { NodeSchemaType } from '@thingsvis/schema'
+import {
+  copyNodes,
+  readClipboard,
+  hasClipboardContent,
+  nextPasteOffset,
+  makePastedNodes,
+  createDuplicatePayload,
+} from '../clipboard'
 
 // =============================================================================
 // Command Factory Helpers
@@ -69,6 +78,12 @@ export interface DefaultCommandsDependencies {
 
   /** Delete nodes by id (must participate in undo/redo via the store) */
   deleteNodes?: (nodeIds: string[]) => void
+
+  /**
+   * Atomic operation: insert new nodes AND update selection in a single state change.
+   * This ensures undo/redo captures both node creation and selection together.
+   */
+  applyNodeInsertAndSelect?: (nodes: NodeSchemaType[], selectIds: string[]) => void
 }
 
 /**
@@ -200,6 +215,121 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
     )
   }
 
+  // --------------------------------------------------------------------------
+  // Copy Command (edit.copy)
+  // --------------------------------------------------------------------------
+  if (deps.getKernelState) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_COPY,
+        'Copy',
+        'edit',
+        () => {
+          const state = deps.getKernelState!()
+          const selectedIds = state.selection.nodeIds
+          if (selectedIds.length === 0) {
+            // No-op: preserve existing clipboard
+            return
+          }
+
+          // Serialize selected nodes
+          const selectedNodes = selectedIds
+            .map(id => state.nodesById[id]?.schemaRef)
+            .filter((node): node is NodeSchemaType => !!node)
+
+          if (selectedNodes.length > 0) {
+            copyNodes(selectedNodes)
+          }
+        },
+        { labelZh: '复制' }
+      )
+    )
+  }
+
+  // --------------------------------------------------------------------------
+  // Paste Command (edit.paste)
+  // --------------------------------------------------------------------------
+  if (deps.getKernelState && deps.applyNodeInsertAndSelect) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_PASTE,
+        'Paste',
+        'edit',
+        () => {
+          const clipboard = readClipboard()
+          if (!clipboard || clipboard.nodes.length === 0) {
+            // No-op: empty clipboard
+            return
+          }
+
+          // Get next offset and create new nodes
+          const offset = nextPasteOffset()
+          const newNodes = makePastedNodes(clipboard, offset)
+          const newIds = newNodes.map(n => n.id)
+
+          // Atomic insert + select
+          deps.applyNodeInsertAndSelect!(newNodes, newIds)
+        },
+        {
+          labelZh: '粘贴',
+          when: () => hasClipboardContent(),
+        }
+      )
+    )
+  }
+
+  // --------------------------------------------------------------------------
+  // Duplicate Command (edit.duplicate)
+  // --------------------------------------------------------------------------
+  if (deps.getKernelState && deps.applyNodeInsertAndSelect) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_DUPLICATE,
+        'Duplicate',
+        'edit',
+        () => {
+          const state = deps.getKernelState!()
+          const selectedIds = state.selection.nodeIds
+          if (selectedIds.length === 0) {
+            // No-op: nothing to duplicate
+            return
+          }
+
+          // Get selected nodes
+          const selectedNodes = selectedIds
+            .map(id => state.nodesById[id]?.schemaRef)
+            .filter((node): node is NodeSchemaType => !!node)
+
+          if (selectedNodes.length === 0) {
+            return
+          }
+
+          // Create duplicate payload (does not modify clipboard)
+          const payload = createDuplicatePayload(selectedNodes)
+          if (!payload) return
+
+          // Get next offset and create new nodes
+          const offset = nextPasteOffset()
+          const newNodes = makePastedNodes(payload, offset)
+          const newIds = newNodes.map(n => n.id)
+
+          // Atomic insert + select
+          deps.applyNodeInsertAndSelect!(newNodes, newIds)
+        },
+        {
+          labelZh: '复制选择',
+          when: () => {
+            const state = deps.getKernelState!()
+            return state.selection.nodeIds.length > 0
+          },
+        }
+      )
+    )
+  }
+
+  // --------------------------------------------------------------------------
+  // Delete Command (edit.delete)
+  // --------------------------------------------------------------------------
   if (deps.getKernelState && deps.deleteNodes) {
     commands.push(
       createCommand(

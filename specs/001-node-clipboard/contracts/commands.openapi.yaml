@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Studio Command Contracts (Conceptual)
+  version: 0.1.0
+  description: |
+    Conceptual contract describing how the Studio command system is expected to behave
+    for Copy/Paste/Duplicate. This is not necessarily a network API; it documents
+    command inputs/outputs and invariants.
+
+paths:
+  /commands/execute:
+    post:
+      summary: Execute a Studio command
+      description: Execute a command by id (e.g., via keyboard shortcuts).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCommandRequest'
+      responses:
+        '204':
+          description: Command executed (or no-op) successfully.
+
+components:
+  schemas:
+    ExecuteCommandRequest:
+      type: object
+      required: [commandId]
+      properties:
+        commandId:
+          type: string
+          description: Command identifier (e.g., `edit.copy`).
+        context:
+          type: object
+          additionalProperties: true
+          description: Optional contextual data.
+
+    ClipboardPayload:
+      type: object
+      required: [version, nodes]
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/NodeSnapshot'
+
+    NodeSnapshot:
+      type: object
+      required: [id, type, position]
+      properties:
+        id:
+          type: string
+          description: Source node id at copy time (not reused on paste).
+        type:
+          type: string
+        position:
+          type: object
+          required: [x, y]
+          properties:
+            x: { type: number }
+            y: { type: number }
+        size:
+          type: object
+          required: [width, height]
+          properties:
+            width: { type: number }
+            height: { type: number }
+        props:
+          type: object
+          additionalProperties: true
+        style:
+          type: object
+          additionalProperties: true
+        parentId:
+          type: string
+        data:
+          type: array
+          items: {}
+
+    CopyEffect:
+      type: object
+      description: Expected logical effect of executing `edit.copy`.
+      properties:
+        clipboardAfter:
+          $ref: '#/components/schemas/ClipboardPayload'
+        pasteCountSinceCopyAfter:
+          type: integer
+          minimum: 0
+
+    PasteOrDuplicateEffect:
+      type: object
+      description: Expected logical effect of executing `edit.paste` or `edit.duplicate`.
+      properties:
+        createdNodeIds:
+          type: array
+          items:
+            type: string
+        selectionNodeIdsAfter:
+          type: array
+          items:
+            type: string
+        pasteCountSinceCopyAfter:
+          type: integer
+          minimum: 1
+
+x-thingsvis-commands:
+  edit.copy:
+    shortcut:
+      - mod
+      - c
+    preconditions:
+      - If focus is in an input/textarea/contenteditable, command must not execute.
+    behavior:
+      - If selection is empty, no-op (clipboard remains unchanged).
+      - Otherwise store a serialized clipboard payload of selected nodes.
+      - Reset paste counter to 0 on successful copy.
+
+  edit.paste:
+    shortcut:
+      - mod
+      - v
+    preconditions:
+      - If focus is in an input/textarea/contenteditable, command must not execute.
+    behavior:
+      - If clipboard is empty, no-op.
+      - Otherwise increment paste counter (n := n + 1).
+      - Create new nodes with new unique ids.
+      - Preserve relative layout; apply offset (20n, 20n) to all pasted nodes.
+      - Pasted nodes become current selection.
+      - Created nodes are unlocked.
+      - Operation is undoable and redoable.
+
+  edit.duplicate:
+    shortcut:
+      - mod
+      - d
+    preconditions:
+      - If focus is in an input/textarea/contenteditable, command must not execute.
+    behavior:
+      - If selection is empty, no-op.
+      - Otherwise increment paste counter (n := n + 1).
+      - Create new nodes from current selection with new unique ids.
+      - Preserve relative layout; apply offset (20n, 20n) to all duplicated nodes.
+      - Duplicated nodes become current selection.
+      - Created nodes are unlocked.
+      - Operation is undoable and redoable.

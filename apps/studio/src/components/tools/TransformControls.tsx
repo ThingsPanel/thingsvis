@@ -33,7 +33,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
   useEffect(() => {
     if (!moveableRef.current) return;
     const z = zoom && zoom > 0 ? zoom : 1;
-    console.log('[TransformControls] Zoom changed', { zoom: z });
     lastKnownZoomRef.current = z;
     // Just update rect - Moveable will re-read target positions via getBoundingClientRect
     moveableRef.current.updateRect();
@@ -77,14 +76,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     const initialZoom = initialVp.zoom && initialVp.zoom > 0 ? initialVp.zoom : 1;
     lastKnownZoomRef.current = initialZoom;
 
-    // DEBUG: Log container and viewport info
-    console.log('[TransformControls] Init', {
-      container: container.className,
-      containerRect: container.getBoundingClientRect(),
-      initialVp,
-      initialZoom,
-    });
-
     try {
       // Use dragContainer (outer, unscaled) for Moveable to match Selecto's coordinate system
       const dragContainer = dragContainerRef?.current || container;
@@ -125,14 +116,8 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         const inputEvent = e.inputEvent;
         const target = inputEvent.target as HTMLElement;
         
-        console.log('[Selecto] dragStart', {
-          target: target.className,
-          targetNodeId: target.getAttribute('data-node-id'),
-        });
-        
         // Check if clicking on a Moveable control element
         if (moveableRef.current?.isMoveableElement(target)) {
-          console.log('[Selecto] dragStart stopped - Moveable element');
           e.stop();
           return;
         }
@@ -143,7 +128,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           .filter(Boolean) as HTMLElement[];
         
         if (selectedTargets.some(t => t === target || t.contains(target))) {
-          console.log('[Selecto] dragStart stopped - already selected target');
           e.stop();
           return;
         }
@@ -151,11 +135,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
       // Real-time selection feedback during box selection drag
       selectoRef.current.on("select", (e) => {
-        console.log('[Selecto] select', {
-          added: e.added.map(el => el.getAttribute('data-node-id')),
-          removed: e.removed.map(el => el.getAttribute('data-node-id')),
-          selected: e.selected.map(el => el.getAttribute('data-node-id')),
-        });
         // Update visual feedback for elements during box selection
         // Add "selecting" class for real-time visual feedback
         e.added.forEach(el => {
@@ -177,17 +156,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
         const inputEvent = e.inputEvent as MouseEvent | undefined;
         const isAdditive = inputEvent?.ctrlKey || inputEvent?.metaKey || inputEvent?.shiftKey;
-
-        console.log('[Selecto] selectEnd', { 
-          selectedCount: e.selected.length,
-          selectedElements: e.selected.map(el => el.getAttribute('data-node-id')),
-          selectedIds, 
-          isAdditive, 
-          isDragStart: e.isDragStart,
-          isDragStartEnd: e.isDragStartEnd,
-          isClick: e.isClick,
-          rect: e.rect,
-        });
 
         if (selectedIds.length > 0) {
           if (isAdditive) {
@@ -282,12 +250,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       };
 
       moveableRef.current.on('drag', ({ target, transform, beforeTranslate }) => {
-        console.log('[Moveable] drag', { 
-          target: target.getAttribute('data-node-id'),
-          transform,
-          beforeTranslate 
-        });
-        
         // Apply transform directly to the target for real-time visual feedback
         target.style.transform = transform;
 
@@ -616,7 +578,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     if (!queryContainer) return;
     
     const selectedIds = state.selection.nodeIds;
-    console.log('[TransformControls] Selection changed', { selectedIds });
     
     // Only select nodes that actually exist in the current state and are not locked
     const validSelectedIds = selectedIds.filter(id => {
@@ -628,30 +589,6 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
 
-    console.log('[TransformControls] Targets found', {
-      validSelectedIds,
-      targetCount: targets.length,
-      queryContainer: !!queryContainer,
-    });
-
-    // DEBUG: Log target selection info
-    if (targets.length > 0) {
-      const vp = getViewport?.() ?? { zoom: 1 };
-      console.log('[TransformControls] Target selected', {
-        selectedIds: validSelectedIds,
-        targetCount: targets.length,
-        targetRect: targets[0]?.getBoundingClientRect(),
-        targetStyle: {
-          left: targets[0]?.style.left,
-          top: targets[0]?.style.top,
-          width: targets[0]?.style.width,
-          height: targets[0]?.style.height,
-        },
-        viewport: vp,
-        moveableZoom: (moveableRef.current as any)?.zoom,
-      });
-    }
-    
     // Disable draggable/resizable for locked nodes
     const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
     moveableRef.current.draggable = !hasLockedSelection;
