@@ -356,6 +356,8 @@ export default function Editor() {
   useEffect(() => {
     registerDefaultCommands({
       saveProject: async () => { await saveNow() },
+      getKernelState: () => store.getState() as KernelState,
+      deleteNodes: (ids) => store.getState().removeNodes(ids),
       undo: () => store.temporal.getState().undo(),
       redo: () => store.temporal.getState().redo(),
       canUndo: () => {

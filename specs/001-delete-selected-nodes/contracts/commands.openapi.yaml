@@ -1,0 +1,62 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Studio Command Contracts (Conceptual)
+  version: 0.1.0
+  description: |
+    Conceptual contract describing how the Studio command system is expected to behave.
+    This is not necessarily a network API; it documents command inputs/outputs and invariants.
+
+paths:
+  /commands/execute:
+    post:
+      summary: Execute a Studio command
+      description: Execute a command by id (e.g., via keyboard shortcuts).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteCommandRequest'
+      responses:
+        '204':
+          description: Command executed (or no-op) successfully.
+
+components:
+  schemas:
+    ExecuteCommandRequest:
+      type: object
+      required: [commandId]
+      properties:
+        commandId:
+          type: string
+          description: Command identifier (e.g., `edit.delete`).
+        context:
+          type: object
+          additionalProperties: true
+          description: Optional contextual data (not required for `edit.delete`).
+
+    DeleteSelectedNodesEffect:
+      type: object
+      description: Expected logical effect of executing `edit.delete`.
+      properties:
+        removedNodeIds:
+          type: array
+          items:
+            type: string
+          description: Node ids removed (locked nodes excluded).
+        selectionNodeIdsAfter:
+          type: array
+          items:
+            type: string
+          description: Selection node ids after deletion.
+
+x-thingsvis-commands:
+  edit.delete:
+    shortcut:
+      - delete
+    preconditions:
+      - If focus is in an input/contenteditable, command must not execute.
+    behavior:
+      - If selection is empty, no-op.
+      - Remove all selected nodes that are not locked.
+      - Operation must be undoable via temporal history.
