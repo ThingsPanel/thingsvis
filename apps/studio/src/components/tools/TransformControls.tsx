@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { useSyncExternalStore } from "react";
-import Moveable, { getElementInfo } from "moveable";
+import Moveable from "moveable";
 import Selecto from "selecto";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
 
@@ -86,7 +86,10 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     });
 
     try {
-      moveableRef.current = new Moveable(container, {
+      // Use dragContainer (outer, unscaled) for Moveable to match Selecto's coordinate system
+      const dragContainer = dragContainerRef?.current || container;
+      
+      moveableRef.current = new Moveable(dragContainer, {
         target: [],
         draggable: true,
         // Allow dragging directly on the target elements and within the moveable bounds.
@@ -102,14 +105,10 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         throttleRotate: 1,
         useResizeObserver: false,
         useMutationObserver: false,
-        // No zoom - Moveable is inside scaled container, everything is in world coords
       });
 
-      // Use dragContainerRef for box selection area, fallback to container
-      const dragContainer = dragContainerRef?.current || container;
-
       selectoRef.current = new Selecto({
-        container: dragContainer, // Selection box rendered in the outer unscaled container
+        container: dragContainer,
         dragContainer,
         selectableTargets: [".node-proxy-target"],
         hitRate: 0,
@@ -117,8 +116,8 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         selectFromInside: false,
         toggleContinueSelect: ["shift", "ctrl", "meta"], // Support Ctrl/Shift/Meta for additive selection
         ratio: 0,
-        // Use Moveable's getElementInfo to correctly calculate element positions with transforms
-        getElementRect: getElementInfo,
+        // Don't use getElementRect - let Selecto use default getBoundingClientRect
+        // which works correctly with our transformed container
       });
 
       // Selecto dragStart - stop if clicking on Moveable element or selected target
@@ -140,7 +139,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         
         // Check if clicking on an already selected target
         const selectedTargets = (kernelStore.getState() as KernelState).selection.nodeIds
-          .map(id => container.querySelector(`[data-node-id="${id}"]`))
+          .map(id => dragContainer.querySelector(`[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
         
         if (selectedTargets.some(t => t === target || t.contains(target))) {
@@ -261,7 +260,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           dragTranslateByIdRef.current[id] = { x: 0, y: 0 };
 
           // Reset transforms for all participating targets
-          const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+          const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
           if (el) {
             el.style.willChange = 'transform';
             el.style.transform = '';
@@ -273,8 +272,26 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         target.style.transform = '';
       });
 
-      moveableRef.current.on('drag', ({ target, beforeTranslate }) => {
-        // Moveable is inside scaled wrapper, beforeTranslate is already in world coords
+      // Helper to find overlay element for a node ID
+      // The overlay is rendered by VisualEngine in #visual-engine-mount's overlay div
+      const findOverlayElement = (nodeId: string): HTMLElement | null => {
+        // Try to find the overlay root which is a sibling of our container hierarchy
+        const canvasRoot = container.closest('[style*="position: relative"]');
+        if (!canvasRoot) return null;
+        return canvasRoot.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
+      };
+
+      moveableRef.current.on('drag', ({ target, transform, beforeTranslate }) => {
+        console.log('[Moveable] drag', { 
+          target: target.getAttribute('data-node-id'),
+          transform,
+          beforeTranslate 
+        });
+        
+        // Apply transform directly to the target for real-time visual feedback
+        target.style.transform = transform;
+
+        // Track translation for commit on dragEnd
         const tx = beforeTranslate?.[0] ?? 0;
         const ty = beforeTranslate?.[1] ?? 0;
 
@@ -285,14 +302,28 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         if (isMultiDrag) {
           for (const id of selectedIds) {
             dragTranslateByIdRef.current[id] = { x: tx, y: ty };
-            const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
-            if (el) el.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+            // Use dragContainer to find elements since that's where Moveable is mounted
+            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            if (el && el !== target) {
+              el.style.transform = `translate(${tx}px, ${ty}px)`;
+            }
+            // Also update the visual overlay element for real-time visual feedback
+            const overlayEl = findOverlayElement(id);
+            if (overlayEl) {
+              overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+            }
           }
           return;
         }
 
-        if (nodeId) dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
-        target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+        if (nodeId) {
+          dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+          // Also update the visual overlay element for real-time visual feedback
+          const overlayEl = findOverlayElement(nodeId);
+          if (overlayEl) {
+            overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+          }
+        }
       });
 
       moveableRef.current.on('dragEnd', ({ target, isDrag, lastEvent }) => {
@@ -303,15 +334,27 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         if (!isDrag) {
           if (isMultiDrag) {
             for (const id of selectedIds) {
-              const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+              const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
               if (el) {
                 el.style.willChange = '';
                 el.style.transform = '';
+              }
+              // Clear overlay transform too
+              const overlayEl = findOverlayElement(id);
+              if (overlayEl) {
+                overlayEl.style.transform = '';
               }
             }
           } else {
             target.style.willChange = '';
             target.style.transform = '';
+            // Clear overlay transform for single node
+            if (nodeId) {
+              const overlayEl = findOverlayElement(nodeId);
+              if (overlayEl) {
+                overlayEl.style.transform = '';
+              }
+            }
           }
           return;
         }
@@ -319,7 +362,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         if (isMultiDrag) {
           // Commit all selected nodes using the same delta
           for (const id of selectedIds) {
-            const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el) el.style.willChange = '';
 
             const delta = dragTranslateByIdRef.current[id] ?? {
@@ -334,6 +377,11 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
               el.style.left = `${x}px`;
               el.style.top = `${y}px`;
               el.style.transform = '';
+            }
+            // Clear overlay transform - store update will reposition it
+            const overlayEl = findOverlayElement(id);
+            if (overlayEl) {
+              overlayEl.style.transform = '';
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
           }
@@ -355,7 +403,12 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         target.style.top = `${y}px`;
         target.style.transform = '';
 
+        // Clear overlay transform - store update will reposition it
         if (nodeId) {
+          const overlayEl = findOverlayElement(nodeId);
+          if (overlayEl) {
+            overlayEl.style.transform = '';
+          }
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
           onUserEdit?.();
         }
@@ -385,7 +438,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           const tx = ev?.beforeTranslate?.[0] ?? 0;
           const ty = ev?.beforeTranslate?.[1] ?? 0;
           const nodeId = t.getAttribute('data-node-id');
-          if (nodeId) dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+          if (nodeId) {
+            dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+            // Also update the visual overlay element for real-time visual feedback
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+            }
+          }
           t.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
         }
       });
@@ -393,12 +453,20 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       moveableRef.current.on('dragGroupEnd', ({ targets, isDrag }) => {
         for (const t of targets) {
           t.style.willChange = '';
+          const nodeId = t.getAttribute('data-node-id');
+          
           if (!isDrag) {
             t.style.transform = '';
+            // Clear overlay transform too
+            if (nodeId) {
+              const overlayEl = findOverlayElement(nodeId);
+              if (overlayEl) {
+                overlayEl.style.transform = '';
+              }
+            }
             continue;
           }
 
-          const nodeId = t.getAttribute('data-node-id');
           if (!nodeId) {
             t.style.transform = '';
             continue;
@@ -412,6 +480,12 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           t.style.left = `${x}px`;
           t.style.top = `${y}px`;
           t.style.transform = '';
+          
+          // Clear overlay transform - store update will reposition it
+          const overlayEl = findOverlayElement(nodeId);
+          if (overlayEl) {
+            overlayEl.style.transform = '';
+          }
 
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
         }
@@ -535,7 +609,11 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
     if (!enabled) return;
-    if (!moveableRef.current || !containerRef.current) return;
+    if (!moveableRef.current) return;
+    
+    // Use dragContainerRef since Moveable is mounted there, fallback to containerRef
+    const queryContainer = dragContainerRef?.current || containerRef.current;
+    if (!queryContainer) return;
     
     const selectedIds = state.selection.nodeIds;
     console.log('[TransformControls] Selection changed', { selectedIds });
@@ -547,13 +625,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     });
     
     const targets = validSelectedIds
-      .map(id => containerRef.current?.querySelector(`[data-node-id="${id}"]`))
+      .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
 
     console.log('[TransformControls] Targets found', {
       validSelectedIds,
       targetCount: targets.length,
-      containerRef: !!containerRef.current,
+      queryContainer: !!queryContainer,
     });
 
     // DEBUG: Log target selection info

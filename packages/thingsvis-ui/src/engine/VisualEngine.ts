@@ -229,6 +229,8 @@ export class VisualEngine {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
         overlayBox.style.pointerEvents = 'auto';
+        // Add data attribute for TransformControls to find and sync transforms during drag
+        overlayBox.setAttribute('data-overlay-node-id', node.id);
         this.overlayRoot.appendChild(overlayBox);
         
         // 根据 resizable 属性决定定位方式
