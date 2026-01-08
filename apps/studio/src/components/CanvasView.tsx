@@ -42,6 +42,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   vpRef.current = vp; // Keep ref in sync for callbacks
   const [isPointerDown, setIsPointerDown] = useState(false);
   const proxyWrapperRef = useRef<HTMLDivElement | null>(null);
+  const proxyLayerRef = useRef<HTMLDivElement | null>(null);
 
   const getViewport = useCallback(() => vpRef.current, []);
 
@@ -79,6 +80,11 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     const target = e.target as HTMLElement;
     // Check if clicked on a node proxy target
     if (target.closest('.node-proxy-target')) {
+      return;
+    }
+    // Don't clear selection if this is from Selecto (proxy-layer or its children)
+    // Selecto handles selection itself via selectEnd event
+    if (target.closest('.proxy-layer')) {
       return;
     }
     // Clear selection
@@ -201,12 +207,13 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 
       {/* Proxy Layer for Moveable targets */}
       <div 
+        ref={proxyLayerRef}
         className="proxy-layer"
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 20,
-          pointerEvents: "none",
+          pointerEvents: isPanTool ? "none" : "auto",
           overflow: "hidden"
         }}
       >
@@ -250,7 +257,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 
           {/* TransformControls inside scaled wrapper */}
           <TransformControls 
-            containerRef={proxyWrapperRef} 
+            containerRef={proxyWrapperRef}
+            dragContainerRef={proxyLayerRef}
             kernelStore={store} 
             enabled={activeTool !== 'pan'}
             onUserEdit={onUserEdit}

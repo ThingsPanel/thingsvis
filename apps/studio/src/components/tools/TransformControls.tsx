@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useCallback } from "react";
 import { useSyncExternalStore } from "react";
-import Moveable from "moveable";
+import Moveable, { getElementInfo } from "moveable";
 import Selecto from "selecto";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
 
 type Props = {
   containerRef: React.RefObject<HTMLElement>;
+  dragContainerRef?: React.RefObject<HTMLElement>; // Container for Selecto drag area (box selection)
   kernelStore: KernelStore;
   enabled?: boolean;
   onUserEdit?: () => void;
@@ -13,7 +14,7 @@ type Props = {
   zoom?: number; // Current viewport zoom - triggers re-render when changed
 };
 
-export default function TransformControls({ containerRef, kernelStore, enabled = true, onUserEdit, getViewport, zoom = 1 }: Props) {
+export default function TransformControls({ containerRef, dragContainerRef, kernelStore, enabled = true, onUserEdit, getViewport, zoom = 1 }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
 
@@ -104,15 +105,20 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         // No zoom - Moveable is inside scaled container, everything is in world coords
       });
 
+      // Use dragContainerRef for box selection area, fallback to container
+      const dragContainer = dragContainerRef?.current || container;
+
       selectoRef.current = new Selecto({
-        container,
-        dragContainer: container,
+        container: dragContainer, // Selection box rendered in the outer unscaled container
+        dragContainer,
         selectableTargets: [".node-proxy-target"],
         hitRate: 0,
         selectByClick: true,
         selectFromInside: false,
         toggleContinueSelect: ["shift", "ctrl", "meta"], // Support Ctrl/Shift/Meta for additive selection
         ratio: 0,
+        // Use Moveable's getElementInfo to correctly calculate element positions with transforms
+        getElementRect: getElementInfo,
       });
 
       // Selecto dragStart - stop if clicking on Moveable element or selected target
@@ -120,8 +126,14 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         const inputEvent = e.inputEvent;
         const target = inputEvent.target as HTMLElement;
         
+        console.log('[Selecto] dragStart', {
+          target: target.className,
+          targetNodeId: target.getAttribute('data-node-id'),
+        });
+        
         // Check if clicking on a Moveable control element
         if (moveableRef.current?.isMoveableElement(target)) {
+          console.log('[Selecto] dragStart stopped - Moveable element');
           e.stop();
           return;
         }
@@ -132,25 +144,50 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
           .filter(Boolean) as HTMLElement[];
         
         if (selectedTargets.some(t => t === target || t.contains(target))) {
+          console.log('[Selecto] dragStart stopped - already selected target');
           e.stop();
           return;
         }
       });
 
+      // Real-time selection feedback during box selection drag
+      selectoRef.current.on("select", (e) => {
+        console.log('[Selecto] select', {
+          added: e.added.map(el => el.getAttribute('data-node-id')),
+          removed: e.removed.map(el => el.getAttribute('data-node-id')),
+          selected: e.selected.map(el => el.getAttribute('data-node-id')),
+        });
+        // Update visual feedback for elements during box selection
+        // Add "selecting" class for real-time visual feedback
+        e.added.forEach(el => {
+          el.classList.add("selecting");
+        });
+        e.removed.forEach(el => {
+          el.classList.remove("selecting");
+        });
+      });
+
       // Selection handling - use selectEnd for final selection state
       selectoRef.current.on("selectEnd", (e) => {
+        // Clean up "selecting" class
+        e.selected.forEach(el => {
+          el.classList.remove("selecting");
+        });
+        
         const getId = (el: Element | null | undefined) => el?.getAttribute?.("data-node-id") || null;
         const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
         const inputEvent = e.inputEvent as MouseEvent | undefined;
         const isAdditive = inputEvent?.ctrlKey || inputEvent?.metaKey || inputEvent?.shiftKey;
 
         console.log('[Selecto] selectEnd', { 
+          selectedCount: e.selected.length,
+          selectedElements: e.selected.map(el => el.getAttribute('data-node-id')),
           selectedIds, 
           isAdditive, 
           isDragStart: e.isDragStart,
+          isDragStartEnd: e.isDragStartEnd,
           isClick: e.isClick,
-          afterAdded: e.afterAdded?.length,
-          afterRemoved: e.afterRemoved?.length
+          rect: e.rect,
         });
 
         if (selectedIds.length > 0) {
@@ -181,8 +218,9 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
           kernelStore.getState().selectNode(null as any);
         }
 
-        // If drag started on a selected element, trigger Moveable drag
-        if (e.isDragStart && selectedIds.length > 0) {
+        // If drag started on a selected element and ended immediately (click or preventDragFromInside),
+        // trigger Moveable drag to allow dragging the selected elements
+        if (e.isDragStartEnd && selectedIds.length > 0) {
           e.inputEvent?.preventDefault?.();
 
           setTimeout(() => {
@@ -492,7 +530,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
       moveableRef.current = null;
       selectoRef.current = null;
     };
-  }, [containerRef, kernelStore, enabled, getViewport]);
+  }, [containerRef, dragContainerRef, kernelStore, enabled, getViewport]);
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
@@ -500,6 +538,8 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     if (!moveableRef.current || !containerRef.current) return;
     
     const selectedIds = state.selection.nodeIds;
+    console.log('[TransformControls] Selection changed', { selectedIds });
+    
     // Only select nodes that actually exist in the current state and are not locked
     const validSelectedIds = selectedIds.filter(id => {
       const node = state.nodesById[id];
@@ -509,6 +549,12 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
     const targets = validSelectedIds
       .map(id => containerRef.current?.querySelector(`[data-node-id="${id}"]`))
       .filter(Boolean) as HTMLElement[];
+
+    console.log('[TransformControls] Targets found', {
+      validSelectedIds,
+      targetCount: targets.length,
+      containerRef: !!containerRef.current,
+    });
 
     // DEBUG: Log target selection info
     if (targets.length > 0) {
