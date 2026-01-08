@@ -215,12 +215,15 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             left: vp.offsetX,
             top: vp.offsetY,
             transform: `scale(${vp.zoom})`,
-            transformOrigin: "0 0"
+            transformOrigin: "0 0",
+            pointerEvents: "auto" // Enable pointer events for Moveable handles
           }}
         >
           {nodes.map(node => {
             const schema = node.schemaRef as any;
             if (!node.visible) return null;
+            // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
+            const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
             return (
               <div
                 key={node.id}
@@ -238,6 +241,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                   top: schema.position.y,
                   width: schema.size?.width ?? 0,
                   height: schema.size?.height ?? 0,
+                  transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
+                  transformOrigin: 'center center',
                   pointerEvents: isPanTool ? "none" : "auto",
                   cursor: isPanTool ? canvasCursor : "pointer",
                   border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"

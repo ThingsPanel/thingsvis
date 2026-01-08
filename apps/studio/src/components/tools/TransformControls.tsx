@@ -230,6 +230,34 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         }
       });
 
+      // Rotate handling
+      moveableRef.current.on('rotate', ({ target, beforeRotate }) => {
+        target.style.transform = `rotate(${beforeRotate}deg)`;
+      });
+
+      moveableRef.current.on('rotateEnd', ({ target, isDrag, lastEvent }) => {
+        if (!isDrag) {
+          target.style.transform = '';
+          return;
+        }
+
+        const nodeId = target.getAttribute('data-node-id');
+        const rotation = (lastEvent as any)?.beforeRotate ?? 0;
+
+        // Keep the rotation in transform style
+        target.style.transform = `rotate(${rotation}deg)`;
+
+        if (nodeId) {
+          // Store rotation in props._rotation since schema doesn't have rotation field in updateNode
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const currentProps = (node?.schemaRef as any)?.props ?? {};
+          kernelStore.getState().updateNode(nodeId, { 
+            props: { ...currentProps, _rotation: rotation } 
+          });
+          onUserEdit?.();
+        }
+      });
+
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn("[TransformControls] initialization failed", e);
