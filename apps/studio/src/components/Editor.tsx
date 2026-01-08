@@ -416,7 +416,6 @@ export default function Editor() {
 
   useEffect(() => {
     // Sync canvas state to kernel store when config changes
-    console.log('[Editor] Syncing canvas config to store:', canvasConfig.mode, canvasConfig.width, canvasConfig.height);
     store.getState().updateCanvas({
       mode: canvasConfig.mode,
       width: canvasConfig.width,
