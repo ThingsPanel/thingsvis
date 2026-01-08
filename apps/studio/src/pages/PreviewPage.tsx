@@ -119,7 +119,7 @@ export default function PreviewPage() {
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
       {/* Minimal overlay toolbar */}
-      <div className="absolute top-4 left-4 z-50 pointer-events-auto">
+      <div className="absolute top-4 right-4 z-50 pointer-events-auto">
         <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1">
           <Button
             variant="ghost"

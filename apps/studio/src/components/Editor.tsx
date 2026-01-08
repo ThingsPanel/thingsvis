@@ -352,6 +352,35 @@ export default function Editor() {
     canvasConfig.gridSize,
   ])
 
+  const openPreview = useCallback(async () => {
+    const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}`
+
+    // Open a new tab synchronously to avoid popup blockers.
+    // We'll navigate it to the preview URL after the save completes.
+    const previewWindow = window.open('about:blank', '_blank')
+
+    try {
+      // Ensure preview loads the latest saved content
+      await saveNow()
+    } catch (error) {
+      // If saving fails, don't leave a blank tab around.
+      previewWindow?.close()
+      throw error
+    }
+
+    const url = new URL(window.location.href)
+    url.hash = previewHash
+
+    if (previewWindow) {
+      previewWindow.location.href = url.toString()
+      previewWindow.focus?.()
+      return
+    }
+
+    // Popup blocked: fall back to same-tab navigation.
+    window.location.hash = previewHash
+  }, [projectId, saveNow])
+
   // Register default commands with the command registry
   useEffect(() => {
     registerDefaultCommands({
@@ -373,11 +402,7 @@ export default function Editor() {
       showShortcutsPanel: () => setShowShortcuts(true),
       setTool: (tool) => setActiveTool(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
-      openPreview: async () => {
-        // Save project before entering in-editor preview
-        await saveNow()
-        window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
-      },
+      openPreview,
       // Atomic insert nodes + select: ensures undo/redo captures both operations together
       // We create a partial state update that includes both nodesById and selection changes
       // This ensures the temporal middleware captures both in a single history entry
@@ -409,7 +434,7 @@ export default function Editor() {
         })
       },
     })
-  }, [saveNow, projectId])
+  }, [saveNow, projectId, openPreview])
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts({ registry: commandRegistry })
@@ -668,10 +693,7 @@ export default function Editor() {
             variant="ghost" 
             size="sm" 
             className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={async () => {
-              await saveNow()
-              window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}`
-            }}
+            onClick={openPreview}
           >
             <Eye className="h-4 w-4" />
             <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
