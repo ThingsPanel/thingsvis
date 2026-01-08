@@ -19,6 +19,7 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
 
   const baseWorldPositionByIdRef = useRef<Record<string, { x: number; y: number }>>({});
   const baseWorldSizeByIdRef = useRef<Record<string, { width: number; height: number }>>({});
+  const dragTranslateByIdRef = useRef<Record<string, { x: number; y: number }>>({});
   const lastKnownZoomRef = useRef<number>(1);
   const viewportPollTimerRef = useRef<number | null>(null);
 
@@ -87,6 +88,9 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
       moveableRef.current = new Moveable(container, {
         target: [],
         draggable: true,
+        // Allow dragging directly on the target elements and within the moveable bounds.
+        // This improves usability and makes multi-drag more predictable.
+        dragArea: true,
         resizable: true,
         rotatable: true,
         pinchable: true,
@@ -107,33 +111,126 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         hitRate: 0,
         selectByClick: true,
         selectFromInside: false,
-        toggleContinueSelect: ["shift"],
+        toggleContinueSelect: ["shift", "ctrl", "meta"], // Support Ctrl/Shift/Meta for additive selection
         ratio: 0,
       });
 
-      // Selection handling
-      selectoRef.current.on("select", (e) => {
-        const selectedIds = e.selected.map(el => el.getAttribute("data-node-id")).filter(Boolean) as string[];
+      // Selecto dragStart - stop if clicking on Moveable element or selected target
+      selectoRef.current.on("dragStart", (e) => {
+        const inputEvent = e.inputEvent;
+        const target = inputEvent.target as HTMLElement;
+        
+        // Check if clicking on a Moveable control element
+        if (moveableRef.current?.isMoveableElement(target)) {
+          e.stop();
+          return;
+        }
+        
+        // Check if clicking on an already selected target
+        const selectedTargets = (kernelStore.getState() as KernelState).selection.nodeIds
+          .map(id => container.querySelector(`[data-node-id="${id}"]`))
+          .filter(Boolean) as HTMLElement[];
+        
+        if (selectedTargets.some(t => t === target || t.contains(target))) {
+          e.stop();
+          return;
+        }
+      });
+
+      // Selection handling - use selectEnd for final selection state
+      selectoRef.current.on("selectEnd", (e) => {
+        const getId = (el: Element | null | undefined) => el?.getAttribute?.("data-node-id") || null;
+        const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
+        const inputEvent = e.inputEvent as MouseEvent | undefined;
+        const isAdditive = inputEvent?.ctrlKey || inputEvent?.metaKey || inputEvent?.shiftKey;
+
+        console.log('[Selecto] selectEnd', { 
+          selectedIds, 
+          isAdditive, 
+          isDragStart: e.isDragStart,
+          isClick: e.isClick,
+          afterAdded: e.afterAdded?.length,
+          afterRemoved: e.afterRemoved?.length
+        });
+
         if (selectedIds.length > 0) {
-          kernelStore.getState().selectNode(selectedIds[0] ?? null); // MVP: single select
-        } else if ((e as any).isDragStartEnd) {
+          if (isAdditive) {
+            // Ctrl/Shift + click: toggle selection for single node
+            if (e.isClick && selectedIds.length === 1) {
+              const nodeId = selectedIds[0]!;
+              const currentIds = kernelStore.getState().selection.nodeIds;
+              if (currentIds.includes(nodeId)) {
+                // Remove from selection
+                kernelStore.getState().selectNodes(currentIds.filter(id => id !== nodeId));
+              } else {
+                // Add to selection
+                kernelStore.getState().selectNodes([...currentIds, nodeId]);
+              }
+            } else {
+              // Box selection with modifier: add all to selection
+              const currentIds = kernelStore.getState().selection.nodeIds;
+              const mergedIds = [...new Set([...currentIds, ...selectedIds])];
+              kernelStore.getState().selectNodes(mergedIds);
+            }
+          } else {
+            // Normal click/drag: replace selection
+            kernelStore.getState().selectNodes(selectedIds);
+          }
+        } else if (e.isClick) {
+          // Click on empty area: clear selection
           kernelStore.getState().selectNode(null as any);
+        }
+
+        // If drag started on a selected element, trigger Moveable drag
+        if (e.isDragStart && selectedIds.length > 0) {
+          e.inputEvent?.preventDefault?.();
+
+          setTimeout(() => {
+            if (moveableRef.current && e.inputEvent) {
+              moveableRef.current.dragStart(e.inputEvent);
+            }
+          });
         }
       });
 
       // Drag handling (use transform during drag for perf; commit left/top at end)
-      moveableRef.current.on('dragStart', ({ target }) => {
+      moveableRef.current.on('dragStart', ({ target, inputEvent }) => {
         moveableRef.current?.updateRect();
 
         const nodeId = target.getAttribute('data-node-id');
-        if (nodeId) {
-          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+        const selectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+        
+        // If clicking on an unselected node without Ctrl/Meta, select it first
+        // This enables single-node drag even when selectByClick is disabled
+        if (nodeId && !selectedIds.includes(nodeId)) {
+          const isModifierHeld = inputEvent?.ctrlKey || inputEvent?.metaKey;
+          if (!isModifierHeld) {
+            kernelStore.getState().selectNode(nodeId);
+          }
+        }
+        
+        // Re-read selection after potential update
+        const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+        const isMultiDrag = !!nodeId && currentSelectedIds.length > 1 && currentSelectedIds.includes(nodeId);
+
+        const idsToInit = isMultiDrag ? currentSelectedIds : (nodeId ? [nodeId] : []);
+        for (const id of idsToInit) {
+          const node = (kernelStore.getState() as KernelState).nodesById[id];
           const schema = node?.schemaRef as any;
           if (schema?.position) {
-            baseWorldPositionByIdRef.current[nodeId] = { x: schema.position.x ?? 0, y: schema.position.y ?? 0 };
+            baseWorldPositionByIdRef.current[id] = { x: schema.position.x ?? 0, y: schema.position.y ?? 0 };
+          }
+          dragTranslateByIdRef.current[id] = { x: 0, y: 0 };
+
+          // Reset transforms for all participating targets
+          const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+          if (el) {
+            el.style.willChange = 'transform';
+            el.style.transform = '';
           }
         }
 
+        // Ensure current target is ready
         target.style.willChange = 'transform';
         target.style.transform = '';
       });
@@ -142,20 +239,75 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
         // Moveable is inside scaled wrapper, beforeTranslate is already in world coords
         const tx = beforeTranslate?.[0] ?? 0;
         const ty = beforeTranslate?.[1] ?? 0;
+
+        const nodeId = target.getAttribute('data-node-id');
+        const selectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+        const isMultiDrag = !!nodeId && selectedIds.length > 1 && selectedIds.includes(nodeId);
+
+        if (isMultiDrag) {
+          for (const id of selectedIds) {
+            dragTranslateByIdRef.current[id] = { x: tx, y: ty };
+            const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            if (el) el.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+          }
+          return;
+        }
+
+        if (nodeId) dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
         target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
       });
 
       moveableRef.current.on('dragEnd', ({ target, isDrag, lastEvent }) => {
-        target.style.willChange = '';
+        const nodeId = target.getAttribute('data-node-id');
+        const selectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+        const isMultiDrag = !!nodeId && selectedIds.length > 1 && selectedIds.includes(nodeId);
+
         if (!isDrag) {
-          target.style.transform = '';
+          if (isMultiDrag) {
+            for (const id of selectedIds) {
+              const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+              if (el) {
+                el.style.willChange = '';
+                el.style.transform = '';
+              }
+            }
+          } else {
+            target.style.willChange = '';
+            target.style.transform = '';
+          }
           return;
         }
 
-        const nodeId = target.getAttribute('data-node-id');
-        // Moveable is inside scaled wrapper, beforeTranslate is already in world coords
-        const dx = (lastEvent as any)?.beforeTranslate?.[0] ?? 0;
-        const dy = (lastEvent as any)?.beforeTranslate?.[1] ?? 0;
+        if (isMultiDrag) {
+          // Commit all selected nodes using the same delta
+          for (const id of selectedIds) {
+            const el = container.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            if (el) el.style.willChange = '';
+
+            const delta = dragTranslateByIdRef.current[id] ?? {
+              x: (lastEvent as any)?.beforeTranslate?.[0] ?? 0,
+              y: (lastEvent as any)?.beforeTranslate?.[1] ?? 0,
+            };
+            const baseWorld = baseWorldPositionByIdRef.current[id];
+            const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
+            const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+
+            if (el) {
+              el.style.left = `${x}px`;
+              el.style.top = `${y}px`;
+              el.style.transform = '';
+            }
+            kernelStore.getState().updateNode(id, { position: { x, y } });
+          }
+          onUserEdit?.();
+          return;
+        }
+
+        target.style.willChange = '';
+
+        // Single target commit
+        const dx = dragTranslateByIdRef.current[nodeId || '']?.x ?? (lastEvent as any)?.beforeTranslate?.[0] ?? 0;
+        const dy = dragTranslateByIdRef.current[nodeId || '']?.y ?? (lastEvent as any)?.beforeTranslate?.[1] ?? 0;
 
         const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
 
@@ -169,6 +321,63 @@ export default function TransformControls({ containerRef, kernelStore, enabled =
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
           onUserEdit?.();
         }
+      });
+
+      // Group drag handling for multi-selection
+      moveableRef.current.on('dragGroupStart', ({ targets }) => {
+        moveableRef.current?.updateRect();
+        for (const t of targets) {
+          const nodeId = t.getAttribute('data-node-id');
+          if (!nodeId) continue;
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const schema = node?.schemaRef as any;
+          if (schema?.position) {
+            baseWorldPositionByIdRef.current[nodeId] = { x: schema.position.x ?? 0, y: schema.position.y ?? 0 };
+          }
+          dragTranslateByIdRef.current[nodeId] = { x: 0, y: 0 };
+          t.style.willChange = 'transform';
+          t.style.transform = '';
+        }
+      });
+
+      moveableRef.current.on('dragGroup', ({ events }) => {
+        for (const ev of events as any[]) {
+          const t = ev?.target as HTMLElement | undefined;
+          if (!t) continue;
+          const tx = ev?.beforeTranslate?.[0] ?? 0;
+          const ty = ev?.beforeTranslate?.[1] ?? 0;
+          const nodeId = t.getAttribute('data-node-id');
+          if (nodeId) dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+          t.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
+        }
+      });
+
+      moveableRef.current.on('dragGroupEnd', ({ targets, isDrag }) => {
+        for (const t of targets) {
+          t.style.willChange = '';
+          if (!isDrag) {
+            t.style.transform = '';
+            continue;
+          }
+
+          const nodeId = t.getAttribute('data-node-id');
+          if (!nodeId) {
+            t.style.transform = '';
+            continue;
+          }
+
+          const delta = dragTranslateByIdRef.current[nodeId] ?? { x: 0, y: 0 };
+          const baseWorld = baseWorldPositionByIdRef.current[nodeId];
+          const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
+          const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+
+          t.style.left = `${x}px`;
+          t.style.top = `${y}px`;
+          t.style.transform = '';
+
+          kernelStore.getState().updateNode(nodeId, { position: { x, y } });
+        }
+        if (isDrag) onUserEdit?.();
       });
 
       // Resize handling (use transform during resize drag)

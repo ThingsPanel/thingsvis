@@ -69,6 +69,7 @@ export type KernelActions = {
   removeNodes: (nodeIds: string[]) => void;
   selectNode: (nodeId: string | null) => void;
   selectNodes: (nodeIds: string[]) => void;
+  toggleNodeSelection: (nodeId: string) => void;
   updateNode: (
     nodeId: string,
     changes: {
@@ -215,6 +216,20 @@ export const createKernelStore = () =>
         const validIds = nodeIds.filter(id => get().nodesById[id]);
         set(state => {
           state.selection = { nodeIds: validIds };
+        });
+      },
+
+      toggleNodeSelection: nodeId => {
+        if (!get().nodesById[nodeId]) return;
+        set(state => {
+          const currentIds = state.selection.nodeIds;
+          if (currentIds.includes(nodeId)) {
+            // Remove from selection
+            state.selection.nodeIds = currentIds.filter(id => id !== nodeId);
+          } else {
+            // Add to selection
+            state.selection.nodeIds = [...currentIds, nodeId];
+          }
         });
       },
 

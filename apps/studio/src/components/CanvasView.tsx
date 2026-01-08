@@ -73,6 +73,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 
   // Click on empty canvas to clear selection
   function handleCanvasClick(e: React.MouseEvent) {
+    // Ctrl/Meta click is used for multi-select toggling; don't clear selection.
+    if (e.ctrlKey || e.metaKey) return;
     // Only clear selection if clicking directly on the canvas container, not on a node
     const target = e.target as HTMLElement;
     // Check if clicked on a node proxy target
@@ -203,6 +205,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         style={{
           position: "absolute",
           inset: 0,
+          zIndex: 20,
           pointerEvents: "none",
           overflow: "hidden"
         }}
@@ -229,12 +232,6 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                 key={node.id}
                 data-node-id={node.id}
                 className="node-proxy-target"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (store.getState().selectNode) {
-                    store.getState().selectNode(node.id);
-                  }
-                }}
                 style={{
                   position: "absolute",
                   left: schema.position.x,
