@@ -14,7 +14,9 @@ export const COMMAND_IDS = {
   // Tool commands
   TOOL_SELECT: 'tool.select',
   TOOL_RECTANGLE: 'tool.rectangle',
+  TOOL_CIRCLE: 'tool.circle',
   TOOL_TEXT: 'tool.text',
+  TOOL_IMAGE: 'tool.image',
   TOOL_PAN: 'tool.pan',
 
   // Edit commands
@@ -51,7 +53,9 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
   // Tools (single key)
   [COMMAND_IDS.TOOL_SELECT]: ['v'],
   [COMMAND_IDS.TOOL_RECTANGLE]: ['r'],
+  [COMMAND_IDS.TOOL_CIRCLE]: ['o'],
   [COMMAND_IDS.TOOL_TEXT]: ['t'],
+  [COMMAND_IDS.TOOL_IMAGE]: ['i'],
   [COMMAND_IDS.TOOL_PAN]: ['h'],
 
   // Edit (mod + key)

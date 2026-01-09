@@ -129,6 +129,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         
         if (selectedTargets.some(t => t === target || t.contains(target))) {
           e.stop();
+          
+          // Trigger Moveable drag since we're clicking on a selected target
+          // Use setTimeout to ensure the event is processed after Selecto stops
+          setTimeout(() => {
+            if (moveableRef.current && inputEvent) {
+              moveableRef.current.dragStart(inputEvent);
+            }
+          }, 0);
           return;
         }
       });
@@ -233,6 +241,17 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             el.style.willChange = 'transform';
             el.style.transform = '';
           }
+          
+          // Save overlay's original zIndex and rotation, then elevate zIndex for drag visibility
+          const overlayEl = findOverlayElement(id);
+          if (overlayEl) {
+            originalOverlayZIndexRef[id] = overlayEl.style.zIndex || '';
+            const existingTransform = overlayEl.style.transform || '';
+            const rotationMatch = existingTransform.match(/rotate\([^)]+\)/);
+            overlayRotationRef[id] = rotationMatch ? rotationMatch[0] : '';
+            // Elevate overlay above proxy-layer (zIndex: 20) during drag
+            overlayEl.style.zIndex = '1000';
+          }
         }
 
         // Ensure current target is ready
@@ -241,13 +260,22 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       });
 
       // Helper to find overlay element for a node ID
-      // The overlay is rendered by VisualEngine in #visual-engine-mount's overlay div
+      // The overlay is rendered by VisualEngine inside #visual-engine-mount's overlay div
       const findOverlayElement = (nodeId: string): HTMLElement | null => {
-        // Try to find the overlay root which is a sibling of our container hierarchy
-        const canvasRoot = container.closest('[style*="position: relative"]');
-        if (!canvasRoot) return null;
-        return canvasRoot.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
+        // Search upward from container to find the root, then search for overlay
+        // The overlay container is inside #visual-engine-mount which is a sibling of our container hierarchy
+        const rootContainer = container.closest('[style*="position: relative"]');
+        if (!rootContainer) {
+          // Fallback: search from document
+          return document.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
+        }
+        return rootContainer.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
       };
+      
+      // Store original overlay zIndex values to restore after drag
+      const originalOverlayZIndexRef: Record<string, string> = {};
+      // Track overlay rotation to preserve during drag
+      const overlayRotationRef: Record<string, string> = {};
 
       moveableRef.current.on('drag', ({ target, transform, beforeTranslate }) => {
         // Apply transform directly to the target for real-time visual feedback
@@ -272,7 +300,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             // Also update the visual overlay element for real-time visual feedback
             const overlayEl = findOverlayElement(id);
             if (overlayEl) {
-              overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+              // Use saved rotation from dragStart
+              const rotation = overlayRotationRef[id] || '';
+              overlayEl.style.transform = `translate(${tx}px, ${ty}px)${rotation ? ' ' + rotation : ''}`;
             }
           }
           return;
@@ -283,7 +313,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           // Also update the visual overlay element for real-time visual feedback
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
-            overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+            // Use saved rotation from dragStart
+            const rotation = overlayRotationRef[nodeId] || '';
+            overlayEl.style.transform = `translate(${tx}px, ${ty}px)${rotation ? ' ' + rotation : ''}`;
           }
         }
       });
@@ -301,20 +333,28 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
                 el.style.willChange = '';
                 el.style.transform = '';
               }
-              // Clear overlay transform too
+              // Clear overlay transform and restore zIndex
               const overlayEl = findOverlayElement(id);
               if (overlayEl) {
-                overlayEl.style.transform = '';
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
               }
             }
           } else {
             target.style.willChange = '';
             target.style.transform = '';
-            // Clear overlay transform for single node
+            // Clear overlay transform and restore zIndex for single node
             if (nodeId) {
               const overlayEl = findOverlayElement(nodeId);
               if (overlayEl) {
-                overlayEl.style.transform = '';
+                const rotation = overlayRotationRef[nodeId] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+                delete originalOverlayZIndexRef[nodeId];
+                delete overlayRotationRef[nodeId];
               }
             }
           }
@@ -340,10 +380,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
               el.style.top = `${y}px`;
               el.style.transform = '';
             }
-            // Clear overlay transform - store update will reposition it
+            // Clear overlay transform and restore zIndex - store update will reposition it
             const overlayEl = findOverlayElement(id);
             if (overlayEl) {
               overlayEl.style.transform = '';
+              overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+              delete originalOverlayZIndexRef[id];
+              delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
           }
@@ -365,11 +408,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         target.style.top = `${y}px`;
         target.style.transform = '';
 
-        // Clear overlay transform - store update will reposition it
+        // Clear overlay transform and restore zIndex - store update will reposition it
         if (nodeId) {
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
+            overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+            delete originalOverlayZIndexRef[nodeId];
+            delete overlayRotationRef[nodeId];
           }
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
           onUserEdit?.();
@@ -541,6 +587,19 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         }
       });
 
+      // After Moveable is fully initialized, set current selection targets immediately
+      // This handles the case where selection was set before Moveable was ready
+      const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+      if (currentSelectedIds.length > 0) {
+        const initialTargets = currentSelectedIds
+          .map(id => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .filter(Boolean) as HTMLElement[];
+        if (initialTargets.length > 0) {
+          moveableRef.current.target = initialTargets;
+          moveableRef.current.updateRect();
+        }
+      }
+
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn("[TransformControls] initialization failed", e);
@@ -579,27 +638,53 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     
     const selectedIds = state.selection.nodeIds;
     
-    // Only select nodes that actually exist in the current state and are not locked
-    const validSelectedIds = selectedIds.filter(id => {
-      const node = state.nodesById[id];
-      return !!node && !node.locked;
-    });
-    
-    const targets = validSelectedIds
-      .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
-      .filter(Boolean) as HTMLElement[];
+    // Function to update Moveable targets
+    const updateTargets = () => {
+      if (!moveableRef.current) {
+        return;
+      }
+      
+      // Only select nodes that actually exist in the current state and are not locked
+      const validSelectedIds = selectedIds.filter(id => {
+        const node = state.nodesById[id];
+        return !!node && !node.locked;
+      });
+      
+      const targets = validSelectedIds
+        .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
+        .filter(Boolean) as HTMLElement[];
 
-    // Disable draggable/resizable for locked nodes
-    const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
-    moveableRef.current.draggable = !hasLockedSelection;
-    moveableRef.current.resizable = !hasLockedSelection;
-    moveableRef.current.rotatable = !hasLockedSelection;
+      // Disable draggable/resizable for locked nodes
+      const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
+      moveableRef.current.draggable = !hasLockedSelection;
+      moveableRef.current.resizable = !hasLockedSelection;
+      moveableRef.current.rotatable = !hasLockedSelection;
+      
+      moveableRef.current.target = targets;
+      
+      // If we expected targets but found none, the DOM might not be ready yet
+      // Schedule a retry after the next paint
+      if (validSelectedIds.length > 0 && targets.length === 0) {
+        requestAnimationFrame(() => {
+          if (!moveableRef.current) return;
+          const retryTargets = validSelectedIds
+            .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
+            .filter(Boolean) as HTMLElement[];
+          if (retryTargets.length > 0) {
+            moveableRef.current.target = retryTargets;
+            moveableRef.current.updateRect();
+          }
+        });
+      }
+      
+      return targets;
+    };
     
-    moveableRef.current.target = targets;
+    const targets = updateTargets();
     
     // Recalculate the position of the handles to match the DOM elements.
     // This is crucial when nodes are moved/restored via Undo/Redo.
-    if (targets.length > 0) {
+    if (targets && targets.length > 0) {
       // Start a lightweight poll so Moveable handle alignment stays correct when the viewport zoom changes.
       if (viewportPollTimerRef.current === null) {
         viewportPollTimerRef.current = window.setInterval(() => {

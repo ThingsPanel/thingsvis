@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-30
 - TypeScript 5.3.x + React 18, Zustand (vanilla store), zundo (temporal history), Rsbuild (001-delete-selected-nodes)
 - N/A (this feature is in-memory editing; persistence handled elsewhere) (001-delete-selected-nodes)
 - N/A (clipboard is in-memory for this feature; persistence handled elsewhere) (001-node-clipboard)
+- TypeScript 5.3.x + React 18, Zustand (kernel store), LeaferJS (render), Module Federation runtime (001-toolbar-basic-nodes)
+- IndexedDB (project persistence via `idb-keyval`); images will be stored in node props for MVP (data URL) (001-toolbar-basic-nodes)
 
 - TypeScript 5.x (strict mode) (007-widget-style)
 
@@ -32,9 +34,9 @@ npm test; npm run lint
 TypeScript 5.x (strict mode): Follow standard conventions
 
 ## Recent Changes
+- 001-toolbar-basic-nodes: Added TypeScript 5.3.x + React 18, Zustand (kernel store), LeaferJS (render), Module Federation runtime
 - 001-node-clipboard: Added TypeScript 5.3.x + React 18, Zustand (vanilla store), zundo (temporal history), Rsbuild
 - 001-delete-selected-nodes: Added TypeScript 5.3.x + React 18, Zustand (vanilla store), zundo (temporal history), Rsbuild
-- 001-fix-transform-zoom: Added TypeScript 5.x, React 18.x
 
 
 <!-- MANUAL ADDITIONS START -->

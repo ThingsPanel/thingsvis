@@ -4,6 +4,8 @@ import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
 import TransformControls from "./tools/TransformControls";
 import ConnectionTool from "./tools/ConnectionTool";
+import CreateToolLayer from "./tools/CreateToolLayer";
+import { isCreationTool } from "./tools/types";
 
 function generateId(prefix = "node") {
   try {
@@ -30,8 +32,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
   onUserEdit?: () => void;
+  onResetTool?: () => void;
+  pendingImageUrl?: string;
+  onImagePickerRequest?: () => void;
+  onImagePickerComplete?: () => void;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit },
+  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -108,6 +114,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     } catch {
       entry = null;
     }
+    
+    // Only create node if we have valid plugin data from component library
+    // This prevents creating text nodes when user drags existing nodes or images
+    if (!entry || !entry.type) {
+      return;
+    }
 
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
     const localX = e.clientX - rect.left;
@@ -129,7 +141,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     
     const node = {
       id: nodeId,
-      type: entry?.type ?? entry?.remoteName ?? "layout/text",
+      type: entry.type,
       position: { x: worldX, y: worldY },
       // 只有可调整尺寸的组件才设置 size
       ...(isResizable ? { size: pluginDefaultSize || { width: 200, height: 100 } } : {}),
@@ -260,13 +272,56 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             containerRef={proxyWrapperRef}
             dragContainerRef={proxyLayerRef}
             kernelStore={store} 
-            enabled={activeTool !== 'pan'}
+            enabled={activeTool !== 'pan' && !isCreationTool(activeTool)}
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
           />
         </div>
       </div>
+
+      {/* Creation Tool Layer for rectangle, circle, text, image tools */}
+      {isCreationTool(activeTool) && (
+        <CreateToolLayer
+          activeTool={activeTool}
+          getViewport={getViewport}
+          applyNodeInsertAndSelect={(nodes, selectIds) => {
+            const currentState = store.getState();
+            
+            // Build the new nodesById with added nodes
+            const newNodesById = { ...currentState.nodesById };
+            const newLayerOrder = [...currentState.layerOrder];
+            
+            nodes.forEach((node: { id: string; type: string; position: { x: number; y: number }; size?: { width: number; height: number }; props: Record<string, unknown> }) => {
+              newNodesById[node.id] = {
+                id: node.id,
+                schemaRef: node,
+                visible: true,
+                locked: false,
+              };
+              // Add to layer order if not already present
+              if (!newLayerOrder.includes(node.id)) {
+                newLayerOrder.push(node.id);
+              }
+            });
+            
+            // Apply the combined state change
+            store.setState({
+              nodesById: newNodesById,
+              layerOrder: newLayerOrder,
+              selection: { nodeIds: selectIds },
+            });
+          }}
+          pendingImageUrl={pendingImageUrl}
+          onImagePickerRequest={onImagePickerRequest}
+          onCreationComplete={() => {
+            // Clean up image picker state and reset to select tool
+            onImagePickerComplete?.();
+          }}
+          onUserEdit={onUserEdit}
+          onExternalDrop={handleDrop}
+        />
+      )}
 
       <ConnectionTool 
         kernelStore={store} 

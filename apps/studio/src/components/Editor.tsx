@@ -86,6 +86,7 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
+import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -141,6 +142,8 @@ export default function Editor() {
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
+  // Image picker state for image tool (stores Object URL)
+  const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -488,6 +491,40 @@ export default function Editor() {
     document.documentElement.classList.toggle("dark")
   }
 
+  // Handle image picker request from CreateToolLayer
+  const handleImagePickerRequest = useCallback(async () => {
+    try {
+      const result = await pickImage()
+      if (result) {
+        setPendingImageUrl(result.dataUrl)
+      } else {
+        // User canceled - reset to select tool
+        setActiveTool('select')
+        setPendingImageUrl(undefined)
+      }
+    } catch (error) {
+      console.error('[Editor] Image picker error:', error)
+      if (error instanceof ImageFileTooLargeError) {
+        alert(language === 'zh' ? '图片文件过大，请选择小于 2MB 的图片' : 'Image file is too large. Please select an image smaller than 2MB.')
+      }
+      setActiveTool('select')
+      setPendingImageUrl(undefined)
+    }
+  }, [language])
+
+  // Handle image creation complete
+  const handleImagePickerComplete = useCallback(() => {
+    // Data URL is stored in node props - no cleanup needed
+    setPendingImageUrl(undefined)
+    setActiveTool('select')
+  }, [])
+
+  // Reset tool to select (used by image tool on cancel)
+  const handleResetTool = useCallback(() => {
+    setActiveTool('select')
+    setPendingImageUrl(undefined)
+  }, [pendingImageUrl])
+
   const tools = [
     { id: "select" as Tool, icon: MousePointer2, label: "选择" },
     { id: "rectangle" as Tool, icon: Square, label: "矩形" },
@@ -534,6 +571,10 @@ export default function Editor() {
           zoom={zoom / 100}
           onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
           onUserEdit={markDirty}
+          onResetTool={handleResetTool}
+          pendingImageUrl={pendingImageUrl}
+          onImagePickerRequest={handleImagePickerRequest}
+          onImagePickerComplete={handleImagePickerComplete}
         />
       </div>
 
