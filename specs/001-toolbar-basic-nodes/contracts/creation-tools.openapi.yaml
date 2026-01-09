@@ -1,0 +1,123 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Studio Creation Tool Contracts (Conceptual)
+  version: 0.1.0
+  description: |
+    Conceptual contract describing how Studio creation tools behave.
+    This is not a network API; it documents tool inputs/outputs and invariants.
+
+paths:
+  /tools/select:
+    post:
+      summary: Select an active tool
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectToolRequest'
+      responses:
+        '204':
+          description: Tool selected.
+
+  /canvas/create-by-tool:
+    post:
+      summary: Create a node using the active tool and a canvas gesture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateByToolRequest'
+      responses:
+        '200':
+          description: Node created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateByToolResponse'
+        '204':
+          description: No-op (e.g., canceled).
+
+components:
+  schemas:
+    SelectToolRequest:
+      type: object
+      required: [toolId]
+      properties:
+        toolId:
+          type: string
+          description: One of the known Studio tool ids.
+          enum: [select, rectangle, circle, text, image, arrow, pan]
+
+    Point:
+      type: object
+      required: [x, y]
+      properties:
+        x: { type: number }
+        y: { type: number }
+
+    Rect:
+      type: object
+      required: [x, y, width, height]
+      properties:
+        x: { type: number }
+        y: { type: number }
+        width: { type: number }
+        height: { type: number }
+
+    ImageAsset:
+      type: object
+      required: [dataUrl]
+      properties:
+        dataUrl:
+          type: string
+          description: Inline data URL for MVP persistence (must be data:image/*).
+        name:
+          type: string
+          description: Optional original filename.
+        mimeType:
+          type: string
+          description: Optional mime type.
+
+    CreateByToolRequest:
+      type: object
+      required: [toolId, gesture]
+      properties:
+        toolId:
+          type: string
+          enum: [rectangle, circle, text, image]
+          description: Tool responsible for creating the node.
+        gesture:
+          type: object
+          required: [start, end, isClick]
+          properties:
+            start: { $ref: '#/components/schemas/Point' }
+            end: { $ref: '#/components/schemas/Point' }
+            isClick:
+              type: boolean
+              description: True if the gesture is treated as click-to-create.
+            boundsWorld:
+              $ref: '#/components/schemas/Rect'
+              description: Optional precomputed world bounds.
+        imageAsset:
+          $ref: '#/components/schemas/ImageAsset'
+          description: Required when toolId=image.
+
+    CreateByToolResponse:
+      type: object
+      required: [createdNodeId]
+      properties:
+        createdNodeId:
+          type: string
+        createdComponentId:
+          type: string
+          description: Registry component id (e.g., basic/rectangle).
+
+x-thingsvis-invariants:
+  - Creation tools are sticky: the tool remains active after creation.
+  - Drag creates bounds-based geometry; click creates default size.
+  - Escape cancels an in-progress creation gesture; no node is created.
+  - A live preview is shown during drag.
+  - Creation + selection is a single undoable action.
+  - Rectangle/Circle/Text are categorized under basic/*; Image is under media/*.

@@ -1,0 +1,305 @@
+/**
+ * CreateToolLayer
+ * 
+ * Handles creation tool gestures (drag/click) on the canvas.
+ * Routes gestures to the appropriate tool handler based on activeTool.
+ */
+
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { 
+  screenToWorld, 
+  normalizeRect, 
+  isClick, 
+  enforceMinSize,
+  type Viewport,
+  type Point,
+  type Rect,
+} from './coordUtils';
+import { isCreationTool, getToolSpec, type NodeCreationSpec } from './types';
+
+// Generate unique IDs
+function generateId(prefix = 'node'): string {
+  try {
+    if (typeof crypto !== 'undefined' && typeof (crypto as unknown as { randomUUID: () => string }).randomUUID === 'function') {
+      return (crypto as unknown as { randomUUID: () => string }).randomUUID();
+    }
+  } catch {
+    // fallback
+  }
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+type GestureState = {
+  /** Whether we're currently dragging */
+  isDragging: boolean;
+  /** Start point in screen coordinates */
+  startScreen: Point | null;
+  /** Current point in screen coordinates */
+  currentScreen: Point | null;
+  /** Preview bounds in world coordinates (normalized) */
+  previewBounds: Rect | null;
+};
+
+type CreateToolLayerProps = {
+  /** Currently active tool */
+  activeTool: string;
+  /** Function to get current viewport state */
+  getViewport: () => Viewport;
+  /** Function to create node and select it atomically */
+  applyNodeInsertAndSelect: (
+    nodes: Array<{
+      id: string;
+      type: string;
+      position: { x: number; y: number };
+      size?: { width: number; height: number };
+      props: Record<string, unknown>;
+    }>,
+    selectIds: string[]
+  ) => void;
+  /** Pending image data URL (for image tool) */
+  pendingImageDataUrl?: string;
+  /** Callback when image tool needs to pick a file */
+  onImagePickerRequest?: () => void;
+  /** Callback when creation is complete */
+  onCreationComplete?: () => void;
+  /** Callback to notify user edit occurred (for autosave) */
+  onUserEdit?: () => void;
+  /** Handler for external drag-drop events (from component library) */
+  onExternalDrop?: (e: React.DragEvent) => void;
+};
+
+export default function CreateToolLayer({
+  activeTool,
+  getViewport,
+  applyNodeInsertAndSelect,
+  pendingImageDataUrl,
+  onImagePickerRequest,
+  onCreationComplete,
+  onUserEdit,
+  onExternalDrop,
+}: CreateToolLayerProps) {
+  const [gesture, setGesture] = useState<GestureState>({
+    isDragging: false,
+    startScreen: null,
+    currentScreen: null,
+    previewBounds: null,
+  });
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Get the tool spec
+  const toolSpec = getToolSpec(activeTool);
+  
+  // Handle image tool activation - request file picker
+  useEffect(() => {
+    if (activeTool === 'image' && !pendingImageDataUrl && onImagePickerRequest) {
+      onImagePickerRequest();
+    }
+  }, [activeTool, pendingImageDataUrl, onImagePickerRequest]);
+  
+  // Create node from gesture
+  const createNodeFromGesture = useCallback((
+    spec: NodeCreationSpec,
+    bounds: Rect,
+    extraProps: Record<string, unknown> = {}
+  ) => {
+    const nodeId = generateId('node');
+    
+    const node = {
+      id: nodeId,
+      type: spec.componentId,
+      position: { x: bounds.x, y: bounds.y },
+      ...(spec.resizable ? { size: { width: bounds.width, height: bounds.height } } : {}),
+      props: { ...spec.defaultProps, ...extraProps },
+    };
+    
+    applyNodeInsertAndSelect([node], [nodeId]);
+    onUserEdit?.();
+    onCreationComplete?.();
+  }, [applyNodeInsertAndSelect, onUserEdit, onCreationComplete]);
+  
+  // Handle pointer down
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!toolSpec || !containerRef.current) return;
+    
+    // For image tool, don't start gesture if no image is pending
+    if (activeTool === 'image' && !pendingImageDataUrl) {
+      return;
+    }
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const screenPoint: Point = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    
+    setGesture({
+      isDragging: true,
+      startScreen: screenPoint,
+      currentScreen: screenPoint,
+      previewBounds: null,
+    });
+    
+    // Capture pointer for drag tracking
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [toolSpec, activeTool, pendingImageDataUrl]);
+  
+  // Handle pointer move
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!gesture.isDragging || !gesture.startScreen || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const screenPoint: Point = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    
+    const viewport = getViewport();
+    const startWorld = screenToWorld(gesture.startScreen, viewport);
+    const currentWorld = screenToWorld(screenPoint, viewport);
+    const previewBounds = normalizeRect(startWorld, currentWorld);
+    
+    setGesture(prev => ({
+      ...prev,
+      currentScreen: screenPoint,
+      previewBounds,
+    }));
+  }, [gesture.isDragging, gesture.startScreen, getViewport]);
+  
+  // Handle pointer up
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (!gesture.isDragging || !gesture.startScreen || !toolSpec) {
+      setGesture({
+        isDragging: false,
+        startScreen: null,
+        currentScreen: null,
+        previewBounds: null,
+      });
+      return;
+    }
+    
+    const viewport = getViewport();
+    const startWorld = screenToWorld(gesture.startScreen, viewport);
+    const endScreen: Point = {
+      x: gesture.currentScreen?.x ?? gesture.startScreen.x,
+      y: gesture.currentScreen?.y ?? gesture.startScreen.y,
+    };
+    const endWorld = screenToWorld(endScreen, viewport);
+    
+    // Check if this is a click or drag
+    const clickGesture = isClick(gesture.startScreen, endScreen);
+    
+    let bounds: Rect;
+    if (clickGesture) {
+      // Click: use default size centered at click point
+      const { width, height } = toolSpec.defaultSize;
+      bounds = {
+        x: startWorld.x - width / 2,
+        y: startWorld.y - height / 2,
+        width,
+        height,
+      };
+    } else {
+      // Drag: use normalized rect with min size enforcement
+      bounds = normalizeRect(startWorld, endWorld);
+      bounds = enforceMinSize(bounds, toolSpec.minSize.width, toolSpec.minSize.height);
+    }
+    
+    // Build extra props based on tool
+    const extraProps: Record<string, unknown> = {};
+    if (activeTool === 'image' && pendingImageDataUrl) {
+      extraProps.dataUrl = pendingImageDataUrl;
+    }
+    
+    // Create the node
+    createNodeFromGesture(toolSpec, bounds, extraProps);
+    
+    // Reset gesture state
+    setGesture({
+      isDragging: false,
+      startScreen: null,
+      currentScreen: null,
+      previewBounds: null,
+    });
+    
+    // Release pointer capture
+    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+  }, [gesture, toolSpec, activeTool, pendingImageDataUrl, getViewport, createNodeFromGesture]);
+  
+  // Handle Escape key to cancel gesture
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && gesture.isDragging) {
+        setGesture({
+          isDragging: false,
+          startScreen: null,
+          currentScreen: null,
+          previewBounds: null,
+        });
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gesture.isDragging]);
+  
+  // Don't render if not a creation tool
+  if (!isCreationTool(activeTool)) {
+    return null;
+  }
+  
+  // Don't render for image tool if no image is pending
+  if (activeTool === 'image' && !pendingImageDataUrl) {
+    return null;
+  }
+  
+  // Calculate preview rect in screen coordinates
+  let previewStyle: React.CSSProperties | null = null;
+  if (gesture.isDragging && gesture.previewBounds) {
+    const viewport = getViewport();
+    const { x, y, width, height } = gesture.previewBounds;
+    
+    // Convert world bounds back to screen for preview
+    const screenX = x * viewport.zoom + viewport.offsetX;
+    const screenY = y * viewport.zoom + viewport.offsetY;
+    const screenWidth = width * viewport.zoom;
+    const screenHeight = height * viewport.zoom;
+    
+    previewStyle = {
+      position: 'absolute',
+      left: screenX,
+      top: screenY,
+      width: screenWidth,
+      height: screenHeight,
+      border: '2px dashed #6965db',
+      backgroundColor: 'rgba(105, 101, 219, 0.1)',
+      pointerEvents: 'none',
+      borderRadius: activeTool === 'circle' ? '50%' : '4px',
+    };
+  }
+  
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        cursor: 'crosshair',
+        zIndex: 30, // Above proxy-layer (zIndex: 20) to receive pointer events
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      // Allow drag-and-drop from component library to pass through
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        // Forward to parent handler for component library drops
+        onExternalDrop?.(e);
+      }}
+    >
+      {/* Preview rectangle during drag */}
+      {previewStyle && <div style={previewStyle} />}
+    </div>
+  );
+}

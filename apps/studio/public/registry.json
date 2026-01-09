@@ -11,6 +11,24 @@
       "version": "1.0.0",
       "icon": "Type"
     },
+    "basic/rectangle": {
+      "remoteName": "thingsvis_plugin_basic_rectangle",
+      "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/rectangle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Square"
+    },
+    "basic/circle": {
+      "remoteName": "thingsvis_plugin_basic_circle",
+      "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/circle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Circle"
+    },
     "basic/indicator": {
       "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
@@ -19,6 +37,15 @@
       "exposedModule": "./Main",
       "version": "1.0.0",
       "icon": "Activity"
+    },
+    "media/image": {
+      "remoteName": "thingsvis_plugin_media_image",
+      "remoteEntryUrl": "http://localhost:3106/remoteEntry.js",
+      "staticEntryUrl": "/plugins/media/image/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Image"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",

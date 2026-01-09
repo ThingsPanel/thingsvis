@@ -167,11 +167,25 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         { labelZh: '矩形' }
       ),
       createCommand(
+        COMMAND_IDS.TOOL_CIRCLE,
+        'Circle',
+        'tool',
+        () => deps.setTool!('circle'),
+        { labelZh: '圆形' }
+      ),
+      createCommand(
         COMMAND_IDS.TOOL_TEXT,
         'Text',
         'tool',
         () => deps.setTool!('text'),
         { labelZh: '文本' }
+      ),
+      createCommand(
+        COMMAND_IDS.TOOL_IMAGE,
+        'Image',
+        'tool',
+        () => deps.setTool!('image'),
+        { labelZh: '图片' }
       ),
       createCommand(
         COMMAND_IDS.TOOL_PAN,
