@@ -85,6 +85,9 @@ export default function CreateToolLayer({
     previewBounds: null,
   });
   
+  // Track if we just completed a creation - disables pointer events immediately
+  const [creationCompleted, setCreationCompleted] = useState(false);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Get the tool spec
@@ -97,7 +100,7 @@ export default function CreateToolLayer({
     }
   }, [activeTool, pendingImageDataUrl, onImagePickerRequest]);
   
-  // Create node from gesture
+  // Create node from gesture (does NOT trigger tool reset - that's handled separately)
   const createNodeFromGesture = useCallback((
     spec: NodeCreationSpec,
     bounds: Rect,
@@ -115,8 +118,8 @@ export default function CreateToolLayer({
     
     applyNodeInsertAndSelect([node], [nodeId]);
     onUserEdit?.();
-    onCreationComplete?.();
-  }, [applyNodeInsertAndSelect, onUserEdit, onCreationComplete]);
+    // Note: onCreationComplete is called separately after pointer cleanup
+  }, [applyNodeInsertAndSelect, onUserEdit]);
   
   // Handle pointer down
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
@@ -211,8 +214,12 @@ export default function CreateToolLayer({
       extraProps.dataUrl = pendingImageDataUrl;
     }
     
-    // Create the node
-    createNodeFromGesture(toolSpec, bounds, extraProps);
+    // Release pointer capture FIRST to avoid event conflicts
+    try {
+      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
+    } catch {
+      // Ignore if pointer was not captured
+    }
     
     // Reset gesture state
     setGesture({
@@ -222,9 +229,19 @@ export default function CreateToolLayer({
       previewBounds: null,
     });
     
-    // Release pointer capture
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  }, [gesture, toolSpec, activeTool, pendingImageDataUrl, getViewport, createNodeFromGesture]);
+    // Mark creation as completed - this immediately disables pointer events
+    // to prevent conflicts before React re-renders and unmounts this component
+    setCreationCompleted(true);
+    
+    // Create the node
+    createNodeFromGesture(toolSpec, bounds, extraProps);
+    
+    // Trigger tool reset after a short delay to ensure React has time to
+    // process the state changes and this component properly releases events
+    setTimeout(() => {
+      onCreationComplete?.();
+    }, 0);
+  }, [gesture, toolSpec, activeTool, pendingImageDataUrl, getViewport, createNodeFromGesture, onCreationComplete]);
   
   // Handle Escape key to cancel gesture
   useEffect(() => {
@@ -284,8 +301,10 @@ export default function CreateToolLayer({
       style={{
         position: 'absolute',
         inset: 0,
-        cursor: 'crosshair',
+        cursor: creationCompleted ? 'default' : 'crosshair',
         zIndex: 30, // Above proxy-layer (zIndex: 20) to receive pointer events
+        // Disable pointer events immediately after creation to prevent conflicts
+        pointerEvents: creationCompleted ? 'none' : 'auto',
       }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
