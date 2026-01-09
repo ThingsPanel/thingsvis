@@ -389,6 +389,40 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  plugins/basic/line:
+    dependencies:
+      leafer-ui:
+        specifier: ^1.0.0
+        version: 1.12.0
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      '@rspack/cli':
+        specifier: ^1.0.0
+        version: 1.6.7(@rspack/core@1.6.7)(webpack@5.103.0)
+      '@rspack/core':
+        specifier: ^1.0.0
+        version: 1.6.7
+      '@types/react':
+        specifier: ^18.2.41
+        version: 18.3.27
+      '@types/react-dom':
+        specifier: ^18.2.17
+        version: 18.3.7(@types/react@18.3.27)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.4(typescript@5.9.3)(webpack@5.103.0)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   plugins/basic/pm25-card:
     dependencies:
       leafer-ui:

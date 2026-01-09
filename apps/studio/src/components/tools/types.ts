@@ -70,6 +70,14 @@ export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
     resizable: true,
     interactionMode: 'auto',
   },
+  line: {
+    componentId: 'basic/line',
+    defaultSize: { width: 220, height: 80 },
+    minSize: { width: 40, height: 20 },
+    defaultProps: {},
+    resizable: true,
+    interactionMode: 'drag',
+  },
 };
 
 /**

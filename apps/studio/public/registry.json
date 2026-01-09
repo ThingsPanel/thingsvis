@@ -29,6 +29,14 @@
       "version": "1.0.0",
       "icon": "Circle"
     },
+    "basic/line": {
+      "remoteName": "thingsvis_plugin_basic_line",
+      "remoteEntryUrl": "http://localhost:3110/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0"
+    },
     "basic/indicator": {
       "remoteName": "thingsvis_plugin_basic_indicator",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",

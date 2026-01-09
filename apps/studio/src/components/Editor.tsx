@@ -91,7 +91,7 @@ import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-type Tool = "select" | "rectangle" | "circle" | "arrow" | "text" | "image" | "pan"
+type Tool = "select" | "rectangle" | "circle" | "line" | "text" | "image" | "pan"
 type Language = "zh" | "en"
 
 function DataPanel(_props: { store: typeof store; language: Language }) {
@@ -529,7 +529,7 @@ export default function Editor() {
     { id: "select" as Tool, icon: MousePointer2, label: "选择" },
     { id: "rectangle" as Tool, icon: Square, label: "矩形" },
     { id: "circle" as Tool, icon: Circle, label: "圆形" },
-    { id: "arrow" as Tool, icon: ArrowRight, label: "连接线" },
+    { id: "line" as Tool, icon: ArrowRight, label: "连线" },
     { id: "text" as Tool, icon: Type, label: "文本" },
     { id: "image" as Tool, icon: ImageIcon, label: "图片" },
     { id: "pan" as Tool, icon: Hand, label: "移动" },
@@ -689,14 +689,15 @@ export default function Editor() {
           {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
+
             return (
               <Button
                 key={tool.id}
                 variant="ghost"
                 size="icon"
                 className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${
-                  isActive 
-                    ? "bg-[#6965db]/10 text-[#6965db] shadow-sm" 
+                  isActive
+                    ? "bg-[#6965db]/10 text-[#6965db] shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
                 onClick={() => setActiveTool(tool.id)}

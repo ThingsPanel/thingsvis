@@ -58,6 +58,8 @@ type CreateToolLayerProps = {
   ) => void;
   /** Pending image URL (Object URL for image tool) */
   pendingImageUrl?: string;
+  /** Extra props to merge into created node props (tool-specific presets) */
+  toolExtraProps?: Record<string, unknown>;
   /** Callback when image tool needs to pick a file */
   onImagePickerRequest?: () => void;
   /** Callback when creation is complete */
@@ -73,6 +75,7 @@ export default function CreateToolLayer({
   getViewport,
   applyNodeInsertAndSelect,
   pendingImageUrl,
+  toolExtraProps,
   onImagePickerRequest,
   onCreationComplete,
   onUserEdit,
@@ -308,7 +311,7 @@ export default function CreateToolLayer({
     }
     
     // Build extra props based on tool
-    const extraProps: Record<string, unknown> = {};
+    const extraProps: Record<string, unknown> = { ...(toolExtraProps ?? {}) };
     if (activeTool === 'image' && pendingImageUrl) {
       extraProps.dataUrl = pendingImageUrl;
     }
@@ -338,9 +341,14 @@ export default function CreateToolLayer({
     // Trigger tool reset after a short delay to ensure React has time to
     // process the state changes and this component properly releases events
     setTimeout(() => {
-      onCreationComplete?.();
+      if (onCreationComplete) {
+        onCreationComplete();
+        return;
+      }
+      // For sticky tools (no reset), re-enable pointer events for next creation.
+      setCreationCompleted(false);
     }, 0);
-  }, [gesture, toolSpec, activeTool, pendingImageUrl, getViewport, createNodeFromGesture, onCreationComplete]);
+  }, [gesture, toolSpec, activeTool, pendingImageUrl, toolExtraProps, getViewport, createNodeFromGesture, onCreationComplete]);
   
   // Handle Escape key to cancel gesture
   useEffect(() => {

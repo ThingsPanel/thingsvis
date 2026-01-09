@@ -3,7 +3,6 @@ import { useSyncExternalStore } from "react";
 import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
 import TransformControls from "./tools/TransformControls";
-import ConnectionTool from "./tools/ConnectionTool";
 import CreateToolLayer from "./tools/CreateToolLayer";
 import { isCreationTool } from "./tools/types";
 
@@ -29,6 +28,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   store: any; 
   resolvePlugin?: (t:string)=>Promise<any>; 
   activeTool: string;
+  lineToolProps?: Record<string, unknown>;
+  lineContinuous?: boolean;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
   onUserEdit?: () => void;
@@ -37,7 +38,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   onImagePickerRequest?: () => void;
   onImagePickerComplete?: () => void;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
+  { pageId, store, activeTool, resolvePlugin, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -314,19 +315,22 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           }}
           pendingImageUrl={pendingImageUrl}
           onImagePickerRequest={onImagePickerRequest}
-          onCreationComplete={() => {
-            // Clean up image picker state and reset to select tool
-            onImagePickerComplete?.();
-          }}
+          toolExtraProps={activeTool === 'line' ? (lineToolProps ?? {}) : undefined}
+          onCreationComplete={
+            activeTool === 'image'
+              ? () => {
+                  onImagePickerComplete?.();
+                }
+              : activeTool === 'line' && !lineContinuous
+                ? () => {
+                    onResetTool?.();
+                  }
+                : undefined
+          }
           onUserEdit={onUserEdit}
           onExternalDrop={handleDrop}
         />
       )}
-
-      <ConnectionTool 
-        kernelStore={store} 
-        activeTool={activeTool} 
-      />
     </div>
   );
 });
