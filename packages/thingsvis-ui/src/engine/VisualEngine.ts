@@ -23,6 +23,8 @@ export class VisualEngine {
   private failedRendererTypes = new Set<string>();
   private errorMessageByType = new Map<string, string>();
   private errorMessageByNode = new Map<string, string>();
+  // Cache node props to detect changes and avoid unnecessary updates
+  private lastNodePropsCache = new Map<string, string>();
 
   constructor(
     private store: KernelStore,
@@ -100,6 +102,8 @@ export class VisualEngine {
           }
           if (entry.overlayBox?.parentElement) entry.overlayBox.parentElement.removeChild(entry.overlayBox);
           this.instanceMap.delete(id);
+          // Clean up props cache
+          this.lastNodePropsCache.delete(id);
         }
       }
 
@@ -319,7 +323,13 @@ export class VisualEngine {
       }
     }
     if (existing.renderer.updateOverlay && existing.overlayInst) {
-      existing.renderer.updateOverlay(existing.overlayInst as any, node);
+      // Only call updateOverlay if props actually changed
+      const propsKey = JSON.stringify((node.schemaRef as any).props || {});
+      const lastPropsKey = this.lastNodePropsCache.get(node.id);
+      if (propsKey !== lastPropsKey) {
+        this.lastNodePropsCache.set(node.id, propsKey);
+        existing.renderer.updateOverlay(existing.overlayInst as any, node);
+      }
     }
   }
 

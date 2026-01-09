@@ -25,9 +25,12 @@ function create(): Rect {
 
 /**
  * 应用样式到 DOM 元素
+ * @param skipSrc - 如果为 true，跳过更新 img.src（用于性能优化）
  */
-function applyStyles(img: HTMLImageElement, container: HTMLDivElement, props: Props) {
-  img.src = props.dataUrl || '';
+function applyStyles(img: HTMLImageElement, container: HTMLDivElement, props: Props, skipSrc = false) {
+  if (!skipSrc) {
+    img.src = props.dataUrl || '';
+  }
   img.style.opacity = String(props.opacity);
   img.style.objectFit = props.objectFit;
   img.style.borderRadius = `${props.cornerRadius}px`;
@@ -70,14 +73,23 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   const defaults = getDefaultProps();
   let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
   
+  // 记录上一次的 dataUrl，用于检测变化
+  let lastDataUrl = currentProps.dataUrl;
+  
   // 应用初始样式
   applyStyles(img, element, currentProps);
   
   return {
     element,
     update: (newCtx: PluginOverlayContext) => {
-      currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
-      applyStyles(img, element, currentProps);
+      const newProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
+      // 只在 dataUrl 变化时才更新 src（性能优化）
+      const dataUrlChanged = newProps.dataUrl !== lastDataUrl;
+      if (dataUrlChanged) {
+        lastDataUrl = newProps.dataUrl;
+      }
+      currentProps = newProps;
+      applyStyles(img, element, currentProps, !dataUrlChanged);
     },
     destroy: () => {
       img.src = '';

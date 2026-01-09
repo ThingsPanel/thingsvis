@@ -99,6 +99,11 @@ export default function CreateToolLayer({
   // Get the tool spec
   const toolSpec = getToolSpec(activeTool);
   
+  // Reset creationCompleted when tool changes to ensure fresh state
+  useEffect(() => {
+    setCreationCompleted(false);
+  }, [activeTool]);
+  
   // Reset picker request flag only when switching to a different tool
   useEffect(() => {
     if (activeTool !== 'image' && lastPickerToolRef.current === 'image') {
@@ -162,6 +167,10 @@ export default function CreateToolLayer({
     applyNodeInsertAndSelect([node], [nodeId]);
     onUserEdit?.();
     
+    // Mark creation as completed IMMEDIATELY to disable pointer events
+    // This allows the user to interact with the newly created node right away
+    setCreationCompleted(true);
+    
     // Complete creation - this will clear pendingImageUrl and switch tool
     onCreationComplete?.();
   }, [activeTool, toolSpec, pendingImageUrl, getViewport, applyNodeInsertAndSelect, onUserEdit, onCreationComplete]);
@@ -196,10 +205,27 @@ export default function CreateToolLayer({
   
   // Handle pointer down
   const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    // Prevent any interaction if creation was just completed
+    if (creationCompleted) {
+      return;
+    }
     if (!toolSpec || !containerRef.current) return;
     
     // For image tool, don't start gesture if no image is pending
     if (activeTool === 'image' && !pendingImageUrl) {
+      return;
+    }
+    
+    // Check if the click is on an existing node (node-proxy-target or overlay element)
+    // If so, don't create a new node - let the selection layer handle it
+    const target = e.target as HTMLElement;
+    const isOnNode = target.closest('.node-proxy-target') || 
+                     target.closest('[data-overlay-node-id]') ||
+                     target.closest('[data-node-id]') ||
+                     target.closest('.moveable-control') ||
+                     target.closest('.selecto-selection');
+    if (isOnNode) {
+      // Don't prevent default - let the event bubble to selection layer
       return;
     }
     
@@ -218,7 +244,7 @@ export default function CreateToolLayer({
     
     // Capture pointer for drag tracking
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [toolSpec, activeTool, pendingImageUrl]);
+  }, [toolSpec, activeTool, pendingImageUrl, creationCompleted]);
   
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {

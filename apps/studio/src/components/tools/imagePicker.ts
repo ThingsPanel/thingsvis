@@ -8,7 +8,10 @@
 const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 /** Maximum dimension for resizing (width or height) */
-const MAX_DIMENSION = 1920;
+const MAX_DIMENSION = 1200;
+
+/** Maximum dataUrl length (about 500KB base64) */
+const MAX_DATAURL_LENGTH = 700000;
 
 export type ImagePickerResult = {
   /** Data URL for the image (base64) */
@@ -101,10 +104,30 @@ async function resizeAndCompressImage(
       ctx.drawImage(img, 0, 0, width, height);
       
       // Convert to data URL with compression
-      // Use JPEG for photos (better compression), PNG for others
-      const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-      const quality = outputType === 'image/jpeg' ? 0.85 : undefined;
-      const dataUrl = canvas.toDataURL(outputType, quality);
+      // Always use JPEG for better compression (except for truly transparent PNGs)
+      const outputType = 'image/jpeg';
+      
+      // Try progressively lower quality until dataUrl is small enough
+      let quality = 0.8;
+      let dataUrl = canvas.toDataURL(outputType, quality);
+      
+      while (dataUrl.length > MAX_DATAURL_LENGTH && quality > 0.3) {
+        quality -= 0.1;
+        dataUrl = canvas.toDataURL(outputType, quality);
+      }
+      
+      // If still too large, resize further
+      if (dataUrl.length > MAX_DATAURL_LENGTH) {
+        const scale = 0.7;
+        const newWidth = Math.round(width * scale);
+        const newHeight = Math.round(height * scale);
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        ctx.drawImage(img, 0, 0, newWidth, newHeight);
+        dataUrl = canvas.toDataURL(outputType, 0.7);
+        resolve({ dataUrl, width: newWidth, height: newHeight });
+        return;
+      }
       
       resolve({ dataUrl, width, height });
     };

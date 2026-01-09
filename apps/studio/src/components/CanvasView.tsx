@@ -114,6 +114,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     } catch {
       entry = null;
     }
+    
+    // Only create node if we have valid plugin data from component library
+    // This prevents creating text nodes when user drags existing nodes or images
+    if (!entry || !entry.type) {
+      return;
+    }
 
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
     const localX = e.clientX - rect.left;
@@ -135,7 +141,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     
     const node = {
       id: nodeId,
-      type: entry?.type ?? entry?.remoteName ?? "layout/text",
+      type: entry.type,
       position: { x: worldX, y: worldY },
       // 只有可调整尺寸的组件才设置 size
       ...(isResizable ? { size: pluginDefaultSize || { width: 200, height: 100 } } : {}),

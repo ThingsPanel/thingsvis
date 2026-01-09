@@ -129,6 +129,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         
         if (selectedTargets.some(t => t === target || t.contains(target))) {
           e.stop();
+          
+          // Trigger Moveable drag since we're clicking on a selected target
+          // Use setTimeout to ensure the event is processed after Selecto stops
+          setTimeout(() => {
+            if (moveableRef.current && inputEvent) {
+              moveableRef.current.dragStart(inputEvent);
+            }
+          }, 0);
           return;
         }
       });
@@ -579,6 +587,19 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         }
       });
 
+      // After Moveable is fully initialized, set current selection targets immediately
+      // This handles the case where selection was set before Moveable was ready
+      const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+      if (currentSelectedIds.length > 0) {
+        const initialTargets = currentSelectedIds
+          .map(id => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .filter(Boolean) as HTMLElement[];
+        if (initialTargets.length > 0) {
+          moveableRef.current.target = initialTargets;
+          moveableRef.current.updateRect();
+        }
+      }
+
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn("[TransformControls] initialization failed", e);
@@ -617,27 +638,53 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     
     const selectedIds = state.selection.nodeIds;
     
-    // Only select nodes that actually exist in the current state and are not locked
-    const validSelectedIds = selectedIds.filter(id => {
-      const node = state.nodesById[id];
-      return !!node && !node.locked;
-    });
-    
-    const targets = validSelectedIds
-      .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
-      .filter(Boolean) as HTMLElement[];
+    // Function to update Moveable targets
+    const updateTargets = () => {
+      if (!moveableRef.current) {
+        return;
+      }
+      
+      // Only select nodes that actually exist in the current state and are not locked
+      const validSelectedIds = selectedIds.filter(id => {
+        const node = state.nodesById[id];
+        return !!node && !node.locked;
+      });
+      
+      const targets = validSelectedIds
+        .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
+        .filter(Boolean) as HTMLElement[];
 
-    // Disable draggable/resizable for locked nodes
-    const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
-    moveableRef.current.draggable = !hasLockedSelection;
-    moveableRef.current.resizable = !hasLockedSelection;
-    moveableRef.current.rotatable = !hasLockedSelection;
+      // Disable draggable/resizable for locked nodes
+      const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
+      moveableRef.current.draggable = !hasLockedSelection;
+      moveableRef.current.resizable = !hasLockedSelection;
+      moveableRef.current.rotatable = !hasLockedSelection;
+      
+      moveableRef.current.target = targets;
+      
+      // If we expected targets but found none, the DOM might not be ready yet
+      // Schedule a retry after the next paint
+      if (validSelectedIds.length > 0 && targets.length === 0) {
+        requestAnimationFrame(() => {
+          if (!moveableRef.current) return;
+          const retryTargets = validSelectedIds
+            .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
+            .filter(Boolean) as HTMLElement[];
+          if (retryTargets.length > 0) {
+            moveableRef.current.target = retryTargets;
+            moveableRef.current.updateRect();
+          }
+        });
+      }
+      
+      return targets;
+    };
     
-    moveableRef.current.target = targets;
+    const targets = updateTargets();
     
     // Recalculate the position of the handles to match the DOM elements.
     // This is crucial when nodes are moved/restored via Undo/Redo.
-    if (targets.length > 0) {
+    if (targets && targets.length > 0) {
       // Start a lightweight poll so Moveable handle alignment stays correct when the viewport zoom changes.
       if (viewportPollTimerRef.current === null) {
         viewportPollTimerRef.current = window.setInterval(() => {
