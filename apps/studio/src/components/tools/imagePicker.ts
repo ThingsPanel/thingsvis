@@ -101,19 +101,31 @@ async function resizeAndCompressImage(
         return;
       }
       
+      // For PNG files, preserve transparency by not filling background
+      // For other formats, we can use JPEG for better compression
+      const isPng = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+      const isGif = file.type === 'image/gif' || file.name.toLowerCase().endsWith('.gif');
+      const hasTransparency = isPng || isGif;
+      
+      // Clear canvas (transparent background for PNG)
+      ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       
       // Convert to data URL with compression
-      // Always use JPEG for better compression (except for truly transparent PNGs)
-      const outputType = 'image/jpeg';
+      // Use PNG for images that may have transparency, JPEG for others
+      const outputType = hasTransparency ? 'image/png' : 'image/jpeg';
       
       // Try progressively lower quality until dataUrl is small enough
+      // Note: PNG doesn't support quality parameter, but we can try resizing
       let quality = 0.8;
       let dataUrl = canvas.toDataURL(outputType, quality);
       
-      while (dataUrl.length > MAX_DATAURL_LENGTH && quality > 0.3) {
-        quality -= 0.1;
-        dataUrl = canvas.toDataURL(outputType, quality);
+      // For JPEG, try lower quality
+      if (!hasTransparency) {
+        while (dataUrl.length > MAX_DATAURL_LENGTH && quality > 0.3) {
+          quality -= 0.1;
+          dataUrl = canvas.toDataURL(outputType, quality);
+        }
       }
       
       // If still too large, resize further
@@ -123,8 +135,24 @@ async function resizeAndCompressImage(
         const newHeight = Math.round(height * scale);
         canvas.width = newWidth;
         canvas.height = newHeight;
+        ctx.clearRect(0, 0, newWidth, newHeight);
         ctx.drawImage(img, 0, 0, newWidth, newHeight);
-        dataUrl = canvas.toDataURL(outputType, 0.7);
+        dataUrl = canvas.toDataURL(outputType, hasTransparency ? undefined : 0.7);
+        
+        // For PNG that's still too large, try even smaller
+        if (hasTransparency && dataUrl.length > MAX_DATAURL_LENGTH) {
+          const scale2 = 0.5;
+          const newWidth2 = Math.round(newWidth * scale2);
+          const newHeight2 = Math.round(newHeight * scale2);
+          canvas.width = newWidth2;
+          canvas.height = newHeight2;
+          ctx.clearRect(0, 0, newWidth2, newHeight2);
+          ctx.drawImage(img, 0, 0, newWidth2, newHeight2);
+          dataUrl = canvas.toDataURL(outputType);
+          resolve({ dataUrl, width: newWidth2, height: newHeight2 });
+          return;
+        }
+        
         resolve({ dataUrl, width: newWidth, height: newHeight });
         return;
       }
