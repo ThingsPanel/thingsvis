@@ -3,7 +3,7 @@
  */
 
 export const metadata = {
-  id: 'media-image',
+  id: 'media/image',
   name: '图片',
   category: 'media',
   icon: 'Image',

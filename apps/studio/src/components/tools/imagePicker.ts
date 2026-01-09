@@ -4,13 +4,27 @@
  * Utilities for selecting and converting images for the image tool
  */
 
+/** Maximum file size in bytes (2MB) */
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
+
+/** Maximum dimension for resizing (width or height) */
+const MAX_DIMENSION = 1920;
+
 export type ImagePickerResult = {
+  /** Data URL for the image (base64) */
   dataUrl: string;
   mimeType: string;
   name: string;
   width: number;
   height: number;
 };
+
+export class ImageFileTooLargeError extends Error {
+  constructor(fileSize: number) {
+    super(`Image file is too large: ${(fileSize / 1024 / 1024).toFixed(2)}MB. Maximum allowed size is 2MB.`);
+    this.name = 'ImageFileTooLargeError';
+  }
+}
 
 /**
  * Open file picker and select an image file
@@ -50,38 +64,64 @@ export function openImagePicker(): Promise<File | null> {
 }
 
 /**
- * Convert a file to a data URL
- * 
- * @param file - The image file to convert
- * @returns Promise resolving to the data URL
+ * Resize image if it exceeds max dimensions
+ * Returns a compressed data URL
  */
-export function fileToDataUrl(file: File): Promise<string> {
+async function resizeAndCompressImage(
+  file: File,
+  maxDimension: number = MAX_DIMENSION
+): Promise<{ dataUrl: string; width: number; height: number }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
     
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        resolve(reader.result);
-      } else {
-        reject(new Error('Failed to read file as data URL'));
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      let { naturalWidth: width, naturalHeight: height } = img;
+      
+      // Check if resizing is needed
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = Math.min(maxDimension / width, maxDimension / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
       }
+      
+      // Create canvas and draw resized image
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        reject(new Error('Failed to get canvas context'));
+        return;
+      }
+      
+      ctx.drawImage(img, 0, 0, width, height);
+      
+      // Convert to data URL with compression
+      // Use JPEG for photos (better compression), PNG for others
+      const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      const quality = outputType === 'image/jpeg' ? 0.85 : undefined;
+      const dataUrl = canvas.toDataURL(outputType, quality);
+      
+      resolve({ dataUrl, width, height });
     };
     
-    reader.onerror = () => {
-      reject(reader.error ?? new Error('Failed to read file'));
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Failed to load image'));
     };
     
-    reader.readAsDataURL(file);
+    img.src = objectUrl;
   });
 }
 
 /**
- * Get image dimensions from a data URL
- * 
- * @param dataUrl - The image data URL
- * @returns Promise resolving to width and height
+ * Get image dimensions from a URL
  */
-export function getImageDimensions(dataUrl: string): Promise<{ width: number; height: number }> {
+export function getImageDimensions(url: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     
@@ -93,14 +133,16 @@ export function getImageDimensions(dataUrl: string): Promise<{ width: number; he
       reject(new Error('Failed to load image'));
     };
     
-    img.src = dataUrl;
+    img.src = url;
   });
 }
 
 /**
- * Pick an image and convert it to a full result with data URL and dimensions
+ * Pick an image, resize if needed, and return compressed data URL
  * 
- * @returns Promise resolving to the image result, or null if canceled/error
+ * @returns Promise resolving to the image result, or null if canceled
+ * @throws ImageFileTooLargeError if file exceeds 2MB
+ * @throws Error if file is not an image
  */
 export async function pickImage(): Promise<ImagePickerResult | null> {
   const file = await openImagePicker();
@@ -113,14 +155,20 @@ export async function pickImage(): Promise<ImagePickerResult | null> {
     throw new Error('Selected file is not an image');
   }
   
-  const dataUrl = await fileToDataUrl(file);
-  const dimensions = await getImageDimensions(dataUrl);
+  // Validate file size (max 2MB)
+  if (file.size > MAX_FILE_SIZE) {
+    throw new ImageFileTooLargeError(file.size);
+  }
+  
+  // Resize and compress the image
+  const { dataUrl, width, height } = await resizeAndCompressImage(file);
   
   return {
     dataUrl,
     mimeType: file.type,
     name: file.name,
-    ...dimensions,
+    width,
+    height,
   };
 }
 

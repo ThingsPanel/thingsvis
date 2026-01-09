@@ -9,7 +9,7 @@ export const PropsSchema = z.object({
   // 内容属性
   // ========================================
   
-  /** 图片数据URL */
+  /** 图片数据URL（base64） */
   dataUrl: z.string().default('').describe('图片数据'),
   
   // ========================================

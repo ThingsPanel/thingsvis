@@ -33,11 +33,11 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   onZoomChange?: (zoom: number) => void;
   onUserEdit?: () => void;
   onResetTool?: () => void;
-  pendingImageDataUrl?: string;
+  pendingImageUrl?: string;
   onImagePickerRequest?: () => void;
   onImagePickerComplete?: () => void;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageDataUrl, onImagePickerRequest, onImagePickerComplete },
+  { pageId, store, activeTool, resolvePlugin, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -306,13 +306,11 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
               selection: { nodeIds: selectIds },
             });
           }}
-          pendingImageDataUrl={pendingImageDataUrl}
+          pendingImageUrl={pendingImageUrl}
           onImagePickerRequest={onImagePickerRequest}
           onCreationComplete={() => {
-            // Clean up image picker state if needed
+            // Clean up image picker state and reset to select tool
             onImagePickerComplete?.();
-            // Reset to select tool after creation
-            onResetTool?.();
           }}
           onUserEdit={onUserEdit}
           onExternalDrop={handleDrop}

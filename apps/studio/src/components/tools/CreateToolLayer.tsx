@@ -15,7 +15,7 @@ import {
   type Point,
   type Rect,
 } from './coordUtils';
-import { isCreationTool, getToolSpec, type NodeCreationSpec } from './types';
+import { isCreationTool, isAutoPlaceTool, getToolSpec, type NodeCreationSpec } from './types';
 
 // Generate unique IDs
 function generateId(prefix = 'node'): string {
@@ -56,8 +56,8 @@ type CreateToolLayerProps = {
     }>,
     selectIds: string[]
   ) => void;
-  /** Pending image data URL (for image tool) */
-  pendingImageDataUrl?: string;
+  /** Pending image URL (Object URL for image tool) */
+  pendingImageUrl?: string;
   /** Callback when image tool needs to pick a file */
   onImagePickerRequest?: () => void;
   /** Callback when creation is complete */
@@ -72,7 +72,7 @@ export default function CreateToolLayer({
   activeTool,
   getViewport,
   applyNodeInsertAndSelect,
-  pendingImageDataUrl,
+  pendingImageUrl,
   onImagePickerRequest,
   onCreationComplete,
   onUserEdit,
@@ -90,15 +90,88 @@ export default function CreateToolLayer({
   
   const containerRef = useRef<HTMLDivElement>(null);
   
+  // Track if we've already requested a file picker for this tool activation
+  // This prevents re-requesting the picker after errors or cancellation
+  const hasRequestedPickerRef = useRef(false);
+  // Track the tool that last requested the picker to properly reset the flag
+  const lastPickerToolRef = useRef<string | null>(null);
+  
   // Get the tool spec
   const toolSpec = getToolSpec(activeTool);
   
-  // Handle image tool activation - request file picker
+  // Reset picker request flag only when switching to a different tool
   useEffect(() => {
-    if (activeTool === 'image' && !pendingImageDataUrl && onImagePickerRequest) {
+    if (activeTool !== 'image' && lastPickerToolRef.current === 'image') {
+      hasRequestedPickerRef.current = false;
+      lastPickerToolRef.current = null;
+    }
+  }, [activeTool]);
+  
+  // Handle image tool activation - request file picker (only once per activation)
+  useEffect(() => {
+    if (activeTool === 'image' && !pendingImageUrl && onImagePickerRequest && !hasRequestedPickerRef.current) {
+      hasRequestedPickerRef.current = true;
+      lastPickerToolRef.current = 'image';
       onImagePickerRequest();
     }
-  }, [activeTool, pendingImageDataUrl, onImagePickerRequest]);
+  }, [activeTool, pendingImageUrl, onImagePickerRequest]);
+  
+  // Track the pendingImageUrl we've already processed to prevent duplicate creation
+  const processedImageUrlRef = useRef<string | null>(null);
+  
+  // Handle auto-place tools (like image): automatically place node at canvas center
+  // when pendingImageUrl becomes available
+  useEffect(() => {
+    if (!toolSpec || !isAutoPlaceTool(activeTool) || !pendingImageUrl) {
+      return;
+    }
+    
+    // Prevent duplicate creation for the same image
+    if (processedImageUrlRef.current === pendingImageUrl) {
+      return;
+    }
+    processedImageUrlRef.current = pendingImageUrl;
+    
+    // Get viewport and calculate center in world coordinates
+    const viewport = getViewport();
+    const centerScreen: Point = {
+      x: viewport.width / 2,
+      y: viewport.height / 2,
+    };
+    const centerWorld = screenToWorld(centerScreen, viewport);
+    
+    // Use default size centered at viewport center
+    const { width, height } = toolSpec.defaultSize;
+    const bounds: Rect = {
+      x: centerWorld.x - width / 2,
+      y: centerWorld.y - height / 2,
+      width,
+      height,
+    };
+    
+    // Create the node with image data
+    const nodeId = generateId('node');
+    const node = {
+      id: nodeId,
+      type: toolSpec.componentId,
+      position: { x: bounds.x, y: bounds.y },
+      ...(toolSpec.resizable ? { size: { width: bounds.width, height: bounds.height } } : {}),
+      props: { ...toolSpec.defaultProps, dataUrl: pendingImageUrl },
+    };
+    
+    applyNodeInsertAndSelect([node], [nodeId]);
+    onUserEdit?.();
+    
+    // Complete creation - this will clear pendingImageUrl and switch tool
+    onCreationComplete?.();
+  }, [activeTool, toolSpec, pendingImageUrl, getViewport, applyNodeInsertAndSelect, onUserEdit, onCreationComplete]);
+  
+  // Reset processed image ref when pendingImageUrl is cleared
+  useEffect(() => {
+    if (!pendingImageUrl) {
+      processedImageUrlRef.current = null;
+    }
+  }, [pendingImageUrl]);
   
   // Create node from gesture (does NOT trigger tool reset - that's handled separately)
   const createNodeFromGesture = useCallback((
@@ -126,7 +199,7 @@ export default function CreateToolLayer({
     if (!toolSpec || !containerRef.current) return;
     
     // For image tool, don't start gesture if no image is pending
-    if (activeTool === 'image' && !pendingImageDataUrl) {
+    if (activeTool === 'image' && !pendingImageUrl) {
       return;
     }
     
@@ -145,7 +218,7 @@ export default function CreateToolLayer({
     
     // Capture pointer for drag tracking
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  }, [toolSpec, activeTool, pendingImageDataUrl]);
+  }, [toolSpec, activeTool, pendingImageUrl]);
   
   // Handle pointer move
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
@@ -210,8 +283,8 @@ export default function CreateToolLayer({
     
     // Build extra props based on tool
     const extraProps: Record<string, unknown> = {};
-    if (activeTool === 'image' && pendingImageDataUrl) {
-      extraProps.dataUrl = pendingImageDataUrl;
+    if (activeTool === 'image' && pendingImageUrl) {
+      extraProps.dataUrl = pendingImageUrl;
     }
     
     // Release pointer capture FIRST to avoid event conflicts
@@ -241,7 +314,7 @@ export default function CreateToolLayer({
     setTimeout(() => {
       onCreationComplete?.();
     }, 0);
-  }, [gesture, toolSpec, activeTool, pendingImageDataUrl, getViewport, createNodeFromGesture, onCreationComplete]);
+  }, [gesture, toolSpec, activeTool, pendingImageUrl, getViewport, createNodeFromGesture, onCreationComplete]);
   
   // Handle Escape key to cancel gesture
   useEffect(() => {
@@ -266,7 +339,7 @@ export default function CreateToolLayer({
   }
   
   // Don't render for image tool if no image is pending
-  if (activeTool === 'image' && !pendingImageDataUrl) {
+  if (activeTool === 'image' && !pendingImageUrl) {
     return null;
   }
   

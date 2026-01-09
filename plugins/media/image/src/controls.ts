@@ -8,7 +8,7 @@ import { generateControls } from './lib/types';
 export const controls = generateControls(PropsSchema, {
   // 属性分组配置
   groups: {
-    Content: ['dataUrl'],
+    Content: ['imageUrl'],
     Style: ['opacity', 'objectFit', 'cornerRadius', 'borderColor', 'borderWidth'],
   },
   
@@ -19,7 +19,7 @@ export const controls = generateControls(PropsSchema, {
   
   // 数据绑定配置
   bindings: {
-    dataUrl: { enabled: true, modes: ['static', 'field', 'expr'] },
+    imageUrl: { enabled: true, modes: ['static', 'field', 'expr'] },
     opacity: { enabled: true, modes: ['static', 'field', 'expr'] },
   },
 });
