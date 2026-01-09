@@ -233,6 +233,17 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             el.style.willChange = 'transform';
             el.style.transform = '';
           }
+          
+          // Save overlay's original zIndex and rotation, then elevate zIndex for drag visibility
+          const overlayEl = findOverlayElement(id);
+          if (overlayEl) {
+            originalOverlayZIndexRef[id] = overlayEl.style.zIndex || '';
+            const existingTransform = overlayEl.style.transform || '';
+            const rotationMatch = existingTransform.match(/rotate\([^)]+\)/);
+            overlayRotationRef[id] = rotationMatch ? rotationMatch[0] : '';
+            // Elevate overlay above proxy-layer (zIndex: 20) during drag
+            overlayEl.style.zIndex = '1000';
+          }
         }
 
         // Ensure current target is ready
@@ -241,13 +252,22 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       });
 
       // Helper to find overlay element for a node ID
-      // The overlay is rendered by VisualEngine in #visual-engine-mount's overlay div
+      // The overlay is rendered by VisualEngine inside #visual-engine-mount's overlay div
       const findOverlayElement = (nodeId: string): HTMLElement | null => {
-        // Try to find the overlay root which is a sibling of our container hierarchy
-        const canvasRoot = container.closest('[style*="position: relative"]');
-        if (!canvasRoot) return null;
-        return canvasRoot.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
+        // Search upward from container to find the root, then search for overlay
+        // The overlay container is inside #visual-engine-mount which is a sibling of our container hierarchy
+        const rootContainer = container.closest('[style*="position: relative"]');
+        if (!rootContainer) {
+          // Fallback: search from document
+          return document.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
+        }
+        return rootContainer.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
       };
+      
+      // Store original overlay zIndex values to restore after drag
+      const originalOverlayZIndexRef: Record<string, string> = {};
+      // Track overlay rotation to preserve during drag
+      const overlayRotationRef: Record<string, string> = {};
 
       moveableRef.current.on('drag', ({ target, transform, beforeTranslate }) => {
         // Apply transform directly to the target for real-time visual feedback
@@ -272,7 +292,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             // Also update the visual overlay element for real-time visual feedback
             const overlayEl = findOverlayElement(id);
             if (overlayEl) {
-              overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+              // Use saved rotation from dragStart
+              const rotation = overlayRotationRef[id] || '';
+              overlayEl.style.transform = `translate(${tx}px, ${ty}px)${rotation ? ' ' + rotation : ''}`;
             }
           }
           return;
@@ -283,7 +305,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           // Also update the visual overlay element for real-time visual feedback
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
-            overlayEl.style.transform = `translate(${tx}px, ${ty}px)`;
+            // Use saved rotation from dragStart
+            const rotation = overlayRotationRef[nodeId] || '';
+            overlayEl.style.transform = `translate(${tx}px, ${ty}px)${rotation ? ' ' + rotation : ''}`;
           }
         }
       });
@@ -301,20 +325,28 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
                 el.style.willChange = '';
                 el.style.transform = '';
               }
-              // Clear overlay transform too
+              // Clear overlay transform and restore zIndex
               const overlayEl = findOverlayElement(id);
               if (overlayEl) {
-                overlayEl.style.transform = '';
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
               }
             }
           } else {
             target.style.willChange = '';
             target.style.transform = '';
-            // Clear overlay transform for single node
+            // Clear overlay transform and restore zIndex for single node
             if (nodeId) {
               const overlayEl = findOverlayElement(nodeId);
               if (overlayEl) {
-                overlayEl.style.transform = '';
+                const rotation = overlayRotationRef[nodeId] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+                delete originalOverlayZIndexRef[nodeId];
+                delete overlayRotationRef[nodeId];
               }
             }
           }
@@ -340,10 +372,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
               el.style.top = `${y}px`;
               el.style.transform = '';
             }
-            // Clear overlay transform - store update will reposition it
+            // Clear overlay transform and restore zIndex - store update will reposition it
             const overlayEl = findOverlayElement(id);
             if (overlayEl) {
               overlayEl.style.transform = '';
+              overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+              delete originalOverlayZIndexRef[id];
+              delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
           }
@@ -365,11 +400,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         target.style.top = `${y}px`;
         target.style.transform = '';
 
-        // Clear overlay transform - store update will reposition it
+        // Clear overlay transform and restore zIndex - store update will reposition it
         if (nodeId) {
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
+            overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+            delete originalOverlayZIndexRef[nodeId];
+            delete overlayRotationRef[nodeId];
           }
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
           onUserEdit?.();

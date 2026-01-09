@@ -4,7 +4,6 @@ import { App, Rect, Group, Line } from 'leafer-ui';
 import type { RendererFactory } from './renderers/types';
 import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
-import { PropertyResolver } from './PropertyResolver';
 
 export class VisualEngine {
   private app?: App;
@@ -40,6 +39,7 @@ export class VisualEngine {
     overlayRoot.style.inset = '0';
     overlayRoot.style.pointerEvents = 'none';
     overlayRoot.style.zIndex = '5';
+    overlayRoot.style.background = 'transparent';
     container.appendChild(overlayRoot);
     this.overlayRoot = overlayRoot;
 
@@ -229,6 +229,7 @@ export class VisualEngine {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
         overlayBox.style.pointerEvents = 'auto';
+        overlayBox.style.background = 'transparent';
         // Add data attribute for TransformControls to find and sync transforms during drag
         overlayBox.setAttribute('data-overlay-node-id', node.id);
         this.overlayRoot.appendChild(overlayBox);
@@ -476,12 +477,6 @@ export class VisualEngine {
     const { x, y } = schema.position;
     // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
     const rotation = (schema as any).props?._rotation ?? (schema as any).rotation ?? 0;
-    
-    // Resolve expressions in props using PropertyResolver
-    const dataSources = this.store.getState().dataSources;
-    const resolvedProps = PropertyResolver.resolve(node, dataSources);
-
-    const fill = resolvedProps.fill;
 
     return {
       x,
@@ -489,7 +484,7 @@ export class VisualEngine {
       width,
       height,
       rotation,
-      fill,
+      fill: 'transparent', // Always transparent - visual rendering is done via DOM overlay
       draggable: true,
       cursor: 'pointer'
     };

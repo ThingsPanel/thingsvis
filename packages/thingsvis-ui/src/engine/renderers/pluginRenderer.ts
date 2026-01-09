@@ -10,15 +10,14 @@ function nodeToLeaferProps(node: NodeState, store: KernelStore): Record<string, 
   const height = schema.size?.height ?? 0;
   const { x, y } = schema.position ?? { x: 0, y: 0 };
   
-  // Use PropertyResolver to get final props
-  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
-  
+  // Only return position/size for Leafer placeholder
+  // Visual props (fill, stroke, etc.) are handled by DOM overlay
   return {
     x,
     y,
     width,
     height,
-    ...resolvedProps
+    fill: 'transparent', // Always keep placeholder transparent
   };
 }
 

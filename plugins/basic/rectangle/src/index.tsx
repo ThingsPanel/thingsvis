@@ -1,0 +1,92 @@
+/**
+ * 矩形组件
+ */
+
+import React from 'react';
+import { createRoot, Root } from 'react-dom/client';
+import { Rect } from 'leafer-ui';
+import { metadata } from './metadata';
+import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { controls } from './controls';
+import type { PluginMainModule, PluginOverlayContext, PluginOverlayInstance } from './lib/types';
+
+/**
+ * 创建透明占位 Rect
+ */
+function create(): Rect {
+  return new Rect({
+    width: 120,
+    height: 80,
+    fill: 'transparent',
+    draggable: true,
+    cursor: 'pointer',
+  });
+}
+
+/**
+ * React 矩形组件
+ */
+const RectangleShape: React.FC<Props> = (props) => {
+  return (
+    <div style={{
+      width: '100%',
+      height: '100%',
+      backgroundColor: props.fill,
+      border: props.strokeWidth > 0 ? `${props.strokeWidth}px solid ${props.stroke}` : 'none',
+      borderRadius: props.cornerRadius > 0 ? `${props.cornerRadius}px` : undefined,
+      opacity: props.opacity,
+      boxSizing: 'border-box',
+    }} />
+  );
+};
+
+/**
+ * 创建 DOM Overlay
+ */
+function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
+  const element = document.createElement('div');
+  element.style.width = '100%';
+  element.style.height = '100%';
+  element.style.boxSizing = 'border-box';
+
+  let root: Root | null = null;
+
+  const update = (ctx: PluginOverlayContext) => {
+    const defaults = getDefaultProps();
+    const props: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
+    if (!root) {
+      root = createRoot(element);
+    }
+    root.render(<RectangleShape {...props} />);
+  };
+
+  // Initial render
+  if (ctx.props) {
+    update(ctx);
+  }
+
+  return {
+    element,
+    update,
+    destroy: () => {
+      if (root) {
+        root.unmount();
+        root = null;
+      }
+    },
+  };
+}
+
+export const Main: PluginMainModule = {
+  id: metadata.id,
+  name: metadata.name,
+  category: metadata.category,
+  icon: metadata.icon,
+  version: metadata.version,
+  create,
+  createOverlay,
+  schema: PropsSchema,
+  controls,
+};
+
+export default Main;
