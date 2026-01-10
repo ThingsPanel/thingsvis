@@ -29,11 +29,15 @@ export const PropsSchema = z.object({
   // Style (Stroke)
   // =========================
 
-  stroke: z.string().default('#6965db').describe('线条颜色'),
-  strokeWidth: z.enum(['thin', 'medium', 'thick']).default('medium').describe('线宽'),
-  strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid').describe('线条样式'),
+  renderStyle: z.enum(['line', 'pipe']).default('line').describe('风格'),
+  stroke: z.string().default('#000000').describe('颜色'),
+  // Manual width in px. (Backward compatible: old saved values may still be 'thin'|'medium'|'thick'.)
+  strokeWidth: z.number().min(1).max(50).default(4).describe('粗细'),
+  strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid').describe('线型'),
   opacity: z.number().min(0).max(1).default(1).describe('透明度'),
   lineCap: z.enum(['butt', 'round', 'square']).default('round').describe('端点样式'),
+  borderWidth: z.number().min(0).max(20).default(0).describe('外框宽度(px)'),
+  borderColor: z.string().default('#ffffff').describe('外框颜色'),
 
   // =========================
   // Sloppiness (Hand-drawn style)
@@ -54,15 +58,38 @@ export const PropsSchema = z.object({
   /** 终点箭头样式 */
   arrowEnd: z.enum(['none', 'arrow']).default('arrow').describe('终点箭头'),
 
-  arrowSize: z.number().min(4).max(40).default(12).describe('箭头大小'),
+  arrowSize: z.number().min(4).max(40).default(12).describe('大小'),
+
+  // =========================
+  // Pipe Style (管道样式)
+  // =========================
+
+  /** 管道背景色（仅管道模式生效） */
+  pipeBackground: z.string().default('#000000').describe('管道背景'),
 
   // =========================
   // Flow (Animation)
   // =========================
 
-  flowEnabled: z.boolean().default(false).describe('流动动画'),
-  flowSpeed: z.number().min(0).max(1000).default(120).describe('流动速度(px/s)'),
-  flowSpacing: z.number().min(2).max(200).default(16).describe('流动间距(px)'),
+  flowEnabled: z.boolean().default(false).describe('启用流动'),
+  flowSpeed: z.number().min(0).max(1000).default(120).describe('速度(px/s)'),
+  flowSpacing: z.number().min(2).max(200).default(16).describe('间距(px)'),
+  flowLength: z.number().min(1).max(100).default(8).describe('流动长度(px)'),
+  /** 流动颜色，默认黑色 */
+  flowColor: z.string().default('#000000').describe('流动颜色'),
+
+  // =========================
+  // Node Binding (节点连接)
+  // =========================
+
+  /** 起点绑定的节点 ID */
+  sourceNodeId: z.string().optional().describe('起点节点'),
+  /** 起点在节点上的位置 (0-1) */
+  sourceAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('起点锚点'),
+  /** 终点绑定的节点 ID */
+  targetNodeId: z.string().optional().describe('终点节点'),
+  /** 终点在节点上的位置 */
+  targetAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('终点锚点'),
 
   // =========================
   // Legacy (backward compatibility)
@@ -85,12 +112,19 @@ export function getDefaultProps(): Props {
 // =========================
 
 /** 将 strokeWidth 枚举转换为实际像素值 */
-export function getStrokeWidthPx(width: Props['strokeWidth']): number {
+export function getStrokeWidthPx(width: Props['strokeWidth'] | 'thin' | 'medium' | 'thick' | unknown): number {
+  if (typeof width === 'number' && Number.isFinite(width)) {
+    return Math.max(1, Math.min(50, width));
+  }
   switch (width) {
-    case 'thin': return 2;
-    case 'medium': return 4;
-    case 'thick': return 8;
-    default: return 4;
+    case 'thin':
+      return 2;
+    case 'medium':
+      return 4;
+    case 'thick':
+      return 8;
+    default:
+      return 4;
   }
 }
 

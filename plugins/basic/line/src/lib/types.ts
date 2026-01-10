@@ -18,7 +18,7 @@ import type { z } from 'zod';
 export type BindingMode = 'static' | 'field' | 'expr' | 'rule';
 
 /** 控件类型 */
-export type ControlKind = 'string' | 'number' | 'boolean' | 'color' | 'select' | 'json';
+export type ControlKind = 'string' | 'number' | 'boolean' | 'color' | 'select' | 'json' | 'nodeSelect';
 
 /** 下拉选项 */
 export type ControlOption = {
@@ -58,6 +58,13 @@ export type PluginControls = {
 // 插件模块类型
 // ============================================================================
 
+/** 连接节点的位置信息 */
+export interface LinkedNodeInfo {
+  id: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+}
+
 /** 节点状态（宿主会额外注入 position/size；这里保持宽松以兼容） */
 export interface PluginOverlayContext {
   id?: string;
@@ -65,6 +72,8 @@ export interface PluginOverlayContext {
   position?: { x: number; y: number };
   size?: { width: number; height: number };
   props?: Record<string, unknown>;
+  /** 宿主注入的连接节点位置信息 */
+  linkedNodes?: Record<string, LinkedNodeInfo>;
 }
 
 /** Overlay 实例接口 */
@@ -99,6 +108,8 @@ type GenerateControlsOptions<T extends ZodObjectShape> = {
   // NOTE: use string-key maps to avoid strict indexing issues under noUncheckedIndexedAccess.
   overrides?: Record<string, Partial<ControlField>>;
   bindings?: Record<string, ControlBinding>;
+  /** 排除的字段，不会出现在任何分组中 */
+  exclude?: (keyof T)[];
 };
 
 function inferKind(zodType: z.ZodTypeAny): ControlKind {
@@ -136,9 +147,13 @@ export function generateControls<T extends ZodObjectShape>(
   options: GenerateControlsOptions<T> = {}
 ): PluginControls {
   const shape = schema.shape as T;
-  const { groups = {}, overrides = {}, bindings = {} } = options;
+  const { groups = {}, overrides = {}, bindings = {}, exclude = [] } = options;
 
   const assignedKeys = new Set<string>();
+  // 排除的字段也加入 assignedKeys，这样它们不会出现在 Advanced 中
+  for (const k of exclude) {
+    assignedKeys.add(k as string);
+  }
   const result: ControlGroup[] = [];
 
   const groupOrder: ('Content' | 'Style' | 'Data' | 'Advanced')[] = ['Content', 'Style', 'Data', 'Advanced'];

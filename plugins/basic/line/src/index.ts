@@ -2,9 +2,39 @@ import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, getStrokeWidthPx, getStrokeDasharray, type Props } from './schema';
 import { controls } from './controls';
-import type { PluginMainModule, PluginOverlayContext, PluginOverlayInstance } from './lib/types';
+import type { PluginMainModule, PluginOverlayContext, PluginOverlayInstance, LinkedNodeInfo } from './lib/types';
 
 type Pt = { x: number; y: number };
+type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
+
+/** 根据锚点类型计算节点上的连接点位置（世界坐标） */
+function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt {
+  const { position, size } = node;
+  const cx = position.x + size.width / 2;
+  const cy = position.y + size.height / 2;
+  
+  switch (anchor) {
+    case 'top':
+      return { x: cx, y: position.y };
+    case 'right':
+      return { x: position.x + size.width, y: cy };
+    case 'bottom':
+      return { x: cx, y: position.y + size.height };
+    case 'left':
+      return { x: position.x, y: cy };
+    case 'center':
+    default:
+      return { x: cx, y: cy };
+  }
+}
+
+/** 将世界坐标转换为线条组件内的本地坐标 */
+function worldToLocal(worldPt: Pt, linePosition: Pt): Pt {
+  return {
+    x: worldPt.x - linePosition.x,
+    y: worldPt.y - linePosition.y,
+  };
+}
 
 function isNormalizedPoints(points: Pt[]): boolean {
   // Heuristic: if all coords are between 0..1, treat as normalized
@@ -51,15 +81,67 @@ function buildCurvePathD(points: Pt[]): string {
   return `M ${a.x} ${a.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${b.x} ${b.y}`;
 }
 
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function darkenHexColor(hex: string, amount01: number): string {
+  // Supports #rgb or #rrggbb; otherwise return input.
+  const h = (hex || '').trim();
+  if (!h.startsWith('#')) return hex;
+  let r = 0, g = 0, b = 0;
+  if (h.length === 4) {
+    const r1 = h.charAt(1);
+    const g1 = h.charAt(2);
+    const b1 = h.charAt(3);
+    r = parseInt(r1 + r1, 16);
+    g = parseInt(g1 + g1, 16);
+    b = parseInt(b1 + b1, 16);
+  } else if (h.length === 7) {
+    r = parseInt(h.slice(1, 3), 16);
+    g = parseInt(h.slice(3, 5), 16);
+    b = parseInt(h.slice(5, 7), 16);
+  } else {
+    return hex;
+  }
+  const k = clamp(1 - amount01, 0, 1);
+  const rr = clamp(Math.round(r * k), 0, 255);
+  const gg = clamp(Math.round(g * k), 0, 255);
+  const bb = clamp(Math.round(b * k), 0, 255);
+  return `#${rr.toString(16).padStart(2, '0')}${gg.toString(16).padStart(2, '0')}${bb.toString(16).padStart(2, '0')}`;
+}
+
 /** 构建折线路径（Elbow），适用于流程图式连接 */
-function buildElbowPathD(points: Pt[]): string {
+function buildElbowRoutePoints(a: Pt, b: Pt, sourceAnchor?: AnchorType, targetAnchor?: AnchorType): Pt[] {
+  const isSourceHorizontal = sourceAnchor === 'left' || sourceAnchor === 'right';
+  const isSourceVertical = sourceAnchor === 'top' || sourceAnchor === 'bottom';
+  const isTargetHorizontal = targetAnchor === 'left' || targetAnchor === 'right';
+  const isTargetVertical = targetAnchor === 'top' || targetAnchor === 'bottom';
+
+  if (isSourceVertical && isTargetVertical) {
+    const midY = (a.y + b.y) / 2;
+    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
+  }
+  if (isSourceHorizontal && isTargetHorizontal) {
+    const midX = (a.x + b.x) / 2;
+    return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+  }
+  if (isSourceVertical && isTargetHorizontal) {
+    return [a, { x: a.x, y: b.y }, b];
+  }
+  if (isSourceHorizontal && isTargetVertical) {
+    return [a, { x: b.x, y: a.y }, b];
+  }
+  const midX = (a.x + b.x) / 2;
+  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+}
+
+/** 构建折线路径（Elbow），适用于流程图式连接 */
+function buildElbowPathD(points: Pt[], sourceAnchor?: AnchorType, targetAnchor?: AnchorType): string {
   if (points.length < 2) return '';
   const a = points[0]!;
   const b = points[points.length - 1]!;
-
-  // 折线：从起点水平走一半，然后垂直到终点的 y，再水平到终点
-  const midX = (a.x + b.x) / 2;
-  return `M ${a.x} ${a.y} L ${midX} ${a.y} L ${midX} ${b.y} L ${b.x} ${b.y}`;
+  return buildLinePathD(buildElbowRoutePoints(a, b, sourceAnchor, targetAnchor));
 }
 
 /** 应用手绘风格抖动到路径点 */
@@ -154,6 +236,10 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   element.style.width = '100%';
   element.style.height = '100%';
   element.style.boxSizing = 'border-box';
+  element.style.position = 'relative';
+  element.style.overflow = 'visible'; // 允许溢出显示连接线
+  // Let selection/drag interactions pass through (Moveable/Selecto target the proxy layer)
+  element.style.pointerEvents = 'none';
 
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
@@ -161,9 +247,20 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   svg.setAttribute('height', '100%');
   svg.setAttribute('viewBox', '0 0 1 1');
   svg.setAttribute('preserveAspectRatio', 'none');
+  svg.style.overflow = 'visible'; // SVG 也允许溢出
+  svg.style.pointerEvents = 'none';
 
   const defs = document.createElementNS(svgNS, 'defs');
   svg.appendChild(defs);
+
+  // Box border (component frame)
+  const frameRect = document.createElementNS(svgNS, 'rect');
+  frameRect.setAttribute('x', '0');
+  frameRect.setAttribute('y', '0');
+  frameRect.setAttribute('width', '100%');
+  frameRect.setAttribute('height', '100%');
+  frameRect.setAttribute('fill', 'none');
+  svg.appendChild(frameRect);
 
   const markerStart = document.createElementNS(svgNS, 'marker');
   const markerEnd = document.createElementNS(svgNS, 'marker');
@@ -201,8 +298,32 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   path.setAttribute('fill', 'none');
   path.setAttribute('vector-effect', 'non-scaling-stroke');
 
+  // Pipe outline rendered behind the main stroke (not the component frame)
+  const polyBorder = document.createElementNS(svgNS, 'polyline');
+  polyBorder.setAttribute('fill', 'none');
+  polyBorder.setAttribute('vector-effect', 'non-scaling-stroke');
+
+  const pathBorder = document.createElementNS(svgNS, 'path');
+  pathBorder.setAttribute('fill', 'none');
+  pathBorder.setAttribute('vector-effect', 'non-scaling-stroke');
+
+  // Flow overlay for Pipe style
+  const polyFlow = document.createElementNS(svgNS, 'polyline');
+  polyFlow.setAttribute('fill', 'none');
+  polyFlow.setAttribute('vector-effect', 'non-scaling-stroke');
+  polyFlow.style.pointerEvents = 'none';
+
+  const pathFlow = document.createElementNS(svgNS, 'path');
+  pathFlow.setAttribute('fill', 'none');
+  pathFlow.setAttribute('vector-effect', 'non-scaling-stroke');
+  pathFlow.style.pointerEvents = 'none';
+
+  svg.appendChild(polyBorder);
+  svg.appendChild(pathBorder);
   svg.appendChild(poly);
   svg.appendChild(path);
+  svg.appendChild(polyFlow);
+  svg.appendChild(pathFlow);
   element.appendChild(svg);
 
   // Flow animation state
@@ -211,7 +332,9 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
   let dashOffset = 0;
   let cachedPathLen = 0;
 
-  let flowTarget: (SVGGeometryElement & { style: CSSStyleDeclaration }) | null = null;
+  let flowSpeedPx = 0;
+  let flowDashSpacing = 0;
+  let flowTargets: Array<SVGGeometryElement & { style: CSSStyleDeclaration }> = [];
 
   function stopFlow() {
     if (rafId != null) {
@@ -221,30 +344,106 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     lastTS = 0;
   }
 
-  function tick(speed: number, dashSpacing: number) {
+  function tick() {
     rafId = requestAnimationFrame((ts) => {
       if (!lastTS) lastTS = ts;
       const dt = Math.max(0, ts - lastTS) / 1000;
       lastTS = ts;
 
       // px/s -> px per frame
-      dashOffset = (dashOffset - speed * dt) % Math.max(1, dashSpacing);
-      if (flowTarget) flowTarget.style.strokeDashoffset = String(dashOffset);
-      tick(speed, dashSpacing);
+      const spacing = Math.max(1, flowDashSpacing);
+      dashOffset = dashOffset - flowSpeedPx * dt;
+      // Keep dashOffset within [0, spacing) to avoid negative modulo jitter.
+      dashOffset = ((dashOffset % spacing) + spacing) % spacing;
+      for (const t of flowTargets) {
+        t.style.strokeDashoffset = String(dashOffset);
+      }
+      tick();
     });
+  }
+
+  function applyFlowAttrs(el: SVGElement, props: Props) {
+    const isPipe = (props as any).renderStyle === 'pipe';
+    if (!isPipe || !props.flowEnabled) {
+      el.style.display = 'none';
+      return;
+    }
+
+    el.style.display = '';
+    
+    // Flow overlay style - 流动内容使用方形端点，不加圆角
+    const strokeWidthPx = getStrokeWidthPx(props.strokeWidth);
+    // 流动颜色默认使用线条颜色
+    const flowColor = (props as any).flowColor || props.stroke;
+    
+    el.setAttribute('stroke', flowColor);
+    // Make flow slightly thinner than the pipe to stay inside
+    el.setAttribute('stroke-width', String(Math.max(1, strokeWidthPx - 4))); 
+    el.setAttribute('opacity', '0.9');
+    // 使用 butt 端点，不要圆角
+    el.setAttribute('stroke-linecap', 'butt');
+    el.setAttribute('stroke-linejoin', 'miter');
+
+    const spacing = props.flowSpacing || 16;
+    // 使用用户配置的流动长度
+    const dashLen = (props as any).flowLength || 8;
+    el.setAttribute('stroke-dasharray', `${dashLen} ${spacing}`);
   }
 
   function applyStrokeAttrs(el: SVGElement, props: Props) {
     const strokeWidthPx = getStrokeWidthPx(props.strokeWidth);
     const dashArray = getStrokeDasharray(props.strokeStyle, strokeWidthPx);
-    
+    const isPipe = (props as any).renderStyle === 'pipe';
+
     el.setAttribute('stroke', props.stroke);
     el.setAttribute('stroke-width', String(strokeWidthPx));
     el.setAttribute('opacity', String(props.opacity));
-    el.setAttribute('stroke-linecap', props.lineCap);
-    el.setAttribute('stroke-linejoin', 'round');
+    
+    // 端点样式
+    el.setAttribute('stroke-linecap', props.lineCap || 'butt');
+    el.setAttribute('stroke-linejoin', 'miter');
 
     // 优先使用新的 strokeStyle，回退到旧的 dashPattern
+    // For pipes, the main body (liquid) is usually solid.
+    // Flow is handled by overlay.
+    if (isPipe) {
+      el.removeAttribute('stroke-dasharray');
+    } else {
+      if (dashArray) {
+        el.setAttribute('stroke-dasharray', dashArray);
+      } else if (props.dashPattern && props.dashPattern.trim()) {
+        el.setAttribute('stroke-dasharray', props.dashPattern);
+      } else {
+        el.removeAttribute('stroke-dasharray');
+      }
+    }
+  }
+
+  function applyBorderAttrs(el: SVGElement, props: Props) {
+    const strokeWidthPx = getStrokeWidthPx(props.strokeWidth);
+    const renderStyle = (props as any).renderStyle as string | undefined;
+
+    // Pipe style: use pipeBackground for the outer border
+    if (renderStyle !== 'pipe') {
+      el.style.display = 'none';
+      return;
+    }
+
+    // 背景边框宽度
+    const outlineWidth = Math.max(1, Math.round(strokeWidthPx * 0.25));
+    const width = strokeWidthPx + outlineWidth * 2;
+    const dashArray = getStrokeDasharray(props.strokeStyle, strokeWidthPx);
+    el.style.display = '';
+    // 使用用户配置的管道背景色
+    const pipeBackground = (props as any).pipeBackground || '#1a1a2e';
+    el.setAttribute('stroke', pipeBackground);
+    el.setAttribute('stroke-width', String(width));
+    el.setAttribute('opacity', String(props.opacity));
+    // 默认使用直角端点
+    el.setAttribute('stroke-linecap', 'butt');
+    el.setAttribute('stroke-linejoin', 'miter');
+
+    // Keep dash pattern consistent with the main stroke.
     if (dashArray) {
       el.setAttribute('stroke-dasharray', dashArray);
     } else if (props.dashPattern && props.dashPattern.trim()) {
@@ -254,19 +453,30 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     }
   }
 
+  function applyFrameBorder(props: Props) {
+    const bw = Math.max(0, Number((props as any).borderWidth ?? 0));
+    if (bw <= 0) {
+      frameRect.style.display = 'none';
+      return;
+    }
+    frameRect.style.display = '';
+    frameRect.setAttribute('stroke', String((props as any).borderColor ?? '#ffffff'));
+    frameRect.setAttribute('stroke-width', String(bw));
+    frameRect.setAttribute('opacity', String(props.opacity));
+  }
+
   function clearMarkers(el: SVGElement) {
     el.removeAttribute('marker-start');
     el.removeAttribute('marker-end');
   }
 
-  function applyMarkers(el: SVGElement, props: Props) {
+  function applyMarkers(el: SVGElement, props: Props, useNewAPI: boolean) {
     // 新 API: arrowStart 和 arrowEnd
     const hasArrowStart = props.arrowStart === 'arrow';
     const hasArrowEnd = props.arrowEnd === 'arrow';
-    
-    // 如果新 API 有值，使用新 API；否则回退到旧的 direction
-    const useNewAPI = props.arrowStart !== undefined || props.arrowEnd !== undefined;
-    
+
+    // NOTE: useNewAPI must be decided from raw next.props keys,
+    // not merged defaults (defaults always contain arrowStart/arrowEnd).
     if (useNewAPI) {
       if (hasArrowStart) {
         el.setAttribute('marker-start', `url(#${startId})`);
@@ -301,23 +511,92 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     const defaults = getDefaultProps();
     const props: Props = { ...defaults, ...(next.props as Partial<Props>) };
 
+    // Decide whether the host is using the new arrow API based on provided keys.
+    // This avoids mixing legacy `direction` defaults with explicit arrowStart/arrowEnd.
+    const rawProps = (next.props ?? {}) as Record<string, unknown>;
+    const useNewArrowAPI =
+      Object.prototype.hasOwnProperty.call(rawProps, 'arrowStart') ||
+      Object.prototype.hasOwnProperty.call(rawProps, 'arrowEnd');
+
+    const isPipe = (props as any).renderStyle === 'pipe';
+    const rawHasDirection = Object.prototype.hasOwnProperty.call(rawProps, 'direction');
+    // In pipe mode, default should be NO arrows unless user explicitly sets arrowStart/arrowEnd or direction.
+    const defaultNoArrows = isPipe && !useNewArrowAPI && !rawHasDirection;
+
     const size = clampMinSize((next as any).size);
+    const linePosition = next.position ?? { x: 0, y: 0 };
     const strokeWidthPx = getStrokeWidthPx(props.strokeWidth);
     const arrowSizePx = Math.max(4, props.arrowSize);
 
-    // Keep viewBox in px so points are intuitive
-    svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
-
-    const rawPoints = Array.isArray(props.points) ? (props.points as any as Pt[]) : defaults.points;
-    let points = toPxPoints(rawPoints, size);
+    // 获取连接节点信息
+    const linkedNodes = (next as any).linkedNodes as Record<string, LinkedNodeInfo> | undefined;
     
-    // 应用手绘风格抖动
-    const seed = next.id ? next.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 42;
-    points = applySloppiness(points, props.sloppiness, seed);
+    const sourceNode = props.sourceNodeId && linkedNodes?.[props.sourceNodeId];
+    const targetNode = props.targetNodeId && linkedNodes?.[props.targetNodeId];
 
-    // 判断箭头是否显示
-    const hasArrowStart = props.arrowStart === 'arrow' || props.direction === 'reverse' || props.direction === 'bidirectional';
-    const hasArrowEnd = props.arrowEnd === 'arrow' || props.direction === 'forward' || props.direction === 'bidirectional';
+    // 检测是否有节点绑定
+    const hasNodeBinding = !!(sourceNode || targetNode);
+
+    // 根据 arrowType 或 kind 决定使用哪种路径（节点绑定默认 elbow）
+    const arrowType = props.arrowType || 'straight';
+    const kind = props.kind;
+
+    let pathType: 'polyline' | 'curve' | 'elbow' | 'mind' = 'polyline';
+    if (isPipe) {
+      // Pipe style always forces Orthogonal (Elbow) routing for industrial standards
+      pathType = 'elbow';
+    } else if (arrowType === 'curved' || kind === 'curve') {
+      pathType = 'curve';
+    } else if (arrowType === 'elbow' || (hasNodeBinding && arrowType === 'straight')) {
+      pathType = 'elbow';
+    } else if (kind === 'mind') {
+      pathType = 'mind';
+    } else if (kind === 'polyline' || kind === 'straight') {
+      pathType = 'polyline';
+    }
+
+    // Resolve base points
+    let basePoints: Pt[];
+    if (hasNodeBinding) {
+      const startPt = sourceNode
+        ? worldToLocal(getAnchorPoint(sourceNode, props.sourceAnchor as AnchorType), linePosition)
+        : { x: 0, y: size.height / 2 };
+
+      const endPt = targetNode
+        ? worldToLocal(getAnchorPoint(targetNode, props.targetAnchor as AnchorType), linePosition)
+        : { x: size.width, y: size.height / 2 };
+
+      basePoints = [startPt, endPt];
+    } else {
+      const rawPoints = Array.isArray(props.points) ? (props.points as any as Pt[]) : defaults.points;
+      basePoints = toPxPoints(rawPoints, size);
+    }
+
+    // Expand elbow into orthogonal route points for correct bounds + arrow trimming
+    let points = basePoints;
+    if (pathType === 'elbow' && basePoints.length >= 2) {
+      const a = basePoints[0]!;
+      const b = basePoints[basePoints.length - 1]!;
+      points = buildElbowRoutePoints(a, b, props.sourceAnchor as AnchorType, props.targetAnchor as AnchorType);
+    }
+    
+    // 应用手绘风格抖动（elbow 保持直角，不做抖动）
+    if (pathType !== 'elbow') {
+      const seed = next.id ? next.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 42;
+      points = applySloppiness(points, props.sloppiness, seed);
+    }
+
+    // 判断箭头是否显示：新旧 API 不要混用
+    const hasArrowStart = defaultNoArrows
+      ? false
+      : useNewArrowAPI
+        ? props.arrowStart === 'arrow'
+        : props.direction === 'reverse' || props.direction === 'bidirectional';
+    const hasArrowEnd = defaultNoArrows
+      ? false
+      : useNewArrowAPI
+        ? props.arrowEnd === 'arrow'
+        : props.direction === 'forward' || props.direction === 'bidirectional';
 
     // 缩短线条端点，为箭头留出空间
     if (points.length >= 2) {
@@ -348,42 +627,115 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
       }
     }
 
-    // 根据 arrowType 或 kind 决定使用哪种路径
-    const arrowType = props.arrowType || 'straight';
-    const kind = props.kind;
-    
-    // 决定路径类型
-    let pathType: 'polyline' | 'curve' | 'elbow' | 'mind' = 'polyline';
-    if (arrowType === 'curved' || kind === 'curve') {
-      pathType = 'curve';
-    } else if (arrowType === 'elbow') {
-      pathType = 'elbow';
-    } else if (kind === 'mind') {
-      pathType = 'mind';
-    } else if (kind === 'polyline' || kind === 'straight') {
-      pathType = 'polyline';
+    // If node-bound, render in 1:1 pixel space by sizing/positioning the SVG
+    // so it covers the whole path bounds, then shift points into that local space.
+    if (hasNodeBinding && points.length) {
+      const pad = Math.max(20, strokeWidthPx * 2 + arrowSizePx + 6);
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+      for (const p of points) {
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+      }
+      minX -= pad;
+      minY -= pad;
+      maxX += pad;
+      maxY += pad;
+
+      const w = Math.max(1, maxX - minX);
+      const h = Math.max(1, maxY - minY);
+
+      svg.style.position = 'absolute';
+      svg.style.left = `${minX}px`;
+      svg.style.top = `${minY}px`;
+      svg.setAttribute('width', String(w));
+      svg.setAttribute('height', String(h));
+      (svg as any).style.width = `${w}px`;
+      (svg as any).style.height = `${h}px`;
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      svg.setAttribute('preserveAspectRatio', 'none');
+
+      points = points.map(p => ({ x: p.x - minX, y: p.y - minY }));
+    } else {
+      // Reset SVG back to normal sized-to-node mode
+      svg.style.position = '';
+      svg.style.left = '';
+      svg.style.top = '';
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', '100%');
+      (svg as any).style.width = '100%';
+      (svg as any).style.height = '100%';
+      svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
+      svg.setAttribute('preserveAspectRatio', 'none');
     }
-    
+
     const usePath = pathType === 'curve' || pathType === 'mind' || pathType === 'elbow';
     poly.style.display = usePath ? 'none' : '';
     path.style.display = usePath ? '' : 'none';
+    polyBorder.style.display = usePath ? 'none' : '';
+    pathBorder.style.display = usePath ? '' : 'none';
+    // Sync flow overlay visibility
+    polyFlow.style.display = usePath ? 'none' : '';
+    pathFlow.style.display = usePath ? '' : 'none';
 
     if (usePath) {
-      const radius = Math.min(60, Math.max(6, strokeWidthPx * 1.5));
       let d: string;
+      let borderD: string;
       if (pathType === 'curve') {
         d = buildCurvePathD(points);
-      } else if (pathType === 'elbow') {
-        d = buildElbowPathD(points);
+        borderD = d;
       } else {
-        d = buildRoundedPolylinePathD(points, radius);
+        // 折线/管道都使用直角，不要圆角
+        d = buildLinePathD(points);
+        
+        // 管道模式：背景路径端点缩短，让主体能完全覆盖背景
+        if (isPipe && points.length >= 2) {
+          const shrinkPts = [...points];
+          const shrink = Math.max(2, strokeWidthPx * 0.5); // 缩短量
+          
+          // 缩短起点
+          const p0 = shrinkPts[0]!;
+          const p1 = shrinkPts[1]!;
+          const dx0 = p1.x - p0.x;
+          const dy0 = p1.y - p0.y;
+          const len0 = Math.hypot(dx0, dy0);
+          if (len0 > shrink * 2) {
+            shrinkPts[0] = { x: p0.x + (dx0 / len0) * shrink, y: p0.y + (dy0 / len0) * shrink };
+          }
+          
+          // 缩短终点
+          const pLast = shrinkPts[shrinkPts.length - 1]!;
+          const pPrev = shrinkPts[shrinkPts.length - 2]!;
+          const dxL = pLast.x - pPrev.x;
+          const dyL = pLast.y - pPrev.y;
+          const lenL = Math.hypot(dxL, dyL);
+          if (lenL > shrink * 2) {
+            shrinkPts[shrinkPts.length - 1] = { x: pLast.x - (dxL / lenL) * shrink, y: pLast.y - (dyL / lenL) * shrink };
+          }
+          
+          borderD = buildLinePathD(shrinkPts);
+        } else {
+          borderD = d;
+        }
       }
       path.setAttribute('d', d);
+      pathBorder.setAttribute('d', borderD);
+      pathFlow.setAttribute('d', d);
     } else {
-      poly.setAttribute('points', buildPolylinePointsAttr(points));
+      const ptsAttr = buildPolylinePointsAttr(points);
+      poly.setAttribute('points', ptsAttr);
+      polyBorder.setAttribute('points', ptsAttr);
+      polyFlow.setAttribute('points', ptsAttr);
     }
 
     applyStrokeAttrs(usePath ? path : poly, props);
+    applyBorderAttrs(usePath ? pathBorder : polyBorder, props);
+    applyFlowAttrs(usePath ? pathFlow : polyFlow, props);
+    applyFrameBorder(props);
     clearMarkers(usePath ? poly : path);
 
     // Arrow markers
@@ -417,46 +769,56 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     startPath.setAttribute('fill', props.stroke);
     endPath.setAttribute('fill', props.stroke);
 
-    applyMarkers(usePath ? path : poly, props);
+    if (defaultNoArrows) {
+      clearMarkers(usePath ? path : poly);
+    } else {
+      applyMarkers(usePath ? path : poly, props, useNewArrowAPI);
+    }
 
-    // Flow: use a dedicated dash pattern so dashoffset moves visible markers.
+    flowTargets = [];
+    const isPipe = (props as any).renderStyle === 'pipe';
+
+    // Flow animation logic
     if (props.flowEnabled && props.flowSpeed > 0) {
       const spacing = Math.max(2, props.flowSpacing);
-      const markerLen = Math.max(1, Math.min(spacing - 1, Math.max(1, strokeWidthPx * 1.5)));
-      const target = (usePath ? path : poly) as any;
-      target.style.strokeDasharray = `${markerLen} ${Math.max(1, spacing - markerLen)}`;
+      flowSpeedPx = props.flowSpeed;
 
-      // Cache length for potential future use
-      if ((usePath ? (path as any) : (poly as any)).getTotalLength) {
-        try {
-          cachedPathLen = (usePath ? (path as any) : (poly as any)).getTotalLength();
-        } catch {
-          cachedPathLen = polylineLength(points);
-        }
+      if (isPipe) {
+        // For Pipe, we animate the dedicated Flow Overlay (polyFlow/pathFlow).
+        // The main liquid (poly/path) remains solid.
+        // 与 applyFlowAttrs 保持一致
+        const dashLen = (props as any).flowLength || 8;
+        flowDashSpacing = dashLen + spacing;
+
+        const target = (usePath ? pathFlow : polyFlow) as any;
+        flowTargets = [target];
+        if (!rafId) tick();
       } else {
-        cachedPathLen = polylineLength(points);
-      }
+        // Legacy/Line style flow: animate the main stroke & border dashes
+        // use a dedicated dash pattern so dashoffset moves visible markers.
+        const markerLen = Math.max(1, Math.min(spacing - 1, Math.max(1, strokeWidthPx * 1.5)));
+        const target = (usePath ? path : poly) as any;
+        target.style.strokeDasharray = `${markerLen} ${Math.max(1, spacing - markerLen)}`;
 
-      flowTarget = (usePath ? (path as any) : (poly as any)) as any;
+        const borderTarget = (usePath ? (pathBorder as any) : (polyBorder as any)) as any;
+        // Keep border dash pattern consistent during flow.
+        borderTarget.style.strokeDasharray = `${markerLen} ${Math.max(1, spacing - markerLen)}`;
 
-      if (rafId == null) {
-        dashOffset = 0;
-        lastTS = 0;
-        tick(props.flowSpeed, spacing);
+        flowTargets = [target, borderTarget];
+        if (!rafId) tick();
       }
     } else {
+      // Flow disabled: stop animation and reset dash styles
       stopFlow();
-      flowTarget = null;
+      flowTargets = [];
+      flowSpeedPx = 0;
+      flowDashSpacing = 0;
       (poly as any).style.strokeDashoffset = '0';
       (path as any).style.strokeDashoffset = '0';
-      // Restore user dashPattern if set
-      if (props.dashPattern && props.dashPattern.trim()) {
-        (poly as any).style.strokeDasharray = props.dashPattern;
-        (path as any).style.strokeDasharray = props.dashPattern;
-      } else {
-        (poly as any).style.strokeDasharray = '';
-        (path as any).style.strokeDasharray = '';
-      }
+      (polyBorder as any).style.strokeDashoffset = '0';
+      (pathBorder as any).style.strokeDashoffset = '0';
+      (polyFlow as any).style.strokeDashoffset = '0';
+      (pathFlow as any).style.strokeDashoffset = '0';
     }
 
     void cachedPathLen;

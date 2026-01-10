@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type { KernelStore } from '@thingsvis/kernel';
+import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import type { ControlField, DataBinding } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
 
@@ -145,7 +145,18 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           {field.kind === 'number' && (
             <Input
               type="number"
-              value={typeof propsValue === 'number' ? propsValue : 0}
+              value={(() => {
+                if (typeof propsValue === 'number' && Number.isFinite(propsValue)) return propsValue;
+                if (typeof propsValue === 'string') {
+                  // Backward-compat: common preset tokens & numeric strings.
+                  if (propsValue === 'thin') return 2;
+                  if (propsValue === 'medium') return 4;
+                  if (propsValue === 'thick') return 8;
+                  const n = Number(propsValue);
+                  if (Number.isFinite(n)) return n;
+                }
+                return typeof field.default === 'number' ? field.default : 0;
+              })()}
               onChange={(e) => setStatic(Number(e.target.value))}
               className="h-8 text-sm"
             />
@@ -167,7 +178,32 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
             </div>
           )}
 
-          {field.kind !== 'string' && field.kind !== 'number' && field.kind !== 'color' && (
+          {field.kind === 'nodeSelect' && (
+            <NodeSelector
+              kernelStore={kernelStore}
+              currentNodeId={nodeId}
+              value={typeof propsValue === 'string' ? propsValue : ''}
+              onChange={(v) => setStatic(v)}
+              language={language}
+            />
+          )}
+
+          {field.kind === 'select' && field.options && (
+            <select
+              value={typeof propsValue === 'string' || typeof propsValue === 'number' ? propsValue : ''}
+              onChange={(e) => setStatic(e.target.value)}
+              className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
+            >
+              <option value="">{t('(请选择)', '(select)')}</option>
+              {field.options.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {field.kind !== 'string' && field.kind !== 'number' && field.kind !== 'color' && field.kind !== 'nodeSelect' && field.kind !== 'select' && (
             <Input
               value={propsValue === undefined ? '' : String(propsValue)}
               onChange={(e) => setStatic(e.target.value)}
@@ -219,6 +255,58 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * 节点选择器组件
+ * 用于在属性面板中选择画布上的其他节点
+ */
+function NodeSelector({
+  kernelStore,
+  currentNodeId,
+  value,
+  onChange,
+  language,
+}: {
+  kernelStore: KernelStore;
+  currentNodeId: string;
+  value: string;
+  onChange: (nodeId: string) => void;
+  language?: string;
+}) {
+  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
+  
+  // 订阅 store 获取所有节点
+  const nodesById = useSyncExternalStore(
+    useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),
+    () => (kernelStore.getState() as KernelState).nodesById
+  );
+  
+  // 获取可选节点列表（排除当前节点）
+  const nodeOptions = useMemo(() => {
+    return Object.values(nodesById)
+      .filter((node) => node.id !== currentNodeId && node.visible)
+      .map((node) => ({
+        id: node.id,
+        type: node.schemaRef.type,
+        label: `${node.schemaRef.type.split('/').pop()} (${node.id.slice(0, 8)}...)`,
+      }));
+  }, [nodesById, currentNodeId]);
+
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
+    >
+      <option value="">{t('(无连接)', '(none)')}</option>
+      {nodeOptions.map((node) => (
+        <option key={node.id} value={node.id}>
+          {node.label}
+        </option>
+      ))}
+    </select>
   );
 }
 

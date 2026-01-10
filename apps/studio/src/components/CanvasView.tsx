@@ -4,6 +4,7 @@ import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
 import TransformControls from "./tools/TransformControls";
 import CreateToolLayer from "./tools/CreateToolLayer";
+import LineConnectionTool from "./tools/LineConnectionTool";
 import { isCreationTool } from "./tools/types";
 
 function generateId(prefix = "node") {
@@ -247,6 +248,10 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             if (!node.visible) return null;
             // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
             const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
+            const isLine = schema.type === 'basic/line';
+            const isSelected = state.selection.nodeIds.includes(node.id);
+            // Line components use LineConnectionTool for selection UI, don't show border
+            const showBorder = isSelected && !isLine;
             return (
               <div
                 key={node.id}
@@ -262,7 +267,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                   transformOrigin: 'center center',
                   pointerEvents: isPanTool ? "none" : "auto",
                   cursor: isPanTool ? canvasCursor : "pointer",
-                  border: state.selection.nodeIds.includes(node.id) ? "1px solid #0066ff" : "none"
+                  border: showBorder ? "1px solid #0066ff" : "none"
                 }}
               />
             );
@@ -280,6 +285,16 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           />
         </div>
       </div>
+
+      {/* Line Connection Tool - shows handles when a line is selected */}
+      {activeTool !== 'pan' && !isCreationTool(activeTool) && (
+        <LineConnectionTool
+          kernelStore={store}
+          containerRef={proxyLayerRef}
+          getViewport={getViewport}
+          onUserEdit={onUserEdit}
+        />
+      )}
 
       {/* Creation Tool Layer for rectangle, circle, text, image tools */}
       {isCreationTool(activeTool) && (

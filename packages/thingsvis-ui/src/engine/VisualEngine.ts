@@ -41,6 +41,122 @@ export class VisualEngine {
   private errorMessageByNode = new Map<string, string>();
   // Cache node props to detect changes and avoid unnecessary updates
   private lastNodePropsCache = new Map<string, string>();
+  // Cache for auto-layout of connected line nodes (bbox/points)
+  private lastLineAutoLayoutCache = new Map<string, string>();
+
+  private getAnchorWorldPoint(
+    position: { x: number; y: number },
+    size: { width: number; height: number },
+    anchor?: string
+  ): { x: number; y: number } {
+    const cx = position.x + size.width / 2;
+    const cy = position.y + size.height / 2;
+    switch (anchor) {
+      case 'top':
+        return { x: cx, y: position.y };
+      case 'right':
+        return { x: position.x + size.width, y: cy };
+      case 'bottom':
+        return { x: cx, y: position.y + size.height };
+      case 'left':
+        return { x: position.x, y: cy };
+      case 'center':
+      default:
+        return { x: cx, y: cy };
+    }
+  }
+
+  private scheduleAutoLayoutConnectedLine(node: NodeState, linkedNodes: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }>) {
+    // Only for line nodes that have endpoint bindings
+    if (node.schemaRef.type !== 'basic/line') return;
+    const schema = node.schemaRef as any;
+    const props = (schema.props || {}) as Record<string, any>;
+    const hasBinding = !!(props.sourceNodeId || props.targetNodeId);
+    if (!hasBinding) return;
+
+    const lp = schema.position ?? { x: 0, y: 0 };
+    const ls = schema.size ?? { width: 0, height: 0 };
+
+    const source = props.sourceNodeId ? linkedNodes[props.sourceNodeId] : undefined;
+    const target = props.targetNodeId ? linkedNodes[props.targetNodeId] : undefined;
+
+    const pts = Array.isArray(props.points) ? (props.points as Array<any>) : null;
+    const firstPt = pts && pts.length >= 2 ? pts[0] : null;
+    const lastPt = pts && pts.length >= 2 ? pts[pts.length - 1] : null;
+    const normalizedPts =
+      firstPt && lastPt &&
+      typeof firstPt?.x === 'number' && typeof firstPt?.y === 'number' &&
+      typeof lastPt?.x === 'number' && typeof lastPt?.y === 'number' &&
+      Math.max(firstPt.x, firstPt.y, lastPt.x, lastPt.y) <= 1;
+
+    const localToWorld = (p: any, fallback: { x: number; y: number }) => {
+      if (!p || typeof p.x !== 'number' || typeof p.y !== 'number') return fallback;
+      const dx = normalizedPts ? p.x * (ls.width ?? 0) : p.x;
+      const dy = normalizedPts ? p.y * (ls.height ?? 0) : p.y;
+      return { x: lp.x + dx, y: lp.y + dy };
+    };
+
+    const startWorld = source
+      ? this.getAnchorWorldPoint(source.position, source.size, props.sourceAnchor)
+      : localToWorld(firstPt, { x: lp.x, y: lp.y + (ls.height ?? 0) / 2 });
+
+    const endWorld = target
+      ? this.getAnchorWorldPoint(target.position, target.size, props.targetAnchor)
+      : localToWorld(lastPt, { x: lp.x + (ls.width ?? 0), y: lp.y + (ls.height ?? 0) / 2 });
+
+    const padding = 24;
+    const minX = Math.min(startWorld.x, endWorld.x) - padding;
+    const minY = Math.min(startWorld.y, endWorld.y) - padding;
+    const maxX = Math.max(startWorld.x, endWorld.x) + padding;
+    const maxY = Math.max(startWorld.y, endWorld.y) + padding;
+
+    const nextPosition = { x: minX, y: minY };
+    const nextSize = {
+      width: Math.max(40, maxX - minX),
+      height: Math.max(40, maxY - minY)
+    };
+
+    const nextPoints = [
+      { x: startWorld.x - nextPosition.x, y: startWorld.y - nextPosition.y },
+      { x: endWorld.x - nextPosition.x, y: endWorld.y - nextPosition.y }
+    ];
+
+    const key = JSON.stringify({ startWorld, endWorld, nextPosition, nextSize });
+    const lastKey = this.lastLineAutoLayoutCache.get(node.id);
+    if (key === lastKey) return;
+    this.lastLineAutoLayoutCache.set(node.id, key);
+
+    // Avoid re-entrancy: schedule into next frame.
+    requestAnimationFrame(() => {
+      const { updateNode } = this.store.getState() as KernelState & {
+        updateNode?: (id: string, changes: { position?: { x: number; y: number }; size?: { width: number; height: number }; props?: Record<string, unknown> }) => void;
+      };
+      if (!updateNode) return;
+
+      const fresh = (this.store.getState() as KernelState).nodesById[node.id];
+      const freshSchema = (fresh?.schemaRef as any) || {};
+      const curPos = freshSchema.position ?? { x: 0, y: 0 };
+      const curSize = freshSchema.size ?? { width: 0, height: 0 };
+
+      const posChanged = curPos.x !== nextPosition.x || curPos.y !== nextPosition.y;
+      const sizeChanged = curSize.width !== nextSize.width || curSize.height !== nextSize.height;
+
+      // Keep other props; just overwrite points.
+      const curProps = (freshSchema.props || {}) as Record<string, unknown>;
+      const curPts = (curProps as any).points;
+      const ptsChanged = !Array.isArray(curPts) || curPts.length < 2 ||
+        curPts[0]?.x !== nextPoints[0]!.x || curPts[0]?.y !== nextPoints[0]!.y ||
+        curPts[curPts.length - 1]?.x !== nextPoints[1]!.x || curPts[curPts.length - 1]?.y !== nextPoints[1]!.y;
+
+      if (!posChanged && !sizeChanged && !ptsChanged) return;
+
+      updateNode(node.id, {
+        position: nextPosition,
+        size: nextSize,
+        props: { ...curProps, points: nextPoints }
+      });
+    });
+  }
 
   constructor(
     private store: KernelStore,
@@ -48,6 +164,35 @@ export class VisualEngine {
       resolvePlugin?: (type: string) => Promise<PluginMainModule>;
     }
   ) {}
+
+  /**
+   * 构建连接节点信息，用于 line 插件的节点连接功能
+   * 从当前节点的 props 中提取 sourceNodeId/targetNodeId，
+   * 返回对应节点的位置和尺寸信息
+   */
+  private buildLinkedNodes(
+    node: NodeState,
+    allNodes: Record<string, NodeState>
+  ): Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> {
+    const result: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> = {};
+    const props = (node.schemaRef as any).props || {};
+    
+    const nodeIds = [props.sourceNodeId, props.targetNodeId].filter(Boolean) as string[];
+    
+    for (const nodeId of nodeIds) {
+      const linkedNode = allNodes[nodeId];
+      if (linkedNode && linkedNode.schemaRef) {
+        const schema = linkedNode.schemaRef as any;
+        result[nodeId] = {
+          id: nodeId,
+          position: schema.position || { x: 0, y: 0 },
+          size: schema.size || { width: 100, height: 100 },
+        };
+      }
+    }
+    
+    return result;
+  }
 
   mount(container: HTMLElement) {
     this.containerEl = container;
@@ -140,7 +285,7 @@ export class VisualEngine {
       Object.values(nodes).forEach(node => {
         // Wrap each node's sync in try-catch to isolate errors
         try {
-          this.syncSingleNode(node, root);
+          this.syncSingleNode(node, root, nodes);
         } catch (e) {
           // Log error but don't let it break other nodes
           console.error(`[VisualEngine] Error syncing node ${node.id}:`, e);
@@ -222,7 +367,7 @@ export class VisualEngine {
   /**
    * Sync a single node - extracted to isolate error handling per node
    */
-  private syncSingleNode(node: NodeState, root: Group) {
+  private syncSingleNode(node: NodeState, root: Group, allNodes: Record<string, NodeState>) {
     if (!node.visible) return;
     
     const existing = this.instanceMap.get(node.id);
@@ -271,7 +416,11 @@ export class VisualEngine {
         this.positionOverlayBox(overlayBox, node, isResizable);
         
         try {
-          const ov = rendererToUse.createOverlay(node);
+          // 构建 linkedNodes 用于节点连接功能
+          const linkedNodes = this.buildLinkedNodes(node, allNodes);
+          const contextWithLinks = { ...node, linkedNodes };
+          
+          const ov = rendererToUse.createOverlay(contextWithLinks);
           overlayInst = ov;
           overlayBox.appendChild(ov.element);
           
@@ -352,13 +501,23 @@ export class VisualEngine {
       }
     }
     if (existing.renderer.updateOverlay && existing.overlayInst) {
-      // Only call updateOverlay if props actually changed
-      const propsKey = JSON.stringify((node.schemaRef as any).props || {});
+      // 构建 linkedNodes 用于节点连接功能
+      const linkedNodes = this.buildLinkedNodes(node, allNodes);
+      const linkedKey = JSON.stringify(linkedNodes);
+      
+      // Only call updateOverlay if props or linkedNodes actually changed
+      const propsKey = JSON.stringify((node.schemaRef as any).props || {}) + linkedKey;
       const lastPropsKey = this.lastNodePropsCache.get(node.id);
+
       if (propsKey !== lastPropsKey) {
         this.lastNodePropsCache.set(node.id, propsKey);
-        existing.renderer.updateOverlay(existing.overlayInst as any, node);
+        const contextWithLinks = { ...node, linkedNodes };
+        existing.renderer.updateOverlay(existing.overlayInst as any, contextWithLinks);
       }
+
+      // Keep connected line nodes' bbox/points in sync with linked nodes.
+      // This ensures selection/handles match the visual connector even after moving other nodes.
+      this.scheduleAutoLayoutConnectedLine(node, linkedNodes);
     }
   }
 

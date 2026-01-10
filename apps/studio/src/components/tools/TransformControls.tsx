@@ -650,15 +650,26 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         return !!node && !node.locked;
       });
       
+      // Lines should still be draggable when unconnected, but not resizable/rotatable.
+      const anyLinesSelected = validSelectedIds.some(id => state.nodesById[id]?.schemaRef?.type === 'basic/line');
+      const anyConnectedLinesSelected = validSelectedIds.some(id => {
+        const node = state.nodesById[id];
+        if (node?.schemaRef?.type !== 'basic/line') return false;
+        const props = (node.schemaRef as any)?.props || {};
+        return !!(props.sourceNodeId || props.targetNodeId);
+      });
+      
       const targets = validSelectedIds
         .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
-      // Disable draggable/resizable for locked nodes
+      // Disable transforms for locked nodes
       const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
-      moveableRef.current.draggable = !hasLockedSelection;
-      moveableRef.current.resizable = !hasLockedSelection;
-      moveableRef.current.rotatable = !hasLockedSelection;
+      moveableRef.current.draggable = !hasLockedSelection && !anyConnectedLinesSelected;
+      // If any line is selected, disable resize/rotate to avoid weird UX
+      moveableRef.current.resizable = !hasLockedSelection && !anyLinesSelected;
+      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected;
+      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected;
       
       moveableRef.current.target = targets;
       

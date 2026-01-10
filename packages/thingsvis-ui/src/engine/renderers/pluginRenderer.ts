@@ -112,18 +112,35 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
     },
     createOverlay: plugin.createOverlay
       ? (node: NodeState) => {
-          const overlay = plugin.createOverlay!(nodeToOverlayContext(node, store));
+          // 从 node 中提取 linkedNodes（如果存在）
+          const linkedNodes = (node as any).linkedNodes;
+          const context = nodeToOverlayContext(node, store);
+          // 将 linkedNodes 附加到 context
+          if (linkedNodes) {
+            (context as any).linkedNodes = linkedNodes;
+          }
+          const overlay = plugin.createOverlay!(context);
           return {
             element: overlay.element,
             update: overlay.update
-              ? (nextNode: NodeState) => overlay.update?.(nodeToOverlayContext(nextNode, store))
+              ? (nextNode: NodeState) => {
+                  const nextLinkedNodes = (nextNode as any).linkedNodes;
+                  const nextContext = nodeToOverlayContext(nextNode, store);
+                  if (nextLinkedNodes) {
+                    (nextContext as any).linkedNodes = nextLinkedNodes;
+                  }
+                  overlay.update?.(nextContext);
+                }
               : undefined,
             destroy: overlay.destroy
           };
         }
       : undefined,
     updateOverlay: plugin.createOverlay
-      ? (overlay, node) => overlay.update?.(node)
+      ? (overlay, node) => {
+          // 直接调用已包装的 update，它会处理 linkedNodes
+          overlay.update?.(node);
+        }
       : undefined,
     destroyOverlay: plugin.createOverlay ? overlay => overlay.destroy?.() : undefined
     ,

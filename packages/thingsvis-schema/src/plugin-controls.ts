@@ -9,7 +9,7 @@ import { z } from 'zod';
 export const BindingModeSchema = z.enum(['static', 'field', 'expr', 'rule']);
 export type BindingMode = z.infer<typeof BindingModeSchema>;
 
-export const ControlKindSchema = z.enum(['string', 'number', 'boolean', 'color', 'select', 'json']);
+export const ControlKindSchema = z.enum(['string', 'number', 'boolean', 'color', 'select', 'json', 'nodeSelect']);
 export type ControlKind = z.infer<typeof ControlKindSchema>;
 
 export const ControlOptionSchema = z.object({
