@@ -505,8 +505,35 @@ export class VisualEngine {
       const linkedNodes = this.buildLinkedNodes(node, allNodes);
       const linkedKey = JSON.stringify(linkedNodes);
       
-      // Only call updateOverlay if props or linkedNodes actually changed
-      const propsKey = JSON.stringify((node.schemaRef as any).props || {}) + linkedKey;
+      // 获取当前 state 用于解析数据绑定
+      const state = this.store.getState() as KernelState;
+      
+      // 计算数据绑定相关的缓存 key
+      // 需要包含：props + data bindings + 绑定相关的数据源数据
+      const dataBindings = (node.schemaRef as any).data || [];
+      let dataSourceKey = '';
+      if (Array.isArray(dataBindings) && dataBindings.length > 0) {
+        // 提取所有绑定表达式中引用的数据源 ID，计算相关数据源的值
+        const referencedData: Record<string, any> = {};
+        dataBindings.forEach((binding: any) => {
+          if (binding.expression && typeof binding.expression === 'string') {
+            // 简单匹配 ds.<id> 模式
+            const matches = binding.expression.match(/ds\.([a-zA-Z0-9_-]+)/g);
+            if (matches) {
+              matches.forEach((match: string) => {
+                const dsId = match.replace('ds.', '');
+                if (state.dataSources && state.dataSources[dsId]) {
+                  referencedData[dsId] = state.dataSources[dsId].data;
+                }
+              });
+            }
+          }
+        });
+        dataSourceKey = JSON.stringify(referencedData);
+      }
+      
+      // Only call updateOverlay if props, linkedNodes, or data source values actually changed
+      const propsKey = JSON.stringify((node.schemaRef as any).props || {}) + linkedKey + dataSourceKey;
       const lastPropsKey = this.lastNodePropsCache.get(node.id);
 
       if (propsKey !== lastPropsKey) {
