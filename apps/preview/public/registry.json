@@ -26,6 +26,15 @@
       "localEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "1.0.0"
+    },
+    "custom/water-tank": {
+      "remoteName": "thingsvis_plugin_custom_water_tank",
+      "remoteEntryUrl": "http://localhost:3120/remoteEntry.js",
+      "staticEntryUrl": "/plugins/custom/water-tank/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "Container"
     }
   }
 }

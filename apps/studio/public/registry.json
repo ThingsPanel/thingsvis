@@ -63,6 +63,15 @@
       "exposedModule": "./Main",
       "version": "1.0.0",
       "icon": "BarChart3"
+    },
+    "custom/water-tank": {
+      "remoteName": "thingsvis_plugin_custom_water_tank",
+      "remoteEntryUrl": "http://localhost:3120/remoteEntry.js",
+      "staticEntryUrl": "/plugins/custom/water-tank/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "Container"
     }
   }
 }
