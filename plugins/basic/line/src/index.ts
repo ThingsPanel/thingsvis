@@ -439,9 +439,10 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
     el.setAttribute('stroke', pipeBackground);
     el.setAttribute('stroke-width', String(width));
     el.setAttribute('opacity', String(props.opacity));
-    // 默认使用直角端点
-    el.setAttribute('stroke-linecap', 'butt');
+    // 使用 square 端点确保管道边框在拐角处完全延伸
+    el.setAttribute('stroke-linecap', 'square');
     el.setAttribute('stroke-linejoin', 'miter');
+    el.setAttribute('stroke-miterlimit', '10');
 
     // Keep dash pattern consistent with the main stroke.
     if (dashArray) {
