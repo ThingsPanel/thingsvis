@@ -1,24 +1,47 @@
+/**
+ * 组件主入口
+ * 
+ * 使用 @thingsvis/plugin-sdk 构建
+ */
+
 import { Rect } from 'leafer-ui';
-import { entry } from './spec';
+import { metadata } from './metadata';
+import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { controls } from './controls';
+import type { PluginMainModule } from '@thingsvis/schema';
 
 /**
  * 创建组件渲染实例
  */
-export function create() {
+function create(): Rect {
+  const defaults = getDefaultProps();
   return new Rect({
     width: 100,
     height: 100,
-    fill: '#6965db',
+    fill: defaults.fill,
+    opacity: defaults.opacity,
     draggable: true,
+    cursor: 'pointer',
   });
+}
+
+/**
+ * 更新组件属性
+ */
+function update(rect: Rect, props: Props) {
+  rect.fill = props.fill;
+  rect.opacity = props.opacity;
 }
 
 /**
  * 插件导出入口
  */
-export const Main = {
-  ...entry,
+export const Main: PluginMainModule = {
+  ...metadata,
+  schema: PropsSchema,
+  controls,
   create,
+  update,
 };
 
 export default Main;

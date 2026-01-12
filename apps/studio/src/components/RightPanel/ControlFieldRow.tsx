@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore 
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import type { ControlField, DataBinding } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
+import * as LucideIcons from 'lucide-react';
 
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
 import {
@@ -139,6 +140,16 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(e) => setStatic(e.target.value)}
               className="h-8 text-sm"
+              placeholder={field.placeholder}
+            />
+          )}
+
+          {field.kind === 'textarea' && (
+            <textarea
+              value={typeof propsValue === 'string' ? propsValue : ''}
+              onChange={(e) => setStatic(e.target.value)}
+              className="w-full h-20 p-2 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-y"
+              placeholder={field.placeholder}
             />
           )}
 
@@ -163,16 +174,35 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           )}
 
           {field.kind === 'color' && (
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 items-center">
+              {/* 透明按钮 */}
+              <button
+                type="button"
+                onClick={() => setStatic('transparent')}
+                title={t('透明', 'Transparent')}
+                className={`w-6 h-6 rounded-sm border flex-shrink-0 ${
+                  propsValue === 'transparent' 
+                    ? 'ring-2 ring-ring ring-offset-1' 
+                    : 'border-input'
+                }`}
+                style={{
+                  background: 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
+                  backgroundSize: '6px 6px',
+                  backgroundPosition: '0 0, 0 3px, 3px -3px, -3px 0px',
+                }}
+              />
+              {/* 颜色选择器 */}
               <Input
                 type="color"
-                value={typeof propsValue === 'string' && propsValue ? propsValue : '#000000'}
+                value={typeof propsValue === 'string' && propsValue && propsValue !== 'transparent' ? propsValue : '#000000'}
                 onChange={(e) => setStatic(e.target.value)}
-                className="w-8 h-8 p-0 border-0 overflow-hidden rounded-sm cursor-pointer"
+                className="w-6 h-6 p-0 border-0 overflow-hidden rounded-sm cursor-pointer flex-shrink-0"
               />
+              {/* 文本输入 */}
               <Input
                 value={typeof propsValue === 'string' ? propsValue : ''}
                 onChange={(e) => setStatic(e.target.value)}
+                placeholder={t('透明 / #hex / rgba()', 'transparent / #hex / rgba()')}
                 className="h-8 flex-1 text-sm font-mono"
               />
             </div>
@@ -203,7 +233,82 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
             </select>
           )}
 
-          {field.kind !== 'string' && field.kind !== 'number' && field.kind !== 'color' && field.kind !== 'nodeSelect' && field.kind !== 'select' && (
+          {/* Boolean / Switch */}
+          {field.kind === 'boolean' && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(propsValue)}
+                onChange={(e) => setStatic(e.target.checked)}
+                className="w-4 h-4 rounded border-input"
+              />
+              <span className="text-sm text-muted-foreground">
+                {propsValue ? t('开启', 'On') : t('关闭', 'Off')}
+              </span>
+            </label>
+          )}
+
+          {/* Slider */}
+          {field.kind === 'slider' && (
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={field.min ?? 0}
+                max={field.max ?? 100}
+                step={field.step ?? 1}
+                value={typeof propsValue === 'number' ? propsValue : (field.default as number ?? 0)}
+                onChange={(e) => setStatic(Number(e.target.value))}
+                className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-muted"
+              />
+              <span className="text-sm text-muted-foreground w-12 text-right tabular-nums">
+                {typeof propsValue === 'number' ? propsValue : (field.default as number ?? 0)}
+              </span>
+            </div>
+          )}
+
+          {/* Segmented / Radio group inline */}
+          {(field.kind === 'segmented' || field.kind === 'radio') && field.options && (
+            <div className="flex gap-1 p-1 bg-muted rounded-md">
+              {field.options.map((opt) => {
+                // 动态获取 Lucide 图标
+                const IconComponent = opt.icon ? (LucideIcons as Record<string, React.ComponentType<{ className?: string }>>)[opt.icon] : null;
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setStatic(opt.value)}
+                    title={opt.label}
+                    className={`px-3 py-1.5 text-sm rounded transition-colors flex items-center justify-center ${
+                      propsValue === opt.value
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {IconComponent ? <IconComponent className="w-4 h-4" /> : opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* JSON Editor (basic textarea for now) */}
+          {field.kind === 'json' && (
+            <textarea
+              value={typeof propsValue === 'object' ? JSON.stringify(propsValue, null, 2) : String(propsValue ?? '{}')}
+              onChange={(e) => {
+                try {
+                  const parsed = JSON.parse(e.target.value);
+                  setStatic(parsed);
+                } catch {
+                  // Invalid JSON, don't update
+                }
+              }}
+              className="w-full h-24 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-y"
+              placeholder="{}"
+            />
+          )}
+
+          {/* Fallback for unknown kinds */}
+          {!['string', 'number', 'color', 'nodeSelect', 'select', 'boolean', 'slider', 'segmented', 'radio', 'json', 'textarea'].includes(field.kind) && (
             <Input
               value={propsValue === undefined ? '' : String(propsValue)}
               onChange={(e) => setStatic(e.target.value)}

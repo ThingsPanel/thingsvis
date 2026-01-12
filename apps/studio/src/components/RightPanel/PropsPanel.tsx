@@ -171,33 +171,50 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
     </div>
   );
 
+  // 检查字段是否应该显示（基于 showWhen 条件）
+  const shouldShowField = (field: typeof controls.groups[0]['fields'][0]) => {
+    if (!field.showWhen) return true;
+    const { field: depField, value: depValue } = field.showWhen;
+    const currentValue = schema.props?.[depField];
+    // 支持简单的相等比较，也支持 > 0 等条件（通过检查 truthy）
+    if (depValue === true) return Boolean(currentValue);
+    if (depValue === false) return !currentValue;
+    return currentValue === depValue;
+  };
+
   const renderControlsPanel = () => {
     if (!controls) return null;
 
     return (
       <div className="space-y-4">
         {renderGeometry()}
-        {controls.groups.map((group) => (
-          <div key={group.id} className="space-y-3 pt-4 border-t border-border px-1">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              {group.label ?? group.id}
-            </h3>
-            <div className="space-y-3">
-              {group.fields.map((field) => (
-                <ControlFieldRow
-                  key={field.path}
-                  kernelStore={kernelStore}
-                  nodeId={nodeId}
-                  field={field}
-                  propsValue={schema.props?.[field.path]}
-                  bindings={schema.data}
-                  updateNode={updateNode}
-                  language={language}
-                />
-              ))}
+        {controls.groups.map((group) => {
+          // 过滤出应该显示的字段
+          const visibleFields = group.fields.filter(shouldShowField);
+          if (visibleFields.length === 0) return null;
+
+          return (
+            <div key={group.id} className="space-y-3 pt-4 border-t border-border px-1">
+              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
+                {group.label ?? group.id}
+              </h3>
+              <div className="space-y-3">
+                {visibleFields.map((field) => (
+                  <ControlFieldRow
+                    key={field.path}
+                    kernelStore={kernelStore}
+                    nodeId={nodeId}
+                    field={field}
+                    propsValue={schema.props?.[field.path]}
+                    bindings={schema.data}
+                    updateNode={updateNode}
+                    language={language}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {pluginError && (
           <p className="text-xs text-muted-foreground">{pluginError}</p>

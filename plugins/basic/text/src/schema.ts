@@ -1,67 +1,112 @@
 /**
  * 文本组件属性 Schema
  * 
- * ⭐ 这是开发者需要重点关注的文件
+ * ⭐ 使用 @thingsvis/plugin-sdk 重构
  * 
- * 📝 开发指南：
- * - 使用 Zod 定义组件的所有可配置属性
- * - 使用 .describe() 设置属性在面板中的显示标签
- * - 使用 .default() 设置属性默认值
- * - 属性会自动生成到 Studio 的属性面板中
- * 
- * 📌 属性分类建议：
- * - 内容属性：text, title, label 等（通常需要数据绑定）
- * - 样式属性：fill, fontSize, fontWeight 等（通常使用静态值）
- * 
- * 💡 提示：
- * - 使用 z.enum() 定义枚举属性，会自动生成下拉选择器
- * - 颜色属性需要在 controls.ts 中配置为 'color' 类型
+ * 📝 属性分类：
+ * - 内容属性：text（需要数据绑定）
+ * - 字体属性：fontSize, fontFamily, fontWeight, fontStyle
+ * - 排版属性：textAlign, lineHeight, letterSpacing
+ * - 颜色属性：fill, backgroundColor
+ * - 效果属性：opacity, textShadow
  */
 
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
   // ========================================
-  // 内容属性（通常需要数据绑定）
+  // 内容属性
   // ========================================
   
   /** 文本内容 */
   text: z.string().default('请输入文本').describe('文本内容'),
 
   // ========================================
-  // 样式属性
+  // 字体属性
   // ========================================
-  
-  /** 文字颜色 */
-  fill: z.string().default('#000000').describe('文字颜色'),
   
   /** 字号（像素） */
-  fontSize: z.number().min(1).max(999).default(16).describe('字号'),
-  
-  /** 字重 */
-  fontWeight: z.enum(['normal', 'bold']).default('normal').describe('字重'),
-  
-  /** 文本对齐 */
-  textAlign: z.enum(['left', 'center', 'right']).default('left').describe('对齐方式'),
+  fontSize: z.number().min(8).max(200).default(16).describe('字号'),
   
   /** 字体 */
-  fontFamily: z.string().default('sans-serif').describe('字体'),
+  fontFamily: z.enum([
+    'sans-serif',
+    'serif',
+    'monospace',
+    'Arial',
+    'Helvetica',
+    'Times New Roman',
+    'Georgia',
+    'Courier New',
+    'Microsoft YaHei',
+    'PingFang SC',
+    'SimHei',
+    'SimSun',
+  ]).default('sans-serif').describe('字体'),
+  
+  /** 字重 */
+  fontWeight: z.enum(['normal', 'bold', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']).default('normal').describe('字重'),
+  
+  /** 字体样式（斜体） */
+  fontStyle: z.enum(['normal', 'italic', 'oblique']).default('normal').describe('斜体'),
 
   // ========================================
-  // 高级样式属性
+  // 排版属性
   // ========================================
   
-  /** 背景颜色 */
-  backgroundColor: z.string().default('transparent').describe('背景颜色'),
+  /** 文本对齐 */
+  textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('对齐方式'),
   
-  /** 内边距 */
-  padding: z.number().min(0).max(100).default(0).describe('内边距'),
+  /** 垂直对齐 */
+  verticalAlign: z.enum(['top', 'middle', 'bottom']).default('top').describe('垂直对齐'),
   
   /** 行高 */
   lineHeight: z.number().min(0.5).max(5).default(1.4).describe('行高'),
   
   /** 字间距 */
   letterSpacing: z.number().min(-10).max(50).default(0).describe('字间距'),
+  
+  /** 文本装饰 */
+  textDecoration: z.enum(['none', 'underline', 'line-through']).default('none').describe('装饰线'),
+
+  // ========================================
+  // 颜色属性
+  // ========================================
+  
+  /** 文字颜色 */
+  fill: z.string().default('#333333').describe('文字颜色'),
+  
+  /** 背景颜色 */
+  backgroundColor: z.string().default('transparent').describe('背景颜色'),
+
+  // ========================================
+  // 效果属性
+  // ========================================
+  
+  /** 不透明度 */
+  opacity: z.number().min(0).max(1).default(1).describe('不透明度'),
+  
+  /** 文字阴影 */
+  textShadowEnabled: z.boolean().default(false).describe('启用阴影'),
+  
+  /** 阴影颜色 */
+  textShadowColor: z.string().default('rgba(0,0,0,0.3)').describe('阴影颜色'),
+  
+  /** 阴影模糊 */
+  textShadowBlur: z.number().min(0).max(50).default(4).describe('阴影模糊'),
+  
+  /** 阴影 X 偏移 */
+  textShadowOffsetX: z.number().min(-50).max(50).default(1).describe('阴影X偏移'),
+  
+  /** 阴影 Y 偏移 */
+  textShadowOffsetY: z.number().min(-50).max(50).default(1).describe('阴影Y偏移'),
+
+  // ========================================
+  // 其他属性
+  // ========================================
+  
+  /** 内边距 */
+  padding: z.number().min(0).max(100).default(0).describe('内边距'),
 });
 
 /** 属性类型（用于 TypeScript 类型推导） */
