@@ -23,8 +23,8 @@
   --destructive-foreground: 0 0% 99%;
   --border: 240 1% 88%;
   --input: 240 1% 88%;
-  /* Updated ring color to match primary */
-  --ring: 270 15% 55%;
+  /* Updated ring color to #6965db */
+  --ring: 243 58% 63%;
   --radius: 0.5rem;
 
   /* Canvas background */
@@ -57,8 +57,8 @@
   --destructive-foreground: 0 0% 99%;
   --border: 240 1% 30%;
   --input: 240 1% 30%;
-  /* Updated ring color to match primary */
-  --ring: 270 15% 60%;
+  /* Updated ring color to #6965db */
+  --ring: 243 58% 63%;
 
   /* Canvas background */
   --canvas-dot: 240 1% 35%;

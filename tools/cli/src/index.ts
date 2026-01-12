@@ -51,13 +51,22 @@ program
     await copyTemplateDir(templateDir, targetDir, {
       PACKAGE_NAME: packageName,
       COMPONENT_ID: componentId,
+      CATEGORY: category,
       DEV_SERVER_PORT: port
     });
 
     // eslint-disable-next-line no-console
-    console.log(`Created plugin: ${componentId}`);
+    console.log(`\n✅ Created plugin: ${componentId}`);
     // eslint-disable-next-line no-console
-    console.log(`Path: ${targetDir}`);
+    console.log(`📁 Path: ${targetDir}`);
+    // eslint-disable-next-line no-console
+    console.log(`\n📝 Next steps:`);
+    // eslint-disable-next-line no-console
+    console.log(`   1. cd ${targetDir}`);
+    // eslint-disable-next-line no-console
+    console.log(`   2. pnpm install`);
+    // eslint-disable-next-line no-console
+    console.log(`   3. pnpm dev`);
   });
 
 program.parse(process.argv);

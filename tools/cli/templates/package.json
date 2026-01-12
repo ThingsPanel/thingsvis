@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "rspack serve",
+    "dev": "rspack serve --port {{DEV_SERVER_PORT}}",
     "build": "rspack build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -12,6 +12,9 @@
     "react-dom": "^18.2.0",
     "leafer-ui": "^1.0.0",
     "@thingsvis/schema": "workspace:*"
+  },
+  "dependencies": {
+    "@thingsvis/plugin-sdk": "workspace:*"
   },
   "devDependencies": {
     "@rspack/cli": "^1.0.0",
