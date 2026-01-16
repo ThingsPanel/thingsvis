@@ -87,13 +87,7 @@ import { recentProjects } from '../lib/storage/recentProjects'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
-import {
-  resolveExternalId,
-  saveToHost,
-  toWebChartConfig,
-} from '../lib/embedded/host-bridge'
-import { resolveEditorServiceConfig } from '../lib/embedded/service-config'
-import { resolveEmbeddedDefaultProject } from '../lib/embedded/bootstrap'
+import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -152,12 +146,19 @@ export default function Editor() {
   // Image picker state for image tool (stores Object URL)
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
 
-  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), [])
-  const embeddedMode = serviceConfig.mode === 'embedded'
-  const embeddedBootstrap = useMemo(
-    () => (embeddedMode ? resolveEmbeddedDefaultProject() : {}),
-    [embeddedMode]
-  )
+  // Embed mode UI visibility from URL params
+  const embedVisibility = useMemo(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const isEmbedded = params.get('mode') === 'embedded'
+    return {
+      isEmbedded,
+      showLibrary: params.get('showLibrary') !== '0',
+      showProps: params.get('showProps') !== '0',
+      showTopLeft: params.get('showTopLeft') !== '0',
+      showToolbar: params.get('showToolbar') !== '0',
+      showTopRight: params.get('showTopRight') !== '0',
+    }
+  }, [])
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -173,16 +174,6 @@ export default function Editor() {
   }, [])
 
   const [zoom, setZoom] = useState(100)
-  const externalId = useMemo(() => resolveExternalId(), [])
-
-  const serviceMessages = useMemo(() => {
-    const messages: string[] = []
-    if (serviceConfig.warnings?.length) messages.push(...serviceConfig.warnings)
-    if (embeddedMode && embeddedBootstrap.error) {
-      messages.push(`Invalid default project payload: ${embeddedBootstrap.error}`)
-    }
-    return messages
-  }, [serviceConfig.warnings, embeddedMode, embeddedBootstrap.error])
 
   // Subscribe to temporal history
   const temporalSnapshot = useSyncExternalStore(
@@ -199,11 +190,6 @@ export default function Editor() {
 
   // Resolve initial project id from URL/hash, last-opened id, or recents.
   const resolveInitialProjectId = (): string => {
-    // 0) Embedded default project
-    if (embeddedMode && embeddedBootstrap.project?.meta?.id) {
-      return embeddedBootstrap.project.meta.id
-    }
-
     // 1) URL hash query: #/editor?projectId=...
     try {
       const hash = window.location.hash || ''
@@ -214,11 +200,6 @@ export default function Editor() {
         if (fromHash) return fromHash
       }
     } catch {}
-
-    // Embedded mode should not leak local projects; start a fresh empty project if host didn't provide an id.
-    if (embeddedMode) {
-      return crypto.randomUUID()
-    }
 
     // 2) localStorage last opened project
     try {
@@ -236,6 +217,7 @@ export default function Editor() {
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId()
+    const defaultMode = isEmbedMode() ? "reflow" : "fixed"
     return {
     // Meta - 基础身份
     id: initialId,
@@ -250,7 +232,7 @@ export default function Editor() {
     createdBy: "user-001",
 
     // Config - 画布配置
-    mode: "infinite" as "fixed" | "infinite" | "reflow",
+    mode: defaultMode as "fixed" | "infinite" | "reflow",
     width: 1920,
     height: 1080,
     theme: "dark" as "dark" | "light" | "auto",
@@ -301,15 +283,11 @@ export default function Editor() {
     }
   }, [projectId, canvasConfig])
 
-  const getWebChartConfig = useCallback(() => {
-    return toWebChartConfig(getProjectState(), externalId)
-  }, [getProjectState, externalId])
-
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
     getProjectState,
-    enabled: !isBootstrapping && !embeddedMode,
+    enabled: !isBootstrapping,
   })
 
   // Bootstrap: load last project into store (or create a new empty page)
@@ -320,50 +298,6 @@ export default function Editor() {
       setIsBootstrapping(true)
 
       try {
-        if (embeddedMode) {
-          const injected = embeddedBootstrap.project
-          if (injected) {
-            store.getState().loadPage({
-              id: injected.meta.id,
-              type: 'page' as const,
-              version: injected.meta.version,
-              nodes: injected.nodes,
-            })
-
-            setCanvasConfig(prev => ({
-              ...prev,
-              id: injected.meta.id,
-              name: injected.meta.name,
-              createdAt: injected.meta.createdAt,
-              mode: injected.canvas.mode,
-              width: injected.canvas.width,
-              height: injected.canvas.height,
-              bgValue: injected.canvas.background,
-              gridEnabled: injected.canvas.gridEnabled ?? prev.gridEnabled,
-              gridSize: injected.canvas.gridSize ?? prev.gridSize,
-              dataSources: (injected.dataSources as any) ?? prev.dataSources,
-            }))
-
-            try {
-              store.temporal.getState().clear?.()
-            } catch {}
-
-            return
-          }
-
-          // No injected project: start empty per spec.
-          store.getState().loadPage({
-            id: projectId,
-            type: 'page' as const,
-            version: '1.0.0',
-            nodes: [],
-          })
-          try {
-            store.temporal.getState().clear?.()
-          } catch {}
-          return
-        }
-
         const loaded = await projectStorage.load(projectId)
         if (cancelled) return
         if (loaded) {
@@ -418,7 +352,7 @@ export default function Editor() {
     return () => {
       cancelled = true
     }
-  }, [projectId, embeddedMode, embeddedBootstrap.project])
+  }, [projectId])
 
   // Mark dirty on meaningful changes only:
   // - explicit user edits (node add/move/resize/props/etc.)
@@ -466,19 +400,10 @@ export default function Editor() {
     window.location.hash = previewHash
   }, [projectId, saveNow])
 
-  const handleSave = useCallback(async () => {
-    if (!embeddedMode) {
-      await saveNow()
-      return
-    }
-    const payload = getWebChartConfig()
-    await saveToHost(payload)
-  }, [embeddedMode, getWebChartConfig, saveNow])
-
   // Register default commands with the command registry
   useEffect(() => {
     registerDefaultCommands({
-      saveProject: async () => { await handleSave() },
+      saveProject: async () => { await saveNow() },
       getKernelState: () => store.getState() as KernelState,
       deleteNodes: (ids) => store.getState().removeNodes(ids),
       undo: () => store.temporal.getState().undo(),
@@ -528,10 +453,151 @@ export default function Editor() {
         })
       },
     })
-  }, [handleSave, projectId, openPreview])
+  }, [saveNow, projectId, openPreview])
 
   // Enable keyboard shortcuts
   useKeyboardShortcuts({ registry: commandRegistry })
+
+  // Handle embed mode triggerSave event
+  useEffect(() => {
+    if (!isEmbedMode()) return;
+
+    const unsubscribe = onEmbedEvent('triggerSave', () => {
+      console.log('[Editor] triggerSave event received, collecting data...');
+      // Collect all nodes with their thing model bindings
+      const state = store.getState() as KernelState;
+      const nodes = Object.values(state.nodesById).map(nodeState => {
+        const schema = nodeState.schemaRef as any;
+        return {
+          id: schema.id,
+          type: schema.type,
+          position: schema.position,
+          size: schema.size,
+          props: schema.props,
+          // Include thing model bindings if present
+          thingModelBindings: schema.thingModelBindings || [],
+        };
+      });
+
+      // Build export data for ThingsPanel
+      const exportData = {
+        canvas: {
+          mode: canvasConfig.mode,
+          width: canvasConfig.width,
+          height: canvasConfig.height,
+          background: canvasConfig.bgValue,
+        },
+        nodes,
+        // Collect all thing model bindings in flat format for easy access
+        dataBindings: nodes.flatMap(node =>
+          (node.thingModelBindings || []).map((binding: any) => ({
+            nodeId: node.id,
+            targetProp: binding.targetProp,
+            metricsId: binding.metricsId,
+            metricsName: binding.metricsName,
+            metricsType: binding.metricsType,
+            dataType: binding.dataType,
+            unit: binding.unit,
+          }))
+        ),
+      };
+
+      console.log('[Editor] Sending saveRequest with data:', exportData);
+      // Send to host
+      requestSave(exportData);
+    });
+
+    return unsubscribe;
+  }, [canvasConfig]);
+
+  // Handle embed mode init event - load initial data from host
+  useEffect(() => {
+    if (!isEmbedMode()) return;
+
+    const unsubscribe = onEmbedEvent('init', (payload: any) => {
+      console.log('[Editor] Embed init received:', payload);
+      
+      if (payload?.data) {
+        const data = payload.data;
+        
+        // Load canvas config if provided
+        if (data.canvas) {
+          setCanvasConfig(prev => ({
+            ...prev,
+            mode: data.canvas.mode || prev.mode,
+            width: data.canvas.width || prev.width,
+            height: data.canvas.height || prev.height,
+            bgValue: data.canvas.background || prev.bgValue,
+          }));
+        }
+        
+        // Load nodes if provided
+        if (data.nodes && Array.isArray(data.nodes)) {
+          // Convert nodes to NodeSchemaType format and load into store
+          const nodesToLoad = data.nodes.map((node: any) => ({
+            id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            type: node.type,
+            position: node.position || { x: 100, y: 100 },
+            size: node.size || { width: 200, height: 80 },
+            props: node.props || {},
+            thingModelBindings: node.thingModelBindings || [],
+          }));
+          
+          store.getState().loadPage({
+            id: `embed-${Date.now()}`,
+            type: 'page' as const,
+            version: '1.0.0',
+            nodes: nodesToLoad,
+          });
+          
+          // Clear undo history for clean start
+          try {
+            store.temporal.getState().clear?.();
+          } catch {}
+        }
+      }
+    });
+
+    // Also check if initial data is already available (in case init was received before this effect ran)
+    const initialData = getInitialData();
+    if (initialData) {
+      console.log('[Editor] Loading already-received initial data:', initialData);
+      
+      if (initialData.canvas) {
+        setCanvasConfig(prev => ({
+          ...prev,
+          mode: initialData.canvas.mode || prev.mode,
+          width: initialData.canvas.width || prev.width,
+          height: initialData.canvas.height || prev.height,
+          bgValue: initialData.canvas.background || prev.bgValue,
+        }));
+      }
+      
+      if (initialData.nodes && Array.isArray(initialData.nodes)) {
+        const nodesToLoad = initialData.nodes.map((node: any) => ({
+          id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          type: node.type,
+          position: node.position || { x: 100, y: 100 },
+          size: node.size || { width: 200, height: 80 },
+          props: node.props || {},
+          thingModelBindings: node.thingModelBindings || [],
+        }));
+        
+        store.getState().loadPage({
+          id: `embed-${Date.now()}`,
+          type: 'page' as const,
+          version: '1.0.0',
+          nodes: nodesToLoad,
+        });
+        
+        try {
+          store.temporal.getState().clear?.();
+        } catch {}
+      }
+    }
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     // Sync canvas state to kernel store when config changes
@@ -626,12 +692,6 @@ export default function Editor() {
     { id: "pan" as Tool, icon: Hand, label: "移动" },
   ]
 
-  const ui = serviceConfig.ui
-  const isMinimalIntegration = embeddedMode && serviceConfig.integrationLevel === 'minimal'
-  const showTopBar = ui.showTopLeft || ui.showToolbar || ui.showTopRight
-  const toolbarTools = ui.toolbarItems ? tools.filter(t => ui.toolbarItems!.includes(t.id)) : tools
-  const bottomLeftPositionClass = ui.showComponentLibrary ? 'left-[324px]' : 'left-4'
-
   const shortcuts = [
     { key: "Ctrl/⌘ + O", action: language === "zh" ? "打开项目" : "Open Project" },
     { key: "Ctrl/⌘ + S", action: language === "zh" ? "保存项目" : "Save Project" },
@@ -657,17 +717,6 @@ export default function Editor() {
     <div className={isDarkMode ? "dark relative min-h-screen overflow-hidden" : "relative min-h-screen overflow-hidden"}>
       {/* Canvas Background with Dot Grid */}
       <div className="absolute inset-0 bg-background" />
-
-      {/* Service mode warnings */}
-      {serviceMessages.length ? (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[60] pointer-events-auto">
-          <div className="glass rounded-md shadow-md border border-border px-3 py-2 text-xs text-muted-foreground max-w-[720px]">
-            {serviceMessages.map((m, idx) => (
-              <div key={idx} className="truncate">{m}</div>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       {/* Canvas View */}
       <div className="absolute inset-0">
@@ -728,52 +777,10 @@ export default function Editor() {
         </div>
       )}
 
-      {/* Minimal integration toolbar */}
-      {isMinimalIntegration ? (
-        <div className="absolute top-4 right-4 z-50 pointer-events-auto">
-          <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-              onClick={() => handleSave()}
-              title={language === 'zh' ? '保存' : 'Save'}
-            >
-              <Save className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-              onClick={handleUndo}
-              disabled={!canUndo}
-              title={language === 'zh' ? '撤销' : 'Undo'}
-            >
-              <Undo2 className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-              onClick={handleRedo}
-              disabled={!canRedo}
-              title={language === 'zh' ? '重做' : 'Redo'}
-            >
-              <Redo2 className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
       {/* Top Navigation Bar */}
-      {showTopBar ? (
-        <div className="absolute top-4 left-4 right-4 z-50 grid grid-cols-3 items-center gap-4 pointer-events-none">
-          {/* Left Side: Logo (Menu), Title, Status */}
-          <div className="flex justify-start">
-            {ui.showTopLeft ? (
-              <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
+      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+        {/* Left Side: Logo (Menu), Title, Status */}
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -788,7 +795,7 @@ export default function Editor() {
                 {language === "zh" ? "打开项目" : "Open Project"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => handleSave()}>
+              <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
                 <Save className="h-4 w-4" />
                 {language === "zh" ? "保存" : "Save"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
@@ -832,15 +839,11 @@ export default function Editor() {
             language={language}
             className="ml-1 pr-2"
           />
-              </div>
-            ) : null}
-          </div>
+        </div>
 
-          {/* Center Side: Tools */}
-          <div className="flex justify-center">
-            {ui.showToolbar ? (
-              <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
-          {toolbarTools.map((tool) => {
+        {/* Center Side: Tools */}
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
+          {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
 
@@ -861,14 +864,10 @@ export default function Editor() {
               </Button>
             )
           })}
-              </div>
-            ) : null}
-          </div>
+        </div>
 
-          {/* Right Side: Language, Theme, Preview, Publish */}
-          <div className="flex justify-end">
-            {ui.showTopRight ? (
-              <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
+        {/* Right Side: Language, Theme, Preview, Publish */}
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!embedVisibility.showTopRight ? 'invisible' : ''}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
@@ -907,14 +906,11 @@ export default function Editor() {
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
-              </div>
-            ) : null}
-          </div>
         </div>
-      ) : null}
+      </div>
 
       {/* Left Panel: Assets & Layers */}
-      {!isMinimalIntegration && ui.showComponentLibrary ? (
+      {embedVisibility.showLibrary && (
       <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex border-b border-border">
@@ -967,11 +963,10 @@ export default function Editor() {
           </div>
         </div>
       </aside>
-      ) : null}
+      )}
 
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
-      {!isMinimalIntegration ? (
-      <div className={`absolute ${bottomLeftPositionClass} bottom-4 z-40 flex items-center gap-3 select-none`}>
+      <div className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${embedVisibility.showLibrary ? 'left-[324px]' : 'left-4'}`}>
         {/* Zoom Controls */}
         <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
@@ -1019,10 +1014,9 @@ export default function Editor() {
           </Button>
         </div>
       </div>
-      ) : null}
 
       {/* Right Panel - Properties */}
-      {!isMinimalIntegration && ui.showPropsPanel ? (
+      {embedVisibility.showProps && (
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -1080,9 +1074,9 @@ export default function Editor() {
                       }
                       className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
-                      <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                       <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
                       <option value="reflow">{language === "zh" ? "自适应" : "Reflow"}</option>
+                      <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                     </select>
                   </div>
 
@@ -1114,7 +1108,7 @@ export default function Editor() {
           </div>
         </div>
       </aside>
-      ) : null}
+      )}
 
       {/* Keyboard Shortcuts Help Panel */}
       <ShortcutHelpPanel

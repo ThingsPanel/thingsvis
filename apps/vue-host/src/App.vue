@@ -5,7 +5,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 type IntegrationLevel = 'full' | 'minimal'
 
 // --- State ---
-const studioUrl = ref('http://localhost:3000')
+const studioUrl = ref('http://localhost:3000/main')
 const integrationLevel = ref<IntegrationLevel>('full')
 const showComponentLibrary = ref(true)
 const showPropsPanel = ref(true)
@@ -15,6 +15,9 @@ const showTopRight = ref(true)
 const injectDefaultProject = ref(false)
 const iframeKey = ref(0)
 const events = ref<string[]>([])
+
+// Sidebar collapse state
+const sidebarCollapsed = ref(false)
 
 // --- Constants ---
 const SAMPLE_PROJECT = {
@@ -47,26 +50,28 @@ const SAMPLE_PROJECT = {
 
 // --- Computed ---
 const iframeSrc = computed(() => {
-  const url = new URL('/#/editor', studioUrl.value)
-  url.searchParams.set('mode', 'embedded') // Fixed to embedded for this host
-  url.searchParams.set('integration', integrationLevel.value)
+  // Build URL with hash routing support
+  const baseUrl = studioUrl.value.replace(/\/$/, '')
+  const params = new URLSearchParams()
+  params.set('mode', 'embedded') // Fixed to embedded for this host
+  params.set('integration', integrationLevel.value)
   
   if (integrationLevel.value === 'full') {
-    if (!showComponentLibrary.value) url.searchParams.set('showLibrary', '0')
-    if (!showPropsPanel.value) url.searchParams.set('showProps', '0')
-    if (!showTopLeft.value) url.searchParams.set('showTopLeft', '0')
-    if (!showToolbar.value) url.searchParams.set('showToolbar', '0')
-    if (!showTopRight.value) url.searchParams.set('showTopRight', '0')
+    if (!showComponentLibrary.value) params.set('showLibrary', '0')
+    if (!showPropsPanel.value) params.set('showProps', '0')
+    if (!showTopLeft.value) params.set('showTopLeft', '0')
+    if (!showToolbar.value) params.set('showToolbar', '0')
+    if (!showTopRight.value) params.set('showTopRight', '0')
   }
 
   if (injectDefaultProject.value) {
     const json = JSON.stringify(SAMPLE_PROJECT)
     // Simple base64url encoding
     const b64 = btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-    url.searchParams.set('defaultProject', b64)
+    params.set('defaultProject', b64)
   }
 
-  return url.toString()
+  return `${baseUrl}#/editor?${params.toString()}`
 })
 
 // --- Methods ---
@@ -102,7 +107,12 @@ onUnmounted(() => {
     </header>
 
     <main>
-      <div class="sidebar">
+      <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+        <button class="collapse-btn" @click="sidebarCollapsed = !sidebarCollapsed">
+          {{ sidebarCollapsed ? '▶' : '◀' }}
+        </button>
+        
+        <template v-if="!sidebarCollapsed">
         <div class="control-group">
           <h3>Connection</h3>
           <label>
@@ -146,6 +156,7 @@ onUnmounted(() => {
             <li v-for="(ev, i) in events" :key="i">{{ ev }}</li>
           </ul>
         </div>
+        </template>
       </div>
 
       <div class="preview-area">
@@ -171,17 +182,24 @@ onUnmounted(() => {
 }
 
 header {
-  padding: 0 1rem;
+  padding: 0 0.75rem;
   background: #fff;
   border-bottom: 1px solid #e4e4e7;
   display: flex;
   align-items: center;
-  gap: 1rem;
-  height: 60px;
+  gap: 0.75rem;
+  height: 36px;
+  flex-shrink: 0;
 }
 
 header h1 {
-  font-size: 1.25rem;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+header p {
+  font-size: 0.75rem;
+  color: #71717a;
   margin: 0;
 }
 
@@ -192,20 +210,58 @@ main {
 }
 
 .sidebar {
-  width: 300px;
+  width: 240px;
+  min-width: 240px;
   background: #fff;
   border-right: 1px solid #e4e4e7;
-  padding: 1rem;
+  padding: 0.75rem;
+  padding-top: 2.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0.75rem;
   overflow-y: auto;
+  position: relative;
+  transition: width 0.2s, min-width 0.2s, padding 0.2s;
+}
+
+.sidebar.collapsed {
+  width: 32px;
+  min-width: 32px;
+  padding: 0.25rem;
+  padding-top: 0.25rem;
+}
+
+.collapse-btn {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  color: #71717a;
+  z-index: 10;
+}
+
+.sidebar.collapsed .collapse-btn {
+  position: static;
+  margin: 0 auto;
+}
+
+.collapse-btn:hover {
+  background: #f4f4f5;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
 .control-group.disabled {
@@ -214,35 +270,37 @@ main {
 }
 
 .control-group h3 {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   color: #71717a;
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 0.15rem 0;
 }
 
 input[type="text"] {
   width: 100%;
-  padding: 0.5rem;
+  padding: 0.3rem;
   border: 1px solid #d4d4d8;
   border-radius: 4px;
+  font-size: 0.85rem;
 }
 
 label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
+  gap: 0.3rem;
+  font-size: 0.85rem;
   cursor: pointer;
 }
 
 .reload-btn {
   background: #000;
   color: #fff;
-  padding: 0.75rem;
+  padding: 0.5rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
+  font-size: 0.8rem;
 }
 
 .reload-btn:hover {
@@ -264,7 +322,11 @@ iframe {
 .events-log {
   margin-top: auto;
   border-top: 1px solid #eee;
-  padding-top: 1rem;
+  padding-top: 0.5rem;
+}
+
+.events-log h3 {
+  font-size: 0.7rem;
 }
 
 .events-log ul {
@@ -272,14 +334,14 @@ iframe {
   padding: 0;
   margin: 0;
   font-family: monospace;
-  font-size: 0.8rem;
-  max-height: 200px;
+  font-size: 0.7rem;
+  max-height: 120px;
   overflow-y: auto;
 }
 
 .events-log li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   border-bottom: 1px dashed #eee;
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.15rem;
 }
 </style>
