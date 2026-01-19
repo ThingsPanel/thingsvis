@@ -1,19 +1,52 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { immer } from 'zustand/middleware/immer';
 import { temporal } from 'zundo';
-import type { PageSchemaType, NodeSchemaType, IPage } from '@thingsvis/schema';
+import type { PageSchemaType, NodeSchemaType, IPage, GridSettings, GridPosition } from '@thingsvis/schema';
+import { GridSystem } from '../grid/GridSystem';
+import type { GridItem } from '../grid/types';
 
 export type SelectionState = {
   nodeIds: string[];
 };
 
 export type CanvasState = {
-  mode: 'fixed' | 'infinite' | 'reflow';
+  mode: 'fixed' | 'infinite' | 'reflow' | 'grid';
   width: number;
   height: number;
   zoom: number;
   offsetX: number;
   offsetY: number;
+};
+
+/**
+ * Grid-specific runtime state
+ */
+export type GridState = {
+  /** Grid settings from page config */
+  settings: GridSettings | null;
+  
+  /** Current active breakpoint (derived from container width) */
+  activeBreakpoint: { minWidth: number; cols: number } | null;
+  
+  /** Cached column width in pixels (recalculated on resize) */
+  colWidth: number;
+  
+  /** Current container width */
+  containerWidth: number;
+  
+  /** Effective column count (may differ from settings due to breakpoint) */
+  effectiveCols: number;
+  
+  /** Drag/resize preview state */
+  preview: {
+    active: boolean;
+    itemId: string | null;
+    targetPosition: GridPosition | null;
+    affectedItems: string[];
+  };
+  
+  /** Total grid height in rows (for scrolling) */
+  totalHeight: number;
 };
 
 export type NodeState = {
@@ -149,6 +182,8 @@ export type KernelState = {
   // Layer system
   layerOrder: string[]; // node ids in render order (bottom to top)
   layerGroups: Record<string, LayerGroup>;
+  // Grid layout state
+  gridState: GridState;
 };
 
 export type KernelActions = {
@@ -194,6 +229,19 @@ export type KernelActions = {
   setGroupVisible: (groupId: string, visible: boolean) => void;
   setGroupLocked: (groupId: string, locked: boolean) => void;
   renameGroup: (groupId: string, name: string) => void;
+  
+  // Grid Actions
+  setGridSettings: (settings: Partial<GridSettings>) => void;
+  moveGridItem: (nodeId: string, newPos: { x: number; y: number }) => void;
+  resizeGridItem: (nodeId: string, newSize: { w: number; h: number }) => void;
+  compactGrid: () => void;
+  setGridPreview: (preview: {
+    active: boolean;
+    itemId: string | null;
+    targetPosition: GridPosition | null;
+    affectedItems: string[];
+  }) => void;
+  updateGridContainerWidth: (containerWidth: number) => void;
 };
 
 export type KernelStoreState = KernelState & KernelActions;
@@ -213,6 +261,21 @@ const defaultCanvas: CanvasState = {
   offsetY: 0 
 };
 
+const defaultGridState: GridState = {
+  settings: null,
+  activeBreakpoint: null,
+  colWidth: 0,
+  containerWidth: 1920,
+  effectiveCols: 24,
+  preview: {
+    active: false,
+    itemId: null,
+    targetPosition: null,
+    affectedItems: [],
+  },
+  totalHeight: 0,
+};
+
 export const createKernelStore = () =>
   (createStore<KernelStoreState>()(
     (temporal as any)(
@@ -225,6 +288,7 @@ export const createKernelStore = () =>
       dataSources: {},
       layerOrder: [],
       layerGroups: {},
+      gridState: defaultGridState,
 
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
@@ -279,6 +343,9 @@ export const createKernelStore = () =>
       },
 
       removeNodes: nodeIds => {
+        const currentState = get();
+        const isGridMode = currentState.canvas.mode === 'grid';
+        
         set(state => {
           nodeIds.forEach(nodeId => {
             delete state.nodesById[nodeId];
@@ -291,6 +358,11 @@ export const createKernelStore = () =>
           // Clear selection if removed
           state.selection.nodeIds = state.selection.nodeIds.filter(id => !nodeIds.includes(id));
         });
+        
+        // Trigger grid compaction after node deletion in grid mode
+        if (isGridMode && currentState.gridState.settings?.compactVertical !== false) {
+          get().compactGrid();
+        }
       },
 
       selectNode: nodeId => {
@@ -603,6 +675,215 @@ export const createKernelStore = () =>
           const group = state.layerGroups[groupId];
           if (group) group.name = name;
         });
+      },
+
+      // Grid Actions
+      setGridSettings: settings => {
+        set(state => {
+          const current = state.gridState.settings ?? {
+            cols: 24,
+            rowHeight: 30,
+            gap: 10,
+            compactVertical: true,
+            minW: 1,
+            minH: 1,
+            showGridLines: true,
+            breakpoints: [],
+            responsive: true,
+          };
+          state.gridState.settings = { ...current, ...settings };
+          state.gridState.effectiveCols = state.gridState.settings.cols;
+          
+          // Recalculate column width
+          if (state.gridState.containerWidth > 0 && state.gridState.settings) {
+            const { cols, gap } = state.gridState.settings;
+            state.gridState.colWidth = (state.gridState.containerWidth - (cols - 1) * gap) / cols;
+          }
+        });
+      },
+
+      moveGridItem: (nodeId, newPos) => {
+        const state = get();
+        if (!state.nodesById[nodeId]) return;
+        if (state.canvas.mode !== 'grid') return;
+        
+        // Build grid items from nodes
+        const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
+          const schema = node.schemaRef as any;
+          const grid = schema.grid ?? { x: 0, y: 0, w: 4, h: 2 };
+          return {
+            id: node.id,
+            x: grid.x ?? 0,
+            y: grid.y ?? 0,
+            w: grid.w ?? 4,
+            h: grid.h ?? 2,
+            static: grid.static,
+            minW: grid.minW,
+            maxW: grid.maxW,
+            minH: grid.minH,
+            maxH: grid.maxH,
+          };
+        });
+        
+        const cols = state.gridState.effectiveCols;
+        const shouldCompact = state.gridState.settings?.compactVertical ?? true;
+        
+        try {
+          const result = GridSystem.moveItem(gridItems, nodeId, newPos, cols, shouldCompact);
+          
+          set(s => {
+            // Update all changed nodes
+            for (const item of result.items) {
+              const node = s.nodesById[item.id];
+              if (node) {
+                const schema = node.schemaRef as any;
+                schema.grid = {
+                  ...schema.grid,
+                  x: item.x,
+                  y: item.y,
+                  w: item.w,
+                  h: item.h,
+                };
+              }
+            }
+            s.gridState.totalHeight = result.totalHeight;
+          });
+        } catch (e) {
+          console.error('GridSystem.moveItem failed:', e);
+        }
+      },
+
+      resizeGridItem: (nodeId, newSize) => {
+        const state = get();
+        if (!state.nodesById[nodeId]) return;
+        if (state.canvas.mode !== 'grid') return;
+        
+        // Build grid items from nodes
+        const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
+          const schema = node.schemaRef as any;
+          const grid = schema.grid ?? { x: 0, y: 0, w: 4, h: 2 };
+          return {
+            id: node.id,
+            x: grid.x ?? 0,
+            y: grid.y ?? 0,
+            w: grid.w ?? 4,
+            h: grid.h ?? 2,
+            static: grid.static,
+            minW: grid.minW,
+            maxW: grid.maxW,
+            minH: grid.minH,
+            maxH: grid.maxH,
+          };
+        });
+        
+        const cols = state.gridState.effectiveCols;
+        const shouldCompact = state.gridState.settings?.compactVertical ?? true;
+        
+        try {
+          const result = GridSystem.resizeItem(gridItems, nodeId, newSize, cols, shouldCompact);
+          
+          set(s => {
+            for (const item of result.items) {
+              const node = s.nodesById[item.id];
+              if (node) {
+                const schema = node.schemaRef as any;
+                schema.grid = {
+                  ...schema.grid,
+                  x: item.x,
+                  y: item.y,
+                  w: item.w,
+                  h: item.h,
+                };
+              }
+            }
+            s.gridState.totalHeight = result.totalHeight;
+          });
+        } catch (e) {
+          console.error('GridSystem.resizeItem failed:', e);
+        }
+      },
+
+      compactGrid: () => {
+        const state = get();
+        if (state.canvas.mode !== 'grid') return;
+        
+        const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
+          const schema = node.schemaRef as any;
+          const grid = schema.grid ?? { x: 0, y: 0, w: 4, h: 2 };
+          return {
+            id: node.id,
+            x: grid.x ?? 0,
+            y: grid.y ?? 0,
+            w: grid.w ?? 4,
+            h: grid.h ?? 2,
+            static: grid.static,
+          };
+        });
+        
+        const cols = state.gridState.effectiveCols;
+        const result = GridSystem.compact(gridItems, cols);
+        
+        set(s => {
+          for (const item of result.items) {
+            const node = s.nodesById[item.id];
+            if (node) {
+              const schema = node.schemaRef as any;
+              schema.grid = {
+                ...schema.grid,
+                x: item.x,
+                y: item.y,
+              };
+            }
+          }
+          s.gridState.totalHeight = result.totalHeight;
+        });
+      },
+
+      setGridPreview: preview => {
+        set(state => {
+          state.gridState.preview = preview;
+        });
+      },
+
+      updateGridContainerWidth: containerWidth => {
+        const currentState = get();
+        const previousBreakpoint = currentState.gridState.activeBreakpoint;
+        const previousCols = currentState.gridState.effectiveCols;
+        
+        set(state => {
+          state.gridState.containerWidth = containerWidth;
+          
+          if (state.gridState.settings) {
+            const settings = state.gridState.settings;
+            const { cols, gap, breakpoints, responsive } = settings;
+            
+            // Determine active breakpoint and effective columns
+            let activeBreakpoint: string = 'lg';
+            let effectiveCols = cols;
+            
+            if (responsive && breakpoints && breakpoints.length > 0) {
+              // Sort breakpoints by width descending
+              const sortedBreakpoints = [...breakpoints].sort((a, b) => b.width - a.width);
+              
+              for (const bp of sortedBreakpoints) {
+                if (containerWidth <= bp.width) {
+                  activeBreakpoint = bp.name;
+                  effectiveCols = bp.cols;
+                }
+              }
+            }
+            
+            state.gridState.activeBreakpoint = activeBreakpoint;
+            state.gridState.effectiveCols = effectiveCols;
+            state.gridState.colWidth = (containerWidth - (effectiveCols - 1) * gap) / effectiveCols;
+          }
+        });
+        
+        // Trigger recompaction if effective columns changed
+        const newState = get();
+        if (newState.gridState.effectiveCols !== previousCols) {
+          get().compactGrid();
+        }
       }
       })),
       {

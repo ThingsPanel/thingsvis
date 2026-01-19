@@ -12,15 +12,21 @@ export function calculateScaleToFit(
   containerHeight: number,
   contentWidth: number,
   contentHeight: number,
-  padding = 0
+  padding = 0,
+  allowScaleUp = false
 ): number {
   const availableWidth = containerWidth - padding * 2;
   const availableHeight = containerHeight - padding * 2;
   
+  if (contentWidth <= 0 || contentHeight <= 0) return 1;
+  
   const scaleX = availableWidth / contentWidth;
   const scaleY = availableHeight / contentHeight;
   
-  return Math.min(scaleX, scaleY, 1); // Don't scale up beyond 1:1 by default
+  const scale = Math.min(scaleX, scaleY);
+  
+  // If allowScaleUp is false, don't scale beyond 1:1
+  return allowScaleUp ? scale : Math.min(scale, 1);
 }
 
 export function applyModeToContainer(mode: Mode, container: HTMLElement) {

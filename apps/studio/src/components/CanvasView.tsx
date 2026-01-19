@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState, useCallback } from "react";
 import { useSyncExternalStore } from "react";
-import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
+import { CanvasView as UI_CanvasView, screenToCanvas, useGridLayout } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
 import TransformControls from "./tools/TransformControls";
 import CreateToolLayer from "./tools/CreateToolLayer";
@@ -58,6 +58,17 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     useCallback(subscribe => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState
   );
+
+  // Detect grid layout mode
+  const isGridMode = state.canvas?.mode === 'grid';
+
+  // Grid layout hook (provides grid-aware drag/resize handlers)
+  const gridLayout = useGridLayout({
+    store,
+    containerWidth: containerRef.current?.clientWidth ?? 0,
+    settings: state.gridState?.settings ?? null,
+    isGridMode,
+  });
 
   useImperativeHandle(ref, () => ({
     dispatchToKernel: (payload: unknown) => {
@@ -282,6 +293,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
+            isGridMode={isGridMode}
+            gridLayout={isGridMode ? gridLayout : undefined}
           />
         </div>
       </div>

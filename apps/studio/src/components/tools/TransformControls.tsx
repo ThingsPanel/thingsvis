@@ -4,6 +4,21 @@ import Moveable from "moveable";
 import Selecto from "selecto";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
 
+/** Grid layout handlers from useGridLayout hook */
+type GridLayoutHandlers = {
+  colWidth: number;
+  effectiveCols: number;
+  onDragStart: (nodeId: string) => void;
+  onDragMove: (nodeId: string, pixelX: number, pixelY: number) => void;
+  onDragEnd: (nodeId: string) => void;
+  onResizeStart: (nodeId: string) => void;
+  onResizeMove: (nodeId: string, pixelWidth: number, pixelHeight: number) => void;
+  onResizeEnd: (nodeId: string) => void;
+  getGridPosition: (nodeId: string) => { x: number; y: number; w: number; h: number } | null;
+  getPixelRect: (nodeId: string) => { x: number; y: number; width: number; height: number } | null;
+  snapPixelToGrid: (pixelX: number, pixelY: number) => { x: number; y: number };
+};
+
 type Props = {
   containerRef: React.RefObject<HTMLElement>;
   dragContainerRef?: React.RefObject<HTMLElement>; // Container for Selecto drag area (box selection)
@@ -12,9 +27,11 @@ type Props = {
   onUserEdit?: () => void;
   getViewport?: () => { width: number; height: number; zoom: number; offsetX: number; offsetY: number };
   zoom?: number; // Current viewport zoom - triggers re-render when changed
+  isGridMode?: boolean; // Whether grid layout mode is active
+  gridLayout?: GridLayoutHandlers; // Grid layout handlers from useGridLayout hook
 };
 
-export default function TransformControls({ containerRef, dragContainerRef, kernelStore, enabled = true, onUserEdit, getViewport, zoom = 1 }: Props) {
+export default function TransformControls({ containerRef, dragContainerRef, kernelStore, enabled = true, onUserEdit, getViewport, zoom = 1, isGridMode = false, gridLayout }: Props) {
   const moveableRef = useRef<Moveable | null>(null);
   const selectoRef = useRef<Selecto | null>(null);
 

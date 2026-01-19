@@ -1,10 +1,12 @@
-import type { KernelStore, KernelState, NodeState, ConnectionState } from '@thingsvis/kernel';
-import type { NodeSchemaType, PluginMainModule } from '@thingsvis/schema';
+import type { KernelStore, KernelState, NodeState, ConnectionState, GridState } from '@thingsvis/kernel';
+import type { NodeSchemaType, PluginMainModule, GridSettings } from '@thingsvis/schema';
 import { App, Rect, Group, Line } from 'leafer-ui';
 import { ExpressionEvaluator } from '@thingsvis/utils';
 import type { RendererFactory } from './renderers/types';
 import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
+import { GridOverlay } from './grid/GridOverlay';
+import { GridPlaceholder } from './grid/GridPlaceholder';
 
 type Point = { x: number; y: number };
 type ConnectionDirection = 'forward' | 'reverse' | 'bidirectional';
@@ -33,6 +35,15 @@ export class VisualEngine {
   private unsubscribe?: () => void;
   private overlayRoot?: HTMLDivElement;
   private containerEl?: HTMLElement;
+
+  // Grid layout overlay and placeholder
+  private gridOverlay?: GridOverlay;
+  private gridPlaceholder?: GridPlaceholder;
+  private gridRoot?: Group;
+  private lastGridSettings?: GridSettings;
+  private lastGridPreview?: GridState['preview'];
+  private resizeObserver?: ResizeObserver;
+  private lastContainerWidth?: number;
 
   private rendererByType = new Map<string, RendererFactory>();
   private pendingRendererLoad = new Map<string, Promise<void>>();
@@ -216,14 +227,22 @@ export class VisualEngine {
     this.connRoot = new Group();
     this.root.addAt(this.connRoot, 0);
 
+    // Initialize grid layout layers
+    this.initGridLayers();
+
+    // Set up container resize observer for responsive grid layout
+    this.setupResizeObserver();
+
     // Subscribe to store updates
     this.unsubscribe = this.store.subscribe(() => {
       const state = this.store.getState() as KernelState;
       this.sync(state.nodesById, state.connections, state.layerOrder);
+      this.syncGridState(state);
     });
     // Initial sync
     const state = this.store.getState() as KernelState;
     this.sync(state.nodesById, state.connections, state.layerOrder);
+    this.syncGridState(state);
   }
 
   unmount() {
@@ -234,6 +253,21 @@ export class VisualEngine {
     }
     this.overlayRoot = undefined;
     this.containerEl = undefined;
+    
+    // Clean up resize observer
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
+    this.lastContainerWidth = undefined;
+    
+    // Clean up grid layers
+    this.gridOverlay?.dispose();
+    this.gridOverlay = undefined;
+    this.gridPlaceholder?.dispose();
+    this.gridPlaceholder = undefined;
+    this.gridRoot = undefined;
+    this.lastGridSettings = undefined;
+    this.lastGridPreview = undefined;
+    
     this.app?.destroy?.();
     this.app = undefined;
     this.root = undefined;
@@ -254,6 +288,175 @@ export class VisualEngine {
     if (this.flowRafId != null) cancelAnimationFrame(this.flowRafId);
     this.flowRafId = null;
     this.errorMessageByNode.clear();
+  }
+
+  /**
+   * Set viewport transform (scale and offset) for the canvas
+   * This applies the transform to the Leafer root group
+   */
+  setViewport(zoom: number, offsetX: number, offsetY: number) {
+    if (!this.root) return;
+    this.root.scaleX = zoom;
+    this.root.scaleY = zoom;
+    this.root.x = offsetX;
+    this.root.y = offsetY;
+    
+    // Also update overlay root position
+    if (this.overlayRoot) {
+      this.overlayRoot.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`;
+      this.overlayRoot.style.transformOrigin = '0 0';
+    }
+  }
+
+  /**
+   * Initialize grid layout layers (overlay at background, placeholder above nodes)
+   */
+  private initGridLayers() {
+    if (!this.root) return;
+    
+    // Create grid root group to hold overlay and placeholder
+    this.gridRoot = new Group();
+    // Add grid root at index 0 (below connections and nodes)
+    this.root.addAt(this.gridRoot, 0);
+    
+    // Grid overlay and placeholder will be lazily created when grid mode is active
+  }
+
+  /**
+   * Set up container resize observer for responsive grid layout
+   */
+  private setupResizeObserver() {
+    if (!this.containerEl) return;
+    
+    this.lastContainerWidth = this.containerEl.clientWidth;
+    
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newWidth = entry.contentRect.width;
+        
+        // Only update if width changed significantly (avoid subpixel jitter)
+        if (this.lastContainerWidth !== undefined && 
+            Math.abs(newWidth - this.lastContainerWidth) < 1) {
+          continue;
+        }
+        
+        this.lastContainerWidth = newWidth;
+        
+        // Update grid state with new container width
+        const state = this.store.getState() as KernelState;
+        if (state.canvas?.mode === 'grid' && state.updateGridContainerWidth) {
+          state.updateGridContainerWidth(newWidth);
+        }
+        
+        // Force re-sync of grid overlay with new dimensions
+        this.lastGridSettings = undefined; // Force settings update
+        this.syncGridState(state);
+      }
+    });
+    
+    this.resizeObserver.observe(this.containerEl);
+  }
+
+  /**
+   * Sync grid state from store - update overlay and placeholder
+   */
+  private syncGridState(state: KernelState) {
+    if (!this.root || !this.gridRoot || !this.containerEl) return;
+    
+    const gridState = state.gridState;
+    const canvasMode = state.canvas?.mode;
+    const isGridMode = canvasMode === 'grid';
+    
+    // If not in grid mode, hide/dispose grid elements
+    if (!isGridMode) {
+      this.gridOverlay?.setVisible(false);
+      this.gridPlaceholder?.hide();
+      return;
+    }
+    
+    const settings = gridState?.settings;
+    if (!settings) return;
+    
+    const containerWidth = this.containerEl.clientWidth;
+    const containerHeight = this.containerEl.clientHeight;
+    
+    // Calculate column width
+    const gap = settings.gap ?? 10;
+    const cols = gridState?.effectiveCols ?? settings.cols ?? 24;
+    const colWidth = (containerWidth - gap * (cols + 1)) / cols;
+    const rowHeight = settings.rowHeight ?? 30;
+    
+    // Initialize or update grid overlay
+    if (!this.gridOverlay) {
+      this.gridOverlay = new GridOverlay();
+      this.gridRoot.add(this.gridOverlay.getGroup());
+    }
+    
+    // Check if settings changed
+    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(this.lastGridSettings);
+    if (settingsChanged) {
+      this.lastGridSettings = settings;
+      this.gridOverlay.update({
+        settings,
+        containerWidth,
+        containerHeight,
+        visible: true
+      });
+    }
+    
+    this.gridOverlay.setVisible(true);
+    
+    // Initialize grid placeholder (rendered above nodes in overlay layer)
+    if (!this.gridPlaceholder) {
+      this.gridPlaceholder = new GridPlaceholder();
+      // Add placeholder above grid overlay but still in grid root
+      this.gridRoot.add(this.gridPlaceholder.getGroup());
+    }
+    
+    // Update placeholder from preview state
+    const preview = gridState?.preview;
+    const previewChanged = JSON.stringify(preview) !== JSON.stringify(this.lastGridPreview);
+    
+    if (previewChanged) {
+      this.lastGridPreview = preview;
+      
+      if (preview?.active && preview.targetPosition) {
+        // Convert grid position to pixel position
+        const x = gap + preview.targetPosition.x * (colWidth + gap);
+        const y = gap + preview.targetPosition.y * (rowHeight + gap);
+        const width = preview.targetPosition.w * (colWidth + gap) - gap;
+        const height = preview.targetPosition.h * (rowHeight + gap) - gap;
+        
+        this.gridPlaceholder.updatePosition({ x, y, width, height }, true);
+        this.gridPlaceholder.show();
+        
+        // Update ghost overlays for affected items
+        if (preview.affectedItems && preview.affectedItems.length > 0) {
+          // Look up affected item positions from gridState
+          const affectedNodes = preview.affectedItems
+            .map(id => state.nodesById[id])
+            .filter((node): node is NodeState => !!node && !!node.schemaRef);
+          
+          const ghostRects = affectedNodes.map(node => {
+            const gridPos = (node.schemaRef as any).grid;
+            if (!gridPos) return null;
+            return {
+              x: gap + gridPos.x * (colWidth + gap),
+              y: gap + gridPos.y * (rowHeight + gap),
+              width: gridPos.w * (colWidth + gap) - gap,
+              height: gridPos.h * (rowHeight + gap) - gap
+            };
+          }).filter((rect): rect is { x: number; y: number; width: number; height: number } => rect !== null);
+          
+          this.gridPlaceholder.updateGhosts(ghostRects);
+        } else {
+          this.gridPlaceholder.updateGhosts([]);
+        }
+      } else {
+        this.gridPlaceholder.hide();
+        this.gridPlaceholder.updateGhosts([]);
+      }
+    }
   }
 
   private isSyncing = false;
