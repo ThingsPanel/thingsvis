@@ -10,6 +10,7 @@ import { useSyncExternalStore } from 'react';
 import { GridStack } from 'gridstack';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
 import type { GridSettings, PluginOverlayContext } from '@thingsvis/schema';
+import { PropertyResolver } from '../engine/PropertyResolver';
 
 export interface GridStackCanvasProps {
   store: KernelStore;
@@ -32,10 +33,12 @@ const renderedOverlays = new Map<string, { update?: (ctx: PluginOverlayContext) 
 
 function nodeToOverlayContext(node: NodeState, store: KernelStore): PluginOverlayContext {
   const schema = node.schemaRef as any;
+  // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定）
+  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
   return {
     position: schema.position ?? { x: 0, y: 0 },
     size: schema.size ?? { width: 200, height: 100 },
-    props: schema.props ?? {}
+    props: resolvedProps
   };
 }
 
@@ -330,6 +333,18 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#e53e3e;font-size:12px;">Error: ${nodeType}</div>`;
     }
   }, [resolvePlugin, store]);
+
+  // Update existing overlays when node props change (for data source updates)
+  // Note: We watch dataSources explicitly since props may contain bindings like "${ds.xxx}"
+  useEffect(() => {
+    nodes.forEach((node) => {
+      const overlay = renderedOverlays.get(node.id);
+      if (overlay?.update) {
+        const context = nodeToOverlayContext(node, store);
+        overlay.update(context);
+      }
+    });
+  }, [nodes, store, kernelState.dataSources]);
 
   // Use fixed dimensions or fill container
   const containerWidth = width ? `${width}px` : '100%';
