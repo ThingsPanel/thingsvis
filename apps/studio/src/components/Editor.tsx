@@ -87,6 +87,7 @@ import { recentProjects } from '../lib/storage/recentProjects'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
+import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -145,6 +146,20 @@ export default function Editor() {
   // Image picker state for image tool (stores Object URL)
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
 
+  // Embed mode UI visibility from URL params
+  const embedVisibility = useMemo(() => {
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const isEmbedded = params.get('mode') === 'embedded'
+    return {
+      isEmbedded,
+      showLibrary: params.get('showLibrary') !== '0',
+      showProps: params.get('showProps') !== '0',
+      showTopLeft: params.get('showTopLeft') !== '0',
+      showToolbar: params.get('showToolbar') !== '0',
+      showTopRight: params.get('showTopRight') !== '0',
+    }
+  }, [])
+
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
     () => store.getState() as KernelState
@@ -202,6 +217,7 @@ export default function Editor() {
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId()
+    const defaultMode = isEmbedMode() ? "reflow" : "fixed"
     return {
     // Meta - 基础身份
     id: initialId,
@@ -216,7 +232,7 @@ export default function Editor() {
     createdBy: "user-001",
 
     // Config - 画布配置
-    mode: "infinite" as "fixed" | "infinite" | "reflow",
+    mode: defaultMode as "fixed" | "infinite" | "reflow",
     width: 1920,
     height: 1080,
     theme: "dark" as "dark" | "light" | "auto",
@@ -442,6 +458,147 @@ export default function Editor() {
   // Enable keyboard shortcuts
   useKeyboardShortcuts({ registry: commandRegistry })
 
+  // Handle embed mode triggerSave event
+  useEffect(() => {
+    if (!isEmbedMode()) return;
+
+    const unsubscribe = onEmbedEvent('triggerSave', () => {
+      console.log('[Editor] triggerSave event received, collecting data...');
+      // Collect all nodes with their thing model bindings
+      const state = store.getState() as KernelState;
+      const nodes = Object.values(state.nodesById).map(nodeState => {
+        const schema = nodeState.schemaRef as any;
+        return {
+          id: schema.id,
+          type: schema.type,
+          position: schema.position,
+          size: schema.size,
+          props: schema.props,
+          // Include thing model bindings if present
+          thingModelBindings: schema.thingModelBindings || [],
+        };
+      });
+
+      // Build export data for ThingsPanel
+      const exportData = {
+        canvas: {
+          mode: canvasConfig.mode,
+          width: canvasConfig.width,
+          height: canvasConfig.height,
+          background: canvasConfig.bgValue,
+        },
+        nodes,
+        // Collect all thing model bindings in flat format for easy access
+        dataBindings: nodes.flatMap(node =>
+          (node.thingModelBindings || []).map((binding: any) => ({
+            nodeId: node.id,
+            targetProp: binding.targetProp,
+            metricsId: binding.metricsId,
+            metricsName: binding.metricsName,
+            metricsType: binding.metricsType,
+            dataType: binding.dataType,
+            unit: binding.unit,
+          }))
+        ),
+      };
+
+      console.log('[Editor] Sending saveRequest with data:', exportData);
+      // Send to host
+      requestSave(exportData);
+    });
+
+    return unsubscribe;
+  }, [canvasConfig]);
+
+  // Handle embed mode init event - load initial data from host
+  useEffect(() => {
+    if (!isEmbedMode()) return;
+
+    const unsubscribe = onEmbedEvent('init', (payload: any) => {
+      console.log('[Editor] Embed init received:', payload);
+      
+      if (payload?.data) {
+        const data = payload.data;
+        
+        // Load canvas config if provided
+        if (data.canvas) {
+          setCanvasConfig(prev => ({
+            ...prev,
+            mode: data.canvas.mode || prev.mode,
+            width: data.canvas.width || prev.width,
+            height: data.canvas.height || prev.height,
+            bgValue: data.canvas.background || prev.bgValue,
+          }));
+        }
+        
+        // Load nodes if provided
+        if (data.nodes && Array.isArray(data.nodes)) {
+          // Convert nodes to NodeSchemaType format and load into store
+          const nodesToLoad = data.nodes.map((node: any) => ({
+            id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+            type: node.type,
+            position: node.position || { x: 100, y: 100 },
+            size: node.size || { width: 200, height: 80 },
+            props: node.props || {},
+            thingModelBindings: node.thingModelBindings || [],
+          }));
+          
+          store.getState().loadPage({
+            id: `embed-${Date.now()}`,
+            type: 'page' as const,
+            version: '1.0.0',
+            nodes: nodesToLoad,
+          });
+          
+          // Clear undo history for clean start
+          try {
+            store.temporal.getState().clear?.();
+          } catch {}
+        }
+      }
+    });
+
+    // Also check if initial data is already available (in case init was received before this effect ran)
+    const initialData = getInitialData();
+    if (initialData) {
+      console.log('[Editor] Loading already-received initial data:', initialData);
+      
+      if (initialData.canvas) {
+        setCanvasConfig(prev => ({
+          ...prev,
+          mode: initialData.canvas.mode || prev.mode,
+          width: initialData.canvas.width || prev.width,
+          height: initialData.canvas.height || prev.height,
+          bgValue: initialData.canvas.background || prev.bgValue,
+        }));
+      }
+      
+      if (initialData.nodes && Array.isArray(initialData.nodes)) {
+        const nodesToLoad = initialData.nodes.map((node: any) => ({
+          id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          type: node.type,
+          position: node.position || { x: 100, y: 100 },
+          size: node.size || { width: 200, height: 80 },
+          props: node.props || {},
+          thingModelBindings: node.thingModelBindings || [],
+        }));
+        
+        store.getState().loadPage({
+          id: `embed-${Date.now()}`,
+          type: 'page' as const,
+          version: '1.0.0',
+          nodes: nodesToLoad,
+        });
+        
+        try {
+          store.temporal.getState().clear?.();
+        } catch {}
+      }
+    }
+
+    return unsubscribe;
+  }, []);
+
   useEffect(() => {
     // Sync canvas state to kernel store when config changes
     store.getState().updateCanvas({
@@ -623,7 +780,7 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -685,7 +842,7 @@ export default function Editor() {
         </div>
 
         {/* Center Side: Tools */}
-        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto">
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
           {tools.map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
@@ -710,7 +867,7 @@ export default function Editor() {
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!embedVisibility.showTopRight ? 'invisible' : ''}`}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
@@ -753,6 +910,7 @@ export default function Editor() {
       </div>
 
       {/* Left Panel: Assets & Layers */}
+      {embedVisibility.showLibrary && (
       <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex border-b border-border">
@@ -805,9 +963,10 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
-      <div className="absolute left-[324px] bottom-4 z-40 flex items-center gap-3 select-none">
+      <div className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${embedVisibility.showLibrary ? 'left-[324px]' : 'left-4'}`}>
         {/* Zoom Controls */}
         <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
           <Button
@@ -857,6 +1016,7 @@ export default function Editor() {
       </div>
 
       {/* Right Panel - Properties */}
+      {embedVisibility.showProps && (
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
@@ -914,9 +1074,9 @@ export default function Editor() {
                       }
                       className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
-                      <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                       <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
                       <option value="reflow">{language === "zh" ? "自适应" : "Reflow"}</option>
+                      <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                     </select>
                   </div>
 
@@ -948,6 +1108,7 @@ export default function Editor() {
           </div>
         </div>
       </aside>
+      )}
 
       {/* Keyboard Shortcuts Help Panel */}
       <ShortcutHelpPanel

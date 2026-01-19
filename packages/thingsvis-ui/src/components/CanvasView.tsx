@@ -75,6 +75,7 @@ export const CanvasView: React.FC<Props> = ({
   );
 
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [hasUserPanned, setHasUserPanned] = useState(false);
   const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 });
 
   // Update container dimensions on mount and resize
@@ -102,19 +103,25 @@ export const CanvasView: React.FC<Props> = ({
     }
   }, [mode, containerDimensions, width, height, hasAutoFit, propsZoom]);
 
-  const viewportInfo = useMemo(() => {
-    let currentZoom = zoom;
-    let currentOffset = offset;
-
-    if (mode === 'fixed' && containerDimensions.width > 0) {
-      currentOffset = {
-        x: (containerDimensions.width - width * currentZoom) / 2,
-        y: (containerDimensions.height - height * currentZoom) / 2
-      };
+  useEffect(() => {
+    if (mode !== 'fixed') {
+      setHasUserPanned(false);
+      return;
     }
+    if (containerDimensions.width <= 0 || containerDimensions.height <= 0) return;
+    if (hasUserPanned) return;
+    const nextOffset = {
+      x: (containerDimensions.width - width * zoom) / 2,
+      y: (containerDimensions.height - height * zoom) / 2
+    };
+    setOffset((prev) => (
+      prev.x === nextOffset.x && prev.y === nextOffset.y ? prev : nextOffset
+    ));
+  }, [mode, containerDimensions, width, height, zoom, hasUserPanned]);
 
-    return { zoom: currentZoom, offset: currentOffset };
-  }, [mode, width, height, zoom, offset, containerDimensions]);
+  const viewportInfo = useMemo(() => {
+    return { zoom, offset };
+  }, [zoom, offset]);
 
   const drawGrid = useCallback(() => {
     const canvas = gridCanvasRef.current;
@@ -185,7 +192,7 @@ export const CanvasView: React.FC<Props> = ({
     let lastY = 0;
 
     function onPointerDown(e: PointerEvent) {
-      if (mode !== 'infinite') return;
+      if (mode !== 'infinite' && mode !== 'fixed') return;
       if (!panEnabled) return;
       isPanning = true;
       lastX = e.clientX;
@@ -199,6 +206,9 @@ export const CanvasView: React.FC<Props> = ({
       lastX = e.clientX;
       lastY = e.clientY;
       setOffset((o) => ({ x: o.x + dx, y: o.y + dy }));
+      if (mode === 'fixed') {
+        setHasUserPanned(true);
+      }
     }
     function onPointerUp(e: PointerEvent) {
       isPanning = false;
@@ -216,10 +226,13 @@ export const CanvasView: React.FC<Props> = ({
         const factor = delta > 0 ? 1.1 : 0.9;
         const next = Math.max(0.1, Math.min(10, zoomRef.current * factor));
         setZoomValue(next);
-      } else if (mode === 'infinite') {
+      } else if (mode === 'infinite' || mode === 'fixed') {
         if (!panEnabled) return;
         // Panning via wheel (standard scroll)
         setOffset((o) => ({ x: o.x - e.deltaX, y: o.y - e.deltaY }));
+        if (mode === 'fixed') {
+          setHasUserPanned(true);
+        }
       }
     }
 
