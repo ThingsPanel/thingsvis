@@ -21,6 +21,8 @@ export interface GridStackCanvasProps {
   width?: number;
   /** Fixed height in pixels, or undefined for 100% */
   height?: number;
+  /** Current active tool */
+  activeTool?: string;
 }
 
 // Cache for loaded plugins
@@ -51,6 +53,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   onDropComponent,
   width,
   height,
+  activeTool,
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,8 +73,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
   // Default grid settings
   const cols = settings?.cols ?? 12;
-  const rowHeight = settings?.rowHeight ?? 10;
+  const rowHeight = settings?.rowHeight ?? 50;
   const gap = settings?.gap ?? 5;
+  // GridStack applies margin to all sides, so use half to get the desired gap between widgets
+  const margin = gap / 2;
 
   // Handle drop from external drag source (ComponentsList)
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -127,7 +132,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       gridRef.current = GridStack.init({
         column: cols,
         cellHeight: rowHeight,
-        margin: gap,
+        margin: margin,
         float: true, // Allow overlapping - widgets can be placed anywhere
         animate: false,
         disableOneColumnMode: true,
@@ -177,8 +182,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     grid.cellHeight(rowHeight);
 
     // Update margin/gap
-    grid.margin(gap);
-  }, [cols, rowHeight, gap]);
+    grid.margin(margin);
+  }, [cols, rowHeight, gap, margin]);
 
   // Sync nodes with gridstack using makeWidget
   useEffect(() => {
@@ -228,7 +233,28 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       const contentEl = document.createElement('div');
       contentEl.className = 'grid-stack-item-content';
-      contentEl.style.cssText = 'background:#fff;border:1px solid #e0e0e0;overflow:hidden;';
+      contentEl.style.cssText = 'background:#fff;border:1px solid #e0e0e0;overflow:hidden;cursor:pointer;';
+      
+      // Track if this is a click (mousedown + mouseup without much movement)
+      let mouseDownPos: { x: number; y: number } | null = null;
+      
+      itemEl.addEventListener('mousedown', (e) => {
+        mouseDownPos = { x: e.clientX, y: e.clientY };
+      });
+      
+      itemEl.addEventListener('mouseup', (e) => {
+        if (!mouseDownPos) return;
+        const dx = Math.abs(e.clientX - mouseDownPos.x);
+        const dy = Math.abs(e.clientY - mouseDownPos.y);
+        mouseDownPos = null;
+        
+        // If mouse didn't move much, treat as click
+        if (dx < 5 && dy < 5) {
+          e.stopPropagation();
+          // Select this node in the store
+          (store.getState() as any).selectNode(node.id);
+        }
+      });
       
       // Show loading placeholder initially
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;">Loading ${nodeType}...</div>`;
@@ -309,34 +335,122 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   const containerWidth = width ? `${width}px` : '100%';
   const containerHeight = height ? `${height}px` : '100%';
 
+  // Pan state for dragging canvas using transform
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const isPanningRef = useRef(false);
+  const panStartRef = useRef({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = React.useState({ x: 0, y: 0 });
+  const panOffsetRef = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    // Click on empty area clears selection (only if clicking directly on container, not a widget)
+    if (e.target === scrollContainerRef.current || e.target === containerRef.current) {
+      (store.getState() as any).selectNode(null);
+    }
+    
+    if (activeTool !== 'pan') return;
+    
+    // Prevent gridstack from handling this event
+    e.stopPropagation();
+    e.preventDefault();
+    
+    isPanningRef.current = true;
+    panStartRef.current = {
+      x: e.clientX - panOffsetRef.current.x,
+      y: e.clientY - panOffsetRef.current.y,
+    };
+    
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.style.cursor = 'grabbing';
+    }
+  }, [activeTool]);
+
+  // Use window-level mouse events for reliable pan
+  useEffect(() => {
+    if (activeTool !== 'pan') return;
+    
+    const handleGlobalMouseUp = () => {
+      if (isPanningRef.current) {
+        isPanningRef.current = false;
+        const container = scrollContainerRef.current;
+        if (container) {
+          container.style.cursor = 'grab';
+        }
+      }
+    };
+
+    const handleGlobalMouseMove = (e: MouseEvent) => {
+      if (!isPanningRef.current) return;
+      
+      const newX = e.clientX - panStartRef.current.x;
+      const newY = e.clientY - panStartRef.current.y;
+      
+      panOffsetRef.current = { x: newX, y: newY };
+      setPanOffset({ x: newX, y: newY });
+    };
+
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    window.addEventListener('mousemove', handleGlobalMouseMove);
+
+    return () => {
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+    };
+  }, [activeTool]);
+
+  // Disable gridstack drag/resize when pan tool is active
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    if (activeTool === 'pan') {
+      grid.disable(); // Disable all grid interactions
+    } else {
+      grid.enable(); // Re-enable grid interactions
+    }
+  }, [activeTool]);
+
   return (
     <div 
+      ref={scrollContainerRef}
+      onMouseDown={handleMouseDown}
       style={{ 
         width: '100%', 
         height: '100%',
-        overflow: 'auto',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-        padding: '20px',
-        boxSizing: 'border-box',
+        overflow: 'hidden',
+        position: 'relative',
         background: '#e5e5e5',
+        cursor: activeTool === 'pan' ? 'grab' : 'default',
+        userSelect: activeTool === 'pan' ? 'none' : 'auto',
       }}
     >
-      <div 
-        ref={containerRef}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
-        style={{ 
-          width: containerWidth, 
-          minHeight: containerHeight,
-          background: '#fff',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-          overflow: 'hidden',
+      <div
+        style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px))`,
         }}
       >
-        {/* The grid-stack container - GridStack will initialize on this */}
-        <div className="grid-stack" style={{ minHeight: containerHeight }} />
+        <div 
+          ref={containerRef}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          style={{ 
+            width: containerWidth, 
+            minHeight: containerHeight,
+            background: '#fff',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            // Add padding to compensate for halved margin on outer edges
+            padding: `${margin}px`,
+            boxSizing: 'border-box',
+          }}
+        >
+          {/* The grid-stack container - GridStack will initialize on this */}
+          <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
+        </div>
       </div>
     </div>
   );

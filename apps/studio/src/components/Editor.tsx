@@ -237,7 +237,7 @@ export default function Editor() {
     width: 1920,
     height: 1080,
     gridCols: 24,
-    gridRowHeight: 10,
+    gridRowHeight: 50,
     gridGap: 5,
     theme: "dark" as "dark" | "light" | "auto",
     gridSize: 20,
@@ -737,11 +737,12 @@ export default function Editor() {
 
       {/* Canvas View - switch between normal and grid mode */}
       <div className="absolute inset-0">
-        {canvasConfig.mode === 'grid' ? (
+        {canvasConfig.mode === 'reflow' ? (
           <GridStackCanvas
             store={store}
             width={canvasConfig.width}
             height={canvasConfig.height}
+            activeTool={activeTool}
             settings={{
               cols: canvasConfig.gridCols ?? 24,
               rowHeight: canvasConfig.gridRowHeight ?? 10,
@@ -1135,19 +1136,30 @@ export default function Editor() {
                     <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
                     <select
                       value={canvasConfig.mode}
-                      onChange={(e) =>
-                        setCanvasConfig({ ...canvasConfig, mode: e.target.value as "fixed" | "infinite" | "reflow" | "grid" })
-                      }
+                      onChange={(e) => {
+                        const newMode = e.target.value as "fixed" | "infinite" | "reflow";
+                        if (newMode !== canvasConfig.mode) {
+                          const hasNodes = Object.keys(store.getState().nodesById).length > 0;
+                          if (hasNodes) {
+                            const msg = language === "zh" 
+                              ? "切换布局模式将清空当前画布，是否继续？" 
+                              : "Switching layout mode will clear the current canvas. Continue?";
+                            if (!window.confirm(msg)) return;
+                            store.getState().loadPage({ id: canvasConfig.id, type: 'page', version: '1.0.0', nodes: [] });
+                            markDirty();
+                          }
+                          setCanvasConfig({ ...canvasConfig, mode: newMode });
+                        }
+                      }}
                       className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
                       <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                      <option value="reflow">{language === "zh" ? "自适应" : "Reflow"}</option>
+                      <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
                       <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
-                      <option value="grid">{language === "zh" ? "栅格布局" : "Grid Layout"}</option>
                     </select>
                   </div>
 
-                  {canvasConfig.mode === 'grid' ? (
+                  {canvasConfig.mode === 'reflow' ? (
                     <div className="space-y-3">
                       {/* Canvas size for grid mode */}
                       <div className="grid grid-cols-2 gap-3">
@@ -1210,7 +1222,7 @@ export default function Editor() {
                         {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
                       </p>
                     </div>
-                  ) : canvasConfig.mode !== 'infinite' ? (
+                  ) : canvasConfig.mode === 'fixed' ? (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
