@@ -201,6 +201,7 @@ export type KernelActions = {
       props?: Record<string, unknown>;
       locked?: boolean;
       data?: any[]; // 新增：支持数据绑定字段更新
+      grid?: { x: number; y: number; w: number; h: number }; // Grid layout position
     }
   ) => void;
   setNodeError: (nodeId: string, error: string) => void;
@@ -427,6 +428,10 @@ export const createKernelStore = () =>
 
           if (changes.locked !== undefined) {
             target.locked = changes.locked;
+          }
+
+          if (changes.grid !== undefined) {
+            (target.schemaRef as NodeSchemaType).grid = changes.grid;
           }
 
           if (changes.data !== undefined) {
