@@ -5,7 +5,7 @@
  * @see https://github.com/gridstack/gridstack.js/blob/master/demo/react.html
  */
 
-import React, { useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useSyncExternalStore } from 'react';
 import { GridStack } from 'gridstack';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
@@ -68,11 +68,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     () => store.getState() as KernelState
   );
 
-  // Memoize nodes array
-  const nodes = useMemo(() => 
-    Object.values(kernelState.nodesById), 
-    [kernelState.nodesById]
-  );
+  // Always derive nodes from the latest state to reflect binding updates.
+  const nodes = Object.values(kernelState.nodesById);
 
   // Default grid settings
   const cols = settings?.cols ?? 12;
@@ -358,8 +355,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   const panOffsetRef = useRef({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    // Click on empty area clears selection (only if clicking directly on container, not a widget)
-    if (e.target === scrollContainerRef.current || e.target === containerRef.current) {
+    // Click on empty area clears selection (avoid clearing when clicking a widget)
+    const target = e.target as Element | null;
+    const clickedWidget = target?.closest?.('.grid-stack-item');
+    if (!clickedWidget) {
       (store.getState() as any).selectNode(null);
     }
     

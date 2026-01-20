@@ -574,7 +574,14 @@ export class VisualEngine {
     if (!node.visible) return;
     
     const existing = this.instanceMap.get(node.id);
-    const type = node.schemaRef.type;
+    const type = node.schemaRef?.type;
+    if (!type || typeof type !== 'string') {
+      const msg = 'Invalid node type';
+      this.errorMessageByNode.set(node.id, msg);
+      const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+      setNodeError?.(node.id, msg);
+      return;
+    }
 
     if (!existing) {
       const renderer = this.getRendererOrScheduleLoad(type);
