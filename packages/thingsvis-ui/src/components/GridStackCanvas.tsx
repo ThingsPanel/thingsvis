@@ -24,6 +24,8 @@ export interface GridStackCanvasProps {
   height?: number;
   /** Current active tool */
   activeTool?: string;
+  /** Enable interactions (drag/resize/select/drop). Defaults to true. */
+  interactive?: boolean;
 }
 
 // Cache for loaded plugins
@@ -57,6 +59,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   width,
   height,
   activeTool,
+  interactive = true,
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -80,13 +83,15 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
   // Handle drop from external drag source (ComponentsList)
   const handleDragOver = useCallback((e: React.DragEvent) => {
+    if (!interactive) return;
     if (e.dataTransfer.types.includes('application/thingsvis-plugin')) {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
     }
-  }, []);
+  }, [interactive]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
+    if (!interactive) return;
     e.preventDefault();
     const data = e.dataTransfer.getData('application/thingsvis-plugin');
     if (!data || !onDropComponent) return;
@@ -115,7 +120,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     } catch (err) {
       console.error('[GridStackCanvas] Drop error:', err);
     }
-  }, [onDropComponent, cols, rowHeight]);
+  }, [interactive, onDropComponent, cols, rowHeight]);
 
   // Store callbacks in refs to avoid re-initialization
   const onNodeChangeRef = useRef(onNodeChange);
@@ -136,7 +141,9 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         float: true, // Allow overlapping - widgets can be placed anywhere
         animate: false,
         disableOneColumnMode: true,
-        staticGrid: false,
+        staticGrid: !interactive,
+        disableDrag: !interactive,
+        disableResize: !interactive,
         // Prevent collision resolution issues
         acceptWidgets: true,
         removable: false,
@@ -249,7 +256,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         mouseDownPos = null;
         
         // If mouse didn't move much, treat as click
-        if (dx < 5 && dy < 5) {
+        if (interactive && dx < 5 && dy < 5) {
           e.stopPropagation();
           // Select this node in the store
           (store.getState() as any).selectNode(node.id);
@@ -285,7 +292,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         renderedOverlays.delete(id);
         
         const el = grid.getGridItems().find((item: HTMLElement) => item.getAttribute('gs-id') === id);
-        if (el) grid.removeWidget(el, false);
+        if (el) grid.removeWidget(el, true);
       }
     });
   }, [nodes, resolvePlugin]);

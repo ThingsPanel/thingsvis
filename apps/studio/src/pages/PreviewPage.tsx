@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Maximize, Minimize, RefreshCw } from 'lucide-react'
 import type { PageSchemaType } from '@thingsvis/schema'
-import { CanvasView } from '@thingsvis/ui'
+import { CanvasView, GridStackCanvas } from '@thingsvis/ui'
 
 import { store } from '../lib/store'
 import { loadPlugin } from '../plugins/pluginResolver'
@@ -38,6 +38,27 @@ export default function PreviewPage() {
     const nodesById = kernelState?.nodesById as Record<string, unknown> | undefined
     return nodesById ? Object.keys(nodesById).length > 0 : false
   }, [kernelState])
+
+  const canvasMode = kernelState?.canvas?.mode ?? 'infinite'
+  const canvasWidth = kernelState?.canvas?.width ?? 1920
+  const canvasHeight = kernelState?.canvas?.height ?? 1080
+  const hasGridNodes = useMemo(() => {
+    const nodesById = kernelState?.nodesById as Record<string, any> | undefined
+    if (!nodesById) return false
+    return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid))
+  }, [kernelState])
+  const isGridLayout = canvasMode === 'reflow' || canvasMode === 'grid' || hasGridNodes
+  const gridSettings = kernelState?.gridState?.settings ?? {
+    cols: 24,
+    rowHeight: 50,
+    gap: 5,
+    compactVertical: true,
+    minW: 1,
+    minH: 1,
+    showGridLines: false,
+    breakpoints: [],
+    responsive: true,
+  }
 
   useEffect(() => {
     const onHashChange = () => setParams(getPreviewParamsFromHash())
@@ -79,6 +100,11 @@ export default function PreviewPage() {
           mode: project.canvas.mode || 'infinite',
           width: project.canvas.width || 1920,
           height: project.canvas.height || 1080,
+        })
+        store.getState().setGridSettings?.({
+          cols: project.canvas.gridCols ?? 24,
+          rowHeight: project.canvas.gridRowHeight ?? 50,
+          gap: project.canvas.gridGap ?? 5,
         })
       }
 
@@ -171,13 +197,24 @@ export default function PreviewPage() {
 
       {/* Preview canvas */}
       <div className="absolute inset-0">
-        <CanvasView
-          store={store as any}
-          resolvePlugin={resolvePlugin as any}
-          gridSize={0}
-          snapToGrid={false}
-          centeredMask={false}
-        />
+        {isGridLayout ? (
+          <GridStackCanvas
+            store={store as any}
+            resolvePlugin={resolvePlugin as any}
+            width={canvasWidth}
+            height={canvasHeight}
+            settings={gridSettings}
+            interactive={false}
+          />
+        ) : (
+          <CanvasView
+            store={store as any}
+            resolvePlugin={resolvePlugin as any}
+            gridSize={0}
+            snapToGrid={false}
+            centeredMask={false}
+          />
+        )}
       </div>
     </div>
   )

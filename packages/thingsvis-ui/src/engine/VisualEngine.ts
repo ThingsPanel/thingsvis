@@ -7,6 +7,7 @@ import { createPluginRenderer } from './renderers/pluginRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
 import { GridOverlay } from './grid/GridOverlay';
 import { GridPlaceholder } from './grid/GridPlaceholder';
+import { gridToPixel } from '../utils/grid-mapper';
 
 type Point = { x: number; y: number };
 type ConnectionDirection = 'forward' | 'reverse' | 'bidirectional';
@@ -380,11 +381,11 @@ export class VisualEngine {
     const containerWidth = this.containerEl.clientWidth;
     const containerHeight = this.containerEl.clientHeight;
     
-    // Calculate column width
-    const gap = settings.gap ?? 10;
     const cols = gridState?.effectiveCols ?? settings.cols ?? 24;
-    const colWidth = (containerWidth - gap * (cols + 1)) / cols;
-    const rowHeight = settings.rowHeight ?? 30;
+    const renderSettings: GridSettings = {
+      ...settings,
+      cols,
+    };
     
     // Initialize or update grid overlay
     if (!this.gridOverlay) {
@@ -393,11 +394,11 @@ export class VisualEngine {
     }
     
     // Check if settings changed
-    const settingsChanged = JSON.stringify(settings) !== JSON.stringify(this.lastGridSettings);
+    const settingsChanged = JSON.stringify(renderSettings) !== JSON.stringify(this.lastGridSettings);
     if (settingsChanged) {
-      this.lastGridSettings = settings;
+      this.lastGridSettings = renderSettings;
       this.gridOverlay.update({
-        settings,
+        settings: renderSettings,
         containerWidth,
         containerHeight,
         visible: true
@@ -421,13 +422,8 @@ export class VisualEngine {
       this.lastGridPreview = preview;
       
       if (preview?.active && preview.targetPosition) {
-        // Convert grid position to pixel position
-        const x = gap + preview.targetPosition.x * (colWidth + gap);
-        const y = gap + preview.targetPosition.y * (rowHeight + gap);
-        const width = preview.targetPosition.w * (colWidth + gap) - gap;
-        const height = preview.targetPosition.h * (rowHeight + gap) - gap;
-        
-        this.gridPlaceholder.updatePosition({ x, y, width, height }, true);
+        const previewRect = gridToPixel(preview.targetPosition, renderSettings, containerWidth);
+        this.gridPlaceholder.updatePosition(previewRect, true);
         this.gridPlaceholder.show();
         
         // Update ghost overlays for affected items
@@ -441,10 +437,7 @@ export class VisualEngine {
             const gridPos = (node.schemaRef as any).grid;
             if (!gridPos) return null;
             return {
-              x: gap + gridPos.x * (colWidth + gap),
-              y: gap + gridPos.y * (rowHeight + gap),
-              width: gridPos.w * (colWidth + gap) - gap,
-              height: gridPos.h * (rowHeight + gap) - gap
+              ...gridToPixel(gridPos, renderSettings, containerWidth)
             };
           }).filter((rect): rect is { x: number; y: number; width: number; height: number } => rect !== null);
           

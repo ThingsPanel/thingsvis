@@ -118,6 +118,9 @@ type CanvasConfigSchema = {
   mode: "fixed" | "infinite" | "reflow" | "grid"
   width: number
   height: number
+  gridCols?: number
+  gridRowHeight?: number
+  gridGap?: number
   theme: "dark" | "light" | "auto"
   gridSize: number
   bgType: "color" | "image"
@@ -279,6 +282,9 @@ export default function Editor() {
         width: canvasConfig.width,
         height: canvasConfig.height,
         background: canvasConfig.bgValue,
+        gridCols: canvasConfig.gridCols,
+        gridRowHeight: canvasConfig.gridRowHeight,
+        gridGap: canvasConfig.gridGap,
         gridEnabled: canvasConfig.gridEnabled,
         gridSize: canvasConfig.gridSize,
       },
@@ -322,6 +328,9 @@ export default function Editor() {
             width: loaded.canvas.width,
             height: loaded.canvas.height,
             bgValue: loaded.canvas.background,
+            gridCols: loaded.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: loaded.canvas.gridGap ?? prev.gridGap,
             gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: loaded.canvas.gridSize ?? prev.gridSize,
             dataSources: (loaded.dataSources as any) ?? prev.dataSources,
@@ -370,6 +379,9 @@ export default function Editor() {
     canvasConfig.mode,
     canvasConfig.width,
     canvasConfig.height,
+    canvasConfig.gridCols,
+    canvasConfig.gridRowHeight,
+    canvasConfig.gridGap,
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
     canvasConfig.gridSize,
@@ -532,6 +544,9 @@ export default function Editor() {
             width: data.canvas.width || prev.width,
             height: data.canvas.height || prev.height,
             bgValue: data.canvas.background || prev.bgValue,
+            gridCols: data.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: data.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: data.canvas.gridGap ?? prev.gridGap,
           }));
         }
         
@@ -574,6 +589,9 @@ export default function Editor() {
           width: initialData.canvas.width || prev.width,
           height: initialData.canvas.height || prev.height,
           bgValue: initialData.canvas.background || prev.bgValue,
+          gridCols: initialData.canvas.gridCols ?? prev.gridCols,
+          gridRowHeight: initialData.canvas.gridRowHeight ?? prev.gridRowHeight,
+          gridGap: initialData.canvas.gridGap ?? prev.gridGap,
         }));
       }
       
@@ -611,6 +629,16 @@ export default function Editor() {
       height: canvasConfig.height
     })
   }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height])
+
+  useEffect(() => {
+    const { setGridSettings } = store.getState()
+    if (!setGridSettings) return
+    setGridSettings({
+      cols: canvasConfig.gridCols ?? 24,
+      rowHeight: canvasConfig.gridRowHeight ?? 50,
+      gap: canvasConfig.gridGap ?? 5,
+    })
+  }, [canvasConfig.gridCols, canvasConfig.gridRowHeight, canvasConfig.gridGap])
 
   const { canUndo, canRedo } = useMemo(() => {
     const past = temporalSnapshot.pastStates ?? []
@@ -1290,6 +1318,9 @@ export default function Editor() {
             width: project.canvas.width,
             height: project.canvas.height,
             bgValue: project.canvas.background,
+            gridCols: project.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: project.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: project.canvas.gridGap ?? prev.gridGap,
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
