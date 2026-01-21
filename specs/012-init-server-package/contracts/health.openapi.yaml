@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Server Health Endpoint
+  version: 0.1.0
+  description: Minimal root endpoint response used to verify the server is running.
+paths:
+  /:
+    get:
+      summary: Root health response
+      description: Returns a minimal HTML response indicating the server is online.
+      responses:
+        '200':
+          description: Server is running
+          content:
+            text/html:
+              schema:
+                type: string
+                example: "ThingsVis Server"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string

@@ -3,8 +3,11 @@ node_modules/
 dist/
 build/
 *.log
+*.log*
 .env*
 coverage/
 .DS_Store
+Dockerfile*
+.dockerignore
 
 
