@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { GridPositionSchema } from './grid';
 
 /**
  * Component identity schema
@@ -120,6 +121,12 @@ export const VisualComponentSchema = z.object({
   data: ComponentDataSchema,
   props: ComponentPropsSchema,
   events: z.array(ComponentEventSchema).default([]),
+  /**
+   * Grid position (optional, only used in grid mode)
+   * When present and page is in grid mode, this is the source of truth
+   * The transform values are derived from grid position for rendering
+   */
+  grid: GridPositionSchema.optional(),
 });
 
 /**

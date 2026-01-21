@@ -69,6 +69,7 @@ import {
 import { type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
+import { GridStackCanvas } from '@thingsvis/ui'
 import ComponentsList from './LeftPanel/ComponentsList'
 import LayerPanel from './LeftPanel/LayerPanel'
 import PropsPanel from './RightPanel/PropsPanel'
@@ -114,9 +115,12 @@ type CanvasConfigSchema = {
   createdBy: string
 
   // Config - 画布配置
-  mode: "fixed" | "infinite" | "reflow"
+  mode: "fixed" | "infinite" | "reflow" | "grid"
   width: number
   height: number
+  gridCols?: number
+  gridRowHeight?: number
+  gridGap?: number
   theme: "dark" | "light" | "auto"
   gridSize: number
   bgType: "color" | "image"
@@ -235,6 +239,9 @@ export default function Editor() {
     mode: defaultMode as "fixed" | "infinite" | "reflow",
     width: 1920,
     height: 1080,
+    gridCols: 24,
+    gridRowHeight: 50,
+    gridGap: 5,
     theme: "dark" as "dark" | "light" | "auto",
     gridSize: 20,
     bgType: "color" as "color" | "image",
@@ -275,6 +282,9 @@ export default function Editor() {
         width: canvasConfig.width,
         height: canvasConfig.height,
         background: canvasConfig.bgValue,
+        gridCols: canvasConfig.gridCols,
+        gridRowHeight: canvasConfig.gridRowHeight,
+        gridGap: canvasConfig.gridGap,
         gridEnabled: canvasConfig.gridEnabled,
         gridSize: canvasConfig.gridSize,
       },
@@ -318,6 +328,9 @@ export default function Editor() {
             width: loaded.canvas.width,
             height: loaded.canvas.height,
             bgValue: loaded.canvas.background,
+            gridCols: loaded.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: loaded.canvas.gridGap ?? prev.gridGap,
             gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: loaded.canvas.gridSize ?? prev.gridSize,
             dataSources: (loaded.dataSources as any) ?? prev.dataSources,
@@ -366,6 +379,9 @@ export default function Editor() {
     canvasConfig.mode,
     canvasConfig.width,
     canvasConfig.height,
+    canvasConfig.gridCols,
+    canvasConfig.gridRowHeight,
+    canvasConfig.gridGap,
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
     canvasConfig.gridSize,
@@ -528,6 +544,9 @@ export default function Editor() {
             width: data.canvas.width || prev.width,
             height: data.canvas.height || prev.height,
             bgValue: data.canvas.background || prev.bgValue,
+            gridCols: data.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: data.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: data.canvas.gridGap ?? prev.gridGap,
           }));
         }
         
@@ -570,6 +589,9 @@ export default function Editor() {
           width: initialData.canvas.width || prev.width,
           height: initialData.canvas.height || prev.height,
           bgValue: initialData.canvas.background || prev.bgValue,
+          gridCols: initialData.canvas.gridCols ?? prev.gridCols,
+          gridRowHeight: initialData.canvas.gridRowHeight ?? prev.gridRowHeight,
+          gridGap: initialData.canvas.gridGap ?? prev.gridGap,
         }));
       }
       
@@ -608,6 +630,16 @@ export default function Editor() {
     })
   }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height])
 
+  useEffect(() => {
+    const { setGridSettings } = store.getState()
+    if (!setGridSettings) return
+    setGridSettings({
+      cols: canvasConfig.gridCols ?? 24,
+      rowHeight: canvasConfig.gridRowHeight ?? 50,
+      gap: canvasConfig.gridGap ?? 5,
+    })
+  }, [canvasConfig.gridCols, canvasConfig.gridRowHeight, canvasConfig.gridGap])
+
   const { canUndo, canRedo } = useMemo(() => {
     const past = temporalSnapshot.pastStates ?? []
     const future = temporalSnapshot.futureStates ?? []
@@ -630,12 +662,25 @@ export default function Editor() {
       const { entry } = await loadPlugin(componentType)
       const defaultProps = extractDefaults(entry.schema)
       const now = Date.now()
+      
+      // Calculate grid position for new widget
+      const existingNodes = Object.values(store.getState().nodesById)
+      let gridY = 0
+      existingNodes.forEach((n: any) => {
+        const g = n.schemaRef?.grid
+        if (g) {
+          gridY = Math.max(gridY, (g.y ?? 0) + (g.h ?? 2))
+        }
+      })
+      
       const node: NodeSchemaType = {
         id: `node-${componentType}-${now}`,
         type: componentType,
         position: { x: 100, y: 100 },
         size: { width: 200, height: 80 },
-        props: defaultProps
+        props: defaultProps,
+        // Add grid position for grid layout mode
+        grid: { x: 0, y: gridY, w: 4, h: 3 },
       }
       store.getState().addNodes([node])
     } catch (e) {
@@ -718,21 +763,71 @@ export default function Editor() {
       {/* Canvas Background with Dot Grid */}
       <div className="absolute inset-0 bg-background" />
 
-      {/* Canvas View */}
+      {/* Canvas View - switch between normal and grid mode */}
       <div className="absolute inset-0">
-        <CanvasView
-          pageId={canvasConfig.id}
-          store={store}
-          activeTool={activeTool}
-          resolvePlugin={resolvePlugin}
-          zoom={zoom / 100}
-          onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
-          onUserEdit={markDirty}
-          onResetTool={handleResetTool}
-          pendingImageUrl={pendingImageUrl}
-          onImagePickerRequest={handleImagePickerRequest}
-          onImagePickerComplete={handleImagePickerComplete}
-        />
+        {canvasConfig.mode === 'reflow' ? (
+          <GridStackCanvas
+            store={store}
+            width={canvasConfig.width}
+            height={canvasConfig.height}
+            activeTool={activeTool}
+            settings={{
+              cols: canvasConfig.gridCols ?? 24,
+              rowHeight: canvasConfig.gridRowHeight ?? 10,
+              gap: canvasConfig.gridGap ?? 5,
+              margin: canvasConfig.gridGap ?? 5,
+              showGridLines: true,
+              compactVertical: true,
+              responsive: [],
+            }}
+            resolvePlugin={resolvePlugin}
+            onNodeChange={(nodeId, position) => {
+              // Update node grid position in kernel store
+              const state = store.getState();
+              const node = state.nodesById[nodeId];
+              if (node) {
+                store.getState().updateNode(nodeId, {
+                  grid: position,
+                });
+                markDirty();
+              }
+            }}
+            onDropComponent={async (componentType, gridPosition) => {
+              // Handle component dropped from sidebar
+              try {
+                const { entry } = await loadPlugin(componentType);
+                const defaultProps = extractDefaults(entry.schema);
+                const now = Date.now();
+                const node = {
+                  id: `node-${componentType}-${now}`,
+                  type: componentType,
+                  position: { x: 100, y: 100 },
+                  size: { width: 200, height: 80 },
+                  props: defaultProps,
+                  grid: gridPosition,
+                };
+                store.getState().addNodes([node]);
+                markDirty();
+              } catch (e) {
+                console.error('[Editor] Failed to add dropped component:', e);
+              }
+            }}
+          />
+        ) : (
+          <CanvasView
+            pageId={canvasConfig.id}
+            store={store}
+            activeTool={activeTool}
+            resolvePlugin={resolvePlugin}
+            zoom={zoom / 100}
+            onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
+            onUserEdit={markDirty}
+            onResetTool={handleResetTool}
+            pendingImageUrl={pendingImageUrl}
+            onImagePickerRequest={handleImagePickerRequest}
+            onImagePickerComplete={handleImagePickerComplete}
+          />
+        )}
       </div>
 
       {Object.keys(kernelState.nodesById).length === 0 && (
@@ -1069,18 +1164,93 @@ export default function Editor() {
                     <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
                     <select
                       value={canvasConfig.mode}
-                      onChange={(e) =>
-                        setCanvasConfig({ ...canvasConfig, mode: e.target.value as "fixed" | "infinite" | "reflow" })
-                      }
+                      onChange={(e) => {
+                        const newMode = e.target.value as "fixed" | "infinite" | "reflow";
+                        if (newMode !== canvasConfig.mode) {
+                          const hasNodes = Object.keys(store.getState().nodesById).length > 0;
+                          if (hasNodes) {
+                            const msg = language === "zh" 
+                              ? "切换布局模式将清空当前画布，是否继续？" 
+                              : "Switching layout mode will clear the current canvas. Continue?";
+                            if (!window.confirm(msg)) return;
+                            store.getState().loadPage({ id: canvasConfig.id, type: 'page', version: '1.0.0', nodes: [] });
+                            markDirty();
+                          }
+                          setCanvasConfig({ ...canvasConfig, mode: newMode });
+                        }
+                      }}
                       className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
                       <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                      <option value="reflow">{language === "zh" ? "自适应" : "Reflow"}</option>
+                      <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
                       <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                     </select>
                   </div>
 
-                  {canvasConfig.mode !== 'infinite' ? (
+                  {canvasConfig.mode === 'reflow' ? (
+                    <div className="space-y-3">
+                      {/* Canvas size for grid mode */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.width}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.height}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                      </div>
+                      {/* Grid settings */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "列数" : "Cols"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridCols ?? 24}
+                            min={1}
+                            max={48}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridCols: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "行高" : "Row H"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridRowHeight ?? 10}
+                            min={5}
+                            max={200}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridRowHeight: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "间距" : "Gap"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridGap ?? 5}
+                            min={0}
+                            max={50}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridGap: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
+                      </p>
+                    </div>
+                  ) : canvasConfig.mode === 'fixed' ? (
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-2">
                         <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
@@ -1148,6 +1318,9 @@ export default function Editor() {
             width: project.canvas.width,
             height: project.canvas.height,
             bgValue: project.canvas.background,
+            gridCols: project.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: project.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: project.canvas.gridGap ?? prev.gridGap,
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,

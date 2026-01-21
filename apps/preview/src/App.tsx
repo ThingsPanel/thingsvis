@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useSyncExternalStore, useMemo, useState } from 'react';
 import type { NodeSchemaType, PageSchemaType } from '@thingsvis/schema';
 import { createKernelStore } from '@thingsvis/kernel';
-import { CanvasView, HeadlessErrorBoundary } from '@thingsvis/ui';
+import { CanvasView, GridStackCanvas, HeadlessErrorBoundary } from '@thingsvis/ui';
 import { loadPlugin } from './plugins/pluginResolver';
 import { extractDefaults } from './plugins/schemaUtils';
 import { usePreviewMode } from './hooks/usePreviewMode';
@@ -52,6 +52,33 @@ const App: React.FC = () => {
     () => store.temporal.getState()
   );
 
+  const kernelState = useSyncExternalStore(
+    useCallback((subscribe) => store.subscribe(subscribe), []),
+    () => store.getState() as any,
+    () => store.getState() as any
+  );
+
+  const canvasMode = kernelState?.canvas?.mode ?? 'infinite';
+  const canvasWidth = kernelState?.canvas?.width ?? 1920;
+  const canvasHeight = kernelState?.canvas?.height ?? 1080;
+  const hasGridNodes = useMemo(() => {
+    const nodesById = kernelState?.nodesById as Record<string, any> | undefined;
+    if (!nodesById) return false;
+    return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid));
+  }, [kernelState]);
+  const isGridLayout = canvasMode === 'reflow' || canvasMode === 'grid' || hasGridNodes;
+  const gridSettings = kernelState?.gridState?.settings ?? {
+    cols: 24,
+    rowHeight: 50,
+    gap: 5,
+    compactVertical: true,
+    minW: 1,
+    minH: 1,
+    showGridLines: false,
+    breakpoints: [],
+    responsive: true,
+  };
+
   const { canUndo, canRedo } = useMemo(() => {
     const past = temporalSnapshot.pastStates ?? [];
     const future = temporalSnapshot.futureStates ?? [];
@@ -101,6 +128,11 @@ const App: React.FC = () => {
               mode: project.canvas.mode || 'infinite',
               width: project.canvas.width || 1920,
               height: project.canvas.height || 1080,
+            })
+            store.getState().setGridSettings?.({
+              cols: project.canvas.gridCols ?? 24,
+              rowHeight: project.canvas.gridRowHeight ?? 50,
+              gap: project.canvas.gridGap ?? 5,
             })
           }
           
@@ -294,7 +326,18 @@ const App: React.FC = () => {
     return (
       <HeadlessErrorBoundary fallback={<div>Component failed</div>}>
         <KioskView>
-          <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+          {isGridLayout ? (
+            <GridStackCanvas
+              store={store}
+              resolvePlugin={resolvePlugin}
+              width={canvasWidth}
+              height={canvasHeight}
+              settings={gridSettings}
+              interactive={false}
+            />
+          ) : (
+            <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+          )}
         </KioskView>
       </HeadlessErrorBoundary>
     )
@@ -342,7 +385,18 @@ const App: React.FC = () => {
             isFullscreen={isFullscreen}
             onToggleFullscreen={handleToggleFullscreen}
           />
-          <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+          {isGridLayout ? (
+            <GridStackCanvas
+              store={store}
+              resolvePlugin={resolvePlugin}
+              width={canvasWidth}
+              height={canvasHeight}
+              settings={gridSettings}
+              interactive={false}
+            />
+          ) : (
+            <CanvasView store={store} resolvePlugin={resolvePlugin} gridSize={0} />
+          )}
         </div>
       </HeadlessErrorBoundary>
     )
@@ -390,7 +444,18 @@ const App: React.FC = () => {
             </div>
           ) : null}
         </div>
-        <CanvasView store={store} resolvePlugin={resolvePlugin} />
+        {isGridLayout ? (
+            <GridStackCanvas
+              store={store}
+              resolvePlugin={resolvePlugin}
+              width={canvasWidth}
+              height={canvasHeight}
+              settings={gridSettings}
+              interactive={false}
+            />
+        ) : (
+          <CanvasView store={store} resolvePlugin={resolvePlugin} />
+        )}
       </div>
     </HeadlessErrorBoundary>
   );

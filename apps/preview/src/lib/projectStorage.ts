@@ -32,6 +32,9 @@ export interface CanvasConfig {
   width: number
   height: number
   background: string
+  gridCols?: number
+  gridRowHeight?: number
+  gridGap?: number
   gridEnabled: boolean
   gridSize: number
 }
