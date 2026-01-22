@@ -1,0 +1,267 @@
+openapi: 3.1.0
+info:
+  title: ThingsVis Authentication API
+  description: NextAuth.js authentication endpoints for ThingsVis Server
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3001
+    description: Development server
+
+paths:
+  /api/auth/signin:
+    get:
+      summary: Sign-in page
+      description: Returns the NextAuth.js sign-in page (HTML)
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Sign-in page HTML
+          content:
+            text/html:
+              schema:
+                type: string
+    post:
+      summary: Sign in with credentials
+      description: Authenticate user with email and password
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email, password, csrfToken]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  format: password
+                  example: secretpassword
+                csrfToken:
+                  type: string
+                  description: CSRF token from /api/auth/csrf
+      responses:
+        '302':
+          description: Redirect to callback URL on success, or back to signin with error
+        '400':
+          description: Invalid request body
+
+  /api/auth/signout:
+    get:
+      summary: Sign-out page
+      description: Returns the NextAuth.js sign-out confirmation page
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Sign-out page HTML
+    post:
+      summary: Sign out
+      description: End the user's session
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [csrfToken]
+              properties:
+                csrfToken:
+                  type: string
+      responses:
+        '302':
+          description: Redirect to home page
+
+  /api/auth/session:
+    get:
+      summary: Get current session
+      description: Returns the current user's session data
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Session data (empty object if not authenticated)
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Session'
+                  - type: object
+                    properties: {}
+
+  /api/auth/csrf:
+    get:
+      summary: Get CSRF token
+      description: Returns a CSRF token for form submissions
+      tags: [Authentication]
+      responses:
+        '200':
+          description: CSRF token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrfToken:
+                    type: string
+
+  /api/auth/providers:
+    get:
+      summary: List authentication providers
+      description: Returns available authentication providers
+      tags: [Authentication]
+      responses:
+        '200':
+          description: Provider configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credentials:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: credentials
+                      name:
+                        type: string
+                        example: credentials
+                      type:
+                        type: string
+                        example: credentials
+
+  /api/auth/callback/credentials:
+    post:
+      summary: Credentials callback
+      description: Internal endpoint for credentials authentication
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Authentication result
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Public endpoint for health monitoring (no auth required)
+      tags: [System]
+      security: []
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/projects:
+    get:
+      summary: List projects (protected)
+      description: Example of a protected endpoint - requires authentication
+      tags: [Protected Resources]
+      security:
+        - sessionAuth: []
+      responses:
+        '200':
+          description: List of projects
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: authjs.session-token
+      description: NextAuth.js session cookie (JWT)
+
+  schemas:
+    Session:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/SessionUser'
+        expires:
+          type: string
+          format: date-time
+          description: Session expiration time
+
+    SessionUser:
+      type: object
+      required: [id, email, role, tenantId]
+      properties:
+        id:
+          type: string
+          description: User ID (cuid)
+          example: clx1234567890abcdef
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        name:
+          type: string
+          nullable: true
+          example: John Doe
+        role:
+          type: string
+          enum: [OWNER, ADMIN, EDITOR, VIEWER]
+          example: EDITOR
+        tenantId:
+          type: string
+          description: Tenant ID (cuid)
+          example: clx0987654321fedcba
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Unauthorized
+        code:
+          type: string
+          example: AUTH_ERROR
+        details:
+          type: object
+
+tags:
+  - name: Authentication
+    description: NextAuth.js authentication endpoints
+  - name: System
+    description: System and health endpoints
+  - name: Protected Resources
+    description: Example endpoints requiring authentication
