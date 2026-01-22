@@ -1,0 +1,217 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Auth API - Registration
+  version: 1.0.0
+  description: User registration endpoint for ThingsVis platform
+
+servers:
+  - url: http://localhost:3001/api/v1
+    description: Local development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: |
+        Creates a new user account. If no tenantId is provided, a new tenant 
+        is automatically created and the user becomes OWNER. If tenantId is 
+        provided, the user joins that tenant with VIEWER role (or OWNER if 
+        first user in tenant).
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              newUserNoTenant:
+                summary: New user without tenant (auto-create)
+                value:
+                  email: "user@example.com"
+                  password: "SecurePass123"
+                  name: "John Doe"
+              newUserWithTenant:
+                summary: New user joining existing tenant
+                value:
+                  email: "colleague@example.com"
+                  password: "SecurePass456"
+                  name: "Jane Smith"
+                  tenantId: "clx1234567890abcdef"
+              minimalRequest:
+                summary: Minimal registration (email + password only)
+                value:
+                  email: "minimal@example.com"
+                  password: "password123"
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+              example:
+                id: "clx0987654321fedcba"
+                email: "user@example.com"
+                name: "John Doe"
+                role: "OWNER"
+                tenantId: "clx1234567890abcdef"
+                createdAt: "2026-01-22T10:30:00.000Z"
+        '400':
+          description: Validation error or duplicate email
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ValidationError'
+                  - $ref: '#/components/schemas/DuplicateEmailError'
+              examples:
+                validationFailed:
+                  summary: Validation failed
+                  value:
+                    error: "Validation failed"
+                    details:
+                      formErrors: []
+                      fieldErrors:
+                        email: ["Invalid email"]
+                        password: ["Password must be at least 8 characters"]
+                duplicateEmail:
+                  summary: Email already registered
+                  value:
+                    error: "Email already registered"
+        '404':
+          description: Tenant not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotFoundError'
+              example:
+                error: "Tenant not found"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerError'
+              example:
+                error: "Internal server error"
+
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+          description: User's email address (must be unique)
+          example: "user@example.com"
+        password:
+          type: string
+          minLength: 8
+          description: User's password (min 8 characters)
+          example: "SecurePass123"
+        name:
+          type: string
+          maxLength: 100
+          description: User's display name (optional)
+          example: "John Doe"
+        tenantId:
+          type: string
+          pattern: '^c[a-z0-9]{24}$'
+          description: Existing tenant ID to join (optional, cuid format)
+          example: "clx1234567890abcdef"
+
+    UserResponse:
+      type: object
+      required:
+        - id
+        - email
+        - role
+        - tenantId
+        - createdAt
+      properties:
+        id:
+          type: string
+          description: User's unique identifier (cuid)
+          example: "clx0987654321fedcba"
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@example.com"
+        name:
+          type: string
+          nullable: true
+          description: User's display name
+          example: "John Doe"
+        role:
+          type: string
+          enum: [OWNER, ADMIN, EDITOR, VIEWER]
+          description: User's role in the tenant
+          example: "OWNER"
+        tenantId:
+          type: string
+          description: Associated tenant ID
+          example: "clx1234567890abcdef"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2026-01-22T10:30:00.000Z"
+
+    ValidationError:
+      type: object
+      required:
+        - error
+        - details
+      properties:
+        error:
+          type: string
+          enum: ["Validation failed"]
+        details:
+          type: object
+          properties:
+            formErrors:
+              type: array
+              items:
+                type: string
+            fieldErrors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+    DuplicateEmailError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum: ["Email already registered"]
+
+    NotFoundError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum: ["Tenant not found"]
+
+    ServerError:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          enum: ["Internal server error"]
