@@ -1,3 +1,7 @@
+// Prisma Schema for ThingsVis Server
+// Supports SQLite (development) and PostgreSQL (production)
+// Uses String types for enums and JSON fields for SQLite compatibility
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,7 +11,124 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model SystemHealth {
+// =============================================================================
+// Tenant Model - Multi-tenant isolation
+// =============================================================================
+model Tenant {
   id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("FREE") // FREE, PRO, ENTERPRISE
+  settings  String   @default("{}") // JSON string for custom settings
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    User[]
+  projects Project[]
+
+  @@map("tenants")
+}
+
+// =============================================================================
+// User Model - Users belonging to a tenant
+// =============================================================================
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String?
+  passwordHash String?
+  avatar       String?
+  role         String  @default("VIEWER") // OWNER, ADMIN, EDITOR, VIEWER
+
+  ssoProvider String?
+  ssoSubject  String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  projects   Project[]
+  dashboards Dashboard[]
+
+  @@unique([ssoProvider, ssoSubject])
+  @@map("users")
+}
+
+// =============================================================================
+// Project Model - Container for dashboards
+// =============================================================================
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dashboards Dashboard[]
+
+  @@index([tenantId])
+  @@map("projects")
+}
+
+// =============================================================================
+// Dashboard Model - Visualization screen with canvas, nodes, and data sources
+// =============================================================================
+model Dashboard {
+  id      String @id @default(cuid())
+  name    String
+  version Int    @default(1)
+
+  canvasConfig String @default("{}") // JSON: { mode, width, height, background }
+  nodes        String @default("[]") // JSON: NodeSchema[]
+  dataSources  String @default("[]") // JSON: DataSourceConfig[]
+
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  shareToken  String?   @unique
+  shareConfig String? // JSON: { password?, expiresAt? }
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions DashboardVersion[]
+
+  @@index([projectId])
+  @@index([shareToken])
+  @@map("dashboards")
+}
+
+// =============================================================================
+// DashboardVersion Model - Version history for dashboards
+// =============================================================================
+model DashboardVersion {
+  id           String @id @default(cuid())
+  version      Int
+  canvasConfig String
+  nodes        String
+  dataSources  String
+
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([dashboardId, version])
+  @@map("dashboard_versions")
 }
