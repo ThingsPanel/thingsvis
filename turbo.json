@@ -6,7 +6,12 @@
         "dist/**",
         "build/**"
       ],
-      "dependsOn": ["^build"]
+      "dependsOn": ["^build", "db:generate"]
+    },
+    "db:generate": {
+      "outputs": [
+        "node_modules/.prisma/**"
+      ]
     },
     "dev": {
       "cache": false

@@ -1,15 +1,16 @@
 ﻿# thingsvis Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-01-19
+Auto-generated from all feature plans. Last updated: 2026-01-21
 
 ## Active Technologies
 
-- TypeScript 5.x (strict mode enabled) + `zod` (Schema), `zustand` + `immer` (State), `leafer-ui` (2D Rendering), `react` (Studio UI) (002-grid-layout)
+- TypeScript 5.x (Node.js 20 LTS) + Next.js 15 (App Router), Prisma ORM, React 19, Zod (012-init-server-package)
 
 ## Project Structure
 
 ```text
-src/
+backend/
+frontend/
 tests/
 ```
 
@@ -19,11 +20,11 @@ npm test; npm run lint
 
 ## Code Style
 
-TypeScript 5.x (strict mode enabled): Follow standard conventions
+TypeScript 5.x (Node.js 20 LTS): Follow standard conventions
 
 ## Recent Changes
 
-- 002-grid-layout: Added TypeScript 5.x (strict mode enabled) + `zod` (Schema), `zustand` + `immer` (State), `leafer-ui` (2D Rendering), `react` (Studio UI)
+- 012-init-server-package: Added TypeScript 5.x (Node.js 20 LTS) + Next.js 15 (App Router), Prisma ORM, React 19, Zod
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

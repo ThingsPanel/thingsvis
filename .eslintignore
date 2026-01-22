@@ -2,16 +2,11 @@ node_modules/
 dist/
 build/
 coverage/
-*.min.js
-*.log
-
+.next/
 .turbo/
 .pnpm-store/
+*.min.js
+*.log
 .env*
-
-node_modules/
-dist/
-build/
-coverage/
 
 
