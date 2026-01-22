@@ -1,0 +1,397 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Dashboards API
+  description: CRUD API for managing dashboards within projects
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /dashboards:
+    get:
+      summary: List dashboards
+      description: |
+        Returns a paginated list of dashboards. Optionally filter by projectId.
+        Results are scoped to the authenticated user's tenant.
+      tags:
+        - Dashboards
+      security:
+        - session: []
+      parameters:
+        - name: projectId
+          in: query
+          description: Filter dashboards by project ID
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          description: Items per page
+          required: false
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: List of dashboards
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DashboardSummary'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Create dashboard
+      description: Create a new dashboard in a project
+      tags:
+        - Dashboards
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDashboardRequest'
+      responses:
+        '201':
+          description: Dashboard created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /dashboards/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Dashboard ID
+        schema:
+          type: string
+
+    get:
+      summary: Get dashboard
+      description: |
+        Retrieve a single dashboard with full data including parsed JSON fields.
+        Returns canvasConfig, nodes, and dataSources as objects (not strings).
+      tags:
+        - Dashboards
+      security:
+        - session: []
+      responses:
+        '200':
+          description: Dashboard details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Update dashboard
+      description: |
+        Update a dashboard. Automatically creates a version history entry
+        before applying changes. The version number is incremented.
+      tags:
+        - Dashboards
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDashboardRequest'
+      responses:
+        '200':
+          description: Dashboard updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Delete dashboard
+      description: |
+        Permanently delete a dashboard. All associated version history
+        records are also deleted (cascade).
+      tags:
+        - Dashboards
+      security:
+        - session: []
+      responses:
+        '200':
+          description: Dashboard deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: authjs.session-token
+      description: NextAuth session cookie
+
+  schemas:
+    CanvasConfig:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [fixed, infinite, reflow]
+          default: fixed
+        width:
+          type: integer
+          minimum: 1
+          default: 1920
+        height:
+          type: integer
+          minimum: 1
+          default: 1080
+        background:
+          type: string
+          default: '#1a1a2e'
+
+    DashboardSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        isPublished:
+          type: boolean
+        projectId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: integer
+        canvasConfig:
+          $ref: '#/components/schemas/CanvasConfig'
+        nodes:
+          type: array
+          items:
+            type: object
+          description: Array of NodeSchema objects
+        dataSources:
+          type: array
+          items:
+            type: object
+          description: Array of DataSourceConfig objects
+        isPublished:
+          type: boolean
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        shareToken:
+          type: string
+          nullable: true
+        shareConfig:
+          type: object
+          nullable: true
+        projectId:
+          type: string
+        createdById:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        project:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+
+    CreateDashboardRequest:
+      type: object
+      required:
+        - name
+        - projectId
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        projectId:
+          type: string
+          description: Valid project cuid
+        canvasConfig:
+          $ref: '#/components/schemas/CanvasConfig'
+
+    UpdateDashboardRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        canvasConfig:
+          type: object
+          description: Canvas configuration object
+        nodes:
+          type: array
+          items:
+            type: object
+          description: Array of node objects
+        dataSources:
+          type: array
+          items:
+            type: object
+          description: Array of data source configuration objects
+
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Validation failed
+        details:
+          type: object
+          properties:
+            formErrors:
+              type: array
+              items:
+                type: string
+            fieldErrors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+  responses:
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Dashboard not found
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
