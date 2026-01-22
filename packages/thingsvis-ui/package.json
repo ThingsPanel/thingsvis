@@ -22,6 +22,7 @@
     "@thingsvis/kernel": "workspace:*",
     "@thingsvis/schema": "workspace:*",
     "@thingsvis/utils": "workspace:*",
+    "gridstack": "^12.4.2",
     "leafer-ui": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
@@ -31,8 +32,7 @@
     "@rspack/core": "^1.0.0",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
-    "typescript": "^5.3.3",
-    "ts-loader": "^9.5.1"
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
   }
 }
-

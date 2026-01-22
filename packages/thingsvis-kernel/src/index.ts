@@ -12,8 +12,24 @@ export type {
   SelectionState,
   CanvasState,
   DataSourceRuntimeState,
-  LayerGroup
+  LayerGroup,
+  GridState
 } from './store/KernelStore';
+
+// Export grid layout engine
+export { GridSystem } from './grid/GridSystem';
+export { GridLayoutError, type GridErrorCode } from './grid/errors';
+export { detectCollision, findCollisions, resolveCollisions } from './grid/GridCollision';
+export { compact, compactWithSort } from './grid/GridCompaction';
+export type {
+  GridItem,
+  GridLayoutResult,
+  GridDelta,
+  GridPreviewResult,
+  MigrationRecord,
+  PixelRect,
+} from './grid/types';
+
 export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';
 export { safeExecute } from './executor/SafeExecutor';

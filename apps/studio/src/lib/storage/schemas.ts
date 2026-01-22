@@ -38,6 +38,12 @@ export const CanvasConfigSchema = z.object({
   height: z.number().int().positive(),
   /** Background CSS color */
   background: z.string(),
+  /** Grid column count (grid layout only) */
+  gridCols: z.number().int().min(1).max(48).optional(),
+  /** Grid row height in pixels (grid layout only) */
+  gridRowHeight: z.number().int().positive().optional(),
+  /** Grid gap in pixels (grid layout only) */
+  gridGap: z.number().int().nonnegative().optional(),
   /** Whether grid is visible */
   gridEnabled: z.boolean().optional(),
   /** Grid cell size in pixels */

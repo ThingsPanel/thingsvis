@@ -1,5 +1,12 @@
 import { z } from 'zod';
 import { VisualComponentSchema } from './component';
+import { GridSettingsSchema } from './grid';
+
+/**
+ * Layout mode enum - includes grid mode
+ */
+export const LayoutModeSchema = z.enum(['fixed', 'infinite', 'reflow', 'grid']);
+export type LayoutMode = z.infer<typeof LayoutModeSchema>;
 
 /**
  * Page metadata schema
@@ -34,16 +41,22 @@ export const PageMetaSchema = z.object({
 export const PageConfigSchema = z.object({
   /**
    * Page layout mode
+   * - 'fixed': Fixed canvas size, centered
+   * - 'infinite': Infinite canvas with pan/zoom
+   * - 'reflow': Responsive reflow layout
+   * - 'grid': Gridstack-style grid layout
    */
-  mode: z.enum(['fixed', 'infinite', 'reflow']),
+  mode: LayoutModeSchema,
   
   /**
    * Page width in pixels (defaults to 1920)
+   * For grid mode: defines the design-time reference width
    */
   width: z.number().int().positive().default(1920),
   
   /**
    * Page height in pixels (defaults to 1080)
+   * For grid mode: minimum height, expands with content
    */
   height: z.number().int().positive().default(1080),
   
@@ -51,6 +64,11 @@ export const PageConfigSchema = z.object({
    * Visual theme preference
    */
   theme: z.enum(['dark', 'light', 'auto']),
+  
+  /**
+   * Grid layout settings (only used when mode === 'grid')
+   */
+  gridSettings: GridSettingsSchema.optional(),
 });
 
 /**

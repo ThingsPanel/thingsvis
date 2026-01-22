@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DataBindingSchema } from './datasource/index';
+import { GridPositionSchema } from './grid';
 
 export const NodeSchema = z.object({
   id: z.string(),
@@ -17,7 +18,9 @@ export const NodeSchema = z.object({
     })
     .optional(),
   parentId: z.string().optional(),
-  data: z.array(DataBindingSchema).optional()
+  data: z.array(DataBindingSchema).optional(),
+  // Grid layout position (for grid layout mode)
+  grid: GridPositionSchema.optional(),
 });
 
 export type NodeSchemaType = z.infer<typeof NodeSchema>;

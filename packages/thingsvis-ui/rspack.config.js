@@ -22,7 +22,9 @@ export default defineConfig({
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
     alias: {
-      '@thingsvis/utils': path.resolve(__dirname, '../thingsvis-utils/src')
+      '@thingsvis/utils': path.resolve(__dirname, '../thingsvis-utils/src'),
+      '@thingsvis/kernel': path.resolve(__dirname, '../thingsvis-kernel/src'),
+      '@thingsvis/schema': path.resolve(__dirname, '../thingsvis-schema/src')
     }
   },
   module: {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState, useCallback } from "react";
 import { useSyncExternalStore } from "react";
-import { CanvasView as UI_CanvasView, screenToCanvas } from "@thingsvis/ui";
+import { CanvasView as UI_CanvasView, screenToCanvas, useGridLayout } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
 import TransformControls from "./tools/TransformControls";
 import CreateToolLayer from "./tools/CreateToolLayer";
@@ -58,6 +58,17 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     useCallback(subscribe => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState
   );
+
+  // Detect grid layout mode
+  const isGridMode = state.canvas?.mode === 'grid';
+
+  // Grid layout hook (provides grid-aware drag/resize handlers)
+  const gridLayout = useGridLayout({
+    store,
+    containerWidth: containerRef.current?.clientWidth ?? 0,
+    settings: state.gridState?.settings ?? null,
+    isGridMode,
+  });
 
   useImperativeHandle(ref, () => ({
     dispatchToKernel: (payload: unknown) => {
@@ -246,6 +257,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           {nodes.map(node => {
             const schema = node.schemaRef as any;
             if (!node.visible) return null;
+            const position = schema.position ?? {};
+            const size = schema.size ?? {};
+            const posX = typeof position.x === 'number' ? position.x : 0;
+            const posY = typeof position.y === 'number' ? position.y : 0;
+            const width = typeof size.width === 'number' ? size.width : 0;
+            const height = typeof size.height === 'number' ? size.height : 0;
             // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
             const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
             const isLine = schema.type === 'basic/line';
@@ -259,10 +276,10 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                 className="node-proxy-target"
                 style={{
                   position: "absolute",
-                  left: schema.position.x,
-                  top: schema.position.y,
-                  width: schema.size?.width ?? 0,
-                  height: schema.size?.height ?? 0,
+                  left: posX,
+                  top: posY,
+                  width,
+                  height,
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
                   pointerEvents: isPanTool ? "none" : "auto",
@@ -282,6 +299,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
+            isGridMode={isGridMode}
+            gridLayout={isGridMode ? gridLayout : undefined}
           />
         </div>
       </div>

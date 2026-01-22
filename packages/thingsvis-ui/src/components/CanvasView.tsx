@@ -57,7 +57,9 @@ export const CanvasView: React.FC<Props> = ({
   const height = propsHeight || kernelState.canvas.height || 1080;
 
   const [internalZoom, setInternalZoom] = useState(1);
-  const zoom = propsZoom !== undefined ? propsZoom : internalZoom;
+  // In reflow mode, always use internal zoom (auto-calculated)
+  // In other modes, use external zoom if provided
+  const zoom = mode === 'reflow' ? internalZoom : (propsZoom !== undefined ? propsZoom : internalZoom);
   const zoomRef = useRef(zoom);
   useEffect(() => {
     zoomRef.current = zoom;
@@ -65,13 +67,14 @@ export const CanvasView: React.FC<Props> = ({
 
   const setZoomValue = useCallback(
     (nextZoom: number) => {
-      if (onZoomChange) {
+      // Always update internal zoom
+      setInternalZoom(nextZoom);
+      // Notify external if callback provided (except in reflow mode where we control zoom)
+      if (onZoomChange && mode !== 'reflow') {
         onZoomChange(nextZoom);
-      } else {
-        setInternalZoom(nextZoom);
       }
     },
-    [onZoomChange]
+    [onZoomChange, mode]
   );
 
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -103,6 +106,36 @@ export const CanvasView: React.FC<Props> = ({
     }
   }, [mode, containerDimensions, width, height, hasAutoFit, propsZoom]);
 
+  // Reflow mode: auto-scale to fit container on every resize
+  useEffect(() => {
+    console.log('[CanvasView] Reflow check:', { mode, containerDimensions, width, height });
+    if (mode !== 'reflow') return;
+    if (containerDimensions.width <= 0 || containerDimensions.height <= 0) return;
+    
+    // Calculate scale to fit the container with some padding
+    const padding = 20;
+    // In reflow mode, allow scaling to fit regardless of original size
+    const scaleToFit = calculateScaleToFit(
+      containerDimensions.width, 
+      containerDimensions.height, 
+      width, 
+      height, 
+      padding,
+      true // allowScaleUp - in reflow mode we scale to fit container
+    );
+    
+    console.log('[CanvasView] Reflow scaleToFit:', scaleToFit);
+    setInternalZoom(scaleToFit);
+    
+    // Center the content
+    const scaledWidth = width * scaleToFit;
+    const scaledHeight = height * scaleToFit;
+    setOffset({
+      x: (containerDimensions.width - scaledWidth) / 2,
+      y: (containerDimensions.height - scaledHeight) / 2
+    });
+  }, [mode, containerDimensions, width, height]);
+
   useEffect(() => {
     if (mode !== 'fixed') {
       setHasUserPanned(false);
@@ -122,6 +155,13 @@ export const CanvasView: React.FC<Props> = ({
   const viewportInfo = useMemo(() => {
     return { zoom, offset };
   }, [zoom, offset]);
+
+  // Debug: log when zoom changes in reflow mode
+  useEffect(() => {
+    if (mode === 'reflow') {
+      console.log('[CanvasView] Reflow zoom updated:', { zoom, internalZoom, offset });
+    }
+  }, [mode, zoom, internalZoom, offset]);
 
   const drawGrid = useCallback(() => {
     const canvas = gridCanvasRef.current;
@@ -182,6 +222,13 @@ export const CanvasView: React.FC<Props> = ({
       engine.unmount();
     };
   }, [store, resolvePlugin]);
+
+  // Update VisualEngine viewport when zoom/offset changes
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setViewport(zoom, offset.x, offset.y);
+    }
+  }, [zoom, offset]);
 
   // pan handling (infinite mode)
   useEffect(() => {
@@ -279,8 +326,8 @@ export const CanvasView: React.FC<Props> = ({
 
   const { zoom: vZoom, offset: vOffset } = viewportInfo;
 
-  // Fixed mode border/shadow
-  const canvasOutlineStyle: React.CSSProperties = mode === 'fixed' ? {
+  // Fixed/Reflow mode border/shadow
+  const canvasOutlineStyle: React.CSSProperties = (mode === 'fixed' || mode === 'reflow') ? {
     position: 'absolute',
     left: vOffset.x,
     top: vOffset.y,
@@ -296,22 +343,20 @@ export const CanvasView: React.FC<Props> = ({
       {/* background grid canvas */}
       <canvas ref={gridCanvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
       
-      {/* main engine mount point */}
+      {/* main engine mount point - Leafer canvas fills this, viewport controlled via VisualEngine.setViewport */}
       <div 
         style={{ 
-          width: '100%', 
-          height: '100%',
-          transform: `translate(${vOffset.x}px, ${vOffset.y}px) scale(${vZoom})`,
-          transformOrigin: '0 0'
+          position: 'absolute',
+          inset: 0,
         }} 
         id="visual-engine-mount" 
       />
 
-      {/* Canvas border for fixed mode */}
-      {mode === 'fixed' && <div style={canvasOutlineStyle} />}
+      {/* Canvas border for fixed/reflow mode */}
+      {(mode === 'fixed' || mode === 'reflow') && <div style={canvasOutlineStyle} />}
 
-      {/* centered mask for fixed mode */}
-      {mode === 'fixed' && centeredMask && (
+      {/* centered mask for fixed/reflow mode */}
+      {(mode === 'fixed' || mode === 'reflow') && centeredMask && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           {/* Top */}
           <div style={{ ...maskStyle, top: 0, left: 0, right: 0, height: Math.max(0, vOffset.y) }} />

@@ -11,6 +11,8 @@ export {
   PageConfigSchema,
   PageContentSchema,
   PageSchema,
+  LayoutModeSchema,
+  type LayoutMode,
   type IPageMeta,
   type IPageConfig,
   type IPageContent,
@@ -32,6 +34,19 @@ export {
   type IComponentProps,
   type IVisualComponent,
 } from './component';
+
+// Export grid schemas and types
+export {
+  GridSettingsSchema,
+  BreakpointConfigSchema,
+  GridPositionSchema,
+  DEFAULT_BREAKPOINTS,
+  DEFAULT_GRID_SETTINGS,
+  DEFAULT_GRID_POSITION,
+  type GridSettings,
+  type BreakpointConfig,
+  type GridPosition,
+} from './grid';
 
 // Export plugin registry schemas and types (L1 plugin layer)
 export {
