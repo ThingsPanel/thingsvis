@@ -12,6 +12,8 @@ Auto-generated from all feature plans. Last updated: 2026-01-21
 - TypeScript 5.6 (Next.js 15) + Next.js 15, NextAuth 5 (beta), Prisma 5, Zod 3 (014-projects-crud-api)
 - SQLite (dev) / PostgreSQL (prod) via Prisma ORM (014-projects-crud-api)
 - SQLite (dev) / PostgreSQL (prod) via Prisma ORM; JSON fields stored as strings (015-dashboards-crud-api)
+- TypeScript 5.6+ with Next.js 15 (App Router) + Next.js, Prisma Client, Zod (001-health-check-api)
+- Prisma with existing database (SQLite/PostgreSQL) (001-health-check-api)
 
 - TypeScript 5.x (Node.js 20 LTS) + Next.js 15 (App Router), Prisma ORM, React 19, Zod (012-init-server-package)
 
@@ -32,9 +34,9 @@ npm test; npm run lint
 TypeScript 5.x (Node.js 20 LTS): Follow standard conventions
 
 ## Recent Changes
+- 001-health-check-api: Added TypeScript 5.6+ with Next.js 15 (App Router) + Next.js, Prisma Client, Zod
 - 015-dashboards-crud-api: Added TypeScript 5.6 (Next.js 15) + Next.js 15, NextAuth 5 (beta), Prisma 5, Zod 3
 - 014-projects-crud-api: Added TypeScript 5.6 (Next.js 15) + Next.js 15, NextAuth 5 (beta), Prisma 5, Zod 3
-- 001-user-registration-api: Added TypeScript 5.x (strict mode), Node.js 20 LTS + Next.js 15 (App Router), Prisma 5.22, bcryptjs 3.x, Zod 3.23, NextAuth.js 5 beta
 
 
 <!-- MANUAL ADDITIONS START -->
