@@ -86,25 +86,7 @@ export default function HomePage() {
 
       {/* Hero Section */}
       <main className="max-w-4xl mx-auto px-6 pt-20 pb-10 text-center">
-        {/* Decorative elements */}
         <div className="relative">
-          {/* Floating labels - decorative */}
-          <div className="absolute -top-8 left-1/4 hidden lg:block">
-            <span className="inline-block px-2 py-1 text-xs rounded bg-pink-100 text-pink-600 dark:bg-pink-900/30 dark:text-pink-400 rotate-[-8deg]">
-              拖拽编辑
-            </span>
-          </div>
-          <div className="absolute top-16 -right-4 hidden lg:block">
-            <span className="inline-block px-2 py-1 text-xs rounded bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400 rotate-[5deg]">
-              实时预览
-            </span>
-          </div>
-          <div className="absolute top-32 -left-8 hidden lg:block">
-            <span className="inline-block px-2 py-1 text-xs rounded bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 rotate-[-3deg]">
-              多数据源
-            </span>
-          </div>
-
           {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
             让数据<span style={{ color: '#6965db' }}>可视化</span>变得简单
