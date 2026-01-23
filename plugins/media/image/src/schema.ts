@@ -20,7 +20,7 @@ export const PropsSchema = z.object({
   opacity: z.number().min(0).max(1).default(1).describe('透明度'),
   
   /** 对象填充方式 */
-  objectFit: z.enum(['contain', 'cover', 'fill', 'none']).default('contain').describe('填充方式'),
+  objectFit: z.enum(['contain', 'cover', 'fill', 'none']).default('fill').describe('填充方式'),
   
   /** 圆角半径 */
   cornerRadius: z.number().min(0).max(100).default(0).describe('圆角半径'),
