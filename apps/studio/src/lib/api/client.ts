@@ -71,14 +71,19 @@ class ApiClient {
 
       if (response.status === 401) {
         this.onUnauthorized();
-        return { error: 'Unauthorized' };
+        return { error: 'Invalid credentials' };
       }
 
       if (!response.ok) {
         return { error: data.error || 'Request failed', details: data.details };
       }
 
-      return data;
+      // If response already has a data field, return as-is
+      // Otherwise wrap the response in a data field for consistency
+      if ('data' in data) {
+        return data;
+      }
+      return { data };
     } catch (error) {
       console.error('API request failed:', error);
       return { error: 'Network error' };
@@ -126,7 +131,7 @@ class ApiClient {
 
       if (response.status === 401) {
         this.onUnauthorized();
-        return { error: 'Unauthorized' };
+        return { error: 'Invalid credentials' };
       }
 
       if (!response.ok) {

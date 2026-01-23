@@ -1,3 +1,3 @@
 const { createPluginConfig } = require('../../../configs/rspack-plugin.config.js');
 
-module.exports = createPluginConfig(__dirname, { port: 3104 });
+module.exports = createPluginConfig(__dirname, { port: 3107 });

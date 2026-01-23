@@ -26,6 +26,22 @@ export default function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
+  // 错误消息映射
+  const getErrorMessage = (error: string): string => {
+    const errorMap: Record<string, string> = {
+      'Invalid credentials': '身份验证失败，请重试',
+      'Email already registered': '该邮箱已被注册，请直接登录',
+      'Email already exists': '该邮箱已被注册，请直接登录',
+      'Validation failed': '输入的信息格式不正确，请检查后重试',
+      'Invalid email': '请输入有效的邮箱地址',
+      'Password too short': '密码至少需要8个字符',
+      'Network error': '网络连接失败，请检查网络后重试',
+      'Failed to fetch': '无法连接到服务器，请稍后重试',
+      'Internal server error': '服务器出错了，请稍后重试',
+    };
+    return errorMap[error] || `注册失败：${error}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -55,10 +71,10 @@ export default function RegisterPage() {
           state: { message: '注册成功！请登录。' }
         });
       } else {
-        setError(result.error || '注册失败');
+        setError(getErrorMessage(result.error || '注册失败'));
       }
     } catch (err) {
-      setError('发生意外错误');
+      setError('注册过程中发生错误，请稍后重试');
     } finally {
       setIsLoading(false);
     }
@@ -130,7 +146,7 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="您的称呼"
-                  className="pl-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                 />
                  <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -148,7 +164,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="pl-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                   required
                 />
                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
@@ -166,7 +182,7 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                   placeholder="至少8位字符"
                   required
                 />
@@ -192,7 +208,7 @@ export default function RegisterPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                   placeholder="再次输入密码"
                   required
                 />
@@ -214,11 +230,11 @@ export default function RegisterPage() {
                <input
                  id="terms"
                  type="checkbox"
-                 className="mt-1 rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                 className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 flex-shrink-0"
                  checked={agreedToTerms}
                  onChange={(e) => setAgreedToTerms(e.target.checked)}
                />
-               <label htmlFor="terms" className="text-sm text-muted-foreground leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+               <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
                  我已阅读并同意
                  <Link to="/terms" className="text-primary hover:underline mx-1">服务条款</Link>
                  和

@@ -23,8 +23,23 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get redirect URL from query params or default to home
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  // Get redirect URL from query params or default to editor
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/editor';
+
+  // 错误消息映射
+  const getErrorMessage = (error: string): string => {
+    const errorMap: Record<string, string> = {
+      'Invalid credentials': '邮箱或密码错误',
+      'Invalid email or password': '邮箱或密码错误，请检查后重试',
+      'Invalid credentials format': '请输入有效的邮箱和密码',
+      'User not found': '该账号不存在，请先注册',
+      'Invalid email': '请输入有效的邮箱地址',
+      'Network error': '网络连接失败，请检查网络后重试',
+      'Failed to fetch': '无法连接到服务器，请稍后重试',
+      'Internal server error': '服务器出错了，请稍后重试',
+    };
+    return errorMap[error] || `登录失败：${error}`;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +52,10 @@ export default function LoginPage() {
       if (result.success) {
         navigate(from, { replace: true });
       } else {
-        setError(result.error || '登录失败');
+        setError(getErrorMessage(result.error || '登录失败，请检查邮箱和密码'));
       }
     } catch (err) {
-      setError('发生意外错误');
+      setError('登录过程中发生错误，请稍后重试');
     } finally {
       setIsLoading(false);
     }
@@ -116,7 +131,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="pl-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                   required
                 />
                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
@@ -139,7 +154,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 bg-muted/30 border-input/60 focus:bg-background transition-colors"
+                  className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                   placeholder="••••••••"
                   required
                 />
