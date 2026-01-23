@@ -25,6 +25,11 @@ import {
   Box,
   Undo2,
   Redo2,
+  Scan,
+  PanelRightClose,
+  PanelRightOpen,
+  Maximize,
+  Monitor,
   Menu,
   FolderOpen,
   Save,
@@ -208,6 +213,39 @@ export default function Editor() {
   }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded])
 
   const [zoom, setZoom] = useState(100)
+  const [zoomInput, setZoomInput] = useState("100")
+  const [showRightPanel, setShowRightPanel] = useState(true)
+
+  // Update zoom input when zoom changes externally
+  useEffect(() => {
+    setZoomInput(zoom.toString())
+  }, [zoom])
+  
+  const handleZoomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setZoomInput(e.target.value)
+  }
+
+  const handleZoomInputBlur = () => {
+    let value = parseInt(zoomInput.replace(/[^0-9]/g, ''), 10)
+    if (isNaN(value)) value = 100
+    value = Math.max(10, Math.min(500, value))
+    setZoom(value)
+    setZoomInput(value.toString())
+  }
+
+  const handleZoomInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleZoomInputBlur()
+      e.currentTarget.blur()
+    }
+  }
+
+  // Auto-open right panel when a node is selected
+  useEffect(() => {
+    if (selectedElement) {
+      setShowRightPanel(true)
+    }
+  }, [selectedElement])
 
   // Subscribe to temporal history
   const temporalSnapshot = useSyncExternalStore(
@@ -1104,6 +1142,18 @@ export default function Editor() {
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
+
+          {!showRightPanel && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" 
+              onClick={() => setShowRightPanel(true)}
+              title={language === "zh" ? "显示属性面板" : "Show Properties"}
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </Button>
+          )}
           
           <Button 
             variant="ghost" 
@@ -1194,9 +1244,21 @@ export default function Editor() {
           >
             <Minus className="h-4 w-4" />
           </Button>
-          <div className="px-3 min-w-[60px] text-center">
-            <span className="text-sm font-medium tabular-nums">{zoom}%</span>
+
+          <div className="w-[48px] px-0.5">
+            <Input
+              value={zoomInput + "%"}
+              onChange={(e) => {
+                // Allow user to type, stripping % for state
+                const val = e.target.value.replace(/%/g, '')
+                setZoomInput(val)
+              }}
+              onBlur={handleZoomInputBlur}
+              onKeyDown={handleZoomInputKeyDown}
+              className="h-6 text-sm font-medium text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:bg-background/50 p-0 tabular-nums shadow-none hover:bg-background/40 transition-colors rounded-sm"
+            />
           </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -1204,6 +1266,39 @@ export default function Editor() {
             onClick={() => setZoom(Math.min(500, zoom + 10))}
           >
             <Plus className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+            title={language === "zh" ? "适应窗口" : "Best Fit"}
+            onClick={() => {
+              const leftPanelWidth = embedVisibility.showLibrary ? 320 : 0
+              const rightPanelWidth = (embedVisibility.showProps && showRightPanel) ? 340 : 0
+              const availableWidth = window.innerWidth - leftPanelWidth - rightPanelWidth - 60
+              const availableHeight = window.innerHeight - 150
+              
+              const canvasW = canvasConfig.width || 1920
+              const canvasH = canvasConfig.height || 1080
+              
+              const scaleW = availableWidth / canvasW
+              const scaleH = availableHeight / canvasH
+              
+              const bestFit = Math.min(scaleW, scaleH)
+              setZoom(Math.floor(Math.max(10, Math.min(500, bestFit * 90))))
+            }}
+          >
+            <Maximize className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+            title={language === "zh" ? "100% 视图" : "100% View"}
+            onClick={() => setZoom(100)}
+          >
+            <Monitor className="h-4 w-4" />
           </Button>
         </div>
 
@@ -1233,12 +1328,21 @@ export default function Editor() {
       </div>
 
       {/* Right Panel - Properties */}
-      {embedVisibility.showProps && (
+      {embedVisibility.showProps && showRightPanel && (
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
-            <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>
+            <button 
+              className="p-1 hover:bg-accent rounded" 
+              onClick={() => {
+                if (selectedElement) {
+                  store.getState().selectNode(null)
+                } else {
+                  setShowRightPanel(false)
+                }
+              }}
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
