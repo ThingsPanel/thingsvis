@@ -357,6 +357,11 @@ export default function Editor() {
             type: 'page' as const,
             version: loaded.meta.version,
             nodes: loaded.nodes,
+            config: {
+              mode: loaded.canvas.mode,
+              width: loaded.canvas.width,
+              height: loaded.canvas.height
+            }
           })
           // Update canvas config
           setCanvasConfig(prev => ({
@@ -387,6 +392,11 @@ export default function Editor() {
             type: 'page' as const,
             version: '1.0.0',
             nodes: [],
+            config: {
+              mode: canvasConfig.mode,
+              width: canvasConfig.width,
+              height: canvasConfig.height,
+            }
           })
           try {
             store.temporal.getState().clear?.()
@@ -1295,7 +1305,17 @@ export default function Editor() {
                               ? "切换布局模式将清空当前画布，是否继续？" 
                               : "Switching layout mode will clear the current canvas. Continue?";
                             if (!window.confirm(msg)) return;
-                            store.getState().loadPage({ id: canvasConfig.id, type: 'page', version: '1.0.0', nodes: [] });
+                            store.getState().loadPage({
+                              id: canvasConfig.id,
+                              type: 'page' as const,
+                              version: '1.0.0',
+                              nodes: [],
+                              config: {
+                                mode: newMode,
+                                width: canvasConfig.width,
+                                height: canvasConfig.height,
+                              },
+                            });
                             markDirty();
                           }
                           setCanvasConfig({ ...canvasConfig, mode: newMode });
@@ -1434,6 +1454,11 @@ export default function Editor() {
             type: 'page' as const,
             version: project.meta.version,
             nodes: project.nodes,
+            config: {
+              mode: project.canvas.mode,
+              width: project.canvas.width,
+              height: project.canvas.height,
+            }
           }
           store.getState().loadPage(pageData)
           try {
@@ -1475,6 +1500,11 @@ export default function Editor() {
             type: 'page' as const,
             version: '1.0.0',
             nodes: [],
+            config: {
+              mode: canvasConfig.mode,
+              width: canvasConfig.width,
+              height: canvasConfig.height,
+            }
           }
           store.getState().loadPage(emptyPage)
           try {
