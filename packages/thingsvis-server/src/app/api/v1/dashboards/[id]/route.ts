@@ -24,7 +24,7 @@ function parseDashboard(dashboard: {
 
 // GET /api/v1/dashboards/:id - Get dashboard details with parsed JSON fields
 export async function GET(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // PUT /api/v1/dashboards/:id - Update dashboard (creates version history)
 export async function PUT(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -111,7 +111,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // DELETE /api/v1/dashboards/:id - Delete dashboard (cascades to versions)
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

@@ -8,6 +8,11 @@
 import type { StorageAdapter, StorageProject, StorageProjectMeta, ListOptions, ListResult, StorageBackend } from './types';
 import * as dashboardsApi from '../../api/dashboards';
 
+function isCuid(id?: string): boolean {
+  if (!id) return false;
+  return /^c[a-z0-9]{24,}$/i.test(id);
+}
+
 function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): StorageProject {
   return {
     meta: {
@@ -30,10 +35,21 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async list(options?: ListOptions): Promise<ListResult<StorageProjectMeta>> {
       try {
+        console.log('[CloudAdapter] Listing dashboards:', {
+          projectId,
+          options,
+        });
+        
         const response = await dashboardsApi.listDashboards({
           limit: options?.limit,
           page: options?.page || 1,
           projectId,
+        });
+
+        console.log('[CloudAdapter] List response:', {
+          hasError: !!response.error,
+          hasData: !!response.data,
+          error: response.error,
         });
 
         if (response.error || !response.data) {
@@ -42,6 +58,12 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         const { data, meta } = response.data;
         const hasMore = meta.page < meta.totalPages;
+        
+        console.log('[CloudAdapter] Parsed dashboards:', {
+          count: data.length,
+          total: meta.total,
+          hasMore,
+        });
         
         return {
           data: data.map(d => ({
@@ -76,38 +98,50 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async save(project: StorageProject): Promise<{ id: string }> {
       try {
-        // If project has ID, update; otherwise create
-        if (project.meta.id) {
+        const canUpdate = project.meta.id && isCuid(project.meta.id);
+
+        if (canUpdate) {
           const response = await dashboardsApi.updateDashboard(project.meta.id, {
             name: project.meta.name,
             canvasConfig: project.schema.canvas,
             nodes: project.schema.nodes,
             dataSources: project.schema.dataSources,
           });
-          
-          if (response.error) {
+
+          if (!response.error) {
+            return { id: project.meta.id };
+          }
+
+          // If the dashboard doesn't exist, fall through to create.
+          if (response.error !== 'Dashboard not found') {
             throw new Error(response.error);
           }
-          
-          return { id: project.meta.id };
-        } else {
-          // Create requires a projectId
-          if (!projectId) {
-            throw new Error('Project ID is required to create a dashboard');
-          }
-          
-          const response = await dashboardsApi.createDashboard({
-            name: project.meta.name,
-            projectId,
-            canvasConfig: project.schema.canvas,
-          });
-          
-          if (response.error || !response.data) {
-            throw new Error(response.error || 'Failed to create dashboard');
-          }
-          
-          return { id: response.data.id };
         }
+
+        // Create dashboard - projectId is optional, backend will auto-create if not provided
+        const createResponse = await dashboardsApi.createDashboard({
+          name: project.meta.name,
+          projectId, // Optional - will auto-create project if not provided
+          canvasConfig: project.schema.canvas,
+        });
+
+        if (createResponse.error || !createResponse.data) {
+          throw new Error(createResponse.error || 'Failed to create dashboard');
+        }
+
+        const createdId = createResponse.data.id;
+
+        // Update full schema after creation (nodes/dataSources)
+        const updateResponse = await dashboardsApi.updateDashboard(createdId, {
+          nodes: project.schema.nodes,
+          dataSources: project.schema.dataSources,
+        });
+
+        if (updateResponse.error) {
+          throw new Error(updateResponse.error);
+        }
+
+        return { id: createdId };
       } catch (error) {
         console.error('Cloud storage save error:', error);
         throw error;
@@ -131,13 +165,10 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
         if (!original) throw new Error('Dashboard not found');
 
         // Create new dashboard with same schema but new name
-        if (!projectId) {
-          throw new Error('Project ID is required to duplicate a dashboard');
-        }
-
+        // projectId is optional - will auto-create if not provided
         const response = await dashboardsApi.createDashboard({
           name: newName,
-          projectId,
+          projectId, // Optional
           canvasConfig: original.schema.canvas,
         });
 
@@ -182,20 +213,16 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async import(file: File): Promise<{ id: string }> {
       return new Promise((resolve, reject) => {
-        if (!projectId) {
-          reject(new Error('Project ID is required to import a dashboard'));
-          return;
-        }
-
         const reader = new FileReader();
         reader.onload = async (e) => {
           try {
             const content = e.target?.result as string;
             const parsed = JSON.parse(content);
 
+            // projectId is optional - will auto-create if not provided
             const response = await dashboardsApi.createDashboard({
               name: parsed.meta?.name || 'Imported Dashboard',
-              projectId,
+              projectId, // Optional
               canvasConfig: parsed.canvas,
             });
 

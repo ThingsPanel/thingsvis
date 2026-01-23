@@ -5,7 +5,7 @@ import { CreateProjectSchema } from '@/lib/validators/project'
 
 // GET /api/v1/projects - List projects with pagination
 export async function GET(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/v1/projects - Create a new project
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

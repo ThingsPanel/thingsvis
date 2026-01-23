@@ -38,7 +38,15 @@ export function useStorage(projectId?: string): UseStorageResult {
   
   // Get the appropriate adapter based on auth state
   const adapter: StorageAdapter = useMemo(() => {
-    if (isAuthenticated && storageMode === 'cloud') {
+    const shouldUseCloud = isAuthenticated && storageMode === 'cloud';
+    console.log('[useStorage] Selecting adapter:', {
+      isAuthenticated,
+      storageMode,
+      shouldUseCloud,
+      projectId,
+    });
+    
+    if (shouldUseCloud) {
       return createCloudStorageAdapter(projectId);
     }
     return localStorageAdapter;

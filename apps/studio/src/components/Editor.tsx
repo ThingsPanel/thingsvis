@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { useProject } from '@/contexts/ProjectContext'
 import {
   MousePointer2,
   Square,
@@ -58,6 +60,7 @@ import {
   Minus,
   Plus,
   Database,
+  LogOut,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -138,6 +141,8 @@ type CanvasConfigSchema = {
 }
 
 export default function Editor() {
+  const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
+  const { currentProject } = useProject()
   const [activeTool, setActiveTool] = useState<Tool>("select")
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -147,8 +152,15 @@ export default function Editor() {
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
+  // 跟踪云端模式下是否已选择画布（用于阻止用户在未选择画布时关闭对话框）
+  const [hasSelectedDashboard, setHasSelectedDashboard] = useState(false)
   // Image picker state for image tool (stores Object URL)
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
+
+  const handleLogout = useCallback(() => {
+    logout()
+    window.location.hash = '#/'
+  }, [logout])
 
   // Embed mode UI visibility from URL params
   const embedVisibility = useMemo(() => {
@@ -176,6 +188,28 @@ export default function Editor() {
     const isDark = document.documentElement.classList.contains('dark')
     setIsDarkMode(isDark)
   }, [])
+
+  // Debug: Log authentication state
+  useEffect(() => {
+    console.log('[Editor] Auth state:', {
+      isAuthenticated,
+      authLoading,
+      hasUser: !!user,
+      userEmail: user?.email,
+      userName: user?.name,
+    })
+  }, [isAuthenticated, authLoading, user])
+
+  // Prompt project creation after login if no project exists
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) return
+    if (embedVisibility.isEmbedded) return
+    // 云端模式下，强制显示对话框让用户选择画布
+    if (storageMode === 'cloud' && !hasSelectedDashboard) {
+      setShowProjectDialog(true)
+    }
+  }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded])
 
   const [zoom, setZoom] = useState(100)
 
@@ -296,8 +330,18 @@ export default function Editor() {
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
+    cloudProjectId: currentProject?.id,
     getProjectState,
     enabled: !isBootstrapping,
+    onIdChange: (newId) => {
+      setCanvasConfig(prev => ({
+        ...prev,
+        id: newId,
+      }))
+      try {
+        localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId)
+      } catch {}
+    },
   })
 
   // Bootstrap: load last project into store (or create a new empty page)
@@ -438,6 +482,7 @@ export default function Editor() {
       setTool: (tool) => setActiveTool(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
       openPreview,
+      logout: handleLogout,
       // Atomic insert nodes + select: ensures undo/redo captures both operations together
       // We create a partial state update that includes both nodesById and selection changes
       // This ensures the temporal middleware captures both in a single history entry
@@ -858,15 +903,29 @@ export default function Editor() {
                 </div>
                 <span className="text-sm text-muted-foreground">?</span>
               </button>
-              <button
-                onClick={() => console.log('Login clicked - TODO: implement login')}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <Users className="h-4 w-4" />
-                  <span>{language === "zh" ? "登录" : "Login"}</span>
-                </div>
-              </button>
+              {!authLoading && isAuthenticated && user ? (
+                <>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left text-red-600 dark:text-red-400"
+                  >
+                    <div className="flex items-center gap-3">
+                      <LogOut className="h-4 w-4" />
+                      <span>{language === "zh" ? "退出登录" : "Logout"}</span>
+                    </div>
+                  </button>
+                </>
+              ) : !authLoading ? (
+                <button
+                  onClick={() => window.location.hash = '#/login'}
+                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4" />
+                    <span>{language === "zh" ? "登录" : "Login"}</span>
+                  </div>
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -917,6 +976,33 @@ export default function Editor() {
                 <HelpCircle className="h-4 w-4" />
                 {language === "zh" ? "帮助" : "Help"}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {!authLoading && isAuthenticated && user ? (
+                <>
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    <div className="font-medium text-foreground">{user.name || user.email}</div>
+                    <div className="text-xs">{user.email}</div>
+                  </div>
+                  <DropdownMenuItem 
+                    className="gap-2 text-red-600 dark:text-red-400" 
+                    onClick={() => {
+                      logout()
+                      window.location.hash = '#/'
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {language === "zh" ? "退出登录" : "Logout"}
+                  </DropdownMenuItem>
+                </>
+              ) : !authLoading ? (
+                <DropdownMenuItem 
+                  className="gap-2" 
+                  onClick={() => window.location.hash = '#/login'}
+                >
+                  <Users className="h-4 w-4" />
+                  {language === "zh" ? "登录" : "Login"}
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -1290,8 +1376,17 @@ export default function Editor() {
       {/* Project Dialog */}
       <ProjectDialog
         open={showProjectDialog}
-        onClose={() => setShowProjectDialog(false)}
+        onClose={() => {
+          // 云端模式下，如果还没选择画布，不允许关闭对话框
+          if (isAuthenticated && storageMode === 'cloud' && !hasSelectedDashboard) {
+            return
+          }
+          setShowProjectDialog(false)
+        }}
         onProjectLoad={(project) => {
+          // 标记已选择画布
+          setHasSelectedDashboard(true)
+          
           // Persist last opened project id
           try {
             localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, project.meta.id)
@@ -1325,8 +1420,15 @@ export default function Editor() {
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
           }))
+          
+          // 关闭对话框
+          setShowProjectDialog(false)
         }}
         onNewProject={() => {
+          // 本地模式下才使用这个方法创建新项目
+          // 云端模式下会在 onProjectLoad 中处理
+          setHasSelectedDashboard(true)
+          
           // Create new empty project
           const newId = crypto.randomUUID()
           try {
@@ -1350,6 +1452,9 @@ export default function Editor() {
             createdAt: Date.now(),
             dataSources: [],
           }))
+          
+          // 关闭对话框
+          setShowProjectDialog(false)
         }}
         currentProject={getProjectState()}
         language={language}

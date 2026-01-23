@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
 
 // CORS configuration
 const allowedOrigins = [
@@ -31,12 +32,30 @@ function corsMiddleware(req: NextRequest) {
   return null
 }
 
-export default auth((req) => {
+async function hasValidBearerToken(req: NextRequest): Promise<boolean> {
+  const authHeader = req.headers.get('authorization')
+  if (!authHeader?.startsWith('Bearer ')) return false
+
+  const token = authHeader.substring(7)
+  const secret = new TextEncoder().encode(
+    process.env.AUTH_SECRET || 'thingsvis-dev-secret-key'
+  )
+
+  try {
+    await jwtVerify(token, secret)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export default auth(async (req) => {
   // Handle CORS preflight
   const corsResponse = corsMiddleware(req)
   if (corsResponse) return corsResponse
 
   const isLoggedIn = !!req.auth
+  const hasBearer = await hasValidBearerToken(req)
   const isApiRoute = req.nextUrl.pathname.startsWith('/api/v1')
   const isAuthRoute = req.nextUrl.pathname.startsWith('/api/v1/auth')
   const isPublicRoute = req.nextUrl.pathname.startsWith('/api/v1/public')
@@ -61,7 +80,7 @@ export default auth((req) => {
   }
 
   // Protect API routes
-  if (isApiRoute && !isLoggedIn) {
+  if (isApiRoute && !isLoggedIn && !hasBearer) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401, headers: corsHeaders }

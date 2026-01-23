@@ -5,6 +5,7 @@
  */
 
 const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
+const TOKEN_KEY = 'thingsvis_token'; // Must match AuthContext
 
 export interface ApiClientConfig {
   baseUrl?: string;
@@ -31,7 +32,7 @@ class ApiClient {
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = config.baseUrl || DEFAULT_API_BASE_URL;
-    this.getToken = config.getToken || (() => localStorage.getItem('thingsvis_token'));
+    this.getToken = config.getToken || (() => localStorage.getItem(TOKEN_KEY));
     this.onUnauthorized = config.onUnauthorized || (() => {});
   }
 
@@ -49,6 +50,13 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${path}`;
     const token = this.getToken();
+
+    console.log('[API Client] Request:', {
+      method,
+      path,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : null,
+    });
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -70,8 +78,21 @@ class ApiClient {
       const data = await response.json();
 
       if (response.status === 401) {
-        this.onUnauthorized();
-        return { error: 'Invalid credentials' };
+        console.error('[API Client] 401 Unauthorized:', {
+          url,
+          method,
+          hasToken: !!token,
+          response: data,
+        });
+        
+        // Only call onUnauthorized if we actually had a token
+        // This prevents clearing auth on initial requests
+        if (token) {
+          console.warn('[API Client] Calling onUnauthorized handler');
+          this.onUnauthorized();
+        }
+        
+        return { error: data.error || 'Unauthorized' };
       }
 
       if (!response.ok) {

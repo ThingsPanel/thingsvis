@@ -10,6 +10,8 @@ import { autoSaveManager } from '../lib/storage/autoSave'
 import { projectStorage } from '../lib/storage/projectStorage'
 import type { SaveState } from '../lib/storage/types'
 import type { ProjectFile } from '../lib/storage/schemas'
+import { useStorage } from './useStorage'
+import type { StorageProject } from '../lib/storage/adapter'
 
 // =============================================================================
 // Hook Options
@@ -18,10 +20,14 @@ import type { ProjectFile } from '../lib/storage/schemas'
 export interface UseAutoSaveOptions {
   /** Project ID to save */
   projectId: string
+  /** Backend project ID for cloud storage (optional) */
+  cloudProjectId?: string
   /** Function to get current project state */
   getProjectState: () => ProjectFile
   /** Whether auto-save is enabled */
   enabled?: boolean
+  /** Callback when a new storage ID is assigned */
+  onIdChange?: (newId: string) => void
 }
 
 // =============================================================================
@@ -33,7 +39,37 @@ export interface UseAutoSaveOptions {
  * Returns save state and methods to trigger save operations.
  */
 export function useAutoSave(options: UseAutoSaveOptions) {
-  const { projectId, getProjectState, enabled = true } = options
+  const { projectId, cloudProjectId, getProjectState, enabled = true, onIdChange } = options
+  const storage = useStorage(cloudProjectId)
+
+  const saveProject = useCallback(
+    async (project: ProjectFile) => {
+      if (storage.isCloud) {
+        const storageProject: StorageProject = {
+          meta: {
+            id: project.meta.id,
+            name: project.meta.name,
+            thumbnail: project.meta.thumbnail,
+            createdAt: project.meta.createdAt,
+            updatedAt: project.meta.updatedAt,
+          },
+          schema: {
+            canvas: project.canvas,
+            nodes: project.nodes,
+            dataSources: project.dataSources,
+          },
+        }
+        const result = await storage.save(storageProject)
+        if (result?.id && result.id !== project.meta.id) {
+          onIdChange?.(result.id)
+        }
+        return
+      }
+
+      await projectStorage.save(project)
+    },
+    [storage, onIdChange]
+  )
 
   // Keep latest getter without causing AutoSaveManager re-init (which would cancel debounce timers)
   const getProjectStateRef = useRef(getProjectState)
@@ -55,12 +91,12 @@ export function useAutoSave(options: UseAutoSaveOptions) {
   useEffect(() => {
     if (!enabled) return
 
-    autoSaveManager.init(projectId, () => getProjectStateRef.current())
+    autoSaveManager.init(projectId, () => getProjectStateRef.current(), saveProject)
 
     return () => {
       autoSaveManager.destroy()
     }
-  }, [projectId, enabled])
+  }, [projectId, enabled, saveProject])
 
   // Mark dirty - call this when state changes
   const markDirty = useCallback(() => {

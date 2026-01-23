@@ -9,6 +9,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
+import { ProjectSwitcher } from '@/components/ProjectSwitcher';
 import { Button } from '@/components/ui/button';
 import { 
   Github, 
@@ -90,6 +91,7 @@ export default function HomePage() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isAuthenticated && <ProjectSwitcher />}
             {!isAuthenticated && (
               <Link to="/login" className="text-[15px] font-medium text-gray-900 hover:opacity-70 transition-opacity">
                 登录
