@@ -20,7 +20,7 @@ class Boundary extends React.Component<Props, State> {
   componentDidCatch(error: unknown) {
     // headless: no styling or logging here; host app can log if desired
     // eslint-disable-next-line no-console
-    console.error('HeadlessErrorBoundary caught', error);
+    
   }
 
   render() {

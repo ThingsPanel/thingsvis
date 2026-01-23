@@ -86,7 +86,6 @@ function handleMessage(event: MessageEvent) {
     events.value.unshift(
       `[${new Date().toLocaleTimeString()}] SAVE received! Project: "${payload.meta.name}" (Nodes: ${payload.nodes?.length})`
     )
-    console.log('Received save payload:', payload)
   }
 }
 

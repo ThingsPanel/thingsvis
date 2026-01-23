@@ -59,7 +59,7 @@ export async function loadProject(projectId: string): Promise<ProjectFile | null
     const project = await get<ProjectFile>(projectId, projectsStore)
     return project ?? null
   } catch (error) {
-    console.error('[preview] Failed to load project:', error)
+    
     return null
   }
 }

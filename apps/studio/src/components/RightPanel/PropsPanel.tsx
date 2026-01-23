@@ -69,10 +69,7 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
     if (!controlsParse.issues?.length) return;
 
     // eslint-disable-next-line no-console
-    console.warn('[PropsPanel] Invalid plugin controls; falling back to legacy panel', {
-      pluginId: pluginEntry.id,
-      issues: controlsParse.issues
-    });
+    
   }, [pluginEntry, controls, controlsParse.issues]);
 
   function updateNode(changes: any) {

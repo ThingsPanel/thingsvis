@@ -74,15 +74,7 @@ export function ProjectDialog({
 
   // Debug: Log auth and storage state
   useEffect(() => {
-    console.log('[ProjectDialog] Auth and storage state:', {
-      isAuthenticated,
-      hasUser: !!user,
-      hasToken: !!token,
-      storageMode,
-      storageBackend: storage.backend,
-      cloudProjectId: cloudProject?.id,
-      selectedProjectId,
-    })
+    
   }, [isAuthenticated, user, token, storageMode, storage.backend, cloudProject, selectedProjectId])
 
   // 当 cloudProject 变化时，同步到 selectedProjectId
@@ -117,7 +109,7 @@ export function ProjectDialog({
             setProjects(projectsList)
           }
         } catch (err) {
-          console.error('Failed to load projects:', err)
+          
         }
       }
 
@@ -128,14 +120,14 @@ export function ProjectDialog({
             if (!cancelled) setDashboards([])
           } else {
             const response = await dashboardsApi.listDashboards({ projectId: selectedProjectId, limit: 50 })
-            console.log('[ProjectDialog] Dashboards response:', response)
+            
             if (!cancelled && !response.error) {
               // API 返回格式: { data: [...], meta: {...} }
               // response.data 可能直接是数组，也可能是 { data: [...], meta: {...} }
               const list = Array.isArray(response.data) 
                 ? response.data 
                 : (response.data?.data || [])
-              console.log('[ProjectDialog] Dashboard list:', list)
+              
               setDashboards(list.map((d: any) => ({
                 id: d.id,
                 name: d.name,
@@ -150,7 +142,7 @@ export function ProjectDialog({
           if (!cancelled) setDashboards(result.data)
         }
       } catch (err) {
-        console.error('Failed to load dashboards:', err)
+        
       }
     }
 
@@ -391,7 +383,7 @@ export function ProjectDialog({
       await storage.delete(dashboardId)
       setRefreshKey(k => k + 1)
     } catch (error) {
-      console.error('Failed to delete dashboard', error)
+      
     }
   }, [storage])
 

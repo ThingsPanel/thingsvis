@@ -13,7 +13,7 @@ async function resetPassword() {
   const newPassword = process.argv[3];
 
   if (!email || !newPassword) {
-    console.error('Usage: node scripts/reset-password.js <email> <new-password>');
+    
     process.exit(1);
   }
 
@@ -24,7 +24,7 @@ async function resetPassword() {
     });
 
     if (!user) {
-      console.error(`❌ User not found: ${email}`);
+      
       process.exit(1);
     }
 
@@ -37,11 +37,11 @@ async function resetPassword() {
       data: { passwordHash },
     });
 
-    console.log(`✅ Password reset successfully for ${email}`);
-    console.log(`   New password: ${newPassword}`);
-    console.log(`   You can now login with these credentials.`);
+    
+    
+    
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    
     process.exit(1);
   } finally {
     await prisma.$disconnect();

@@ -22,7 +22,7 @@ class TinyEmitter {
             catch (e) {
                 // swallow handler errors for now
                 // eslint-disable-next-line no-console
-                console.warn("[TinyEmitter] handler error", e);
+                
             }
         }
     }

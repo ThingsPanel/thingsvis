@@ -33,7 +33,7 @@ class CommandRegistryImpl implements ICommandRegistry {
   registerAll(commands: Command[]): void {
     for (const command of commands) {
       if (this.commands.has(command.id)) {
-        console.warn(`Command "${command.id}" is already registered, skipping`)
+        
         continue
       }
       this.commands.set(command.id, command)
@@ -57,7 +57,7 @@ class CommandRegistryImpl implements ICommandRegistry {
   async execute(id: string): Promise<void> {
     const command = this.commands.get(id)
     if (!command) {
-      console.warn(`Command "${id}" not found`)
+      
       return
     }
 
@@ -68,7 +68,7 @@ class CommandRegistryImpl implements ICommandRegistry {
     try {
       await command.execute()
     } catch (error) {
-      console.error(`Error executing command "${id}":`, error)
+      
     }
   }
 
@@ -122,7 +122,7 @@ class CommandRegistryImpl implements ICommandRegistry {
       try {
         listener()
       } catch (error) {
-        console.error('Error in command registry listener:', error)
+        
       }
     }
   }

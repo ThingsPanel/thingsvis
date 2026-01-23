@@ -8,7 +8,35 @@
       "staticEntryUrl": "/plugins/basic/text/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "2.0.0"
+      "version": "2.0.0",
+      "name": "基础文本"
+    },
+    "basic/rectangle": {
+      "remoteName": "thingsvis_plugin_basic_rectangle",
+      "remoteEntryUrl": "http://localhost:3100/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/rectangle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "name": "矩形"
+    },
+    "basic/circle": {
+      "remoteName": "thingsvis_plugin_basic_circle",
+      "remoteEntryUrl": "http://localhost:3101/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/circle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "name": "圆形"
+    },
+    "basic/line": {
+      "remoteName": "thingsvis_plugin_basic_line",
+      "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "staticEntryUrl": "/plugins/basic/line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "name": "连线"
     },
     "basic/indicator": {
       "remoteName": "thingsvis_plugin_basic_indicator",
@@ -16,7 +44,8 @@
       "staticEntryUrl": "/plugins/basic/indicator/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "name": "数字指示器"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
@@ -25,7 +54,17 @@
       "debugSource": "static",
       "localEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "name": "ECharts 折线图"
+    },
+    "media/image": {
+      "remoteName": "thingsvis_plugin_media_image",
+      "remoteEntryUrl": "http://localhost:3300/remoteEntry.js",
+      "staticEntryUrl": "/plugins/media/image/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "name": "图片"
     },
     "custom/water-tank": {
       "remoteName": "thingsvis_plugin_custom_water_tank",
@@ -34,7 +73,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "icon": "Container"
+      "icon": "Container",
+      "name": "蓄水池"
     }
   }
 }

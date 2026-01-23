@@ -199,7 +199,7 @@ export async function enterFullscreen(element?: HTMLElement): Promise<void> {
       await (target as any).msRequestFullscreen()
     }
   } catch (error) {
-    console.error('Failed to enter fullscreen:', error)
+    
   }
 }
 
@@ -218,7 +218,7 @@ export async function exitFullscreen(): Promise<void> {
       await (document as any).msExitFullscreen()
     }
   } catch (error) {
-    console.error('Failed to exit fullscreen:', error)
+    
   }
 }
 

@@ -69,7 +69,7 @@ export default function ImageUploadSettingsPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      
       alert('保存设置失败');
     } finally {
       setIsSaving(false);

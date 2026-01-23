@@ -44,7 +44,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Wait for auth to finish loading
     if (authLoading) {
-      console.log('[ProjectContext] Waiting for auth to complete...');
+      
       return;
     }
 
@@ -52,15 +52,11 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     const storedToken = localStorage.getItem('thingsvis_token');
     const hasToken = !!storedToken;
     
-    console.log('[ProjectContext] Auth check:', {
-      isAuthenticated,
-      hasToken,
-      authLoading,
-    });
+    
 
     // If no token in localStorage, clear project
     if (!hasToken) {
-      console.log('[ProjectContext] No token found, clearing project');
+      
       setCurrentProject(null);
       localStorage.removeItem(CURRENT_PROJECT_KEY);
       return;
@@ -68,7 +64,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     
     // If we have token but not authenticated yet, wait for auth to complete
     if (!isAuthenticated && hasToken) {
-      console.log('[ProjectContext] Has token but not authenticated yet, waiting...');
+      
       return;
     }
 
@@ -77,28 +73,24 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       try {
-        console.log('[ProjectContext] Initializing project...');
+        
         
         // Try to load saved project ID
         const savedProjectId = localStorage.getItem(CURRENT_PROJECT_KEY);
-        console.log('[ProjectContext] Saved project ID:', savedProjectId);
+        
         
         // Load projects list using API
-        console.log('[ProjectContext] Fetching projects from API...');
+        
         const projectsResponse = await projectsApi.listProjects({ page: 1, limit: 20 });
 
-        console.log('[ProjectContext] Projects API response:', {
-          hasError: !!projectsResponse.error,
-          hasData: !!projectsResponse.data,
-          error: projectsResponse.error,
-        });
+        
 
         if (projectsResponse.error || !projectsResponse.data) {
           throw new Error(projectsResponse.error || 'Failed to load projects');
         }
 
         const fetchedProjects = projectsResponse.data.data || [];
-        console.log('[ProjectContext] Fetched projects count:', fetchedProjects.length);
+        
         
         // If we have projects
         if (fetchedProjects && fetchedProjects.length > 0) {
@@ -112,30 +104,27 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
           if (!projectToLoad) {
             throw new Error('No project to load');
           }
-          console.log('[ProjectContext] Loading project:', projectToLoad.name, projectToLoad.id);
+          
           
           // Load full project details
           const projectResponse = await projectsApi.getProject(projectToLoad.id);
           
-          console.log('[ProjectContext] Project details response:', {
-            hasError: !!projectResponse.error,
-            hasData: !!projectResponse.data,
-          });
+          
           
           if (projectResponse.data) {
             const projectData = projectResponse.data;
             setCurrentProject(projectData);
             localStorage.setItem(CURRENT_PROJECT_KEY, projectData.id);
-            console.log('[ProjectContext] ✓ Project loaded successfully:', projectData.name);
+            
           }
         } else {
           // No projects exist - require user to create one
-          console.log('[ProjectContext] No projects found, waiting for user to create project');
+          
           setCurrentProject(null);
           localStorage.removeItem(CURRENT_PROJECT_KEY);
         }
       } catch (err) {
-        console.error('[ProjectContext] Failed to initialize project:', err);
+        
         setError(err instanceof Error ? err.message : '初始化项目失败');
       } finally {
         setIsLoading(false);

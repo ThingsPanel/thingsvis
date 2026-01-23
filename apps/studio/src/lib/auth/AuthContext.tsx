@@ -89,17 +89,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Always use localStorage as the source of truth
     // This ensures token is available even during initialization
     const currentToken = localStorage.getItem(TOKEN_KEY);
-    console.log('[AuthContext] Configuring API client, token:', currentToken ? `${currentToken.substring(0, 20)}...` : 'null');
+    
     
     apiClient.configure({
       getToken: () => {
         const token = localStorage.getItem(TOKEN_KEY);
-        console.log('[AuthContext] API client getToken called, returning:', token ? `${token.substring(0, 20)}...` : 'null');
+        
         return token;
       },
       onUnauthorized: () => {
         // Token expired or invalid
-        console.log('[AuthContext] API client onUnauthorized triggered - clearing auth');
+        
         clearAuth();
       },
     });
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Check for embed token first
         if (isEmbedded()) {
           const embedToken = getEmbedToken();
-          console.log('[AuthContext] Embed mode detected, token:', embedToken ? 'present' : 'missing');
+          
           if (embedToken) {
             setToken(embedToken);
             // Optionally validate the token by fetching user
@@ -133,20 +133,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const storedExpiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
         const storedUser = localStorage.getItem(USER_KEY);
 
-        console.log('[AuthContext] Initializing auth from localStorage:', {
-          hasToken: !!storedToken,
-          tokenPreview: storedToken ? `${storedToken.substring(0, 20)}...` : null,
-          hasExpiry: !!storedExpiry,
-          expiryDate: storedExpiry ? new Date(parseInt(storedExpiry, 10)).toISOString() : null,
-          hasUser: !!storedUser,
-        });
+        
 
         if (storedToken && storedExpiry) {
           const expiry = parseInt(storedExpiry, 10);
           
           // Check if token is expired
           if (Date.now() < expiry) {
-            console.log('[AuthContext] Token is valid, validating with server...');
+            
             setToken(storedToken);
             
             if (storedUser) {
@@ -160,30 +154,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Validate token by fetching current user
             // Note: apiClient already configured to use localStorage
             const result = await getCurrentUser();
-            console.log('[AuthContext] User validation result:', {
-              success: !!result.data,
-              error: result.error,
-              user: result.data?.email,
-            });
+            
             
             if (result.data) {
               setUser(result.data);
               localStorage.setItem(USER_KEY, JSON.stringify(result.data));
             } else {
               // Token is invalid
-              console.log('[AuthContext] Token validation failed, clearing auth');
+              
               clearAuth();
             }
           } else {
             // Token expired
-            console.log('[AuthContext] Token expired, clearing auth');
+            
             clearAuth();
           }
         } else {
-          console.log('[AuthContext] No stored token found');
+          
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        
         clearAuth();
       } finally {
         setIsLoading(false);
@@ -196,10 +186,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Login handler
   const login = useCallback(async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('[AuthContext] Login attempt:', credentials.email);
+      
       const result = await apiLogin(credentials);
       
-      console.log('[AuthContext] Login API raw response:', result);
+      
       
       if (result.error) {
         return { success: false, error: result.error };
@@ -213,20 +203,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const newUser: User = authData.user;
       const expiresAt: number = authData.expiresAt;
       
-      console.log('[AuthContext] Parsed auth data:', {
-        hasToken: !!newToken,
-        tokenLength: newToken?.length,
-        hasUser: !!newUser,
-        userEmail: newUser?.email,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-      });
+      
       
       if (!newToken || !newUser || !expiresAt) {
-        console.error('[AuthContext] Incomplete auth data:', { hasToken: !!newToken, hasUser: !!newUser, hasExpiresAt: !!expiresAt });
+        
         return { success: false, error: 'Invalid response format' };
       }
       
-      console.log('[AuthContext] Setting token and user in state...');
+      
       setToken(newToken);
       setUser(newUser);
       
@@ -235,16 +219,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
       
-      console.log('[AuthContext] Auth data saved to localStorage');
-      console.log('[AuthContext] Verify - token in localStorage:', localStorage.getItem(TOKEN_KEY)?.substring(0, 30) + '...');
-      console.log('[AuthContext] State updated - isAuthenticated will be:', !!(newToken && newUser));
+      
+      
+      
       
       // Important: Don't trigger re-initialization after login
       // The state update will handle authentication status
       
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      
       return { success: false, error: 'Network error' };
     }
   }, []);
@@ -265,7 +249,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return { success: false, error: 'Invalid response' };
     } catch (error) {
-      console.error('Register error:', error);
+      
       return { success: false, error: 'Network error' };
     }
   }, []);

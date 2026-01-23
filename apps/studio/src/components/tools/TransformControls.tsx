@@ -61,13 +61,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         moveableRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[TransformControls] Moveable destroy failed', e);
+        
       }
       try {
         selectoRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[TransformControls] Selecto destroy failed', e);
+        
       }
       moveableRef.current = null;
       selectoRef.current = null;
@@ -619,7 +619,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.warn("[TransformControls] initialization failed", e);
+      
     }
 
     return () => {
@@ -631,13 +631,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         moveableRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[TransformControls] Moveable destroy failed', e);
+        
       }
       try {
         selectoRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.warn('[TransformControls] Selecto destroy failed', e);
+        
       }
       moveableRef.current = null;
       selectoRef.current = null;

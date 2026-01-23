@@ -49,7 +49,7 @@ function saveRecentProjects(projects: RecentProjectEntry[]): void {
       JSON.stringify(sorted)
     )
   } catch (error) {
-    console.error('Failed to save recent projects:', error)
+    
   }
 }
 

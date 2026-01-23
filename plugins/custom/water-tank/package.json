@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "dev": "rspack serve --port 3120",
+    "dev": "rspack serve --port 3122",
     "build": "rspack build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

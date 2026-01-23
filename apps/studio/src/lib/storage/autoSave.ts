@@ -94,12 +94,7 @@ export class AutoSaveManager {
    * Save now with retry logic (exponential backoff, up to 3 attempts)
    */
   async saveNow(): Promise<void> {
-    console.log('[AutoSaveManager] saveNow called', {
-      hasGetState: !!this.getState,
-      projectId: this.projectId,
-      isDirty: this.isDirty,
-      lastSavedAt: this.currentState.lastSavedAt,
-    })
+    
     
     // Cancel pending debounce
     if (this.debounceTimer !== null) {
@@ -108,7 +103,7 @@ export class AutoSaveManager {
     }
 
     if (!this.getState || !this.projectId) {
-      console.warn('[AutoSaveManager] Cannot save: missing getState or projectId')
+      
       return
     }
 
@@ -126,13 +121,9 @@ export class AutoSaveManager {
       try {
         this.updateStatus({ ...this.currentState, status: 'saving', error: null })
         const project = this.getState()
-        console.log('[AutoSaveManager] Saving project:', {
-          projectId: project.meta.id,
-          projectName: project.meta.name,
-          nodesCount: project.nodes?.length,
-        })
+        
         await this.saveFn(project)
-        console.log('[AutoSaveManager] Save succeeded')
+        
         this.isDirty = false
         const savedAt = Date.now()
         this.updateStatus({ status: 'saved', lastSavedAt: savedAt, error: null })
@@ -144,7 +135,7 @@ export class AutoSaveManager {
         }, STORAGE_CONSTANTS.SAVED_DISPLAY_MS)
         return
       } catch (error) {
-        console.error('[AutoSaveManager] Save attempt failed:', error)
+        
         lastError = error
         attempt++
         if (attempt < maxAttempts) {
@@ -217,7 +208,7 @@ export class AutoSaveManager {
       try {
         listener(state)
       } catch (error) {
-        console.error('Error in save state listener:', error)
+        
       }
     }
   }

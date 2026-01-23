@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
       uploadedBy: userId || 'anonymous',
     })
   } catch (error) {
-    console.error('Upload error:', error)
+    
     return NextResponse.json(
       { error: 'Failed to upload file' },
       { status: 500 }

@@ -104,7 +104,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
           hasMore: offset + limit < total,
         };
       } catch (error) {
-        console.error('Local storage list error:', error);
+        
         return { data: [], total: 0, hasMore: false };
       }
     },
@@ -115,7 +115,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
         if (!projectFile) return null;
         return projectFileToStorageProject(projectFile);
       } catch (error) {
-        console.error('Local storage get error:', error);
+        
         return null;
       }
     },
@@ -137,7 +137,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
         await saveProject(projectFile);
         return { id };
       } catch (error) {
-        console.error('Local storage save error:', error);
+        
         throw error;
       }
     },
@@ -147,7 +147,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
         await deleteProject(id);
         return true;
       } catch (error) {
-        console.error('Local storage delete error:', error);
+        
         return false;
       }
     },
@@ -171,7 +171,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
 
         return this.save(duplicated);
       } catch (error) {
-        console.error('Local storage duplicate error:', error);
+        
         throw error;
       }
     },

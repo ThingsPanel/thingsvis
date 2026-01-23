@@ -484,7 +484,7 @@ export class VisualEngine {
           this.syncSingleNode(node, root, nodes);
         } catch (e) {
           // Log error but don't let it break other nodes
-          console.error(`[VisualEngine] Error syncing node ${node.id}:`, e);
+          
           this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
           
           // Try to create an error placeholder for this node
@@ -495,7 +495,7 @@ export class VisualEngine {
               this.instanceMap.set(node.id, { instance, renderer: errorRenderer });
             }
           } catch (placeholderError) {
-            console.error(`[VisualEngine] Failed to create error placeholder for node ${node.id}:`, placeholderError);
+            
           }
         }
       });
@@ -651,7 +651,7 @@ export class VisualEngine {
           }
         } catch (e) {
           // overlay 失败不影响主渲染
-          console.error('[VisualEngine] overlay creation failed:', e);
+          
           if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
           overlayBox = undefined;
         }
@@ -1117,7 +1117,7 @@ export class VisualEngine {
           this.failedRendererTypes.add(type);
           this.errorMessageByType.set(type, e instanceof Error ? e.message : String(e));
           // eslint-disable-next-line no-console
-          console.error('[VisualEngine] failed to resolve plugin renderer:', type, e);
+          
         }
       })();
       this.pendingRendererLoad.set(type, p);

@@ -51,19 +51,19 @@ export class DataSourceManager {
       const allKeys = await keys();
       const dsKeys = (allKeys as string[]).filter(k => k.startsWith(STORAGE_KEY_PREFIX));
       
-      console.log(`[DataSourceManager] Found ${dsKeys.length} saved data sources. Loading...`);
+      
       
       for (const key of dsKeys) {
         const config = await get<DataSource>(key);
         if (config) {
           // Register without awaiting each to speed up boot, or await for sequential stability
           this.registerDataSource(config, false).catch(e => {
-            console.error(`[DataSourceManager] Auto-load failed for ${config.id}:`, e);
+            
           });
         }
       }
     } catch (e) {
-      console.error('[DataSourceManager] Failed to load from storage:', e);
+      
     }
   }
 
@@ -100,7 +100,7 @@ export class DataSourceManager {
     // Save to storage if requested
     if (persist) {
       set(`${STORAGE_KEY_PREFIX}${config.id}`, config).catch(e => {
-        console.warn('[DataSourceManager] Failed to persist config:', e);
+        
       });
     }
 
@@ -130,7 +130,7 @@ export class DataSourceManager {
         lastUpdated: Date.now()
       });
     } catch (error) {
-      console.error(`[DataSourceManager] Failed to connect data source ${config.id}:`, error);
+      
       this.store?.getState().setDataSourceState(config.id, {
         status: 'error',
         error: error instanceof Error ? error.message : String(error),
@@ -148,14 +148,14 @@ export class DataSourceManager {
     
     // Remove from storage
     del(`${STORAGE_KEY_PREFIX}${id}`).catch(e => {
-      console.warn('[DataSourceManager] Failed to remove config from storage:', e);
+      
     });
 
     if (adapter) {
       try {
         await adapter.disconnect();
       } catch (e) {
-        console.warn(`[DataSourceManager] Error disconnecting ${id}:`, e);
+        
       }
       this.adapters.delete(id);
       this.configs.delete(id);

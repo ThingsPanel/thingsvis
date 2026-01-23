@@ -35,10 +35,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async list(options?: ListOptions): Promise<ListResult<StorageProjectMeta>> {
       try {
-        console.log('[CloudAdapter] Listing dashboards:', {
-          projectId,
-          options,
-        });
+        
         
         const response = await dashboardsApi.listDashboards({
           limit: options?.limit,
@@ -46,11 +43,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
           projectId,
         });
 
-        console.log('[CloudAdapter] List response:', {
-          hasError: !!response.error,
-          hasData: !!response.data,
-          error: response.error,
-        });
+        
 
         if (response.error || !response.data) {
           return { data: [], total: 0, hasMore: false };
@@ -59,11 +52,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
         const { data, meta } = response.data;
         const hasMore = meta.page < meta.totalPages;
         
-        console.log('[CloudAdapter] Parsed dashboards:', {
-          count: data.length,
-          total: meta.total,
-          hasMore,
-        });
+        
         
         return {
           data: data.map(d => ({
@@ -76,7 +65,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
           hasMore,
         };
       } catch (error) {
-        console.error('Cloud storage list error:', error);
+        
         return { data: [], total: 0, hasMore: false };
       }
     },
@@ -91,7 +80,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         return apiDashboardToStorageProject(response.data);
       } catch (error) {
-        console.error('Cloud storage get error:', error);
+        
         return null;
       }
     },
@@ -143,7 +132,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         return { id: createdId };
       } catch (error) {
-        console.error('Cloud storage save error:', error);
+        
         throw error;
       }
     },
@@ -153,7 +142,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
         const response = await dashboardsApi.deleteDashboard(id);
         return !response.error;
       } catch (error) {
-        console.error('Cloud storage delete error:', error);
+        
         return false;
       }
     },
@@ -184,7 +173,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         return { id: response.data.id };
       } catch (error) {
-        console.error('Cloud storage duplicate error:', error);
+        
         throw error;
       }
     },

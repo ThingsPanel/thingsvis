@@ -44,13 +44,13 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
   const envUrl = typeof process !== "undefined" && (process.env as any).PREVIEW_REGISTRY_URL ? (process.env as any).PREVIEW_REGISTRY_URL : undefined;
   const registryUrl = url ?? runtimeUrl ?? envUrl ?? "/registry.json";
   try {
-    const res = await fetch(registryUrl);
+    const res = await fetch(registryUrl, { cache: "no-store" });
     if (res.ok) {
       const body = await res.json();
       // Basic validation left to caller (Zod in packages/thingsvis-schema)
       return Object.keys(body.components || {}).map((key) => {
         const entry = body.components[key];
-        return {
+        const mapped = {
           remoteName: entry.remoteName,
           remoteEntryUrl: entry.remoteEntryUrl,
           localEntryUrl: entry.localEntryUrl,
@@ -58,19 +58,21 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
           debugSource: entry.debugSource,
           exposedModule: entry.exposedModule,
           version: entry.version,
-          displayName: key,
+          displayName: entry.name ?? key,
           iconUrl: entry.iconUrl,
           icon: entry.icon
         } as ComponentRegistryEntry;
+        (mapped as any).componentId = key;
+        return mapped;
       });
     } else {
       // fallback to bundled fixture
       // eslint-disable-next-line no-console
-      console.warn(`[dynamicLoader] registry fetch failed (${res.status}); falling back to built-in fixture`);
+      
     }
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn("[dynamicLoader] registry fetch error; falling back to built-in fixture", e);
+    
   }
 
   // Load built-in fixture as last resort (works during dev when preview public isn't mounted)
@@ -81,7 +83,7 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
     const body = fixture;
     return Object.keys(body.components || {}).map((key) => {
       const entry = body.components[key];
-      return {
+      const mapped = {
         remoteName: entry.remoteName,
         remoteEntryUrl: entry.remoteEntryUrl,
         localEntryUrl: entry.localEntryUrl,
@@ -89,10 +91,12 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
         debugSource: entry.debugSource,
         exposedModule: entry.exposedModule,
         version: entry.version,
-        displayName: key,
+        displayName: entry.name ?? key,
         iconUrl: entry.iconUrl,
         icon: entry.icon
       } as ComponentRegistryEntry;
+      (mapped as any).componentId = key;
+      return mapped;
     });
   } catch (e) {
     throw new Error("Failed to load registry (network + fixture)");
@@ -120,7 +124,7 @@ export async function loadPlugin(remoteEntryUrl: string, exposedModule: string):
   // 2) Fallback: dynamic import from blob (dev only)
   // For now return a simple stub module to allow integration tests to proceed.
   // eslint-disable-next-line no-console
-  console.log("[dynamicLoader] loadPlugin", remoteEntryUrl, exposedModule);
+  
   const module = {
     create: (opts: any) => {
       // plugin factory stub

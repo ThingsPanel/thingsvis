@@ -86,10 +86,12 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
               debugSource: entry.debugSource,
               exposedModule: entry.exposedModule,
               version: entry.version,
-              displayName: key,
+              displayName: entry.name ?? key, // Use entry.name (中文名称) if available, fallback to key
               iconUrl: (entry as any).iconUrl ?? "",
               icon: (entry as any).icon ?? ""
             } as ComponentRegistryEntry;
+
+            (baseEntry as any).componentId = key;
             
             arr.push(baseEntry);
 
@@ -97,7 +99,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
             if (entry.localEntryUrl) {
               arr.push({
                 ...baseEntry,
-                displayName: `${key} (Local)`,
+                displayName: `${entry.name ?? key} (Local)`,
               } as any);
             }
           });
@@ -108,7 +110,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
       })
       .catch((e) => {
         // eslint-disable-next-line no-console
-        console.error("[ComponentsList] failed to load registry", e);
+        
         setError(String(e));
       })
       .finally(() => {
@@ -122,7 +124,8 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
 
   function handleDragStart(e: React.DragEvent, entry: ComponentRegistryEntry) {
     const payload = JSON.stringify({
-      type: (entry as any).displayName ?? entry.remoteName,
+      // Use stable componentId for insertion/loading; label is for UI only
+      type: (entry as any).componentId ?? entry.remoteName,
       remoteName: entry.remoteName,
       remoteEntryUrl: entry.remoteEntryUrl,
       localEntryUrl: entry.localEntryUrl,
@@ -149,7 +152,8 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
     };
 
     for (const entry of entries) {
-      const sourceKey = ((entry as any).displayName as string) || (entry.remoteName as string) || "";
+      // Grouping should be based on componentId (e.g. "basic/text"), not the display label.
+      const sourceKey = ((entry as any).componentId as string) || (entry.remoteName as string) || "";
       const parts = sourceKey.split("/");
       const rawPrefix = (parts[0] || "basic").toLowerCase();
       const cat = prefixMap[rawPrefix] ?? "basic";
@@ -208,9 +212,14 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
                                 <IconComponent className="h-6 w-6 text-foreground" />
                               )}
                             </div>
-                            <span className="text-sm text-foreground font-medium">
-                              {((entry as any).displayName ?? entry.remoteName).split("/").slice(-1)[0] || entry.remoteName}
-                            </span>
+                            <div className="leading-tight text-center">
+                              <div className="text-sm text-foreground font-medium">
+                                {(entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
+                              </div>
+                              {/* <div className="text-xs text-muted-foreground">
+                                {(((entry as any).componentId ?? entry.remoteName) as string).split("/").slice(-1)[0] || entry.remoteName}
+                              </div> */}
+                            </div>
                           </button>
                         );
                       })}

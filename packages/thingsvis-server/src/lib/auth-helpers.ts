@@ -19,23 +19,23 @@ export async function getSessionUser(request?: NextRequest) {
 
   try {
     const authHeader = request.headers.get('authorization')
-    console.log('[auth-helpers] Authorization header:', authHeader ? authHeader.substring(0, 20) + '...' : 'none')
+    
     
     if (!authHeader?.startsWith('Bearer ')) {
-      console.log('[auth-helpers] No Bearer token found')
+      
       return null
     }
 
     const token = authHeader.substring(7)
-    console.log('[auth-helpers] Extracted token:', token.substring(0, 30) + '...')
+    
     
     const secret = new TextEncoder().encode(
       process.env.AUTH_SECRET || 'thingsvis-dev-secret-key'
     )
-    console.log('[auth-helpers] Using secret length:', secret.length)
+    
 
     const { payload } = await jwtVerify(token, secret)
-    console.log('[auth-helpers] JWT verification successful:', payload)
+    
     
     // Return user object matching session user format
     return {
@@ -46,7 +46,7 @@ export async function getSessionUser(request?: NextRequest) {
       tenantId: payload.tenantId as string,
     }
   } catch (error) {
-    console.error('[auth-helpers] Token verification failed:', error)
+    
     return null
   }
 }

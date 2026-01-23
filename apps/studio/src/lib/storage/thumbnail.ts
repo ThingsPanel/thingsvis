@@ -81,7 +81,7 @@ export async function generateThumbnailFromElement(
     // Fallback: use a placeholder or the element's background
     return canvas.toDataURL('image/jpeg', quality)
   } catch (error) {
-    console.error('Failed to generate thumbnail:', error)
+    
     return generatePlaceholderThumbnail(options)
   }
 }
@@ -123,7 +123,7 @@ export function generateThumbnailFromCanvas(
 
     return canvas.toDataURL('image/jpeg', quality)
   } catch (error) {
-    console.error('Failed to generate thumbnail from canvas:', error)
+    
     return generatePlaceholderThumbnail(options)
   }
 }
@@ -200,7 +200,7 @@ async function renderSvgToDataUrl(svgElement: SVGElement): Promise<string | null
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
     return URL.createObjectURL(blob)
   } catch (error) {
-    console.error('Failed to serialize SVG:', error)
+    
     return null
   }
 }

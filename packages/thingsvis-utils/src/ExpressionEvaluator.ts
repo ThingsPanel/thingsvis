@@ -63,7 +63,7 @@ export class ExpressionEvaluator {
       const fn = new Function(...keys, `return (${expr})`);
       return fn(...values);
     } catch (error) {
-      console.warn('[ExpressionEvaluator] Failed to evaluate expression:', expr, error);
+      
       // Fallback: try simple path access
       return this.get(context, expr);
     }

@@ -51,12 +51,7 @@ class ApiClient {
     const url = `${this.baseUrl}${path}`;
     const token = this.getToken();
 
-    console.log('[API Client] Request:', {
-      method,
-      path,
-      hasToken: !!token,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : null,
-    });
+    
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -78,17 +73,12 @@ class ApiClient {
       const data = await response.json();
 
       if (response.status === 401) {
-        console.error('[API Client] 401 Unauthorized:', {
-          url,
-          method,
-          hasToken: !!token,
-          response: data,
-        });
+        
         
         // Only call onUnauthorized if we actually had a token
         // This prevents clearing auth on initial requests
         if (token) {
-          console.warn('[API Client] Calling onUnauthorized handler');
+          
           this.onUnauthorized();
         }
         
@@ -106,7 +96,7 @@ class ApiClient {
       }
       return { data };
     } catch (error) {
-      console.error('API request failed:', error);
+      
       return { error: 'Network error' };
     }
   }
@@ -161,7 +151,7 @@ class ApiClient {
 
       return data;
     } catch (error) {
-      console.error('Upload failed:', error);
+      
       return { error: 'Network error' };
     }
   }

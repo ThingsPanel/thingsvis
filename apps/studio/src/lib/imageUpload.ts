@@ -42,7 +42,7 @@ export function getImageUploadSettings(): ImageUploadSettings {
       return JSON.parse(saved);
     }
   } catch (error) {
-    console.error('Failed to load image upload settings:', error);
+    
   }
   return defaultSettings;
 }
@@ -54,7 +54,7 @@ export function saveImageUploadSettings(settings: ImageUploadSettings): void {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
   } catch (error) {
-    console.error('Failed to save image upload settings:', error);
+    
     throw error;
   }
 }
@@ -107,7 +107,7 @@ async function uploadToLocal(file: File): Promise<string> {
     // We'll use a custom format: blob:...#id
     return `${objectURL}#${id}`;
   } catch (error) {
-    console.error('Failed to upload to local storage:', error);
+    
     throw new Error('本地存储失败');
   }
 }
@@ -122,7 +122,7 @@ export async function loadLocalImage(id: string): Promise<string | null> {
     if (!file) return null;
     return URL.createObjectURL(file);
   } catch (error) {
-    console.error('Failed to load local image:', error);
+    
     return null;
   }
 }
@@ -134,7 +134,7 @@ export async function deleteLocalImage(id: string): Promise<void> {
   try {
     await del(id, imageStore);
   } catch (error) {
-    console.error('Failed to delete local image:', error);
+    
   }
 }
 
@@ -184,7 +184,7 @@ async function uploadToOSS(file: File, config: OSSConfig): Promise<string> {
 
     return `${config.endpoint}/${config.bucket}/${filename}`;
   } catch (error) {
-    console.error('OSS upload error:', error);
+    
     throw error;
   }
 }

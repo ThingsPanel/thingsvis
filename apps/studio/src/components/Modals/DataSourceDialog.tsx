@@ -103,7 +103,7 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
       setIsAdding(false);
       setSelectedId(editingSource.id);
     } catch (e) {
-      console.error('[DataSourceDialog] Failed to save source', e);
+      
     }
   };
 

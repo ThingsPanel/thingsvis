@@ -191,13 +191,7 @@ export default function Editor() {
 
   // Debug: Log authentication state
   useEffect(() => {
-    console.log('[Editor] Auth state:', {
-      isAuthenticated,
-      authLoading,
-      hasUser: !!user,
-      userEmail: user?.email,
-      userName: user?.name,
-    })
+    
   }, [isAuthenticated, authLoading, user])
 
   // Prompt project creation after login if no project exists
@@ -398,7 +392,7 @@ export default function Editor() {
         }
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.error('[Editor] bootstrap project failed', e)
+        
       } finally {
         if (cancelled) return
         bootstrappingRef.current = false
@@ -524,7 +518,7 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('triggerSave', () => {
-      console.log('[Editor] triggerSave event received, collecting data...');
+      
       // Collect all nodes with their thing model bindings
       const state = store.getState() as KernelState;
       const nodes = Object.values(state.nodesById).map(nodeState => {
@@ -563,7 +557,7 @@ export default function Editor() {
         ),
       };
 
-      console.log('[Editor] Sending saveRequest with data:', exportData);
+      
       // Send to host
       requestSave(exportData);
     });
@@ -576,7 +570,7 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('init', (payload: any) => {
-      console.log('[Editor] Embed init received:', payload);
+      
       
       if (payload?.data) {
         const data = payload.data;
@@ -625,7 +619,7 @@ export default function Editor() {
     // Also check if initial data is already available (in case init was received before this effect ran)
     const initialData = getInitialData();
     if (initialData) {
-      console.log('[Editor] Loading already-received initial data:', initialData);
+      
       
       if (initialData.canvas) {
         setCanvasConfig(prev => ({
@@ -729,7 +723,7 @@ export default function Editor() {
       }
       store.getState().addNodes([node])
     } catch (e) {
-      console.error('[Editor] failed to add node', e)
+      
     }
   }, [])
 
@@ -750,7 +744,7 @@ export default function Editor() {
         setPendingImageUrl(undefined)
       }
     } catch (error) {
-      console.error('[Editor] Image picker error:', error)
+      
       if (error instanceof ImageFileTooLargeError) {
         alert(language === 'zh' ? '图片文件过大，请选择小于 2MB 的图片' : 'Image file is too large. Please select an image smaller than 2MB.')
       }
@@ -854,7 +848,7 @@ export default function Editor() {
                 store.getState().addNodes([node]);
                 markDirty();
               } catch (e) {
-                console.error('[Editor] Failed to add dropped component:', e);
+                
               }
             }}
           />
@@ -1082,7 +1076,7 @@ export default function Editor() {
           <Button 
             size="sm" 
             className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={() => console.log('Publish clicked - TODO: implement publish')}
+            onClick={() => {}}
           >
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>

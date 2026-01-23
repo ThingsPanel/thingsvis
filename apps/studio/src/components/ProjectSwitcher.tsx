@@ -49,7 +49,7 @@ export function ProjectSwitcher() {
     try {
       await switchProject(projectId);
     } catch (error) {
-      console.error('Failed to switch project:', error);
+      
     }
   };
 
@@ -64,7 +64,7 @@ export function ProjectSwitcher() {
       setNewProjectDescription('');
       await loadProjects(1);
     } catch (error) {
-      console.error('Failed to create project:', error);
+      
     } finally {
       setIsCreating(false);
     }
