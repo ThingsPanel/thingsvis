@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -86,18 +86,9 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10 max-w-lg text-center space-y-8">
-          {/* Logo Context */}
-          <div className="w-24 h-24 mx-auto bg-white/10 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
-               <polygon points="12 2 2 7 12 12 22 7 12 2" />
-               <polyline points="2 17 12 22 22 17" />
-               <polyline points="2 12 12 17 22 12" />
-            </svg>
-          </div>
-
           <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">ThingsVis Studio</h1>
-            <p className="text-lg opacity-90 font-light leading-relaxed">
+            <h1 className="text-4xl font-[800] tracking-tight">ThingsVis Studio</h1>
+            <p className="text-lg opacity-90 font-medium leading-relaxed">
               开启您的可视化搭建之旅。
               <br />
               专业、高效、无限可能。
@@ -108,6 +99,15 @@ export default function LoginPage() {
 
       {/* Right Side - Login Form */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative">
+        <div className="absolute top-8 left-8">
+          <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group">
+            <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted border border-transparent group-hover:border-border transition-all">
+              <ArrowLeft size={18} />
+            </div>
+            <span>返回首页</span>
+          </Link>
+        </div>
+
         <div className="w-full max-w-[400px] space-y-6">
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight">欢迎回来</h2>

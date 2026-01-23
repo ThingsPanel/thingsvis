@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
@@ -102,18 +102,9 @@ export default function RegisterPage() {
         </div>
 
         <div className="relative z-10 max-w-lg text-center space-y-8">
-           <div className="w-24 h-24 mx-auto bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/20 shadow-2xl">
-             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-             </svg>
-           </div>
-           
            <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">加入 ThingsVis</h1>
-            <p className="text-lg opacity-90 font-light leading-relaxed">
+            <h1 className="text-4xl font-[800] tracking-tight">加入 ThingsVis</h1>
+            <p className="text-lg opacity-90 font-medium leading-relaxed">
               与数万名开发者和设计师一起，<br/>构建未来的数据体验。
             </p>
           </div>
@@ -122,6 +113,15 @@ export default function RegisterPage() {
 
       {/* Right Side - Register Form */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative overflow-y-auto">
+        <div className="absolute top-8 left-8">
+          <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group">
+            <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted border border-transparent group-hover:border-border transition-all">
+              <ArrowLeft size={18} />
+            </div>
+            <span>返回首页</span>
+          </Link>
+        </div>
+
         <div className="w-full max-w-[400px] space-y-6">
           <div className="space-y-2 text-center lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight">创建账号</h2>
