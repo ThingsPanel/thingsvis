@@ -21,6 +21,9 @@ export interface UploadProgress {
   percentage: number;
 }
 
+
+const API_BASE_URL = 'http://localhost:3001';
+
 /**
  * Upload a file to the server.
  * 
@@ -55,6 +58,10 @@ export async function uploadFile(
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const data = JSON.parse(xhr.responseText);
+            // Fix relative URL to absolute URL
+            if (data.url && data.url.startsWith('/')) {
+              data.url = `${API_BASE_URL}${data.url}`;
+            }
             resolve({ data });
           } catch {
             resolve({ error: 'Invalid response' });
@@ -73,7 +80,7 @@ export async function uploadFile(
         resolve({ error: 'Network error' });
       });
 
-      xhr.open('POST', 'http://localhost:3001/api/v1/uploads');
+      xhr.open('POST', `${API_BASE_URL}/api/v1/uploads`);
       if (token) {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }
