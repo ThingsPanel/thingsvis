@@ -90,8 +90,10 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
-import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
+import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { uploadFile } from "@/lib/api/uploads"
+import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -735,19 +737,49 @@ export default function Editor() {
   // Handle image picker request from CreateToolLayer
   const handleImagePickerRequest = useCallback(async () => {
     try {
-      const result = await pickImage()
-      if (result) {
-        setPendingImageUrl(result.dataUrl)
-      } else {
+      const file = await openImagePicker()
+      if (!file) {
         // User canceled - reset to select tool
         setActiveTool('select')
         setPendingImageUrl(undefined)
+        return
+      }
+
+      // Check max size 10MB (consistent with ImageSourceInput)
+      if (file.size > 10 * 1024 * 1024) {
+        alert(language === 'zh' ? '图片文件过大，请选择小于 10MB 的图片' : 'Image file is too large. Please select an image smaller than 10MB.')
+        setActiveTool('select')
+        setPendingImageUrl(undefined)
+        return
+      }
+
+      // Check login status
+      const isLoggedIn = !!localStorage.getItem('thingsvis_token')
+      let url = ''
+
+      if (isLoggedIn) {
+        // Upload to server
+        const result = await uploadFile(file)
+        if (result.error) {
+          throw new Error(result.error)
+        }
+        if (result.data) {
+          url = result.data.url
+        }
+      } else {
+        // Upload to local indexedDB
+        url = await uploadToLocal(file)
+      }
+
+      if (url) {
+        setPendingImageUrl(url)
+      } else {
+        throw new Error('Failed to get image URL')
       }
     } catch (error) {
-      
-      if (error instanceof ImageFileTooLargeError) {
-        alert(language === 'zh' ? '图片文件过大，请选择小于 2MB 的图片' : 'Image file is too large. Please select an image smaller than 2MB.')
-      }
+      // eslint-disable-next-line no-console
+      console.error('Image picker error:', error)
+      alert(language === 'zh' ? '图片上传失败' : 'Image upload failed')
       setActiveTool('select')
       setPendingImageUrl(undefined)
     }
@@ -1215,6 +1247,16 @@ export default function Editor() {
                   <h3 className="text-sm font-semibold text-foreground">
                     {language === "zh" ? "基础信息" : "Basic Info"}
                   </h3>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
+                    <Input
+                      value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                      readOnly
+                      disabled
+                      className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
+                    />
+                  </div>
 
                   <div className="space-y-3">
                     <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
