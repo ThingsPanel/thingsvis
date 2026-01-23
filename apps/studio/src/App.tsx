@@ -1,29 +1,58 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './lib/auth';
+import { LoginPage, RegisterPage, HomePage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
+import ProtectedRoute from './components/ProtectedRoute';
 import Editor from './components/Editor';
-import DataSourcesPage from './pages/DataSourcesPage';
-import PreviewPage from './pages/PreviewPage';
 import './index.css';
 
-type Route = 'editor' | 'data-sources' | 'preview';
-
-function getRouteFromHash(): Route {
-  const h = (window.location.hash || '').replace(/^#/, '');
-  if (h.startsWith('/data-sources')) return 'data-sources';
-  if (h.startsWith('/preview')) return 'preview';
-  return 'editor';
-}
-
+/**
+ * Root Application Component
+ * 
+ * Uses HashRouter for compatibility with static hosting and iframe embedding.
+ * Routes:
+ *   /           - Home page (project list)
+ *   /login      - Login page
+ *   /register   - Registration page
+ *   /editor     - Dashboard editor
+ *   /editor/:id - Edit specific dashboard
+ *   /data-sources - Data sources management
+ *   /preview    - Dashboard preview
+ *   /preview/:id - Preview specific dashboard
+ *   /embed      - Embeddable preview page for iframe
+ */
 export default function App() {
-  const [route, setRoute] = useState<Route>(() => getRouteFromHash());
-
-  useEffect(() => {
-    const onHashChange = () => setRoute(getRouteFromHash());
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
-
-  if (route === 'data-sources') return <DataSourcesPage />;
-  if (route === 'preview') return <PreviewPage />;
-  return <Editor />;
+  return (
+    <AuthProvider>
+      <HashRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          
+          {/* Home page - shows project list */}
+          <Route path="/" element={<HomePage />} />
+          
+          {/* Editor Routes */}
+          <Route path="/editor" element={<Editor />} />
+          <Route path="/editor/:dashboardId" element={<Editor />} />
+          
+          {/* Data Sources */}
+          <Route path="/data-sources" element={<DataSourcesPage />} />
+          
+          {/* Preview Routes */}
+          <Route path="/preview" element={<PreviewPage />} />
+          <Route path="/preview/:dashboardId" element={<PreviewPage />} />
+          
+          {/* Embed Route - for iframe embedding */}
+          <Route path="/embed" element={<EmbedPage />} />
+          <Route path="/embed/:dashboardId" element={<EmbedPage />} />
+          
+          {/* Catch all - redirect to home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </HashRouter>
+    </AuthProvider>
+  );
 }
 

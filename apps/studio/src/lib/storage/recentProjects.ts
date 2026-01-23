@@ -113,6 +113,7 @@ function clearRecentProjects(): void {
 
 export const recentProjects = {
   get: getRecentProjects,
+  getAll: getRecentProjects, // Alias for consistency
   add: addToRecent,
   remove: removeFromRecent,
   updateName: updateProjectName,
