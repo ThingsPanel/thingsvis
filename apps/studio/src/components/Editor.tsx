@@ -956,7 +956,7 @@ export default function Editor() {
             <p className="text-muted-foreground max-w-md">
               {language === "zh" ? "您的所有数据都保存在浏览器本地。" : "Your data is stored locally in the browser."}
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground pointer-events-auto w-64 mx-auto">
+            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto pointer-events-auto">
               <button
                 onClick={() => setShowProjectDialog(true)}
                 className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
@@ -1325,6 +1325,19 @@ export default function Editor() {
             <Redo2 className="h-4 w-4" />
           </Button>
         </div>
+      </div>
+
+      {/* Bottom Right: Help Button (Floating) */}
+      <div className="absolute bottom-4 right-4 z-40 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full shadow-lg border border-border bg-[#f0f0f7]/90 dark:bg-[#1a1a24]/90 hover:bg-background text-muted-foreground hover:text-foreground transition-all"
+          onClick={() => setShowShortcuts(true)}
+          title={language === "zh" ? "快捷键帮助 (?)" : "Shortcuts (?)"}
+        >
+          <HelpCircle className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Right Panel - Properties */}

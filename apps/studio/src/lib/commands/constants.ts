@@ -28,6 +28,8 @@ export const COMMAND_IDS = {
   EDIT_DELETE: 'edit.delete',
   EDIT_SELECT_ALL: 'edit.selectAll',
   EDIT_DESELECT: 'edit.deselect',
+  EDIT_GROUP: 'edit.group',
+  EDIT_UNGROUP: 'edit.ungroup',
 
   // View commands
   VIEW_ZOOM_IN: 'view.zoomIn',
