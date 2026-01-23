@@ -69,7 +69,7 @@
       "exposedModule": "./Main",
       "version": "1.0.0",
       "icon": "BarChart3",
-      "name": "ECharts 折线图"
+      "name": "折线图"
     },
     "custom/water-tank": {
       "remoteName": "thingsvis_plugin_custom_water_tank",

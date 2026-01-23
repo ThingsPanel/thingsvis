@@ -883,7 +883,7 @@ export default function Editor() {
       <div className="absolute inset-0 bg-background" />
 
       {/* Canvas View - switch between normal and grid mode */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         {canvasConfig.mode === 'reflow' ? (
           <GridStackCanvas
             store={store}
@@ -950,16 +950,16 @@ export default function Editor() {
       </div>
 
       {Object.keys(kernelState.nodesById).length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="text-center space-y-6">
+        <div className="absolute inset-0 flex items-center justify-center z-30">
+          <div className="text-center space-y-6 pointer-events-auto">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
             <p className="text-muted-foreground max-w-md">
               {language === "zh" ? "您的所有数据都保存在浏览器本地。" : "Your data is stored locally in the browser."}
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto pointer-events-auto">
+            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto">
               <button
                 onClick={() => setShowProjectDialog(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <FolderOpen className="h-4 w-4" />
@@ -969,7 +969,7 @@ export default function Editor() {
               </button>
               <button
                 onClick={() => setShowShortcuts(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <HelpCircle className="h-4 w-4" />
@@ -981,7 +981,7 @@ export default function Editor() {
                 <>
                   <button
                     onClick={handleLogout}
-                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left text-red-600 dark:text-red-400"
+                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer text-red-600 dark:text-red-400"
                   >
                     <div className="flex items-center gap-3">
                       <LogOut className="h-4 w-4" />
@@ -992,7 +992,7 @@ export default function Editor() {
               ) : !authLoading ? (
                 <button
                   onClick={() => window.location.hash = '#/login'}
-                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
                     <Users className="h-4 w-4" />
