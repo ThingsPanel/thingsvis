@@ -1,0 +1,354 @@
+openapi: 3.0.3
+info:
+  title: ThingsVis Public Dashboard API
+  description: API for publishing dashboards and generating shareable links for public access
+  version: 1.0.0
+  contact:
+    name: ThingsVis Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+tags:
+  - name: Dashboard Publishing
+    description: Publish/unpublish dashboards for sharing
+  - name: Share Links
+    description: Generate and manage share links
+  - name: Public Access
+    description: Public endpoints for anonymous dashboard viewing
+
+paths:
+  /dashboards/{id}/publish:
+    post:
+      tags:
+        - Dashboard Publishing
+      summary: Publish a dashboard
+      description: Mark a dashboard as published, making it available for sharing
+      operationId: publishDashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DashboardId'
+      responses:
+        '200':
+          description: Dashboard published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Dashboard Publishing
+      summary: Unpublish a dashboard
+      description: Mark a dashboard as draft, invalidating all share links
+      operationId: unpublishDashboard
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DashboardId'
+      responses:
+        '200':
+          description: Dashboard unpublished successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublishResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /dashboards/{id}/share:
+    post:
+      tags:
+        - Share Links
+      summary: Generate a share link
+      description: Create a shareable link for a published dashboard with optional password and expiration
+      operationId: generateShareLink
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DashboardId'
+      requestBody:
+        description: Share link options
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ShareOptions'
+      responses:
+        '200':
+          description: Share link generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareResponse'
+        '400':
+          description: Dashboard must be published before sharing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    get:
+      tags:
+        - Share Links
+      summary: Get share link info
+      description: Get current share link information for a dashboard
+      operationId: getShareLink
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DashboardId'
+      responses:
+        '200':
+          description: Share link info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShareInfoResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Share Links
+      summary: Revoke share link
+      description: Invalidate the current share link for a dashboard
+      operationId: revokeShareLink
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DashboardId'
+      responses:
+        '200':
+          description: Share link revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /public/dashboard/{token}:
+    get:
+      tags:
+        - Public Access
+      summary: Get public dashboard
+      description: Retrieve dashboard data using a share token (no authentication required)
+      operationId: getPublicDashboard
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The share token from the share link
+          schema:
+            type: string
+            example: share_V1StGXR8_Z5jdHi6B
+        - name: X-Share-Password
+          in: header
+          required: false
+          description: Password for password-protected dashboards
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dashboard data for rendering
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicDashboard'
+        '401':
+          description: Password required or incorrect
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: object
+                    properties:
+                      requirePassword:
+                        type: boolean
+                        example: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Share link has expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    DashboardId:
+      name: id
+      in: path
+      required: true
+      description: Dashboard ID
+      schema:
+        type: string
+        example: clx1234567890abcdef
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Dashboard not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          example: Dashboard not found
+
+    PublishResponse:
+      type: object
+      required:
+        - id
+        - isPublished
+      properties:
+        id:
+          type: string
+          example: clx1234567890abcdef
+        isPublished:
+          type: boolean
+          example: true
+        publishedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-01-22T10:30:00.000Z'
+
+    ShareOptions:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 4
+          description: Optional password protection
+          example: mySecretPassword
+        expiresIn:
+          type: integer
+          minimum: 3600
+          maximum: 2592000
+          description: Expiration time in seconds (1 hour to 30 days)
+          example: 86400
+
+    ShareResponse:
+      type: object
+      required:
+        - shareToken
+        - shareUrl
+      properties:
+        shareToken:
+          type: string
+          example: share_V1StGXR8_Z5jdHi6B
+        shareUrl:
+          type: string
+          example: /preview/share_V1StGXR8_Z5jdHi6B
+
+    ShareInfoResponse:
+      type: object
+      properties:
+        shareToken:
+          type: string
+          nullable: true
+          example: share_V1StGXR8_Z5jdHi6B
+        shareUrl:
+          type: string
+          nullable: true
+          example: /preview/share_V1StGXR8_Z5jdHi6B
+        hasPassword:
+          type: boolean
+          example: false
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2026-01-23T10:30:00.000Z'
+        createdAt:
+          type: string
+          format: date-time
+          example: '2026-01-22T10:30:00.000Z'
+
+    PublicDashboard:
+      type: object
+      required:
+        - id
+        - name
+        - canvasConfig
+        - nodes
+        - dataSources
+      properties:
+        id:
+          type: string
+          example: clx1234567890abcdef
+        name:
+          type: string
+          example: Sales Dashboard
+        canvasConfig:
+          $ref: '#/components/schemas/CanvasConfig'
+        nodes:
+          type: array
+          items:
+            type: object
+          description: Array of node configurations for the dashboard
+        dataSources:
+          type: array
+          items:
+            type: object
+          description: Array of data source configurations
+
+    CanvasConfig:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [fixed, infinite, reflow]
+          example: fixed
+        width:
+          type: integer
+          example: 1920
+        height:
+          type: integer
+          example: 1080
+        background:
+          type: string
+          example: '#1a1a2e'
