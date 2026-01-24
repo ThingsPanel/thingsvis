@@ -9,6 +9,8 @@ import { store } from '../lib/store'
 import { loadPlugin } from '../plugins/pluginResolver'
 import { projectStorage } from '../lib/storage/projectStorage'
 import * as previewSession from '../lib/storage/previewSession'
+import * as dashboardsApi from '../lib/api/dashboards'
+import type { ProjectFile } from '../lib/storage/schemas'
 
 function getPreviewParamsFromHash(): { projectId: string | null } {
   const hash = window.location.hash || ''
@@ -87,7 +89,32 @@ export default function PreviewPage() {
     setError(null)
 
     try {
-      const project = await projectStorage.load(projectId)
+      let project = await projectStorage.load(projectId)
+      
+      // If not in local storage, try loading from API (Cloud)
+      if (!project) {
+        try {
+          const response = await dashboardsApi.getDashboard(projectId)
+          if (response.data) {
+            const dashboard = response.data
+            project = {
+               meta: {
+                 id: dashboard.id,
+                 name: dashboard.name,
+                 version: '1.0.0',
+                 createdAt: new Date(dashboard.createdAt).getTime(),
+                 updatedAt: new Date(dashboard.updatedAt).getTime(),
+               },
+               canvas: dashboard.canvasConfig as any,
+               nodes: (dashboard.nodes as any[]) || [],
+               dataSources: (dashboard.dataSources as any[]) || [],
+            }
+          }
+        } catch (apiErr) {
+          console.warn('Failed to load from cloud:', apiErr)
+        }
+      }
+
       if (!project) {
         setError('Project not found')
         return
