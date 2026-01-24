@@ -24,6 +24,8 @@ type Props = {
   panEnabled?: boolean;
   /** Enable zooming (Ctrl/Meta + wheel zoom) */
   zoomEnabled?: boolean;
+  /** Enable component interaction (dragging etc) */
+  interactive?: boolean;
 };
 
 export const CanvasView: React.FC<Props> = ({ 
@@ -39,7 +41,8 @@ export const CanvasView: React.FC<Props> = ({
   onZoomChange,
   onViewportChange,
   panEnabled = true,
-  zoomEnabled = true
+  zoomEnabled = true,
+  interactive = true
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
@@ -215,13 +218,13 @@ export const CanvasView: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const mountEl = containerRef.current.querySelector('#visual-engine-mount') as HTMLDivElement | null;
-    const engine = new VisualEngine(store, { resolvePlugin });
+    const engine = new VisualEngine(store, { resolvePlugin, editable: interactive });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);
     return () => {
       engine.unmount();
     };
-  }, [store, resolvePlugin]);
+  }, [store, resolvePlugin, interactive]);
 
   // Update VisualEngine viewport when zoom/offset changes
   useEffect(() => {

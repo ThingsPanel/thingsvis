@@ -174,6 +174,7 @@ export class VisualEngine {
     private store: KernelStore,
     private opts?: {
       resolvePlugin?: (type: string) => Promise<PluginMainModule>;
+      editable?: boolean;
     }
   ) {}
 
@@ -1108,7 +1109,7 @@ export class VisualEngine {
       const p = (async () => {
         try {
           const plugin = await this.opts!.resolvePlugin!(type);
-          this.rendererByType.set(type, createPluginRenderer(plugin, this.store));
+          this.rendererByType.set(type, createPluginRenderer(plugin, this.store, { editable: this.opts?.editable }));
           this.errorMessageByType.delete(type);
           this.failedRendererTypes.delete(type);
         } catch (e) {
@@ -1199,7 +1200,7 @@ export class VisualEngine {
       height,
       rotation,
       fill: 'transparent', // Always transparent - visual rendering is done via DOM overlay
-      draggable: true,
+      draggable: this.opts?.editable ?? true,
       cursor: 'pointer'
     };
   }

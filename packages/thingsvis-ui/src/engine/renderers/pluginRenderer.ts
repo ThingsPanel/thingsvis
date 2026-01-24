@@ -44,10 +44,11 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore): PluginOverla
   };
 }
 
-export function createPluginRenderer(plugin: PluginMainModule, store: KernelStore): RendererFactory {
+export function createPluginRenderer(plugin: PluginMainModule, store: KernelStore, opts?: { editable?: boolean }): RendererFactory {
   // 判断是否为纯 Overlay 组件（只有 createOverlay，没有 create）
   const isOverlayOnly = !plugin.create && typeof plugin.createOverlay === 'function';
   const resizable = (plugin as any).resizable as boolean | undefined;
+  const draggable = opts?.editable ?? true;
   
   return {
     create(node: NodeState): LeaferDisplayObject {
@@ -60,7 +61,7 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
           width: props.width as number || 100,
           height: props.height as number || 60,
           fill: 'transparent',
-          draggable: true,
+          draggable,
           cursor: 'pointer'
         });
         return placeholder as unknown as LeaferDisplayObject;
@@ -93,7 +94,7 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
         stroke: '#999',
         strokeWidth: 1,
         dashPattern: [4, 4],
-        draggable: true,
+        draggable,
         cursor: 'pointer'
       });
       return placeholder as unknown as LeaferDisplayObject;
