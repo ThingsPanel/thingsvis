@@ -17,7 +17,7 @@ export function safeExecute<T>(fn: () => T, fallback: T): T {
   } catch (error) {
     // Minimal logging for now; can be replaced with ErrorStore later.
     // eslint-disable-next-line no-console
-    console.error('[SafeExecutor] execution error:', error);
+    
     return fallback;
   }
 }
@@ -30,7 +30,7 @@ export async function safeExecuteAsync<T>(fn: () => Promise<T>, fallback: T): Pr
     return await fn();
   } catch (error) {
     // eslint-disable-next-line no-console
-    console.error('[SafeExecutor] async execution error:', error);
+    
     return fallback;
   }
 }

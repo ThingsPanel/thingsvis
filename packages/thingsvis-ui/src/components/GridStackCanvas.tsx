@@ -114,11 +114,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       const x = Math.max(0, Math.min(cols - 4, Math.floor(relX / cellWidth)));
       const y = Math.max(0, Math.floor(relY / rowHeight));
 
-      console.log('[GridStackCanvas] Drop:', componentType, 'at grid position:', { x, y });
+      
       
       onDropComponent(componentType, { x, y, w: 4, h: 3 });
     } catch (err) {
-      console.error('[GridStackCanvas] Drop error:', err);
+      
     }
   }, [interactive, onDropComponent, cols, rowHeight]);
 
@@ -196,11 +196,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid) {
-      console.log('[GridStackCanvas] Grid not initialized yet');
+      
       return;
     }
 
-    console.log('[GridStackCanvas] Syncing nodes:', nodes.length);
+    
 
     // Get existing widget IDs
     const existingIds = new Set<string>();
@@ -224,7 +224,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       const w = Math.max(1, Math.min(cols - x, gridPos.w ?? 4));
       const h = Math.max(1, gridPos.h ?? 3);
 
-      console.log('[GridStackCanvas] Adding widget:', node.id, 'grid:', { x, y, w, h }, 'type:', nodeType);
+      
 
       // Create widget element with gs-* attributes (v11+ API)
       const itemEl = document.createElement('div');
@@ -333,7 +333,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#333;">${nodeType}</div>`;
       }
     } catch (err) {
-      console.error('[GridStackCanvas] Failed to load plugin:', nodeType, err);
+      
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#e53e3e;font-size:12px;">Error: ${nodeType}</div>`;
     }
   }, [resolvePlugin, store]);

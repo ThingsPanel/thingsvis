@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { useAuth } from "@/lib/auth/AuthContext"
+import { useProject } from '@/contexts/ProjectContext'
 import {
   MousePointer2,
   Square,
@@ -23,6 +25,11 @@ import {
   Box,
   Undo2,
   Redo2,
+  Scan,
+  PanelRightClose,
+  PanelRightOpen,
+  Maximize,
+  Monitor,
   Menu,
   FolderOpen,
   Save,
@@ -58,6 +65,7 @@ import {
   Minus,
   Plus,
   Database,
+  LogOut,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -87,8 +95,10 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
-import { pickImage, ImageFileTooLargeError } from './tools/imagePicker'
+import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { uploadFile } from "@/lib/api/uploads"
+import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
 // Generate UUID helper
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -138,6 +148,8 @@ type CanvasConfigSchema = {
 }
 
 export default function Editor() {
+  const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
+  const { currentProject } = useProject()
   const [activeTool, setActiveTool] = useState<Tool>("select")
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -147,8 +159,15 @@ export default function Editor() {
   const [language, setLanguage] = useState<Language>("zh")
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
+  // 跟踪云端模式下是否已选择画布（用于阻止用户在未选择画布时关闭对话框）
+  const [hasSelectedDashboard, setHasSelectedDashboard] = useState(false)
   // Image picker state for image tool (stores Object URL)
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
+
+  const handleLogout = useCallback(() => {
+    logout()
+    window.location.hash = '#/'
+  }, [logout])
 
   // Embed mode UI visibility from URL params
   const embedVisibility = useMemo(() => {
@@ -177,7 +196,56 @@ export default function Editor() {
     setIsDarkMode(isDark)
   }, [])
 
+  // Debug: Log authentication state
+  useEffect(() => {
+    
+  }, [isAuthenticated, authLoading, user])
+
+  // Prompt project creation after login if no project exists
+  useEffect(() => {
+    if (authLoading) return
+    if (!isAuthenticated) return
+    if (embedVisibility.isEmbedded) return
+    // 云端模式下，强制显示对话框让用户选择画布
+    if (storageMode === 'cloud' && !hasSelectedDashboard) {
+      setShowProjectDialog(true)
+    }
+  }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded])
+
   const [zoom, setZoom] = useState(100)
+  const [zoomInput, setZoomInput] = useState("100")
+  const [showRightPanel, setShowRightPanel] = useState(true)
+
+  // Update zoom input when zoom changes externally
+  useEffect(() => {
+    setZoomInput(zoom.toString())
+  }, [zoom])
+  
+  const handleZoomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setZoomInput(e.target.value)
+  }
+
+  const handleZoomInputBlur = () => {
+    let value = parseInt(zoomInput.replace(/[^0-9]/g, ''), 10)
+    if (isNaN(value)) value = 100
+    value = Math.max(10, Math.min(500, value))
+    setZoom(value)
+    setZoomInput(value.toString())
+  }
+
+  const handleZoomInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleZoomInputBlur()
+      e.currentTarget.blur()
+    }
+  }
+
+  // Auto-open right panel when a node is selected
+  useEffect(() => {
+    if (selectedElement) {
+      setShowRightPanel(true)
+    }
+  }, [selectedElement])
 
   // Subscribe to temporal history
   const temporalSnapshot = useSyncExternalStore(
@@ -296,8 +364,18 @@ export default function Editor() {
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
+    cloudProjectId: currentProject?.id,
     getProjectState,
     enabled: !isBootstrapping,
+    onIdChange: (newId) => {
+      setCanvasConfig(prev => ({
+        ...prev,
+        id: newId,
+      }))
+      try {
+        localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId)
+      } catch {}
+    },
   })
 
   // Bootstrap: load last project into store (or create a new empty page)
@@ -317,6 +395,11 @@ export default function Editor() {
             type: 'page' as const,
             version: loaded.meta.version,
             nodes: loaded.nodes,
+            config: {
+              mode: loaded.canvas.mode,
+              width: loaded.canvas.width,
+              height: loaded.canvas.height
+            }
           })
           // Update canvas config
           setCanvasConfig(prev => ({
@@ -347,6 +430,11 @@ export default function Editor() {
             type: 'page' as const,
             version: '1.0.0',
             nodes: [],
+            config: {
+              mode: canvasConfig.mode,
+              width: canvasConfig.width,
+              height: canvasConfig.height,
+            }
           })
           try {
             store.temporal.getState().clear?.()
@@ -354,7 +442,7 @@ export default function Editor() {
         }
       } catch (e) {
         // eslint-disable-next-line no-console
-        console.error('[Editor] bootstrap project failed', e)
+        
       } finally {
         if (cancelled) return
         bootstrappingRef.current = false
@@ -438,6 +526,7 @@ export default function Editor() {
       setTool: (tool) => setActiveTool(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
       openPreview,
+      logout: handleLogout,
       // Atomic insert nodes + select: ensures undo/redo captures both operations together
       // We create a partial state update that includes both nodesById and selection changes
       // This ensures the temporal middleware captures both in a single history entry
@@ -479,7 +568,7 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('triggerSave', () => {
-      console.log('[Editor] triggerSave event received, collecting data...');
+      
       // Collect all nodes with their thing model bindings
       const state = store.getState() as KernelState;
       const nodes = Object.values(state.nodesById).map(nodeState => {
@@ -518,7 +607,7 @@ export default function Editor() {
         ),
       };
 
-      console.log('[Editor] Sending saveRequest with data:', exportData);
+      
       // Send to host
       requestSave(exportData);
     });
@@ -531,7 +620,7 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('init', (payload: any) => {
-      console.log('[Editor] Embed init received:', payload);
+      
       
       if (payload?.data) {
         const data = payload.data;
@@ -580,7 +669,7 @@ export default function Editor() {
     // Also check if initial data is already available (in case init was received before this effect ran)
     const initialData = getInitialData();
     if (initialData) {
-      console.log('[Editor] Loading already-received initial data:', initialData);
+      
       
       if (initialData.canvas) {
         setCanvasConfig(prev => ({
@@ -684,7 +773,7 @@ export default function Editor() {
       }
       store.getState().addNodes([node])
     } catch (e) {
-      console.error('[Editor] failed to add node', e)
+      
     }
   }, [])
 
@@ -696,19 +785,49 @@ export default function Editor() {
   // Handle image picker request from CreateToolLayer
   const handleImagePickerRequest = useCallback(async () => {
     try {
-      const result = await pickImage()
-      if (result) {
-        setPendingImageUrl(result.dataUrl)
-      } else {
+      const file = await openImagePicker()
+      if (!file) {
         // User canceled - reset to select tool
         setActiveTool('select')
         setPendingImageUrl(undefined)
+        return
+      }
+
+      // Check max size 10MB (consistent with ImageSourceInput)
+      if (file.size > 10 * 1024 * 1024) {
+        alert(language === 'zh' ? '图片文件过大，请选择小于 10MB 的图片' : 'Image file is too large. Please select an image smaller than 10MB.')
+        setActiveTool('select')
+        setPendingImageUrl(undefined)
+        return
+      }
+
+      // Check login status
+      const isLoggedIn = !!localStorage.getItem('thingsvis_token')
+      let url = ''
+
+      if (isLoggedIn) {
+        // Upload to server
+        const result = await uploadFile(file)
+        if (result.error) {
+          throw new Error(result.error)
+        }
+        if (result.data) {
+          url = result.data.url
+        }
+      } else {
+        // Upload to local indexedDB
+        url = await uploadToLocal(file)
+      }
+
+      if (url) {
+        setPendingImageUrl(url)
+      } else {
+        throw new Error('Failed to get image URL')
       }
     } catch (error) {
-      console.error('[Editor] Image picker error:', error)
-      if (error instanceof ImageFileTooLargeError) {
-        alert(language === 'zh' ? '图片文件过大，请选择小于 2MB 的图片' : 'Image file is too large. Please select an image smaller than 2MB.')
-      }
+      // eslint-disable-next-line no-console
+      console.error('Image picker error:', error)
+      alert(language === 'zh' ? '图片上传失败' : 'Image upload failed')
       setActiveTool('select')
       setPendingImageUrl(undefined)
     }
@@ -764,7 +883,7 @@ export default function Editor() {
       <div className="absolute inset-0 bg-background" />
 
       {/* Canvas View - switch between normal and grid mode */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 z-0">
         {canvasConfig.mode === 'reflow' ? (
           <GridStackCanvas
             store={store}
@@ -809,7 +928,7 @@ export default function Editor() {
                 store.getState().addNodes([node]);
                 markDirty();
               } catch (e) {
-                console.error('[Editor] Failed to add dropped component:', e);
+                
               }
             }}
           />
@@ -831,16 +950,16 @@ export default function Editor() {
       </div>
 
       {Object.keys(kernelState.nodesById).length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="text-center space-y-6">
+        <div className="absolute inset-0 flex items-center justify-center z-30">
+          <div className="text-center space-y-6 pointer-events-auto">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
             <p className="text-muted-foreground max-w-md">
               {language === "zh" ? "您的所有数据都保存在浏览器本地。" : "Your data is stored locally in the browser."}
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground pointer-events-auto w-64 mx-auto">
+            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto">
               <button
                 onClick={() => setShowProjectDialog(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <FolderOpen className="h-4 w-4" />
@@ -850,7 +969,7 @@ export default function Editor() {
               </button>
               <button
                 onClick={() => setShowShortcuts(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
+                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
               >
                 <div className="flex items-center gap-3">
                   <HelpCircle className="h-4 w-4" />
@@ -858,15 +977,29 @@ export default function Editor() {
                 </div>
                 <span className="text-sm text-muted-foreground">?</span>
               </button>
-              <button
-                onClick={() => console.log('Login clicked - TODO: implement login')}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left"
-              >
-                <div className="flex items-center gap-3">
-                  <Users className="h-4 w-4" />
-                  <span>{language === "zh" ? "登录" : "Login"}</span>
-                </div>
-              </button>
+              {!authLoading && isAuthenticated && user ? (
+                <>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer text-red-600 dark:text-red-400"
+                  >
+                    <div className="flex items-center gap-3">
+                      <LogOut className="h-4 w-4" />
+                      <span>{language === "zh" ? "退出登录" : "Logout"}</span>
+                    </div>
+                  </button>
+                </>
+              ) : !authLoading ? (
+                <button
+                  onClick={() => window.location.hash = '#/login'}
+                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Users className="h-4 w-4" />
+                    <span>{language === "zh" ? "登录" : "Login"}</span>
+                  </div>
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
@@ -917,6 +1050,33 @@ export default function Editor() {
                 <HelpCircle className="h-4 w-4" />
                 {language === "zh" ? "帮助" : "Help"}
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {!authLoading && isAuthenticated && user ? (
+                <>
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    <div className="font-medium text-foreground">{user.name || user.email}</div>
+                    <div className="text-xs">{user.email}</div>
+                  </div>
+                  <DropdownMenuItem 
+                    className="gap-2 text-red-600 dark:text-red-400" 
+                    onClick={() => {
+                      logout()
+                      window.location.hash = '#/'
+                    }}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {language === "zh" ? "退出登录" : "Logout"}
+                  </DropdownMenuItem>
+                </>
+              ) : !authLoading ? (
+                <DropdownMenuItem 
+                  className="gap-2" 
+                  onClick={() => window.location.hash = '#/login'}
+                >
+                  <Users className="h-4 w-4" />
+                  {language === "zh" ? "登录" : "Login"}
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -982,6 +1142,18 @@ export default function Editor() {
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
             {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
+
+          {!showRightPanel && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" 
+              onClick={() => setShowRightPanel(true)}
+              title={language === "zh" ? "显示属性面板" : "Show Properties"}
+            >
+              <PanelRightOpen className="h-4 w-4" />
+            </Button>
+          )}
           
           <Button 
             variant="ghost" 
@@ -996,7 +1168,7 @@ export default function Editor() {
           <Button 
             size="sm" 
             className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={() => console.log('Publish clicked - TODO: implement publish')}
+            onClick={() => {}}
           >
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
@@ -1072,9 +1244,21 @@ export default function Editor() {
           >
             <Minus className="h-4 w-4" />
           </Button>
-          <div className="px-3 min-w-[60px] text-center">
-            <span className="text-sm font-medium tabular-nums">{zoom}%</span>
+
+          <div className="w-[48px] px-0.5">
+            <Input
+              value={zoomInput + "%"}
+              onChange={(e) => {
+                // Allow user to type, stripping % for state
+                const val = e.target.value.replace(/%/g, '')
+                setZoomInput(val)
+              }}
+              onBlur={handleZoomInputBlur}
+              onKeyDown={handleZoomInputKeyDown}
+              className="h-6 text-sm font-medium text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:bg-background/50 p-0 tabular-nums shadow-none hover:bg-background/40 transition-colors rounded-sm"
+            />
           </div>
+
           <Button
             variant="ghost"
             size="icon"
@@ -1082,6 +1266,39 @@ export default function Editor() {
             onClick={() => setZoom(Math.min(500, zoom + 10))}
           >
             <Plus className="h-4 w-4" />
+          </Button>
+          <div className="w-px h-4 bg-border mx-1" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+            title={language === "zh" ? "适应窗口" : "Best Fit"}
+            onClick={() => {
+              const leftPanelWidth = embedVisibility.showLibrary ? 320 : 0
+              const rightPanelWidth = (embedVisibility.showProps && showRightPanel) ? 340 : 0
+              const availableWidth = window.innerWidth - leftPanelWidth - rightPanelWidth - 60
+              const availableHeight = window.innerHeight - 150
+              
+              const canvasW = canvasConfig.width || 1920
+              const canvasH = canvasConfig.height || 1080
+              
+              const scaleW = availableWidth / canvasW
+              const scaleH = availableHeight / canvasH
+              
+              const bestFit = Math.min(scaleW, scaleH)
+              setZoom(Math.floor(Math.max(10, Math.min(500, bestFit * 90))))
+            }}
+          >
+            <Maximize className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+            title={language === "zh" ? "100% 视图" : "100% View"}
+            onClick={() => setZoom(100)}
+          >
+            <Monitor className="h-4 w-4" />
           </Button>
         </div>
 
@@ -1110,13 +1327,35 @@ export default function Editor() {
         </div>
       </div>
 
+      {/* Bottom Right: Help Button (Floating) */}
+      <div className="absolute bottom-4 right-4 z-40 flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full shadow-lg border border-border bg-[#f0f0f7]/90 dark:bg-[#1a1a24]/90 hover:bg-background text-muted-foreground hover:text-foreground transition-all"
+          onClick={() => setShowShortcuts(true)}
+          title={language === "zh" ? "快捷键帮助 (?)" : "Shortcuts (?)"}
+        >
+          <HelpCircle className="h-5 w-5" />
+        </Button>
+      </div>
+
       {/* Right Panel - Properties */}
-      {embedVisibility.showProps && (
+      {embedVisibility.showProps && showRightPanel && (
       <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
         <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
-            <button className="p-1 hover:bg-accent rounded" onClick={() => store.getState().selectNode(null)}>
+            <button 
+              className="p-1 hover:bg-accent rounded" 
+              onClick={() => {
+                if (selectedElement) {
+                  store.getState().selectNode(null)
+                } else {
+                  setShowRightPanel(false)
+                }
+              }}
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -1135,6 +1374,16 @@ export default function Editor() {
                   <h3 className="text-sm font-semibold text-foreground">
                     {language === "zh" ? "基础信息" : "Basic Info"}
                   </h3>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
+                    <Input
+                      value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                      readOnly
+                      disabled
+                      className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
+                    />
+                  </div>
 
                   <div className="space-y-3">
                     <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
@@ -1173,7 +1422,17 @@ export default function Editor() {
                               ? "切换布局模式将清空当前画布，是否继续？" 
                               : "Switching layout mode will clear the current canvas. Continue?";
                             if (!window.confirm(msg)) return;
-                            store.getState().loadPage({ id: canvasConfig.id, type: 'page', version: '1.0.0', nodes: [] });
+                            store.getState().loadPage({
+                              id: canvasConfig.id,
+                              type: 'page' as const,
+                              version: '1.0.0',
+                              nodes: [],
+                              config: {
+                                mode: newMode,
+                                width: canvasConfig.width,
+                                height: canvasConfig.height,
+                              },
+                            });
                             markDirty();
                           }
                           setCanvasConfig({ ...canvasConfig, mode: newMode });
@@ -1290,8 +1549,17 @@ export default function Editor() {
       {/* Project Dialog */}
       <ProjectDialog
         open={showProjectDialog}
-        onClose={() => setShowProjectDialog(false)}
+        onClose={() => {
+          // 云端模式下，如果还没选择画布，不允许关闭对话框
+          if (isAuthenticated && storageMode === 'cloud' && !hasSelectedDashboard) {
+            return
+          }
+          setShowProjectDialog(false)
+        }}
         onProjectLoad={(project) => {
+          // 标记已选择画布
+          setHasSelectedDashboard(true)
+          
           // Persist last opened project id
           try {
             localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, project.meta.id)
@@ -1303,6 +1571,11 @@ export default function Editor() {
             type: 'page' as const,
             version: project.meta.version,
             nodes: project.nodes,
+            config: {
+              mode: project.canvas.mode,
+              width: project.canvas.width,
+              height: project.canvas.height,
+            }
           }
           store.getState().loadPage(pageData)
           try {
@@ -1325,8 +1598,15 @@ export default function Editor() {
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
           }))
+          
+          // 关闭对话框
+          setShowProjectDialog(false)
         }}
         onNewProject={() => {
+          // 本地模式下才使用这个方法创建新项目
+          // 云端模式下会在 onProjectLoad 中处理
+          setHasSelectedDashboard(true)
+          
           // Create new empty project
           const newId = crypto.randomUUID()
           try {
@@ -1337,6 +1617,11 @@ export default function Editor() {
             type: 'page' as const,
             version: '1.0.0',
             nodes: [],
+            config: {
+              mode: canvasConfig.mode,
+              width: canvasConfig.width,
+              height: canvasConfig.height,
+            }
           }
           store.getState().loadPage(emptyPage)
           try {
@@ -1350,6 +1635,9 @@ export default function Editor() {
             createdAt: Date.now(),
             dataSources: [],
           }))
+          
+          // 关闭对话框
+          setShowProjectDialog(false)
         }}
         currentProject={getProjectState()}
         language={language}

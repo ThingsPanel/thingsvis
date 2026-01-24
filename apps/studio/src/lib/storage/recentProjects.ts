@@ -49,7 +49,7 @@ function saveRecentProjects(projects: RecentProjectEntry[]): void {
       JSON.stringify(sorted)
     )
   } catch (error) {
-    console.error('Failed to save recent projects:', error)
+    
   }
 }
 
@@ -113,6 +113,7 @@ function clearRecentProjects(): void {
 
 export const recentProjects = {
   get: getRecentProjects,
+  getAll: getRecentProjects, // Alias for consistency
   add: addToRecent,
   remove: removeFromRecent,
   updateName: updateProjectName,

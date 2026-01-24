@@ -11,7 +11,7 @@ export class LeaferAdapter {
   init(viewportEl: HTMLDivElement) {
     // Lazy-load Leafer to avoid bundling in server contexts.
     // eslint-disable-next-line no-console
-    console.log("[LeaferAdapter] init", viewportEl);
+    
     // TODO: Initialize actual Leafer Viewport instance here.
     this.viewport = { el: viewportEl };
   }
@@ -19,7 +19,7 @@ export class LeaferAdapter {
   addNode(nodeId: string, renderSpec: any) {
     // Create a visual primitive for the node and attach to viewport
     // eslint-disable-next-line no-console
-    console.log("[LeaferAdapter] addNode", nodeId, renderSpec);
+    
     const primitive = { id: nodeId, spec: renderSpec };
     this.nodes.set(nodeId, primitive);
     // attach to viewport
@@ -27,13 +27,13 @@ export class LeaferAdapter {
 
   removeNode(nodeId: string) {
     // eslint-disable-next-line no-console
-    console.log("[LeaferAdapter] removeNode", nodeId);
+    
     this.nodes.delete(nodeId);
   }
 
   updateNodeTransform(nodeId: string, transform: { x: number; y: number; rotation?: number; scale?: { x: number; y: number } }) {
     // eslint-disable-next-line no-console
-    console.log("[LeaferAdapter] updateNodeTransform", nodeId, transform);
+    
     const node = this.nodes.get(nodeId);
     if (!node) return;
     node.transform = transform;

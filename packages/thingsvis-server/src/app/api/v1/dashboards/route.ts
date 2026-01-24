@@ -22,7 +22,7 @@ function parseDashboardForResponse(dashboard: {
 
 // GET /api/v1/dashboards - List dashboards with pagination
 export async function GET(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/v1/dashboards - Create a new dashboard
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

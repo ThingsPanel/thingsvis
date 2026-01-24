@@ -14,12 +14,12 @@ export class SafeExecutor {
     if (!code) return data;
 
     try {
-      // Create a sandbox object to restrict global access
+      // Create a sandbox object to restrict global access.
       const sandbox = {
         data,
         console: {
-          log: (...args: any[]) => console.log('[Sandbox]', ...args),
-          error: (...args: any[]) => console.error('[Sandbox]', ...args),
+          log: (...args: any[]) => {},
+          error: (...args: any[]) => {},
         },
         Math,
         JSON,
@@ -63,7 +63,7 @@ export class SafeExecutor {
 
       return fn(proxy);
     } catch (error) {
-      console.error('[SafeExecutor] Transformation failed:', error);
+      
       // Return original data as fallback
       return data;
     }

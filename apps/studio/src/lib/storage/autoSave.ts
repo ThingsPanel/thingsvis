@@ -17,6 +17,7 @@ import { STORAGE_CONSTANTS } from './constants'
 export class AutoSaveManager {
   private projectId: string | null = null
   private getState: (() => ProjectFile) | null = null
+  private saveFn: (project: ProjectFile) => Promise<void> = projectStorage.save
   private debounceTimer: number | null = null
   private periodicTimer: number | null = null
   private isDirty = false
@@ -40,11 +41,16 @@ export class AutoSaveManager {
   /**
    * Initialize auto-save with project ID and state getter.
    */
-  init(projectId: string, getState: () => ProjectFile): void {
+  init(
+    projectId: string,
+    getState: () => ProjectFile,
+    saveFn?: (project: ProjectFile) => Promise<void>
+  ): void {
     this.destroy() // Clean up any existing timers
 
     this.projectId = projectId
     this.getState = getState
+    this.saveFn = saveFn ?? projectStorage.save
     this.isDirty = false
     this.updateStatus({ status: 'idle', lastSavedAt: null, error: null })
 
@@ -88,6 +94,8 @@ export class AutoSaveManager {
    * Save now with retry logic (exponential backoff, up to 3 attempts)
    */
   async saveNow(): Promise<void> {
+    
+    
     // Cancel pending debounce
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer)
@@ -95,6 +103,7 @@ export class AutoSaveManager {
     }
 
     if (!this.getState || !this.projectId) {
+      
       return
     }
 
@@ -112,7 +121,9 @@ export class AutoSaveManager {
       try {
         this.updateStatus({ ...this.currentState, status: 'saving', error: null })
         const project = this.getState()
-        await projectStorage.save(project)
+        
+        await this.saveFn(project)
+        
         this.isDirty = false
         const savedAt = Date.now()
         this.updateStatus({ status: 'saved', lastSavedAt: savedAt, error: null })
@@ -124,6 +135,7 @@ export class AutoSaveManager {
         }, STORAGE_CONSTANTS.SAVED_DISPLAY_MS)
         return
       } catch (error) {
+        
         lastError = error
         attempt++
         if (attempt < maxAttempts) {
@@ -175,6 +187,7 @@ export class AutoSaveManager {
 
     this.projectId = null
     this.getState = null
+    this.saveFn = projectStorage.save
     this.isDirty = false
     this.listeners.clear()
   }
@@ -195,7 +208,7 @@ export class AutoSaveManager {
       try {
         listener(state)
       } catch (error) {
-        console.error('Error in save state listener:', error)
+        
       }
     }
   }

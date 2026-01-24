@@ -94,6 +94,27 @@ Studio 将在 `http://localhost:3000` (或终端显示的端口) 上可用。
 pnpm dev --filter ./apps/preview
 ```
 
+#### 运行后端服务
+
+后端服务用于支持认证和项目管理等功能。
+
+1. 设置环境变量:
+   复制 `packages/thingsvis-server/` 目录下的 `.env.example` 文件为 `.env`。
+
+2. 初始化数据库:
+   ```bash
+   pnpm --filter @thingsvis/server db:migrate
+   # 或
+   pnpm --filter @thingsvis/server db:push
+   ```
+
+3. 启动服务:
+   ```bash
+   pnpm dev --filter @thingsvis/server
+   ```
+
+   服务将在 `http://localhost:3001` 上可用。
+
 ### 构建
 
 ```bash

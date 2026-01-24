@@ -100,12 +100,12 @@ const App: React.FC = () => {
       return
     }
     
-    console.log('[preview] Requesting project data via postMessage:', projectId)
+    
     
     // Listen for project data from studio
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.type === 'THINGSVIS_PROJECT_DATA' && event.data?.projectId === projectId) {
-        console.log('[preview] Received project data via postMessage')
+        
         const project = event.data.data
         
         if (!project) {
@@ -141,9 +141,9 @@ const App: React.FC = () => {
           
           setProjectName(project?.meta?.name)
           setProjectLoaded(true)
-          console.log('[preview] Project loaded successfully with', project.nodes?.length || 0, 'nodes')
+          
         } catch (error) {
-          console.error('[preview] Failed to process project data:', error)
+          
           setProjectError('Failed to process project data.')
         }
       }
@@ -223,7 +223,7 @@ const App: React.FC = () => {
       if (!entry.schema) {
         // 仅告警，不中断交互，方便调试不完整的插件
         // eslint-disable-next-line no-console
-        console.warn('⚠️ 该组件缺少 schema 定义，不符合 Phase 3 默认值注入约定:', specComponentId);
+        
       }
       const defaultProps = extractDefaults(entry.schema);
       const now = Date.now();
@@ -238,7 +238,7 @@ const App: React.FC = () => {
       store.getState().addNodes([node]);
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error('[preview] failed to add node from schema', e);
+      
     }
   }, [specComponentId]);
 
@@ -249,10 +249,10 @@ const App: React.FC = () => {
       const plugin = await loadPlugin(specComponentId);
       if (!plugin.entry.schema) {
         // eslint-disable-next-line no-console
-        console.warn('⚠️ 警告：该组件缺少 Schema 定义，不符合 Phase 3 交付标准', specComponentId);
+        
       } else {
         // eslint-disable-next-line no-console
-        console.log('✅ Schema Loaded:', plugin.entry.schema);
+        
       }
       const Spec = (plugin.entry as any).Spec as React.ComponentType | undefined;
       if (!Spec) {
@@ -285,10 +285,10 @@ const App: React.FC = () => {
 
   const handleToggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(console.error)
+      document.exitFullscreen?.().catch(() => {})
       return
     }
-    document.documentElement.requestFullscreen?.().catch(console.error)
+    document.documentElement.requestFullscreen?.().catch(() => {})
   }, [])
 
   // Determine if we need to load a project

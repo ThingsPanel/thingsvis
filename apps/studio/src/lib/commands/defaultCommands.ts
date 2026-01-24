@@ -62,6 +62,8 @@ export interface DefaultCommandsDependencies {
   openPreview?: () => void | Promise<void>
   /** Function to show shortcuts help panel */
   showShortcutsPanel?: () => void
+  /** Function to logout */
+  logout?: () => void
   /** Function to set the current tool */
   setTool?: (tool: string) => void
   /** Function to undo */
@@ -142,6 +144,18 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
           await deps.openPreview!()
         },
         { labelZh: '预览' }
+      )
+    )
+  }
+
+  if (deps.logout) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.AUTH_LOGOUT,
+        'Logout',
+        'project',
+        () => deps.logout!(),
+        { labelZh: '退出登录' }
       )
     )
   }

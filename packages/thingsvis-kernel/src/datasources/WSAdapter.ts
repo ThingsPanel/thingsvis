@@ -67,7 +67,7 @@ export class WSAdapter extends BaseAdapter {
         this.socket = new WebSocket(wsConfig.url, wsConfig.protocols);
 
         this.socket.onopen = () => {
-          console.log(`[WSAdapter] Connected to ${wsConfig.url}`);
+          
           this.reconnectAttempt = 0;
           this.updateStatus(createConnectedStatus());
           
@@ -91,13 +91,13 @@ export class WSAdapter extends BaseAdapter {
         };
 
         this.socket.onerror = (error) => {
-          console.error(`[WSAdapter] Error:`, error);
+          
           this.emitError(error);
           // Don't reject here - let onclose handle reconnection
         };
 
         this.socket.onclose = (event) => {
-          console.log(`[WSAdapter] Closed connection to ${wsConfig.url}`, event.code, event.reason);
+          
           
           // Stop heartbeat
           this.stopHeartbeat();
@@ -122,9 +122,9 @@ export class WSAdapter extends BaseAdapter {
     for (const message of initMessages) {
       try {
         this.socket?.send(message);
-        console.log(`[WSAdapter] Sent init message:`, message);
+        
       } catch (e) {
-        console.error(`[WSAdapter] Failed to send init message:`, e);
+        
       }
     }
   }
@@ -145,14 +145,14 @@ export class WSAdapter extends BaseAdapter {
       if (this.socket?.readyState === WebSocket.OPEN) {
         try {
           this.socket.send(heartbeat.message);
-          console.log(`[WSAdapter] Sent heartbeat:`, heartbeat.message);
+          
         } catch (e) {
-          console.error(`[WSAdapter] Heartbeat failed:`, e);
+          
         }
       }
     }, intervalMs);
     
-    console.log(`[WSAdapter] Heartbeat started (interval: ${heartbeat.interval}s)`);
+    
   }
 
   /**
@@ -162,7 +162,7 @@ export class WSAdapter extends BaseAdapter {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = undefined;
-      console.log(`[WSAdapter] Heartbeat stopped`);
+      
     }
   }
 
@@ -173,7 +173,7 @@ export class WSAdapter extends BaseAdapter {
     const policy = getEffectiveReconnectPolicy(this.wsConfig!);
     
     if (!shouldReconnect(this.reconnectAttempt, policy)) {
-      console.log(`[WSAdapter] Max reconnection attempts reached`);
+      
       this.updateStatus(createFailedStatus('Max reconnection attempts reached'));
       return;
     }
@@ -182,11 +182,11 @@ export class WSAdapter extends BaseAdapter {
     this.reconnectAttempt++;
     
     this.updateStatus(createReconnectingStatus(this.reconnectAttempt, policy.maxAttempts));
-    console.log(`[WSAdapter] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempt}/${policy.maxAttempts || '∞'})`);
+    
 
     this.reconnectTimer = setTimeout(() => {
       this.createConnection().catch((e) => {
-        console.error(`[WSAdapter] Reconnection failed:`, e);
+        
       });
     }, delay);
   }

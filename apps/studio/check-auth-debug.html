@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Debug Helper</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        pre { background: #2d2d2d; padding: 10px; border-radius: 5px; overflow-x: auto; }
+        button { padding: 10px 20px; margin: 10px 5px; cursor: pointer; background: #0e639c; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #1177bb; }
+        .section { margin: 20px 0; padding: 15px; background: #252526; border-radius: 8px; }
+        h2 { color: #4ec9b0; margin-top: 0; }
+        .key { color: #ce9178; }
+        .value { color: #b5cea8; }
+        .null { color: #569cd6; }
+    </style>
+</head>
+<body>
+    <h1>🔍 ThingsVis Authentication Debug Tool</h1>
+    
+    <div class="section">
+        <h2>📦 LocalStorage Data</h2>
+        <div id="storage-data"></div>
+    </div>
+
+    <div class="section">
+        <h2>🔐 Token Info</h2>
+        <div id="token-info"></div>
+    </div>
+
+    <div class="section">
+        <h2>⏰ Token Expiry</h2>
+        <div id="token-expiry"></div>
+    </div>
+
+    <div class="section">
+        <h2>👤 User Info</h2>
+        <div id="user-info"></div>
+    </div>
+
+    <button onclick="location.reload()">🔄 Refresh</button>
+    <button onclick="clearAll()">🗑️ Clear All Auth Data</button>
+
+    <script>
+        function formatJSON(obj) {
+            return JSON.stringify(obj, null, 2)
+                .replace(/"([^"]+)":/g, '<span class="key">"$1"</span>:')
+                .replace(/: "([^"]+)"/g, ': <span class="value">"$1"</span>')
+                .replace(/: null/g, ': <span class="null">null</span>');
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('thingsvis_token');
+            const expiry = localStorage.getItem('thingsvis_token_expiry');
+            const user = localStorage.getItem('thingsvis_user');
+
+            // Display storage keys
+            const storageKeys = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('thingsvis')) {
+                    storageKeys.push({
+                        key: key,
+                        length: localStorage.getItem(key)?.length || 0
+                    });
+                }
+            }
+            document.getElementById('storage-data').innerHTML = 
+                '<pre>' + formatJSON(storageKeys) + '</pre>';
+
+            // Display token
+            if (token) {
+                const tokenPreview = token.substring(0, 50) + '...';
+                document.getElementById('token-info').innerHTML = 
+                    `<pre>Length: ${token.length} chars\nPreview: ${tokenPreview}</pre>`;
+            } else {
+                document.getElementById('token-info').innerHTML = 
+                    '<pre><span class="null">No token found</span></pre>';
+            }
+
+            // Display expiry
+            if (expiry) {
+                const expiryDate = new Date(parseInt(expiry, 10));
+                const now = new Date();
+                const isExpired = now > expiryDate;
+                const timeDiff = expiryDate - now;
+                const hoursLeft = Math.floor(timeDiff / (1000 * 60 * 60));
+                const minutesLeft = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                
+                document.getElementById('token-expiry').innerHTML = 
+                    `<pre>Expiry Time: ${expiryDate.toLocaleString()}\n` +
+                    `Current Time: ${now.toLocaleString()}\n` +
+                    `Status: ${isExpired ? '❌ EXPIRED' : '✅ Valid'}\n` +
+                    `Time Left: ${hoursLeft}h ${minutesLeft}m</pre>`;
+            } else {
+                document.getElementById('token-expiry').innerHTML = 
+                    '<pre><span class="null">No expiry found</span></pre>';
+            }
+
+            // Display user
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    document.getElementById('user-info').innerHTML = 
+                        '<pre>' + formatJSON(userData) + '</pre>';
+                } catch (e) {
+                    document.getElementById('user-info').innerHTML = 
+                        '<pre style="color: #f48771;">Invalid JSON: ' + user + '</pre>';
+                }
+            } else {
+                document.getElementById('user-info').innerHTML = 
+                    '<pre><span class="null">No user data found</span></pre>';
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to clear all authentication data?')) {
+                localStorage.removeItem('thingsvis_token');
+                localStorage.removeItem('thingsvis_token_expiry');
+                localStorage.removeItem('thingsvis_user');
+                alert('Auth data cleared! Please refresh.');
+                location.reload();
+            }
+        }
+
+        // Run on load
+        checkAuth();
+    </script>
+</body>
+</html>

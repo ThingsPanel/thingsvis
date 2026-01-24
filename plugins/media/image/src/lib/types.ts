@@ -18,7 +18,7 @@ import type { z } from 'zod';
 export type BindingMode = 'static' | 'field' | 'expr' | 'rule';
 
 /** 控件类型 */
-export type ControlKind = 'string' | 'number' | 'boolean' | 'color' | 'select' | 'json';
+export type ControlKind = 'string' | 'number' | 'boolean' | 'color' | 'select' | 'json' | 'image';
 
 /** 下拉选项 */
 export type ControlOption = {

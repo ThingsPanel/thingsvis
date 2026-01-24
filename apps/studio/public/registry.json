@@ -9,7 +9,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Type"
+      "icon": "Type",
+      "name": "基础文本"
     },
     "basic/rectangle": {
       "remoteName": "thingsvis_plugin_basic_rectangle",
@@ -18,7 +19,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Square"
+      "icon": "Square",
+      "name": "矩形"
     },
     "basic/circle": {
       "remoteName": "thingsvis_plugin_basic_circle",
@@ -27,7 +29,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Circle"
+      "icon": "Circle",
+      "name": "圆形"
     },
     "basic/line": {
       "remoteName": "thingsvis_plugin_basic_line",
@@ -35,7 +38,8 @@
       "staticEntryUrl": "/plugins/basic/line/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "name": "连线"
     },
     "basic/indicator": {
       "remoteName": "thingsvis_plugin_basic_indicator",
@@ -44,7 +48,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Activity"
+      "icon": "Activity",
+      "name": "数字指示器"
     },
     "media/image": {
       "remoteName": "thingsvis_plugin_media_image",
@@ -53,7 +58,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "Image"
+      "icon": "Image",
+      "name": "图片"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_plugin_chart_echarts_line",
@@ -62,7 +68,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "1.0.0",
-      "icon": "BarChart3"
+      "icon": "BarChart3",
+      "name": "折线图"
     },
     "custom/water-tank": {
       "remoteName": "thingsvis_plugin_custom_water_tank",
@@ -71,7 +78,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "icon": "Container"
+      "icon": "Container",
+      "name": "蓄水池"
     }
   }
 }

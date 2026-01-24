@@ -20,7 +20,7 @@ if (isNode) {
     req("./etl-worker.node");
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn("[etl-worker] failed to load node worker implementation", e);
+    
   }
 } else if (typeof self !== "undefined" && typeof (self as any).postMessage === "function") {
   try {
@@ -29,12 +29,12 @@ if (isNode) {
     req("./etl-worker.web");
   } catch (e) {
     // eslint-disable-next-line no-console
-    console.warn("[etl-worker] failed to load web worker implementation", e);
+    
   }
 } else {
   // Not running inside a worker; expose a no-op adapter
   // eslint-disable-next-line no-console
-  console.warn("[etl-worker] running outside worker context; no-op adapter loaded");
+  
 }
 
 export {};

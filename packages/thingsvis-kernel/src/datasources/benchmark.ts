@@ -16,20 +16,20 @@ export function runSandboxBenchmark() {
 
   const code = 'return data.items.filter(i => i.value > 50).map(i => i.id);';
   
-  console.log('[Benchmark] Starting SC-005 validation (1MB JSON < 10ms)...');
+  
   
   const start = performance.now();
   const result = SafeExecutor.execute(code, largeData);
   const end = performance.now();
   
   const duration = end - start;
-  console.log(`[Benchmark] Execution completed in ${duration.toFixed(2)}ms`);
-  console.log(`[Benchmark] Filtered ${result.length} items`);
+  
+  
 
   if (duration < 10) {
-    console.log('✅ SC-005 PASSED: Execution time is under 10ms.');
+    
   } else {
-    console.warn('❌ SC-005 FAILED: Execution time exceeded 10ms.');
+    
   }
 }
 

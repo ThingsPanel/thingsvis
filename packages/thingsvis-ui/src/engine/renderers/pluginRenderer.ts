@@ -77,15 +77,9 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
       // If the plugin returned a DOM element, we'll use a placeholder Rect
       // The actual DOM rendering should be done via createOverlay
       if (raw instanceof HTMLElement) {
-        console.warn(
-          `[pluginRenderer] Plugin "${plugin.id}" returned a DOM element from create(). ` +
-          `Please use createOverlay() for DOM-based rendering. Using placeholder.`
-        );
+        
       } else {
-        console.warn(
-          `[pluginRenderer] Plugin "${plugin.id}" returned an invalid object from create(). ` +
-          `Expected a Leafer display object. Using placeholder.`
-        );
+        
       }
       
       // Create a placeholder Rect as fallback

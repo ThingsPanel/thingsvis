@@ -94,6 +94,27 @@ The studio will be available at `http://localhost:3000` (or the port shown in te
 pnpm dev --filter ./apps/preview
 ```
 
+#### Run the Backend Server
+
+The backend server is required for features like authentication and project management.
+
+1. Setup environment variables:
+   Copy `.env.example` to `.env` in `packages/thingsvis-server/`.
+
+2. Initialize the database:
+   ```bash
+   pnpm --filter @thingsvis/server db:migrate
+   # or
+   pnpm --filter @thingsvis/server db:push
+   ```
+
+3. Start the server:
+   ```bash
+   pnpm dev --filter @thingsvis/server
+   ```
+
+   The server will be available at `http://localhost:3001`.
+
 ### Building
 
 ```bash

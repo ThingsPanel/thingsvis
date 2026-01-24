@@ -75,7 +75,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       // Bridge for the studio app to send commands/events to the kernel.
       // Implementation will call the kernel IPC or store action in future tasks.
       // eslint-disable-next-line no-console
-      console.log("[StudioCanvasView] dispatchToKernel:", payload);
+      
     },
     mount: () => {
       mountedRef.current = true;
@@ -173,7 +173,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       onUserEdit?.();
     } catch (e) {
       // eslint-disable-next-line no-console
-      console.error("[CanvasView] drop failed", e);
+      
     }
   }
 

@@ -7,7 +7,7 @@ type Params = { params: Promise<{ id: string }> }
 
 // GET /api/v1/projects/:id - Get project details
 export async function GET(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // PUT /api/v1/projects/:id - Update project
 export async function PUT(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
 // DELETE /api/v1/projects/:id - Delete project (cascades to dashboards)
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

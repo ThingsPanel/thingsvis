@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import * as LucideIcons from 'lucide-react';
 
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
+import ImageSourceInput from './ImageSourceInput';
 import {
   detectBindingMode,
   getBinding,
@@ -307,8 +308,17 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
             />
           )}
 
+          {/* Image control - supports upload, URL, and base64 */}
+          {field.kind === 'image' && (
+            <ImageSourceInput
+              value={typeof propsValue === 'string' ? propsValue : ''}
+              onChange={(v) => setStatic(v)}
+              language={language}
+            />
+          )}
+
           {/* Fallback for unknown kinds */}
-          {!['string', 'number', 'color', 'nodeSelect', 'select', 'boolean', 'slider', 'segmented', 'radio', 'json', 'textarea'].includes(field.kind) && (
+          {!['string', 'number', 'color', 'nodeSelect', 'select', 'boolean', 'slider', 'segmented', 'radio', 'json', 'textarea', 'image'].includes(field.kind) && (
             <Input
               value={propsValue === undefined ? '' : String(propsValue)}
               onChange={(e) => setStatic(e.target.value)}

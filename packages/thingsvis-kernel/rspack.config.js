@@ -32,9 +32,13 @@ export default defineConfig({
         test: /\.ts$/,
         use: [
           {
-            loader: 'ts-loader',
+            loader: 'builtin:swc-loader',
             options: {
-              transpileOnly: true
+              jsc: {
+                parser: {
+                  syntax: 'typescript'
+                }
+              }
             }
           }
         ]

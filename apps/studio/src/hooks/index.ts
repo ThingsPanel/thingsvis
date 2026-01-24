@@ -7,3 +7,4 @@
 export { useAutoSave, useProject } from './useAutoSave'
 export { useHistoryState } from './useHistoryState'
 export { useHelpPanel } from './useHelpPanel'
+export { useStorage, type UseStorageResult } from './useStorage'

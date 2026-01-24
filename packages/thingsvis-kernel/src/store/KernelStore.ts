@@ -754,7 +754,7 @@ export const createKernelStore = () =>
             s.gridState.totalHeight = result.totalHeight;
           });
         } catch (e) {
-          console.error('GridSystem.moveItem failed:', e);
+          
         }
       },
 
@@ -804,7 +804,7 @@ export const createKernelStore = () =>
             s.gridState.totalHeight = result.totalHeight;
           });
         } catch (e) {
-          console.error('GridSystem.resizeItem failed:', e);
+          
         }
       },
 

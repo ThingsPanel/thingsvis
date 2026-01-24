@@ -49,7 +49,7 @@ export function KioskView({
   // Auto-enter fullscreen
   useEffect(() => {
     if (autoFullscreen && containerRef.current && !document.fullscreenElement) {
-      containerRef.current.requestFullscreen?.().catch(console.error)
+      containerRef.current.requestFullscreen?.().catch(() => {})
     }
   }, [autoFullscreen])
 
@@ -72,7 +72,7 @@ export function KioskView({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isFullscreen) {
-        document.exitFullscreen?.().catch(console.error)
+        document.exitFullscreen?.().catch(() => {})
       }
     }
 

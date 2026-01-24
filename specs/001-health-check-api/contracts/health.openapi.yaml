@@ -1,0 +1,180 @@
+openapi: 3.1.0
+info:
+  title: ThingsVis Health Check API
+  description: Health check endpoint for operational monitoring
+  version: 1.0.0
+  contact:
+    name: ThingsVis Team
+
+servers:
+  - url: /api/v1
+    description: API v1
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Get server health status
+      description: |
+        Returns the health status of the server and its dependencies.
+        Used by Docker, Kubernetes, load balancers, and monitoring systems.
+      tags:
+        - Health
+      security: []  # No authentication required
+      responses:
+        '200':
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: healthy
+                version: "0.1.0"
+                timestamp: "2026-01-22T10:00:00.000Z"
+                uptime: 12345.67
+                checks:
+                  database:
+                    status: healthy
+                    latency: 5
+                responseTime: 10
+        '503':
+          description: Server is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: unhealthy
+                version: "0.1.0"
+                timestamp: "2026-01-22T10:00:00.000Z"
+                uptime: 12345.67
+                checks:
+                  database:
+                    status: unhealthy
+                    error: "Connection refused"
+                responseTime: 5002
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Method not allowed"
+    
+    # Explicitly document that other methods return 405
+    post:
+      operationId: postHealth
+      summary: Method not allowed
+      tags:
+        - Health
+      responses:
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      operationId: putHealth
+      summary: Method not allowed
+      tags:
+        - Health
+      responses:
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      operationId: deleteHealth
+      summary: Method not allowed
+      tags:
+        - Health
+      responses:
+        '405':
+          description: Method not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - timestamp
+        - uptime
+        - checks
+        - responseTime
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - unhealthy
+          description: Overall health status
+        version:
+          type: string
+          description: Application version
+          example: "0.1.0"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when check was performed
+        uptime:
+          type: number
+          description: Server uptime in seconds
+          example: 12345.67
+        checks:
+          type: object
+          description: Individual component check results
+          additionalProperties:
+            $ref: '#/components/schemas/ComponentCheck'
+          example:
+            database:
+              status: healthy
+              latency: 5
+        responseTime:
+          type: number
+          description: Total response time in milliseconds
+          example: 10
+
+    ComponentCheck:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - unhealthy
+          description: Component health status
+        latency:
+          type: number
+          description: Check latency in milliseconds (only present if healthy)
+          example: 5
+        error:
+          type: string
+          description: Error message (only present if unhealthy)
+          example: "Connection refused"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Method not allowed"
+
+tags:
+  - name: Health
+    description: Health check operations for monitoring and orchestration

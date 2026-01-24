@@ -41,19 +41,19 @@ export async function loadPlugin(componentId: string): Promise<LoadedPlugin> {
     if (isLocalRequested) {
       // 强制使用本地，如果是 (Local) 条目
       finalUrl = entry.localEntryUrl || entry.staticEntryUrl || entry.remoteEntryUrl;
-      console.log(`[pluginResolver] Force local/static source for ${componentId}: ${finalUrl}`);
+      
     } else if (entry.debugSource === 'static' && entry.staticEntryUrl) {
       // 优先使用宿主托管的静态编译文件
       finalUrl = entry.staticEntryUrl;
-      console.log(`[pluginResolver] Using static source for ${componentId}: ${finalUrl}`);
+      
     } else if (entry.debugSource === 'local' && entry.localEntryUrl) {
       // 优先使用插件独立的开发服务
       finalUrl = entry.localEntryUrl;
-      console.log(`[pluginResolver] Using local dev server for ${componentId}: ${finalUrl}`);
+      
     } else if (isDev && entry.staticEntryUrl) {
       // 开发环境下，如果没有显式指定且存在静态文件，默认降级到静态文件（避免必须开插件服务）
       finalUrl = entry.staticEntryUrl;
-      console.log(`[pluginResolver] Dev mode fallback to static source for ${componentId}: ${finalUrl}`);
+      
     }
 
     // 开发阶段：直接使用远程 URL 注册 remote，避免 Blob/ObjectURL → manifest 解析导致的 RUNTIME-003。

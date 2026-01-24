@@ -22,7 +22,7 @@ export class VisualEngine {
     this.stopLoop = startRenderLoop((patches) => {
       // For MVP, forward basic patches to adapter (real mapping later)
       // eslint-disable-next-line no-console
-      console.log("[VisualEngine] onFrame patches:", patches.length);
+      
       // TODO: translate patches into adapter.addNode/update/removeNode calls
     });
   }

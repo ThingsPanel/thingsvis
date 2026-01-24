@@ -21,6 +21,10 @@ export default defineConfig({
       copyOnBuild: true,
     },
   },
+  html: {
+    title: 'ThingsVis 编辑器',
+    template: path.resolve(__dirname, './index.html'),
+  },
   dev: {
     setupMiddlewares: [
       (middlewares, server) => {

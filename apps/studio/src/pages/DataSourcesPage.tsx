@@ -113,9 +113,9 @@ export default function DataSourcesPage() {
       // Show success toast
       setToast({ message: label('数据源保存成功！', 'Data source saved successfully!'), visible: true });
       setTimeout(() => setToast({ message: '', visible: false }), 3000);
-      console.log('[DataSourcesPage] Saved data source:', editingSource.id);
+      
     } catch (e) {
-      console.error('[DataSourcesPage] Failed to save source', e);
+      
       alert(label('保存失败: ' + String(e), 'Save failed: ' + String(e)));
     }
   };

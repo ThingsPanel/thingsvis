@@ -4,15 +4,15 @@ export function createLeaferRoot(container: HTMLElement) {
   return {
     mount: () => {
       // eslint-disable-next-line no-console
-      console.log("[leafer] mount");
+      
     },
     render: () => {
       // eslint-disable-next-line no-console
-      console.log("[leafer] render");
+      
     },
     destroy: () => {
       // eslint-disable-next-line no-console
-      console.log("[leafer] destroy");
+      
     },
   };
 }

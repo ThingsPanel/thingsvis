@@ -9,7 +9,7 @@ export async function runSafeAsync<T>(fn: () => Promise<T>, fallback: T): Promis
     return await fn();
   } catch (err) {
     // eslint-disable-next-line no-console
-    console.error("[runSafeAsync] error:", err);
+    
     return fallback;
   }
 }

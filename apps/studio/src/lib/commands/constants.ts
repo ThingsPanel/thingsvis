@@ -28,6 +28,8 @@ export const COMMAND_IDS = {
   EDIT_DELETE: 'edit.delete',
   EDIT_SELECT_ALL: 'edit.selectAll',
   EDIT_DESELECT: 'edit.deselect',
+  EDIT_GROUP: 'edit.group',
+  EDIT_UNGROUP: 'edit.ungroup',
 
   // View commands
   VIEW_ZOOM_IN: 'view.zoomIn',
@@ -40,6 +42,9 @@ export const COMMAND_IDS = {
   PROJECT_OPEN: 'project.open',
   PROJECT_EXPORT: 'project.export',
   PROJECT_PREVIEW: 'project.preview',
+
+  // Auth commands
+  AUTH_LOGOUT: 'auth.logout',
 
   // Help commands
   HELP_SHORTCUTS: 'help.shortcuts',
@@ -79,6 +84,9 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
   [COMMAND_IDS.PROJECT_OPEN]: ['mod', 'o'],
   [COMMAND_IDS.PROJECT_EXPORT]: ['mod', 'e'],
   [COMMAND_IDS.PROJECT_PREVIEW]: ['mod', 'p'],
+
+  // Auth
+  [COMMAND_IDS.AUTH_LOGOUT]: ['mod', 'shift', 'l'],
 
   // Help
   [COMMAND_IDS.HELP_SHORTCUTS]: ['?'],

@@ -108,7 +108,7 @@ export const CanvasView: React.FC<Props> = ({
 
   // Reflow mode: auto-scale to fit container on every resize
   useEffect(() => {
-    console.log('[CanvasView] Reflow check:', { mode, containerDimensions, width, height });
+    
     if (mode !== 'reflow') return;
     if (containerDimensions.width <= 0 || containerDimensions.height <= 0) return;
     
@@ -124,7 +124,7 @@ export const CanvasView: React.FC<Props> = ({
       true // allowScaleUp - in reflow mode we scale to fit container
     );
     
-    console.log('[CanvasView] Reflow scaleToFit:', scaleToFit);
+    
     setInternalZoom(scaleToFit);
     
     // Center the content
@@ -159,7 +159,7 @@ export const CanvasView: React.FC<Props> = ({
   // Debug: log when zoom changes in reflow mode
   useEffect(() => {
     if (mode === 'reflow') {
-      console.log('[CanvasView] Reflow zoom updated:', { zoom, internalZoom, offset });
+      
     }
   }, [mode, zoom, internalZoom, offset]);
 
