@@ -88,3 +88,41 @@ export const saveToHost = async (payload: WebChartConfig): Promise<void> => {
 
   throw new Error('No host save handler found')
 }
+
+/**
+ * Request save to host platform (new protocol)
+ * Returns a promise that resolves when host responds
+ */
+export const requestSaveToHost = async (payload: {
+  canvasConfig: any
+  nodes: any[]
+  dataSources: any[]
+}): Promise<{ success: boolean; data?: any; error?: any }> => {
+  return new Promise((resolve) => {
+    const requestId = Date.now().toString()
+
+    // Register one-time response listener
+    const handleResponse = (event: MessageEvent) => {
+      if (event.data.type === 'thingsvis:saveResponse' && event.data.requestId === requestId) {
+        window.removeEventListener('message', handleResponse)
+        resolve(event.data.payload)
+      }
+    }
+
+    window.addEventListener('message', handleResponse)
+
+    // Send save request
+    window.parent.postMessage({
+      type: 'thingsvis:requestSave',
+      requestId,
+      payload
+    }, '*')
+
+    // Timeout after 30 seconds
+    setTimeout(() => {
+      window.removeEventListener('message', handleResponse)
+      resolve({ success: false, error: { message: 'Save request timeout' } })
+    }, 30000)
+  })
+}
+

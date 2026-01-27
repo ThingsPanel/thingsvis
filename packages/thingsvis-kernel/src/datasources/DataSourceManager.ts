@@ -4,6 +4,7 @@ import { KernelStore } from '../store/KernelStore';
 import { StaticAdapter } from './StaticAdapter';
 import { WSAdapter } from './WSAdapter';
 import { RESTAdapter } from './RESTAdapter';
+import { PlatformFieldAdapter } from './PlatformFieldAdapter';
 import { get, set, del, keys } from 'idb-keyval';
 
 type AdapterConstructor = new () => BaseAdapter;
@@ -26,6 +27,7 @@ export class DataSourceManager {
     this.registerAdapterType('STATIC', StaticAdapter);
     this.registerAdapterType('WS', WSAdapter);
     this.registerAdapterType('REST', RESTAdapter);
+    this.registerAdapterType('PLATFORM_FIELD', PlatformFieldAdapter);
   }
 
   public static getInstance(): DataSourceManager {
@@ -50,20 +52,20 @@ export class DataSourceManager {
     try {
       const allKeys = await keys();
       const dsKeys = (allKeys as string[]).filter(k => k.startsWith(STORAGE_KEY_PREFIX));
-      
-      
-      
+
+
+
       for (const key of dsKeys) {
         const config = await get<DataSource>(key);
         if (config) {
           // Register without awaiting each to speed up boot, or await for sequential stability
           this.registerDataSource(config, false).catch(e => {
-            
+
           });
         }
       }
     } catch (e) {
-      
+
     }
   }
 
@@ -100,7 +102,7 @@ export class DataSourceManager {
     // Save to storage if requested
     if (persist) {
       set(`${STORAGE_KEY_PREFIX}${config.id}`, config).catch(e => {
-        
+
       });
     }
 
@@ -130,7 +132,7 @@ export class DataSourceManager {
         lastUpdated: Date.now()
       });
     } catch (error) {
-      
+
       this.store?.getState().setDataSourceState(config.id, {
         status: 'error',
         error: error instanceof Error ? error.message : String(error),
@@ -145,17 +147,17 @@ export class DataSourceManager {
    */
   public async unregisterDataSource(id: string): Promise<void> {
     const adapter = this.adapters.get(id);
-    
+
     // Remove from storage
     del(`${STORAGE_KEY_PREFIX}${id}`).catch(e => {
-      
+
     });
 
     if (adapter) {
       try {
         await adapter.disconnect();
       } catch (e) {
-        
+
       }
       this.adapters.delete(id);
       this.configs.delete(id);
@@ -172,6 +174,14 @@ export class DataSourceManager {
 
   public getConfig(id: string): DataSource | undefined {
     return this.configs.get(id);
+  }
+
+  /**
+   * Get all registered data source configurations.
+   * Used for saving to project files.
+   */
+  public getAllConfigs(): DataSource[] {
+    return Array.from(this.configs.values());
   }
 
   /**

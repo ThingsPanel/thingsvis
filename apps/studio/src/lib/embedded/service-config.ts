@@ -16,10 +16,23 @@ export type EditorUiConfig = {
   toolbarItems?: string[]
 }
 
+export type PlatformField = {
+  id: string
+  name: string
+  type: 'number' | 'string' | 'boolean' | 'json'
+  dataType: 'attribute' | 'telemetry' | 'command'
+  unit?: string
+  description?: string
+}
+
+export type SaveTarget = 'self' | 'host'
+
 export type EditorServiceConfig = {
   mode: EditorServiceMode
   integrationLevel: IntegrationLevel
   ui: EditorUiConfig
+  saveTarget?: SaveTarget
+  platformFields?: PlatformField[]
   warnings: string[]
 }
 
@@ -147,6 +160,23 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     }
   }
 
+  // -------- Save target --------
+  const saveTargetParam = getParam('saveTarget')
+  const saveTarget: SaveTarget | undefined = saveTargetParam === 'host' || saveTargetParam === 'self'
+    ? saveTargetParam as SaveTarget
+    : undefined
+
+  // -------- Platform fields --------
+  let platformFields: PlatformField[] | undefined
+  try {
+    const fieldsParam = getParam('platformFields')
+    if (fieldsParam) {
+      platformFields = JSON.parse(decodeURIComponent(fieldsParam))
+    }
+  } catch (e) {
+    warnings.push('Failed to parse platform fields')
+  }
+
   // Embedded + full
-  return { mode, integrationLevel, ui: requestedUi, warnings }
+  return { mode, integrationLevel, ui: requestedUi, saveTarget, platformFields, warnings }
 }

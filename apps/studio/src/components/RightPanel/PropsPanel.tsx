@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDataSourceRegistry } from "@thingsvis/ui";
+import { resolveEditorServiceConfig } from "@/lib/embedded/service-config";
+import { PlatformFieldPicker } from "./PlatformFieldPicker";
 
 import { loadPlugin } from "@/plugins/pluginResolver";
 import { getPluginControls } from "@/plugins/getPluginControls";
@@ -69,7 +71,7 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
     if (!controlsParse.issues?.length) return;
 
     // eslint-disable-next-line no-console
-    
+
   }, [pluginEntry, controls, controlsParse.issues]);
 
   function updateNode(changes: any) {
@@ -222,9 +224,10 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
 
   const renderLegacyPanel = () => (
     <Tabs defaultValue="style" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 mb-4">
+      <TabsList className="grid w-full grid-cols-3 mb-4">
         <TabsTrigger value="style" className="text-sm">{labelZh("样式", "Style")}</TabsTrigger>
         <TabsTrigger value="data" className="text-sm">{labelZh("数据", "Data")}</TabsTrigger>
+        <TabsTrigger value="platform" className="text-sm">{labelZh("平台", "Platform")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="style" className="space-y-4">
@@ -306,7 +309,7 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
         <div className="space-y-4">
           {bindings.map((binding: any, index: number) => (
             <div key={index} className="p-3 glass rounded-sm border border-border/50 space-y-3 relative group/item">
-              <button 
+              <button
                 onClick={() => removeBinding(index)}
                 className="absolute top-2 right-2 opacity-0 group-hover/item:opacity-100 p-1 hover:bg-destructive/10 text-destructive rounded transition-all"
               >
@@ -317,8 +320,8 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
                 <label className="text-sm font-medium text-muted-foreground">
                   {labelZh("目标属性", "Target Prop")}
                 </label>
-                <Input 
-                  value={binding.targetProp} 
+                <Input
+                  value={binding.targetProp}
                   onChange={(e) => updateBinding(index, 'targetProp', e.target.value)}
                   placeholder={labelZh("例如：text / fill / fontSize", "e.g. text / fill / fontSize")}
                   className="h-8 text-sm"
@@ -330,8 +333,8 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
                   <span>{labelZh("表达式", "Expression")}</span>
                   <Database className="h-2.5 w-2.5 opacity-50" />
                 </label>
-                <textarea 
-                  value={binding.expression} 
+                <textarea
+                  value={binding.expression}
                   onChange={(e) => updateBinding(index, 'expression', e.target.value)}
                   placeholder="{{ ds.<id>.data.<path> }}"
                   className="w-full h-16 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
@@ -366,6 +369,43 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
             )}
           </div>
         </div>
+      </TabsContent>
+
+      <TabsContent value="platform" className="space-y-4 px-1">
+        {(() => {
+          const serviceConfig = resolveEditorServiceConfig()
+          const platformFields = serviceConfig.platformFields || []
+
+          if (platformFields.length === 0) {
+            return (
+              <div className="text-center py-8 text-muted-foreground/40 text-sm italic">
+                {labelZh(
+                  "非嵌入模式或未配置平台字段",
+                  "Not in embedded mode or no platform fields configured"
+                )}
+              </div>
+            )
+          }
+
+          return (
+            <PlatformFieldPicker
+              platformFields={platformFields}
+              onSelectField={(field) => {
+                // Create a PLATFORM_FIELD data binding
+                const newBindings = [
+                  ...bindings,
+                  {
+                    targetProp: 'text', // default to text, user can change
+                    expression: `{{ platform.${field.id} }}`,
+                    platformField: field
+                  }
+                ]
+                updateNode({ data: newBindings })
+              }}
+              language={language as 'zh' | 'en'}
+            />
+          )
+        })()}
       </TabsContent>
     </Tabs>
   );

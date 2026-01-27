@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ThingsPanel 集成示例 - ThingsVis</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f0f2f5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .sidebar {
+      width: 350px;
+      background: white;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #e5e7eb;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+    }
+    
+    .editor-container {
+      flex: 1;
+      background: #fafafa;
+    }
+    
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    h2 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: #1f2937;
+      font-weight: 600;
+    }
+    
+    h3 {
+      font-size: 14px;
+      margin: 16px 0 8px;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 10px 16px;
+      margin: 6px 0;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    button:hover {
+      background: #2563eb;
+    }
+    
+    button:active {
+      transform: translateY(1px);
+    }
+    
+    .status {
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    
+    .status.info {
+      background: #dbeafe;
+      color: #1e40af;
+      border-left: 3px solid #3b82f6;
+    }
+    
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      border-left: 3px solid #10b981;
+    }
+    
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+      border-left: 3px solid #ef4444;
+    }
+    
+    pre {
+      font-size: 11px;
+      background: #f9fafbb;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 8px 0;
+      border: 1px solid #e5e7eb;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .field-item {
+      background: #f9fafb;
+      padding: 8px;
+      margin: 4px 0;
+      border-radius: 4px;
+      font-size: 12px;
+      border-left: 3px solid #8b5cf6;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #8b5cf6;
+      color: white;
+      border-radius: 12px;
+      font-size: 10px;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>🏭 ThingsPanel 模拟控制台</h2>
+      
+      <h3>1. 初始化配置</h3>
+      <button onclick="initEditor()">🚀 初始化ThingsVis编辑器</button>
+      
+      <h3>2. 平台字段列表</h3>
+      <div id="fields-container"></div>
+      
+      <h3>3. 操作</h3>
+      <button onclick="updateFieldData()">📊 推送模拟数据</button>
+      <button onclick="requestSave()">💾 触发保存测试</button>
+      
+      <h3>4. 保存状态</h3>
+      <div id="save-status" class="status info">等待初始化...</div>
+      
+      <h3>5. 已保存配置</h3>
+      <pre id="saved-config">暂无保存数据</pre>
+    </div>
+    
+    <div class="editor-container">
+      <iframe id="thingsvis-iframe" src=""></iframe>
+    </div>
+  </div>
+
+  <script>
+    const iframe = document.getElementById('thingsvis-iframe');
+    
+    // === 平台字段定义 ===
+    const platformFields = [
+      { 
+        id: 'temp', 
+        name: '温度', 
+        type: 'number', 
+        dataType: 'telemetry', 
+        unit: '°C',
+        description: '设备当前温度'
+      },
+      { 
+        id: 'humi', 
+        name: '湿度', 
+        type: 'number', 
+        dataType: 'telemetry', 
+        unit: '%',
+        description: '设备当前湿度'
+      },
+      { 
+        id: 'status', 
+        name: '运行状态', 
+        type: 'string', 
+        dataType: 'attribute',
+        description: '设备运行状态'
+      },
+      { 
+        id: 'power', 
+        name: '功率', 
+        type: 'number', 
+        dataType: 'telemetry', 
+        unit: 'W',
+        description: '设备功率'
+      }
+    ];
+    
+    // === 显示字段列表 ===
+    function renderFields() {
+      const container = document.getElementById('fields-container');
+      container.innerHTML = platformFields.map(field => `
+        <div class="field-item">
+          <strong>${field.name}</strong> <span class="badge">${field.dataType}</span><br>
+          <small style="color: #6b7280;">ID: ${field.id} | 类型: ${field.type}${field.unit ? ` (${field.unit})` : ''}</small>
+        </div>
+      `).join('');
+    }
+    
+    // === 初始化编辑器 ===
+    function initEditor() {
+      const editorUrl = 'http://localhost:3000';
+      const params = new URLSearchParams({
+        mode: 'embedded',
+        saveTarget: 'host',
+        platformFields: JSON.stringify(platformFields)
+      });
+      
+      iframe.src = `${editorUrl}?${params.toString()}`;
+      
+      document.getElementById('save-status').className = 'status info';
+      document.getElementById('save-status').textContent = '⏳ 编辑器加载中...';
+      
+      // 等待iframe加载完成后发送初始化消息
+      iframe.onload = () => {
+        setTimeout(() => {
+          iframe.contentWindow.postMessage({
+            type: 'thingsvis:init',
+            payload: {
+              mode: 'embedded',
+              saveTarget: 'host',
+              platformFields
+            }
+          }, '*');
+          
+          document.getElementById('save-status').className = 'status success';
+          document.getElementById('save-status').textContent = '✅ 编辑器已初始化';
+        }, 1000);
+      };
+    }
+    
+    // === 推送模拟数据 ===
+    function updateFieldData() {
+      const mockData = {
+        temp: (20 + Math.random() * 10).toFixed(1),
+        humi: (50 + Math.random() * 30).toFixed(1),
+        status: Math.random() > 0.5 ? '正常' : '告警',
+        power: (100 + Math.random() * 200).toFixed(0)
+      };
+      
+      // 逐个字段推送数据
+      Object.entries(mockData).forEach(([fieldId, value]) => {
+        iframe.contentWindow.postMessage({
+          type: 'thingsvis:platformData',
+          payload: {
+            fieldId,
+            value,
+            timestamp: Date.now()
+          }
+        }, '*');
+      });
+      
+      document.getElementById('save-status').className = 'status info';
+      document.getElementById('save-status').textContent = `📊 已推送数据: 温度=${mockData.temp}°C, 湿度=${mockData.humi}%, 状态=${mockData.status}, 功率=${mockData.power}W`;
+    }
+    
+    // === 测试保存流程 ===
+    function requestSave() {
+      document.getElementById('save-status').className = 'status info';
+      document.getElementById('save-status').textContent = '💾 请在ThingsVis编辑器中点击保存按钮...';
+    }
+    
+    // === 监听来自ThingsVis的消息 ===
+    window.addEventListener('message', (event) => {
+      console.log('Received message from ThingsVis:', event.data);
+      
+      // 处理保存请求
+      if (event.data.type === 'thingsvis:requestSave') {
+        console.log('保存请求:', event.data.payload);
+        
+        const config = event.data.payload;
+        document.getElementById('saved-config').textContent = JSON.stringify(config, null, 2);
+        document.getElementById('save-status').className = 'status success';
+        document.getElementById('save-status').textContent = `✅ 保存成功！时间: ${new Date().toLocaleTimeString()}`;
+        
+        // 响应保存成功
+        iframe.contentWindow.postMessage({
+          type: 'thingsvis:saveResponse',
+          requestId: event.data.requestId,
+          payload: {
+            success: true,
+            data: { 
+              savedAt: new Date().toISOString(),
+              templateId: 'tpl_' + Date.now()
+            }
+          }
+        }, '*');
+      }
+      
+      // 处理字段数据请求
+      if (event.data.type === 'thingsvis:requestFieldData') {
+        console.log('字段数据请求:', event.data.payload);
+        // 立即推送初始数据
+        updateFieldData();
+      }
+    });
+    
+    // === 自动初始化 ===
+    window.onload = () => {
+      renderFields();
+      // 延迟自动初始化，给用户时间查看界面
+      setTimeout(() => {
+        document.getElementById('save-status').className = 'status info';
+        document.getElementById('save-status').textContent = '👉 点击"初始化ThingsVis编辑器"按钮开始';
+      }, 500);
+    };
+    
+    // === 定时推送数据 (模拟实时数据流) ===
+    let dataInterval = null;
+    iframe.addEventListener('load', () => {
+      if (dataInterval) clearInterval(dataInterval);
+      
+      // 每5秒推送一次数据
+      dataInterval = setInterval(() => {
+        if (iframe.src) {
+          updateFieldData();
+        }
+      }, 5000);
+    });
+  </script>
+</body>
+</html>

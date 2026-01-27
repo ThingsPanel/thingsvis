@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "rspack serve",
-    "build": "rspack build",
+    "build": "rspack build --config rspack.config.prod.js",
+    "build:analyze": "rspack build --config rspack.config.prod.js --analyze",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {

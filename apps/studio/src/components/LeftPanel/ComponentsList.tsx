@@ -24,8 +24,10 @@ import {
   Circle,
   Wind,
   LucideIcon,
+  Search,
 } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { Input } from "@/components/ui/input";
 
 // Lucide 图标名称到组件的映射
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -66,6 +68,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
   const [entries, setEntries] = useState<ComponentRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -92,7 +95,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
             } as ComponentRegistryEntry;
 
             (baseEntry as any).componentId = key;
-            
+
             arr.push(baseEntry);
 
             // 如果配置了本地地址，则额外增加一个“(Local)”条目方便对比调试
@@ -110,7 +113,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
       })
       .catch((e) => {
         // eslint-disable-next-line no-console
-        
+
         setError(String(e));
       })
       .finally(() => {
@@ -163,74 +166,126 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
     return map;
   }, [entries]);
 
+  // Filter entries based on search query
+  const filteredCategoriesMap = useMemo(() => {
+    if (!searchQuery.trim()) return entriesByCategory;
+
+    const query = searchQuery.toLowerCase();
+    const filtered: Record<string, ComponentRegistryEntry[]> = {};
+
+    for (const [cat, items] of Object.entries(entriesByCategory)) {
+      const matchedItems = items.filter((entry) => {
+        const displayName = ((entry as any).displayName ?? entry.remoteName).toLowerCase();
+        const componentId = ((entry as any).componentId ?? entry.remoteName).toLowerCase();
+        return displayName.includes(query) || componentId.includes(query);
+      });
+
+      if (matchedItems.length > 0) {
+        filtered[cat] = matchedItems;
+      }
+    }
+
+    return filtered;
+  }, [entriesByCategory, searchQuery]);
+
   if (loading) return <div className="p-2 text-sm text-muted-foreground">Loading...</div>;
   if (error) return <div className="p-2 text-sm text-red-500">Failed to load registry</div>;
 
-  return (
-    <div>
-      <Accordion type="multiple" defaultValue={CATEGORY_DEFS.map((c) => c.key)} className="space-y-2">
-        {CATEGORY_DEFS.map((c) => {
-          const label = language === "zh" ? c.labelZh : c.labelEn;
-          const items = entriesByCategory[c.key] ?? [];
-          const Icon = c.Icon;
+  // Get categories that have matching items
+  const hasResults = Object.keys(filteredCategoriesMap).length > 0;
+  const defaultExpandedCategories = searchQuery ? Object.keys(filteredCategoriesMap) : CATEGORY_DEFS.map((c) => c.key);
 
-          // Render items flat under the primary category while preserving the secondary styling (grid, spacing)
-          return (
-            <AccordionItem key={c.key} value={c.key} className="border-0">
-              <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline text-left">
-                <span className="block w-full">{label}</span>
-              </AccordionTrigger>
-              <AccordionContent className="pt-2 pb-1 px-2">
-                {items.length === 0 ? (
-                  <div className="text-sm text-muted-foreground px-2 py-1.5">
-                    {language === "zh" ? "暂无组件" : "No components"}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      {items.map((entry) => {
-                        // 根据 icon 字段获取对应的 Lucide 图标组件，默认使用 Box
-                        const iconName = (entry as any).icon as string;
-                        const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
-                        return (
-                          <button
-                            key={entry.remoteName}
-                            type="button"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, entry)}
-                            className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
-                          >
-                            <div className="h-6 w-6 text-foreground mb-1">
-                              {(entry as any).iconUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={(entry as any).iconUrl}
-                                  alt={(entry as any).displayName ?? entry.remoteName}
-                                  className="w-6 h-6 object-contain"
-                                />
-                              ) : (
-                                <IconComponent className="h-6 w-6 text-foreground" />
-                              )}
-                            </div>
-                            <div className="leading-tight text-center">
-                              <div className="text-sm text-foreground font-medium">
-                                {(entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
-                              </div>
-                              {/* <div className="text-xs text-muted-foreground">
+  return (
+    <div className="flex flex-col h-full">
+      {/* Search Input */}
+      <div className="p-2 pb-3 border-b border-border">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-8 text-sm"
+          />
+        </div>
+      </div>
+
+      {/* Components List */}
+      <div className="flex-1 overflow-y-auto p-2">
+        {!hasResults && searchQuery ? (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            {language === "zh" ? "未找到匹配的组件" : "No components found"}
+          </div>
+        ) : (
+          <Accordion type="multiple" value={defaultExpandedCategories} className="space-y-2">
+            {CATEGORY_DEFS.map((c) => {
+              const label = language === "zh" ? c.labelZh : c.labelEn;
+              const items = filteredCategoriesMap[c.key] ?? [];
+              const Icon = c.Icon;
+
+              // Skip empty categories when searching
+              if (items.length === 0 && searchQuery) return null;
+
+              // Render items flat under the primary category while preserving the secondary styling (grid, spacing)
+              return (
+                <AccordionItem key={c.key} value={c.key} className="border-0">
+                  <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline text-left">
+                    <span className="block w-full">{label}</span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-2 pb-1 px-2">
+                    {items.length === 0 ? (
+                      <div className="text-sm text-muted-foreground px-2 py-1.5">
+                        {language === "zh" ? "暂无组件" : "No components"}
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-2">
+                          {items.map((entry) => {
+                            // 根据 icon 字段获取对应的 Lucide 图标组件，默认使用 Box
+                            const iconName = (entry as any).icon as string;
+                            const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
+                            return (
+                              <button
+                                key={entry.remoteName}
+                                type="button"
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, entry)}
+                                className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
+                              >
+                                <div className="h-6 w-6 text-foreground mb-1">
+                                  {(entry as any).iconUrl ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={(entry as any).iconUrl}
+                                      alt={(entry as any).displayName ?? entry.remoteName}
+                                      className="w-6 h-6 object-contain"
+                                    />
+                                  ) : (
+                                    <IconComponent className="h-6 w-6 text-foreground" />
+                                  )}
+                                </div>
+                                <div className="leading-tight text-center">
+                                  <div className="text-sm text-foreground font-medium">
+                                    {(entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
+                                  </div>
+                                  {/* <div className="text-xs text-muted-foreground">
                                 {(((entry as any).componentId ?? entry.remoteName) as string).split("/").slice(-1)[0] || entry.remoteName}
                               </div> */}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </AccordionContent>
+                </AccordionItem>
+              );
+            })}
+          </Accordion>
+        )}
+      </div>
     </div>
   );
 }

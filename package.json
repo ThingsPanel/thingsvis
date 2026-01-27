@@ -5,6 +5,7 @@
   "packageManager": "pnpm@8.15.4",
   "scripts": {
     "dev": "turbo run dev",
+    "dev:all": "turbo run dev --filter=studio --filter=@thingsvis/server",
     "build": "turbo run build",
     "build:plugins": "turbo run build --filter=\"thingsvis-plugin-*\"",
     "dev:plugins": "turbo run dev --filter=\"thingsvis-plugin-*\"",

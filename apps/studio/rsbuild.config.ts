@@ -20,6 +20,14 @@ export default defineConfig({
       name: 'public',
       copyOnBuild: true,
     },
+    proxy: {
+      // Proxy API requests to demo.thingspanel.cn
+      '/api': {
+        target: 'http://demo.thingspanel.cn',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   html: {
     title: 'ThingsVis 编辑器',

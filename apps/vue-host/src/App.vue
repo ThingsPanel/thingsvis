@@ -4,6 +4,15 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 // --- Types ---
 type IntegrationLevel = 'full' | 'minimal'
 
+interface PlatformField {
+  id: string
+  name: string
+  type: 'number' | 'string' | 'boolean' | 'json'
+  dataType: 'attribute' | 'telemetry' | 'command'
+  unit?: string
+  description?: string
+}
+
 // --- State ---
 const studioUrl = ref('http://localhost:3000/main')
 const integrationLevel = ref<IntegrationLevel>('full')
@@ -15,9 +24,23 @@ const showTopRight = ref(true)
 const injectDefaultProject = ref(false)
 const iframeKey = ref(0)
 const events = ref<string[]>([])
+const iframeRef = ref<HTMLIFrameElement | null>(null)
+
+// 平台字段功能
+const enablePlatformFields = ref(true)
+const saveTarget = ref<'self' | 'host'>('host')
+const dataPushInterval = ref<number | null>(null)
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(false)
+
+// --- Platform Fields ---
+const platformFields: PlatformField[] = [
+  { id: 'temp', name: '温度', type: 'number', dataType: 'telemetry', unit: '°C', description: '设备当前温度' },
+  { id: 'humi', name: '湿度', type: 'number', dataType: 'telemetry', unit: '%', description: '设备当前湿度' },
+  { id: 'status', name: '运行状态', type: 'string', dataType: 'attribute', description: '设备运行状态' },
+  { id: 'power', name: '功率', type: 'number', dataType: 'telemetry', unit: 'W', description: '设备功率' },
+]
 
 // --- Constants ---
 const SAMPLE_PROJECT = {
@@ -56,6 +79,12 @@ const iframeSrc = computed(() => {
   params.set('mode', 'embedded') // Fixed to embedded for this host
   params.set('integration', integrationLevel.value)
   
+  // 平台字段集成参数
+  if (enablePlatformFields.value) {
+    params.set('saveTarget', saveTarget.value)
+    params.set('platformFields', JSON.stringify(platformFields))
+  }
+  
   if (integrationLevel.value === 'full') {
     if (!showComponentLibrary.value) params.set('showLibrary', '0')
     if (!showPropsPanel.value) params.set('showProps', '0')
@@ -80,7 +109,80 @@ function reload() {
   events.value.unshift(`[${new Date().toLocaleTimeString()}] Reloading iframe...`)
 }
 
+// 推送平台数据
+function pushPlatformData() {
+  if (!iframeRef.value?.contentWindow) {
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ⚠️ Iframe not ready`)
+    return
+  }
+
+  const mockData = {
+    temp: (20 + Math.random() * 10).toFixed(1),
+    humi: (50 + Math.random() * 30).toFixed(1),
+    status: Math.random() > 0.5 ? '正常' : '告警',
+    power: (100 + Math.random() * 200).toFixed(0)
+  }
+
+  Object.entries(mockData).forEach(([fieldId, value]) => {
+    iframeRef.value!.contentWindow!.postMessage({
+      type: 'thingsvis:platformData',
+      payload: { fieldId, value, timestamp: Date.now() }
+    }, '*')
+  })
+
+  events.value.unshift(
+    `[${new Date().toLocaleTimeString()}] 📊 Pushed: temp=${mockData.temp}°C, humi=${mockData.humi}%, status=${mockData.status}, power=${mockData.power}W`
+  )
+}
+
+// 切换自动推送
+function toggleAutoPush() {
+  if (dataPushInterval.value) {
+    clearInterval(dataPushInterval.value)
+    dataPushInterval.value = null
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ⏸️ Auto-push stopped`)
+  } else {
+    pushPlatformData() // 立即推送一次
+    dataPushInterval.value = setInterval(pushPlatformData, 5000) as unknown as number
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ▶️ Auto-push started (5s interval)`)
+  }
+}
+
 function handleMessage(event: MessageEvent) {
+  // 处理保存请求
+  if (event.data?.type === 'thingsvis:requestSave') {
+    const payload = event.data.payload
+    const requestId = event.data.requestId
+    
+    events.value.unshift(
+      `[${new Date().toLocaleTimeString()}] 💾 SAVE received! Nodes: ${payload.nodes?.length || 0}, DataSources: ${payload.dataSources?.length || 0}`
+    )
+    
+    // 模拟保存到数据库
+    setTimeout(() => {
+      iframeRef.value?.contentWindow?.postMessage({
+        type: 'thingsvis:saveResponse',
+        requestId,
+        payload: {
+          success: true,
+          data: { savedAt: new Date().toISOString(), templateId: `tpl_${Date.now()}` }
+        }
+      }, '*')
+      events.value.unshift(`[${new Date().toLocaleTimeString()}] ✅ Save confirmed to editor`)
+    }, 500)
+    
+    return
+  }
+
+  // 处理字段数据请求
+  if (event.data?.type === 'thingsvis:requestFieldData') {
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] 🔄 Field data requested`)
+    // 立即推送一次数据
+    setTimeout(pushPlatformData, 100)
+    return
+  }
+
+  // 旧的保存处理（兼容）
   if (event.data?.type === 'thingsvis:host-save') {
     const payload = event.data.payload
     events.value.unshift(
@@ -95,7 +197,11 @@ onMounted(() => {
 })
 onUnmounted(() => {
   window.removeEventListener('message', handleMessage)
+  if (dataPushInterval.value) {
+    clearInterval(dataPushInterval.value)
+  }
 })
+</script>
 </script>
 
 <template>
@@ -142,6 +248,33 @@ onUnmounted(() => {
           <label><input type="checkbox" v-model="showTopRight" /> Show Top-Right</label>
         </div>
 
+        <!-- 新增：平台字段集成 -->
+        <div class="control-group platform-fields">
+          <h3>🆕 Platform Fields</h3>
+          <label><input type="checkbox" v-model="enablePlatformFields" /> Enable Platform Fields</label>
+          <template v-if="enablePlatformFields">
+            <div class="field-list">
+              <div v-for="field in platformFields" :key="field.id" class="field-item">
+                <span class="field-name">{{ field.name }}</span>
+                <span class="field-badge">{{ field.dataType }}</span>
+              </div>
+            </div>
+            <div class="button-group">
+              <button class="action-btn" @click="pushPlatformData">📊 Push Data Once</button>
+              <button class="action-btn" @click="toggleAutoPush">
+                {{ dataPushInterval ? '⏸️ Stop Auto' : '▶️ Start Auto (5s)' }}
+              </button>
+            </div>
+            <label>
+              Save Target:
+              <select v-model="saveTarget">
+                <option value="self">ThingsVis</option>
+                <option value="host">ThingsPanel (Host)</option>
+              </select>
+            </label>
+          </template>
+        </div>
+
         <div class="control-group">
           <h3>Data Injection</h3>
           <label><input type="checkbox" v-model="injectDefaultProject" /> Inject Default Project</label>
@@ -160,6 +293,7 @@ onUnmounted(() => {
 
       <div class="preview-area">
         <iframe 
+          ref="iframeRef"
           :key="iframeKey"
           :src="iframeSrc" 
           frameborder="0"
@@ -342,5 +476,75 @@ iframe {
   margin-bottom: 0.25rem;
   border-bottom: 1px dashed #eee;
   padding-bottom: 0.15rem;
+}
+
+/* 平台字段样式 */
+.platform-fields {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 0.5rem !important;
+}
+
+.field-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+}
+
+.field-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.4rem;
+  background: #fff;
+  border: 1px solid #e0f2fe;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.field-name {
+  font-weight: 500;
+}
+
+.field-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  background: #0ea5e9;
+  color: #fff;
+  border-radius: 10px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0.5rem 0;
+}
+
+.action-btn {
+  padding: 0.4rem;
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.action-btn:hover {
+  background: #0284c7;
+}
+
+select {
+  width: 100%;
+  padding: 0.3rem;
+  border: 1px solid #d4d4d8;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: #fff;
+  margin-top: 0.2rem;
 }
 </style>
