@@ -6,6 +6,8 @@ import { WSAdapter } from './WSAdapter';
 import { RESTAdapter } from './RESTAdapter';
 import { PlatformFieldAdapter } from './PlatformFieldAdapter';
 import { get, set, del, keys } from 'idb-keyval';
+import type { DataSourceSyncAdapter } from './DataSourceSync';
+import { NoopSyncAdapter } from './DataSourceSync';
 
 type AdapterConstructor = new () => BaseAdapter;
 
@@ -21,6 +23,7 @@ export class DataSourceManager {
   private configs: Map<string, DataSource> = new Map();
   private adapterRegistry: Map<DataSourceType, AdapterConstructor> = new Map();
   private store?: KernelStore;
+  private syncAdapter: DataSourceSyncAdapter = new NoopSyncAdapter();
 
   private constructor() {
     // Register built-in adapters
@@ -38,10 +41,33 @@ export class DataSourceManager {
   }
 
   /**
-   * Initializes the manager and loads saved data sources from browser storage.
+   * Set the sync adapter for cloud synchronization
+   */
+  public setSyncAdapter(adapter: DataSourceSyncAdapter): void {
+    this.syncAdapter = adapter;
+  }
+
+  /**
+   * Initializes the manager and loads saved data sources from backend and browser storage.
    */
   public async init(store: KernelStore): Promise<void> {
     this.store = store;
+
+    // 1. Try to load from cloud first (if sync adapter is configured)
+    try {
+      const cloudConfigs = await this.syncAdapter.loadAll();
+
+      for (const config of cloudConfigs) {
+        // Register without persisting locally (already in cloud)
+        await this.registerDataSource(config, false).catch(e => {
+          console.error(`Failed to load cloud data source ${config.id}:`, e);
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to load from cloud, will use local storage:', e);
+    }
+
+    // 2. Load from local storage as fallback/backup
     await this.loadFromStorage();
   }
 
@@ -57,15 +83,15 @@ export class DataSourceManager {
 
       for (const key of dsKeys) {
         const config = await get<DataSource>(key);
-        if (config) {
-          // Register without awaiting each to speed up boot, or await for sequential stability
+        if (config && !this.configs.has(config.id)) {
+          // Only load from local if not already loaded from cloud
           this.registerDataSource(config, false).catch(e => {
-
+            console.error(`Failed to load local data source:`, e);
           });
         }
       }
     } catch (e) {
-
+      console.error('Failed to load from local storage:', e);
     }
   }
 
@@ -102,8 +128,16 @@ export class DataSourceManager {
     // Save to storage if requested
     if (persist) {
       set(`${STORAGE_KEY_PREFIX}${config.id}`, config).catch(e => {
-
+        console.error('Failed to save to local storage:', e);
       });
+
+      // Sync to cloud
+      try {
+        await this.syncAdapter.save(config);
+      } catch (e) {
+        console.error('Failed to sync to cloud:', e);
+        // Don't throw - local save succeeded
+      }
     }
 
     // Sync with store
@@ -150,14 +184,22 @@ export class DataSourceManager {
 
     // Remove from storage
     del(`${STORAGE_KEY_PREFIX}${id}`).catch(e => {
-
+      console.error('Failed to delete from local storage:', e);
     });
+
+    // Remove from cloud
+    try {
+      await this.syncAdapter.delete(id);
+    } catch (e) {
+      console.error('Failed to delete from cloud:', e);
+      // Don't throw - local delete succeeded
+    }
 
     if (adapter) {
       try {
         await adapter.disconnect();
       } catch (e) {
-
+        console.error('Failed to disconnect adapter:', e);
       }
       this.adapters.delete(id);
       this.configs.delete(id);

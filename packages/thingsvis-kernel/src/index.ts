@@ -49,7 +49,7 @@ try {
   if (typeof globalThis !== 'undefined' && !(globalThis as any).__thingsvis_kernel_eventbus__) {
     (globalThis as any).__thingsvis_kernel_eventbus__ = _eventBus;
   }
-} catch (e) {}
+} catch (e) { }
 
 // expose subscribeToPatches for UI runtime via globalThis to avoid static package imports
 try {
@@ -57,7 +57,7 @@ try {
   if (sub && typeof globalThis !== "undefined") {
     (globalThis as any).__thingsvis_subscribeToPatches__ = sub;
   }
-} catch (e) {}
+} catch (e) { }
 
 // Export kernel interfaces
 export { type IVisualComponent } from './interfaces/visual-component';
@@ -66,5 +66,7 @@ export { type IPluginFactory } from './interfaces/plugin-factory';
 // Export DataSource Management
 export { dataSourceManager, DataSourceManager } from './datasources/DataSourceManager';
 export { BaseAdapter } from './datasources/BaseAdapter';
+export { NoopSyncAdapter, ApiSyncAdapter } from './datasources/DataSourceSync';
+export type { DataSourceSyncAdapter } from './datasources/DataSourceSync';
 export { SafeExecutor } from './sandbox/SafeExecutor';
 

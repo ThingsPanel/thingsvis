@@ -1,8 +1,18 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity, ArrowLeft, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { dataSourceManager } from '@thingsvis/kernel';
 import type { DataSourceType, RESTConfig, WSConfig } from '@thingsvis/schema';
 import { DEFAULT_AUTH_CONFIG, DEFAULT_RECONNECT_POLICY, DEFAULT_HEARTBEAT_CONFIG } from '@thingsvis/schema';
@@ -39,11 +49,22 @@ export default function DataSourcesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [language] = useState<'zh' | 'en'>('zh');
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: '', visible: false });
+
+  // Toast state
+  const [toast, setToast] = useState<{ message: string; visible: boolean; type?: 'success' | 'error' }>({
+    message: '',
+    visible: false,
+    type: 'success'
+  });
+
+  // Alert Dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [sourceToDelete, setSourceToDelete] = useState<string | null>(null);
+  const [sourceNameToDelete, setSourceNameToDelete] = useState<string>('');
 
   const [staticJsonText, setStaticJsonText] = useState<string>("{}");
   const [staticJsonError, setStaticJsonError] = useState<string | null>(null);
-  
+
   const [editingSource, setEditingSource] = useState<{
     id: string;
     name: string;
@@ -62,6 +83,11 @@ export default function DataSourcesPage() {
 
   const jsonExtensions = useMemo(() => [json()], []);
 
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, visible: true, type });
+    setTimeout(() => setToast(prev => ({ ...prev, visible: false })), 3000);
+  };
+
   const syncStaticJsonTextFromConfig = (configValue: unknown) => {
     try {
       setStaticJsonText(JSON.stringify(configValue ?? {}, null, 2));
@@ -77,15 +103,15 @@ export default function DataSourcesPage() {
 
   const handleSave = async () => {
     if (!editingSource.id) {
-      alert(label('请输入数据源 ID', 'Please enter Source ID'));
+      showToast(label('请输入数据源 ID', 'Please enter Source ID'), 'error');
       return;
     }
 
     if (!isValidDataSourceId(editingSource.id)) {
-      alert(label(
-        '数据源 ID 格式无效。只能包含字母、数字和下划线，且必须以字母或下划线开头。',
-        'Invalid Source ID format. Only letters, numbers and underscores allowed, must start with letter or underscore.'
-      ));
+      showToast(label(
+        '数据源 ID 格式无效。只能包含字母、数字和下划线。',
+        'Invalid Source ID format. Only letters, numbers and underscores allowed.'
+      ), 'error');
       return;
     }
 
@@ -110,13 +136,10 @@ export default function DataSourcesPage() {
       });
       setIsAdding(false);
       setSelectedId(editingSource.id);
-      // Show success toast
-      setToast({ message: label('数据源保存成功！', 'Data source saved successfully!'), visible: true });
-      setTimeout(() => setToast({ message: '', visible: false }), 3000);
-      
+      showToast(label('数据源保存成功！', 'Data source saved successfully!'), 'success');
+
     } catch (e) {
-      
-      alert(label('保存失败: ' + String(e), 'Save failed: ' + String(e)));
+      showToast(label('保存失败: ' + String(e), 'Save failed: ' + String(e)), 'error');
     }
   };
 
@@ -147,10 +170,31 @@ export default function DataSourcesPage() {
     }
   };
 
-  const deleteSource = async (e: React.MouseEvent, id: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    await dataSourceManager.unregisterDataSource(id);
-    if (selectedId === id) setSelectedId(null);
+
+    // Find name for confirmation
+    const config = dataSourceManager.getConfig(id);
+    setSourceToDelete(id);
+    setSourceNameToDelete(config?.name || id);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!sourceToDelete) return;
+
+    try {
+      await dataSourceManager.unregisterDataSource(sourceToDelete);
+      if (selectedId === sourceToDelete) setSelectedId(null);
+
+      showToast(label('数据源已删除', 'Data source deleted'), 'success');
+    } catch (error) {
+      console.error('Failed to delete data source:', error);
+      showToast(label('删除失败', 'Delete failed'), 'error');
+    } finally {
+      setDeleteDialogOpen(false);
+      setSourceToDelete(null);
+    }
   };
 
   const goBack = () => {
@@ -159,6 +203,45 @@ export default function DataSourcesPage() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-card text-foreground">
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 border ${toast.type === 'error'
+            ? 'bg-destructive/10 border-destructive text-destructive bg-white dark:bg-zinc-900'
+            : 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 bg-white dark:bg-zinc-900'
+          }`}>
+          {toast.type === 'error' ? (
+            <AlertCircle className="h-5 w-5" />
+          ) : (
+            <CheckCircle className="h-5 w-5" />
+          )}
+          <span className="font-medium">{toast.message}</span>
+          <button onClick={() => setToast(prev => ({ ...prev, visible: false }))} className="ml-2 hover:opacity-70">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{label('确认删除', 'Confirm Delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {label(
+                `确定要删除数据源 "${sourceNameToDelete}" 吗？此操作无法撤销。`,
+                `Are you sure you want to delete data source "${sourceNameToDelete}"? This action cannot be undone.`
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{label('取消', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {label('删除', 'Delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Header */}
       <header className="p-4 border-b border-border bg-muted/30 flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={goBack} className="h-9 w-9">
@@ -191,21 +274,20 @@ export default function DataSourcesPage() {
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
             {Object.values(states).map((ds) => (
-              <div 
-                key={ds.id} 
+              <div
+                key={ds.id}
                 onClick={() => selectSource(ds.id)}
-                className={`px-3 py-2.5 rounded-md border transition-all cursor-pointer group flex items-center justify-between ${
-                  selectedId === ds.id 
-                    ? 'bg-[#6965db] text-white border-[#6965db] shadow-md' 
-                    : 'border-transparent hover:bg-accent'
-                }`}
+                className={`px-3 py-2.5 rounded-md border transition-all cursor-pointer group flex items-center justify-between ${selectedId === ds.id
+                  ? 'bg-[#6965db] text-white border-[#6965db] shadow-md'
+                  : 'border-transparent hover:bg-accent'
+                  }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <div className={`w-2 h-2 rounded-full shrink-0 ${ds.status === 'connected' ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-yellow-400'}`} />
                   <span className="text-sm font-semibold truncate">{ds.id}</span>
                 </div>
-                <button 
-                  onClick={(e) => deleteSource(e, ds.id)}
+                <button
+                  onClick={(e) => handleDeleteClick(e, ds.id)}
                   className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -232,13 +314,13 @@ export default function DataSourcesPage() {
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">{label('标识 ID', 'Source ID')}</label>
-                      <Input 
+                      <Input
                         placeholder={label('唯一标识，如 my_data', 'Unique ID, e.g. my_data')}
                         value={editingSource.id}
                         onChange={(e) => {
                           // 只允许输入字母、数字和下划线
                           const sanitized = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
-                          setEditingSource({...editingSource, id: sanitized});
+                          setEditingSource({ ...editingSource, id: sanitized });
                         }}
                         disabled={!!selectedId && !isAdding}
                         className="font-mono text-sm h-10"
@@ -247,10 +329,10 @@ export default function DataSourcesPage() {
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-muted-foreground">{label('数据源名称', 'Source Name')}</label>
-                      <Input 
+                      <Input
                         placeholder={label('便于识别的名称', 'Display name for easy identification')}
                         value={editingSource.name || ''}
-                        onChange={(e) => setEditingSource({...editingSource, name: e.target.value})}
+                        onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
                         className="text-sm h-10"
                       />
                     </div>
@@ -287,11 +369,10 @@ export default function DataSourcesPage() {
                                 config: newConfig
                               });
                             }}
-                            className={`flex-1 flex items-center justify-center gap-2 rounded-md transition-all text-sm font-semibold ${
-                              editingSource.type === t.id 
-                                ? 'bg-background text-[#6965db] shadow-sm' 
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
+                            className={`flex-1 flex items-center justify-center gap-2 rounded-md transition-all text-sm font-semibold ${editingSource.type === t.id
+                              ? 'bg-background text-[#6965db] shadow-sm'
+                              : 'text-muted-foreground hover:text-foreground'
+                              }`}
                           >
                             <t.icon className="h-4 w-4" />
                             {t.label}
@@ -312,8 +393,8 @@ export default function DataSourcesPage() {
                       {label('2. 协议配置', '2. Protocol Config')}
                     </div>
                     <div className="p-5 rounded-md border border-border bg-muted/5 min-h-[320px]">
-                      {editingSource.type === 'REST' && <RESTForm config={editingSource.config} onChange={(c) => setEditingSource({...editingSource, config: c})} language={language} />}
-                      {editingSource.type === 'WS' && <WSForm config={editingSource.config} onChange={(c) => setEditingSource({...editingSource, config: c})} language={language} />}
+                      {editingSource.type === 'REST' && <RESTForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} language={language} />}
+                      {editingSource.type === 'WS' && <WSForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} language={language} />}
                       {editingSource.type === 'STATIC' && (
                         <div className="space-y-2">
                           <div className="rounded-md border border-input overflow-hidden bg-muted/20">
@@ -347,10 +428,10 @@ export default function DataSourcesPage() {
                       <div className="w-1 h-5 bg-[#6965db] rounded-full" />
                       {label('3. 数据转换', '3. Transformation')}
                     </div>
-                    <TransformationEditor 
-                      code={editingSource.transformation} 
-                      onChange={(code) => setEditingSource({...editingSource, transformation: code})} 
-                      language={language} 
+                    <TransformationEditor
+                      code={editingSource.transformation}
+                      onChange={(code) => setEditingSource({ ...editingSource, transformation: code })}
+                      language={language}
                     />
                   </section>
                 </div>
@@ -367,9 +448,8 @@ export default function DataSourcesPage() {
                     {selectedId && states[selectedId] && (
                       <div className="flex items-center gap-4 text-sm">
                         <span className="text-muted-foreground italic">Last Update: {new Date(states[selectedId].lastUpdated).toLocaleTimeString()}</span>
-                        <span className={`px-2 py-0.5 rounded-full font-bold border ${
-                          states[selectedId].status === 'connected' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded-full font-bold border ${states[selectedId].status === 'connected' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'
+                          }`}>
                           {states[selectedId].status.toUpperCase()}
                         </span>
                       </div>
@@ -391,8 +471,8 @@ export default function DataSourcesPage() {
               {/* Footer Actions */}
               <div className="fixed bottom-0 left-72 right-0 p-4 bg-card/90 backdrop-blur-md border-t border-border flex justify-end gap-3">
                 <Button variant="outline" onClick={goBack} className="h-10 px-6 rounded-md">{label('返回编辑器', 'Back to Editor')}</Button>
-                <Button 
-                  onClick={handleSave} 
+                <Button
+                  onClick={handleSave}
                   className="h-10 px-10 bg-[#6965db] hover:bg-[#5851db] font-bold shadow-lg shadow-[#6965db]/20 rounded-md"
                 >
                   {label('保存并连接', 'Save & Connect')}
@@ -408,16 +488,6 @@ export default function DataSourcesPage() {
           )}
         </div>
       </div>
-
-      {/* Success Toast */}
-      {toast.visible && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="flex items-center gap-2 px-4 py-3 bg-green-500 text-white rounded-lg shadow-lg shadow-green-500/20">
-            <CheckCircle className="h-5 w-5" />
-            <span className="font-medium">{toast.message}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

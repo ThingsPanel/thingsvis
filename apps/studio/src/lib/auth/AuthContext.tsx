@@ -8,6 +8,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { apiClient } from '../api/client';
 import { login as apiLogin, register as apiRegister, getCurrentUser, type User, type LoginCredentials, type RegisterData } from '../api/auth';
+import { initDataSourceSync } from '../datasource-sync';
 
 // Storage keys
 const TOKEN_KEY = 'thingsvis_token';
@@ -24,12 +25,12 @@ export interface AuthContextValue {
   user: User | null;
   token: string | null;
   storageMode: StorageMode;
-  
+
   // Actions
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  
+
   // For embed mode
   setEmbedToken: (token: string) => void;
 }
@@ -89,17 +90,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Always use localStorage as the source of truth
     // This ensures token is available even during initialization
     const currentToken = localStorage.getItem(TOKEN_KEY);
-    
-    
+
+
     apiClient.configure({
       getToken: () => {
         const token = localStorage.getItem(TOKEN_KEY);
-        
+
         return token;
       },
       onUnauthorized: () => {
         // Token expired or invalid
-        
+
         clearAuth();
       },
     });
@@ -109,12 +110,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
-      
+
       try {
         // Check for embed token first
         if (isEmbedded()) {
           const embedToken = getEmbedToken();
-          
+
           if (embedToken) {
             setToken(embedToken);
             // Optionally validate the token by fetching user
@@ -133,16 +134,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const storedExpiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
         const storedUser = localStorage.getItem(USER_KEY);
 
-        
+
 
         if (storedToken && storedExpiry) {
           const expiry = parseInt(storedExpiry, 10);
-          
+
           // Check if token is expired
           if (Date.now() < expiry) {
-            
+
             setToken(storedToken);
-            
+
             if (storedUser) {
               try {
                 setUser(JSON.parse(storedUser));
@@ -154,26 +155,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Validate token by fetching current user
             // Note: apiClient already configured to use localStorage
             const result = await getCurrentUser();
-            
-            
+
+
             if (result.data) {
               setUser(result.data);
               localStorage.setItem(USER_KEY, JSON.stringify(result.data));
             } else {
               // Token is invalid
-              
+
               clearAuth();
             }
           } else {
             // Token expired
-            
+
             clearAuth();
           }
         } else {
-          
+
         }
       } catch (error) {
-        
+
         clearAuth();
       } finally {
         setIsLoading(false);
@@ -186,11 +187,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Login handler
   const login = useCallback(async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
     try {
-      
+
       const result = await apiLogin(credentials);
-      
-      
-      
+
+
+
       if (result.error) {
         return { success: false, error: result.error };
       }
@@ -202,33 +203,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const newToken: string = authData.token;
       const newUser: User = authData.user;
       const expiresAt: number = authData.expiresAt;
-      
-      
-      
+
+
+
       if (!newToken || !newUser || !expiresAt) {
-        
+
         return { success: false, error: 'Invalid response format' };
       }
-      
-      
+
+
       setToken(newToken);
       setUser(newUser);
-      
+
       // Persist to localStorage
       localStorage.setItem(TOKEN_KEY, newToken);
       localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-      
-      
-      
-      
-      
+
+
+
+
+
       // Important: Don't trigger re-initialization after login
       // The state update will handle authentication status
-      
+
       return { success: true };
     } catch (error) {
-      
+
       return { success: false, error: 'Network error' };
     }
   }, []);
@@ -237,7 +238,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = useCallback(async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       const result = await apiRegister(data);
-      
+
       if (result.error) {
         return { success: false, error: result.error };
       }
@@ -249,14 +250,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return { success: false, error: 'Invalid response' };
     } catch (error) {
-      
+
       return { success: false, error: 'Network error' };
     }
   }, []);
 
   // Logout handler
   const logout = useCallback(() => {
+    console.log('👋 [AuthContext] Logging out, switching to local-only mode...');
     clearAuth();
+    initDataSourceSync(false);
   }, [clearAuth]);
 
   // Set token for embed mode
@@ -275,6 +278,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     setEmbedToken,
   }), [token, user, isLoading, storageMode, login, register, logout, setEmbedToken]);
+
+  // Initialize data source sync when authentication state changes
+  useEffect(() => {
+    if (!isLoading) {
+      initDataSourceSync(!!token && !!user);
+    }
+  }, [token, user, isLoading]);
 
   return (
     <AuthContext.Provider value={value}>
