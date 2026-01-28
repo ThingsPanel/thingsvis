@@ -7,20 +7,28 @@ import { jwtVerify } from 'jose'
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3001',
+  'http://localhost:5002',  // ThingsPanel frontend
+  'http://localhost:5173',  // Vue Host
   'http://127.0.0.1:3000',
   'http://127.0.0.1:3001',
+  'http://127.0.0.1:5002',
+  'http://127.0.0.1:5173',
 ]
 
 function corsMiddleware(req: NextRequest) {
   const origin = req.headers.get('origin')
-  const isAllowedOrigin = origin && allowedOrigins.includes(origin)
+
+  // In development, allow all localhost/127.0.0.1 origins
+  const isDevelopment = process.env.NODE_ENV !== 'production'
+  const isLocalhost = origin?.startsWith('http://localhost:') || origin?.startsWith('http://127.0.0.1:')
+  const isAllowedOrigin = origin && (allowedOrigins.includes(origin) || (isDevelopment && isLocalhost))
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return new NextResponse(null, {
       status: 200,
       headers: {
-        'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
+        'Access-Control-Allow-Origin': isAllowedOrigin ? origin! : allowedOrigins[0],
         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Requested-With',
         'Access-Control-Allow-Credentials': 'true',
@@ -63,10 +71,12 @@ export default auth(async (req) => {
 
   // Get origin for CORS headers
   const origin = req.headers.get('origin')
-  const isAllowedOrigin = origin && allowedOrigins.includes(origin)
-  
+  const isDevelopment = process.env.NODE_ENV !== 'production'
+  const isLocalhost = origin?.startsWith('http://localhost:') || origin?.startsWith('http://127.0.0.1:')
+  const isAllowedOrigin = origin && (allowedOrigins.includes(origin) || (isDevelopment && isLocalhost))
+
   const corsHeaders = {
-    'Access-Control-Allow-Origin': isAllowedOrigin ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Origin': isAllowedOrigin ? origin! : allowedOrigins[0],
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Requested-With',

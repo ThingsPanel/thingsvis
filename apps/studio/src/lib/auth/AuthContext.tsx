@@ -28,6 +28,7 @@ export interface AuthContextValue {
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
+  loginWithToken: (token: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 
@@ -106,25 +107,55 @@ export function AuthProvider({ children }: AuthProviderProps) {
     });
   }, [clearAuth]);
 
-  // Initialize from localStorage or embed token
+  // Initialize from localStorage or URL token (SSO)
   useEffect(() => {
     const initAuth = async () => {
       setIsLoading(true);
 
       try {
-        // Check for embed token first
-        if (isEmbedded()) {
-          const embedToken = getEmbedToken();
+        // Check for SSO token in URL first (both embed and standalone)
+        const urlToken = getEmbedToken();
 
-          if (embedToken) {
-            setToken(embedToken);
-            // Optionally validate the token by fetching user
-            apiClient.configure({ getToken: () => embedToken });
-            const result = await getCurrentUser();
-            if (result.data) {
-              setUser(result.data);
+        if (urlToken) {
+          console.log('🔐 [Auth] SSO token detected in URL, attempting auto-login...');
+
+          // Store token and validate
+          apiClient.configure({ getToken: () => urlToken });
+          const result = await getCurrentUser();
+
+          if (result.data) {
+            console.log('✅ [Auth] SSO token valid, user:', result.data.email);
+
+            // Calculate expiry (assume 2 hours for SSO tokens)
+            const expiresAt = Date.now() + (2 * 60 * 60 * 1000);
+
+            // Store in localStorage for persistent session
+            localStorage.setItem(TOKEN_KEY, urlToken);
+            localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
+            localStorage.setItem(USER_KEY, JSON.stringify(result.data));
+
+            setToken(urlToken);
+            setUser(result.data);
+
+            // Redirect to editor after SSO login (both embedded and standalone)
+            if (!window.location.hash.includes('/editor')) {
+              console.log('🔀 [Auth] SSO login successful, redirecting to editor...');
+              setTimeout(() => {
+                window.location.hash = '#/editor';
+              }, 100);
+            } else {
+              console.log('✅ [Auth] Already on editor page');
             }
+          } else {
+            console.error('❌ [Auth] SSO token invalid');
           }
+
+          setIsLoading(false);
+          return;
+        }
+
+        // For embedded mode without token, just set loading to false
+        if (isEmbedded()) {
           setIsLoading(false);
           return;
         }
@@ -183,6 +214,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     initAuth();
   }, [clearAuth]);
+
+  // Login with JWT token (for SSO)
+  const loginWithToken = useCallback(async (jwtToken: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log('🔐 [Auth] Logging in with JWT token...');
+
+      // Validate token by fetching user
+      apiClient.configure({ getToken: () => jwtToken });
+      const result = await getCurrentUser();
+
+      if (!result.data) {
+        return { success: false, error: 'Invalid token' };
+      }
+
+      const newUser: User = result.data;
+      const expiresAt = Date.now() + (2 * 60 * 60 * 1000); // 2 hours
+
+      console.log('✅ [Auth] Token validated, user:', newUser.email);
+
+      setToken(jwtToken);
+      setUser(newUser);
+
+      // Persist to localStorage
+      localStorage.setItem(TOKEN_KEY, jwtToken);
+      localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
+      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+
+      return { success: true };
+    } catch (error) {
+      console.error('❌ [Auth] Token login failed:', error);
+      return { success: false, error: 'Token validation failed' };
+    }
+  }, []);
 
   // Login handler
   const login = useCallback(async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
@@ -274,10 +338,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     token,
     storageMode,
     login,
+    loginWithToken,
     register,
     logout,
     setEmbedToken,
-  }), [token, user, isLoading, storageMode, login, register, logout, setEmbedToken]);
+  }), [token, user, isLoading, storageMode, login, loginWithToken, register, logout, setEmbedToken]);
 
   // Initialize data source sync when authentication state changes
   useEffect(() => {
