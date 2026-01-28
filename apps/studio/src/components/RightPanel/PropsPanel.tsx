@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDataSourceRegistry } from "@thingsvis/ui";
 import { resolveEditorServiceConfig } from "@/lib/embedded/service-config";
 import { PlatformFieldPicker } from "./PlatformFieldPicker";
+import { DataSourceSelector } from "./DataSourceSelector";
 
 import { loadPlugin } from "@/plugins/pluginResolver";
 import { getPluginControls } from "@/plugins/getPluginControls";
@@ -329,6 +330,30 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
               </div>
 
               <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {labelZh("数据源", "Data Source")}
+                </label>
+                <DataSourceSelector
+                  dataSources={dataSources}
+                  platformFields={resolveEditorServiceConfig().platformFields}
+                  value={binding.dataSourcePath || ''}
+                  onChange={(path) => {
+                    // 自动填充表达式
+                    const newExpression = `{{ ${path} }}`;
+                    const updatedBinding = {
+                      ...binding,
+                      dataSourcePath: path,
+                      expression: newExpression
+                    };
+                    const newBindings = [...bindings];
+                    newBindings[index] = updatedBinding;
+                    updateNode({ data: newBindings });
+                  }}
+                  language={language as 'zh' | 'en'}
+                />
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-sm font-medium text-muted-foreground flex items-center justify-between">
                   <span>{labelZh("表达式", "Expression")}</span>
                   <Database className="h-2.5 w-2.5 opacity-50" />
@@ -339,6 +364,12 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
                   placeholder="{{ ds.<id>.data.<path> }}"
                   className="w-full h-16 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
                 />
+                <p className="text-xs text-muted-foreground italic">
+                  {labelZh("💡 提示：可以手动编辑表达式添加路径，如 ", "💡 Tip: Manually edit to add path, e.g. ")}
+                  <code className="px-1 py-0.5 bg-muted rounded text-[10px]">
+                    {`{{ ds.mydata.data.temperature }}`}
+                  </code>
+                </p>
               </div>
             </div>
           ))}

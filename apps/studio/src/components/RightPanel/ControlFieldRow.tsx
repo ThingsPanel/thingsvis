@@ -181,11 +181,10 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                 type="button"
                 onClick={() => setStatic('transparent')}
                 title={t('透明', 'Transparent')}
-                className={`w-6 h-6 rounded-sm border flex-shrink-0 ${
-                  propsValue === 'transparent' 
-                    ? 'ring-2 ring-ring ring-offset-1' 
-                    : 'border-input'
-                }`}
+                className={`w-6 h-6 rounded-sm border flex-shrink-0 ${propsValue === 'transparent'
+                  ? 'ring-2 ring-ring ring-offset-1'
+                  : 'border-input'
+                  }`}
                 style={{
                   background: 'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
                   backgroundSize: '6px 6px',
@@ -278,11 +277,10 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                     key={opt.value}
                     onClick={() => setStatic(opt.value)}
                     title={opt.label}
-                    className={`px-3 py-1.5 text-sm rounded transition-colors flex items-center justify-center ${
-                      propsValue === opt.value
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground'
-                    }`}
+                    className={`px-3 py-1.5 text-sm rounded transition-colors flex items-center justify-center ${propsValue === opt.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                      }`}
                   >
                     {IconComponent ? <IconComponent className="w-4 h-4" /> : opt.label}
                   </button>
@@ -391,13 +389,13 @@ function NodeSelector({
   language?: string;
 }) {
   const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-  
+
   // 订阅 store 获取所有节点
   const nodesById = useSyncExternalStore(
     useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),
     () => (kernelStore.getState() as KernelState).nodesById
   );
-  
+
   // 获取可选节点列表（排除当前节点）
   const nodeOptions = useMemo(() => {
     return Object.values(nodesById)

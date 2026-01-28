@@ -202,7 +202,6 @@ onUnmounted(() => {
   }
 })
 </script>
-</script>
 
 <template>
   <div class="host-app">

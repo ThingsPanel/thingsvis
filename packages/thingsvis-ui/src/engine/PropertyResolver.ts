@@ -1,5 +1,6 @@
 import { type NodeState } from '@thingsvis/kernel';
 import { ExpressionEvaluator } from '@thingsvis/utils';
+import { PlatformDataStore } from './PlatformDataStore';
 
 /**
  * PropertyResolver: A utility to resolve dynamic property bindings in a node's props.
@@ -15,9 +16,13 @@ export class PropertyResolver {
   public static resolve(node: NodeState, dataSources: Record<string, any>): Record<string, any> {
     const rawProps = (node.schemaRef.props ?? {}) as Record<string, any>;
     const resolvedProps: Record<string, any> = { ...rawProps };
-    
+
     // Preparation: Context for expression evaluation
-    const context = { ds: dataSources };
+    // Include both data sources (ds) and platform fields (platform)
+    const context = {
+      ds: dataSources,
+      platform: PlatformDataStore.getAll()
+    };
 
     // 1. Resolve standard property bindings (legacy/simple)
     Object.keys(resolvedProps).forEach(key => {

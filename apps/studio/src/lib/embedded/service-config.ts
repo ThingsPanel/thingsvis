@@ -40,20 +40,23 @@ const getHashParams = (): URLSearchParams | null => {
   try {
     const hash = window.location.hash || ''
     const queryIndex = hash.indexOf('?')
-    if (queryIndex === -1) return null
-    return new URLSearchParams(hash.slice(queryIndex + 1))
-  } catch {
+    if (queryIndex === -1) return null;
+    const queryString = hash.slice(queryIndex + 1);
+    return new URLSearchParams(queryString)
+  } catch (e) {
     return null
   }
 }
 
 const getParam = (key: string): string | null => {
   const hashParams = getHashParams()
-  if (hashParams?.has(key)) return hashParams.get(key)
+  if (hashParams?.has(key)) {
+    return hashParams.get(key);
+  }
   try {
     const url = new URL(window.location.href)
-    return url.searchParams.get(key)
-  } catch {
+    return url.searchParams.get(key);
+  } catch (e) {
     return null
   }
 }
@@ -133,15 +136,32 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     return { mode, integrationLevel: 'full', ui: requestedUi, warnings }
   }
 
-  if (integrationLevel === 'minimal') {
-    const anyNonMinimalRequested =
-      requestedUi.showComponentLibrary ||
-      requestedUi.showPropsPanel ||
-      requestedUi.showTopLeft ||
-      requestedUi.showToolbar ||
-      requestedUi.showTopRight
+  // -------- Save target --------
+  const saveTargetParam = getParam('saveTarget')
+  const saveTarget: SaveTarget | undefined = saveTargetParam === 'host' || saveTargetParam === 'self'
+    ? saveTargetParam as SaveTarget
+    : undefined
 
-    if (anyNonMinimalRequested) {
+  // -------- Platform fields --------
+  let platformFields: PlatformField[] | undefined
+  try {
+    const fieldsParam = getParam('platformFields')
+    if (fieldsParam) {
+      // URLSearchParams.get() already decodes the parameter, no need to decode again
+      platformFields = JSON.parse(fieldsParam)
+    }
+  } catch (e) {
+    warnings.push('Failed to parse platform fields')
+  }
+
+  // -------- Integration level handling --------
+  if (integrationLevel === 'minimal') {
+    if (requestedUi.showComponentLibrary !== undefined ||
+      requestedUi.showPropsPanel !== undefined ||
+      requestedUi.showTopLeft !== undefined ||
+      requestedUi.showToolbar !== undefined ||
+      requestedUi.showTopRight !== undefined ||
+      requestedUi.toolbarItems !== undefined) {
       warnings.push('Minimal integration ignores non-minimal UI flags (library/props/top/toolbar).')
     }
 
@@ -156,25 +176,10 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
         showTopRight: false,
         toolbarItems: undefined,
       },
+      saveTarget,
+      platformFields,
       warnings,
     }
-  }
-
-  // -------- Save target --------
-  const saveTargetParam = getParam('saveTarget')
-  const saveTarget: SaveTarget | undefined = saveTargetParam === 'host' || saveTargetParam === 'self'
-    ? saveTargetParam as SaveTarget
-    : undefined
-
-  // -------- Platform fields --------
-  let platformFields: PlatformField[] | undefined
-  try {
-    const fieldsParam = getParam('platformFields')
-    if (fieldsParam) {
-      platformFields = JSON.parse(decodeURIComponent(fieldsParam))
-    }
-  } catch (e) {
-    warnings.push('Failed to parse platform fields')
   }
 
   // Embedded + full
