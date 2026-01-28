@@ -148,6 +148,21 @@ function toggleAutoPush() {
   }
 }
 
+// 触发Studio保存
+function triggerSave() {
+  if (!iframeRef.value?.contentWindow) {
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ⚠️ Iframe not ready`)
+    return
+  }
+  
+  iframeRef.value.contentWindow.postMessage({
+    type: 'thingsvis:editor-trigger-save',
+    payload: {}
+  }, '*')
+  
+  events.value.unshift(`[${new Date().toLocaleTimeString()}] 💾 Triggered save request to editor`)
+}
+
 function handleMessage(event: MessageEvent) {
   // 处理保存请求
   if (event.data?.type === 'thingsvis:requestSave') {
@@ -185,9 +200,20 @@ function handleMessage(event: MessageEvent) {
   // 旧的保存处理（兼容）
   if (event.data?.type === 'thingsvis:host-save') {
     const payload = event.data.payload
+    console.log('📦 [Vue Host] Received save data:', payload)
+    
+    // 安全地读取数据
+    const projectName = payload?.meta?.name || payload?.canvasConfig?.name || 'Unnamed Project'
+    const nodesCount = payload?.nodes?.length ?? 0
+    const dataSourcesCount = payload?.dataSources?.length ?? 0
+    const bindingsCount = payload?.dataBindings?.length ?? 0
+    
     events.value.unshift(
-      `[${new Date().toLocaleTimeString()}] SAVE received! Project: "${payload.meta.name}" (Nodes: ${payload.nodes?.length})`
+      `[${new Date().toLocaleTimeString()}] 💾 SAVE received! Project: "${projectName}" (Nodes: ${nodesCount}, DataSources: ${dataSourcesCount}, Bindings: ${bindingsCount})`
     )
+    
+    // 这里可以将数据保存到后端
+    // 例如: await api.saveVisualization(payload)
   }
 }
 
@@ -263,6 +289,7 @@ onUnmounted(() => {
               <button class="action-btn" @click="toggleAutoPush">
                 {{ dataPushInterval ? '⏸️ Stop Auto' : '▶️ Start Auto (5s)' }}
               </button>
+              <button class="action-btn primary" @click="triggerSave">💾 Trigger Save</button>
             </div>
             <label>
               Save Target:

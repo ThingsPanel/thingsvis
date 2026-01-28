@@ -593,8 +593,10 @@ export default function Editor() {
           position: schema.position,
           size: schema.size,
           props: schema.props,
-          // Include thing model bindings if present
+          // Include thing model bindings if present (物模型绑定)
           thingModelBindings: schema.thingModelBindings || [],
+          // Include data bindings for platform fields (平台字段绑定，如 {{ platform.temp }})
+          data: schema.data || [],
         };
       });
 
@@ -608,17 +610,26 @@ export default function Editor() {
         },
         nodes,
         // Collect all thing model bindings in flat format for easy access
-        dataBindings: nodes.flatMap(node =>
-          (node.thingModelBindings || []).map((binding: any) => ({
+        dataBindings: nodes.flatMap(node => [
+          // Thing model bindings (物模型绑定)
+          ...(node.thingModelBindings || []).map((binding: any) => ({
             nodeId: node.id,
+            type: 'thingModel',
             targetProp: binding.targetProp,
             metricsId: binding.metricsId,
             metricsName: binding.metricsName,
             metricsType: binding.metricsType,
             dataType: binding.dataType,
             unit: binding.unit,
-          }))
-        ),
+          })),
+          // Platform field bindings (平台字段绑定)
+          ...(node.data || []).map((binding: any) => ({
+            nodeId: node.id,
+            type: 'platformField',
+            targetProp: binding.targetProp,
+            expression: binding.expression,
+          })),
+        ]),
       };
 
 
