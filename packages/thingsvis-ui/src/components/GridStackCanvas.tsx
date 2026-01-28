@@ -11,6 +11,7 @@ import { GridStack } from 'gridstack';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
 import type { GridSettings, PluginOverlayContext } from '@thingsvis/schema';
 import { PropertyResolver } from '../engine/PropertyResolver';
+import { usePlatformData } from '../hooks/usePlatformData';
 
 export interface GridStackCanvasProps {
   store: KernelStore;
@@ -33,10 +34,10 @@ const pluginCache = new Map<string, any>();
 // Track which nodes have been rendered with plugins
 const renderedOverlays = new Map<string, { update?: (ctx: PluginOverlayContext) => void; destroy?: () => void }>();
 
-function nodeToOverlayContext(node: NodeState, store: KernelStore): PluginOverlayContext {
+function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>): PluginOverlayContext {
   const schema = node.schemaRef as any;
-  // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定）
-  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
+  // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定和Platform字段绑定）
+  const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources, platformData);
   return {
     position: schema.position ?? { x: 0, y: 0 },
     size: schema.size ?? { width: 200, height: 100 },
@@ -63,13 +64,16 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Subscribe to store state
   const kernelState = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState,
     () => store.getState() as KernelState
   );
+
+  // Subscribe to platform data changes for {{ platform.xxx }} expressions
+  const platformData = usePlatformData();
 
   // Always derive nodes from the latest state to reflect binding updates.
   const nodes = Object.values(kernelState.nodesById);
@@ -99,7 +103,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     try {
       const payload = JSON.parse(data);
       const componentType = payload.type || payload.remoteName;
-      
+
       // Calculate grid position from drop coordinates
       const grid = gridRef.current;
       const gridEl = containerRef.current?.querySelector('.grid-stack');
@@ -108,17 +112,17 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       const rect = gridEl.getBoundingClientRect();
       const relX = e.clientX - rect.left;
       const relY = e.clientY - rect.top + gridEl.scrollTop;
-      
+
       // Convert to grid units, clamped to valid range
       const cellWidth = rect.width / cols;
       const x = Math.max(0, Math.min(cols - 4, Math.floor(relX / cellWidth)));
       const y = Math.max(0, Math.floor(relY / rowHeight));
 
-      
-      
+
+
       onDropComponent(componentType, { x, y, w: 4, h: 3 });
     } catch (err) {
-      
+
     }
   }, [interactive, onDropComponent, cols, rowHeight]);
 
@@ -174,7 +178,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         gridRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Initialize only on mount
 
   // Update grid settings dynamically when they change
@@ -196,11 +200,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   useEffect(() => {
     const grid = gridRef.current;
     if (!grid) {
-      
+
       return;
     }
 
-    
+
 
     // Get existing widget IDs
     const existingIds = new Set<string>();
@@ -212,19 +216,19 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     // Add new nodes as widgets
     nodes.forEach((node) => {
       if (existingIds.has(node.id)) return;
-      
+
       const schema = node.schemaRef as any;
       // grid is directly on schemaRef
       const gridPos = schema?.grid ?? { x: 0, y: 0, w: 4, h: 3 };
       const nodeType = schema?.type || 'unknown';
-      
+
       // Ensure valid grid position values
       const x = Math.max(0, Math.min(cols - 1, gridPos.x ?? 0));
       const y = Math.max(0, gridPos.y ?? 0);
       const w = Math.max(1, Math.min(cols - x, gridPos.w ?? 4));
       const h = Math.max(1, gridPos.h ?? 3);
 
-      
+
 
       // Create widget element with gs-* attributes (v11+ API)
       const itemEl = document.createElement('div');
@@ -241,20 +245,20 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       const contentEl = document.createElement('div');
       contentEl.className = 'grid-stack-item-content';
       contentEl.style.cssText = 'background:#fff;border:1px solid #e0e0e0;overflow:hidden;cursor:pointer;';
-      
+
       // Track if this is a click (mousedown + mouseup without much movement)
       let mouseDownPos: { x: number; y: number } | null = null;
-      
+
       itemEl.addEventListener('mousedown', (e) => {
         mouseDownPos = { x: e.clientX, y: e.clientY };
       });
-      
+
       itemEl.addEventListener('mouseup', (e) => {
         if (!mouseDownPos) return;
         const dx = Math.abs(e.clientX - mouseDownPos.x);
         const dy = Math.abs(e.clientY - mouseDownPos.y);
         mouseDownPos = null;
-        
+
         // If mouse didn't move much, treat as click
         if (interactive && dx < 5 && dy < 5) {
           e.stopPropagation();
@@ -262,7 +266,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           (store.getState() as any).selectNode(node.id);
         }
       });
-      
+
       // Show loading placeholder initially
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;">Loading ${nodeType}...</div>`;
 
@@ -275,7 +279,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         // Use makeWidget for v11+ - it reads position from gs-* attributes
         grid.makeWidget(itemEl);
       }
-      
+
       // Load and render the actual plugin
       if (resolvePlugin) {
         loadAndRenderPlugin(node, nodeType, contentEl);
@@ -290,7 +294,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         const overlay = renderedOverlays.get(id);
         if (overlay?.destroy) overlay.destroy();
         renderedOverlays.delete(id);
-        
+
         const el = grid.getGridItems().find((item: HTMLElement) => item.getAttribute('gs-id') === id);
         if (el) grid.removeWidget(el, true);
       }
@@ -300,7 +304,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   // Function to load plugin and render overlay
   const loadAndRenderPlugin = useCallback(async (node: NodeState, nodeType: string, contentEl: HTMLElement) => {
     if (!resolvePlugin) return;
-    
+
     try {
       // Check cache first
       let plugin = pluginCache.get(nodeType);
@@ -316,12 +320,12 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       if (plugin.createOverlay) {
         const context = nodeToOverlayContext(node, store);
         const overlay = plugin.createOverlay(context);
-        
+
         if (overlay.element) {
           overlay.element.style.width = '100%';
           overlay.element.style.height = '100%';
           contentEl.appendChild(overlay.element);
-          
+
           // Store for updates/cleanup
           renderedOverlays.set(node.id, {
             update: overlay.update,
@@ -333,22 +337,22 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#333;">${nodeType}</div>`;
       }
     } catch (err) {
-      
+
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#e53e3e;font-size:12px;">Error: ${nodeType}</div>`;
     }
   }, [resolvePlugin, store]);
 
-  // Update existing overlays when node props change (for data source updates)
-  // Note: We watch dataSources explicitly since props may contain bindings like "${ds.xxx}"
+  // Update existing overlays when node props change (for data source and platform data updates)
+  // Note: We watch dataSources and platformData explicitly since props may contain bindings
   useEffect(() => {
-    nodes.forEach((node) => {
+    nodes.forEach((node: any) => {
       const overlay = renderedOverlays.get(node.id);
       if (overlay?.update) {
-        const context = nodeToOverlayContext(node, store);
+        const context = nodeToOverlayContext(node, store, platformData);
         overlay.update(context);
       }
     });
-  }, [nodes, store, kernelState.dataSources]);
+  }, [nodes, store, kernelState.dataSources, platformData]);
 
   // Use fixed dimensions or fill container
   const containerWidth = width ? `${width}px` : '100%';
@@ -368,19 +372,19 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     if (!clickedWidget) {
       (store.getState() as any).selectNode(null);
     }
-    
+
     if (activeTool !== 'pan') return;
-    
+
     // Prevent gridstack from handling this event
     e.stopPropagation();
     e.preventDefault();
-    
+
     isPanningRef.current = true;
     panStartRef.current = {
       x: e.clientX - panOffsetRef.current.x,
       y: e.clientY - panOffsetRef.current.y,
     };
-    
+
     const container = scrollContainerRef.current;
     if (container) {
       container.style.cursor = 'grabbing';
@@ -390,7 +394,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   // Use window-level mouse events for reliable pan
   useEffect(() => {
     if (activeTool !== 'pan') return;
-    
+
     const handleGlobalMouseUp = () => {
       if (isPanningRef.current) {
         isPanningRef.current = false;
@@ -403,10 +407,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
     const handleGlobalMouseMove = (e: MouseEvent) => {
       if (!isPanningRef.current) return;
-      
+
       const newX = e.clientX - panStartRef.current.x;
       const newY = e.clientY - panStartRef.current.y;
-      
+
       panOffsetRef.current = { x: newX, y: newY };
       setPanOffset({ x: newX, y: newY });
     };
@@ -433,11 +437,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   }, [activeTool]);
 
   return (
-    <div 
+    <div
       ref={scrollContainerRef}
       onMouseDown={handleMouseDown}
-      style={{ 
-        width: '100%', 
+      style={{
+        width: '100%',
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
@@ -454,12 +458,12 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px))`,
         }}
       >
-        <div 
+        <div
           ref={containerRef}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
-          style={{ 
-            width: containerWidth, 
+          style={{
+            width: containerWidth,
             minHeight: containerHeight,
             background: '#fff',
             boxShadow: '0 2px 12px rgba(0,0,0,0.15)',

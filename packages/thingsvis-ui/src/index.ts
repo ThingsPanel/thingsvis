@@ -12,6 +12,7 @@ export * from "./hooks/useDataSource";
 export * from "./hooks/useDataRegistry";
 export * from "./hooks/useRealtimeData";
 export * from "./hooks/useExpressionEvaluator";
+export * from "./hooks/usePlatformData";
 
 // Export Grid Layout
 export { useGridLayout } from "./hooks/useGridLayout";

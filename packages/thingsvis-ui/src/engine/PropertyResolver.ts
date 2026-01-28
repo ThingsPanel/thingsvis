@@ -12,8 +12,14 @@ export class PropertyResolver {
    * Resolves all properties of a node, including those with {{ ... }} expressions.
    * @param node The node state containing raw props and data bindings.
    * @param dataSources The global data source states from the kernel store.
+   * @param platformData Optional platform field data for {{ platform.xxx }} expressions.
+   *                     If not provided, will fetch from PlatformDataStore.
    */
-  public static resolve(node: NodeState, dataSources: Record<string, any>): Record<string, any> {
+  public static resolve(
+    node: NodeState,
+    dataSources: Record<string, any>,
+    platformData?: Record<string, any>
+  ): Record<string, any> {
     const rawProps = (node.schemaRef.props ?? {}) as Record<string, any>;
     const resolvedProps: Record<string, any> = { ...rawProps };
 
@@ -21,7 +27,7 @@ export class PropertyResolver {
     // Include both data sources (ds) and platform fields (platform)
     const context = {
       ds: dataSources,
-      platform: PlatformDataStore.getAll()
+      platform: platformData ?? PlatformDataStore.getAll()
     };
 
     // 1. Resolve standard property bindings (legacy/simple)
@@ -35,7 +41,7 @@ export class PropertyResolver {
     // 2. Resolve explicit DataBindings (from node.data)
     // node.data: DataBinding[]
     if (node.schemaRef.data && Array.isArray(node.schemaRef.data)) {
-      node.schemaRef.data.forEach(binding => {
+      node.schemaRef.data.forEach((binding: any) => {
         if (binding.targetProp && binding.expression) {
           const resolvedValue = ExpressionEvaluator.evaluate(binding.expression, context);
           // 只有当解析出结果时才覆盖

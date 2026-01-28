@@ -14,6 +14,10 @@ class PlatformDataStoreClass {
     private listeners: Set<() => void> = new Set();
     private messageListener: ((event: MessageEvent) => void) | null = null;
 
+    // Cached snapshot for useSyncExternalStore compatibility
+    private cachedSnapshot: Record<string, any> = {};
+    private version: number = 0;
+
     constructor() {
         // Automatically subscribe to platform data messages
         this.subscribeToMessages();
@@ -25,9 +29,17 @@ class PlatformDataStoreClass {
     private subscribeToMessages() {
         if (typeof window === 'undefined') return;
 
+        console.log('🚀 [PlatformDataStore] Subscribing to postMessage...');
+
         this.messageListener = (event: MessageEvent) => {
+            // Debug: log all incoming messages
+            if (event.data?.type?.startsWith('thingsvis:')) {
+                console.log('📨 [PlatformDataStore] Received message:', event.data);
+            }
+
             if (event.data?.type === 'thingsvis:platformData') {
                 const { fieldId, value, timestamp } = event.data.payload || {};
+                console.log(`✅ [PlatformDataStore] Platform data: ${fieldId} = ${value}`);
                 if (fieldId !== undefined) {
                     this.set(fieldId, value, timestamp);
                 }
@@ -35,16 +47,19 @@ class PlatformDataStoreClass {
         };
 
         window.addEventListener('message', this.messageListener);
+        console.log('✅ [PlatformDataStore] Message listener registered');
     }
 
     /**
      * Set a platform field value
      */
     set(fieldId: string, value: any, timestamp?: number) {
+        console.log(`📝 [PlatformDataStore] Setting ${fieldId} = ${value}, listeners: ${this.listeners.size}`);
         this.data.set(fieldId, {
             value,
             timestamp: timestamp ?? Date.now(),
         });
+        this.updateSnapshot();
         this.notifyListeners();
     }
 
@@ -56,15 +71,30 @@ class PlatformDataStoreClass {
     }
 
     /**
-     * Get all platform field data as an object
-     * This is used by PropertyResolver for {{ platform.xxx }} expressions
+     * Update the cached snapshot when data changes
      */
-    getAll(): Record<string, any> {
+    private updateSnapshot() {
         const result: Record<string, any> = {};
         this.data.forEach((fieldData, fieldId) => {
             result[fieldId] = fieldData.value;
         });
-        return result;
+        this.cachedSnapshot = result;
+        this.version++;
+    }
+
+    /**
+     * Get all platform field data as an object
+     * Returns a cached object for useSyncExternalStore compatibility
+     */
+    getAll(): Record<string, any> {
+        return this.cachedSnapshot;
+    }
+
+    /**
+     * Get the current version number (used for change detection)
+     */
+    getVersion(): number {
+        return this.version;
     }
 
     /**
@@ -84,6 +114,7 @@ class PlatformDataStoreClass {
      */
     clear() {
         this.data.clear();
+        this.updateSnapshot();
         this.notifyListeners();
     }
 

@@ -2,6 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { useSyncExternalStore } from 'react';
 import { type KernelStore, type KernelState } from '@thingsvis/kernel';
 import { PropertyResolver } from '../engine/PropertyResolver';
+import { usePlatformData } from '../hooks/usePlatformData';
 
 interface DataContainerProps {
   store: KernelStore;
@@ -19,12 +20,15 @@ export const DataContainer: React.FC<DataContainerProps> = ({ store, nodeId, chi
     () => store.getState() as KernelState
   );
 
+  // Subscribe to platform data changes for {{ platform.xxx }} expressions
+  const platformData = usePlatformData();
+
   const node = kernelState.nodesById[nodeId];
 
   const resolvedProps = useMemo(() => {
     if (!node) return {};
-    return PropertyResolver.resolve(node, kernelState.dataSources);
-  }, [node, kernelState.dataSources]);
+    return PropertyResolver.resolve(node, kernelState.dataSources, platformData);
+  }, [node, kernelState.dataSources, platformData]);
 
   return children(resolvedProps);
 };
