@@ -338,7 +338,48 @@ export default function Editor() {
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
     // Extract node schemas from NodeState (schemaRef contains the actual node data)
-    const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
+    let nodes = Object.values(state.nodesById).map(nodeState => ({ ...nodeState.schemaRef }))
+
+    // [FIX] Ensure grid properties are saved when in reflow/grid mode
+    // The editor operates in pixel coordinates, so we must calculate grid coordinates for persistence
+    if (canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') {
+      const cols = canvasConfig.gridCols || 24
+      const rowHeight = canvasConfig.gridRowHeight || 50
+      const gap = canvasConfig.gridGap || 5
+      const canvasWidth = canvasConfig.width || 1920
+
+      // Effective column width (simplified approximations matching typical grid logic)
+      // Note: This logic should ideally match the same logic used in GridStack/useGridLayout
+      // width = colWidth * cols + gap * (cols - 1)
+      // colWidth = (width - gap * (cols - 1)) / cols
+      const totalGapW = gap * (cols - 1)
+      const colWidth = (canvasWidth - totalGapW) / cols
+
+      nodes = nodes.map(node => {
+        // Always recalculate grid to match current visual position
+        const posX = node.position?.x ?? 0
+        const posY = node.position?.y ?? 0
+        const w = node.size?.width ?? 200
+        const h = node.size?.height ?? 100
+
+        // Calculate grid coords
+        const gx = Math.round(posX / (colWidth + gap))
+        const gy = Math.round(posY / (rowHeight + gap))
+        const gw = Math.max(1, Math.round(w / (colWidth + gap)))
+        const gh = Math.max(1, Math.round(h / (rowHeight + gap)))
+
+        return {
+          ...node,
+          grid: {
+            x: gx,
+            y: gy,
+            w: gw,
+            h: gh
+          }
+        }
+      })
+    }
+
     return {
       meta: {
         version: '1.0.0',
@@ -584,8 +625,9 @@ export default function Editor() {
     const unsubscribe = onEmbedEvent('triggerSave', () => {
 
       // Collect all nodes with their thing model bindings
+      // Collect all nodes with their thing model bindings
       const state = store.getState() as KernelState;
-      const nodes = Object.values(state.nodesById).map(nodeState => {
+      let nodes = Object.values(state.nodesById).map(nodeState => {
         const schema = nodeState.schemaRef as any;
         return {
           id: schema.id,
@@ -593,12 +635,64 @@ export default function Editor() {
           position: schema.position,
           size: schema.size,
           props: schema.props,
+          grid: schema.grid, // [FIX] Include existing grid props
           // Include thing model bindings if present (物模型绑定)
           thingModelBindings: schema.thingModelBindings || [],
           // Include data bindings for platform fields (平台字段绑定，如 {{ platform.temp }})
           data: schema.data || [],
         };
       });
+
+      // [FIX] Ensure grid properties are saved when in reflow/grid mode (same as getProjectState)
+      console.log('💾 [Editor] triggerSave: mode=', canvasConfig.mode, 'cols=', canvasConfig.gridCols)
+
+      if (canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') {
+        const cols = canvasConfig.gridCols || 24
+        const rowHeight = canvasConfig.gridRowHeight || 50
+        const gap = canvasConfig.gridGap || 5
+        const canvasWidth = canvasConfig.width || 1920
+
+        const totalGapW = gap * (cols - 1)
+        const colWidth = (canvasWidth - totalGapW) / cols
+
+        console.log('💾 [Editor] Calculating grid fallback (if needed):', { cols, rowHeight, gap, canvasWidth, colWidth })
+
+        nodes = nodes.map(node => {
+          // Correct Logic:
+          // 1. If node already has valid grid info, USE IT! Do not recalculate from stale pixel positions.
+          // 2. Only if grid is missing (e.g. fresh from fixed mode), calculate default from position.
+
+          if (node.grid && node.grid.w > 0 && node.grid.h > 0) {
+            console.log(`Node ${node.id}: Using existing grid(${node.grid.x},${node.grid.y},${node.grid.w},${node.grid.h})`)
+            return node
+          }
+
+          // Fallback: Calculate grid coords from pixel position
+          const posX = node.position?.x ?? 0
+          const posY = node.position?.y ?? 0
+          const w = node.size?.width ?? 200
+          const h = node.size?.height ?? 100
+
+          const gx = Math.round(posX / (colWidth + gap))
+          const gy = Math.round(posY / (rowHeight + gap))
+          const gw = Math.max(1, Math.round(w / (colWidth + gap)))
+          const gh = Math.max(1, Math.round(h / (rowHeight + gap)))
+
+          console.log(`Node ${node.id}: Missing grid! Calculated fallback: pos(${posX},${posY}) -> grid(${gx},${gy},${gw},${gh})`)
+
+          return {
+            ...node,
+            grid: {
+              x: gx,
+              y: gy,
+              w: gw,
+              h: gh
+            }
+          }
+        })
+      } else {
+        console.log('⚠️ [Editor] Skipping grid calculation, mode is', canvasConfig.mode)
+      }
 
       // Build export data for ThingsPanel
       const exportData = {
@@ -632,6 +726,20 @@ export default function Editor() {
         ]),
       };
 
+      try {
+        console.group('📦 [Editor] EXPORT DATA VERIFICATION');
+        console.log('Canvas Mode:', exportData.canvas.mode);
+        console.log('Total Nodes:', exportData.nodes.length);
+        exportData.nodes.forEach((n, i) => {
+          console.log(`Node ${i} (${n.id}): grid=`, n.grid ? JSON.stringify(n.grid) : 'MISSING ❌');
+        });
+        // [USER REQUEST] Print full JSON for verification
+        console.log('👇 FULL PAYLOAD JSON (Copy this check):');
+        console.log(JSON.stringify(exportData, null, 2));
+        console.groupEnd();
+      } catch (e) {
+        console.error('Error logging export data', e);
+      }
 
       // Send to host
       requestSave(exportData);
@@ -1033,150 +1141,152 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
-                  <Menu className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 mt-2">
-              <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
-                <FolderOpen className="h-4 w-4" />
-                {language === "zh" ? "打开项目" : "Open Project"}
-                <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
-                <Save className="h-4 w-4" />
-                {language === "zh" ? "保存" : "Save"}
-                <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
-                <Database className="h-4 w-4" />
-                {language === "zh" ? "数据源管理" : "Data Sources"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={async () => {
-                  const input = document.createElement('input')
-                  input.type = 'file'
-                  input.accept = '.thingsvis,.json'
-                  input.onchange = async (e) => {
-                    const file = (e.target as HTMLInputElement).files?.[0]
-                    if (!file) return
-
-                    try {
-                      // Import and validate the file
-                      const imported = await projectStorage.importFromFile(file)
-                      // Save to local storage
-                      await projectStorage.save(imported)
-                      // Reload to show the imported project
-                      window.location.reload()
-                    } catch (err) {
-                      console.error('Import failed:', err)
-                      alert(language === 'zh' ? '导入失败' : 'Import failed')
-                    }
-                  }
-                  input.click()
-                }}
-              >
-                <FileUp className="h-4 w-4" />
-                {language === "zh" ? "导入配置" : "Import Config"}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={async () => {
-                  try {
-                    const projectState = getProjectState()
-                    const json = JSON.stringify(projectState, null, 2)
-                    const blob = new Blob([json], { type: 'application/json' })
-                    const url = URL.createObjectURL(blob)
-                    const filename = `${canvasConfig.name || 'project'}.thingsvis`
-
-                    const link = document.createElement('a')
-                    link.href = url
-                    link.download = filename
-                    document.body.appendChild(link)
-                    link.click()
-                    document.body.removeChild(link)
-                    URL.revokeObjectURL(url)
-                  } catch (err) {
-                    console.error('Export failed:', err)
-                    alert(language === 'zh' ? '导出失败' : 'Export failed')
-                  }
-                }}
-              >
-                <FileDown className="h-4 w-4" />
-                {language === "zh" ? "导出配置" : "Export Config"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => {
-                  alert(language === 'zh'
-                    ? '设置功能开发中...'
-                    : 'Settings coming soon...'
-                  )
-                }}
-              >
-                <Settings className="h-4 w-4" />
-                {language === "zh" ? "设置" : "Settings"}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="gap-2"
-                onClick={() => setShowShortcuts(true)}
-              >
-                <HelpCircle className="h-4 w-4" />
-                {language === "zh" ? "帮助" : "Help"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {!authLoading && isAuthenticated && user ? (
-                <>
-                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    <div className="font-medium text-foreground">{user.name || user.email}</div>
-                    <div className="text-xs">{user.email}</div>
+        {embedVisibility.showTopLeft && (
+          <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                  <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
+                    <Menu className="h-4 w-4 text-white" />
                   </div>
-                  <DropdownMenuItem
-                    className="gap-2 text-red-600 dark:text-red-400"
-                    onClick={() => {
-                      logout()
-                      window.location.hash = '#/'
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {language === "zh" ? "退出登录" : "Logout"}
-                  </DropdownMenuItem>
-                </>
-              ) : !authLoading ? (
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56 mt-2">
+                <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
+                  <FolderOpen className="h-4 w-4" />
+                  {language === "zh" ? "打开项目" : "Open Project"}
+                  <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
+                  <Save className="h-4 w-4" />
+                  {language === "zh" ? "保存" : "Save"}
+                  <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
+                  <Database className="h-4 w-4" />
+                  {language === "zh" ? "数据源管理" : "Data Sources"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="gap-2"
-                  onClick={() => window.location.hash = '#/login'}
+                  onClick={async () => {
+                    const input = document.createElement('input')
+                    input.type = 'file'
+                    input.accept = '.thingsvis,.json'
+                    input.onchange = async (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0]
+                      if (!file) return
+
+                      try {
+                        // Import and validate the file
+                        const imported = await projectStorage.importFromFile(file)
+                        // Save to local storage
+                        await projectStorage.save(imported)
+                        // Reload to show the imported project
+                        window.location.reload()
+                      } catch (err) {
+                        console.error('Import failed:', err)
+                        alert(language === 'zh' ? '导入失败' : 'Import failed')
+                      }
+                    }
+                    input.click()
+                  }}
                 >
-                  <Users className="h-4 w-4" />
-                  {language === "zh" ? "登录" : "Login"}
+                  <FileUp className="h-4 w-4" />
+                  {language === "zh" ? "导入配置" : "Import Config"}
                 </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={async () => {
+                    try {
+                      const projectState = getProjectState()
+                      const json = JSON.stringify(projectState, null, 2)
+                      const blob = new Blob([json], { type: 'application/json' })
+                      const url = URL.createObjectURL(blob)
+                      const filename = `${canvasConfig.name || 'project'}.thingsvis`
 
-          <Input
-            placeholder="未命名项目"
-            className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
-            value={canvasConfig.name}
-            onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-          />
+                      const link = document.createElement('a')
+                      link.href = url
+                      link.download = filename
+                      document.body.appendChild(link)
+                      link.click()
+                      document.body.removeChild(link)
+                      URL.revokeObjectURL(url)
+                    } catch (err) {
+                      console.error('Export failed:', err)
+                      alert(language === 'zh' ? '导出失败' : 'Export failed')
+                    }
+                  }}
+                >
+                  <FileDown className="h-4 w-4" />
+                  {language === "zh" ? "导出配置" : "Export Config"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => {
+                    alert(language === 'zh'
+                      ? '设置功能开发中...'
+                      : 'Settings coming soon...'
+                    )
+                  }}
+                >
+                  <Settings className="h-4 w-4" />
+                  {language === "zh" ? "设置" : "Settings"}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2"
+                  onClick={() => setShowShortcuts(true)}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  {language === "zh" ? "帮助" : "Help"}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {!authLoading && isAuthenticated && user ? (
+                  <>
+                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                      <div className="font-medium text-foreground">{user.name || user.email}</div>
+                      <div className="text-xs">{user.email}</div>
+                    </div>
+                    <DropdownMenuItem
+                      className="gap-2 text-red-600 dark:text-red-400"
+                      onClick={() => {
+                        logout()
+                        window.location.hash = '#/'
+                      }}
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {language === "zh" ? "退出登录" : "Logout"}
+                    </DropdownMenuItem>
+                  </>
+                ) : !authLoading ? (
+                  <DropdownMenuItem
+                    className="gap-2"
+                    onClick={() => window.location.hash = '#/login'}
+                  >
+                    <Users className="h-4 w-4" />
+                    {language === "zh" ? "登录" : "Login"}
+                  </DropdownMenuItem>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          <SaveIndicator
-            status={saveState.status}
-            lastSavedAt={saveState.lastSavedAt}
-            error={saveState.error}
-            language={language}
-            className="ml-1 pr-2"
-          />
-        </div>
+            <Input
+              placeholder="未命名项目"
+              className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+              value={canvasConfig.name}
+              onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
+            />
+
+            <SaveIndicator
+              status={saveState.status}
+              lastSavedAt={saveState.lastSavedAt}
+              error={saveState.error}
+              language={language}
+              className="ml-1 pr-2"
+            />
+          </div>
+        )}
 
         {/* Center Side: Tools */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
@@ -1209,58 +1319,60 @@ export default function Editor() {
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!embedVisibility.showTopRight ? 'invisible' : ''}`}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
-                <Languages className="h-4 w-4" />
+        {embedVisibility.showTopRight && (
+          <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
+                  <Languages className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="mt-2">
+                <DropdownMenuItem onClick={() => setLanguage("zh")}>
+                  <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setLanguage("en")}>
+                  <span className={language === "en" ? "font-semibold" : ""}>English</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
+              {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </Button>
+
+            {!showRightPanel && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
+                onClick={() => setShowRightPanel(true)}
+                title={language === "zh" ? "显示属性面板" : "Show Properties"}
+              >
+                <PanelRightOpen className="h-4 w-4" />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="mt-2">
-              <DropdownMenuItem onClick={() => setLanguage("zh")}>
-                <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage("en")}>
-                <span className={language === "en" ? "font-semibold" : ""}>English</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            )}
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
-            {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          </Button>
-
-          {!showRightPanel && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
-              onClick={() => setShowRightPanel(true)}
-              title={language === "zh" ? "显示属性面板" : "Show Properties"}
+              size="sm"
+              className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+              onClick={openPreview}
             >
-              <PanelRightOpen className="h-4 w-4" />
+              <Eye className="h-4 w-4" />
+              <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
             </Button>
-          )}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={openPreview}
-          >
-            <Eye className="h-4 w-4" />
-            <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
-          </Button>
-
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={() => { }}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
-          </Button>
-        </div>
+            <Button
+              size="sm"
+              className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
+              onClick={() => { }}
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Left Panel: Assets & Layers */}

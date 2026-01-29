@@ -54,7 +54,7 @@ export default function EmbedPage() {
   const canvasMode = kernelState?.canvas?.mode ?? 'infinite';
   const canvasWidth = kernelState?.canvas?.width ?? 1920;
   const canvasHeight = kernelState?.canvas?.height ?? 1080;
-  
+
   const hasGridNodes = useMemo(() => {
     const nodesById = kernelState?.nodesById as Record<string, any> | undefined;
     if (!nodesById) return false;
@@ -62,7 +62,7 @@ export default function EmbedPage() {
   }, [kernelState]);
 
   const isGridLayout = canvasMode === 'reflow' || canvasMode === 'grid' || hasGridNodes;
-  
+
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
     rowHeight: 50,
@@ -91,21 +91,21 @@ export default function EmbedPage() {
   // Load dashboard from API by ID
   const loadFromApi = useCallback(async (id: string, token?: string) => {
     setState(s => ({ ...s, isLoading: true, error: null }));
-    
+
     try {
       // Set token if provided
       if (token) {
         localStorage.setItem('thingsvis_token', token);
       }
-      
+
       const response = await getDashboard(id);
-      
+
       if (response.error || !response.data) {
         throw new Error(response.error || 'Dashboard not found');
       }
-      
+
       const dashboard = response.data;
-      
+
       // Update canvas settings
       if (dashboard.canvasConfig) {
         store.getState().updateCanvas({
@@ -114,7 +114,7 @@ export default function EmbedPage() {
           height: dashboard.canvasConfig.height || 1080,
         });
       }
-      
+
       // Load page into kernel
       const page: PageSchemaType = {
         id: dashboard.id,
@@ -122,16 +122,16 @@ export default function EmbedPage() {
         version: '1.0.0',
         nodes: (dashboard.nodes as any[]) || [],
       };
-      
+
       store.getState().loadPage(page);
-      
+
       setState({
         isLoading: false,
         error: null,
         schema: dashboard,
         variables: {},
       });
-      
+
       postToParent({ type: 'LOADED', payload: { id: dashboard.id, name: dashboard.name } });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load dashboard';
@@ -143,42 +143,101 @@ export default function EmbedPage() {
   // Load dashboard from schema data
   const loadFromSchema = useCallback((schema: any) => {
     setState(s => ({ ...s, isLoading: true, error: null }));
-    
+
+    console.log('🔄 [EmbedPage] loadFromSchema called with mode:', schema.canvas?.mode);
+
+    if (!schema || !schema.canvas) {
+      console.error('❌ [EmbedPage] Invalid schema:', schema);
+      setState(s => ({ ...s, isLoading: false, error: 'Invalid schema provided' }));
+      postToParent({ type: 'ERROR', payload: 'Invalid schema provided' });
+      return;
+    }
+
     try {
-      // Update canvas settings
-      if (schema.canvas) {
-        store.getState().updateCanvas({
-          mode: schema.canvas.mode || 'infinite',
-          width: schema.canvas.width || 1920,
-          height: schema.canvas.height || 1080,
-        });
-        
-        if (schema.canvas.gridCols) {
-          store.getState().setGridSettings?.({
-            cols: schema.canvas.gridCols,
-            rowHeight: schema.canvas.gridRowHeight ?? 50,
-            gap: schema.canvas.gridGap ?? 5,
-          });
-        }
+      // Update basic canvas settings
+      store.getState().updateCanvas({
+        mode: schema.canvas.mode || 'infinite',
+        width: schema.canvas.width || 1920,
+        height: schema.canvas.height || 1080,
+      });
+
+      // Handle background separately if needed or ensure updateCanvas supports it
+      if (schema.canvas.background && store.getState().updateCanvas) {
+        // Some kernel versions might need explicit setBackground call
       }
-      
+
+      // Update grid settings in store if needed
+      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
+        const gridSettings = {
+          cols: schema.canvas.gridCols ?? 24,
+          rowHeight: schema.canvas.gridRowHeight ?? 50,
+          gap: schema.canvas.gridGap ?? 5,
+        };
+        console.log('📏 [EmbedPage] Applying grid settings:', gridSettings);
+        store.getState().setGridSettings?.(gridSettings);
+      }
+
       // Load page into kernel
+      const pageNodes = schema.nodes || [];
+
+      // If in reflow/grid mode, ensure all nodes have grid properties
+      // This fixes the issue where nodes without grid props stack on top of each other
+      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid') {
+        const GRID_COLS = schema.canvas.gridCols ?? 24;
+        let runningY = 0;
+        let runningX = 0;
+        let maxHeightInRow = 0;
+
+        pageNodes.forEach((node: any, index: number) => {
+          if (!node.grid) {
+            console.warn(`⚠️ [EmbedPage] Node ${node.id} missing grid props! Generating fallback...`);
+            // Calculate a default grid position if missing
+            // Default width: 6 columns (1/4 of simplified 24-col grid)
+            const w = 6;
+            // Default height: 4 rows (~200px)
+            const h = 4;
+
+            // Check if we need to wrap to next row
+            if (runningX + w > GRID_COLS) {
+              runningX = 0;
+              runningY += maxHeightInRow || h;
+              maxHeightInRow = 0;
+            }
+
+            node.grid = {
+              x: runningX,
+              y: runningY,
+              w: w,
+              h: h
+            };
+
+            // Update placement for next node
+            runningX += w;
+            maxHeightInRow = Math.max(maxHeightInRow, h);
+          } else {
+            console.log(`✅ [EmbedPage] Node ${node.id} has grid:`, node.grid);
+          }
+        });
+      }
+
+      console.log('📦 [EmbedPage] Loading page with nodes:', pageNodes.length);
+
       const page: PageSchemaType = {
         id: schema.id || 'embed-page',
         type: 'page',
         version: '1.0.0',
-        nodes: schema.nodes || [],
+        nodes: pageNodes,
       };
-      
+
       store.getState().loadPage(page);
-      
+
       setState({
         isLoading: false,
         error: null,
         schema,
         variables: {},
       });
-      
+
       postToParent({ type: 'LOADED', payload: { name: schema.name } });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load schema';
@@ -193,7 +252,7 @@ export default function EmbedPage() {
       ...s,
       variables: { ...s.variables, ...variables },
     }));
-    
+
     // TODO: Dispatch variable update to kernel when variable system is implemented
   }, []);
 
@@ -206,7 +265,7 @@ export default function EmbedPage() {
       }
 
       const message = event.data as EmbedMessage;
-      
+
       switch (message.type) {
         case 'LOAD_DASHBOARD':
           loadFromSchema(message.payload);
@@ -286,25 +345,27 @@ export default function EmbedPage() {
 
   // Render the canvas
   return (
-    <div className="w-full h-screen overflow-hidden bg-background">
-      {isGridLayout ? (
-        <GridStackCanvas 
-          store={store as any}
-          resolvePlugin={resolvePlugin as any}
-          width={canvasWidth}
-          height={canvasHeight}
-          settings={gridSettings}
-          interactive={false}
-        />
-      ) : (
-        <CanvasView 
-          store={store as any}
-          resolvePlugin={resolvePlugin as any}
-          gridSize={0}
-          snapToGrid={false}
-          centeredMask={false}
-        />
-      )}
+    <div className="relative w-screen h-screen bg-background overflow-hidden">
+      <div className="absolute inset-0">
+        {isGridLayout ? (
+          <GridStackCanvas
+            store={store as any}
+            resolvePlugin={resolvePlugin as any}
+            width={canvasWidth}
+            height={canvasHeight}
+            settings={gridSettings}
+            interactive={false}
+          />
+        ) : (
+          <CanvasView
+            store={store as any}
+            resolvePlugin={resolvePlugin as any}
+            gridSize={0}
+            snapToGrid={false}
+            centeredMask={false}
+          />
+        )}
+      </div>
     </div>
   );
 }

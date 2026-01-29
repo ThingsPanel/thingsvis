@@ -227,16 +227,33 @@ onUnmounted(() => {
     clearInterval(dataPushInterval.value)
   }
 })
+
+// --- Tabs ---
+const activeTab = ref<'editor' | 'preview'>('editor')
+import ThingsVisPreview from './components/ThingsVisPreview.vue'
+
+// Authenticated token for preview (retrieved from memory or localStorage in real app)
+// For demo, we assume the host has handled auth
+const currentToken = ref<string | null>(null)
 </script>
 
 <template>
   <div class="host-app">
     <header>
       <h1>Vue Host App</h1>
-      <p>Simulating an embedding platform (ThingsPanel)</p>
+      <div class="tabs">
+        <button 
+          :class="{ active: activeTab === 'editor' }" 
+          @click="activeTab = 'editor'"
+        >Editor Mode</button>
+        <button 
+          :class="{ active: activeTab === 'preview' }" 
+          @click="activeTab = 'preview'"
+        >Preview Mode</button>
+      </div>
     </header>
 
-    <main>
+    <main v-if="activeTab === 'editor'">
       <div class="sidebar" :class="{ collapsed: sidebarCollapsed }">
         <button class="collapse-btn" @click="sidebarCollapsed = !sidebarCollapsed">
           {{ sidebarCollapsed ? '▶' : '◀' }}
@@ -250,7 +267,9 @@ onUnmounted(() => {
             <input v-model="studioUrl" type="text" />
           </label>
         </div>
-
+        
+        <!-- ... existing constraints ... -->
+        
         <div class="control-group">
           <h3>Integration</h3>
           <div class="radio-group">
@@ -327,6 +346,13 @@ onUnmounted(() => {
         ></iframe>
       </div>
     </main>
+
+    <main v-else class="preview-mode">
+      <ThingsVisPreview 
+        :studio-url="studioUrl"
+        :token="currentToken"
+      />
+    </main>
   </div>
 </template>
 
@@ -347,19 +373,45 @@ header {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  height: 36px;
+  gap: 0.75rem;
+  height: 48px;
   flex-shrink: 0;
 }
 
 header h1 {
   font-size: 0.9rem;
   margin: 0;
+  margin-right: 1rem;
 }
 
-header p {
-  font-size: 0.75rem;
-  color: #71717a;
-  margin: 0;
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tabs button {
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.tabs button.active {
+  background: #f4f4f5;
+  color: #000;
+  border-color: #e4e4e7;
+  font-weight: 600;
+}
+
+.preview-mode {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
 }
 
 main {
