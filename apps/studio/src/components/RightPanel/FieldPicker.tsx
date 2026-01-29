@@ -19,6 +19,8 @@ type Props = {
   language?: string;
 };
 
+import { isEmbedMode } from '@/embed/embed-mode';
+
 export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, language }: Props) {
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
@@ -34,9 +36,14 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
   const selectedFieldPath = value?.fieldPath || '';
 
   // Check if selected source is platform fields
-  const isPlatformSource = selectedDataSourceId === '__platform__';
+  const isEmbedded = isEmbedMode();
 
-  const dsState = selectedDataSourceId && !isPlatformSource ? states[selectedDataSourceId] : null;
+  // In embedded mode, if no source is selected, default to platform source
+  const effectiveDataSourceId = (isEmbedded && !selectedDataSourceId) ? '__platform__' : selectedDataSourceId;
+
+  const isPlatformSource = effectiveDataSourceId === '__platform__';
+
+  const dsState = effectiveDataSourceId && !isPlatformSource ? states[effectiveDataSourceId] : null;
   const snapshot = dsState?.data ?? null;
   const dsStatus = dsState?.status ?? 'disconnected';
 
@@ -62,33 +69,43 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
     <div className="space-y-2">
       <div className="space-y-1">
         <label className="text-sm font-medium text-muted-foreground">{t('数据源', 'Data Source')}</label>
-        <select
-          value={selectedDataSourceId}
-          onChange={(e) => {
-            const nextId = e.target.value;
-            safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
-          }}
-          className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
-        >
-          <option value="">{t('(请选择数据源)', '(select a data source)')}</option>
+        {isEmbedded ? (
+          <div className="w-full h-8 px-3 flex items-center text-sm rounded-sm border border-input bg-muted/50 text-muted-foreground cursor-not-allowed">
+            {isPlatformSource ? (
+              <span>{t('平台字段', 'Platform Fields')}</span>
+            ) : (
+              <span>{selectedDataSourceId || t('(未选择)', '(none)')}</span>
+            )}
+          </div>
+        ) : (
+          <select
+            value={selectedDataSourceId}
+            onChange={(e) => {
+              const nextId = e.target.value;
+              safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
+            }}
+            className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
+          >
+            <option value="">{t('(请选择数据源)', '(select a data source)')}</option>
 
-          {/* Platform Fields Option */}
-          {platformFields.length > 0 && (
-            <option value="__platform__">
-              🔌 {t('平台字段 (Platform Fields)', 'Platform Fields')}
-            </option>
-          )}
+            {/* Platform Fields Option */}
+            {platformFields.length > 0 && (
+              <option value="__platform__">
+                🔌 {t('平台字段 (Platform Fields)', 'Platform Fields')}
+              </option>
+            )}
 
-          {/* Regular Data Sources */}
-          {dataSourceIds.length > 0 && platformFields.length > 0 && (
-            <option disabled>──────────</option>
-          )}
-          {dataSourceIds.map((id) => (
-            <option key={id} value={id}>
-              {id}
-            </option>
-          ))}
-        </select>
+            {/* Regular Data Sources */}
+            {dataSourceIds.length > 0 && platformFields.length > 0 && (
+              <option disabled>──────────</option>
+            )}
+            {dataSourceIds.map((id) => (
+              <option key={id} value={id}>
+                {id}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="space-y-1">
@@ -97,10 +114,10 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
           value={selectedFieldPath}
           onChange={(e) => {
             const nextPath = e.target.value;
-            safeOnChange(selectedDataSourceId ? { dataSourceId: selectedDataSourceId, fieldPath: nextPath } : null);
+            safeOnChange(effectiveDataSourceId ? { dataSourceId: effectiveDataSourceId, fieldPath: nextPath } : null);
           }}
           className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
-          disabled={!selectedDataSourceId || (dsStatus === 'loading' && !isPlatformSource)}
+          disabled={!effectiveDataSourceId || (dsStatus === 'loading' && !isPlatformSource)}
         >
           <option value="">{t('(请选择字段)', '(select a field)')}</option>
           {isPlatformSource ? (
