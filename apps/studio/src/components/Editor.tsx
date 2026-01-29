@@ -429,6 +429,44 @@ export default function Editor() {
         setIsBootstrapping(true)
 
         try {
+          // [FIX] In embed mode, skip projectStorage.load and prioritize external JSON
+          if (isEmbedMode()) {
+            console.log('🔗 [Editor] Embed mode detected: skipping projectStorage.load')
+            const initialData = getInitialData()
+
+            if (initialData?.canvas && initialData?.nodes) {
+              console.log('📦 [Editor] Loading initial data from embed init')
+              // Data will be loaded by the embed init event handler
+              // Just create an empty page here, init handler will populate it
+            } else {
+              console.log('⏳ [Editor] Waiting for external data via postMessage')
+            }
+
+            // Create empty page in embed mode - data will come from postMessage
+            store.getState().loadPage({
+              id: `embed-${Date.now()}`,
+              type: 'page' as const,
+              version: '1.0.0',
+              nodes: [],
+              config: {
+                mode: canvasConfig.mode,
+                width: canvasConfig.width,
+                height: canvasConfig.height,
+              }
+            })
+
+            try {
+              store.temporal.getState().clear?.()
+            } catch { }
+
+            // Exit early - don't load from projectStorage
+            if (cancelled) return
+            bootstrappingRef.current = false
+            setIsBootstrapping(false)
+            return
+          }
+
+          // [EXISTING] Non-embed mode: normal project loading
           const loaded = await projectStorage.load(projectId)
           if (cancelled) return
           if (loaded) {
@@ -753,13 +791,14 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('init', (payload: any) => {
-
+      console.log('📨 [Editor] Received embed init event:', payload);
 
       if (payload?.data) {
         const data = payload.data;
 
         // Load canvas config if provided
         if (data.canvas) {
+          console.log('🎨 [Editor] Loading canvas config from external data');
           setCanvasConfig(prev => ({
             ...prev,
             mode: data.canvas.mode || prev.mode,
@@ -774,6 +813,8 @@ export default function Editor() {
 
         // Load nodes if provided
         if (data.nodes && Array.isArray(data.nodes)) {
+          console.log(`📦 [Editor] Loading ${data.nodes.length} nodes from external data`);
+
           // Convert nodes to NodeSchemaType format and load into store
           const nodesToLoad = data.nodes.map((node: any) => ({
             id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -781,6 +822,7 @@ export default function Editor() {
             position: node.position || { x: 100, y: 100 },
             size: node.size || { width: 200, height: 80 },
             props: node.props || {},
+            grid: node.grid, // [IMPORTANT] Preserve grid properties from external JSON
             thingModelBindings: node.thingModelBindings || [],
           }));
 
@@ -796,6 +838,11 @@ export default function Editor() {
             store.temporal.getState().clear?.();
           } catch { }
         }
+
+        // Mark bootstrapping as complete after loading external data
+        bootstrappingRef.current = false;
+        setIsBootstrapping(false);
+        console.log('✅ [Editor] Embed mode initialization complete');
       }
     });
 

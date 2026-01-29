@@ -75,6 +75,7 @@ export default function EmbedPage() {
     responsive: true,
   };
 
+
   // Send message to parent window
   const postToParent = useCallback((message: EmbedMessage) => {
     if (window.parent !== window) {
@@ -144,7 +145,12 @@ export default function EmbedPage() {
   const loadFromSchema = useCallback((schema: any) => {
     setState(s => ({ ...s, isLoading: true, error: null }));
 
-    console.log('🔄 [EmbedPage] loadFromSchema called with mode:', schema.canvas?.mode);
+    console.group('🔄 [EmbedPage] loadFromSchema called');
+    console.log('Full schema:', schema);
+    console.log('Canvas config:', schema.canvas);
+    console.log('Nodes:', schema.nodes);
+    console.log('Node count:', schema.nodes?.length);
+    console.groupEnd();
 
     if (!schema || !schema.canvas) {
       console.error('❌ [EmbedPage] Invalid schema:', schema);
@@ -154,30 +160,7 @@ export default function EmbedPage() {
     }
 
     try {
-      // Update basic canvas settings
-      store.getState().updateCanvas({
-        mode: schema.canvas.mode || 'infinite',
-        width: schema.canvas.width || 1920,
-        height: schema.canvas.height || 1080,
-      });
-
-      // Handle background separately if needed or ensure updateCanvas supports it
-      if (schema.canvas.background && store.getState().updateCanvas) {
-        // Some kernel versions might need explicit setBackground call
-      }
-
-      // Update grid settings in store if needed
-      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
-        const gridSettings = {
-          cols: schema.canvas.gridCols ?? 24,
-          rowHeight: schema.canvas.gridRowHeight ?? 50,
-          gap: schema.canvas.gridGap ?? 5,
-        };
-        console.log('📏 [EmbedPage] Applying grid settings:', gridSettings);
-        store.getState().setGridSettings?.(gridSettings);
-      }
-
-      // Load page into kernel
+      // Load page into kernel FIRST (this resets canvas to defaults)
       const pageNodes = schema.nodes || [];
 
       // If in reflow/grid mode, ensure all nodes have grid properties
@@ -230,6 +213,28 @@ export default function EmbedPage() {
       };
 
       store.getState().loadPage(page);
+
+      // Update canvas settings AFTER loadPage (loadPage resets canvas to defaults)
+      store.getState().updateCanvas({
+        mode: schema.canvas.mode || 'infinite',
+        width: schema.canvas.width || 1920,
+        height: schema.canvas.height || 1080,
+      });
+
+      // Verify the final canvas state
+      const finalCanvas = store.getState().canvas;
+      console.log('📐 [EmbedPage] Final canvas state:', finalCanvas);
+
+      // Update grid settings in store if needed
+      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
+        const gridSettings = {
+          cols: schema.canvas.gridCols ?? 24,
+          rowHeight: schema.canvas.gridRowHeight ?? 50,
+          gap: schema.canvas.gridGap ?? 5,
+        };
+        console.log('📏 [EmbedPage] Applying grid settings:', gridSettings);
+        store.getState().setGridSettings?.(gridSettings);
+      }
 
       setState({
         isLoading: false,
@@ -343,7 +348,16 @@ export default function EmbedPage() {
     );
   }
 
+
   // Render the canvas
+  console.log('🎨 [EmbedPage] Rendering:', {
+    isGridLayout,
+    canvasWidth,
+    canvasHeight,
+    gridSettings,
+    nodeCount: Object.keys(kernelState?.nodesById || {}).length
+  });
+
   return (
     <div className="relative w-screen h-screen bg-background overflow-hidden">
       <div className="absolute inset-0">

@@ -22,9 +22,11 @@ const showTopLeft = ref(true)
 const showToolbar = ref(true)
 const showTopRight = ref(true)
 const injectDefaultProject = ref(false)
+const useSavedData = ref(false) // [NEW] Toggle to use saved data
 const iframeKey = ref(0)
 const events = ref<string[]>([])
 const iframeRef = ref<HTMLIFrameElement | null>(null)
+const savedProjectData = ref<any>(null) // [NEW] Store last saved data
 
 // 平台字段功能
 const enablePlatformFields = ref(true)
@@ -104,6 +106,60 @@ const iframeSrc = computed(() => {
 })
 
 // --- Methods ---
+// [NEW] Load saved data from localStorage
+function loadSavedData() {
+  try {
+    const saved = localStorage.getItem('vue-host-saved-project')
+    if (saved) {
+      savedProjectData.value = JSON.parse(saved)
+      events.value.unshift(`[${new Date().toLocaleTimeString()}] 📂 Loaded saved data from localStorage (${savedProjectData.value.nodes?.length || 0} nodes)`)
+      return savedProjectData.value
+    }
+  } catch (e) {
+    console.error('Failed to load saved data:', e)
+  }
+  return null
+}
+
+// [NEW] Send saved data to editor via postMessage
+function sendInitData() {
+  if (!iframeRef.value?.contentWindow) {
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ⚠️ Iframe not ready`)
+    return
+  }
+  
+  const dataToSend = useSavedData.value ? savedProjectData.value : null
+  
+  if (!dataToSend) {
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ⚠️ No saved data to send`)
+    return
+  }
+  
+  // Deep clone to ensure data is serializable for postMessage
+  try {
+    const clonedData = JSON.parse(JSON.stringify(dataToSend))
+    
+    iframeRef.value.contentWindow.postMessage({
+      type: 'thingsvis:editor-init',
+      payload: { data: clonedData }
+    }, '*')
+    
+    events.value.unshift(
+      `[${new Date().toLocaleTimeString()}] 📤 Sent saved data to editor (${clonedData.nodes?.length || 0} nodes)`
+    )
+  } catch (e: any) {
+    console.error('Failed to clone data:', e)
+    events.value.unshift(`[${new Date().toLocaleTimeString()}] ❌ Failed to send data: ${e.message}`)
+  }
+}
+
+// [NEW] Clear saved data
+function clearSavedData() {
+  localStorage.removeItem('vue-host-saved-project')
+  savedProjectData.value = null
+  events.value.unshift(`[${new Date().toLocaleTimeString()}] 🗑️ Cleared saved data`)
+}
+
 function reload() {
   iframeKey.value++
   events.value.unshift(`[${new Date().toLocaleTimeString()}] Reloading iframe...`)
@@ -202,6 +258,17 @@ function handleMessage(event: MessageEvent) {
     const payload = event.data.payload
     console.log('📦 [Vue Host] Received save data:', payload)
     
+    // [NEW] Save to localStorage for echo-back testing
+    try {
+      localStorage.setItem('vue-host-saved-project', JSON.stringify(payload))
+      savedProjectData.value = payload
+      events.value.unshift(
+        `[${new Date().toLocaleTimeString()}] 💾 Data saved to localStorage`
+      )
+    } catch (e) {
+      console.error('Failed to save to localStorage:', e)
+    }
+    
     // 安全地读取数据
     const projectName = payload?.meta?.name || payload?.canvasConfig?.name || 'Unnamed Project'
     const nodesCount = payload?.nodes?.length ?? 0
@@ -220,6 +287,8 @@ function handleMessage(event: MessageEvent) {
 // --- Lifecycle ---
 onMounted(() => {
   window.addEventListener('message', handleMessage)
+  // [NEW] Load saved data on mount
+  loadSavedData()
 })
 onUnmounted(() => {
   window.removeEventListener('message', handleMessage)
@@ -323,6 +392,14 @@ const currentToken = ref<string | null>(null)
         <div class="control-group">
           <h3>Data Injection</h3>
           <label><input type="checkbox" v-model="injectDefaultProject" /> Inject Default Project</label>
+          <label><input type="checkbox" v-model="useSavedData" /> Use Saved Data (Echo Back)</label>
+          <div v-if="savedProjectData" class="saved-data-info">
+            <span>✅ Saved: {{ savedProjectData.nodes?.length || 0 }} nodes</span>
+          </div>
+          <div class="button-group" v-if="useSavedData">
+            <button class="action-btn" @click="sendInitData">📤 Send Saved Data</button>
+            <button class="action-btn" @click="clearSavedData">🗑️ Clear Saved Data</button>
+          </div>
         </div>
 
         <button class="reload-btn" @click="reload">Reload Editor</button>
@@ -624,5 +701,18 @@ select {
   font-size: 0.85rem;
   background: #fff;
   margin-top: 0.2rem;
+}
+
+.saved-data-info {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.4rem;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+  color: #166534;
 }
 </style>
