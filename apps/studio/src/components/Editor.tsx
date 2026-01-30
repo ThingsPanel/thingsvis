@@ -75,8 +75,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { type KernelState, type KernelActions } from '@thingsvis/kernel'
-import { dataSourceManager } from '@thingsvis/kernel'
-import type { PageSchemaType, NodeSchemaType, DataSource } from '@thingsvis/schema'
+import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import { GridStackCanvas } from '@thingsvis/ui'
 import ComponentsList from './LeftPanel/ComponentsList'
@@ -98,7 +97,6 @@ import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
-import { AlignTools } from './tools/AlignTools'
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -200,7 +198,7 @@ export default function Editor() {
 
   // Debug: Log authentication state
   useEffect(() => {
-
+    
   }, [isAuthenticated, authLoading, user])
 
   // Prompt project creation after login if no project exists
@@ -222,7 +220,7 @@ export default function Editor() {
   useEffect(() => {
     setZoomInput(zoom.toString())
   }, [zoom])
-
+  
   const handleZoomInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setZoomInput(e.target.value)
   }
@@ -273,13 +271,13 @@ export default function Editor() {
         const fromHash = params.get('projectId')
         if (fromHash) return fromHash
       }
-    } catch { }
+    } catch {}
 
     // 2) localStorage last opened project
     try {
       const last = localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY)
       if (last) return last
-    } catch { }
+    } catch {}
 
     // 3) first recent project
     const recent = recentProjects.get()[0]?.id
@@ -293,40 +291,40 @@ export default function Editor() {
     const initialId = resolveInitialProjectId()
     const defaultMode = isEmbedMode() ? "reflow" : "fixed"
     return {
-      // Meta - 基础身份
-      id: initialId,
-      projectId: "",
-      version: "1.0.0",
-      name: "My Visualization",
-      description: "",
-      thumbnail: "",
-      scope: "app" as "app" | "template",
-      params: [] as string[],
-      createdAt: Date.now(),
-      createdBy: "user-001",
+    // Meta - 基础身份
+    id: initialId,
+    projectId: "",
+    version: "1.0.0",
+    name: "My Visualization",
+    description: "",
+    thumbnail: "",
+    scope: "app" as "app" | "template",
+    params: [] as string[],
+    createdAt: Date.now(),
+    createdBy: "user-001",
 
-      // Config - 画布配置
-      mode: defaultMode as "fixed" | "infinite" | "reflow",
-      width: 1920,
-      height: 1080,
-      gridCols: 24,
-      gridRowHeight: 50,
-      gridGap: 5,
-      theme: "dark" as "dark" | "light" | "auto",
-      gridSize: 20,
-      bgType: "color" as "color" | "image",
-      bgValue: "#1a1a1a",
-      bgColor: "#1a1a1a", // Initial value for color input
-      bgImage: "", // Initial value for image URL input
+    // Config - 画布配置
+    mode: defaultMode as "fixed" | "infinite" | "reflow",
+    width: 1920,
+    height: 1080,
+    gridCols: 24,
+    gridRowHeight: 50,
+    gridGap: 5,
+    theme: "dark" as "dark" | "light" | "auto",
+    gridSize: 20,
+    bgType: "color" as "color" | "image",
+    bgValue: "#1a1a1a",
+    bgColor: "#1a1a1a", // Initial value for color input
+    bgImage: "", // Initial value for image URL input
 
-      // Global - 全局逻辑
-      variables: {} as Record<string, any>,
-      dataSources: [] as Array<{ id: string; name: string; type: string; config: any }>,
+    // Global - 全局逻辑
+    variables: {} as Record<string, any>,
+    dataSources: [] as Array<{ id: string; name: string; type: string; config: any }>,
 
-      // Legacy (保持向后兼容)
-      background: "#1a1a1a",
-      gridEnabled: true,
-    }
+    // Legacy (保持向后兼容)
+    background: "#1a1a1a",
+    gridEnabled: true,
+  }
   })
 
   // Single source of truth for persistence id
@@ -338,48 +336,7 @@ export default function Editor() {
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
     // Extract node schemas from NodeState (schemaRef contains the actual node data)
-    let nodes = Object.values(state.nodesById).map(nodeState => ({ ...nodeState.schemaRef }))
-
-    // [FIX] Ensure grid properties are saved when in reflow/grid mode
-    // The editor operates in pixel coordinates, so we must calculate grid coordinates for persistence
-    if (canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') {
-      const cols = canvasConfig.gridCols || 24
-      const rowHeight = canvasConfig.gridRowHeight || 50
-      const gap = canvasConfig.gridGap || 5
-      const canvasWidth = canvasConfig.width || 1920
-
-      // Effective column width (simplified approximations matching typical grid logic)
-      // Note: This logic should ideally match the same logic used in GridStack/useGridLayout
-      // width = colWidth * cols + gap * (cols - 1)
-      // colWidth = (width - gap * (cols - 1)) / cols
-      const totalGapW = gap * (cols - 1)
-      const colWidth = (canvasWidth - totalGapW) / cols
-
-      nodes = nodes.map(node => {
-        // Always recalculate grid to match current visual position
-        const posX = node.position?.x ?? 0
-        const posY = node.position?.y ?? 0
-        const w = node.size?.width ?? 200
-        const h = node.size?.height ?? 100
-
-        // Calculate grid coords
-        const gx = Math.round(posX / (colWidth + gap))
-        const gy = Math.round(posY / (rowHeight + gap))
-        const gw = Math.max(1, Math.round(w / (colWidth + gap)))
-        const gh = Math.max(1, Math.round(h / (rowHeight + gap)))
-
-        return {
-          ...node,
-          grid: {
-            x: gx,
-            y: gy,
-            w: gw,
-            h: gh
-          }
-        }
-      })
-    }
-
+    const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
     return {
       meta: {
         version: '1.0.0',
@@ -400,7 +357,7 @@ export default function Editor() {
         gridSize: canvasConfig.gridSize,
       },
       nodes: nodes,
-      dataSources: dataSourceManager.getAllConfigs(), // Get all data source configs from manager
+      dataSources: canvasConfig.dataSources,
     }
   }, [projectId, canvasConfig])
 
@@ -417,131 +374,81 @@ export default function Editor() {
       }))
       try {
         localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId)
-      } catch { }
+      } catch {}
     },
   })
 
   // Bootstrap: load last project into store (or create a new empty page)
   useEffect(() => {
     let cancelled = false
-      ; (async () => {
-        bootstrappingRef.current = true
-        setIsBootstrapping(true)
+    ;(async () => {
+      bootstrappingRef.current = true
+      setIsBootstrapping(true)
 
-        try {
-          // [FIX] In embed mode, skip projectStorage.load and prioritize external JSON
-          if (isEmbedMode()) {
-            console.log('🔗 [Editor] Embed mode detected: skipping projectStorage.load')
-            const initialData = getInitialData()
-
-            if (initialData?.canvas && initialData?.nodes) {
-              console.log('📦 [Editor] Loading initial data from embed init')
-              // Data will be loaded by the embed init event handler
-              // Just create an empty page here, init handler will populate it
-            } else {
-              console.log('⏳ [Editor] Waiting for external data via postMessage')
-            }
-
-            // Create empty page in embed mode - data will come from postMessage
-            store.getState().loadPage({
-              id: `embed-${Date.now()}`,
-              type: 'page' as const,
-              version: '1.0.0',
-              nodes: [],
-              config: {
-                mode: canvasConfig.mode,
-                width: canvasConfig.width,
-                height: canvasConfig.height,
-              }
-            })
-
-            try {
-              store.temporal.getState().clear?.()
-            } catch { }
-
-            // Exit early - don't load from projectStorage
-            if (cancelled) return
-            bootstrappingRef.current = false
-            setIsBootstrapping(false)
-            return
-          }
-
-          // [EXISTING] Non-embed mode: normal project loading
-          const loaded = await projectStorage.load(projectId)
-          if (cancelled) return
-          if (loaded) {
-            // Load project into kernel store
-            store.getState().loadPage({
-              id: loaded.meta.id,
-              type: 'page' as const,
-              version: loaded.meta.version,
-              nodes: loaded.nodes,
-              config: {
-                mode: loaded.canvas.mode,
-                width: loaded.canvas.width,
-                height: loaded.canvas.height
-              }
-            })
-            // Update canvas config
-            setCanvasConfig(prev => ({
-              ...prev,
-              id: loaded.meta.id,
-              name: loaded.meta.name,
-              createdAt: loaded.meta.createdAt,
+      try {
+        const loaded = await projectStorage.load(projectId)
+        if (cancelled) return
+        if (loaded) {
+          // Load project into kernel store
+          store.getState().loadPage({
+            id: loaded.meta.id,
+            type: 'page' as const,
+            version: loaded.meta.version,
+            nodes: loaded.nodes,
+            config: {
               mode: loaded.canvas.mode,
               width: loaded.canvas.width,
-              height: loaded.canvas.height,
-              bgValue: loaded.canvas.background,
-              gridCols: loaded.canvas.gridCols ?? prev.gridCols,
-              gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
-              gridGap: loaded.canvas.gridGap ?? prev.gridGap,
-              gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
-              gridSize: loaded.canvas.gridSize ?? prev.gridSize,
-              dataSources: (loaded.dataSources as any) ?? prev.dataSources,
-            }))
-
-            // Restore DataSource configurations from project
-            if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
-              // Register all data sources from the project
-              for (const dsConfig of loaded.dataSources) {
-                try {
-                  await dataSourceManager.registerDataSource(dsConfig as DataSource, false)
-                } catch (error) {
-                  console.error('Failed to restore data source:', dsConfig.id, error)
-                }
-              }
+              height: loaded.canvas.height
             }
+          })
+          // Update canvas config
+          setCanvasConfig(prev => ({
+            ...prev,
+            id: loaded.meta.id,
+            name: loaded.meta.name,
+            createdAt: loaded.meta.createdAt,
+            mode: loaded.canvas.mode,
+            width: loaded.canvas.width,
+            height: loaded.canvas.height,
+            bgValue: loaded.canvas.background,
+            gridCols: loaded.canvas.gridCols ?? prev.gridCols,
+            gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
+            gridGap: loaded.canvas.gridGap ?? prev.gridGap,
+            gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
+            gridSize: loaded.canvas.gridSize ?? prev.gridSize,
+            dataSources: (loaded.dataSources as any) ?? prev.dataSources,
+          }))
 
-            // Clear undo history when switching/loading projects (best-effort)
-            try {
-              store.temporal.getState().clear?.()
-            } catch { }
-          } else {
-            // Create new empty project page
-            store.getState().loadPage({
-              id: projectId,
-              type: 'page' as const,
-              version: '1.0.0',
-              nodes: [],
-              config: {
-                mode: canvasConfig.mode,
-                width: canvasConfig.width,
-                height: canvasConfig.height,
-              }
-            })
-            try {
-              store.temporal.getState().clear?.()
-            } catch { }
-          }
-        } catch (e) {
-          // eslint-disable-next-line no-console
-
-        } finally {
-          if (cancelled) return
-          bootstrappingRef.current = false
-          setIsBootstrapping(false)
+          // Clear undo history when switching/loading projects (best-effort)
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
+        } else {
+          // Create new empty project page
+          store.getState().loadPage({
+            id: projectId,
+            type: 'page' as const,
+            version: '1.0.0',
+            nodes: [],
+            config: {
+              mode: canvasConfig.mode,
+              width: canvasConfig.width,
+              height: canvasConfig.height,
+            }
+          })
+          try {
+            store.temporal.getState().clear?.()
+          } catch {}
         }
-      })()
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        
+      } finally {
+        if (cancelled) return
+        bootstrappingRef.current = false
+        setIsBootstrapping(false)
+      }
+    })()
 
     return () => {
       cancelled = true
@@ -625,11 +532,11 @@ export default function Editor() {
       // This ensures the temporal middleware captures both in a single history entry
       applyNodeInsertAndSelect: (nodes, selectIds) => {
         const currentState = store.getState()
-
+        
         // Build the new nodesById with added nodes
         const newNodesById = { ...currentState.nodesById }
         const newLayerOrder = [...currentState.layerOrder]
-
+        
         nodes.forEach(node => {
           newNodesById[node.id] = {
             id: node.id,
@@ -642,7 +549,7 @@ export default function Editor() {
             newLayerOrder.push(node.id)
           }
         })
-
+        
         // Apply the combined state change
         store.setState({
           nodesById: newNodesById,
@@ -661,11 +568,10 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('triggerSave', () => {
-
-      // Collect all nodes with their thing model bindings
+      
       // Collect all nodes with their thing model bindings
       const state = store.getState() as KernelState;
-      let nodes = Object.values(state.nodesById).map(nodeState => {
+      const nodes = Object.values(state.nodesById).map(nodeState => {
         const schema = nodeState.schemaRef as any;
         return {
           id: schema.id,
@@ -673,64 +579,10 @@ export default function Editor() {
           position: schema.position,
           size: schema.size,
           props: schema.props,
-          grid: schema.grid, // [FIX] Include existing grid props
-          // Include thing model bindings if present (物模型绑定)
+          // Include thing model bindings if present
           thingModelBindings: schema.thingModelBindings || [],
-          // Include data bindings for platform fields (平台字段绑定，如 {{ platform.temp }})
-          data: schema.data || [],
         };
       });
-
-      // [FIX] Ensure grid properties are saved when in reflow/grid mode (same as getProjectState)
-      console.log('💾 [Editor] triggerSave: mode=', canvasConfig.mode, 'cols=', canvasConfig.gridCols)
-
-      if (canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') {
-        const cols = canvasConfig.gridCols || 24
-        const rowHeight = canvasConfig.gridRowHeight || 50
-        const gap = canvasConfig.gridGap || 5
-        const canvasWidth = canvasConfig.width || 1920
-
-        const totalGapW = gap * (cols - 1)
-        const colWidth = (canvasWidth - totalGapW) / cols
-
-        console.log('💾 [Editor] Calculating grid fallback (if needed):', { cols, rowHeight, gap, canvasWidth, colWidth })
-
-        nodes = nodes.map(node => {
-          // Correct Logic:
-          // 1. If node already has valid grid info, USE IT! Do not recalculate from stale pixel positions.
-          // 2. Only if grid is missing (e.g. fresh from fixed mode), calculate default from position.
-
-          if (node.grid && node.grid.w > 0 && node.grid.h > 0) {
-            console.log(`Node ${node.id}: Using existing grid(${node.grid.x},${node.grid.y},${node.grid.w},${node.grid.h})`)
-            return node
-          }
-
-          // Fallback: Calculate grid coords from pixel position
-          const posX = node.position?.x ?? 0
-          const posY = node.position?.y ?? 0
-          const w = node.size?.width ?? 200
-          const h = node.size?.height ?? 100
-
-          const gx = Math.round(posX / (colWidth + gap))
-          const gy = Math.round(posY / (rowHeight + gap))
-          const gw = Math.max(1, Math.round(w / (colWidth + gap)))
-          const gh = Math.max(1, Math.round(h / (rowHeight + gap)))
-
-          console.log(`Node ${node.id}: Missing grid! Calculated fallback: pos(${posX},${posY}) -> grid(${gx},${gy},${gw},${gh})`)
-
-          return {
-            ...node,
-            grid: {
-              x: gx,
-              y: gy,
-              w: gw,
-              h: gh
-            }
-          }
-        })
-      } else {
-        console.log('⚠️ [Editor] Skipping grid calculation, mode is', canvasConfig.mode)
-      }
 
       // Build export data for ThingsPanel
       const exportData = {
@@ -742,43 +594,20 @@ export default function Editor() {
         },
         nodes,
         // Collect all thing model bindings in flat format for easy access
-        dataBindings: nodes.flatMap(node => [
-          // Thing model bindings (物模型绑定)
-          ...(node.thingModelBindings || []).map((binding: any) => ({
+        dataBindings: nodes.flatMap(node =>
+          (node.thingModelBindings || []).map((binding: any) => ({
             nodeId: node.id,
-            type: 'thingModel',
             targetProp: binding.targetProp,
             metricsId: binding.metricsId,
             metricsName: binding.metricsName,
             metricsType: binding.metricsType,
             dataType: binding.dataType,
             unit: binding.unit,
-          })),
-          // Platform field bindings (平台字段绑定)
-          ...(node.data || []).map((binding: any) => ({
-            nodeId: node.id,
-            type: 'platformField',
-            targetProp: binding.targetProp,
-            expression: binding.expression,
-          })),
-        ]),
+          }))
+        ),
       };
 
-      try {
-        console.group('📦 [Editor] EXPORT DATA VERIFICATION');
-        console.log('Canvas Mode:', exportData.canvas.mode);
-        console.log('Total Nodes:', exportData.nodes.length);
-        exportData.nodes.forEach((n, i) => {
-          console.log(`Node ${i} (${n.id}): grid=`, n.grid ? JSON.stringify(n.grid) : 'MISSING ❌');
-        });
-        // [USER REQUEST] Print full JSON for verification
-        console.log('👇 FULL PAYLOAD JSON (Copy this check):');
-        console.log(JSON.stringify(exportData, null, 2));
-        console.groupEnd();
-      } catch (e) {
-        console.error('Error logging export data', e);
-      }
-
+      
       // Send to host
       requestSave(exportData);
     });
@@ -791,14 +620,13 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('init', (payload: any) => {
-      console.log('📨 [Editor] Received embed init event:', payload);
-
+      
+      
       if (payload?.data) {
         const data = payload.data;
-
+        
         // Load canvas config if provided
         if (data.canvas) {
-          console.log('🎨 [Editor] Loading canvas config from external data');
           setCanvasConfig(prev => ({
             ...prev,
             mode: data.canvas.mode || prev.mode,
@@ -810,11 +638,9 @@ export default function Editor() {
             gridGap: data.canvas.gridGap ?? prev.gridGap,
           }));
         }
-
+        
         // Load nodes if provided
         if (data.nodes && Array.isArray(data.nodes)) {
-          console.log(`📦 [Editor] Loading ${data.nodes.length} nodes from external data`);
-
           // Convert nodes to NodeSchemaType format and load into store
           const nodesToLoad = data.nodes.map((node: any) => ({
             id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -822,35 +648,29 @@ export default function Editor() {
             position: node.position || { x: 100, y: 100 },
             size: node.size || { width: 200, height: 80 },
             props: node.props || {},
-            grid: node.grid, // [IMPORTANT] Preserve grid properties from external JSON
             thingModelBindings: node.thingModelBindings || [],
           }));
-
+          
           store.getState().loadPage({
             id: `embed-${Date.now()}`,
             type: 'page' as const,
             version: '1.0.0',
             nodes: nodesToLoad,
           });
-
+          
           // Clear undo history for clean start
           try {
             store.temporal.getState().clear?.();
-          } catch { }
+          } catch {}
         }
-
-        // Mark bootstrapping as complete after loading external data
-        bootstrappingRef.current = false;
-        setIsBootstrapping(false);
-        console.log('✅ [Editor] Embed mode initialization complete');
       }
     });
 
     // Also check if initial data is already available (in case init was received before this effect ran)
     const initialData = getInitialData();
     if (initialData) {
-
-
+      
+      
       if (initialData.canvas) {
         setCanvasConfig(prev => ({
           ...prev,
@@ -863,7 +683,7 @@ export default function Editor() {
           gridGap: initialData.canvas.gridGap ?? prev.gridGap,
         }));
       }
-
+      
       if (initialData.nodes && Array.isArray(initialData.nodes)) {
         const nodesToLoad = initialData.nodes.map((node: any) => ({
           id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -873,17 +693,17 @@ export default function Editor() {
           props: node.props || {},
           thingModelBindings: node.thingModelBindings || [],
         }));
-
+        
         store.getState().loadPage({
           id: `embed-${Date.now()}`,
           type: 'page' as const,
           version: '1.0.0',
           nodes: nodesToLoad,
         });
-
+        
         try {
           store.temporal.getState().clear?.();
-        } catch { }
+        } catch {}
       }
     }
 
@@ -931,7 +751,7 @@ export default function Editor() {
       const { entry } = await loadPlugin(componentType)
       const defaultProps = extractDefaults(entry.schema)
       const now = Date.now()
-
+      
       // Calculate grid position for new widget
       const existingNodes = Object.values(store.getState().nodesById)
       let gridY = 0
@@ -941,7 +761,7 @@ export default function Editor() {
           gridY = Math.max(gridY, (g.y ?? 0) + (g.h ?? 2))
         }
       })
-
+      
       const node: NodeSchemaType = {
         id: `node-${componentType}-${now}`,
         type: componentType,
@@ -953,7 +773,7 @@ export default function Editor() {
       }
       store.getState().addNodes([node])
     } catch (e) {
-
+      
     }
   }, [])
 
@@ -1108,7 +928,7 @@ export default function Editor() {
                 store.getState().addNodes([node]);
                 markDirty();
               } catch (e) {
-
+                
               }
             }}
           />
@@ -1188,152 +1008,93 @@ export default function Editor() {
       {/* Top Navigation Bar */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
         {/* Left Side: Logo (Menu), Title, Status */}
-        {embedVisibility.showTopLeft && (
-          <div className="glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                  <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
-                    <Menu className="h-4 w-4 text-white" />
-                  </div>
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
+                <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
+                  <Menu className="h-4 w-4 text-white" />
                 </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 mt-2">
-                <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
-                  <FolderOpen className="h-4 w-4" />
-                  {language === "zh" ? "打开项目" : "Open Project"}
-                  <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
-                  <Save className="h-4 w-4" />
-                  {language === "zh" ? "保存" : "Save"}
-                  <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
-                  <Database className="h-4 w-4" />
-                  {language === "zh" ? "数据源管理" : "Data Sources"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={async () => {
-                    const input = document.createElement('input')
-                    input.type = 'file'
-                    input.accept = '.thingsvis,.json'
-                    input.onchange = async (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0]
-                      if (!file) return
-
-                      try {
-                        // Import and validate the file
-                        const imported = await projectStorage.importFromFile(file)
-                        // Save to local storage
-                        await projectStorage.save(imported)
-                        // Reload to show the imported project
-                        window.location.reload()
-                      } catch (err) {
-                        console.error('Import failed:', err)
-                        alert(language === 'zh' ? '导入失败' : 'Import failed')
-                      }
-                    }
-                    input.click()
-                  }}
-                >
-                  <FileUp className="h-4 w-4" />
-                  {language === "zh" ? "导入配置" : "Import Config"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={async () => {
-                    try {
-                      const projectState = getProjectState()
-                      const json = JSON.stringify(projectState, null, 2)
-                      const blob = new Blob([json], { type: 'application/json' })
-                      const url = URL.createObjectURL(blob)
-                      const filename = `${canvasConfig.name || 'project'}.thingsvis`
-
-                      const link = document.createElement('a')
-                      link.href = url
-                      link.download = filename
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                      URL.revokeObjectURL(url)
-                    } catch (err) {
-                      console.error('Export failed:', err)
-                      alert(language === 'zh' ? '导出失败' : 'Export failed')
-                    }
-                  }}
-                >
-                  <FileDown className="h-4 w-4" />
-                  {language === "zh" ? "导出配置" : "Export Config"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={() => {
-                    alert(language === 'zh'
-                      ? '设置功能开发中...'
-                      : 'Settings coming soon...'
-                    )
-                  }}
-                >
-                  <Settings className="h-4 w-4" />
-                  {language === "zh" ? "设置" : "Settings"}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={() => setShowShortcuts(true)}
-                >
-                  <HelpCircle className="h-4 w-4" />
-                  {language === "zh" ? "帮助" : "Help"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {!authLoading && isAuthenticated && user ? (
-                  <>
-                    <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                      <div className="font-medium text-foreground">{user.name || user.email}</div>
-                      <div className="text-xs">{user.email}</div>
-                    </div>
-                    <DropdownMenuItem
-                      className="gap-2 text-red-600 dark:text-red-400"
-                      onClick={() => {
-                        logout()
-                        window.location.hash = '#/'
-                      }}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {language === "zh" ? "退出登录" : "Logout"}
-                    </DropdownMenuItem>
-                  </>
-                ) : !authLoading ? (
-                  <DropdownMenuItem
-                    className="gap-2"
-                    onClick={() => window.location.hash = '#/login'}
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 mt-2">
+              <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
+                <FolderOpen className="h-4 w-4" />
+                {language === "zh" ? "打开项目" : "Open Project"}
+                <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
+                <Save className="h-4 w-4" />
+                {language === "zh" ? "保存" : "Save"}
+                <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
+                <Database className="h-4 w-4" />
+                {language === "zh" ? "数据源管理" : "Data Sources"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <FileUp className="h-4 w-4" />
+                {language === "zh" ? "导入配置" : "Import Config"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <FileDown className="h-4 w-4" />
+                {language === "zh" ? "导出配置" : "Export Config"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="gap-2">
+                <Settings className="h-4 w-4" />
+                {language === "zh" ? "设置" : "Settings"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="gap-2">
+                <HelpCircle className="h-4 w-4" />
+                {language === "zh" ? "帮助" : "Help"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {!authLoading && isAuthenticated && user ? (
+                <>
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    <div className="font-medium text-foreground">{user.name || user.email}</div>
+                    <div className="text-xs">{user.email}</div>
+                  </div>
+                  <DropdownMenuItem 
+                    className="gap-2 text-red-600 dark:text-red-400" 
+                    onClick={() => {
+                      logout()
+                      window.location.hash = '#/'
+                    }}
                   >
-                    <Users className="h-4 w-4" />
-                    {language === "zh" ? "登录" : "Login"}
+                    <LogOut className="h-4 w-4" />
+                    {language === "zh" ? "退出登录" : "Logout"}
                   </DropdownMenuItem>
-                ) : null}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </>
+              ) : !authLoading ? (
+                <DropdownMenuItem 
+                  className="gap-2" 
+                  onClick={() => window.location.hash = '#/login'}
+                >
+                  <Users className="h-4 w-4" />
+                  {language === "zh" ? "登录" : "Login"}
+                </DropdownMenuItem>
+              ) : null}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <Input
-              placeholder="未命名项目"
-              className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
-              value={canvasConfig.name}
-              onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-            />
+          <Input
+            placeholder="未命名项目"
+            className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+            value={canvasConfig.name}
+            onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
+          />
 
-            <SaveIndicator
-              status={saveState.status}
-              lastSavedAt={saveState.lastSavedAt}
-              error={saveState.error}
-              language={language}
-              className="ml-1 pr-2"
-            />
-          </div>
-        )}
+          <SaveIndicator
+            status={saveState.status}
+            lastSavedAt={saveState.lastSavedAt}
+            error={saveState.error}
+            language={language}
+            className="ml-1 pr-2"
+          />
+        </div>
 
         {/* Center Side: Tools */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
@@ -1346,10 +1107,11 @@ export default function Editor() {
                 key={tool.id}
                 variant="ghost"
                 size="icon"
-                className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${isActive
-                  ? "bg-[#6965db]/10 text-[#6965db] shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
+                className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${
+                  isActive
+                    ? "bg-[#6965db]/10 text-[#6965db] shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                }`}
                 onClick={() => setActiveTool(tool.id)}
                 title={tool.label}
               >
@@ -1357,123 +1119,117 @@ export default function Editor() {
               </Button>
             )
           })}
-
-          {/* Align Tools - shown when 2+ nodes selected */}
-          <AlignTools
-            kernelStore={store}
-            onUserEdit={markDirty}
-          />
         </div>
 
         {/* Right Side: Language, Theme, Preview, Publish */}
-        {embedVisibility.showTopRight && (
-          <div className="glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
-                  <Languages className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="mt-2">
-                <DropdownMenuItem onClick={() => setLanguage("zh")}>
-                  <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setLanguage("en")}>
-                  <span className={language === "en" ? "font-semibold" : ""}>English</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
-              {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </Button>
-
-            {!showRightPanel && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
-                onClick={() => setShowRightPanel(true)}
-                title={language === "zh" ? "显示属性面板" : "Show Properties"}
-              >
-                <PanelRightOpen className="h-4 w-4" />
+        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!embedVisibility.showTopRight ? 'invisible' : ''}`}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
+                <Languages className="h-4 w-4" />
               </Button>
-            )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="mt-2">
+              <DropdownMenuItem onClick={() => setLanguage("zh")}>
+                <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setLanguage("en")}>
+                <span className={language === "en" ? "font-semibold" : ""}>English</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-              onClick={openPreview}
-            >
-              <Eye className="h-4 w-4" />
-              <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
-            </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
+            {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+          </Button>
 
-            <Button
-              size="sm"
-              className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-              onClick={() => { }}
+          {!showRightPanel && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" 
+              onClick={() => setShowRightPanel(true)}
+              title={language === "zh" ? "显示属性面板" : "Show Properties"}
             >
-              <Upload className="h-3.5 w-3.5" />
-              <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
+              <PanelRightOpen className="h-4 w-4" />
             </Button>
-          </div>
-        )}
+          )}
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+            onClick={openPreview}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
+          </Button>
+
+          <Button 
+            size="sm" 
+            className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
+            onClick={() => {}}
+          >
+            <Upload className="h-3.5 w-3.5" />
+            <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
-          <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
-            <div className="flex border-b border-border">
-              <button
-                onClick={() => setLeftPanelTab("components")}
-                className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${leftPanelTab === "components"
+      <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
+          <div className="flex border-b border-border">
+            <button
+              onClick={() => setLeftPanelTab("components")}
+              className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                leftPanelTab === "components"
                   ? "text-foreground border-[#6965db] -mb-px"
                   : "text-muted-foreground border-transparent hover:text-foreground"
-                  }`}
-              >
-                <Grid3x3 className="h-4 w-4" />
-                {language === "zh" ? "组件库" : "Library"}
-              </button>
-              <button
-                onClick={() => setLeftPanelTab("layers")}
-                className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${leftPanelTab === "layers"
+              }`}
+            >
+              <Grid3x3 className="h-4 w-4" />
+              {language === "zh" ? "组件库" : "Library"}
+            </button>
+            <button
+              onClick={() => setLeftPanelTab("layers")}
+              className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${
+                leftPanelTab === "layers"
                   ? "text-foreground border-[#6965db] -mb-px"
                   : "text-muted-foreground border-transparent hover:text-foreground"
-                  }`}
-              >
-                <Layers className="h-4 w-4" />
-                {language === "zh" ? "图层" : "Layers"}
-              </button>
-            </div>
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              {language === "zh" ? "图层" : "Layers"}
+            </button>
+          </div>
 
-            <div className="p-3 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 rounded-md"
-                />
-              </div>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3">
-              {leftPanelTab === "components" ? (
-                <div>
-                  <ComponentsList onInsert={handleAddNode} language={language} />
-                </div>
-              ) : leftPanelTab === "layers" ? (
-                <LayerPanel store={store} language={language} searchQuery={searchQuery} onUserEdit={markDirty} />
-              ) : (
-                <DataPanel store={store} language={language} />
-              )}
+          <div className="p-3 border-b border-border">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-8 rounded-md"
+              />
             </div>
           </div>
-        </aside>
+
+          <div className="flex-1 overflow-y-auto p-3">
+          {leftPanelTab === "components" ? (
+            <div>
+              <ComponentsList onInsert={handleAddNode} language={language} />
+            </div>
+            ) : leftPanelTab === "layers" ? (
+              <LayerPanel store={store} language={language} searchQuery={searchQuery} onUserEdit={markDirty} />
+            ) : (
+              <DataPanel store={store} language={language} />
+            )}
+          </div>
+        </div>
+      </aside>
       )}
 
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
@@ -1522,13 +1278,13 @@ export default function Editor() {
               const rightPanelWidth = (embedVisibility.showProps && showRightPanel) ? 340 : 0
               const availableWidth = window.innerWidth - leftPanelWidth - rightPanelWidth - 60
               const availableHeight = window.innerHeight - 150
-
+              
               const canvasW = canvasConfig.width || 1920
               const canvasH = canvasConfig.height || 1080
-
+              
               const scaleW = availableWidth / canvasW
               const scaleH = availableHeight / canvasH
-
+              
               const bestFit = Math.min(scaleW, scaleH)
               setZoom(Math.floor(Math.max(10, Math.min(500, bestFit * 90))))
             }}
@@ -1586,174 +1342,113 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
-          <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
-              <button
-                className="p-1 hover:bg-accent rounded"
-                onClick={() => {
-                  if (selectedElement) {
-                    store.getState().selectNode(null)
-                  } else {
-                    setShowRightPanel(false)
-                  }
-                }}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {selectedElement ? (
-                <PropsPanel
-                  nodeId={selectedElement}
-                  kernelStore={store}
-                  language={language}
-                  onUserEdit={markDirty}
-                />
-              ) : (
-                <>
-                  {/* Canvas Settings */}
-                  <div className="space-y-4 pb-4 border-b border-border">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {language === "zh" ? "基础信息" : "Basic Info"}
-                    </h3>
+      <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
+        <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
+            <button 
+              className="p-1 hover:bg-accent rounded" 
+              onClick={() => {
+                if (selectedElement) {
+                  store.getState().selectNode(null)
+                } else {
+                  setShowRightPanel(false)
+                }
+              }}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {selectedElement ? (
+              <PropsPanel 
+                nodeId={selectedElement} 
+                kernelStore={store} 
+                language={language} 
+                onUserEdit={markDirty}
+              />
+            ) : (
+              <>
+                {/* Canvas Settings */}
+                <div className="space-y-4 pb-4 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {language === "zh" ? "基础信息" : "Basic Info"}
+                  </h3>
 
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
-                      <Input
-                        value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
-                        readOnly
-                        disabled
-                        className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
-                      <Input
-                        value={canvasConfig.name}
-                        onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-                        className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
-                      <Input
-                        value={canvasConfig.id}
-                        readOnly
-                        className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
-                    </div>
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
+                    <Input
+                      value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                      readOnly
+                      disabled
+                      className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
+                    />
                   </div>
 
-                  <div className="space-y-4 pb-4 border-b border-border">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {language === "zh" ? "画布配置" : "Canvas Config"}
-                    </h3>
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
+                    <Input
+                      value={canvasConfig.name}
+                      onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
+                      className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    />
+                  </div>
 
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
-                      <select
-                        value={canvasConfig.mode}
-                        onChange={(e) => {
-                          const newMode = e.target.value as "fixed" | "infinite" | "reflow";
-                          if (newMode !== canvasConfig.mode) {
-                            const hasNodes = Object.keys(store.getState().nodesById).length > 0;
-                            if (hasNodes) {
-                              const msg = language === "zh"
-                                ? "切换布局模式将清空当前画布，是否继续？"
-                                : "Switching layout mode will clear the current canvas. Continue?";
-                              if (!window.confirm(msg)) return;
-                              store.getState().loadPage({
-                                id: canvasConfig.id,
-                                type: 'page' as const,
-                                version: '1.0.0',
-                                nodes: [],
-                                config: {
-                                  mode: newMode,
-                                  width: canvasConfig.width,
-                                  height: canvasConfig.height,
-                                },
-                              });
-                              markDirty();
-                            }
-                            setCanvasConfig({ ...canvasConfig, mode: newMode });
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
+                    <Input
+                      value={canvasConfig.id}
+                      readOnly
+                      className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 pb-4 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    {language === "zh" ? "画布配置" : "Canvas Config"}
+                  </h3>
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
+                    <select
+                      value={canvasConfig.mode}
+                      onChange={(e) => {
+                        const newMode = e.target.value as "fixed" | "infinite" | "reflow";
+                        if (newMode !== canvasConfig.mode) {
+                          const hasNodes = Object.keys(store.getState().nodesById).length > 0;
+                          if (hasNodes) {
+                            const msg = language === "zh" 
+                              ? "切换布局模式将清空当前画布，是否继续？" 
+                              : "Switching layout mode will clear the current canvas. Continue?";
+                            if (!window.confirm(msg)) return;
+                            store.getState().loadPage({
+                              id: canvasConfig.id,
+                              type: 'page' as const,
+                              version: '1.0.0',
+                              nodes: [],
+                              config: {
+                                mode: newMode,
+                                width: canvasConfig.width,
+                                height: canvasConfig.height,
+                              },
+                            });
+                            markDirty();
                           }
-                        }}
-                        className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
-                      >
-                        <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                        <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
-                        <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
-                      </select>
-                    </div>
+                          setCanvasConfig({ ...canvasConfig, mode: newMode });
+                        }
+                      }}
+                      className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
+                    >
+                      <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
+                      <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
+                      <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
+                    </select>
+                  </div>
 
-                    {canvasConfig.mode === 'reflow' ? (
-                      <div className="space-y-3">
-                        {/* Canvas size for grid mode */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.width}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.height}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                        </div>
-                        {/* Grid settings */}
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "列数" : "Cols"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridCols ?? 24}
-                              min={1}
-                              max={48}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridCols: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "行高" : "Row H"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridRowHeight ?? 10}
-                              min={5}
-                              max={200}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridRowHeight: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "间距" : "Gap"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridGap ?? 5}
-                              min={0}
-                              max={50}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridGap: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
-                        </p>
-                      </div>
-                    ) : canvasConfig.mode === 'fixed' ? (
+                  {canvasConfig.mode === 'reflow' ? (
+                    <div className="space-y-3">
+                      {/* Canvas size for grid mode */}
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
                           <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
@@ -1774,13 +1469,74 @@ export default function Editor() {
                           />
                         </div>
                       </div>
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </div>
+                      {/* Grid settings */}
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "列数" : "Cols"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridCols ?? 24}
+                            min={1}
+                            max={48}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridCols: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "行高" : "Row H"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridRowHeight ?? 10}
+                            min={5}
+                            max={200}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridRowHeight: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">{language === "zh" ? "间距" : "Gap"}</label>
+                          <Input
+                            type="number"
+                            value={canvasConfig.gridGap ?? 5}
+                            min={0}
+                            max={50}
+                            onChange={(e) => setCanvasConfig({ ...canvasConfig, gridGap: Number(e.target.value) })}
+                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
+                      </p>
+                    </div>
+                  ) : canvasConfig.mode === 'fixed' ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                        <Input
+                          type="number"
+                          value={canvasConfig.width}
+                          onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
+                          className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                        <Input
+                          type="number"
+                          value={canvasConfig.height}
+                          onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
+                          className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            )}
           </div>
-        </aside>
+        </div>
+      </aside>
       )}
 
       {/* Keyboard Shortcuts Help Panel */}
@@ -1803,11 +1559,11 @@ export default function Editor() {
         onProjectLoad={(project) => {
           // 标记已选择画布
           setHasSelectedDashboard(true)
-
+          
           // Persist last opened project id
           try {
             localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, project.meta.id)
-          } catch { }
+          } catch {}
 
           // Load project into kernel store
           const pageData = {
@@ -1824,7 +1580,7 @@ export default function Editor() {
           store.getState().loadPage(pageData)
           try {
             store.temporal.getState().clear?.()
-          } catch { }
+          } catch {}
           // Update canvas config
           setCanvasConfig(prev => ({
             ...prev,
@@ -1842,7 +1598,7 @@ export default function Editor() {
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
           }))
-
+          
           // 关闭对话框
           setShowProjectDialog(false)
         }}
@@ -1850,12 +1606,12 @@ export default function Editor() {
           // 本地模式下才使用这个方法创建新项目
           // 云端模式下会在 onProjectLoad 中处理
           setHasSelectedDashboard(true)
-
+          
           // Create new empty project
           const newId = crypto.randomUUID()
           try {
             localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId)
-          } catch { }
+          } catch {}
           const emptyPage = {
             id: newId,
             type: 'page' as const,
@@ -1870,7 +1626,7 @@ export default function Editor() {
           store.getState().loadPage(emptyPage)
           try {
             store.temporal.getState().clear?.()
-          } catch { }
+          } catch {}
 
           setCanvasConfig(prev => ({
             ...prev,
@@ -1879,7 +1635,7 @@ export default function Editor() {
             createdAt: Date.now(),
             dataSources: [],
           }))
-
+          
           // 关闭对话框
           setShowProjectDialog(false)
         }}
