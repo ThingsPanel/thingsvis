@@ -125,7 +125,7 @@ type CanvasConfigSchema = {
   createdBy: string
 
   // Config - 画布配置
-  mode: "fixed" | "infinite" | "reflow" | "grid"
+  mode: "fixed" | "infinite" | "grid"
   width: number
   height: number
   gridCols?: number
@@ -305,7 +305,7 @@ export default function Editor() {
       createdBy: "user-001",
 
       // Config - 画布配置
-      mode: defaultMode as "fixed" | "infinite" | "reflow",
+      mode: defaultMode as "fixed" | "infinite" | "grid",
       width: 1920,
       height: 1080,
       gridCols: 24,
@@ -419,6 +419,21 @@ export default function Editor() {
               gridSize: loaded.canvas.gridSize ?? prev.gridSize,
               dataSources: (loaded.dataSources as any) ?? prev.dataSources,
             }))
+
+            // Sync grid settings to kernel store if in grid mode
+            if (loaded.canvas.mode === 'grid') {
+              store.getState().setGridSettings({
+                cols: loaded.canvas.gridCols ?? 24,
+                rowHeight: loaded.canvas.gridRowHeight ?? 50,
+                gap: loaded.canvas.gridGap ?? 5,
+                compactVertical: true,
+                minW: 1,
+                minH: 1,
+                showGridLines: loaded.canvas.gridEnabled ?? true,
+                breakpoints: [],
+                responsive: true,
+              })
+            }
 
             // Clear undo history when switching/loading projects (best-effort)
             try {
@@ -585,7 +600,7 @@ export default function Editor() {
           position: schema.position,
           size: schema.size,
           props: schema.props,
-          // 🆕 Include grid position for grid/reflow layout mode
+          // Include grid position for grid layout mode
           grid: schema.grid,
           // Include thing model bindings if present
           thingModelBindings: schema.thingModelBindings || [],
@@ -675,7 +690,7 @@ export default function Editor() {
             // 🆕 传递画布配置以确保模式正确
             config: data.canvas ? {
               ...data.canvas,
-              mode: (data.canvas.mode === 'grid' || data.canvas.mode === 'reflow') ? 'reflow' : (data.canvas.mode || 'reflow'),
+              mode: data.canvas.mode || 'grid',
               width: data.canvas.width || 1920,
               height: data.canvas.height || 1080,
               theme: initialTheme,
@@ -945,7 +960,7 @@ export default function Editor() {
 
       {/* Canvas View - switch between normal and grid mode */}
       <div className="absolute inset-0 z-0">
-        {canvasConfig.mode === 'reflow' ? (
+        {canvasConfig.mode === 'grid' ? (
           <GridStackCanvas
             store={store}
             width={canvasConfig.width}
@@ -1010,58 +1025,13 @@ export default function Editor() {
         )}
       </div>
 
-      {Object.keys(kernelState.nodesById).length === 0 && (
+      {isBootstrapping && (
         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
           <div className="text-center space-y-6 pointer-events-auto">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
             <p className="text-muted-foreground max-w-md">
-              {language === "zh" ? "您的所有数据都保存在浏览器本地。" : "Your data is stored locally in the browser."}
+              {language === "zh" ? "正在加载..." : "Loading..."}
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto">
-              <button
-                onClick={() => setShowProjectDialog(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <FolderOpen className="h-4 w-4" />
-                  <span>{language === "zh" ? "打开" : "Open"}</span>
-                </div>
-                <span className="text-sm text-muted-foreground">Ctrl+O</span>
-              </button>
-              <button
-                onClick={() => setShowShortcuts(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <HelpCircle className="h-4 w-4" />
-                  <span>{language === "zh" ? "帮助" : "Help"}</span>
-                </div>
-                <span className="text-sm text-muted-foreground">?</span>
-              </button>
-              {!authLoading && isAuthenticated && user ? (
-                <>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer text-red-600 dark:text-red-400"
-                  >
-                    <div className="flex items-center gap-3">
-                      <LogOut className="h-4 w-4" />
-                      <span>{language === "zh" ? "退出登录" : "Logout"}</span>
-                    </div>
-                  </button>
-                </>
-              ) : !authLoading ? (
-                <button
-                  onClick={() => window.location.hash = '#/login'}
-                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Users className="h-4 w-4" />
-                    <span>{language === "zh" ? "登录" : "Login"}</span>
-                  </div>
-                </button>
-              ) : null}
-            </div>
           </div>
         </div>
       )}
@@ -1472,7 +1442,7 @@ export default function Editor() {
                       <select
                         value={canvasConfig.mode}
                         onChange={(e) => {
-                          const newMode = e.target.value as "fixed" | "infinite" | "reflow" | "grid";
+                          const newMode = e.target.value as "fixed" | "infinite" | "grid";
                           if (newMode !== canvasConfig.mode) {
                             const hasNodes = Object.keys(store.getState().nodesById).length > 0;
                             if (hasNodes) {
@@ -1500,12 +1470,11 @@ export default function Editor() {
                       >
                         <option value="grid">{language === "zh" ? "栅格布局" : "Grid Layout"}</option>
                         <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                        <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
                         <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                       </select>
                     </div>
 
-                    {(canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') ? (
+                    {canvasConfig.mode === 'grid' ? (
                       <div className="space-y-3">
                         {/* Canvas size for grid mode */}
                         <div className="grid grid-cols-2 gap-3">

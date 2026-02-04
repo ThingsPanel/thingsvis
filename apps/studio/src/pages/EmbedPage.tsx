@@ -61,7 +61,7 @@ export default function EmbedPage() {
     return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid));
   }, [kernelState]);
 
-  const isGridLayout = canvasMode === 'reflow' || canvasMode === 'grid' || hasGridNodes;
+  const isGridLayout = canvasMode === 'grid' || hasGridNodes;
 
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
@@ -163,9 +163,9 @@ export default function EmbedPage() {
       // Load page into kernel FIRST (this resets canvas to defaults)
       const pageNodes = schema.nodes || [];
 
-      // If in reflow/grid mode, ensure all nodes have grid properties
+      // If in grid mode, ensure all nodes have grid properties
       // This fixes the issue where nodes without grid props stack on top of each other
-      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid') {
+      if (schema.canvas.mode === 'grid') {
         const GRID_COLS = schema.canvas.gridCols ?? 24;
         let runningY = 0;
         let runningX = 0;
@@ -226,7 +226,7 @@ export default function EmbedPage() {
       console.log('📐 [EmbedPage] Final canvas state:', finalCanvas);
 
       // Update grid settings in store if needed
-      if (schema.canvas.mode === 'reflow' || schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
+      if (schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
         const gridSettings = {
           cols: schema.canvas.gridCols ?? 24,
           rowHeight: schema.canvas.gridRowHeight ?? 50,

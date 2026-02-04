@@ -31,7 +31,7 @@ export const ProjectMetaSchema = z.object({
 
 export const CanvasConfigSchema = z.object({
   /** Canvas layout mode */
-  mode: z.enum(['fixed', 'infinite', 'reflow']),
+  mode: z.enum(['fixed', 'infinite', 'grid']),
   /** Canvas width in pixels */
   width: z.number().int().positive(),
   /** Canvas height in pixels */
