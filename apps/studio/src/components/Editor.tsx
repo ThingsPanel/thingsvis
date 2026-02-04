@@ -569,21 +569,30 @@ export default function Editor() {
     if (!isEmbedMode()) return;
 
     const unsubscribe = onEmbedEvent('triggerSave', () => {
+      console.log('[Editor triggerSave] 📦 开始收集保存数据...');
 
       // Collect all nodes with their thing model bindings
       const state = store.getState() as KernelState;
+      console.log('[Editor triggerSave] Store state nodesById count:', Object.keys(state.nodesById).length);
+
       const nodes = Object.values(state.nodesById).map(nodeState => {
         const schema = nodeState.schemaRef as any;
+        // Debug log for each node's grid property
+        console.log(`[Editor triggerSave] Node ${schema.id} grid:`, JSON.stringify(schema.grid));
         return {
           id: schema.id,
           type: schema.type,
           position: schema.position,
           size: schema.size,
           props: schema.props,
+          // 🆕 Include grid position for grid/reflow layout mode
+          grid: schema.grid,
           // Include thing model bindings if present
           thingModelBindings: schema.thingModelBindings || [],
         };
       });
+
+      console.log('[Editor triggerSave] 📊 Collected nodes:', nodes.map(n => ({ id: n.id, grid: n.grid })));
 
       // Build export data for ThingsPanel
       const exportData = {
@@ -1058,7 +1067,7 @@ export default function Editor() {
       )}
 
       {/* Top Navigation Bar */}
-      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+      <div className={`absolute ${isEmbedMode() ? 'top-4' : 'top-4'} left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}>
         {/* Left Side: Logo (Menu), Title, Status */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
           <DropdownMenu>
@@ -1229,7 +1238,7 @@ export default function Editor() {
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className="absolute left-4 top-20 bottom-4 z-40 w-72">
+        <aside className={`absolute left-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 z-40 w-72`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex border-b border-border">
               <button
@@ -1391,7 +1400,7 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className="absolute right-4 top-20 bottom-4 w-80 z-40">
+        <aside className={`absolute right-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 w-80 z-40`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
