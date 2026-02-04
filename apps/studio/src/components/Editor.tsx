@@ -1445,11 +1445,14 @@ export default function Editor() {
                           const newMode = e.target.value as "fixed" | "infinite" | "grid";
                           if (newMode !== canvasConfig.mode) {
                             const hasNodes = Object.keys(store.getState().nodesById).length > 0;
-                            if (hasNodes) {
-                              const msg = language === "zh"
+                            // 嵌入模式下跳过 confirm 对话框（iframe 中 confirm 可能被阻止）
+                            const shouldProceed = isEmbedMode() ? true : !hasNodes || window.confirm(
+                              language === "zh"
                                 ? "切换布局模式将清空当前画布，是否继续？"
-                                : "Switching layout mode will clear the current canvas. Continue?";
-                              if (!window.confirm(msg)) return;
+                                : "Switching layout mode will clear the current canvas. Continue?"
+                            );
+                            if (!shouldProceed) return;
+                            if (hasNodes) {
                               store.getState().loadPage({
                                 id: canvasConfig.id,
                                 type: 'page' as const,
