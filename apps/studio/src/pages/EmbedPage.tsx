@@ -61,7 +61,9 @@ export default function EmbedPage() {
     return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid));
   }, [kernelState]);
 
-  const isGridLayout = canvasMode === 'grid' || hasGridNodes;
+  // 只根据 canvasMode 判断是否使用网格布局
+  // 不再检查 hasGridNodes，避免模式切换后渲染器不匹配
+  const isGridLayout = canvasMode === 'grid';
 
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
@@ -377,6 +379,7 @@ export default function EmbedPage() {
             gridSize={0}
             snapToGrid={false}
             centeredMask={false}
+            interactive={false}
           />
         )}
       </div>
