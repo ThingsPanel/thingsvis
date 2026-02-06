@@ -65,6 +65,9 @@ export default function EmbedPage() {
   // 不再检查 hasGridNodes，避免模式切换后渲染器不匹配
   const isGridLayout = canvasMode === 'grid';
 
+  // 屏幕自适应模式：从 schema 读取配置
+  const fullWidthPreview = state.schema?.canvas?.fullWidthPreview ?? false;
+
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
     rowHeight: 50,
@@ -367,10 +370,11 @@ export default function EmbedPage() {
           <GridStackCanvas
             store={store as any}
             resolvePlugin={resolvePlugin as any}
-            width={canvasWidth}
+            width={fullWidthPreview ? undefined : canvasWidth}
             height={canvasHeight}
             settings={gridSettings}
             interactive={false}
+            fullWidth={fullWidthPreview}
           />
         ) : (
           <CanvasView

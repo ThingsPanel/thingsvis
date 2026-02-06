@@ -27,6 +27,8 @@ export interface GridStackCanvasProps {
   activeTool?: string;
   /** Enable interactions (drag/resize/select/drop). Defaults to true. */
   interactive?: boolean;
+  /** Full-width mode for preview (no shadow, white background, fills container) */
+  fullWidth?: boolean;
 }
 
 // Cache for loaded plugins
@@ -61,6 +63,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   height,
   activeTool,
   interactive = true,
+  fullWidth = false,
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -445,38 +448,56 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        background: '#e5e5e5',
+        background: fullWidth ? '#fff' : '#e5e5e5',
         cursor: activeTool === 'pan' ? 'grab' : 'default',
         userSelect: activeTool === 'pan' ? 'none' : 'auto',
       }}
     >
-      <div
-        style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px))`,
-        }}
-      >
+      {fullWidth ? (
+        /* Full-width mode: no centering, no shadow, fills container */
         <div
           ref={containerRef}
           onDragOver={handleDragOver}
           onDrop={handleDrop}
           style={{
-            width: containerWidth,
+            width: '100%',
             minHeight: containerHeight,
             background: '#fff',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
             overflow: 'hidden',
-            // Add padding to compensate for halved margin on outer edges
             padding: `${margin}px`,
             boxSizing: 'border-box',
           }}
         >
-          {/* The grid-stack container - GridStack will initialize on this */}
           <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
         </div>
-      </div>
+      ) : (
+        /* Normal mode: centered with shadow */
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px))`,
+          }}
+        >
+          <div
+            ref={containerRef}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            style={{
+              width: containerWidth,
+              minHeight: containerHeight,
+              background: '#fff',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+              overflow: 'hidden',
+              padding: `${margin}px`,
+              boxSizing: 'border-box',
+            }}
+          >
+            <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

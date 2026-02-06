@@ -131,6 +131,7 @@ type CanvasConfigSchema = {
   gridCols?: number
   gridRowHeight?: number
   gridGap?: number
+  fullWidthPreview?: boolean  // 预览模式下是否撑满容器宽度
   theme: "dark" | "light" | "auto"
   gridSize: number
   bgType: "color" | "image"
@@ -616,6 +617,7 @@ export default function Editor() {
           width: canvasConfig.width,
           height: canvasConfig.height,
           background: canvasConfig.bgValue,
+          fullWidthPreview: canvasConfig.fullWidthPreview ?? false,
         },
         nodes,
         // Collect all thing model bindings in flat format for easy access
@@ -1538,6 +1540,26 @@ export default function Editor() {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
+                        </p>
+                        {/* 屏幕自适应选项 */}
+                        <div className="flex items-center justify-between pt-2">
+                          <label className="text-sm font-medium">
+                            {language === "zh" ? "屏幕自适应" : "Full Width Preview"}
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={canvasConfig.fullWidthPreview ?? false}
+                            onChange={(e) => setCanvasConfig({
+                              ...canvasConfig,
+                              fullWidthPreview: e.target.checked
+                            })}
+                            className="h-4 w-4 rounded border-gray-300 accent-[#6965db]"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {language === "zh"
+                            ? "勾选后预览页面画布撑满容器宽度，无背景阴影"
+                            : "When checked, preview canvas fills container width without shadow"}
                         </p>
                       </div>
                     ) : canvasConfig.mode === 'fixed' ? (
