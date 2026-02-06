@@ -5,6 +5,7 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    allowedDevOrigins: ['http://localhost:5002'],
   },
 };
 

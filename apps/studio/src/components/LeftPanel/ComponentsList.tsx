@@ -193,7 +193,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
 
   // Get categories that have matching items
   const hasResults = Object.keys(filteredCategoriesMap).length > 0;
-  const defaultExpandedCategories = searchQuery ? Object.keys(filteredCategoriesMap) : CATEGORY_DEFS.map((c) => c.key);
+  // const defaultExpandedCategories = searchQuery ? Object.keys(filteredCategoriesMap) : CATEGORY_DEFS.map((c) => c.key);
 
   return (
     <div className="flex flex-col h-full">
@@ -218,7 +218,12 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
             {language === "zh" ? "未找到匹配的组件" : "No components found"}
           </div>
         ) : (
-          <Accordion type="multiple" value={defaultExpandedCategories} className="space-y-2">
+          <Accordion
+            key={searchQuery ? 'search-results' : 'category-list'}
+            type="multiple"
+            defaultValue={searchQuery ? Object.keys(filteredCategoriesMap) : ["basic"]}
+            className="space-y-2"
+          >
             {CATEGORY_DEFS.map((c) => {
               const label = language === "zh" ? c.labelZh : c.labelEn;
               const items = filteredCategoriesMap[c.key] ?? [];
@@ -227,7 +232,6 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
               // Skip empty categories when searching
               if (items.length === 0 && searchQuery) return null;
 
-              // Render items flat under the primary category while preserving the secondary styling (grid, spacing)
               return (
                 <AccordionItem key={c.key} value={c.key} className="border-0">
                   <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline text-left">

@@ -493,20 +493,19 @@ export default function Editor() {
   ])
 
   const openPreview = useCallback(async () => {
+    // Ensure preview loads the latest saved content
+    await saveNow()
+
+    if (isEmbedMode()) {
+      window.parent.postMessage({ type: 'thingsvis:preview', projectId }, '*')
+      return
+    }
+
     const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}`
 
     // Open a new tab synchronously to avoid popup blockers.
     // We'll navigate it to the preview URL after the save completes.
     const previewWindow = window.open('about:blank', '_blank')
-
-    try {
-      // Ensure preview loads the latest saved content
-      await saveNow()
-    } catch (error) {
-      // If saving fails, don't leave a blank tab around.
-      previewWindow?.close()
-      throw error
-    }
 
     const url = new URL(window.location.href)
     url.hash = previewHash
