@@ -663,6 +663,7 @@ export default function Editor() {
             gridCols: data.canvas.gridCols ?? prev.gridCols,
             gridRowHeight: data.canvas.gridRowHeight ?? prev.gridRowHeight,
             gridGap: data.canvas.gridGap ?? prev.gridGap,
+            fullWidthPreview: data.canvas.fullWidthPreview ?? prev.fullWidthPreview,
           }));
         }
 
@@ -729,6 +730,7 @@ export default function Editor() {
           gridCols: initialData.canvas.gridCols ?? prev.gridCols,
           gridRowHeight: initialData.canvas.gridRowHeight ?? prev.gridRowHeight,
           gridGap: initialData.canvas.gridGap ?? prev.gridGap,
+          fullWidthPreview: initialData.canvas.fullWidthPreview ?? prev.fullWidthPreview,
         }));
       }
 

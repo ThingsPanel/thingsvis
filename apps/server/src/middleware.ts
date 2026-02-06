@@ -68,6 +68,8 @@ export default auth(async (req) => {
   const isAuthRoute = req.nextUrl.pathname.startsWith('/api/v1/auth')
   const isPublicRoute = req.nextUrl.pathname.startsWith('/api/v1/public')
   const isHealthRoute = req.nextUrl.pathname === '/api/v1/health'
+  // TODO: Remove this temporary bypass once token authentication is properly configured
+  const isUploadsRoute = req.nextUrl.pathname.startsWith('/api/v1/uploads')
 
   // Get origin for CORS headers
   const origin = req.headers.get('origin')
@@ -82,8 +84,8 @@ export default auth(async (req) => {
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Requested-With',
   }
 
-  // Allow auth routes, public routes, and health check
-  if (isAuthRoute || isPublicRoute || isHealthRoute) {
+  // Allow auth routes, public routes, health check, and uploads (temporary)
+  if (isAuthRoute || isPublicRoute || isHealthRoute || isUploadsRoute) {
     return NextResponse.next({
       headers: corsHeaders,
     })
