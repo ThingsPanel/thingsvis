@@ -504,6 +504,33 @@ export default function Editor() {
     canvasConfig.gridSize,
   ])
 
+  // 🔑 订阅 store 节点变化，自动触发 markDirty
+  // 这样无论节点是通过什么方式（添加、删除、粘贴、属性修改等）变化的，
+  // 都会自动触发保存，而不需要在每个调用点手动添加 markDirty
+  useEffect(() => {
+    if (isBootstrapping) return
+
+    let prevNodesById: any = null
+    let prevLayerOrder: any = null
+
+    const unsubscribe = store.subscribe(() => {
+      if (bootstrappingRef.current) return
+
+      const state = store.getState()
+      const nodesById = state.nodesById
+      const layerOrder = state.layerOrder
+
+      // 比较引用是否变化（zustand 在状态变化时会创建新引用）
+      if (nodesById !== prevNodesById || layerOrder !== prevLayerOrder) {
+        prevNodesById = nodesById
+        prevLayerOrder = layerOrder
+        markDirty()
+      }
+    })
+
+    return unsubscribe
+  }, [isBootstrapping, markDirty])
+
   const openPreview = useCallback(async () => {
     // Ensure preview loads the latest saved content
     await saveNow()
@@ -1104,7 +1131,7 @@ export default function Editor() {
 
           <Input
             placeholder="未命名项目"
-            className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+            className="w-48 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
             value={canvasConfig.name}
             onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
           />

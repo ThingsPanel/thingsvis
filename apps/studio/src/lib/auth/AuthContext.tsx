@@ -55,10 +55,38 @@ function isEmbedded(): boolean {
   }
 }
 
-// Get URL parameters for embed mode
+// Get URL parameters for embed mode (check both search and hash)
 function getEmbedToken(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('token');
+  // 1. 首先检查 search params (?token=xxx)
+  const searchParams = new URLSearchParams(window.location.search);
+  const searchToken = searchParams.get('token');
+  if (searchToken) return searchToken;
+  
+  // 2. 然后检查 hash params (#/editor?token=xxx)
+  const hash = window.location.hash || '';
+  const queryIndex = hash.indexOf('?');
+  if (queryIndex >= 0) {
+    const hashParams = new URLSearchParams(hash.slice(queryIndex + 1));
+    const hashToken = hashParams.get('token');
+    if (hashToken) {
+      console.log('[Auth] 🔑 Found token in hash params');
+      return hashToken;
+    }
+  }
+  
+  // 3. 最后检查 embed-init 中设置的 token
+  try {
+    const { getEmbedToken: getInitToken } = require('../../embed/embed-init');
+    const initToken = getInitToken();
+    if (initToken) {
+      console.log('[Auth] 🔑 Found token from embed-init');
+      return initToken;
+    }
+  } catch (e) {
+    // ignore
+  }
+  
+  return null;
 }
 
 interface AuthProviderProps {
@@ -88,21 +116,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Configure API client when token changes
   useEffect(() => {
-    // Always use localStorage as the source of truth
-    // This ensures token is available even during initialization
-    const currentToken = localStorage.getItem(TOKEN_KEY);
-
+    // 在嵌入模式下，优先使用 embed token
+    const embedToken = getEmbedToken();
+    const localToken = localStorage.getItem(TOKEN_KEY);
+    
+    console.log('[Auth] 配置 API client:', {
+      hasEmbedToken: !!embedToken,
+      hasLocalToken: !!localToken,
+      isEmbedded: isEmbedded()
+    });
 
     apiClient.configure({
       getToken: () => {
-        const token = localStorage.getItem(TOKEN_KEY);
-
-        return token;
+        // 优先使用 embed token（嵌入模式）
+        const embed = getEmbedToken();
+        if (embed) return embed;
+        
+        // 否则使用 localStorage 中的 token
+        return localStorage.getItem(TOKEN_KEY);
       },
       onUnauthorized: () => {
         // Token expired or invalid
-
-        clearAuth();
+        // 在嵌入模式下不清除认证，因为 token 是外部传入的
+        if (!isEmbedded()) {
+          clearAuth();
+        }
       },
     });
   }, [clearAuth]);

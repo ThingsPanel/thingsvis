@@ -57,6 +57,13 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
   const saveProject = useCallback(
     async (project: ProjectFile) => {
+      console.log('[useAutoSave] saveProject called:', {
+        shouldSaveToHost: shouldSaveToHost(),
+        isCloud: storage.isCloud,
+        saveStrategy: saveStrategy,
+        projectId: project.meta.id,
+      });
+      
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
         console.log('[useAutoSave] 📤 保存到宿主平台 (host-save)');
@@ -109,6 +116,12 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     [storage, onIdChange, saveStrategy]
   )
 
+  // 🔑 关键修复：使用 ref 保存最新的 saveProject 函数，避免 autoSaveManager 重新初始化
+  const saveProjectRef = useRef(saveProject)
+  useEffect(() => {
+    saveProjectRef.current = saveProject
+  }, [saveProject])
+
   // Keep latest getter without causing AutoSaveManager re-init (which would cancel debounce timers)
   const getProjectStateRef = useRef(getProjectState)
   useEffect(() => {
@@ -125,16 +138,21 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     () => autoSaveManager.getStatus()
   )
 
-  // Initialize auto-save manager
+  // Initialize auto-save manager - 只在 projectId/enabled 变化时重新初始化
   useEffect(() => {
     if (!enabled) return
 
-    autoSaveManager.init(projectId, () => getProjectStateRef.current(), saveProject)
+    // 使用 ref 包装的函数，这样 autoSaveManager 始终调用最新的 saveProject
+    autoSaveManager.init(
+      projectId, 
+      () => getProjectStateRef.current(), 
+      (project) => saveProjectRef.current(project)
+    )
 
     return () => {
       autoSaveManager.destroy()
     }
-  }, [projectId, enabled, saveProject])
+  }, [projectId, enabled])
 
   // Mark dirty - call this when state changes
   const markDirty = useCallback(() => {

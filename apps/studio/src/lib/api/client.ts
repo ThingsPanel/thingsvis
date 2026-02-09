@@ -37,6 +37,10 @@ class ApiClient {
   }
 
   configure(config: Partial<ApiClientConfig>) {
+    console.log('[ApiClient] configure called:', {
+      hasBaseUrl: !!config.baseUrl,
+      hasGetToken: !!config.getToken,
+    });
     if (config.baseUrl) this.baseUrl = config.baseUrl;
     if (config.getToken) this.getToken = config.getToken;
     if (config.onUnauthorized) this.onUnauthorized = config.onUnauthorized;
@@ -51,7 +55,13 @@ class ApiClient {
     const url = `${this.baseUrl}${path}`;
     const token = this.getToken();
 
-    
+    // 🔍 调试：打印 token 获取情况
+    console.log('[ApiClient] request:', {
+      method,
+      url,
+      hasToken: !!token,
+      tokenPreview: token ? token.substring(0, 20) + '...' : null,
+    });
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
