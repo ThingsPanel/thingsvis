@@ -1199,7 +1199,13 @@ export default function Editor() {
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className={`absolute left-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 z-40 w-72`}>
+        <aside className={`absolute left-4 ${
+          isEmbedMode() 
+            ? (embedVisibility.showTopLeft || embedVisibility.showTopRight) 
+              ? 'top-20' // 顶部工具栏显示时留出空间
+              : 'top-4' 
+            : 'top-20'
+        } bottom-4 z-40 w-72`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex border-b border-border">
               <button
@@ -1361,7 +1367,13 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className={`absolute right-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 w-80 z-40`}>
+        <aside className={`absolute right-4 ${
+          isEmbedMode() 
+            ? (embedVisibility.showTopLeft || embedVisibility.showTopRight) 
+              ? 'top-20' // 顶部工具栏显示时留出空间
+              : 'top-4' 
+            : 'top-20'
+        } bottom-4 w-80 z-40`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
