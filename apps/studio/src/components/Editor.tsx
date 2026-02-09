@@ -1131,9 +1131,10 @@ export default function Editor() {
 
           <Input
             placeholder="未命名项目"
-            className="w-48 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+            className="min-w-[100px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
             value={canvasConfig.name}
             onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
+            style={{ width: `${Math.max(100, Math.min(300, (canvasConfig.name?.length || 6) * 14 + 16))}px` }}
           />
 
           <SaveIndicator
