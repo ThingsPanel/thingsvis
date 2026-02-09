@@ -3,6 +3,11 @@
  * 
  * React hook for integrating auto-save with the kernel store.
  * Tracks state changes and triggers auto-save accordingly.
+ * 
+ * 支持三种场景:
+ * 1. 独立运行: 保存到 ThingsVis (云端或本地)
+ * 2. 嵌入物模型 (saveTarget=host): 保存到宿主平台
+ * 3. 嵌入可视化 (saveTarget=self): 保存到 ThingsVis 云端
  */
 
 import { useEffect, useCallback, useSyncExternalStore, useRef } from 'react'
@@ -12,6 +17,13 @@ import type { SaveState } from '../lib/storage/types'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { useStorage } from './useStorage'
 import type { StorageProject } from '../lib/storage/adapter'
+import { 
+  shouldSaveToHost, 
+  getEffectiveProjectId,
+  useSaveStrategy,
+  type SavePayload 
+} from '../lib/storage/saveStrategy'
+import { requestSave as sendToHost } from '../embed/embed-mode'
 
 // =============================================================================
 // Hook Options
@@ -41,13 +53,36 @@ export interface UseAutoSaveOptions {
 export function useAutoSave(options: UseAutoSaveOptions) {
   const { projectId, cloudProjectId, getProjectState, enabled = true, onIdChange } = options
   const storage = useStorage(cloudProjectId)
+  const saveStrategy = useSaveStrategy()
 
   const saveProject = useCallback(
     async (project: ProjectFile) => {
+      // 场景2: 嵌入物模型 - 保存到宿主平台
+      if (shouldSaveToHost()) {
+        console.log('[useAutoSave] 📤 保存到宿主平台 (host-save)');
+        const payload: SavePayload = {
+          meta: {
+            id: project.meta.id,
+            name: project.meta.name,
+            version: project.meta.version,
+          },
+          canvas: project.canvas,
+          nodes: project.nodes,
+          dataSources: project.dataSources,
+          dataBindings: extractDataBindings(project.nodes),
+        };
+        sendToHost(payload);
+        return;
+      }
+
+      // 场景1 & 场景3: 保存到 ThingsVis (云端或本地)
+      // 使用嵌入模式传来的有效 ID
+      const effectiveId = getEffectiveProjectId(project.meta.id);
+      
       if (storage.isCloud) {
         const storageProject: StorageProject = {
           meta: {
-            id: project.meta.id,
+            id: effectiveId,
             name: project.meta.name,
             thumbnail: project.meta.thumbnail,
             createdAt: project.meta.createdAt,
@@ -59,16 +94,19 @@ export function useAutoSave(options: UseAutoSaveOptions) {
             dataSources: project.dataSources,
           },
         }
+        console.log('[useAutoSave] 📤 保存到云端:', effectiveId);
         const result = await storage.save(storageProject)
         if (result?.id && result.id !== project.meta.id) {
           onIdChange?.(result.id)
         }
-        return
+        return;
       }
 
+      // 本地存储 (未登录独立运行)
+      console.log('[useAutoSave] 📤 保存到本地:', project.meta.id);
       await projectStorage.save(project)
     },
-    [storage, onIdChange]
+    [storage, onIdChange, saveStrategy]
   )
 
   // Keep latest getter without causing AutoSaveManager re-init (which would cancel debounce timers)
@@ -160,4 +198,29 @@ export function useProject(options: UseProjectOptions = {}) {
     loadProject,
     createProject,
   }
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+/**
+ * 从节点数据中提取数据绑定信息
+ * 用于 saveTarget=host 场景下向宿主传递绑定关系
+ */
+function extractDataBindings(nodes: any[]): any[] {
+  if (!Array.isArray(nodes)) return [];
+  
+  return nodes.flatMap(node => {
+    const bindings = node.thingModelBindings || [];
+    return bindings.map((binding: any) => ({
+      nodeId: node.id,
+      targetProp: binding.targetProp,
+      metricsId: binding.metricsId,
+      metricsName: binding.metricsName,
+      metricsType: binding.metricsType,
+      dataType: binding.dataType,
+      unit: binding.unit,
+    }));
+  });
 }

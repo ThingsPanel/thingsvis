@@ -28,7 +28,7 @@ export interface UseStorageResult {
 }
 
 /**
- * Hook to get the appropriate storage adapter based on auth state.
+ * Hook to get the appropriate storage adapter based on auth state and save strategy.
  * 
  * @param projectId - Optional project ID for cloud storage operations
  * @returns Storage operations and current backend type
@@ -36,14 +36,35 @@ export interface UseStorageResult {
 export function useStorage(projectId?: string): UseStorageResult {
   const { isAuthenticated, storageMode } = useAuth();
   
-  // Get the appropriate adapter based on auth state
+  // Get the appropriate adapter based on auth state and save strategy
   const adapter: StorageAdapter = useMemo(() => {
+    /**
+     * 存储后端选择逻辑:
+     * 
+     * 1. 独立运行 + 已登录 → 云端存储
+     * 2. 独立运行 + 未登录 → 本地存储 (IndexedDB)
+     * 3. 嵌入模式 + saveTarget=self → 云端存储 (ThingsVis API)
+     * 4. 嵌入模式 + saveTarget=host → 由 SaveStrategy 处理 postMessage
+     */
+    
+    // 嵌入模式: 优先使用云端 (除非明确要保存到宿主)
+    if (storageMode === 'embed') {
+      // 嵌入模式总是尝试使用云端存储
+      // saveTarget=host 的情况由 SaveStrategy.executeSave 处理
+      console.log('[useStorage] 嵌入模式，使用云端存储');
+      return createCloudStorageAdapter(projectId);
+    }
+    
+    // 独立运行: 根据认证状态选择
     const shouldUseCloud = isAuthenticated && storageMode === 'cloud';
     
+    console.log('[useStorage] 存储模式:', storageMode, '已认证:', isAuthenticated, '使用云端:', shouldUseCloud);
     
     if (shouldUseCloud) {
       return createCloudStorageAdapter(projectId);
     }
+    
+    // 未登录独立运行: 使用本地存储
     return localStorageAdapter;
   }, [isAuthenticated, storageMode, projectId]);
 

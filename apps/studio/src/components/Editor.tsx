@@ -97,6 +97,8 @@ import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
+import { initSaveStrategy, updateEmbeddedConfig, getEffectiveProjectId } from '../lib/storage/saveStrategy'
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -196,6 +198,16 @@ export default function Editor() {
     const isDark = document.documentElement.classList.contains('dark')
     setIsDarkMode(isDark)
   }, [])
+
+  // 🔑 在嵌入模式下初始化 SaveStrategy (只执行一次)
+  const embedInitializedRef = useRef(false);
+  useEffect(() => {
+    if (embedVisibility.isEmbedded && !embedInitializedRef.current) {
+      embedInitializedRef.current = true;
+      console.log('[Editor] 初始化嵌入模式 SaveStrategy');
+      initEmbedModeFromUrl(isAuthenticated);
+    }
+  }, [embedVisibility.isEmbedded, isAuthenticated])
 
   // Debug: Log authentication state
   useEffect(() => {
@@ -645,122 +657,98 @@ export default function Editor() {
   useEffect(() => {
     if (!isEmbedMode()) return;
 
-    const unsubscribe = onEmbedEvent('init', (payload: any) => {
+    const unsubscribe = onEmbedEvent('init', (payload: EmbedInitPayload) => {
+      console.log('[Editor] 📥 收到 embed init 事件:', payload);
 
+      // 使用新的处理函数解析数据
+      const processed = processEmbedInitPayload(payload);
+      if (!processed) {
+        console.warn('[Editor] ⚠️ embed init 数据无效');
+        return;
+      }
 
-      if (payload?.data) {
-        const data = payload.data;
+      // 🔑 关键修复：使用宿主传来的项目 ID 更新 canvasConfig
+      setCanvasConfig(prev => ({
+        ...prev,
+        id: processed.projectId, // 使用宿主传来的 ID
+        name: processed.projectName,
+        mode: processed.canvas.mode as any,
+        width: processed.canvas.width,
+        height: processed.canvas.height,
+        bgValue: processed.canvas.background,
+        gridCols: processed.canvas.gridCols,
+        gridRowHeight: processed.canvas.gridRowHeight,
+        gridGap: processed.canvas.gridGap,
+        fullWidthPreview: processed.canvas.fullWidthPreview,
+      }));
 
-        // Load canvas config if provided
-        if (data.canvas) {
-          setCanvasConfig(prev => ({
-            ...prev,
-            mode: data.canvas.mode || prev.mode,
-            width: data.canvas.width || prev.width,
-            height: data.canvas.height || prev.height,
-            bgValue: data.canvas.background || prev.bgValue,
-            gridCols: data.canvas.gridCols ?? prev.gridCols,
-            gridRowHeight: data.canvas.gridRowHeight ?? prev.gridRowHeight,
-            gridGap: data.canvas.gridGap ?? prev.gridGap,
-            fullWidthPreview: data.canvas.fullWidthPreview ?? prev.fullWidthPreview,
-          }));
-        }
+      // 加载节点到 store，使用正确的项目 ID
+      if (processed.nodes.length > 0) {
+        store.getState().loadPage({
+          id: processed.projectId, // 🔑 使用宿主传来的 ID
+          type: 'page' as const,
+          version: '1.0.0',
+          nodes: processed.nodes,
+          config: {
+            mode: processed.canvas.mode,
+            width: processed.canvas.width,
+            height: processed.canvas.height,
+            gridSettings: {
+              cols: processed.canvas.gridCols,
+              rowHeight: processed.canvas.gridRowHeight,
+              gap: processed.canvas.gridGap,
+              compactVertical: false,
+              responsive: false,
+            },
+          },
+        });
 
-        // Load nodes if provided
-        // Load nodes if provided
-        if (data.nodes && Array.isArray(data.nodes)) {
-          // Convert nodes to NodeSchemaType format and load into store
-          const nodesToLoad = data.nodes.map((node: any) => ({
-            id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            type: node.type,
-            position: node.position || { x: 100, y: 100 },
-            size: node.size || { width: 200, height: 80 },
-            props: node.props || {},
-            thingModelBindings: node.thingModelBindings || [],
-            // 🆕 保留网格布局位置
-            grid: node.grid,
-          }));
+        // Clear undo history for clean start
+        try {
+          store.temporal.getState().clear?.();
+        } catch { }
+      }
 
-          // Determine initial theme based on context or default to light
-          const initialTheme = data.canvas?.theme || 'light';
+      console.log('[Editor] ✅ embed init 处理完成, projectId:', processed.projectId);
+    });
 
+    // Also check if initial data is already available (in case init was received before this effect ran)
+    const initialData = getInitialData() as EmbedInitPayload | null;
+    if (initialData) {
+      console.log('[Editor] 📥 发现已有初始数据，处理中...');
+      const processed = processEmbedInitPayload(initialData);
+      if (processed) {
+        setCanvasConfig(prev => ({
+          ...prev,
+          id: processed.projectId,
+          name: processed.projectName,
+          mode: processed.canvas.mode as any,
+          width: processed.canvas.width,
+          height: processed.canvas.height,
+          bgValue: processed.canvas.background,
+          gridCols: processed.canvas.gridCols,
+          gridRowHeight: processed.canvas.gridRowHeight,
+          gridGap: processed.canvas.gridGap,
+          fullWidthPreview: processed.canvas.fullWidthPreview,
+        }));
+
+        if (processed.nodes.length > 0) {
           store.getState().loadPage({
-            id: `embed-${Date.now()}`,
+            id: processed.projectId,
             type: 'page' as const,
             version: '1.0.0',
-            nodes: nodesToLoad,
-            // 🆕 传递画布配置以确保模式正确
-            config: data.canvas ? {
-              ...data.canvas,
-              mode: data.canvas.mode || 'grid',
-              width: data.canvas.width || 1920,
-              height: data.canvas.height || 1080,
-              theme: initialTheme,
-              gridSettings: data.canvas.gridSettings || {
-                cols: 24,
-                rowHeight: 50,
-                gap: 5,
-                compactVertical: false,
-                responsive: false
-              }
-            } : undefined,
+            nodes: processed.nodes,
+            config: {
+              mode: processed.canvas.mode,
+              width: processed.canvas.width,
+              height: processed.canvas.height,
+            },
           });
 
-          // Clear undo history for clean start
           try {
             store.temporal.getState().clear?.();
           } catch { }
         }
-      }
-    });
-
-    // Also check if initial data is already available (in case init was received before this effect ran)
-    const initialData = getInitialData();
-    if (initialData) {
-
-
-      if (initialData.canvas) {
-        setCanvasConfig(prev => ({
-          ...prev,
-          mode: initialData.canvas.mode || prev.mode,
-          width: initialData.canvas.width || prev.width,
-          height: initialData.canvas.height || prev.height,
-          bgValue: initialData.canvas.background || prev.bgValue,
-          gridCols: initialData.canvas.gridCols ?? prev.gridCols,
-          gridRowHeight: initialData.canvas.gridRowHeight ?? prev.gridRowHeight,
-          gridGap: initialData.canvas.gridGap ?? prev.gridGap,
-          fullWidthPreview: initialData.canvas.fullWidthPreview ?? prev.fullWidthPreview,
-        }));
-      }
-
-      if (initialData.nodes && Array.isArray(initialData.nodes)) {
-        const nodesToLoad = initialData.nodes.map((node: any) => ({
-          id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          type: node.type,
-          position: node.position || { x: 100, y: 100 },
-          size: node.size || { width: 200, height: 80 },
-          props: node.props || {},
-          thingModelBindings: node.thingModelBindings || [],
-          // 🆕 保留网格布局位置
-          grid: node.grid,
-        }));
-
-        store.getState().loadPage({
-          id: `embed-${Date.now()}`,
-          type: 'page' as const,
-          version: '1.0.0',
-          nodes: nodesToLoad,
-          // 🆕 传递画布配置
-          config: initialData.canvas ? {
-            mode: initialData.canvas.mode || 'grid',
-            width: initialData.canvas.width || 1920,
-            height: initialData.canvas.height || 1080,
-          } : undefined,
-        });
-
-        try {
-          store.temporal.getState().clear?.();
-        } catch { }
       }
     }
 
