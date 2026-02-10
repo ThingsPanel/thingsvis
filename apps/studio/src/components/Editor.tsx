@@ -402,9 +402,15 @@ export default function Editor() {
     },
   })
 
+  // Track whether canvas config has been initialized after bootstrapping
+  // (reset when projectId changes to avoid marking dirty on initial load)
+  const canvasInitializedRef = useRef(false)
+
   // Bootstrap: load last project into store (or create a new empty page)
   useEffect(() => {
     let cancelled = false
+    // Reset canvasInitializedRef when projectId changes
+    canvasInitializedRef.current = false
       ; (async () => {
         bootstrappingRef.current = true
         setIsBootstrapping(true)
@@ -527,6 +533,12 @@ export default function Editor() {
   // - canvas config changes that affect persistence
   useEffect(() => {
     if (bootstrappingRef.current) return
+    // Skip the first effect after bootstrapping completes
+    // (React state updates are async so canvasConfig changes after bootstrappingRef.current = false)
+    if (!canvasInitializedRef.current) {
+      canvasInitializedRef.current = true
+      return
+    }
     markDirty()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -548,15 +560,17 @@ export default function Editor() {
   useEffect(() => {
     if (isBootstrapping) return
 
-    let prevNodesById: any = null
-    let prevLayerOrder: any = null
+    // Initialize with current state to avoid marking dirty on subscription setup
+    const state = store.getState()
+    let prevNodesById: any = state.nodesById
+    let prevLayerOrder: any = state.layerOrder
 
     const unsubscribe = store.subscribe(() => {
       if (bootstrappingRef.current) return
 
-      const state = store.getState()
-      const nodesById = state.nodesById
-      const layerOrder = state.layerOrder
+      const currentState = store.getState()
+      const nodesById = currentState.nodesById
+      const layerOrder = currentState.layerOrder
 
       // 比较引用是否变化（zustand 在状态变化时会创建新引用）
       if (nodesById !== prevNodesById || layerOrder !== prevLayerOrder) {
@@ -1370,18 +1384,6 @@ export default function Editor() {
                 <Layers className="h-4 w-4" />
                 {language === "zh" ? "图层" : "Layers"}
               </button>
-            </div>
-
-            <div className="p-3 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 rounded-md"
-                />
-              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
