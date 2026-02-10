@@ -593,6 +593,38 @@ export default function Editor() {
     window.location.hash = previewHash
   }, [projectId, saveNow])
 
+  // Open publish - publishes the dashboard
+  const openPublish = useCallback(async () => {
+    // Ensure latest content is saved before publishing
+    await saveNow()
+
+    if (isEmbedMode()) {
+      // In embed mode, notify the host to handle publish
+      window.parent.postMessage({ type: 'thingsvis:publish', projectId }, '*')
+      return
+    }
+
+    // In standalone mode, call publish API directly
+    try {
+      const response = await fetch(`/api/v1/dashboards/${projectId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        // 可以在这里显示成功提示，或者触发一个状态更新
+        console.log('[Editor] Dashboard published successfully')
+      } else {
+        console.error('[Editor] Failed to publish dashboard:', response.statusText)
+      }
+    } catch (error) {
+      console.error('[Editor] Publish error:', error)
+    }
+  }, [projectId, saveNow])
+
   // Register default commands with the command registry
   useEffect(() => {
     registerDefaultCommands({
@@ -1293,7 +1325,7 @@ export default function Editor() {
           <Button
             size="sm"
             className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={() => { }}
+            onClick={openPublish}
           >
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>

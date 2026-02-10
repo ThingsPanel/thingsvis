@@ -98,6 +98,8 @@ model Dashboard {
   publishedAt DateTime?
   shareToken  String?   @unique
   shareConfig String? // JSON: { password?, expiresAt? }
+  
+  homeFlag    Boolean   @default(false) // 是否设为首页
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
