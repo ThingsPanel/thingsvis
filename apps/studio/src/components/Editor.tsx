@@ -90,9 +90,11 @@ import { extractDefaults } from '../plugins/schemaUtils'
 import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
+import { useStorage } from '../hooks/useStorage'
 import { projectStorage } from '../lib/storage/projectStorage'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
+import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
@@ -345,12 +347,16 @@ export default function Editor() {
   const projectId = canvasConfig.id
   const bootstrappingRef = useRef(true)
   const [isBootstrapping, setIsBootstrapping] = useState(true)
+  
+  // 获取正确的存储适配器（根据嵌入模式/认证状态自动选择）
+  const storage = useStorage(projectId)
 
   // Function to get current project state for saving
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
     // Extract node schemas from NodeState (schemaRef contains the actual node data)
     const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
+    
     return {
       meta: {
         version: '1.0.0',
@@ -400,7 +406,34 @@ export default function Editor() {
         setIsBootstrapping(true)
 
         try {
-          const loaded = await projectStorage.load(projectId)
+          // 🔑 根据存储模式选择加载来源
+          // - 嵌入模式 (isCloud=true): 从云端 API 加载
+          // - 本地模式 (isCloud=false): 从 IndexedDB 加载
+          let loaded: ProjectFile | null = null;
+          
+          if (storage.isCloud) {
+            console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
+            const cloudProject = await storage.get(projectId);
+            console.log('[Editor] Bootstrap: 云端项目结果:', cloudProject);
+            if (cloudProject) {
+              loaded = {
+                meta: {
+                  version: '1.0.0',
+                  id: cloudProject.meta.id,
+                  name: cloudProject.meta.name,
+                  createdAt: cloudProject.meta.createdAt,
+                  updatedAt: cloudProject.meta.updatedAt,
+                },
+                canvas: cloudProject.schema.canvas,
+                nodes: cloudProject.schema.nodes,
+                dataSources: cloudProject.schema.dataSources,
+              };
+            }
+          } else {
+            console.log('[Editor] Bootstrap: 从本地加载项目', projectId);
+            loaded = await projectStorage.load(projectId);
+          }
+          
           if (cancelled) return
           if (loaded) {
             // Load project into kernel store
@@ -471,7 +504,7 @@ export default function Editor() {
           }
         } catch (e) {
           // eslint-disable-next-line no-console
-
+          console.error('[Editor] Bootstrap error:', e);
         } finally {
           if (cancelled) return
           bootstrappingRef.current = false
@@ -482,7 +515,8 @@ export default function Editor() {
     return () => {
       cancelled = true
     }
-  }, [projectId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, storage.isCloud])
 
   // Mark dirty on meaningful changes only:
   // - explicit user edits (node add/move/resize/props/etc.)
@@ -684,7 +718,7 @@ export default function Editor() {
   useEffect(() => {
     if (!isEmbedMode()) return;
 
-    const unsubscribe = onEmbedEvent('init', (payload: EmbedInitPayload) => {
+    const unsubscribe = onEmbedEvent('init', async (payload: EmbedInitPayload) => {
       console.log('[Editor] 📥 收到 embed init 事件:', payload);
 
       // 使用新的处理函数解析数据
@@ -709,13 +743,37 @@ export default function Editor() {
         fullWidthPreview: processed.canvas.fullWidthPreview,
       }));
 
+      // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
+      let nodesToLoad = processed.nodes;
+      if (processed.saveTarget === 'self' && processed.projectId) {
+        console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
+        try {
+          const cloudAdapter = createCloudStorageAdapter();
+          const cloudProject = await cloudAdapter.get(processed.projectId);
+          if (cloudProject && cloudProject.schema.nodes.length > 0) {
+            console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
+            console.log('[Editor] 云端节点 data 字段:', cloudProject.schema.nodes.map((n: any) => ({
+              id: n.id,
+              type: n.type,
+              hasData: !!n.data,
+              data: n.data
+            })));
+            nodesToLoad = cloudProject.schema.nodes;
+          } else {
+            console.log('[Editor] ⚠️ 云端无节点数据，使用宿主传来的节点');
+          }
+        } catch (err) {
+          console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
+        }
+      }
+
       // 加载节点到 store，使用正确的项目 ID
-      if (processed.nodes.length > 0) {
+      if (nodesToLoad.length > 0) {
         store.getState().loadPage({
           id: processed.projectId, // 🔑 使用宿主传来的 ID
           type: 'page' as const,
           version: '1.0.0',
-          nodes: processed.nodes,
+          nodes: nodesToLoad,
           config: {
             mode: processed.canvas.mode,
             width: processed.canvas.width,
@@ -742,41 +800,59 @@ export default function Editor() {
     // Also check if initial data is already available (in case init was received before this effect ran)
     const initialData = getInitialData() as EmbedInitPayload | null;
     if (initialData) {
-      console.log('[Editor] 📥 发现已有初始数据，处理中...');
-      const processed = processEmbedInitPayload(initialData);
-      if (processed) {
-        setCanvasConfig(prev => ({
-          ...prev,
-          id: processed.projectId,
-          name: processed.projectName,
-          mode: processed.canvas.mode as any,
-          width: processed.canvas.width,
-          height: processed.canvas.height,
-          bgValue: processed.canvas.background,
-          gridCols: processed.canvas.gridCols,
-          gridRowHeight: processed.canvas.gridRowHeight,
-          gridGap: processed.canvas.gridGap,
-          fullWidthPreview: processed.canvas.fullWidthPreview,
-        }));
-
-        if (processed.nodes.length > 0) {
-          store.getState().loadPage({
+      (async () => {
+        console.log('[Editor] 📥 发现已有初始数据，处理中...');
+        const processed = processEmbedInitPayload(initialData);
+        if (processed) {
+          setCanvasConfig(prev => ({
+            ...prev,
             id: processed.projectId,
-            type: 'page' as const,
-            version: '1.0.0',
-            nodes: processed.nodes,
-            config: {
-              mode: processed.canvas.mode,
-              width: processed.canvas.width,
-              height: processed.canvas.height,
-            },
-          });
+            name: processed.projectName,
+            mode: processed.canvas.mode as any,
+            width: processed.canvas.width,
+            height: processed.canvas.height,
+            bgValue: processed.canvas.background,
+            gridCols: processed.canvas.gridCols,
+            gridRowHeight: processed.canvas.gridRowHeight,
+            gridGap: processed.canvas.gridGap,
+            fullWidthPreview: processed.canvas.fullWidthPreview,
+          }));
 
-          try {
-            store.temporal.getState().clear?.();
-          } catch { }
+          // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
+          let nodesToLoad = processed.nodes;
+          if (processed.saveTarget === 'self' && processed.projectId) {
+            console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
+            try {
+              const cloudAdapter = createCloudStorageAdapter();
+              const cloudProject = await cloudAdapter.get(processed.projectId);
+              if (cloudProject && cloudProject.schema.nodes.length > 0) {
+                console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
+                nodesToLoad = cloudProject.schema.nodes;
+              }
+            } catch (err) {
+              console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
+            }
+          }
+
+          if (nodesToLoad.length > 0) {
+            store.getState().loadPage({
+              id: processed.projectId,
+              type: 'page' as const,
+              version: '1.0.0',
+              nodes: nodesToLoad,
+              config: {
+                mode: processed.canvas.mode,
+                width: processed.canvas.width,
+                height: processed.canvas.height,
+              },
+            });
+
+            try {
+              store.temporal.getState().clear?.();
+            } catch { }
+          }
         }
-      }
+      })();
     }
 
     return unsubscribe

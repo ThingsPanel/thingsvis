@@ -101,7 +101,6 @@ export function useAutoSave(options: UseAutoSaveOptions) {
             dataSources: project.dataSources,
           },
         }
-        console.log('[useAutoSave] 📤 保存到云端:', effectiveId);
         const result = await storage.save(storageProject)
         if (result?.id && result.id !== project.meta.id) {
           onIdChange?.(result.id)

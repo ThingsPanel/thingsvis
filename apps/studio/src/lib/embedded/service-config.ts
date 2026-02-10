@@ -143,15 +143,21 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     : undefined
 
   // -------- Platform fields --------
+  // 平台字段只在物模型嵌入场景 (saveTarget='host') 中使用
+  // 可视化嵌入场景 (saveTarget='self') 应使用 ThingsVis 自己的数据源管理器
   let platformFields: PlatformField[] | undefined
-  try {
-    const fieldsParam = getParam('platformFields')
-    if (fieldsParam) {
-      // URLSearchParams.get() already decodes the parameter, no need to decode again
-      platformFields = JSON.parse(fieldsParam)
+  
+  // 只有 saveTarget 不是 'self' (可视化场景) 时才解析平台字段
+  if (saveTarget !== 'self') {
+    try {
+      const fieldsParam = getParam('platformFields')
+      if (fieldsParam) {
+        // URLSearchParams.get() already decodes the parameter, no need to decode again
+        platformFields = JSON.parse(fieldsParam)
+      }
+    } catch (e) {
+      warnings.push('Failed to parse platform fields')
     }
-  } catch (e) {
-    warnings.push('Failed to parse platform fields')
   }
 
   // -------- Integration level handling --------
