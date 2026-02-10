@@ -310,7 +310,7 @@ export default function EmbedPage() {
   // Render
   if (state.isLoading) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-background">
+      <div className="w-full h-full flex items-center justify-center bg-background" style={{ minHeight: '100%' }}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           <p className="text-muted-foreground text-sm">加载仪表板中...</p>
@@ -321,7 +321,7 @@ export default function EmbedPage() {
 
   if (state.error) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-background">
+      <div className="w-full h-full flex items-center justify-center bg-background" style={{ minHeight: '100%' }}>
         <div className="text-center p-8 max-w-md">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <svg className="w-8 h-8 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -337,7 +337,7 @@ export default function EmbedPage() {
 
   if (!state.schema) {
     return (
-      <div className="w-full h-screen flex items-center justify-center bg-background">
+      <div className="w-full h-full flex items-center justify-center bg-background" style={{ minHeight: '100%' }}>
         <div className="text-center p-8 max-w-md">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <svg className="w-8 h-8 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -360,12 +360,13 @@ export default function EmbedPage() {
     canvasWidth,
     canvasHeight,
     gridSettings,
+    fullWidthPreview,
     nodeCount: Object.keys(kernelState?.nodesById || {}).length
   });
 
   return (
-    <div className="relative w-screen h-screen bg-background overflow-hidden">
-      <div className="absolute inset-0">
+    <div className="relative bg-background overflow-auto" style={{ width: '100vw', height: '100vh' }}>
+      <div style={{ width: '100%', minHeight: '100%' }}>
         {isGridLayout ? (
           <GridStackCanvas
             store={store as any}
