@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         name: true,
         version: true,
         isPublished: true,
+        homeFlag: true,
         projectId: true,
         createdAt: true,
         updatedAt: true,

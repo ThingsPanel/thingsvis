@@ -86,9 +86,10 @@ model Project {
 // Dashboard Model - Visualization screen with canvas, nodes, and data sources
 // =============================================================================
 model Dashboard {
-  id      String @id @default(cuid())
-  name    String
-  version Int    @default(1)
+  id        String  @id @default(cuid())
+  name      String
+  thumbnail String? // 缩略图 URL
+  version   Int     @default(1)
 
   canvasConfig String @default("{}") // JSON: { mode, width, height, background }
   nodes        String @default("[]") // JSON: NodeSchema[]

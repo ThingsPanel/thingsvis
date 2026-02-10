@@ -48,6 +48,10 @@ export const CanvasConfigSchema = z.object({
   gridEnabled: z.boolean().optional(),
   /** Grid cell size in pixels */
   gridSize: z.number().int().positive().optional(),
+  /** Whether to use full width in preview mode */
+  fullWidthPreview: z.boolean().optional(),
+  /** Whether this dashboard is set as homepage */
+  homeFlag: z.boolean().optional(),
 })
 
 // =============================================================================

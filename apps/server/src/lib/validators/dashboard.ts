@@ -21,6 +21,7 @@ export const UpdateDashboardSchema = z.object({
   canvasConfig: z.any().optional(), // Flexible JSON object
   nodes: z.any().optional(), // Flexible JSON array
   dataSources: z.any().optional(), // Flexible JSON array
+  thumbnail: z.string().optional(), // Base64 or URL for thumbnail
 })
 
 // Default canvas configuration

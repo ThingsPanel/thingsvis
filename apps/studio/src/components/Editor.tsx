@@ -136,6 +136,7 @@ type CanvasConfigSchema = {
   gridRowHeight?: number
   gridGap?: number
   fullWidthPreview?: boolean  // 预览模式下是否撑满容器宽度
+  homeFlag?: boolean  // 是否设为首页
   theme: "dark" | "light" | "auto"
   gridSize: number
   bgType: "color" | "image"
@@ -362,6 +363,7 @@ export default function Editor() {
         version: '1.0.0',
         id: projectId,
         name: canvasConfig.name,
+        thumbnail: canvasConfig.thumbnail,
         createdAt: canvasConfig.createdAt,
         updatedAt: Date.now(),
       },
@@ -375,6 +377,8 @@ export default function Editor() {
         gridGap: canvasConfig.gridGap,
         gridEnabled: canvasConfig.gridEnabled,
         gridSize: canvasConfig.gridSize,
+        fullWidthPreview: canvasConfig.fullWidthPreview,
+        homeFlag: canvasConfig.homeFlag,
       },
       nodes: nodes,
       dataSources: canvasConfig.dataSources,
@@ -1568,6 +1572,50 @@ export default function Editor() {
                         readOnly
                         className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
                       />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">{language === "zh" ? "缩略图" : "Thumbnail"}</label>
+                      <div className="flex items-center gap-2">
+                        {canvasConfig.thumbnail ? (
+                          <div className="relative group w-full">
+                            <img
+                              src={canvasConfig.thumbnail}
+                              alt="Thumbnail"
+                              className="w-full h-20 object-cover rounded-md border border-border"
+                            />
+                            <button
+                              onClick={() => setCanvasConfig({ ...canvasConfig, thumbnail: undefined })}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex-1 h-20 border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-[#6965db] transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    const base64 = ev.target?.result as string;
+                                    setCanvasConfig({ ...canvasConfig, thumbnail: base64 });
+                                    markDirty();
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {language === "zh" ? "点击上传缩略图" : "Click to upload"}
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     </div>
                   </div>
 

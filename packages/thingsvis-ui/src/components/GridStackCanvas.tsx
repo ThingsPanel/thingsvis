@@ -199,6 +199,17 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     grid.margin(margin);
   }, [cols, rowHeight, gap, margin]);
 
+  // Update interactive state dynamically
+  useEffect(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+
+    // Enable/disable drag and resize based on interactive prop
+    grid.enableMove(interactive);
+    grid.enableResize(interactive);
+    grid.setStatic(!interactive);
+  }, [interactive]);
+
   // Sync nodes with gridstack using makeWidget
   useEffect(() => {
     const grid = gridRef.current;

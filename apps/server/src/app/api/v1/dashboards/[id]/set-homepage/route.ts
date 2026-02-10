@@ -4,7 +4,7 @@ import { getSessionUser } from '@/lib/auth-helpers'
 
 type Params = { params: Promise<{ id: string }> }
 
-// POST /api/v1/dashboards/:id/publish - Publish a dashboard
+// POST /api/v1/dashboards/:id/set-homepage - Set dashboard as homepage
 export async function POST(request: NextRequest, { params }: Params) {
   const user = await getSessionUser(request)
   if (!user) {
@@ -15,28 +15,35 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const dashboard = await prisma.dashboard.findFirst({
     where: { id, project: { tenantId: user.tenantId } },
+    include: { project: true },
   })
 
   if (!dashboard) {
     return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
   }
 
-  const updated = await prisma.dashboard.update({
-    where: { id },
-    data: {
-      isPublished: true,
-      publishedAt: new Date(),
-    },
-  })
+  // Transaction: Clear other homepage flags in the same project, then set this one
+  await prisma.$transaction([
+    // Clear all homeFlag in the same project
+    prisma.dashboard.updateMany({
+      where: { projectId: dashboard.projectId },
+      data: { homeFlag: false },
+    }),
+    // Set this dashboard as homepage
+    prisma.dashboard.update({
+      where: { id },
+      data: { homeFlag: true },
+    }),
+  ])
 
   return NextResponse.json({
-    id: updated.id,
-    isPublished: updated.isPublished,
-    publishedAt: updated.publishedAt,
+    id,
+    homeFlag: true,
+    message: 'Dashboard set as homepage',
   })
 }
 
-// DELETE /api/v1/dashboards/:id/publish - Unpublish a dashboard
+// DELETE /api/v1/dashboards/:id/set-homepage - Unset dashboard as homepage
 export async function DELETE(request: NextRequest, { params }: Params) {
   const user = await getSessionUser(request)
   if (!user) {
@@ -53,20 +60,14 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
   }
 
-  // Unpublish and invalidate all share links
-  const updated = await prisma.dashboard.update({
+  await prisma.dashboard.update({
     where: { id },
-    data: {
-      isPublished: false,
-      publishedAt: null,
-      shareToken: null,
-      shareConfig: null,
-    },
+    data: { homeFlag: false },
   })
 
   return NextResponse.json({
-    id: updated.id,
-    isPublished: updated.isPublished,
-    publishedAt: updated.publishedAt,
+    id,
+    homeFlag: false,
+    message: 'Homepage flag removed',
   })
 }

@@ -14,15 +14,22 @@ function isCuid(id?: string): boolean {
 }
 
 function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): StorageProject {
+  // Merge homeFlag from dashboard level into canvasConfig for editor use
+  const canvasConfig = {
+    ...(dashboard.canvasConfig || { mode: 'infinite', width: 1920, height: 1080, background: '#1e1e2e' }),
+    homeFlag: dashboard.homeFlag || false,
+  };
+  
   return {
     meta: {
       id: dashboard.id,
       name: dashboard.name,
+      thumbnail: dashboard.thumbnail,
       createdAt: new Date(dashboard.createdAt).getTime(),
       updatedAt: new Date(dashboard.updatedAt).getTime(),
     },
     schema: {
-      canvas: dashboard.canvasConfig || { mode: 'infinite', width: 1920, height: 1080, background: '#1e1e2e' },
+      canvas: canvasConfig,
       nodes: (dashboard.nodes as any[]) || [],
       dataSources: (dashboard.dataSources as any[]) || [],
     },
@@ -95,6 +102,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
             canvasConfig: project.schema.canvas,
             nodes: project.schema.nodes,
             dataSources: project.schema.dataSources,
+            thumbnail: project.meta.thumbnail,
           });
 
           if (!response.error) {

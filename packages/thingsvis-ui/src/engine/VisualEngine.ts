@@ -659,7 +659,10 @@ export class VisualEngine {
       }
 
       this.instanceMap.set(node.id, { instance, renderer: rendererToUse, overlayBox, overlayInst });
-      this.attachInteractionHandlers(instance as Rect, node);
+      // Only attach interaction handlers when editable
+      if (this.opts?.editable !== false) {
+        this.attachInteractionHandlers(instance as Rect, node);
+      }
       return;
     }
 
@@ -1193,6 +1196,7 @@ export class VisualEngine {
     // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
     const rotation = (schema as any).props?._rotation ?? (schema as any).rotation ?? 0;
 
+    const isEditable = this.opts?.editable ?? true;
     return {
       x,
       y,
@@ -1200,8 +1204,8 @@ export class VisualEngine {
       height,
       rotation,
       fill: 'transparent', // Always transparent - visual rendering is done via DOM overlay
-      draggable: this.opts?.editable ?? true,
-      cursor: 'pointer'
+      draggable: isEditable,
+      cursor: isEditable ? 'pointer' : 'default'
     };
   }
 }

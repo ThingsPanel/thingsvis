@@ -13,6 +13,7 @@ export interface Dashboard {
     width: number;
     height: number;
     background: string;
+    [key: string]: unknown; // Allow additional properties like homeFlag, fullWidthPreview
   };
   nodes: unknown[];
   dataSources: unknown[];
@@ -23,6 +24,8 @@ export interface Dashboard {
   createdById: string;
   createdAt: string;
   updatedAt: string;
+  thumbnail?: string;
+  homeFlag?: boolean;
 }
 
 export interface DashboardListItem {
@@ -53,6 +56,7 @@ export interface UpdateDashboardData {
   canvasConfig?: unknown;
   nodes?: unknown[];
   dataSources?: unknown[];
+  thumbnail?: string;
 }
 
 export interface DashboardListResponse {
