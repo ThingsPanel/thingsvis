@@ -68,6 +68,7 @@ const emit = (event: EmbedEventName, payload: any) => {
 
 /**
  * 判断当前是否处于嵌入模式
+ * 只要在 Iframe 中，或者 URL 显式指定，都视为嵌入模式
  */
 export const isEmbedMode = (): boolean => {
   try {
@@ -75,7 +76,11 @@ export const isEmbedMode = (): boolean => {
     // 支持 hash 参数和 query 参数
     const fromHash = url.hash.includes('mode=embedded') || url.hash.includes('embedded=1')
     const fromQuery = url.searchParams.get('mode') === 'embedded' || url.searchParams.get('embedded') === '1'
-    return fromHash || fromQuery
+
+    // 检查是否在 Iframe 中
+    const inIframe = window.parent !== window
+
+    return fromHash || fromQuery || inIframe
   } catch {
     return false
   }

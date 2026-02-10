@@ -42,7 +42,8 @@ export interface DashboardListItem {
 
 export interface CreateDashboardData {
   name: string;
-  projectId: string;
+  id?: string;
+  projectId?: string;
   canvasConfig?: {
     mode?: string;
     width?: number;
@@ -81,7 +82,7 @@ export async function listDashboards(params?: {
   if (params?.projectId) searchParams.set('projectId', params.projectId);
   if (params?.page) searchParams.set('page', params.page.toString());
   if (params?.limit) searchParams.set('limit', params.limit.toString());
-  
+
   const query = searchParams.toString();
   return apiClient.get<DashboardListResponse>(`/dashboards${query ? `?${query}` : ''}`);
 }

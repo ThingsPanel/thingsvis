@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 // Canvas configuration schema
 export const CanvasConfigSchema = z.object({
-  mode: z.enum(['fixed', 'infinite', 'reflow']).default('fixed'),
+  mode: z.enum(['fixed', 'infinite', 'reflow', 'grid']).default('fixed'),
   width: z.number().int().positive().default(1920),
   height: z.number().int().positive().default(1080),
   background: z.string().default('#1a1a2e'),
@@ -11,7 +11,8 @@ export const CanvasConfigSchema = z.object({
 // Schema for creating a new dashboard
 export const CreateDashboardSchema = z.object({
   name: z.string().min(1, 'Dashboard name is required').max(100, 'Dashboard name must be 100 characters or less'),
-  projectId: z.string().cuid('Invalid project ID'),
+  id: z.string().optional(),
+  projectId: z.string().optional(),
   canvasConfig: CanvasConfigSchema.optional(),
 })
 
