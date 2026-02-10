@@ -150,12 +150,7 @@ export default function EmbedPage() {
   const loadFromSchema = useCallback((schema: any) => {
     setState(s => ({ ...s, isLoading: true, error: null }));
 
-    console.group('🔄 [EmbedPage] loadFromSchema called');
-    console.log('Full schema:', schema);
-    console.log('Canvas config:', schema.canvas);
-    console.log('Nodes:', schema.nodes);
-    console.log('Node count:', schema.nodes?.length);
-    console.groupEnd();
+
 
     if (!schema || !schema.canvas) {
       console.error('❌ [EmbedPage] Invalid schema:', schema);
@@ -203,12 +198,12 @@ export default function EmbedPage() {
             runningX += w;
             maxHeightInRow = Math.max(maxHeightInRow, h);
           } else {
-            console.log(`✅ [EmbedPage] Node ${node.id} has grid:`, node.grid);
+
           }
         });
       }
 
-      console.log('📦 [EmbedPage] Loading page with nodes:', pageNodes.length);
+
 
       const page: PageSchemaType = {
         id: schema.id || 'embed-page',
@@ -228,7 +223,7 @@ export default function EmbedPage() {
 
       // Verify the final canvas state
       const finalCanvas = store.getState().canvas;
-      console.log('📐 [EmbedPage] Final canvas state:', finalCanvas);
+
 
       // Update grid settings in store if needed
       if (schema.canvas.mode === 'grid' || schema.canvas.gridCols) {
@@ -237,7 +232,7 @@ export default function EmbedPage() {
           rowHeight: schema.canvas.gridRowHeight ?? 50,
           gap: schema.canvas.gridGap ?? 5,
         };
-        console.log('📏 [EmbedPage] Applying grid settings:', gridSettings);
+
         store.getState().setGridSettings?.(gridSettings);
       }
 
@@ -354,15 +349,7 @@ export default function EmbedPage() {
   }
 
 
-  // Render the canvas
-  console.log('🎨 [EmbedPage] Rendering:', {
-    isGridLayout,
-    canvasWidth,
-    canvasHeight,
-    gridSettings,
-    fullWidthPreview,
-    nodeCount: Object.keys(kernelState?.nodesById || {}).length
-  });
+
 
   return (
     <div className="relative bg-background overflow-auto" style={{ width: '100vw', height: '100vh' }}>

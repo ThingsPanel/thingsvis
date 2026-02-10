@@ -29,6 +29,10 @@ export interface GridStackCanvasProps {
   interactive?: boolean;
   /** Full-width mode for preview (no shadow, white background, fills container) */
   fullWidth?: boolean;
+  /** Zoom level (0-1), defaults to 1 */
+  zoom?: number;
+  /** Callback when zoom changes */
+  onZoomChange?: (zoom: number) => void;
 }
 
 // Cache for loaded plugins
@@ -64,6 +68,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   activeTool,
   interactive = true,
   fullWidth = false,
+  zoom = 1,
+  onZoomChange,
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -450,10 +456,24 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     }
   }, [activeTool]);
 
+  // Handle wheel zoom
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (!onZoomChange || fullWidth) return;
+    
+    // Use Ctrl+wheel or pinch gesture for zoom
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.05 : 0.05;
+      const newZoom = Math.min(2, Math.max(0.25, zoom + delta));
+      onZoomChange(newZoom);
+    }
+  }, [zoom, onZoomChange, fullWidth]);
+
   return (
     <div
       ref={scrollContainerRef}
       onMouseDown={handleMouseDown}
+      onWheel={handleWheel}
       style={{
         width: '100%',
         height: '100%',
@@ -482,13 +502,14 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
         </div>
       ) : (
-        /* Normal mode: centered with shadow */
+        /* Normal mode: centered with shadow and zoom support */
         <div
           style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
-            transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px))`,
+            transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom})`,
+            transformOrigin: 'center center',
           }}
         >
           <div

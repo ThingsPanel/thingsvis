@@ -46,24 +46,24 @@ export class AutoSaveManager {
     getState: () => ProjectFile,
     saveFn?: (project: ProjectFile) => Promise<void>
   ): void {
-    console.log('[AutoSave] init() called, projectId:', projectId, 'wasDirty:', this.isDirty);
-    
+
+
     // 保存当前的 dirty 状态，如果是同一个项目的重新初始化，保留 dirty 状态
     const wasDirty = this.isDirty && this.projectId === projectId
-    
+
     this.destroy() // Clean up any existing timers
 
     this.projectId = projectId
     this.getState = getState
     this.saveFn = saveFn ?? projectStorage.save
-    
+
     // 如果是同一个项目且之前是 dirty 状态，保留 dirty
     this.isDirty = wasDirty
     if (wasDirty) {
       this.updateStatus({ status: 'dirty', lastSavedAt: null, error: null })
       // 重新调度保存
       this.debounceTimer = window.setTimeout(() => {
-        console.log('[AutoSave] re-scheduled debounce timer fired');
+
         this.saveNow()
       }, this.config.debounceDelay)
     } else {
@@ -88,7 +88,7 @@ export class AutoSaveManager {
    * Called on every state change.
    */
   markDirty(): void {
-    console.log('[AutoSave] markDirty() called, scheduling save in', this.config.debounceDelay, 'ms');
+
     this.isDirty = true
     this.updateStatus({ ...this.currentState, status: 'dirty' })
 
@@ -99,7 +99,7 @@ export class AutoSaveManager {
 
     // Schedule new debounced save
     this.debounceTimer = window.setTimeout(() => {
-      console.log('[AutoSave] debounce timer fired, calling saveNow()');
+
       this.saveNow()
     }, this.config.debounceDelay)
   }
@@ -112,8 +112,8 @@ export class AutoSaveManager {
    * Save now with retry logic (exponential backoff, up to 3 attempts)
    */
   async saveNow(): Promise<void> {
-    console.log('[AutoSave] saveNow() called, isDirty:', this.isDirty, 'projectId:', this.projectId);
-    
+
+
     // Cancel pending debounce
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer)
@@ -139,9 +139,9 @@ export class AutoSaveManager {
       try {
         this.updateStatus({ ...this.currentState, status: 'saving', error: null })
         const project = this.getState()
-        
+
         await this.saveFn(project)
-        
+
         this.isDirty = false
         const savedAt = Date.now()
         this.updateStatus({ status: 'saved', lastSavedAt: savedAt, error: null })
@@ -153,7 +153,7 @@ export class AutoSaveManager {
         }, STORAGE_CONSTANTS.SAVED_DISPLAY_MS)
         return
       } catch (error) {
-        
+
         lastError = error
         attempt++
         if (attempt < maxAttempts) {
@@ -191,8 +191,8 @@ export class AutoSaveManager {
    * Stop all timers and cleanup.
    */
   destroy(): void {
-    console.log('[AutoSave] destroy() called, isDirty:', this.isDirty, 'projectId:', this.projectId);
-    
+
+
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
@@ -228,7 +228,7 @@ export class AutoSaveManager {
       try {
         listener(state)
       } catch (error) {
-        
+
       }
     }
   }

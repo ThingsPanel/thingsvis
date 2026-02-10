@@ -78,7 +78,6 @@ export class SaveTargetHandler {
     private async saveToSelf(payload: SavePayload): Promise<SaveResult> {
         try {
             // TODO: Implement ThingsVis API call when backend is ready
-            console.log('Saving to ThingsVis backend:', payload);
 
             // For now, save to localStorage as fallback
             const key = `thingsvis_canvas_${Date.now()}`;

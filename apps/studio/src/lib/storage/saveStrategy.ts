@@ -84,25 +84,25 @@ const listeners = new Set<() => void>();
  */
 function parseUrlParams(): Partial<SaveStrategyConfig> {
   const config: Partial<SaveStrategyConfig> = {};
-  
+
   try {
     // 尝试从 hash 参数解析
     const hash = window.location.hash || '';
     const queryIndex = hash.indexOf('?');
     if (queryIndex >= 0) {
       const params = new URLSearchParams(hash.slice(queryIndex + 1));
-      
+
       const saveTarget = params.get('saveTarget');
       if (saveTarget === 'host' || saveTarget === 'self') {
         config.saveTarget = saveTarget;
       }
-      
+
       const mode = params.get('mode');
       if (mode === 'embedded') {
         config.isEmbedded = true;
       }
     }
-    
+
     // 也检查普通 query 参数
     const urlParams = new URLSearchParams(window.location.search);
     const saveTarget = urlParams.get('saveTarget');
@@ -112,7 +112,7 @@ function parseUrlParams(): Partial<SaveStrategyConfig> {
   } catch (e) {
     console.warn('[SaveStrategy] Failed to parse URL params:', e);
   }
-  
+
   return config;
 }
 
@@ -131,7 +131,7 @@ export function initSaveStrategy(options?: {
 }): void {
   const urlConfig = parseUrlParams();
   const isEmbedded = isEmbedMode() || urlConfig.isEmbedded || false;
-  
+
   // 确定存储后端
   let storageBackend: StorageBackend = 'local';
   if (options?.isAuthenticated) {
@@ -141,7 +141,7 @@ export function initSaveStrategy(options?: {
   if (isEmbedded && urlConfig.saveTarget !== 'host') {
     storageBackend = 'cloud';
   }
-  
+
   currentConfig = {
     saveTarget: urlConfig.saveTarget || 'self',
     storageBackend,
@@ -149,8 +149,8 @@ export function initSaveStrategy(options?: {
     embeddedProjectId: options?.embeddedProjectId,
     embeddedProjectName: options?.embeddedProjectName,
   };
-  
-  console.log('[SaveStrategy] Initialized:', currentConfig);
+
+
   notifyListeners();
 }
 
@@ -164,7 +164,7 @@ export function updateEmbeddedConfig(config: {
 }): void {
   // 🔑 关键修复：调用此函数意味着我们在嵌入模式下
   currentConfig.isEmbedded = true;
-  
+
   if (config.projectId) {
     currentConfig.embeddedProjectId = config.projectId;
   }
@@ -178,8 +178,8 @@ export function updateEmbeddedConfig(config: {
       currentConfig.storageBackend = 'cloud';
     }
   }
-  
-  console.log('[SaveStrategy] Updated embedded config:', currentConfig);
+
+
   notifyListeners();
 }
 
@@ -202,8 +202,8 @@ export function shouldSaveToHost(): boolean {
  * 判断是否应该保存到云端
  */
 export function shouldSaveToCloud(): boolean {
-  return currentConfig.storageBackend === 'cloud' || 
-         (currentConfig.isEmbedded && currentConfig.saveTarget === 'self');
+  return currentConfig.storageBackend === 'cloud' ||
+    (currentConfig.isEmbedded && currentConfig.saveTarget === 'self');
 }
 
 /**
@@ -220,17 +220,13 @@ export function getEffectiveProjectId(fallbackId: string): string {
  * 执行保存操作
  */
 export async function executeSave(payload: SavePayload): Promise<{ success: boolean; error?: string }> {
-  console.log('[SaveStrategy] Executing save:', {
-    saveTarget: currentConfig.saveTarget,
-    isEmbedded: currentConfig.isEmbedded,
-    embeddedProjectId: currentConfig.embeddedProjectId,
-  });
-  
+
+
   // 场景2: 嵌入物模型 - 保存到宿主
   if (shouldSaveToHost()) {
     return saveToHost(payload);
   }
-  
+
   // 场景1 & 场景3: 保存到 ThingsVis (云端或本地)
   // 实际保存逻辑由 useAutoSave 处理，这里只返回成功
   // 因为 useAutoSave 已经配置好使用正确的存储适配器
@@ -242,14 +238,14 @@ export async function executeSave(payload: SavePayload): Promise<{ success: bool
  */
 function saveToHost(payload: SavePayload): { success: boolean; error?: string } {
   try {
-    console.log('[SaveStrategy] Saving to host via postMessage:', payload);
+
     sendToHost(payload);
     return { success: true };
   } catch (error) {
     console.error('[SaveStrategy] Failed to save to host:', error);
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : String(error) 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error)
     };
   }
 }
@@ -266,7 +262,7 @@ function notifyListeners(): void {
   // 更新快照版本和缓存
   snapshotVersion++;
   cachedSnapshot = { ...currentConfig };
-  
+
   listeners.forEach(listener => {
     try {
       listener();

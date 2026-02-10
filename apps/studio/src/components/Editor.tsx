@@ -1096,6 +1096,8 @@ export default function Editor() {
             width={canvasConfig.width}
             height={canvasConfig.height}
             activeTool={activeTool}
+            zoom={zoom / 100}
+            onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             settings={{
               cols: canvasConfig.gridCols ?? 24,
               rowHeight: canvasConfig.gridRowHeight ?? 10,

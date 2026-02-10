@@ -61,7 +61,7 @@ function getEmbedToken(): string | null {
   const searchParams = new URLSearchParams(window.location.search);
   const searchToken = searchParams.get('token');
   if (searchToken) return searchToken;
-  
+
   // 2. 然后检查 hash params (#/editor?token=xxx)
   const hash = window.location.hash || '';
   const queryIndex = hash.indexOf('?');
@@ -69,23 +69,23 @@ function getEmbedToken(): string | null {
     const hashParams = new URLSearchParams(hash.slice(queryIndex + 1));
     const hashToken = hashParams.get('token');
     if (hashToken) {
-      console.log('[Auth] 🔑 Found token in hash params');
+
       return hashToken;
     }
   }
-  
+
   // 3. 最后检查 embed-init 中设置的 token
   try {
     const { getEmbedToken: getInitToken } = require('../../embed/embed-init');
     const initToken = getInitToken();
     if (initToken) {
-      console.log('[Auth] 🔑 Found token from embed-init');
+
       return initToken;
     }
   } catch (e) {
     // ignore
   }
-  
+
   return null;
 }
 
@@ -119,19 +119,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // 在嵌入模式下，优先使用 embed token
     const embedToken = getEmbedToken();
     const localToken = localStorage.getItem(TOKEN_KEY);
-    
-    console.log('[Auth] 配置 API client:', {
-      hasEmbedToken: !!embedToken,
-      hasLocalToken: !!localToken,
-      isEmbedded: isEmbedded()
-    });
+
+
 
     apiClient.configure({
       getToken: () => {
         // 优先使用 embed token（嵌入模式）
         const embed = getEmbedToken();
         if (embed) return embed;
-        
+
         // 否则使用 localStorage 中的 token
         return localStorage.getItem(TOKEN_KEY);
       },
@@ -155,14 +151,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const urlToken = getEmbedToken();
 
         if (urlToken) {
-          console.log('🔐 [Auth] SSO token detected in URL, attempting auto-login...');
+
 
           // Store token and validate
           apiClient.configure({ getToken: () => urlToken });
           const result = await getCurrentUser();
 
           if (result.data) {
-            console.log('✅ [Auth] SSO token valid, user:', result.data.email);
+
 
             // Calculate expiry (assume 2 hours for SSO tokens)
             const expiresAt = Date.now() + (2 * 60 * 60 * 1000);
@@ -177,12 +173,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             // Redirect to editor after SSO login (both embedded and standalone)
             if (!window.location.hash.includes('/editor')) {
-              console.log('🔀 [Auth] SSO login successful, redirecting to editor...');
+
               setTimeout(() => {
                 window.location.hash = '#/editor';
               }, 100);
             } else {
-              console.log('✅ [Auth] Already on editor page');
+
             }
           } else {
             console.error('❌ [Auth] SSO token invalid');
@@ -256,7 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Login with JWT token (for SSO)
   const loginWithToken = useCallback(async (jwtToken: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('🔐 [Auth] Logging in with JWT token...');
+
 
       // Validate token by fetching user
       apiClient.configure({ getToken: () => jwtToken });
@@ -269,7 +265,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const newUser: User = result.data;
       const expiresAt = Date.now() + (2 * 60 * 60 * 1000); // 2 hours
 
-      console.log('✅ [Auth] Token validated, user:', newUser.email);
+
 
       setToken(jwtToken);
       setUser(newUser);
@@ -359,7 +355,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout handler
   const logout = useCallback(() => {
-    console.log('👋 [AuthContext] Logging out, switching to local-only mode...');
+
     clearAuth();
     initDataSourceSync(false);
   }, [clearAuth]);

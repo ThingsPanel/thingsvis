@@ -17,11 +17,11 @@ import type { SaveState } from '../lib/storage/types'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { useStorage } from './useStorage'
 import type { StorageProject } from '../lib/storage/adapter'
-import { 
-  shouldSaveToHost, 
+import {
+  shouldSaveToHost,
   getEffectiveProjectId,
   useSaveStrategy,
-  type SavePayload 
+  type SavePayload
 } from '../lib/storage/saveStrategy'
 import { requestSave as sendToHost } from '../embed/embed-mode'
 
@@ -57,16 +57,11 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
   const saveProject = useCallback(
     async (project: ProjectFile) => {
-      console.log('[useAutoSave] saveProject called:', {
-        shouldSaveToHost: shouldSaveToHost(),
-        isCloud: storage.isCloud,
-        saveStrategy: saveStrategy,
-        projectId: project.meta.id,
-      });
-      
+
+
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
-        console.log('[useAutoSave] 📤 保存到宿主平台 (host-save)');
+
         const payload: SavePayload = {
           meta: {
             id: project.meta.id,
@@ -85,7 +80,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       // 场景1 & 场景3: 保存到 ThingsVis (云端或本地)
       // 使用嵌入模式传来的有效 ID
       const effectiveId = getEffectiveProjectId(project.meta.id);
-      
+
       if (storage.isCloud) {
         const storageProject: StorageProject = {
           meta: {
@@ -109,7 +104,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       }
 
       // 本地存储 (未登录独立运行)
-      console.log('[useAutoSave] 📤 保存到本地:', project.meta.id);
+
       await projectStorage.save(project)
     },
     [storage, onIdChange, saveStrategy]
@@ -143,8 +138,8 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
     // 使用 ref 包装的函数，这样 autoSaveManager 始终调用最新的 saveProject
     autoSaveManager.init(
-      projectId, 
-      () => getProjectStateRef.current(), 
+      projectId,
+      () => getProjectStateRef.current(),
       (project) => saveProjectRef.current(project)
     )
 
@@ -227,7 +222,7 @@ export function useProject(options: UseProjectOptions = {}) {
  */
 function extractDataBindings(nodes: any[]): any[] {
   if (!Array.isArray(nodes)) return [];
-  
+
   return nodes.flatMap(node => {
     const bindings = node.thingModelBindings || [];
     return bindings.map((binding: any) => ({

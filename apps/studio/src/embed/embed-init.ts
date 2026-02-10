@@ -19,14 +19,9 @@ let embedToken: string | null = null;
  */
 export function configureEmbedApiClient(token: string, baseUrl?: string): void {
   embedToken = token;
-  console.log('[EmbedInit] 配置嵌入模式 API Client:', { 
-    hasToken: !!token, 
-    tokenPreview: token ? token.substring(0, 20) + '...' : null,
-    // 注意：不使用宿主传递的 baseUrl，因为会有 CORS 问题
-    // ThingsVis iframe 应该继续调用自己的服务器
-    baseUrl: '(不覆盖，使用默认)'
-  });
-  
+  // 注意：不使用宿主传递的 baseUrl，因为会有 CORS 问题
+  // ThingsVis iframe 应该继续调用自己的服务器
+
   // 只配置 token，不改变 baseUrl
   // 因为 ThingsVis iframe 需要调用自己的服务器 (localhost:3001)
   // 而不是宿主的代理 (localhost:5002/thingsvis-api)
@@ -121,12 +116,7 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
   const projectName = data.meta?.name || 'Embedded Project';
   const saveTarget: SaveTarget = config.saveTarget || 'self';
 
-  console.log('[EmbedInit] 处理嵌入初始化数据:', {
-    projectId,
-    projectName,
-    saveTarget,
-    nodesCount: data.nodes?.length || 0,
-  });
+
 
   // 更新 SaveStrategy 配置
   updateEmbeddedConfig({
@@ -174,48 +164,38 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
 export function initEmbedModeFromUrl(isAuthenticated: boolean): void {
   const hash = window.location.hash || '';
   const queryIndex = hash.indexOf('?');
-  
-  console.log('[EmbedInit] ========== initEmbedModeFromUrl START ==========');
-  console.log('[EmbedInit] Full URL:', window.location.href);
-  console.log('[EmbedInit] Hash:', hash);
-  console.log('[EmbedInit] isAuthenticated:', isAuthenticated);
-  
+
+
+
   if (queryIndex >= 0) {
     const params = new URLSearchParams(hash.slice(queryIndex + 1));
     const saveTarget = params.get('saveTarget');
     const mode = params.get('mode');
     const token = params.get('token');
-    
-    // 🔍 调试：打印所有关键参数
-    console.log('[EmbedInit] URL params:', {
-      mode,
-      saveTarget,
-      hasToken: !!token,
-      tokenLength: token?.length,
-      tokenPreview: token ? token.substring(0, 30) + '...' : null,
-    });
-    
+
+
+
     if (mode === 'embedded') {
       // 配置 API Client 使用宿主的 token
       if (token) {
         configureEmbedApiClient(token);
-        console.log('[EmbedInit] ✅ 使用宿主传递的 token 配置 API Client');
+
       } else {
         console.warn('[EmbedInit] ⚠️ 未找到 token，将使用默认认证');
       }
-      
+
       initSaveStrategy({
         isAuthenticated: isAuthenticated || !!token, // 有 token 视为已认证
         embeddedProjectId: undefined, // 稍后由 init 消息设置
       });
-      
+
       if (saveTarget === 'host' || saveTarget === 'self') {
         updateEmbeddedConfig({ saveTarget });
       }
     }
   } else {
-    console.log('[EmbedInit] No query params in URL hash');
+
   }
-  
-  console.log('[EmbedInit] ========== initEmbedModeFromUrl END ==========');
+
+
 }

@@ -29,17 +29,14 @@ class PlatformDataStoreClass {
     private subscribeToMessages() {
         if (typeof window === 'undefined') return;
 
-        console.log('🚀 [PlatformDataStore] Subscribing to postMessage...');
+
 
         this.messageListener = (event: MessageEvent) => {
-            // Debug: log all incoming messages
-            if (event.data?.type?.startsWith('thingsvis:')) {
-                console.log('📨 [PlatformDataStore] Received message:', event.data);
-            }
+
 
             if (event.data?.type === 'thingsvis:platformData') {
                 const { fieldId, value, timestamp } = event.data.payload || {};
-                console.log(`✅ [PlatformDataStore] Platform data: ${fieldId} = ${value}`);
+
                 if (fieldId !== undefined) {
                     this.set(fieldId, value, timestamp);
                 }
@@ -47,14 +44,14 @@ class PlatformDataStoreClass {
         };
 
         window.addEventListener('message', this.messageListener);
-        console.log('✅ [PlatformDataStore] Message listener registered');
+
     }
 
     /**
      * Set a platform field value
      */
     set(fieldId: string, value: any, timestamp?: number) {
-        console.log(`📝 [PlatformDataStore] Setting ${fieldId} = ${value}, listeners: ${this.listeners.size}`);
+
         this.data.set(fieldId, {
             value,
             timestamp: timestamp ?? Date.now(),
