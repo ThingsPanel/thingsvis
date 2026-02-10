@@ -32,7 +32,9 @@ type EmbedMessage =
   | { type: 'SET_TOKEN'; payload: string }
   | { type: 'READY' }
   | { type: 'ERROR'; payload: string }
-  | { type: 'LOADED'; payload: { id?: string; name?: string } };
+  | { type: 'LOADED'; payload: { id?: string; name?: string } }
+  | { type: 'thingsvis:editor-init'; payload: any }
+  | { type: 'thingsvis:editor-event'; payload: any; event?: string };
 
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
@@ -280,6 +282,35 @@ export default function EmbedPage() {
           break;
         case 'SET_TOKEN':
           localStorage.setItem('thingsvis_token', message.payload);
+          break;
+
+        // 🟢 兼容 Standard Embed Protocol (thingsvis:*)
+        case 'thingsvis:editor-init':
+          // payload 结构: { data: { ...canvas, ...nodes }, config: { ... } }
+          // EmbedPage expect pure schema in message.payload.data
+          if (message.payload && message.payload.data) {
+            console.log('[EmbedPage] 收到 thingsvis:editor-init', message.payload.data);
+            // 构造符合 loadFromSchema 期望的 schema 对象
+            const initData = message.payload.data;
+            const schema = {
+              id: initData.meta?.id,
+              name: initData.meta?.name,
+              canvas: initData.canvas,
+              nodes: initData.nodes,
+              dataSources: initData.dataSources
+            };
+            loadFromSchema(schema);
+          }
+          break;
+
+        case 'thingsvis:editor-event':
+          // payload 结构: { event: 'updateData', payload: { ... } }
+          const eventData = message.payload;
+          if (eventData && (eventData.event === 'updateData' || message.event === 'updateData')) {
+            const data = eventData.payload || eventData.data;
+            console.log('[EmbedPage] 收到 updateData', data);
+            updateVariables(data);
+          }
           break;
       }
     };
