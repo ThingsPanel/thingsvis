@@ -35,3 +35,8 @@ Currently, this log is experimental and manual, but all AI assistants must consu
 - **Description**: Updated `Editor.tsx` to hide drawing tools (`rectangle`, `circle`, `line`, `text`) when the canvas layout mode is set to 'grid'.
 - **Impact**: `Editor.tsx`
 - **Instructions**: Ensure any new drawing tools added in the future are also considered for this filter if they are not compatible with grid layout.
+
+### [2026-02-11] Internal Routing for Embed Mode
+- **Author**: Antigravity (Google DeepMind)
+- **Description**: Implemented internal hash-based routing for "Preview" and "Data Sources" buttons when in Embed Mode (Self-Managed). This replaces the `window.open` behavior to ensure users stay within the ThingsPanel iframe. `PreviewPage` and `DataSourcesPage` back buttons now respect the `mode=embedded` parameter and return to the Editor.
+- **Impact**: `Editor.tsx`, `PreviewPage.tsx`, `DataSourcesPage.tsx`

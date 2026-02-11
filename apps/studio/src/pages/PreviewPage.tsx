@@ -158,8 +158,20 @@ export default function PreviewPage() {
   }, [projectId, hasAnyNodes, applyProjectToStore])
 
   const handleBack = useCallback(() => {
-    window.location.hash = '#/'
-  }, [])
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const isEmbedded = params.get('mode') === 'embedded'
+    // projectId is already in state (projectId const)
+
+    if (projectId) {
+      if (isEmbedded) {
+        window.location.hash = `#/editor/${projectId}?mode=embedded`
+      } else {
+        window.location.hash = `#/editor/${projectId}`
+      }
+    } else {
+      window.location.hash = '#/'
+    }
+  }, [projectId])
 
   const handleRefresh = useCallback(() => {
     void applyProjectToStore()

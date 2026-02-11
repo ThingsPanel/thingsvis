@@ -606,7 +606,11 @@ export default function Editor() {
     await saveNow()
 
     if (isEmbedMode()) {
-      window.parent.postMessage({ type: 'thingsvis:preview', projectId }, '*')
+      // 🆕 Embed Mode specific routing
+      // Use internal hash routing to stay within the iframe/context
+      // unless user specifically wants popups (which is rare in dashboards)
+      const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}&mode=embedded`
+      window.location.hash = previewHash
       return
     }
 
@@ -1314,7 +1318,14 @@ export default function Editor() {
                 {language === "zh" ? "保存" : "Save"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
+              <DropdownMenuItem className="gap-2" onClick={async () => {
+                if (isEmbedMode()) {
+                  await saveNow()
+                  window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`
+                } else {
+                  window.open('#/data-sources', '_blank')
+                }
+              }}>
                 <Database className="h-4 w-4" />
                 {language === "zh" ? "数据源管理" : "Data Sources"}
               </DropdownMenuItem>

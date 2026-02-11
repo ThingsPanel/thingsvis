@@ -198,7 +198,19 @@ export default function DataSourcesPage() {
   };
 
   const goBack = () => {
-    window.location.hash = '#/';
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const isEmbedded = params.get('mode') === 'embedded'
+    const projectId = params.get('projectId')
+
+    if (projectId) {
+      if (isEmbedded) {
+        window.location.hash = `#/editor/${projectId}?mode=embedded`
+      } else {
+        window.location.hash = `#/editor/${projectId}`
+      }
+    } else {
+      window.location.hash = '#/'
+    }
   };
 
   return (
@@ -206,8 +218,8 @@ export default function DataSourcesPage() {
       {/* Toast Notification */}
       {toast.visible && (
         <div className={`fixed top-8 left-1/2 -translate-x-1/2 z-[100] px-4 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 border ${toast.type === 'error'
-            ? 'bg-destructive/10 border-destructive text-destructive bg-white dark:bg-zinc-900'
-            : 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 bg-white dark:bg-zinc-900'
+          ? 'bg-destructive/10 border-destructive text-destructive bg-white dark:bg-zinc-900'
+          : 'bg-green-500/10 border-green-500/20 text-green-600 dark:text-green-400 bg-white dark:bg-zinc-900'
           }`}>
           {toast.type === 'error' ? (
             <AlertCircle className="h-5 w-5" />
