@@ -40,3 +40,13 @@ Currently, this log is experimental and manual, but all AI assistants must consu
 - **Author**: Antigravity (Google DeepMind)
 - **Description**: Implemented internal hash-based routing for "Preview" and "Data Sources" buttons when in Embed Mode (Self-Managed). This replaces the `window.open` behavior to ensure users stay within the ThingsPanel iframe. `PreviewPage` and `DataSourcesPage` back buttons now respect the `mode=embedded` parameter and return to the Editor.
 - **Impact**: `Editor.tsx`, `PreviewPage.tsx`, `DataSourcesPage.tsx`
+
+### [2026-02-11] Set Default Zoom to 80%
+- **Author**: Antigravity (Google DeepMind)
+- **Description**: Changed the default zoom level of the Editor from 100% to 80% as per user request.
+- **Impact**: `Editor.tsx`
+
+### [2026-02-11] Set Zoom to 80% on Layout Switch
+- **Author**: Antigravity (Google DeepMind)
+- **Description**: Updated the logic when switching canvas layout modes (Grid/Fixed/Infinite) to automatically reset the zoom level to 80%. Uses `setTimeout` to ensure the zoom update occurs after any initial component layout calculations.
+- **Impact**: `Editor.tsx`

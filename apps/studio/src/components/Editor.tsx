@@ -228,8 +228,8 @@ export default function Editor() {
     }
   }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded])
 
-  const [zoom, setZoom] = useState(100)
-  const [zoomInput, setZoomInput] = useState("100")
+  const [zoom, setZoom] = useState(80)
+  const [zoomInput, setZoomInput] = useState("80")
   const [showRightPanel, setShowRightPanel] = useState(true)
 
   // Update zoom input when zoom changes externally
@@ -1793,6 +1793,12 @@ export default function Editor() {
                               markDirty();
                             }
                             setCanvasConfig({ ...canvasConfig, mode: newMode });
+                            // Reset zoom to 80% on mode switch settings
+                            // Use setTimeout to ensure this happens after any auto-fit logic
+                            setTimeout(() => {
+                              setZoom(80)
+                              setZoomInput("80")
+                            }, 50)
                           }
                         }}
                         className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"

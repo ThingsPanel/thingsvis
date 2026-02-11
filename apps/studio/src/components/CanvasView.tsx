@@ -14,7 +14,7 @@ function generateId(prefix = "node") {
       // @ts-ignore
       return (crypto as any).randomUUID();
     }
-  } catch {}
+  } catch { }
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
@@ -24,10 +24,10 @@ export type StudioCanvasHandle = {
   unmount: () => void;
 };
 
-const CanvasView = forwardRef<StudioCanvasHandle, { 
-  pageId: string; 
-  store: any; 
-  resolvePlugin?: (t:string)=>Promise<any>; 
+const CanvasView = forwardRef<StudioCanvasHandle, {
+  pageId: string;
+  store: any;
+  resolvePlugin?: (t: string) => Promise<any>;
   activeTool: string;
   lineToolProps?: Record<string, unknown>;
   lineContinuous?: boolean;
@@ -45,9 +45,17 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   const mountedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Use state for viewport so changes trigger re-render
-  const [vp, setVp] = useState({ width: 0, height: 0, zoom: 1, offsetX: 0, offsetY: 0 });
+  const [vp, setVp] = useState({ width: 0, height: 0, zoom: zoom, offsetX: 0, offsetY: 0 });
   const vpRef = useRef(vp);
   vpRef.current = vp; // Keep ref in sync for callbacks
+
+  // Sync state when zoom prop changes
+  useEffect(() => {
+    setVp(prev => ({
+      ...prev,
+      zoom: zoom
+    }))
+  }, [zoom])
   const [isPointerDown, setIsPointerDown] = useState(false);
   const proxyWrapperRef = useRef<HTMLDivElement | null>(null);
   const proxyLayerRef = useRef<HTMLDivElement | null>(null);
@@ -75,7 +83,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       // Bridge for the studio app to send commands/events to the kernel.
       // Implementation will call the kernel IPC or store action in future tasks.
       // eslint-disable-next-line no-console
-      
+
     },
     mount: () => {
       mountedRef.current = true;
@@ -127,7 +135,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     } catch {
       entry = null;
     }
-    
+
     // Only create node if we have valid plugin data from component library
     // This prevents creating text nodes when user drags existing nodes or images
     if (!entry || !entry.type) {
@@ -137,12 +145,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
     const localX = e.clientX - rect.left;
     const localY = e.clientY - rect.top;
-    
+
     // Correctly use current viewport state for coordinate conversion
-    const vpState = vpRef.current && vpRef.current.width > 0 
-      ? vpRef.current 
+    const vpState = vpRef.current && vpRef.current.width > 0
+      ? vpRef.current
       : { width: rect.width, height: rect.height, zoom: 1, offsetX: 0, offsetY: 0 };
-    
+
     // Convert screen coords to world coords taking zoom and offset into account
     const worldX = (localX - vpState.offsetX) / vpState.zoom;
     const worldY = (localY - vpState.offsetY) / vpState.zoom;
@@ -151,7 +159,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     // 对于 resizable: false 的组件，不设置 size（由内容撑开）
     const isResizable = (entry as any)?.resizable !== false;
     const pluginDefaultSize = (entry as any)?.defaultSize;
-    
+
     const node = {
       id: nodeId,
       type: entry.type,
@@ -173,7 +181,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       onUserEdit?.();
     } catch (e) {
       // eslint-disable-next-line no-console
-      
+
     }
   }
 
@@ -183,8 +191,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
 
   return (
-    <div 
-      ref={containerRef as any} 
+    <div
+      ref={containerRef as any}
       onClick={handleCanvasClick}
       onMouseDown={() => {
         if (isPanTool) setIsPointerDown(true);
@@ -195,8 +203,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       onMouseLeave={() => {
         if (isPanTool) setIsPointerDown(false);
       }}
-      onDragOver={handleDragOver} 
-      onDrop={handleDrop} 
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
       style={{ width: "100%", height: "100%", position: "relative", cursor: canvasCursor }}
     >
       <UI_CanvasView
@@ -231,7 +239,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       />
 
       {/* Proxy Layer for Moveable targets */}
-      <div 
+      <div
         ref={proxyLayerRef}
         className="proxy-layer"
         style={{
@@ -291,10 +299,10 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           })}
 
           {/* TransformControls inside scaled wrapper */}
-          <TransformControls 
+          <TransformControls
             containerRef={proxyWrapperRef}
             dragContainerRef={proxyLayerRef}
-            kernelStore={store} 
+            kernelStore={store}
             enabled={activeTool !== 'pan' && !isCreationTool(activeTool)}
             onUserEdit={onUserEdit}
             getViewport={getViewport}
@@ -322,11 +330,11 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           getViewport={getViewport}
           applyNodeInsertAndSelect={(nodes, selectIds) => {
             const currentState = store.getState();
-            
+
             // Build the new nodesById with added nodes
             const newNodesById = { ...currentState.nodesById };
             const newLayerOrder = [...currentState.layerOrder];
-            
+
             nodes.forEach((node: { id: string; type: string; position: { x: number; y: number }; size?: { width: number; height: number }; props: Record<string, unknown> }) => {
               newNodesById[node.id] = {
                 id: node.id,
@@ -339,7 +347,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                 newLayerOrder.push(node.id);
               }
             });
-            
+
             // Apply the combined state change
             store.setState({
               nodesById: newNodesById,
@@ -353,12 +361,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           onCreationComplete={
             activeTool === 'image'
               ? () => {
-                  onImagePickerComplete?.();
-                }
+                onImagePickerComplete?.();
+              }
               : activeTool === 'line' && !lineContinuous
                 ? () => {
-                    onResetTool?.();
-                  }
+                  onResetTool?.();
+                }
                 : undefined
           }
           onUserEdit={onUserEdit}
