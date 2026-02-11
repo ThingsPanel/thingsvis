@@ -50,3 +50,8 @@ Currently, this log is experimental and manual, but all AI assistants must consu
 - **Author**: Antigravity (Google DeepMind)
 - **Description**: Updated the logic when switching canvas layout modes (Grid/Fixed/Infinite) to automatically reset the zoom level to 80%. Uses `setTimeout` to ensure the zoom update occurs after any initial component layout calculations.
 - **Impact**: `Editor.tsx`
+
+### [2026-02-11] Add Fullscreen Button in Embed Mode
+- **Author**: Antigravity (Google DeepMind)
+- **Description**: Added a fullscreen toggle button to the top-right toolbar when in embedded mode. It allows users to expand the editor (and the host iframe) to full screen for better editing experience.
+- **Impact**: `Editor.tsx`

@@ -66,6 +66,7 @@ import {
   Plus,
   Database,
   LogOut,
+  Minimize,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -156,6 +157,17 @@ type CanvasConfigSchema = {
 export default function Editor() {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
   const { currentProject } = useProject()
+  // Fullscreen state for Embed Mode
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
   const [activeTool, setActiveTool] = useState<Tool>("select")
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -1487,6 +1499,29 @@ export default function Editor() {
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
+
+          {/* Fullscreen Button (Embed Mode Only) */}
+          {isEmbedMode() && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => { })
+                } else {
+                  if (document.exitFullscreen) {
+                    document.exitFullscreen()
+                  }
+                }
+              }}
+              title={language === "zh"
+                ? (document.fullscreenElement ? "退出全屏" : "全屏")
+                : (document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen")}
+            >
+              {document.fullscreenElement ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
       </div>
 
