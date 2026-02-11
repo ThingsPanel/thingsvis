@@ -44,6 +44,7 @@ export interface EmbedInitPayload {
       id?: string;
       name?: string;
       version?: string;
+      thumbnail?: string; // Add thumbnail type
     };
     canvas?: {
       mode?: string;
@@ -97,6 +98,8 @@ export interface ProcessedEmbedData {
   dataSources: any[];
   /** 保存目标 */
   saveTarget: SaveTarget;
+  /** 缩略图 */
+  thumbnail?: string;
 }
 
 /**
@@ -114,6 +117,7 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
   // 🔑 关键：使用宿主传来的 meta.id 作为项目 ID
   const projectId = data.meta?.id || `embed-${Date.now()}`;
   const projectName = data.meta?.name || 'Embedded Project';
+  const thumbnail = data.meta?.thumbnail; // Extract thumbnail
   const saveTarget: SaveTarget = config.saveTarget || 'self';
 
 
@@ -155,6 +159,7 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
     nodes,
     dataSources: data.dataSources || [],
     saveTarget,
+    thumbnail, // Pass thumbnail
   };
 }
 

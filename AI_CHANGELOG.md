@@ -63,4 +63,7 @@ Currently, this log is experimental and manual, but all AI assistants must consu
   2. Fixed `CreateDashboardSchema` to allow `thumbnail` field during creation.
   3. Fixed data source binding issue by updating `ControlFieldRow.tsx` to include `dataSourcePath` in the binding object, ensuring compatibility with runtime expectations.
   4. Updated `Editor.tsx` to include `thumbnail` in the `triggerSave` export payload for embedded mode.
-- **Impact**: `apps/server/src/app/api/v1/dashboards/route.ts`, `apps/server/src/lib/validators/dashboard.ts`, `apps/studio/src/components/RightPanel/ControlFieldRow.tsx`, `apps/studio/src/components/Editor.tsx`
+  5. Updated `Editor.tsx` to correctly load and display the project `thumbnail` in the editor UI (Canvas Config).
+  6. Updated `ProjectDialog.tsx` to include `thumbnail` when constructing the project object from cloud data.
+  7. Updated `embed/embed-init.ts` and `Editor.tsx` to properly extract and apply `thumbnail` from embedded initialization data (Widget Mode).
+- **Impact**: `apps/server/src/app/api/v1/dashboards/route.ts`, `apps/server/src/lib/validators/dashboard.ts`, `apps/studio/src/components/RightPanel/ControlFieldRow.tsx`, `apps/studio/src/components/Editor.tsx`, `apps/studio/src/components/ProjectDialog.tsx`, `apps/studio/src/embed/embed-init.ts`

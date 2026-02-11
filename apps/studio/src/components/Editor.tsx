@@ -460,6 +460,7 @@ export default function Editor() {
                     version: '1.0.0',
                     id: cloudProject.meta.id,
                     name: cloudProject.meta.name,
+                    thumbnail: cloudProject.meta.thumbnail, // Load thumbnail
                     createdAt: cloudProject.meta.createdAt,
                     updatedAt: cloudProject.meta.updatedAt,
                   },
@@ -485,7 +486,8 @@ export default function Editor() {
               config: {
                 mode: loaded.canvas.mode,
                 width: loaded.canvas.width,
-                height: loaded.canvas.height
+                height: loaded.canvas.height,
+                theme: (loaded.canvas as any).theme || 'dark', // Fix lint: Add theme and cast to any
               }
             })
             // Update canvas config
@@ -493,6 +495,7 @@ export default function Editor() {
               ...prev,
               id: loaded.meta.id,
               name: loaded.meta.name,
+              thumbnail: loaded.meta.thumbnail || "", // Load thumbnail
               createdAt: loaded.meta.createdAt,
               mode: loaded.canvas.mode,
               width: loaded.canvas.width,
@@ -536,6 +539,7 @@ export default function Editor() {
                 mode: canvasConfig.mode,
                 width: canvasConfig.width,
                 height: canvasConfig.height,
+                theme: canvasConfig.theme, // Fix lint: Add theme
               }
             })
             try {
@@ -581,7 +585,9 @@ export default function Editor() {
     canvasConfig.gridGap,
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
+    canvasConfig.gridEnabled,
     canvasConfig.gridSize,
+    canvasConfig.thumbnail, // Trigger save on thumbnail change
   ])
 
   // 🔑 订阅 store 节点变化，自动触发 markDirty
@@ -829,7 +835,9 @@ export default function Editor() {
         gridCols: processed.canvas.gridCols,
         gridRowHeight: processed.canvas.gridRowHeight,
         gridGap: processed.canvas.gridGap,
+        gridGap: processed.canvas.gridGap,
         fullWidthPreview: processed.canvas.fullWidthPreview,
+        thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
       }));
 
       // 🔑 监听 updateData 事件 (用于 Widget 模式实时数据推送)
@@ -951,7 +959,9 @@ export default function Editor() {
             gridCols: processed.canvas.gridCols,
             gridRowHeight: processed.canvas.gridRowHeight,
             gridGap: processed.canvas.gridGap,
+            gridGap: processed.canvas.gridGap,
             fullWidthPreview: processed.canvas.fullWidthPreview,
+            thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
           }));
 
           // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
@@ -1828,6 +1838,7 @@ export default function Editor() {
                                   mode: newMode,
                                   width: canvasConfig.width,
                                   height: canvasConfig.height,
+                                  theme: canvasConfig.theme, // Fix lint: Add theme
                                 },
                               });
                               markDirty();
@@ -2020,6 +2031,7 @@ export default function Editor() {
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
+            thumbnail: project.meta.thumbnail || "", // Load thumbnail from project meta
           }))
 
           // 关闭对话框
