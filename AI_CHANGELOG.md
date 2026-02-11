@@ -55,3 +55,12 @@ Currently, this log is experimental and manual, but all AI assistants must consu
 - **Author**: Antigravity (Google DeepMind)
 - **Description**: Added a fullscreen toggle button to the top-right toolbar when in embedded mode. It allows users to expand the editor (and the host iframe) to full screen for better editing experience.
 - **Impact**: `Editor.tsx`
+
+### [2026-02-11] Fix Dashboard List Thumbnails & Data Binding
+- **Author**: Antigravity (Google DeepMind)
+- **Description**: 
+  1. Addressed missing thumbnails in dashboard list by updating the backend `GET /dashboards` API to include the `thumbnail` field in the response.
+  2. Fixed `CreateDashboardSchema` to allow `thumbnail` field during creation.
+  3. Fixed data source binding issue by updating `ControlFieldRow.tsx` to include `dataSourcePath` in the binding object, ensuring compatibility with runtime expectations.
+  4. Updated `Editor.tsx` to include `thumbnail` in the `triggerSave` export payload for embedded mode.
+- **Impact**: `apps/server/src/app/api/v1/dashboards/route.ts`, `apps/server/src/lib/validators/dashboard.ts`, `apps/studio/src/components/RightPanel/ControlFieldRow.tsx`, `apps/studio/src/components/Editor.tsx`

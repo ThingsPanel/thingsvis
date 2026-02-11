@@ -788,6 +788,11 @@ export default function Editor() {
             unit: binding.unit,
           }))
         ),
+        // Include thumbnail via meta and root (for compatibility)
+        thumbnail: canvasConfig.thumbnail,
+        meta: {
+          thumbnail: canvasConfig.thumbnail,
+        }
       };
 
 

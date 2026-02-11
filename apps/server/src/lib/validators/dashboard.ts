@@ -14,6 +14,7 @@ export const CreateDashboardSchema = z.object({
   id: z.string().optional(),
   projectId: z.string().optional(),
   canvasConfig: CanvasConfigSchema.optional(),
+  thumbnail: z.string().optional(),
 })
 
 // Schema for updating a dashboard

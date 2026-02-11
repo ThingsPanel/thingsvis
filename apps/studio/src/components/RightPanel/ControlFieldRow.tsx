@@ -78,8 +78,16 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
   };
 
   const setBindingExpr = (expression: string) => {
+    // Parse expression to populate other binding fields (like dataSourcePath)
+    const selection = parseFieldBindingExpression(expression);
+    const dataSourcePath = selection ? `ds.${selection.dataSourceId}.data` : undefined;
+
     updateNode({
-      data: upsertBinding(bindings, { targetProp: field.path, expression })
+      data: upsertBinding(bindings, {
+        targetProp: field.path,
+        expression,
+        dataSourcePath
+      } as any)
     });
   };
 
