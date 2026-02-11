@@ -82,6 +82,37 @@ export default function EmbedPage() {
     responsive: true,
   };
 
+  // Auto-calculation of zoom for non-grid layouts (Fixed/Infinite)
+  const [fitZoom, setFitZoom] = useState(1);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (kernelState?.canvas?.mode === 'grid') return;
+
+    const updateZoom = () => {
+      if (!containerRef.current) return;
+      const { clientWidth } = containerRef.current;
+
+      const currentCanvasWidth = kernelState?.canvas?.width ?? 1920;
+      const isFullWidth = state.schema?.canvas?.fullWidthPreview ?? false;
+
+      if (isFullWidth) {
+        // Fit width
+        const scale = clientWidth / currentCanvasWidth;
+        setFitZoom(scale);
+      } else {
+        // Default behavior (no scaling or specific logic)
+        setFitZoom(1);
+      }
+    };
+
+    updateZoom();
+    window.addEventListener('resize', updateZoom);
+    return () => window.removeEventListener('resize', updateZoom);
+  }, [kernelState?.canvas?.mode, state.schema?.canvas?.fullWidthPreview, kernelState?.canvas?.width]);
+
+
+
 
   // Send message to parent window
   const postToParent = useCallback((message: EmbedMessage) => {
@@ -382,9 +413,17 @@ export default function EmbedPage() {
 
 
 
+  // Auto-calculation of zoom for non-grid layouts (Fixed/Infinite)
   return (
     <div className="relative bg-background overflow-auto" style={{ width: '100vw', height: '100vh' }}>
-      <div style={{ width: '100%', minHeight: '100%' }}>
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          overflow: isGridLayout ? 'auto' : 'hidden' // Hide scrollbars for fixed layout doing auto-fit
+        }}
+      >
         {isGridLayout ? (
           <GridStackCanvas
             store={store as any}
@@ -401,8 +440,9 @@ export default function EmbedPage() {
             resolvePlugin={resolvePlugin as any}
             gridSize={0}
             snapToGrid={false}
-            centeredMask={false}
-            interactive={false}
+            centeredMask={true} // Center the content
+            interactive={false} // Disable panning/zooming user interaction
+            zoom={fitZoom}
           />
         )}
       </div>

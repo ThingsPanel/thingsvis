@@ -67,4 +67,5 @@ Currently, this log is experimental and manual, but all AI assistants must consu
   6. Updated `ProjectDialog.tsx` to include `thumbnail` when constructing the project object from cloud data.
   7. Updated `embed/embed-init.ts` and `Editor.tsx` to properly extract and apply `thumbnail` from embedded initialization data (Widget Mode).
   8. Updated `Editor.tsx` and related storage adapters to correctly sync and display the "Project Name" in the properties panel.
-- **Impact**: `apps/studio/src/lib/api/dashboards.ts`, `apps/studio/src/lib/storage/adapter/cloudAdapter.ts`, `apps/studio/src/lib/storage/schemas.ts`, `apps/studio/src/components/Editor.tsx`
+  9. Updated `EmbedPage.tsx` to include auto-zoom logic for "Fixed" and "Infinite" layouts when `fullWidthPreview` is active (e.g., on Homepage).
+- **Impact**: `apps/studio/src/lib/api/dashboards.ts`, `apps/studio/src/lib/storage/adapter/cloudAdapter.ts`, `apps/studio/src/lib/storage/schemas.ts`, `apps/studio/src/components/Editor.tsx`, `apps/studio/src/pages/EmbedPage.tsx`

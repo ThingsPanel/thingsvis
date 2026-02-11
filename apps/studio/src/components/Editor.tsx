@@ -123,7 +123,6 @@ type CanvasConfigSchema = {
   version: string
   name: string
   description: string
-  description: string
   thumbnail: string
   projectName?: string // Added for display
   scope: "app" | "template"
@@ -1297,7 +1296,12 @@ export default function Editor() {
                   position: { x: 100, y: 100 },
                   size: { width: 200, height: 80 },
                   props: defaultProps,
-                  grid: gridPosition,
+                  grid: {
+                    ...gridPosition,
+                    static: false,
+                    isDraggable: true,
+                    isResizable: true,
+                  },
                 };
                 store.getState().addNodes([node]);
                 markDirty();

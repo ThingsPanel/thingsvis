@@ -287,9 +287,9 @@ export function ProjectDialog({
           createdAt: new Date(dashboard.createdAt).getTime(),
           updatedAt: new Date(dashboard.updatedAt).getTime(),
         },
-        canvas: dashboard.canvasConfig,
-        nodes: dashboard.nodes ?? [],
-        dataSources: dashboard.dataSources ?? [],
+        canvas: dashboard.canvasConfig as any,
+        nodes: (dashboard.nodes ?? []) as any,
+        dataSources: (dashboard.dataSources ?? []) as any,
       }
 
       onProjectLoad(projectFile)
@@ -353,9 +353,9 @@ export function ProjectDialog({
             createdAt: new Date(dashboard.createdAt).getTime(),
             updatedAt: new Date(dashboard.updatedAt).getTime(),
           },
-          canvas: dashboard.canvasConfig,
-          nodes: dashboard.nodes ?? [],
-          dataSources: dashboard.dataSources ?? [],
+          canvas: dashboard.canvasConfig as any,
+          nodes: (dashboard.nodes ?? []) as any,
+          dataSources: (dashboard.dataSources ?? []) as any,
         }
 
         // 同步选中的项目到全局状态
