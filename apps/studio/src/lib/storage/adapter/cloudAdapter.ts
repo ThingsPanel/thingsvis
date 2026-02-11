@@ -25,6 +25,8 @@ function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): Stora
       id: dashboard.id,
       name: dashboard.name,
       thumbnail: dashboard.thumbnail,
+      projectId: dashboard.projectId,
+      projectName: dashboard.project?.name,
       createdAt: new Date(dashboard.createdAt).getTime(),
       updatedAt: new Date(dashboard.updatedAt).getTime(),
     },

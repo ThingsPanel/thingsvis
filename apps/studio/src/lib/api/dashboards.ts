@@ -26,6 +26,10 @@ export interface Dashboard {
   updatedAt: string;
   thumbnail?: string;
   homeFlag?: boolean;
+  project?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface DashboardListItem {

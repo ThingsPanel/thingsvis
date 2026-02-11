@@ -123,7 +123,9 @@ type CanvasConfigSchema = {
   version: string
   name: string
   description: string
+  description: string
   thumbnail: string
+  projectName?: string // Added for display
   scope: "app" | "template"
   params: string[]
   createdAt: number
@@ -156,7 +158,7 @@ type CanvasConfigSchema = {
 
 export default function Editor() {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
-  const { currentProject } = useProject()
+  const { currentProject, switchProject } = useProject()
   // Fullscreen state for Embed Mode
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -461,6 +463,8 @@ export default function Editor() {
                     id: cloudProject.meta.id,
                     name: cloudProject.meta.name,
                     thumbnail: cloudProject.meta.thumbnail, // Load thumbnail
+                    projectId: cloudProject.meta.projectId,
+                    projectName: cloudProject.meta.projectName,
                     createdAt: cloudProject.meta.createdAt,
                     updatedAt: cloudProject.meta.updatedAt,
                   },
@@ -468,6 +472,12 @@ export default function Editor() {
                   nodes: cloudProject.schema.nodes,
                   dataSources: cloudProject.schema.dataSources,
                 };
+
+                // Sync Project Context if needed
+                if (cloudProject.meta.projectId && currentProject?.id !== cloudProject.meta.projectId) {
+                  // Don't await to avoid blocking UI
+                  switchProject(cloudProject.meta.projectId).catch(console.error);
+                }
               }
             }
           } else {
@@ -496,6 +506,8 @@ export default function Editor() {
               id: loaded.meta.id,
               name: loaded.meta.name,
               thumbnail: loaded.meta.thumbnail || "", // Load thumbnail
+              projectId: loaded.meta.projectId || prev.projectId,
+              projectName: loaded.meta.projectName, // Load project name
               createdAt: loaded.meta.createdAt,
               mode: loaded.canvas.mode,
               width: loaded.canvas.width,
@@ -1738,7 +1750,7 @@ export default function Editor() {
                     <div className="space-y-3">
                       <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
                       <Input
-                        value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                        value={canvasConfig.projectName || currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
                         readOnly
                         disabled
                         className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"

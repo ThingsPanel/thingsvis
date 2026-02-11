@@ -16,6 +16,8 @@ export interface StorageProjectMeta {
   name: string;
   description?: string;
   thumbnail?: string;
+  projectId?: string;
+  projectName?: string;
   createdAt: number;
   updatedAt: number;
 }
@@ -49,13 +51,13 @@ export interface ListResult<T> {
 export interface StorageAdapter {
   // Backend info
   backend: StorageBackend;
-  
+
   // Project/Dashboard CRUD
   list: (options?: ListOptions) => Promise<ListResult<StorageProjectMeta>>;
   get: (id: string) => Promise<StorageProject | null>;
   save: (project: StorageProject) => Promise<{ id: string }>;
   delete: (id: string) => Promise<boolean>;
-  
+
   // Additional operations
   duplicate?: (id: string, newName: string) => Promise<{ id: string }>;
   export?: (id: string) => Promise<Blob>;

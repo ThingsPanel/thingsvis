@@ -66,4 +66,5 @@ Currently, this log is experimental and manual, but all AI assistants must consu
   5. Updated `Editor.tsx` to correctly load and display the project `thumbnail` in the editor UI (Canvas Config).
   6. Updated `ProjectDialog.tsx` to include `thumbnail` when constructing the project object from cloud data.
   7. Updated `embed/embed-init.ts` and `Editor.tsx` to properly extract and apply `thumbnail` from embedded initialization data (Widget Mode).
-- **Impact**: `apps/server/src/app/api/v1/dashboards/route.ts`, `apps/server/src/lib/validators/dashboard.ts`, `apps/studio/src/components/RightPanel/ControlFieldRow.tsx`, `apps/studio/src/components/Editor.tsx`, `apps/studio/src/components/ProjectDialog.tsx`, `apps/studio/src/embed/embed-init.ts`
+  8. Updated `Editor.tsx` and related storage adapters to correctly sync and display the "Project Name" in the properties panel.
+- **Impact**: `apps/studio/src/lib/api/dashboards.ts`, `apps/studio/src/lib/storage/adapter/cloudAdapter.ts`, `apps/studio/src/lib/storage/schemas.ts`, `apps/studio/src/components/Editor.tsx`

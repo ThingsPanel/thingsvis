@@ -23,6 +23,10 @@ export const ProjectMetaSchema = z.object({
   updatedAt: z.number().int().positive(),
   /** Base64 JPEG thumbnail for recent projects list (max ~50KB) */
   thumbnail: z.string().max(70000).optional(),
+  /** Parent Project ID (Cloud mode) */
+  projectId: z.string().optional(),
+  /** Parent Project Name (Cloud mode) */
+  projectName: z.string().optional(),
 })
 
 // =============================================================================
