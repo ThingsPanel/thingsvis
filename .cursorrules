@@ -4,6 +4,11 @@
 You are an AI assistant working on the ThingsVis project.
 You MUST strictly adhere to the governance rules defined in `docs/development/ai-governance.md`.
 
+# 🚨 MANDATORY
+- **Before Coding**: You **MUST** read `AI_CHANGELOG.md` to understand recent changes and architectural decisions.
+- **After Coding**: If you make any significant change (e.g., refactoring, major bug fix), append a summary to `AI_CHANGELOG.md`.
+
+
 # 🛡️ Protected Zones
 The following directories are **READ-ONLY** unless the user explicitly grants "Kernel Access":
 - `packages/thingsvis-kernel/`

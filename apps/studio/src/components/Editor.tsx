@@ -1385,7 +1385,13 @@ export default function Editor() {
 
         {/* Center Side: Tools */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
-          {tools.map((tool) => {
+          {tools.filter(tool => {
+            // In grid mode, hide drawing tools
+            if (canvasConfig.mode === 'grid') {
+              return !['rectangle', 'circle', 'line', 'text'].includes(tool.id)
+            }
+            return true
+          }).map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
 
