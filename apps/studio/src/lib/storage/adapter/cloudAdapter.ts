@@ -94,7 +94,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async save(project: StorageProject): Promise<{ id: string }> {
       try {
-        const canUpdate = project.meta.id && isCuid(project.meta.id);
+        const canUpdate = !!project.meta.id;
 
         if (canUpdate) {
           const response = await dashboardsApi.updateDashboard(project.meta.id, {

@@ -25,7 +25,6 @@ function initEmbedTokenFromUrl(): void {
 
       if (mode === 'embedded' && token) {
         configureEmbedApiClient(token);
-        configureEmbedApiClient(token);
       }
     }
   } catch (e) {
@@ -37,8 +36,6 @@ function initEmbedTokenFromUrl(): void {
 initEmbedTokenFromUrl();
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <App />
 );
 

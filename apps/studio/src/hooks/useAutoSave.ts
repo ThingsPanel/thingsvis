@@ -158,7 +158,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
   // Force immediate save
   const saveNow = useCallback(async () => {
     if (enabled) {
-      await autoSaveManager.saveNow()
+      await autoSaveManager.saveNow(true)
     }
   }, [enabled])
 

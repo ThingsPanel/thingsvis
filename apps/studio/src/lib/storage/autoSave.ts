@@ -111,7 +111,7 @@ export class AutoSaveManager {
   /**
    * Save now with retry logic (exponential backoff, up to 3 attempts)
    */
-  async saveNow(): Promise<void> {
+  async saveNow(force = false): Promise<void> {
 
 
     // Cancel pending debounce
@@ -125,8 +125,8 @@ export class AutoSaveManager {
       return
     }
 
-    // Skip if not dirty and we've saved before
-    if (!this.isDirty && this.currentState.lastSavedAt !== null) {
+    // Skip if not dirty and we've saved before, UNLESS forced
+    if (!force && !this.isDirty && this.currentState.lastSavedAt !== null) {
       return
     }
 
@@ -209,7 +209,9 @@ export class AutoSaveManager {
     this.getState = null
     this.saveFn = projectStorage.save
     this.isDirty = false
-    this.listeners.clear()
+    // Do not clear listeners here - UI components (like SaveIndicator) 
+    // might still be subscribed and waiting for updates.
+    // They will unsubscribe themselves when they unmount.
   }
 
   /**

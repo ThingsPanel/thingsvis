@@ -1368,10 +1368,10 @@ export default function Editor() {
 
           <Input
             placeholder="未命名项目"
-            className="min-w-[100px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+            className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
             value={canvasConfig.name}
             onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-            style={{ width: `${Math.max(100, Math.min(300, (canvasConfig.name?.length || 6) * 14 + 16))}px` }}
+            style={{ width: `${Math.max(100, Math.min(150, (canvasConfig.name?.length || 6) * 14 + 16))}px` }}
           />
 
           <SaveIndicator
@@ -1440,6 +1440,17 @@ export default function Editor() {
               <PanelRightOpen className="h-4 w-4" />
             </Button>
           )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+            onClick={() => saveNow()}
+            disabled={saveState.status === 'saving'}
+          >
+            <Save className="h-4 w-4" />
+            <span className="text-sm font-medium">{language === "zh" ? "保存" : "Save"}</span>
+          </Button>
 
           <Button
             variant="ghost"
