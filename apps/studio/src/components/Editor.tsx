@@ -66,6 +66,7 @@ import {
   Plus,
   Database,
   LogOut,
+  Minimize,
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -90,13 +91,19 @@ import { extractDefaults } from '../plugins/schemaUtils'
 import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
+import { useStorage } from '../hooks/useStorage'
 import { projectStorage } from '../lib/storage/projectStorage'
 import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
+import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { dataSourceManager } from '@thingsvis/kernel'
+import { platformFieldStore } from '@/lib/stores/platformFieldStore'
+import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
+import { initSaveStrategy, updateEmbeddedConfig, getEffectiveProjectId } from '../lib/storage/saveStrategy'
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -119,18 +126,21 @@ type CanvasConfigSchema = {
   name: string
   description: string
   thumbnail: string
+  projectName?: string // Added for display
   scope: "app" | "template"
   params: string[]
   createdAt: number
   createdBy: string
 
   // Config - 画布配置
-  mode: "fixed" | "infinite" | "reflow" | "grid"
+  mode: "fixed" | "infinite" | "grid"
   width: number
   height: number
   gridCols?: number
   gridRowHeight?: number
   gridGap?: number
+  fullWidthPreview?: boolean  // 预览模式下是否撑满容器宽度
+  homeFlag?: boolean  // 是否设为首页
   theme: "dark" | "light" | "auto"
   gridSize: number
   bgType: "color" | "image"
@@ -149,7 +159,22 @@ type CanvasConfigSchema = {
 
 export default function Editor() {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
-  const { currentProject } = useProject()
+  const { currentProject, switchProject } = useProject()
+  // Refs for event cleanup (to avoid leaks in async init)
+  const schemaUnsubRef = useRef<() => void>();
+  const dataUnsubRef = useRef<() => void>();
+
+  // Fullscreen state for Embed Mode
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  }, [])
+
   const [activeTool, setActiveTool] = useState<Tool>("select")
   // Initialize dark mode state from html class
   const [isDarkMode, setIsDarkMode] = useState(true)
@@ -196,6 +221,16 @@ export default function Editor() {
     setIsDarkMode(isDark)
   }, [])
 
+  // 🔑 在嵌入模式下初始化 SaveStrategy (只执行一次)
+  const embedInitializedRef = useRef(false);
+  useEffect(() => {
+    if (embedVisibility.isEmbedded && !embedInitializedRef.current) {
+      embedInitializedRef.current = true;
+      console.log('[Editor] 初始化嵌入模式 SaveStrategy');
+      initEmbedModeFromUrl(isAuthenticated);
+    }
+  }, [embedVisibility.isEmbedded, isAuthenticated])
+
   // Debug: Log authentication state
   useEffect(() => {
 
@@ -212,8 +247,8 @@ export default function Editor() {
     }
   }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded])
 
-  const [zoom, setZoom] = useState(100)
-  const [zoomInput, setZoomInput] = useState("100")
+  const [zoom, setZoom] = useState(80)
+  const [zoomInput, setZoomInput] = useState("80")
   const [showRightPanel, setShowRightPanel] = useState(true)
 
   // Update zoom input when zoom changes externally
@@ -305,7 +340,7 @@ export default function Editor() {
       createdBy: "user-001",
 
       // Config - 画布配置
-      mode: defaultMode as "fixed" | "infinite" | "reflow",
+      mode: defaultMode as "fixed" | "infinite" | "grid",
       width: 1920,
       height: 1080,
       gridCols: 24,
@@ -333,16 +368,21 @@ export default function Editor() {
   const bootstrappingRef = useRef(true)
   const [isBootstrapping, setIsBootstrapping] = useState(true)
 
+  // 获取正确的存储适配器（根据嵌入模式/认证状态自动选择）
+  const storage = useStorage(projectId)
+
   // Function to get current project state for saving
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
     // Extract node schemas from NodeState (schemaRef contains the actual node data)
     const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
+
     return {
       meta: {
         version: '1.0.0',
         id: projectId,
         name: canvasConfig.name,
+        thumbnail: canvasConfig.thumbnail,
         createdAt: canvasConfig.createdAt,
         updatedAt: Date.now(),
       },
@@ -356,18 +396,23 @@ export default function Editor() {
         gridGap: canvasConfig.gridGap,
         gridEnabled: canvasConfig.gridEnabled,
         gridSize: canvasConfig.gridSize,
+        fullWidthPreview: canvasConfig.fullWidthPreview,
+        homeFlag: canvasConfig.homeFlag,
       },
       nodes: nodes,
       dataSources: canvasConfig.dataSources,
     }
   }, [projectId, canvasConfig])
 
+  // Helper to identify Widget Mode
+  const isWidgetMode = isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-'));
+
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
     cloudProjectId: currentProject?.id,
     getProjectState,
-    enabled: !isBootstrapping,
+    enabled: !isBootstrapping && !isWidgetMode, // Disable auto-save in Widget Mode
     onIdChange: (newId) => {
       setCanvasConfig(prev => ({
         ...prev,
@@ -379,15 +424,72 @@ export default function Editor() {
     },
   })
 
+  // Track whether canvas config has been initialized after bootstrapping
+  // (reset when projectId changes to avoid marking dirty on initial load)
+  const canvasInitializedRef = useRef(false)
+
   // Bootstrap: load last project into store (or create a new empty page)
   useEffect(() => {
     let cancelled = false
+    // Reset canvasInitializedRef when projectId changes
+    canvasInitializedRef.current = false
       ; (async () => {
         bootstrappingRef.current = true
         setIsBootstrapping(true)
 
         try {
-          const loaded = await projectStorage.load(projectId)
+          // 🔑 根据存储模式选择加载来源
+          // - 嵌入模式 (isCloud=true): 从云端 API 加载
+          // - 本地模式 (isCloud=false): 从 IndexedDB 加载
+          let loaded: ProjectFile | null = null;
+
+          if (storage.isCloud) {
+            // 🛑 Hotfix: Embed Mode handling
+            // If we are in embed mode and the project ID is assigned by Host (e.g. 'widget' or 'embed-*'),
+            // it means the project data comes from postMessage, NOT from the cloud.
+            // Fetching from cloud will return 404 and cause fallback to empty project, wiping out our init data.
+            const isHostProject = isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-'));
+
+            if (isHostProject) {
+              console.log('[Editor] Bootstrap: Host-managed project (Widget Mode), skipping cloud load.');
+              // Data is already loaded via onEmbedInit.
+              // We must stop bootstrapping here to prevent 'loaded=null' from triggering the empty project fallback.
+              bootstrappingRef.current = false;
+              setIsBootstrapping(false);
+              return;
+            } else {
+              console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
+              const cloudProject = await storage.get(projectId);
+              console.log('[Editor] Bootstrap: 云端项目结果:', cloudProject);
+              if (cloudProject) {
+                loaded = {
+                  meta: {
+                    version: '1.0.0',
+                    id: cloudProject.meta.id,
+                    name: cloudProject.meta.name,
+                    thumbnail: cloudProject.meta.thumbnail, // Load thumbnail
+                    projectId: cloudProject.meta.projectId,
+                    projectName: cloudProject.meta.projectName,
+                    createdAt: cloudProject.meta.createdAt,
+                    updatedAt: cloudProject.meta.updatedAt,
+                  },
+                  canvas: cloudProject.schema.canvas,
+                  nodes: cloudProject.schema.nodes,
+                  dataSources: cloudProject.schema.dataSources,
+                };
+
+                // Sync Project Context if needed
+                if (cloudProject.meta.projectId && currentProject?.id !== cloudProject.meta.projectId) {
+                  // Don't await to avoid blocking UI
+                  switchProject(cloudProject.meta.projectId).catch(console.error);
+                }
+              }
+            }
+          } else {
+            console.log('[Editor] Bootstrap: 从本地加载项目', projectId);
+            loaded = await projectStorage.load(projectId);
+          }
+
           if (cancelled) return
           if (loaded) {
             // Load project into kernel store
@@ -399,7 +501,8 @@ export default function Editor() {
               config: {
                 mode: loaded.canvas.mode,
                 width: loaded.canvas.width,
-                height: loaded.canvas.height
+                height: loaded.canvas.height,
+                theme: (loaded.canvas as any).theme || 'dark', // Fix lint: Add theme and cast to any
               }
             })
             // Update canvas config
@@ -407,6 +510,9 @@ export default function Editor() {
               ...prev,
               id: loaded.meta.id,
               name: loaded.meta.name,
+              thumbnail: loaded.meta.thumbnail || "", // Load thumbnail
+              projectId: loaded.meta.projectId || prev.projectId,
+              projectName: loaded.meta.projectName, // Load project name
               createdAt: loaded.meta.createdAt,
               mode: loaded.canvas.mode,
               width: loaded.canvas.width,
@@ -419,6 +525,21 @@ export default function Editor() {
               gridSize: loaded.canvas.gridSize ?? prev.gridSize,
               dataSources: (loaded.dataSources as any) ?? prev.dataSources,
             }))
+
+            // Sync grid settings to kernel store if in grid mode
+            if (loaded.canvas.mode === 'grid') {
+              store.getState().setGridSettings({
+                cols: loaded.canvas.gridCols ?? 24,
+                rowHeight: loaded.canvas.gridRowHeight ?? 50,
+                gap: loaded.canvas.gridGap ?? 5,
+                compactVertical: true,
+                minW: 1,
+                minH: 1,
+                showGridLines: loaded.canvas.gridEnabled ?? true,
+                breakpoints: [],
+                responsive: true,
+              })
+            }
 
             // Clear undo history when switching/loading projects (best-effort)
             try {
@@ -435,6 +556,7 @@ export default function Editor() {
                 mode: canvasConfig.mode,
                 width: canvasConfig.width,
                 height: canvasConfig.height,
+                theme: canvasConfig.theme, // Fix lint: Add theme
               }
             })
             try {
@@ -443,7 +565,7 @@ export default function Editor() {
           }
         } catch (e) {
           // eslint-disable-next-line no-console
-
+          console.error('[Editor] Bootstrap error:', e);
         } finally {
           if (cancelled) return
           bootstrappingRef.current = false
@@ -454,13 +576,20 @@ export default function Editor() {
     return () => {
       cancelled = true
     }
-  }, [projectId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, storage.isCloud])
 
   // Mark dirty on meaningful changes only:
   // - explicit user edits (node add/move/resize/props/etc.)
   // - canvas config changes that affect persistence
   useEffect(() => {
     if (bootstrappingRef.current) return
+    // Skip the first effect after bootstrapping completes
+    // (React state updates are async so canvasConfig changes after bootstrappingRef.current = false)
+    if (!canvasInitializedRef.current) {
+      canvasInitializedRef.current = true
+      return
+    }
     markDirty()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -473,24 +602,58 @@ export default function Editor() {
     canvasConfig.gridGap,
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
+    canvasConfig.gridEnabled,
     canvasConfig.gridSize,
+    canvasConfig.thumbnail, // Trigger save on thumbnail change
   ])
 
+  // 🔑 订阅 store 节点变化，自动触发 markDirty
+  // 这样无论节点是通过什么方式（添加、删除、粘贴、属性修改等）变化的，
+  // 都会自动触发保存，而不需要在每个调用点手动添加 markDirty
+  useEffect(() => {
+    if (isBootstrapping) return
+
+    // Initialize with current state to avoid marking dirty on subscription setup
+    const state = store.getState()
+    let prevNodesById: any = state.nodesById
+    let prevLayerOrder: any = state.layerOrder
+
+    const unsubscribe = store.subscribe(() => {
+      if (bootstrappingRef.current) return
+
+      const currentState = store.getState()
+      const nodesById = currentState.nodesById
+      const layerOrder = currentState.layerOrder
+
+      // 比较引用是否变化（zustand 在状态变化时会创建新引用）
+      if (nodesById !== prevNodesById || layerOrder !== prevLayerOrder) {
+        prevNodesById = nodesById
+        prevLayerOrder = layerOrder
+        markDirty()
+      }
+    })
+
+    return unsubscribe
+  }, [isBootstrapping, markDirty])
+
   const openPreview = useCallback(async () => {
+    // Ensure preview loads the latest saved content
+    await saveNow()
+
+    if (isEmbedMode()) {
+      // 🆕 Embed Mode specific routing
+      // Use internal hash routing to stay within the iframe/context
+      // unless user specifically wants popups (which is rare in dashboards)
+      const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}&mode=embedded`
+      window.location.hash = previewHash
+      return
+    }
+
     const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}`
 
     // Open a new tab synchronously to avoid popup blockers.
     // We'll navigate it to the preview URL after the save completes.
     const previewWindow = window.open('about:blank', '_blank')
-
-    try {
-      // Ensure preview loads the latest saved content
-      await saveNow()
-    } catch (error) {
-      // If saving fails, don't leave a blank tab around.
-      previewWindow?.close()
-      throw error
-    }
 
     const url = new URL(window.location.href)
     url.hash = previewHash
@@ -503,6 +666,38 @@ export default function Editor() {
 
     // Popup blocked: fall back to same-tab navigation.
     window.location.hash = previewHash
+  }, [projectId, saveNow])
+
+  // Open publish - publishes the dashboard
+  const openPublish = useCallback(async () => {
+    // Ensure latest content is saved before publishing
+    await saveNow()
+
+    if (isEmbedMode()) {
+      // In embed mode, notify the host to handle publish
+      window.parent.postMessage({ type: 'thingsvis:publish', projectId }, '*')
+      return
+    }
+
+    // In standalone mode, call publish API directly
+    try {
+      const response = await fetch(`/api/v1/dashboards/${projectId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      })
+
+      if (response.ok) {
+        // 可以在这里显示成功提示，或者触发一个状态更新
+        console.log('[Editor] Dashboard published successfully')
+      } else {
+        console.error('[Editor] Failed to publish dashboard:', response.statusText)
+      }
+    } catch (error) {
+      console.error('[Editor] Publish error:', error)
+    }
   }, [projectId, saveNow])
 
   // Register default commands with the command registry
@@ -585,7 +780,7 @@ export default function Editor() {
           position: schema.position,
           size: schema.size,
           props: schema.props,
-          // 🆕 Include grid position for grid/reflow layout mode
+          // Include grid position for grid layout mode
           grid: schema.grid,
           // Include thing model bindings if present
           thingModelBindings: schema.thingModelBindings || [],
@@ -601,6 +796,7 @@ export default function Editor() {
           width: canvasConfig.width,
           height: canvasConfig.height,
           background: canvasConfig.bgValue,
+          fullWidthPreview: canvasConfig.fullWidthPreview ?? false,
         },
         nodes,
         // Collect all thing model bindings in flat format for easy access
@@ -615,6 +811,11 @@ export default function Editor() {
             unit: binding.unit,
           }))
         ),
+        // Include thumbnail via meta and root (for compatibility)
+        thumbnail: canvasConfig.thumbnail,
+        meta: {
+          thumbnail: canvasConfig.thumbnail,
+        }
       };
 
 
@@ -629,125 +830,301 @@ export default function Editor() {
   useEffect(() => {
     if (!isEmbedMode()) return;
 
-    const unsubscribe = onEmbedEvent('init', (payload: any) => {
+    const unsubscribe = onEmbedEvent('init', async (payload: EmbedInitPayload) => {
+      console.log('[Editor] 📥 收到 embed init 事件:', payload);
 
+      // 使用新的处理函数解析数据
+      const processed = processEmbedInitPayload(payload);
+      if (!processed) {
+        console.warn('[Editor] ⚠️ embed init 数据无效');
+        return;
+      }
 
-      if (payload?.data) {
-        const data = payload.data;
+      // 🔑 关键修复：使用宿主传来的项目 ID 更新 canvasConfig
+      setCanvasConfig(prev => ({
+        ...prev,
+        id: processed.projectId, // 使用宿主传来的 ID
+        name: processed.projectName,
+        mode: processed.canvas.mode as any,
+        width: processed.canvas.width,
+        height: processed.canvas.height,
+        bgValue: processed.canvas.background,
+        gridCols: processed.canvas.gridCols,
+        gridRowHeight: processed.canvas.gridRowHeight,
+        gridGap: processed.canvas.gridGap,
+        fullWidthPreview: processed.canvas.fullWidthPreview,
+        thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
+      }));
 
-        // Load canvas config if provided
-        if (data.canvas) {
-          setCanvasConfig(prev => ({
-            ...prev,
-            mode: data.canvas.mode || prev.mode,
-            width: data.canvas.width || prev.width,
-            height: data.canvas.height || prev.height,
-            bgValue: data.canvas.background || prev.bgValue,
-            gridCols: data.canvas.gridCols ?? prev.gridCols,
-            gridRowHeight: data.canvas.gridRowHeight ?? prev.gridRowHeight,
-            gridGap: data.canvas.gridGap ?? prev.gridGap,
-          }));
-        }
+      // 🔌 Handle Platform Fields from Init Payload (Race Condition Fix)
+      const initPayload = payload as any; // Cast to access platformFields
+      if (initPayload.data && initPayload.data.platformFields && Array.isArray(initPayload.data.platformFields)) {
+        console.log('[Editor] 🔌 Initializing Platform Fields from Init:', initPayload.data.platformFields.length);
+        platformFieldStore.setFields(initPayload.data.platformFields);
+      }
 
-        // Load nodes if provided
-        // Load nodes if provided
-        if (data.nodes && Array.isArray(data.nodes)) {
-          // Convert nodes to NodeSchemaType format and load into store
-          const nodesToLoad = data.nodes.map((node: any) => ({
-            id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-            type: node.type,
-            position: node.position || { x: 100, y: 100 },
-            size: node.size || { width: 200, height: 80 },
-            props: node.props || {},
-            thingModelBindings: node.thingModelBindings || [],
-            // 🆕 保留网格布局位置
-            grid: node.grid,
-          }));
+      // 🔌 Ensure __platform__ data source exists
+      const initData = payload.data;
+      if (initData) {
+        // Register datasources if provided, or check if we need to inject platform
+        // Note: Kernel might load dataSources from schema, but we want to be sure adapter is ready.
+        if (!initData.dataSources?.some((ds: any) => ds.id === '__platform__')) {
+          // Inject if missing in payload, effectively ensuring it exists in the loaded project
+          // Actually, ProjectDialog or Kernel loadPage handles this?
+          // Logic in EmbedPage.tsx: manually injects into schema.
+          // Here we might need to rely on what `processed` returns?
+          // processed.project is used? No, Editor uses `projectStorage`.
 
-          // Determine initial theme based on context or default to light
-          const initialTheme = data.canvas?.theme || 'light';
-
-          store.getState().loadPage({
-            id: `embed-${Date.now()}`,
-            type: 'page' as const,
-            version: '1.0.0',
-            nodes: nodesToLoad,
-            // 🆕 传递画布配置以确保模式正确
-            config: data.canvas ? {
-              ...data.canvas,
-              mode: (data.canvas.mode === 'grid' || data.canvas.mode === 'reflow') ? 'reflow' : (data.canvas.mode || 'reflow'),
-              width: data.canvas.width || 1920,
-              height: data.canvas.height || 1080,
-              theme: initialTheme,
-              gridSettings: data.canvas.gridSettings || {
-                cols: 24,
-                rowHeight: 50,
-                gap: 5,
-                compactVertical: false,
-                responsive: false
-              }
-            } : undefined,
+          // In Widget mode, we might not have a full project structure in storage yet.
+          // We can manually register the adapter with DataSourceManager to be safe.
+          dataSourceManager.registerDataSource({
+            id: '__platform__',
+            name: 'System Platform',
+            type: 'PLATFORM_FIELD',
+            config: { source: 'ThingsPanel', fieldMappings: {} }
           });
-
-          // Clear undo history for clean start
-          try {
-            store.temporal.getState().clear?.();
-          } catch { }
         }
       }
-    });
 
-    // Also check if initial data is already available (in case init was received before this effect ran)
-    const initialData = getInitialData();
-    if (initialData) {
+      // Initialize project with data - cleaned up invalid check
 
 
-      if (initialData.canvas) {
-        setCanvasConfig(prev => ({
-          ...prev,
-          mode: initialData.canvas.mode || prev.mode,
-          width: initialData.canvas.width || prev.width,
-          height: initialData.canvas.height || prev.height,
-          bgValue: initialData.canvas.background || prev.bgValue,
-          gridCols: initialData.canvas.gridCols ?? prev.gridCols,
-          gridRowHeight: initialData.canvas.gridRowHeight ?? prev.gridRowHeight,
-          gridGap: initialData.canvas.gridGap ?? prev.gridGap,
-        }));
+      // 🔌 Handle schema update (platform fields)
+      schemaUnsubRef.current = onEmbedEvent('updateSchema', (payload: any) => {
+        const fields = payload; // payload is fields array? or { event, payload }?
+        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'thingsvis:editor-event'
+        // define onEmbedEvent implementation?
+        // If onEmbedEvent wraps 'thingsvis:message', let's assume payload matches the event payload.
+        // Client.ts: this.send('thingsvis:editor-event', { event: 'updateSchema', payload: fields })
+        // If onEmbedEvent('updateSchema') triggers when event.event === 'updateSchema', then payload argument IS fields.
+        // Let's assume based on updateData usage (payload is data).
+        if (Array.isArray(fields)) {
+          console.log('[Editor] 🔌 Received updateSchema:', fields.length);
+          platformFieldStore.setFields(fields);
+        }
+      });
+
+      // 🔑 监听 updateData 事件 (用于 Widget 模式实时数据推送)
+      dataUnsubRef.current = onEmbedEvent('updateData', (payload: any) => {
+        // console.log('[Editor] 收到 updateData:', payload);
+        const data = payload || {};
+
+        // 1. Bridge to PlatformFieldAdapter (for ds.__platform__ bindings)
+        if (data && typeof data === 'object') {
+          Object.entries(data).forEach(([fieldId, value]) => {
+            window.postMessage({
+              type: 'thingsvis:platformData',
+              payload: { fieldId, value, timestamp: Date.now() }
+            }, '*');
+          });
+        }
+
+        // 遍历所有节点，检查是否有物模型绑定
+        const state = store.getState();
+        Object.values(state.nodesById).forEach(nodeState => {
+          const schema = nodeState.schemaRef as any;
+          const bindings = schema.thingModelBindings || [];
+
+          if (bindings.length > 0) {
+            // 有绑定，尝试更新属性
+            const newProps = { ...schema.props };
+            let changed = false;
+
+            bindings.forEach((binding: any) => {
+              // 绑定的目标属性 (例如 'value', 'data')
+              const targetProp = binding.targetProp;
+              // 数据源字段 ID (例如 'temperature', 'humidity')
+              const fieldId = binding.metricsId || binding.key;
+
+              if (targetProp && fieldId && data[fieldId] !== undefined) {
+                newProps[targetProp] = data[fieldId];
+                changed = true;
+              }
+            });
+
+            if (changed) {
+              // 更新节点属性
+              store.getState().updateNode(schema.id, { props: newProps });
+            }
+          }
+        });
+      });
+
+      // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
+      let nodesToLoad = processed.nodes;
+      if (processed.saveTarget === 'self' && processed.projectId) {
+        console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
+        try {
+          const cloudAdapter = createCloudStorageAdapter();
+          const cloudProject = await cloudAdapter.get(processed.projectId);
+          if (cloudProject && cloudProject.schema.nodes.length > 0) {
+            console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
+            console.log('[Editor] 云端节点 data 字段:', cloudProject.schema.nodes.map((n: any) => ({
+              id: n.id,
+              type: n.type,
+              hasData: !!n.data,
+              data: n.data
+            })));
+            nodesToLoad = cloudProject.schema.nodes;
+          } else {
+            console.log('[Editor] ⚠️ 云端无节点数据，使用宿主传来的节点');
+          }
+        } catch (err) {
+          console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
+        }
       }
 
-      if (initialData.nodes && Array.isArray(initialData.nodes)) {
-        const nodesToLoad = initialData.nodes.map((node: any) => ({
-          id: node.id || `node-${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          type: node.type,
-          position: node.position || { x: 100, y: 100 },
-          size: node.size || { width: 200, height: 80 },
-          props: node.props || {},
-          thingModelBindings: node.thingModelBindings || [],
-          // 🆕 保留网格布局位置
-          grid: node.grid,
-        }));
-
+      // 加载节点到 store，使用正确的项目 ID
+      if (nodesToLoad.length > 0) {
         store.getState().loadPage({
-          id: `embed-${Date.now()}`,
+          id: processed.projectId, // 🔑 使用宿主传来的 ID
           type: 'page' as const,
           version: '1.0.0',
           nodes: nodesToLoad,
-          // 🆕 传递画布配置
-          config: initialData.canvas ? {
-            mode: initialData.canvas.mode || 'grid',
-            width: initialData.canvas.width || 1920,
-            height: initialData.canvas.height || 1080,
-          } : undefined,
+          config: {
+            mode: processed.canvas.mode as any,
+            width: processed.canvas.width,
+            height: processed.canvas.height,
+            theme: 'dark',
+            gridSettings: {
+              cols: processed.canvas.gridCols ?? 24,
+              rowHeight: processed.canvas.gridRowHeight ?? 50,
+              gap: processed.canvas.gridGap ?? 5,
+              compactVertical: false,
+              responsive: false,
+              minW: 1,
+              minH: 1,
+              showGridLines: true,
+              breakpoints: []
+            },
+          },
         });
 
+        // Clear undo history for clean start
         try {
           store.temporal.getState().clear?.();
         } catch { }
       }
+
+      console.log('[Editor] ✅ embed init 处理完成, projectId:', processed.projectId);
+    });
+
+    // Also check if initial data is already available (in case init was received before this effect ran)
+    const initialData = getInitialData() as EmbedInitPayload | null;
+    if (initialData) {
+      (async () => {
+        console.log('[Editor] 📥 发现已有初始数据，处理中...');
+        const processed = processEmbedInitPayload(initialData);
+        if (processed) {
+          // 🔍 DEBUG LOGS
+          console.group('[Editor] 处理 Init Payload');
+          console.log('Processed Canvas:', processed.canvas);
+          console.log('Nodes count:', processed.nodes.length);
+          console.groupEnd();
+
+          setCanvasConfig(prev => ({
+            ...prev,
+            id: processed.projectId,
+            name: processed.projectName,
+            mode: processed.canvas.mode as any,
+            width: processed.canvas.width,
+            height: processed.canvas.height,
+            bgValue: processed.canvas.background,
+            gridCols: processed.canvas.gridCols,
+            gridRowHeight: processed.canvas.gridRowHeight,
+            gridGap: processed.canvas.gridGap,
+            gridGap: processed.canvas.gridGap,
+            fullWidthPreview: processed.canvas.fullWidthPreview,
+            thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
+          }));
+
+          // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
+          let nodesToLoad = processed.nodes;
+          if (processed.saveTarget === 'self' && processed.projectId) {
+            console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
+            try {
+              const cloudAdapter = createCloudStorageAdapter();
+              const cloudProject = await cloudAdapter.get(processed.projectId);
+              if (cloudProject && cloudProject.schema.nodes.length > 0) {
+                console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
+                nodesToLoad = cloudProject.schema.nodes;
+              }
+            } catch (err) {
+              console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
+            }
+          }
+
+          if (nodesToLoad.length > 0) {
+            store.getState().loadPage({
+              id: processed.projectId,
+              type: 'page' as const,
+              version: '1.0.0',
+              nodes: nodesToLoad,
+              config: {
+                mode: processed.canvas.mode as any,
+                width: processed.canvas.width,
+                height: processed.canvas.height,
+                theme: 'dark',
+                gridSettings: {
+                  cols: processed.canvas.gridCols ?? 24,
+                  rowHeight: processed.canvas.gridRowHeight ?? 50,
+                  gap: processed.canvas.gridGap ?? 5,
+                  compactVertical: false,
+                  responsive: false,
+                  minW: 1,
+                  minH: 1,
+                  showGridLines: true,
+                  breakpoints: []
+                },
+              },
+            });
+
+            try {
+              store.temporal.getState().clear?.();
+            } catch { }
+          }
+        }
+      })();
     }
 
-    return unsubscribe
+    return () => {
+      unsubscribe();
+      if (schemaUnsubRef.current) schemaUnsubRef.current();
+      if (dataUnsubRef.current) dataUnsubRef.current();
+    }
   }, [])
+
+  // 🆕 监听 Host 主动触发的保存请求 (Widget Mode)
+  useEffect(() => {
+    if (!isWidgetMode) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'thingsvis:request-save') {
+        console.log('[Editor] 收到请求保存指令，手动发送数据');
+
+        // 由于 AutoSave 被禁用，saveNow() 可能不执行，故手动构建数据发送
+        const state = getProjectState();
+        const payload = {
+          config: {
+            meta: state.meta,
+            canvas: state.canvas,
+            nodes: state.nodes,
+            dataSources: state.dataSources
+          }
+        };
+
+        window.parent.postMessage({
+          type: 'thingsvis:host-save',
+          payload
+        }, '*');
+
+        console.log('[Editor] 已发送 thingsvis:host-save', payload);
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [isWidgetMode, getProjectState]);
 
   // 🆕 在 bootstrapping 完成后发送握手请求
   useEffect(() => {
@@ -945,12 +1322,14 @@ export default function Editor() {
 
       {/* Canvas View - switch between normal and grid mode */}
       <div className="absolute inset-0 z-0">
-        {canvasConfig.mode === 'reflow' ? (
+        {canvasConfig.mode === 'grid' ? (
           <GridStackCanvas
             store={store}
             width={canvasConfig.width}
             height={canvasConfig.height}
             activeTool={activeTool}
+            zoom={zoom / 100}
+            onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             settings={{
               cols: canvasConfig.gridCols ?? 24,
               rowHeight: canvasConfig.gridRowHeight ?? 10,
@@ -984,7 +1363,12 @@ export default function Editor() {
                   position: { x: 100, y: 100 },
                   size: { width: 200, height: 80 },
                   props: defaultProps,
-                  grid: gridPosition,
+                  grid: {
+                    ...gridPosition,
+                    static: false,
+                    isDraggable: true,
+                    isResizable: true,
+                  },
                 };
                 store.getState().addNodes([node]);
                 markDirty();
@@ -1010,58 +1394,13 @@ export default function Editor() {
         )}
       </div>
 
-      {Object.keys(kernelState.nodesById).length === 0 && (
+      {isBootstrapping && (
         <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
           <div className="text-center space-y-6 pointer-events-auto">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
             <p className="text-muted-foreground max-w-md">
-              {language === "zh" ? "您的所有数据都保存在浏览器本地。" : "Your data is stored locally in the browser."}
+              {language === "zh" ? "正在加载..." : "Loading..."}
             </p>
-            <div className="space-y-2 text-sm text-muted-foreground w-64 mx-auto">
-              <button
-                onClick={() => setShowProjectDialog(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <FolderOpen className="h-4 w-4" />
-                  <span>{language === "zh" ? "打开" : "Open"}</span>
-                </div>
-                <span className="text-sm text-muted-foreground">Ctrl+O</span>
-              </button>
-              <button
-                onClick={() => setShowShortcuts(true)}
-                className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-              >
-                <div className="flex items-center gap-3">
-                  <HelpCircle className="h-4 w-4" />
-                  <span>{language === "zh" ? "帮助" : "Help"}</span>
-                </div>
-                <span className="text-sm text-muted-foreground">?</span>
-              </button>
-              {!authLoading && isAuthenticated && user ? (
-                <>
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer text-red-600 dark:text-red-400"
-                  >
-                    <div className="flex items-center gap-3">
-                      <LogOut className="h-4 w-4" />
-                      <span>{language === "zh" ? "退出登录" : "Logout"}</span>
-                    </div>
-                  </button>
-                </>
-              ) : !authLoading ? (
-                <button
-                  onClick={() => window.location.hash = '#/login'}
-                  className="flex items-center justify-between w-full px-4 py-2 hover:bg-muted/50 rounded-md transition-colors text-left cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Users className="h-4 w-4" />
-                    <span>{language === "zh" ? "登录" : "Login"}</span>
-                  </div>
-                </button>
-              ) : null}
-            </div>
           </div>
         </div>
       )}
@@ -1089,7 +1428,14 @@ export default function Editor() {
                 {language === "zh" ? "保存" : "Save"}
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
               </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => window.open('#/data-sources', '_blank')}>
+              <DropdownMenuItem className="gap-2" onClick={async () => {
+                if (isEmbedMode()) {
+                  await saveNow()
+                  window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`
+                } else {
+                  window.open('#/data-sources', '_blank')
+                }
+              }}>
                 <Database className="h-4 w-4" />
                 {language === "zh" ? "数据源管理" : "Data Sources"}
               </DropdownMenuItem>
@@ -1143,9 +1489,10 @@ export default function Editor() {
 
           <Input
             placeholder="未命名项目"
-            className="w-32 h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+            className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
             value={canvasConfig.name}
             onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
+            style={{ width: `${Math.max(100, Math.min(150, (canvasConfig.name?.length || 6) * 14 + 16))}px` }}
           />
 
           <SaveIndicator
@@ -1159,7 +1506,13 @@ export default function Editor() {
 
         {/* Center Side: Tools */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
-          {tools.map((tool) => {
+          {tools.filter(tool => {
+            // In grid mode, hide drawing tools
+            if (canvasConfig.mode === 'grid') {
+              return !['rectangle', 'circle', 'line', 'text'].includes(tool.id)
+            }
+            return true
+          }).map((tool) => {
             const Icon = tool.icon
             const isActive = activeTool === tool.id
 
@@ -1219,6 +1572,17 @@ export default function Editor() {
             variant="ghost"
             size="sm"
             className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+            onClick={() => saveNow()}
+            disabled={saveState.status === 'saving'}
+          >
+            <Save className="h-4 w-4" />
+            <span className="text-sm font-medium">{language === "zh" ? "保存" : "Save"}</span>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
             onClick={openPreview}
           >
             <Eye className="h-4 w-4" />
@@ -1228,17 +1592,45 @@ export default function Editor() {
           <Button
             size="sm"
             className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={() => { }}
+            onClick={openPublish}
           >
             <Upload className="h-3.5 w-3.5" />
             <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
           </Button>
+
+          {/* Fullscreen Button (Embed Mode Only) */}
+          {isEmbedMode() && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
+              onClick={() => {
+                if (!document.fullscreenElement) {
+                  document.documentElement.requestFullscreen().catch(() => { })
+                } else {
+                  if (document.exitFullscreen) {
+                    document.exitFullscreen()
+                  }
+                }
+              }}
+              title={language === "zh"
+                ? (document.fullscreenElement ? "退出全屏" : "全屏")
+                : (document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen")}
+            >
+              {document.fullscreenElement ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className={`absolute left-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 z-40 w-72`}>
+        <aside className={`absolute left-4 ${isEmbedMode()
+          ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
+            ? 'top-20' // 顶部工具栏显示时留出空间
+            : 'top-4'
+          : 'top-20'
+          } bottom-4 z-40 w-72`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex border-b border-border">
               <button
@@ -1261,18 +1653,6 @@ export default function Editor() {
                 <Layers className="h-4 w-4" />
                 {language === "zh" ? "图层" : "Layers"}
               </button>
-            </div>
-
-            <div className="p-3 border-b border-border">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-8 rounded-md"
-                />
-              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
@@ -1400,7 +1780,12 @@ export default function Editor() {
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className={`absolute right-4 ${isEmbedMode() ? 'top-4' : 'top-20'} bottom-4 w-80 z-40`}>
+        <aside className={`absolute right-4 ${isEmbedMode()
+          ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
+            ? 'top-20' // 顶部工具栏显示时留出空间
+            : 'top-4'
+          : 'top-20'
+          } bottom-4 w-80 z-40`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
               <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
@@ -1436,7 +1821,7 @@ export default function Editor() {
                     <div className="space-y-3">
                       <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
                       <Input
-                        value={currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                        value={canvasConfig.projectName || currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
                         readOnly
                         disabled
                         className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
@@ -1460,6 +1845,50 @@ export default function Editor() {
                         className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
                       />
                     </div>
+
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">{language === "zh" ? "缩略图" : "Thumbnail"}</label>
+                      <div className="flex items-center gap-2">
+                        {canvasConfig.thumbnail ? (
+                          <div className="relative group w-full">
+                            <img
+                              src={canvasConfig.thumbnail}
+                              alt="Thumbnail"
+                              className="w-full h-20 object-cover rounded-md border border-border"
+                            />
+                            <button
+                              onClick={() => setCanvasConfig({ ...canvasConfig, thumbnail: undefined })}
+                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex-1 h-20 border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-[#6965db] transition-colors">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onload = (ev) => {
+                                    const base64 = ev.target?.result as string;
+                                    setCanvasConfig({ ...canvasConfig, thumbnail: base64 });
+                                    markDirty();
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                            />
+                            <span className="text-xs text-muted-foreground">
+                              {language === "zh" ? "点击上传缩略图" : "Click to upload"}
+                            </span>
+                          </label>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-4 pb-4 border-b border-border">
@@ -1472,14 +1901,17 @@ export default function Editor() {
                       <select
                         value={canvasConfig.mode}
                         onChange={(e) => {
-                          const newMode = e.target.value as "fixed" | "infinite" | "reflow" | "grid";
+                          const newMode = e.target.value as "fixed" | "infinite" | "grid";
                           if (newMode !== canvasConfig.mode) {
                             const hasNodes = Object.keys(store.getState().nodesById).length > 0;
-                            if (hasNodes) {
-                              const msg = language === "zh"
+                            // 嵌入模式下跳过 confirm 对话框（iframe 中 confirm 可能被阻止）
+                            const shouldProceed = isEmbedMode() ? true : !hasNodes || window.confirm(
+                              language === "zh"
                                 ? "切换布局模式将清空当前画布，是否继续？"
-                                : "Switching layout mode will clear the current canvas. Continue?";
-                              if (!window.confirm(msg)) return;
+                                : "Switching layout mode will clear the current canvas. Continue?"
+                            );
+                            if (!shouldProceed) return;
+                            if (hasNodes) {
                               store.getState().loadPage({
                                 id: canvasConfig.id,
                                 type: 'page' as const,
@@ -1489,23 +1921,29 @@ export default function Editor() {
                                   mode: newMode,
                                   width: canvasConfig.width,
                                   height: canvasConfig.height,
+                                  theme: canvasConfig.theme, // Fix lint: Add theme
                                 },
                               });
                               markDirty();
                             }
                             setCanvasConfig({ ...canvasConfig, mode: newMode });
+                            // Reset zoom to 80% on mode switch settings
+                            // Use setTimeout to ensure this happens after any auto-fit logic
+                            setTimeout(() => {
+                              setZoom(80)
+                              setZoomInput("80")
+                            }, 50)
                           }
                         }}
                         className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                       >
                         <option value="grid">{language === "zh" ? "栅格布局" : "Grid Layout"}</option>
                         <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                        <option value="reflow">{language === "zh" ? "自适应" : "Responsive"}</option>
                         <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
                       </select>
                     </div>
 
-                    {(canvasConfig.mode === 'reflow' || canvasConfig.mode === 'grid') ? (
+                    {canvasConfig.mode === 'grid' ? (
                       <div className="space-y-3">
                         {/* Canvas size for grid mode */}
                         <div className="grid grid-cols-2 gap-3">
@@ -1566,6 +2004,26 @@ export default function Editor() {
                         </div>
                         <p className="text-xs text-muted-foreground">
                           {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
+                        </p>
+                        {/* 屏幕自适应选项 */}
+                        <div className="flex items-center justify-between pt-2">
+                          <label className="text-sm font-medium">
+                            {language === "zh" ? "屏幕自适应" : "Full Width Preview"}
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={canvasConfig.fullWidthPreview ?? false}
+                            onChange={(e) => setCanvasConfig({
+                              ...canvasConfig,
+                              fullWidthPreview: e.target.checked
+                            })}
+                            className="h-4 w-4 rounded border-gray-300 accent-[#6965db]"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {language === "zh"
+                            ? "勾选后预览页面画布撑满容器宽度，无背景阴影"
+                            : "When checked, preview canvas fills container width without shadow"}
                         </p>
                       </div>
                     ) : canvasConfig.mode === 'fixed' ? (
@@ -1656,6 +2114,7 @@ export default function Editor() {
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             dataSources: (project.dataSources as any) ?? prev.dataSources,
+            thumbnail: project.meta.thumbnail || "", // Load thumbnail from project meta
           }))
 
           // 关闭对话框

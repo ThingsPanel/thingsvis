@@ -12,7 +12,6 @@ import { Upload, Link2, Code, X, Loader2, Image as ImageIcon } from 'lucide-reac
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { uploadFile, dataUrlToFile } from '@/lib/api/uploads';
-import { uploadImage as uploadToLocal } from '@/lib/imageUpload';
 
 type InputMode = 'upload' | 'url' | 'base64';
 
@@ -24,23 +23,20 @@ interface ImageSourceInputProps {
 
 export function ImageSourceInput({ value, onChange, language }: ImageSourceInputProps) {
   const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-  
+
   const [mode, setMode] = useState<InputMode>(() => {
     if (!value) return 'upload';
     if (value.startsWith('data:image')) return 'base64';
     if (value.startsWith('http://') || value.startsWith('https://') || value.startsWith('blob:')) return 'url';
     return 'upload';
   });
-  
+
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [urlInput, setUrlInput] = useState(value.startsWith('data:') ? '' : value);
   const [base64Input, setBase64Input] = useState(value.startsWith('data:') ? value : '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 检查是否已登录
-  const isLoggedIn = !!localStorage.getItem('thingsvis_token');
-  
   // 当 value 外部变化时同步
   useEffect(() => {
     if (value.startsWith('data:')) {
@@ -70,18 +66,12 @@ export function ImageSourceInput({ value, onChange, language }: ImageSourceInput
     setError(null);
 
     try {
-      if (isLoggedIn) {
-        // 登录状态：上传到服务器
-        const result = await uploadFile(file);
-        if (result.error) {
-          setError(result.error);
-        } else if (result.data) {
-          onChange(result.data.url);
-        }
-      } else {
-        // 未登录：使用本地存储
-        const url = await uploadToLocal(file);
-        onChange(url);
+      // 统一使用后台 API 上传（不需要登录）
+      const result = await uploadFile(file);
+      if (result.error) {
+        setError(result.error);
+      } else if (result.data) {
+        onChange(result.data.url);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('上传失败', 'Upload failed'));
@@ -132,11 +122,10 @@ export function ImageSourceInput({ value, onChange, language }: ImageSourceInput
           type="button"
           onClick={() => handleModeChange('upload')}
           title={t('上传图片', 'Upload Image')}
-          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${
-            mode === 'upload'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          }`}
+          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'upload'
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
         >
           <Upload className="w-3.5 h-3.5" />
           {t('上传', 'Upload')}
@@ -145,11 +134,10 @@ export function ImageSourceInput({ value, onChange, language }: ImageSourceInput
           type="button"
           onClick={() => handleModeChange('url')}
           title={t('输入链接', 'Enter URL')}
-          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${
-            mode === 'url'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          }`}
+          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'url'
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
         >
           <Link2 className="w-3.5 h-3.5" />
           {t('链接', 'URL')}
@@ -158,11 +146,10 @@ export function ImageSourceInput({ value, onChange, language }: ImageSourceInput
           type="button"
           onClick={() => handleModeChange('base64')}
           title={t('输入Base64', 'Enter Base64')}
-          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${
-            mode === 'base64'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          }`}
+          className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'base64'
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
         >
           <Code className="w-3.5 h-3.5" />
           Base64
@@ -186,10 +173,7 @@ export function ImageSourceInput({ value, onChange, language }: ImageSourceInput
                     {t('点击上传图片', 'Click to upload')}
                   </p>
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                    {isLoggedIn 
-                      ? t('保存到服务器 (Max 10MB)', 'Save to server (Max 10MB)')
-                      : t('保存到本地 (Max 10MB)', 'Save locally (Max 10MB)')
-                    }
+                    {t('上传到服务器 (Max 10MB)', 'Upload to server (Max 10MB)')}
                   </p>
                 </>
               )}

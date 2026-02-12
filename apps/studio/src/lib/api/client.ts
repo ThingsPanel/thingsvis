@@ -33,10 +33,11 @@ class ApiClient {
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = config.baseUrl || DEFAULT_API_BASE_URL;
     this.getToken = config.getToken || (() => localStorage.getItem(TOKEN_KEY));
-    this.onUnauthorized = config.onUnauthorized || (() => {});
+    this.onUnauthorized = config.onUnauthorized || (() => { });
   }
 
   configure(config: Partial<ApiClientConfig>) {
+
     if (config.baseUrl) this.baseUrl = config.baseUrl;
     if (config.getToken) this.getToken = config.getToken;
     if (config.onUnauthorized) this.onUnauthorized = config.onUnauthorized;
@@ -51,7 +52,7 @@ class ApiClient {
     const url = `${this.baseUrl}${path}`;
     const token = this.getToken();
 
-    
+
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -73,15 +74,15 @@ class ApiClient {
       const data = await response.json();
 
       if (response.status === 401) {
-        
-        
+
+
         // Only call onUnauthorized if we actually had a token
         // This prevents clearing auth on initial requests
         if (token) {
-          
+
           this.onUnauthorized();
         }
-        
+
         return { error: data.error || 'Unauthorized' };
       }
 
@@ -96,7 +97,7 @@ class ApiClient {
       }
       return { data };
     } catch (error) {
-      
+
       return { error: 'Network error' };
     }
   }
@@ -151,7 +152,7 @@ class ApiClient {
 
       return data;
     } catch (error) {
-      
+
       return { error: 'Network error' };
     }
   }

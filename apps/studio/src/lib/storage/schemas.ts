@@ -23,6 +23,10 @@ export const ProjectMetaSchema = z.object({
   updatedAt: z.number().int().positive(),
   /** Base64 JPEG thumbnail for recent projects list (max ~50KB) */
   thumbnail: z.string().max(70000).optional(),
+  /** Parent Project ID (Cloud mode) */
+  projectId: z.string().optional(),
+  /** Parent Project Name (Cloud mode) */
+  projectName: z.string().optional(),
 })
 
 // =============================================================================
@@ -31,7 +35,7 @@ export const ProjectMetaSchema = z.object({
 
 export const CanvasConfigSchema = z.object({
   /** Canvas layout mode */
-  mode: z.enum(['fixed', 'infinite', 'reflow']),
+  mode: z.enum(['fixed', 'infinite', 'grid']),
   /** Canvas width in pixels */
   width: z.number().int().positive(),
   /** Canvas height in pixels */
@@ -48,6 +52,10 @@ export const CanvasConfigSchema = z.object({
   gridEnabled: z.boolean().optional(),
   /** Grid cell size in pixels */
   gridSize: z.number().int().positive().optional(),
+  /** Whether to use full width in preview mode */
+  fullWidthPreview: z.boolean().optional(),
+  /** Whether this dashboard is set as homepage */
+  homeFlag: z.boolean().optional(),
 })
 
 // =============================================================================

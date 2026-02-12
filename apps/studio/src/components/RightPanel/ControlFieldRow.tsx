@@ -59,6 +59,14 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeId, field.path]);
 
+  // Handle external binding updates (initial load, undo/redo)
+  // Only sync if transitioning to/from 'static' to avoid interfering with Field/Expr preference
+  useEffect(() => {
+    if (persistedMode !== mode && (mode === 'static' || persistedMode === 'static')) {
+      setMode(persistedMode);
+    }
+  }, [persistedMode]);
+
   // Keep UI drafts in sync with persisted binding expression.
   useEffect(() => {
     if (!binding) {
@@ -78,8 +86,16 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
   };
 
   const setBindingExpr = (expression: string) => {
+    // Parse expression to populate other binding fields (like dataSourcePath)
+    const selection = parseFieldBindingExpression(expression);
+    const dataSourcePath = selection ? `ds.${selection.dataSourceId}.data` : undefined;
+
     updateNode({
-      data: upsertBinding(bindings, { targetProp: field.path, expression })
+      data: upsertBinding(bindings, {
+        targetProp: field.path,
+        expression,
+        dataSourcePath
+      } as any)
     });
   };
 

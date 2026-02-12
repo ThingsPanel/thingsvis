@@ -49,6 +49,7 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
   const isOverlayOnly = !plugin.create && typeof plugin.createOverlay === 'function';
   const resizable = (plugin as any).resizable as boolean | undefined;
   const draggable = opts?.editable ?? true;
+  const cursor = draggable ? 'pointer' : 'default';
   
   return {
     create(node: NodeState): LeaferDisplayObject {
@@ -62,7 +63,7 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
           height: props.height as number || 60,
           fill: 'transparent',
           draggable,
-          cursor: 'pointer'
+          cursor
         });
         return placeholder as unknown as LeaferDisplayObject;
       }
@@ -95,7 +96,7 @@ export function createPluginRenderer(plugin: PluginMainModule, store: KernelStor
         strokeWidth: 1,
         dashPattern: [4, 4],
         draggable,
-        cursor: 'pointer'
+        cursor
       });
       return placeholder as unknown as LeaferDisplayObject;
     },

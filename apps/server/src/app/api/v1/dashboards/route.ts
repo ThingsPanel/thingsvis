@@ -45,11 +45,13 @@ export async function GET(request: NextRequest) {
         name: true,
         version: true,
         isPublished: true,
+        homeFlag: true,
         projectId: true,
         createdAt: true,
         updatedAt: true,
         project: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true } },
+        thumbnail: true,
       },
       orderBy: { updatedAt: 'desc' },
       skip: (page - 1) * limit,
@@ -81,20 +83,46 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { projectId, canvasConfig, ...data } = result.data
+  const { projectId: providedProjectId, canvasConfig, ...data } = result.data
 
-  // Verify project belongs to user's tenant
-  const project = await prisma.project.findFirst({
-    where: { id: projectId, tenantId: user.tenantId },
-  })
+  let projectId = providedProjectId;
 
-  if (!project) {
-    return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+  // Auto-create/find default project if projectId is missing
+  if (!projectId) {
+    const defaultProject = await prisma.project.findFirst({
+      where: {
+        tenantId: user.tenantId,
+        name: 'Default Project'
+      }
+    });
+
+    if (defaultProject) {
+      projectId = defaultProject.id;
+    } else {
+      const newProject = await prisma.project.create({
+        data: {
+          name: 'Default Project',
+          tenantId: user.tenantId,
+          createdById: user.id,
+        }
+      });
+      projectId = newProject.id;
+    }
+  } else {
+    // Verify provided project belongs to user's tenant
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, tenantId: user.tenantId },
+    })
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+    }
   }
 
   const dashboard = await prisma.dashboard.create({
     data: {
       ...data,
+      id: data.id, // Use provided ID if available (e.g. UUID from ThingsPanel)
       canvasConfig: JSON.stringify(canvasConfig || DEFAULT_CANVAS_CONFIG),
       nodes: '[]',
       dataSources: '[]',

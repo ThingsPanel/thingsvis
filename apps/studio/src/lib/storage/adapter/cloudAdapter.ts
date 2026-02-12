@@ -14,15 +14,24 @@ function isCuid(id?: string): boolean {
 }
 
 function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): StorageProject {
+  // Merge homeFlag from dashboard level into canvasConfig for editor use
+  const canvasConfig = {
+    ...(dashboard.canvasConfig || { mode: 'infinite', width: 1920, height: 1080, background: '#1e1e2e' }),
+    homeFlag: dashboard.homeFlag || false,
+  };
+
   return {
     meta: {
       id: dashboard.id,
       name: dashboard.name,
+      thumbnail: dashboard.thumbnail,
+      projectId: dashboard.projectId,
+      projectName: dashboard.project?.name,
       createdAt: new Date(dashboard.createdAt).getTime(),
       updatedAt: new Date(dashboard.updatedAt).getTime(),
     },
     schema: {
-      canvas: dashboard.canvasConfig || { mode: 'infinite', width: 1920, height: 1080, background: '#1e1e2e' },
+      canvas: canvasConfig,
       nodes: (dashboard.nodes as any[]) || [],
       dataSources: (dashboard.dataSources as any[]) || [],
     },
@@ -35,15 +44,15 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
     async list(options?: ListOptions): Promise<ListResult<StorageProjectMeta>> {
       try {
-        
-        
+
+
         const response = await dashboardsApi.listDashboards({
           limit: options?.limit,
           page: options?.page || 1,
           projectId,
         });
 
-        
+
 
         if (response.error || !response.data) {
           return { data: [], total: 0, hasMore: false };
@@ -51,9 +60,9 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         const { data, meta } = response.data;
         const hasMore = meta.page < meta.totalPages;
-        
-        
-        
+
+
+
         return {
           data: data.map(d => ({
             id: d.id,
@@ -65,7 +74,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
           hasMore,
         };
       } catch (error) {
-        
+
         return { data: [], total: 0, hasMore: false };
       }
     },
@@ -73,21 +82,21 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
     async get(id: string): Promise<StorageProject | null> {
       try {
         const response = await dashboardsApi.getDashboard(id);
-        
+
         if (response.error || !response.data) {
           return null;
         }
 
         return apiDashboardToStorageProject(response.data);
       } catch (error) {
-        
+
         return null;
       }
     },
 
     async save(project: StorageProject): Promise<{ id: string }> {
       try {
-        const canUpdate = project.meta.id && isCuid(project.meta.id);
+        const canUpdate = !!project.meta.id;
 
         if (canUpdate) {
           const response = await dashboardsApi.updateDashboard(project.meta.id, {
@@ -95,6 +104,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
             canvasConfig: project.schema.canvas,
             nodes: project.schema.nodes,
             dataSources: project.schema.dataSources,
+            thumbnail: project.meta.thumbnail,
           });
 
           if (!response.error) {
@@ -109,6 +119,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         // Create dashboard - projectId is optional, backend will auto-create if not provided
         const createResponse = await dashboardsApi.createDashboard({
+          id: project.meta.id,
           name: project.meta.name,
           projectId, // Optional - will auto-create project if not provided
           canvasConfig: project.schema.canvas,
@@ -132,7 +143,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         return { id: createdId };
       } catch (error) {
-        
+
         throw error;
       }
     },
@@ -142,7 +153,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
         const response = await dashboardsApi.deleteDashboard(id);
         return !response.error;
       } catch (error) {
-        
+
         return false;
       }
     },
@@ -173,7 +184,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
 
         return { id: response.data.id };
       } catch (error) {
-        
+
         throw error;
       }
     },

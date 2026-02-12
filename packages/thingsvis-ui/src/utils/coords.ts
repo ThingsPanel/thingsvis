@@ -26,7 +26,7 @@ export function screenToCanvas(
     return { x, y };
   }
 
-  // reflow: map container fraction to canvas dimensions
+  // grid: map container fraction to canvas dimensions
   const fracX = screenPoint.x / vpW;
   const fracY = screenPoint.y / vpH;
   return { x: fracX * width, y: fracY * height };
@@ -50,7 +50,7 @@ export function canvasToScreen(
     return { x: worldPoint.x * zoom + offsetX, y: worldPoint.y * zoom + offsetY };
   }
 
-  // reflow
+  // grid
   return { x: (worldPoint.x / width) * vpW, y: (worldPoint.y / height) * vpH };
 }
 

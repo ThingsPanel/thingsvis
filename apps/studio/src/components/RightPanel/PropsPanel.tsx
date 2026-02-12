@@ -223,12 +223,22 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
     );
   };
 
-  const renderLegacyPanel = () => (
+  const renderLegacyPanel = () => {
+    const serviceConfig = resolveEditorServiceConfig()
+    const hasPlatformFields = (serviceConfig.platformFields || []).length > 0
+    
+    // 平台 Tab 只在有平台字段时显示（物模型嵌入场景）
+    const showPlatformTab = hasPlatformFields
+    const tabCount = showPlatformTab ? 3 : 2
+    
+    return (
     <Tabs defaultValue="style" className="w-full">
-      <TabsList className="grid w-full grid-cols-3 mb-4">
+      <TabsList className={`grid w-full ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'} mb-4`}>
         <TabsTrigger value="style" className="text-sm">{labelZh("样式", "Style")}</TabsTrigger>
         <TabsTrigger value="data" className="text-sm">{labelZh("数据", "Data")}</TabsTrigger>
-        <TabsTrigger value="platform" className="text-sm">{labelZh("平台", "Platform")}</TabsTrigger>
+        {showPlatformTab && (
+          <TabsTrigger value="platform" className="text-sm">{labelZh("平台", "Platform")}</TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value="style" className="space-y-4">
@@ -335,7 +345,7 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
                 </label>
                 <DataSourceSelector
                   dataSources={dataSources}
-                  platformFields={resolveEditorServiceConfig().platformFields}
+                  platformFields={serviceConfig.platformFields}
                   value={binding.dataSourcePath || ''}
                   onChange={(path) => {
                     // 自动填充表达式
@@ -402,9 +412,9 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
         </div>
       </TabsContent>
 
+      {showPlatformTab && (
       <TabsContent value="platform" className="space-y-4 px-1">
         {(() => {
-          const serviceConfig = resolveEditorServiceConfig()
           const platformFields = serviceConfig.platformFields || []
 
           if (platformFields.length === 0) {
@@ -438,8 +448,9 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
           )
         })()}
       </TabsContent>
+      )}
     </Tabs>
-  );
+  )};
 
   if (controls) {
     return renderControlsPanel();

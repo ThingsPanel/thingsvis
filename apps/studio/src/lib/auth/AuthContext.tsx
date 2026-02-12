@@ -55,10 +55,38 @@ function isEmbedded(): boolean {
   }
 }
 
-// Get URL parameters for embed mode
+// Get URL parameters for embed mode (check both search and hash)
 function getEmbedToken(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('token');
+  // 1. 首先检查 search params (?token=xxx)
+  const searchParams = new URLSearchParams(window.location.search);
+  const searchToken = searchParams.get('token');
+  if (searchToken) return searchToken;
+
+  // 2. 然后检查 hash params (#/editor?token=xxx)
+  const hash = window.location.hash || '';
+  const queryIndex = hash.indexOf('?');
+  if (queryIndex >= 0) {
+    const hashParams = new URLSearchParams(hash.slice(queryIndex + 1));
+    const hashToken = hashParams.get('token');
+    if (hashToken) {
+
+      return hashToken;
+    }
+  }
+
+  // 3. 最后检查 embed-init 中设置的 token
+  try {
+    const { getEmbedToken: getInitToken } = require('../../embed/embed-init');
+    const initToken = getInitToken();
+    if (initToken) {
+
+      return initToken;
+    }
+  } catch (e) {
+    // ignore
+  }
+
+  return null;
 }
 
 interface AuthProviderProps {
@@ -88,21 +116,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Configure API client when token changes
   useEffect(() => {
-    // Always use localStorage as the source of truth
-    // This ensures token is available even during initialization
-    const currentToken = localStorage.getItem(TOKEN_KEY);
+    // 在嵌入模式下，优先使用 embed token
+    const embedToken = getEmbedToken();
+    const localToken = localStorage.getItem(TOKEN_KEY);
+
 
 
     apiClient.configure({
       getToken: () => {
-        const token = localStorage.getItem(TOKEN_KEY);
+        // 优先使用 embed token（嵌入模式）
+        const embed = getEmbedToken();
+        if (embed) return embed;
 
-        return token;
+        // 否则使用 localStorage 中的 token
+        return localStorage.getItem(TOKEN_KEY);
       },
       onUnauthorized: () => {
         // Token expired or invalid
-
-        clearAuth();
+        // 在嵌入模式下不清除认证，因为 token 是外部传入的
+        if (!isEmbedded()) {
+          clearAuth();
+        }
       },
     });
   }, [clearAuth]);
@@ -117,14 +151,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const urlToken = getEmbedToken();
 
         if (urlToken) {
-          console.log('🔐 [Auth] SSO token detected in URL, attempting auto-login...');
+
 
           // Store token and validate
           apiClient.configure({ getToken: () => urlToken });
           const result = await getCurrentUser();
 
           if (result.data) {
-            console.log('✅ [Auth] SSO token valid, user:', result.data.email);
+
 
             // Calculate expiry (assume 2 hours for SSO tokens)
             const expiresAt = Date.now() + (2 * 60 * 60 * 1000);
@@ -139,12 +173,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
             // Redirect to editor after SSO login (both embedded and standalone)
             if (!window.location.hash.includes('/editor')) {
-              console.log('🔀 [Auth] SSO login successful, redirecting to editor...');
+
               setTimeout(() => {
                 window.location.hash = '#/editor';
               }, 100);
             } else {
-              console.log('✅ [Auth] Already on editor page');
+
             }
           } else {
             console.error('❌ [Auth] SSO token invalid');
@@ -218,7 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Login with JWT token (for SSO)
   const loginWithToken = useCallback(async (jwtToken: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log('🔐 [Auth] Logging in with JWT token...');
+
 
       // Validate token by fetching user
       apiClient.configure({ getToken: () => jwtToken });
@@ -231,7 +265,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const newUser: User = result.data;
       const expiresAt = Date.now() + (2 * 60 * 60 * 1000); // 2 hours
 
-      console.log('✅ [Auth] Token validated, user:', newUser.email);
+
 
       setToken(jwtToken);
       setUser(newUser);
@@ -321,7 +355,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Logout handler
   const logout = useCallback(() => {
-    console.log('👋 [AuthContext] Logging out, switching to local-only mode...');
+
     clearAuth();
     initDataSourceSync(false);
   }, [clearAuth]);

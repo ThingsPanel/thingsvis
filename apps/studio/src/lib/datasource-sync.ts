@@ -49,30 +49,30 @@ class ApiClientWrapper {
 export async function initDataSourceSync(isAuthenticated: boolean): Promise<void> {
     const newMode = isAuthenticated ? 'cloud' : 'local';
 
-    console.log(`🔄 [DataSourceSync] Current mode: ${currentMode}, New mode: ${newMode}, isAuthenticated: ${isAuthenticated}`);
+
 
     // Only reinitialize if mode changed
     if (newMode === currentMode) {
-        console.log('⏭️ [DataSourceSync] Mode unchanged, skipping initialization');
+
         return;
     }
 
     currentMode = newMode;
 
     if (isAuthenticated) {
-        console.log('📡 [DataSourceSync] Switching to cloud sync mode');
+
         try {
             // Dynamically import to avoid circular dependency
             const { apiClient } = await import('./api/client');
             const wrapper = new ApiClientWrapper(apiClient);
             const syncAdapter = new ApiSyncAdapter(wrapper);
             dataSourceManager.setSyncAdapter(syncAdapter);
-            console.log('✅ [DataSourceSync] Cloud sync adapter initialized successfully');
+
         } catch (error) {
             console.error('❌ [DataSourceSync] Failed to initialize cloud sync:', error);
         }
     } else {
-        console.log('💾 [DataSourceSync] Switching to local-only mode');
+
         dataSourceManager.setSyncAdapter(new NoopSyncAdapter());
     }
 }
@@ -87,5 +87,5 @@ export async function syncDataSourcesFromCloud(): Promise<void> {
         return;
     }
 
-    console.log('🔄 [DataSourceSync] Data sources will sync from cloud on next load');
+
 }

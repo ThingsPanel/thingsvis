@@ -49,7 +49,7 @@ export default function PreviewPage() {
     if (!nodesById) return false
     return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid))
   }, [kernelState])
-  const isGridLayout = canvasMode === 'reflow' || canvasMode === 'grid' || hasGridNodes
+  const isGridLayout = canvasMode === 'grid' || hasGridNodes
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
     rowHeight: 50,
@@ -90,7 +90,7 @@ export default function PreviewPage() {
 
     try {
       let project = await projectStorage.load(projectId)
-      
+
       // If not in local storage, try loading from API (Cloud)
       if (!project) {
         try {
@@ -98,16 +98,16 @@ export default function PreviewPage() {
           if (response.data) {
             const dashboard = response.data
             project = {
-               meta: {
-                 id: dashboard.id,
-                 name: dashboard.name,
-                 version: '1.0.0',
-                 createdAt: new Date(dashboard.createdAt).getTime(),
-                 updatedAt: new Date(dashboard.updatedAt).getTime(),
-               },
-               canvas: dashboard.canvasConfig as any,
-               nodes: (dashboard.nodes as any[]) || [],
-               dataSources: (dashboard.dataSources as any[]) || [],
+              meta: {
+                id: dashboard.id,
+                name: dashboard.name,
+                version: '1.0.0',
+                createdAt: new Date(dashboard.createdAt).getTime(),
+                updatedAt: new Date(dashboard.updatedAt).getTime(),
+              },
+              canvas: dashboard.canvasConfig as any,
+              nodes: (dashboard.nodes as any[]) || [],
+              dataSources: (dashboard.dataSources as any[]) || [],
             }
           }
         } catch (apiErr) {
@@ -158,8 +158,20 @@ export default function PreviewPage() {
   }, [projectId, hasAnyNodes, applyProjectToStore])
 
   const handleBack = useCallback(() => {
-    window.location.hash = '#/'
-  }, [])
+    const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
+    const isEmbedded = params.get('mode') === 'embedded'
+    // projectId is already in state (projectId const)
+
+    if (projectId) {
+      if (isEmbedded) {
+        window.location.hash = `#/editor/${projectId}?mode=embedded`
+      } else {
+        window.location.hash = `#/editor/${projectId}`
+      }
+    } else {
+      window.location.hash = '#/'
+    }
+  }, [projectId])
 
   const handleRefresh = useCallback(() => {
     void applyProjectToStore()

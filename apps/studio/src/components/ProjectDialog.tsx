@@ -58,11 +58,11 @@ export function ProjectDialog({
 }: ProjectDialogProps) {
   const { isAuthenticated, user, token, storageMode } = useAuth()
   const { currentProject: cloudProject, switchProject } = useProject()
-  
+
   // 本地选中的项目ID（用于在对话框中选择项目）
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(cloudProject?.id)
   const storage = useStorage(selectedProjectId)
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -74,7 +74,7 @@ export function ProjectDialog({
 
   // Debug: Log auth and storage state
   useEffect(() => {
-    
+
   }, [isAuthenticated, user, token, storageMode, storage.backend, cloudProject, selectedProjectId])
 
   // 当 cloudProject 变化时，同步到 selectedProjectId
@@ -86,30 +86,30 @@ export function ProjectDialog({
 
   // Load dashboards list when dialog opens or selected project changes
   const lastLoadKey = useRef<string>('')
-  
+
   useEffect(() => {
     if (!open) return
-    
+
     // 创建一个唯一的加载 key，防止重复请求
     const loadKey = `${open}-${refreshKey}-${selectedProjectId || 'none'}`
     if (loadKey === lastLoadKey.current) return
     lastLoadKey.current = loadKey
 
     let cancelled = false
-    
+
     const loadData = async () => {
       // Load projects (cloud mode only)
       if (storage.isCloud) {
         try {
           const response = await projectsApi.listProjects({ page: 1, limit: 50 })
           if (!cancelled && !response.error) {
-            const projectsList = Array.isArray(response.data) 
-              ? response.data 
+            const projectsList = Array.isArray(response.data)
+              ? response.data
               : (response.data?.data || [])
             setProjects(projectsList)
           }
         } catch (err) {
-          
+
         }
       }
 
@@ -120,14 +120,14 @@ export function ProjectDialog({
             if (!cancelled) setDashboards([])
           } else {
             const response = await dashboardsApi.listDashboards({ projectId: selectedProjectId, limit: 50 })
-            
+
             if (!cancelled && !response.error) {
               // API 返回格式: { data: [...], meta: {...} }
               // response.data 可能直接是数组，也可能是 { data: [...], meta: {...} }
-              const list = Array.isArray(response.data) 
-                ? response.data 
+              const list = Array.isArray(response.data)
+                ? response.data
                 : (response.data?.data || [])
-              
+
               setDashboards(list.map((d: any) => ({
                 id: d.id,
                 name: d.name,
@@ -142,12 +142,12 @@ export function ProjectDialog({
           if (!cancelled) setDashboards(result.data)
         }
       } catch (err) {
-        
+
       }
     }
 
     loadData()
-    
+
     return () => { cancelled = true }
   }, [open, refreshKey, selectedProjectId, storage.isCloud])
 
@@ -162,19 +162,20 @@ export function ProjectDialog({
         if (selectedProjectId !== cloudProject?.id) {
           await switchProject(selectedProjectId)
         }
-        
+
         // 直接调用 API 获取画布数据
         const response = await dashboardsApi.getDashboard(meta.id)
         if (response.error || !response.data) {
           throw new Error(response.error || t.projectNotFound)
         }
-        
+
         const dashboard = response.data
         const projectFile: ProjectFile = {
           meta: {
             id: dashboard.id,
             name: dashboard.name,
             version: '1.0.0',
+            thumbnail: dashboard.thumbnail, // Pass thumbnail
             createdAt: new Date(dashboard.createdAt).getTime(),
             updatedAt: new Date(dashboard.updatedAt).getTime(),
           },
@@ -182,12 +183,12 @@ export function ProjectDialog({
           nodes: (dashboard.nodes as any[]) || [],
           dataSources: (dashboard.dataSources as any[]) || [],
         }
-        
+
         onProjectLoad(projectFile)
         onClose()
         return
       }
-      
+
       // 本地模式：使用 storage adapter
       const project = await storage.get(meta.id)
       if (project) {
@@ -225,7 +226,7 @@ export function ProjectDialog({
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = '.thingsvis,.json'
-    
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file) return
@@ -286,9 +287,9 @@ export function ProjectDialog({
           createdAt: new Date(dashboard.createdAt).getTime(),
           updatedAt: new Date(dashboard.updatedAt).getTime(),
         },
-        canvas: dashboard.canvasConfig,
-        nodes: dashboard.nodes ?? [],
-        dataSources: dashboard.dataSources ?? [],
+        canvas: dashboard.canvasConfig as any,
+        nodes: (dashboard.nodes ?? []) as any,
+        dataSources: (dashboard.dataSources ?? []) as any,
       }
 
       onProjectLoad(projectFile)
@@ -352,9 +353,9 @@ export function ProjectDialog({
             createdAt: new Date(dashboard.createdAt).getTime(),
             updatedAt: new Date(dashboard.updatedAt).getTime(),
           },
-          canvas: dashboard.canvasConfig,
-          nodes: dashboard.nodes ?? [],
-          dataSources: dashboard.dataSources ?? [],
+          canvas: dashboard.canvasConfig as any,
+          nodes: (dashboard.nodes ?? []) as any,
+          dataSources: (dashboard.dataSources ?? []) as any,
         }
 
         // 同步选中的项目到全局状态
@@ -383,7 +384,7 @@ export function ProjectDialog({
       await storage.delete(dashboardId)
       setRefreshKey(k => k + 1)
     } catch (error) {
-      
+
     }
   }, [storage])
 

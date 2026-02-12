@@ -10,7 +10,7 @@ export type SelectionState = {
 };
 
 export type CanvasState = {
-  mode: 'fixed' | 'infinite' | 'reflow' | 'grid';
+  mode: 'fixed' | 'infinite' | 'grid';
   width: number;
   height: number;
   zoom: number;
@@ -24,19 +24,19 @@ export type CanvasState = {
 export type GridState = {
   /** Grid settings from page config */
   settings: GridSettings | null;
-  
+
   /** Current active breakpoint (derived from container width) */
   activeBreakpoint: { minWidth: number; cols: number } | null;
-  
+
   /** Cached column width in pixels (recalculated on resize) */
   colWidth: number;
-  
+
   /** Current container width */
   containerWidth: number;
-  
+
   /** Effective column count (may differ from settings due to breakpoint) */
   effectiveCols: number;
-  
+
   /** Drag/resize preview state */
   preview: {
     active: boolean;
@@ -44,7 +44,7 @@ export type GridState = {
     targetPosition: GridPosition | null;
     affectedItems: string[];
   };
-  
+
   /** Total grid height in rows (for scrolling) */
   totalHeight: number;
 };
@@ -208,7 +208,7 @@ export type KernelActions = {
   addConnection: (conn: Omit<ConnectionState, 'id'>) => void;
   removeConnection: (connId: string) => void;
   updateCanvas: (changes: Partial<CanvasState>) => void;
-  
+
   // Data Source Actions
   setDataSourceState: (id: string, state: Partial<DataSourceRuntimeState>) => void;
   updateDataSourceData: (id: string, data: any) => void;
@@ -222,7 +222,7 @@ export type KernelActions = {
   sendToBack: (nodeIds: string[]) => void;
   bringForward: (nodeIds: string[]) => void;
   sendBackward: (nodeIds: string[]) => void;
-  
+
   // Group Actions
   createGroup: (nodeIds: string[], groupName?: string) => string;
   ungroup: (groupId: string) => void;
@@ -230,7 +230,7 @@ export type KernelActions = {
   setGroupVisible: (groupId: string, visible: boolean) => void;
   setGroupLocked: (groupId: string, locked: boolean) => void;
   renameGroup: (groupId: string, name: string) => void;
-  
+
   // Grid Actions
   setGridSettings: (settings: Partial<GridSettings>) => void;
   moveGridItem: (nodeId: string, newPos: { x: number; y: number }) => void;
@@ -253,13 +253,13 @@ export type KernelStore = StoreApi<KernelStoreState> & {
   temporal: any;
 };
 
-const defaultCanvas: CanvasState = { 
+const defaultCanvas: CanvasState = {
   mode: 'infinite',
   width: 1920,
   height: 1080,
-  zoom: 1, 
-  offsetX: 0, 
-  offsetY: 0 
+  zoom: 1,
+  offsetX: 0,
+  offsetY: 0
 };
 
 const defaultGridState: GridState = {
@@ -278,9 +278,9 @@ const defaultGridState: GridState = {
 };
 
 export const createKernelStore = () =>
-  (createStore<KernelStoreState>()(
-    (temporal as any)(
-      immer<KernelState & KernelActions>((set, get) => ({
+(createStore<KernelStoreState>()(
+  (temporal as any)(
+    immer<KernelState & KernelActions>((set, get) => ({
       page: undefined,
       nodesById: {},
       connections: [],
@@ -294,7 +294,7 @@ export const createKernelStore = () =>
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
         const nodes = 'content' in page ? page.content.nodes : (page as any).nodes || [];
-        
+
         nodes.forEach((node: NodeSchemaType) => {
           nodesById[node.id] = {
             id: node.id,
@@ -311,7 +311,7 @@ export const createKernelStore = () =>
           state.nodesById = nodesById;
           state.connections = (page as any).connections || [];
           state.selection = { nodeIds: [] };
-          state.canvas = { 
+          state.canvas = {
             ...defaultCanvas,
             mode: config.mode || (page as any).mode || 'infinite',
             width: config.width || (page as any).width || 1920,
@@ -346,7 +346,7 @@ export const createKernelStore = () =>
       removeNodes: nodeIds => {
         const currentState = get();
         const isGridMode = currentState.canvas.mode === 'grid';
-        
+
         set(state => {
           nodeIds.forEach(nodeId => {
             delete state.nodesById[nodeId];
@@ -359,7 +359,7 @@ export const createKernelStore = () =>
           // Clear selection if removed
           state.selection.nodeIds = state.selection.nodeIds.filter(id => !nodeIds.includes(id));
         });
-        
+
         // Trigger grid compaction after node deletion in grid mode
         if (isGridMode && currentState.gridState.settings?.compactVertical !== false) {
           get().compactGrid();
@@ -559,7 +559,7 @@ export const createKernelStore = () =>
         set(state => {
           const currentIndex = state.layerOrder.indexOf(nodeId);
           if (currentIndex === -1 || targetIndex < 0 || targetIndex >= state.layerOrder.length) return;
-          
+
           // Remove from current position
           state.layerOrder.splice(currentIndex, 1);
           // Insert at target position
@@ -698,7 +698,7 @@ export const createKernelStore = () =>
           };
           state.gridState.settings = { ...current, ...settings };
           state.gridState.effectiveCols = state.gridState.settings.cols;
-          
+
           // Recalculate column width
           if (state.gridState.containerWidth > 0 && state.gridState.settings) {
             const { cols, gap } = state.gridState.settings;
@@ -711,7 +711,7 @@ export const createKernelStore = () =>
         const state = get();
         if (!state.nodesById[nodeId]) return;
         if (state.canvas.mode !== 'grid') return;
-        
+
         // Build grid items from nodes
         const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
           const schema = node.schemaRef as any;
@@ -729,13 +729,13 @@ export const createKernelStore = () =>
             maxH: grid.maxH,
           };
         });
-        
+
         const cols = state.gridState.effectiveCols;
         const shouldCompact = state.gridState.settings?.compactVertical ?? true;
-        
+
         try {
           const result = GridSystem.moveItem(gridItems, nodeId, newPos, cols, shouldCompact);
-          
+
           set(s => {
             // Update all changed nodes
             for (const item of result.items) {
@@ -754,7 +754,7 @@ export const createKernelStore = () =>
             s.gridState.totalHeight = result.totalHeight;
           });
         } catch (e) {
-          
+
         }
       },
 
@@ -762,7 +762,7 @@ export const createKernelStore = () =>
         const state = get();
         if (!state.nodesById[nodeId]) return;
         if (state.canvas.mode !== 'grid') return;
-        
+
         // Build grid items from nodes
         const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
           const schema = node.schemaRef as any;
@@ -780,13 +780,13 @@ export const createKernelStore = () =>
             maxH: grid.maxH,
           };
         });
-        
+
         const cols = state.gridState.effectiveCols;
         const shouldCompact = state.gridState.settings?.compactVertical ?? true;
-        
+
         try {
           const result = GridSystem.resizeItem(gridItems, nodeId, newSize, cols, shouldCompact);
-          
+
           set(s => {
             for (const item of result.items) {
               const node = s.nodesById[item.id];
@@ -804,14 +804,14 @@ export const createKernelStore = () =>
             s.gridState.totalHeight = result.totalHeight;
           });
         } catch (e) {
-          
+
         }
       },
 
       compactGrid: () => {
         const state = get();
         if (state.canvas.mode !== 'grid') return;
-        
+
         const gridItems: GridItem[] = Object.values(state.nodesById).map(node => {
           const schema = node.schemaRef as any;
           const grid = schema.grid ?? { x: 0, y: 0, w: 4, h: 2 };
@@ -824,10 +824,10 @@ export const createKernelStore = () =>
             static: grid.static,
           };
         });
-        
+
         const cols = state.gridState.effectiveCols;
         const result = GridSystem.compact(gridItems, cols);
-        
+
         set(s => {
           for (const item of result.items) {
             const node = s.nodesById[item.id];
@@ -854,22 +854,22 @@ export const createKernelStore = () =>
         const currentState = get();
         const previousBreakpoint = currentState.gridState.activeBreakpoint;
         const previousCols = currentState.gridState.effectiveCols;
-        
+
         set(state => {
           state.gridState.containerWidth = containerWidth;
-          
+
           if (state.gridState.settings) {
             const settings = state.gridState.settings;
             const { cols, gap, breakpoints, responsive } = settings;
-            
+
             // Determine active breakpoint and effective columns
             let activeBreakpoint: string = 'lg';
             let effectiveCols = cols;
-            
+
             if (responsive && breakpoints && breakpoints.length > 0) {
               // Sort breakpoints by width descending
               const sortedBreakpoints = [...breakpoints].sort((a, b) => b.width - a.width);
-              
+
               for (const bp of sortedBreakpoints) {
                 if (containerWidth <= bp.width) {
                   activeBreakpoint = bp.name;
@@ -877,31 +877,31 @@ export const createKernelStore = () =>
                 }
               }
             }
-            
+
             state.gridState.activeBreakpoint = activeBreakpoint;
             state.gridState.effectiveCols = effectiveCols;
             state.gridState.colWidth = (containerWidth - (effectiveCols - 1) * gap) / effectiveCols;
           }
         });
-        
+
         // Trigger recompaction if effective columns changed
         const newState = get();
         if (newState.gridState.effectiveCols !== previousCols) {
           get().compactGrid();
         }
       }
-      })),
-      {
-        limit: 200,
-        filter: (_state: unknown, delta: any) => {
-          // Ignore selection changes in history
-          if (delta && Object.keys(delta).length === 1 && delta.selection) {
-            return false;
-          }
-          return true;
+    })),
+    {
+      limit: 200,
+      filter: (_state: unknown, delta: any) => {
+        // Ignore selection changes in history
+        if (delta && Object.keys(delta).length === 1 && delta.selection) {
+          return false;
         }
-      } as any
-    )
-  ) as unknown as KernelStore);
+        return true;
+      }
+    } as any
+  )
+) as unknown as KernelStore);
 
 

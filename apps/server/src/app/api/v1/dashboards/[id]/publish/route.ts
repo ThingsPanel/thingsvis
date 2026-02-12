@@ -6,7 +6,7 @@ type Params = { params: Promise<{ id: string }> }
 
 // POST /api/v1/dashboards/:id/publish - Publish a dashboard
 export async function POST(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
 // DELETE /api/v1/dashboards/:id/publish - Unpublish a dashboard
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

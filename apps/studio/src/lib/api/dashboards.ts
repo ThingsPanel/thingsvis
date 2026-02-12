@@ -13,6 +13,7 @@ export interface Dashboard {
     width: number;
     height: number;
     background: string;
+    [key: string]: unknown; // Allow additional properties like homeFlag, fullWidthPreview
   };
   nodes: unknown[];
   dataSources: unknown[];
@@ -23,6 +24,12 @@ export interface Dashboard {
   createdById: string;
   createdAt: string;
   updatedAt: string;
+  thumbnail?: string;
+  homeFlag?: boolean;
+  project?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface DashboardListItem {
@@ -39,7 +46,8 @@ export interface DashboardListItem {
 
 export interface CreateDashboardData {
   name: string;
-  projectId: string;
+  id?: string;
+  projectId?: string;
   canvasConfig?: {
     mode?: string;
     width?: number;
@@ -53,6 +61,7 @@ export interface UpdateDashboardData {
   canvasConfig?: unknown;
   nodes?: unknown[];
   dataSources?: unknown[];
+  thumbnail?: string;
 }
 
 export interface DashboardListResponse {
@@ -77,7 +86,7 @@ export async function listDashboards(params?: {
   if (params?.projectId) searchParams.set('projectId', params.projectId);
   if (params?.page) searchParams.set('page', params.page.toString());
   if (params?.limit) searchParams.set('limit', params.limit.toString());
-  
+
   const query = searchParams.toString();
   return apiClient.get<DashboardListResponse>(`/dashboards${query ? `?${query}` : ''}`);
 }

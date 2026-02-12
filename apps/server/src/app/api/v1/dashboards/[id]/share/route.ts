@@ -9,7 +9,7 @@ type Params = { params: Promise<{ id: string }> }
 
 // POST /api/v1/dashboards/:id/share - Generate a share link
 export async function POST(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
 // GET /api/v1/dashboards/:id/share - Get share link info
 export async function GET(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -115,7 +115,7 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // DELETE /api/v1/dashboards/:id/share - Revoke share link
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser()
+  const user = await getSessionUser(request)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

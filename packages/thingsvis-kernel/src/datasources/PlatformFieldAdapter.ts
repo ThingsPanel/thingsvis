@@ -16,6 +16,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
     }
 
     async connect(config: DataSource): Promise<void> {
+        console.log('[PlatformAdapter] 🟢 Connecting...', config);
         if (config.type !== 'PLATFORM_FIELD') {
             throw new Error('PlatformFieldAdapter requires PLATFORM_FIELD type');
         }
@@ -39,6 +40,9 @@ export class PlatformFieldAdapter extends BaseAdapter {
             // Security: In production, verify event.origin
             if (event.data.type === 'thingsvis:platformData') {
                 const { fieldId, value, timestamp } = event.data.payload;
+
+                // Debug log
+                console.log('[PlatformAdapter] 📥 Received:', fieldId, value);
 
                 // Cache the field data
                 this.platformDataCache.set(fieldId, {
@@ -75,18 +79,26 @@ export class PlatformFieldAdapter extends BaseAdapter {
      * Update component data based on field mappings
      */
     private updateData() {
-        // Map platform field data to component properties
-        const mappedData: Record<string, any> = {};
+        // Prepare data object with all platform fields (support dynamic bindings)
+        const allData: Record<string, any> = {};
 
-        for (const [componentProp, fieldId] of Object.entries(this.fieldMappings)) {
-            const fieldData = this.platformDataCache.get(fieldId);
-            if (fieldData) {
-                mappedData[componentProp] = fieldData.value;
+        // 1. Convert cache to flat object
+        for (const [fieldId, data] of this.platformDataCache.entries()) {
+            allData[fieldId] = data.value;
+        }
+
+        // 2. Apply explicit mappings if any (legacy support)
+        if (this.fieldMappings && Object.keys(this.fieldMappings).length > 0) {
+            for (const [componentProp, fieldId] of Object.entries(this.fieldMappings)) {
+                const fieldData = this.platformDataCache.get(fieldId);
+                if (fieldData) {
+                    allData[componentProp] = fieldData.value;
+                }
             }
         }
 
         // Emit data update event using BaseAdapter method
-        this.emitData(mappedData);
+        this.emitData(allData);
     }
 
     /**

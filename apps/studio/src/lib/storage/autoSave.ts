@@ -46,13 +46,29 @@ export class AutoSaveManager {
     getState: () => ProjectFile,
     saveFn?: (project: ProjectFile) => Promise<void>
   ): void {
+
+
+    // 保存当前的 dirty 状态，如果是同一个项目的重新初始化，保留 dirty 状态
+    const wasDirty = this.isDirty && this.projectId === projectId
+
     this.destroy() // Clean up any existing timers
 
     this.projectId = projectId
     this.getState = getState
     this.saveFn = saveFn ?? projectStorage.save
-    this.isDirty = false
-    this.updateStatus({ status: 'idle', lastSavedAt: null, error: null })
+
+    // 如果是同一个项目且之前是 dirty 状态，保留 dirty
+    this.isDirty = wasDirty
+    if (wasDirty) {
+      this.updateStatus({ status: 'dirty', lastSavedAt: null, error: null })
+      // 重新调度保存
+      this.debounceTimer = window.setTimeout(() => {
+
+        this.saveNow()
+      }, this.config.debounceDelay)
+    } else {
+      this.updateStatus({ status: 'idle', lastSavedAt: null, error: null })
+    }
 
     // Start periodic timer
     this.periodicTimer = window.setInterval(() => {
@@ -72,6 +88,7 @@ export class AutoSaveManager {
    * Called on every state change.
    */
   markDirty(): void {
+
     this.isDirty = true
     this.updateStatus({ ...this.currentState, status: 'dirty' })
 
@@ -82,6 +99,7 @@ export class AutoSaveManager {
 
     // Schedule new debounced save
     this.debounceTimer = window.setTimeout(() => {
+
       this.saveNow()
     }, this.config.debounceDelay)
   }
@@ -93,9 +111,9 @@ export class AutoSaveManager {
   /**
    * Save now with retry logic (exponential backoff, up to 3 attempts)
    */
-  async saveNow(): Promise<void> {
-    
-    
+  async saveNow(force = false): Promise<void> {
+
+
     // Cancel pending debounce
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer)
@@ -103,12 +121,12 @@ export class AutoSaveManager {
     }
 
     if (!this.getState || !this.projectId) {
-      
+      console.warn('[AutoSave] saveNow() aborted: missing getState or projectId');
       return
     }
 
-    // Skip if not dirty and we've saved before
-    if (!this.isDirty && this.currentState.lastSavedAt !== null) {
+    // Skip if not dirty and we've saved before, UNLESS forced
+    if (!force && !this.isDirty && this.currentState.lastSavedAt !== null) {
       return
     }
 
@@ -121,9 +139,9 @@ export class AutoSaveManager {
       try {
         this.updateStatus({ ...this.currentState, status: 'saving', error: null })
         const project = this.getState()
-        
+
         await this.saveFn(project)
-        
+
         this.isDirty = false
         const savedAt = Date.now()
         this.updateStatus({ status: 'saved', lastSavedAt: savedAt, error: null })
@@ -135,7 +153,7 @@ export class AutoSaveManager {
         }, STORAGE_CONSTANTS.SAVED_DISPLAY_MS)
         return
       } catch (error) {
-        
+
         lastError = error
         attempt++
         if (attempt < maxAttempts) {
@@ -173,6 +191,8 @@ export class AutoSaveManager {
    * Stop all timers and cleanup.
    */
   destroy(): void {
+
+
     if (this.debounceTimer !== null) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
@@ -189,7 +209,9 @@ export class AutoSaveManager {
     this.getState = null
     this.saveFn = projectStorage.save
     this.isDirty = false
-    this.listeners.clear()
+    // Do not clear listeners here - UI components (like SaveIndicator) 
+    // might still be subscribed and waiting for updates.
+    // They will unsubscribe themselves when they unmount.
   }
 
   /**
@@ -208,7 +230,7 @@ export class AutoSaveManager {
       try {
         listener(state)
       } catch (error) {
-        
+
       }
     }
   }

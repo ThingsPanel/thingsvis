@@ -6,7 +6,7 @@ import { snapPointToGrid } from '../utils/snapping';
 import type { Point } from '../utils/coords';
 import { calculateScaleToFit } from '../modes/mode-controller';
 
-type Mode = 'fixed' | 'infinite' | 'reflow';
+type Mode = 'fixed' | 'infinite' | 'grid';
 
 type Props = {
   store: KernelStore;
@@ -28,15 +28,15 @@ type Props = {
   interactive?: boolean;
 };
 
-export const CanvasView: React.FC<Props> = ({ 
-  store, 
-  resolvePlugin, 
-  mode: propsMode, 
-  width: propsWidth, 
-  height: propsHeight, 
-  gridSize = 16, 
-  snapToGrid = false, 
-  centeredMask = true, 
+export const CanvasView: React.FC<Props> = ({
+  store,
+  resolvePlugin,
+  mode: propsMode,
+  width: propsWidth,
+  height: propsHeight,
+  gridSize = 16,
+  snapToGrid = false,
+  centeredMask = true,
   zoom: propsZoom,
   onZoomChange,
   onViewportChange,
@@ -47,22 +47,22 @@ export const CanvasView: React.FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
   const gridCanvasRef = useRef<HTMLCanvasElement | null>(null);
-  
+
   // Sync with store state
   const kernelState = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState,
     () => store.getState() as KernelState
   );
-  
+
   const mode = propsMode || kernelState.canvas.mode || 'infinite';
   const width = propsWidth || kernelState.canvas.width || 1920;
   const height = propsHeight || kernelState.canvas.height || 1080;
 
   const [internalZoom, setInternalZoom] = useState(1);
-  // In reflow mode, always use internal zoom (auto-calculated)
+  // In grid mode, always use internal zoom (auto-calculated)
   // In other modes, use external zoom if provided
-  const zoom = mode === 'reflow' ? internalZoom : (propsZoom !== undefined ? propsZoom : internalZoom);
+  const zoom = mode === 'grid' ? internalZoom : (propsZoom !== undefined ? propsZoom : internalZoom);
   const zoomRef = useRef(zoom);
   useEffect(() => {
     zoomRef.current = zoom;
@@ -72,8 +72,8 @@ export const CanvasView: React.FC<Props> = ({
     (nextZoom: number) => {
       // Always update internal zoom
       setInternalZoom(nextZoom);
-      // Notify external if callback provided (except in reflow mode where we control zoom)
-      if (onZoomChange && mode !== 'reflow') {
+      // Notify external if callback provided (except in grid mode where we control zoom)
+      if (onZoomChange && mode !== 'grid') {
         onZoomChange(nextZoom);
       }
     },
@@ -109,27 +109,27 @@ export const CanvasView: React.FC<Props> = ({
     }
   }, [mode, containerDimensions, width, height, hasAutoFit, propsZoom]);
 
-  // Reflow mode: auto-scale to fit container on every resize
+  // Grid mode: auto-scale to fit container on every resize
   useEffect(() => {
-    
-    if (mode !== 'reflow') return;
+
+    if (mode !== 'grid') return;
     if (containerDimensions.width <= 0 || containerDimensions.height <= 0) return;
-    
+
     // Calculate scale to fit the container with some padding
     const padding = 20;
-    // In reflow mode, allow scaling to fit regardless of original size
+    // In grid mode, allow scaling to fit regardless of original size
     const scaleToFit = calculateScaleToFit(
-      containerDimensions.width, 
-      containerDimensions.height, 
-      width, 
-      height, 
+      containerDimensions.width,
+      containerDimensions.height,
+      width,
+      height,
       padding,
-      true // allowScaleUp - in reflow mode we scale to fit container
+      true // allowScaleUp - in grid mode we scale to fit container
     );
-    
-    
+
+
     setInternalZoom(scaleToFit);
-    
+
     // Center the content
     const scaledWidth = width * scaleToFit;
     const scaledHeight = height * scaleToFit;
@@ -159,10 +159,10 @@ export const CanvasView: React.FC<Props> = ({
     return { zoom, offset };
   }, [zoom, offset]);
 
-  // Debug: log when zoom changes in reflow mode
+  // Debug: log when zoom changes in grid mode
   useEffect(() => {
-    if (mode === 'reflow') {
-      
+    if (mode === 'grid') {
+
     }
   }, [mode, zoom, internalZoom, offset]);
 
@@ -182,7 +182,7 @@ export const CanvasView: React.FC<Props> = ({
     ctx.scale(dpr, dpr);
     ctx.strokeStyle = 'rgba(0,0,0,0.06)';
     ctx.lineWidth = 1;
-    
+
     const { zoom: vZoom, offset: vOffset } = viewportInfo;
     const step = gridSize * vZoom;
     if (step <= 0) return;
@@ -262,12 +262,12 @@ export const CanvasView: React.FC<Props> = ({
     }
     function onPointerUp(e: PointerEvent) {
       isPanning = false;
-      try { (e.target as Element).releasePointerCapture?.(e.pointerId); } catch {}
+      try { (e.target as Element).releasePointerCapture?.(e.pointerId); } catch { }
     }
 
     function onWheel(e: WheelEvent) {
       if (mode !== 'infinite' && mode !== 'fixed') return;
-      
+
       // If Ctrl/Meta is pressed, it's a zoom action
       if (e.ctrlKey || e.metaKey) {
         if (!zoomEnabled) return;
@@ -302,21 +302,21 @@ export const CanvasView: React.FC<Props> = ({
   // redraw grid when viewport changes
   useEffect(() => {
     const { zoom: vZoom, offset: vOffset } = viewportInfo;
-    onViewportChange?.({ 
-      width, 
-      height, 
-      zoom: vZoom, 
-      offsetX: vOffset.x, 
-      offsetY: vOffset.y 
+    onViewportChange?.({
+      width,
+      height,
+      zoom: vZoom,
+      offsetX: vOffset.x,
+      offsetY: vOffset.y
     });
   }, [viewportInfo, onViewportChange, width, height]);
 
   // helper to convert screen -> world (used by parent if needed)
   function screenToWorld(screenPoint: Point): Point {
     const { zoom: vZoom, offset: vOffset } = viewportInfo;
-    return { 
-      x: (screenPoint.x - vOffset.x) / vZoom, 
-      y: (screenPoint.y - vOffset.y) / vZoom 
+    return {
+      x: (screenPoint.x - vOffset.x) / vZoom,
+      y: (screenPoint.y - vOffset.y) / vZoom
     };
   }
 
@@ -329,8 +329,8 @@ export const CanvasView: React.FC<Props> = ({
 
   const { zoom: vZoom, offset: vOffset } = viewportInfo;
 
-  // Fixed/Reflow mode border/shadow
-  const canvasOutlineStyle: React.CSSProperties = (mode === 'fixed' || mode === 'reflow') ? {
+  // Fixed/Grid mode border/shadow
+  const canvasOutlineStyle: React.CSSProperties = (mode === 'fixed' || mode === 'grid') ? {
     position: 'absolute',
     left: vOffset.x,
     top: vOffset.y,
@@ -345,21 +345,21 @@ export const CanvasView: React.FC<Props> = ({
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
       {/* background grid canvas */}
       <canvas ref={gridCanvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
-      
+
       {/* main engine mount point - Leafer canvas fills this, viewport controlled via VisualEngine.setViewport */}
-      <div 
-        style={{ 
+      <div
+        style={{
           position: 'absolute',
           inset: 0,
-        }} 
-        id="visual-engine-mount" 
+        }}
+        id="visual-engine-mount"
       />
 
-      {/* Canvas border for fixed/reflow mode */}
-      {(mode === 'fixed' || mode === 'reflow') && <div style={canvasOutlineStyle} />}
+      {/* Canvas border for fixed/grid mode */}
+      {(mode === 'fixed' || mode === 'grid') && <div style={canvasOutlineStyle} />}
 
-      {/* centered mask for fixed/reflow mode */}
-      {(mode === 'fixed' || mode === 'reflow') && centeredMask && (
+      {/* centered mask for fixed/grid mode */}
+      {(mode === 'fixed' || mode === 'grid') && centeredMask && (
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           {/* Top */}
           <div style={{ ...maskStyle, top: 0, left: 0, right: 0, height: Math.max(0, vOffset.y) }} />

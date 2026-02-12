@@ -72,15 +72,22 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
   }
 
-  // Save version history before updating
-  await prisma.dashboardVersion.create({
-    data: {
+  // Save version history before updating (use upsert to handle rapid auto-save)
+  await prisma.dashboardVersion.upsert({
+    where: {
+      dashboardId_version: {
+        dashboardId: existing.id,
+        version: existing.version,
+      },
+    },
+    create: {
       dashboardId: existing.id,
       version: existing.version,
       canvasConfig: existing.canvasConfig,
       nodes: existing.nodes,
       dataSources: existing.dataSources,
     },
+    update: {}, // No update needed if already exists
   })
 
   // Prepare update data - only include fields that are provided
@@ -93,12 +100,30 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
   if (result.data.canvasConfig !== undefined) {
     updateData.canvasConfig = JSON.stringify(result.data.canvasConfig)
+    
+    // Sync homeFlag from canvasConfig to Dashboard field
+    if (typeof result.data.canvasConfig.homeFlag === 'boolean') {
+      if (result.data.canvasConfig.homeFlag) {
+        // Clear other homepages in the same project
+        await prisma.dashboard.updateMany({
+          where: { 
+            projectId: existing.projectId,
+            id: { not: id },
+          },
+          data: { homeFlag: false },
+        })
+      }
+      updateData.homeFlag = result.data.canvasConfig.homeFlag
+    }
   }
   if (result.data.nodes !== undefined) {
     updateData.nodes = JSON.stringify(result.data.nodes)
   }
   if (result.data.dataSources !== undefined) {
     updateData.dataSources = JSON.stringify(result.data.dataSources)
+  }
+  if (result.data.thumbnail !== undefined) {
+    updateData.thumbnail = result.data.thumbnail
   }
 
   const dashboard = await prisma.dashboard.update({

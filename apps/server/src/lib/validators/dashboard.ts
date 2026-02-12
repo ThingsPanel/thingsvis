@@ -11,8 +11,10 @@ export const CanvasConfigSchema = z.object({
 // Schema for creating a new dashboard
 export const CreateDashboardSchema = z.object({
   name: z.string().min(1, 'Dashboard name is required').max(100, 'Dashboard name must be 100 characters or less'),
-  projectId: z.string().cuid('Invalid project ID'),
+  id: z.string().optional(),
+  projectId: z.string().optional(),
   canvasConfig: CanvasConfigSchema.optional(),
+  thumbnail: z.string().optional(),
 })
 
 // Schema for updating a dashboard
@@ -21,6 +23,7 @@ export const UpdateDashboardSchema = z.object({
   canvasConfig: z.any().optional(), // Flexible JSON object
   nodes: z.any().optional(), // Flexible JSON array
   dataSources: z.any().optional(), // Flexible JSON array
+  thumbnail: z.string().optional(), // Base64 or URL for thumbnail
 })
 
 // Default canvas configuration
