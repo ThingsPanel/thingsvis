@@ -13,6 +13,11 @@ const allowedOrigins = [
   'http://127.0.0.1:3001',
   'http://127.0.0.1:5002',
   'http://127.0.0.1:5173',
+  'http://c.thingspanel.cn',   // ThingsPanel 测试环境
+  'https://c.thingspanel.cn',  // ThingsPanel 测试环境 (HTTPS)
+  'http://47.92.253.145',      // ThingsVis 测试服务器
+  'http://47.92.253.145:3000', // ThingsVis Studio
+  'http://47.92.253.145:3001', // ThingsVis Server
 ]
 
 function corsMiddleware(req: NextRequest) {
