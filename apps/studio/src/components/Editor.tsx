@@ -100,6 +100,8 @@ import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { dataSourceManager } from '@thingsvis/kernel'
+import { platformFieldStore } from '@/lib/stores/platformFieldStore'
 import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
 import { initSaveStrategy, updateEmbeddedConfig, getEffectiveProjectId } from '../lib/storage/saveStrategy'
 import { uploadFile } from "@/lib/api/uploads"
@@ -158,6 +160,10 @@ type CanvasConfigSchema = {
 export default function Editor() {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
   const { currentProject, switchProject } = useProject()
+  // Refs for event cleanup (to avoid leaks in async init)
+  const schemaUnsubRef = useRef<() => void>();
+  const dataUnsubRef = useRef<() => void>();
+
   // Fullscreen state for Embed Mode
   const [isFullscreen, setIsFullscreen] = useState(false)
 
@@ -446,7 +452,7 @@ export default function Editor() {
 
             if (isHostProject) {
               console.log('[Editor] Bootstrap: Host-managed project (Widget Mode), skipping cloud load.');
-              // Data is already loaded via onEmbedInit. 
+              // Data is already loaded via onEmbedInit.
               // We must stop bootstrapping here to prevent 'loaded=null' from triggering the empty project fallback.
               bootstrappingRef.current = false;
               setIsBootstrapping(false);
@@ -846,15 +852,72 @@ export default function Editor() {
         gridCols: processed.canvas.gridCols,
         gridRowHeight: processed.canvas.gridRowHeight,
         gridGap: processed.canvas.gridGap,
-        gridGap: processed.canvas.gridGap,
         fullWidthPreview: processed.canvas.fullWidthPreview,
         thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
       }));
 
+      // 🔌 Handle Platform Fields from Init Payload (Race Condition Fix)
+      const initPayload = payload as any; // Cast to access platformFields
+      if (initPayload.data && initPayload.data.platformFields && Array.isArray(initPayload.data.platformFields)) {
+        console.log('[Editor] 🔌 Initializing Platform Fields from Init:', initPayload.data.platformFields.length);
+        platformFieldStore.setFields(initPayload.data.platformFields);
+      }
+
+      // 🔌 Ensure __platform__ data source exists
+      const initData = payload.data;
+      if (initData) {
+        // Register datasources if provided, or check if we need to inject platform
+        // Note: Kernel might load dataSources from schema, but we want to be sure adapter is ready.
+        if (!initData.dataSources?.some((ds: any) => ds.id === '__platform__')) {
+          // Inject if missing in payload, effectively ensuring it exists in the loaded project
+          // Actually, ProjectDialog or Kernel loadPage handles this?
+          // Logic in EmbedPage.tsx: manually injects into schema.
+          // Here we might need to rely on what `processed` returns?
+          // processed.project is used? No, Editor uses `projectStorage`.
+
+          // In Widget mode, we might not have a full project structure in storage yet.
+          // We can manually register the adapter with DataSourceManager to be safe.
+          dataSourceManager.registerDataSource({
+            id: '__platform__',
+            name: 'System Platform',
+            type: 'PLATFORM_FIELD',
+            config: { source: 'ThingsPanel', fieldMappings: {} }
+          });
+        }
+      }
+
+      // Initialize project with data - cleaned up invalid check
+
+
+      // 🔌 Handle schema update (platform fields)
+      schemaUnsubRef.current = onEmbedEvent('updateSchema', (payload: any) => {
+        const fields = payload; // payload is fields array? or { event, payload }?
+        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'thingsvis:editor-event'
+        // define onEmbedEvent implementation?
+        // If onEmbedEvent wraps 'thingsvis:message', let's assume payload matches the event payload.
+        // Client.ts: this.send('thingsvis:editor-event', { event: 'updateSchema', payload: fields })
+        // If onEmbedEvent('updateSchema') triggers when event.event === 'updateSchema', then payload argument IS fields.
+        // Let's assume based on updateData usage (payload is data).
+        if (Array.isArray(fields)) {
+          console.log('[Editor] 🔌 Received updateSchema:', fields.length);
+          platformFieldStore.setFields(fields);
+        }
+      });
+
       // 🔑 监听 updateData 事件 (用于 Widget 模式实时数据推送)
-      const dataUnsubscribe = onEmbedEvent('updateData', (payload: any) => {
+      dataUnsubRef.current = onEmbedEvent('updateData', (payload: any) => {
         // console.log('[Editor] 收到 updateData:', payload);
         const data = payload || {};
+
+        // 1. Bridge to PlatformFieldAdapter (for ds.__platform__ bindings)
+        if (data && typeof data === 'object') {
+          Object.entries(data).forEach(([fieldId, value]) => {
+            window.postMessage({
+              type: 'thingsvis:platformData',
+              payload: { fieldId, value, timestamp: Date.now() }
+            }, '*');
+          });
+        }
 
         // 遍历所有节点，检查是否有物模型绑定
         const state = store.getState();
@@ -1024,7 +1087,11 @@ export default function Editor() {
       })();
     }
 
-    return unsubscribe
+    return () => {
+      unsubscribe();
+      if (schemaUnsubRef.current) schemaUnsubRef.current();
+      if (dataUnsubRef.current) dataUnsubRef.current();
+    }
   }, [])
 
   // 🆕 监听 Host 主动触发的保存请求 (Widget Mode)

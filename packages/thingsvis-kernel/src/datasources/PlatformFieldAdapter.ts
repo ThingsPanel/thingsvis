@@ -16,6 +16,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
     }
 
     async connect(config: DataSource): Promise<void> {
+        console.log('[PlatformAdapter] 🟢 Connecting...', config);
         if (config.type !== 'PLATFORM_FIELD') {
             throw new Error('PlatformFieldAdapter requires PLATFORM_FIELD type');
         }

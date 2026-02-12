@@ -13,10 +13,12 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CanvasView, GridStackCanvas } from '@thingsvis/ui';
+import { dataSourceManager } from '@thingsvis/kernel';
 import type { PageSchemaType } from '@thingsvis/schema';
 import { getDashboard } from '@/lib/api/dashboards';
 import { store } from '@/lib/store';
 import { loadPlugin } from '@/plugins/pluginResolver';
+import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 
 interface EmbedState {
   isLoading: boolean;
@@ -46,12 +48,35 @@ export default function EmbedPage() {
   });
   const parentOrigin = useRef<string>('*');
 
+  // Add declaration for debug globals
+  if (typeof window !== 'undefined') {
+    (window as any)._lastDsUpdate = 0;
+    (window as any)._loggedNodes = false;
+  }
+
   // Observe kernel state
-  const kernelState = useSyncExternalStore(
-    useCallback((subscribe) => store.subscribe(subscribe), []),
-    () => store.getState() as any,
-    () => store.getState() as any
-  );
+  const kernelState = useSyncExternalStore(store.subscribe, store.getState) as any;
+
+  // Debug: Log platform data source state changes
+  // Debug: Log platform data source state changes and schema bindings
+  useEffect(() => {
+    // Access safely
+    const dsState = kernelState.dataSources?.['__platform__'];
+    // Log platform data updates (throttled/debounced ideally, but sufficient for now)
+    if (dsState?.lastUpdated !== (window as any)._lastDsUpdate) {
+      (window as any)._lastDsUpdate = dsState?.lastUpdated;
+      // console.log('[EmbedPage] 🔍 Store State (__platform__):', dsState);
+    }
+
+    // Log bindings in nodes
+    // const nodes = kernelState.nodesById || {};
+    // const firstNodeId = Object.keys(nodes)[0];
+    // if (firstNodeId && !(window as any)._loggedNodes) {
+    //   (window as any)._loggedNodes = true;
+    //   console.log('[EmbedPage] 🔍 Node Schema (First Node):', nodes[firstNodeId]);
+    //   console.log('[EmbedPage] 🔍 All Nodes:', nodes);
+    // }
+  }, [kernelState.dataSources]);
 
   const canvasMode = kernelState?.canvas?.mode ?? 'infinite';
   const canvasWidth = kernelState?.canvas?.width ?? 1920;
@@ -324,13 +349,19 @@ export default function EmbedPage() {
             // 构造符合 loadFromSchema 期望的 schema 对象
             const initData = message.payload.data;
 
-            // 自动注入平台数据源 (如果不存在)
-            const dataSources = initData.dataSources || [];
-            const hasPlatformSource = dataSources.some((ds: any) => ds.id === '__platform__');
+            const schema = {
+              id: initData.meta?.id,
+              name: initData.meta?.name,
+              canvas: initData.canvas,
+              nodes: initData.nodes,
+              dataSources: initData.dataSources || []
+            };
 
-            if (!hasPlatformSource) {
+            // 自动注入平台数据源 (如果不存在)
+            if (!schema.dataSources?.some((ds: any) => ds.id === '__platform__')) {
               console.log('[EmbedPage] 🔌 自动注入 __platform__ 数据源');
-              dataSources.push({
+              if (!schema.dataSources) schema.dataSources = [];
+              schema.dataSources.push({
                 id: '__platform__',
                 name: 'System Platform',
                 type: 'PLATFORM_FIELD',
@@ -340,13 +371,22 @@ export default function EmbedPage() {
               });
             }
 
-            const schema = {
-              id: initData.meta?.id,
-              name: initData.meta?.name,
-              canvas: initData.canvas,
-              nodes: initData.nodes,
-              dataSources: dataSources
-            };
+            // Populate platformFieldStore if fields are provided in init payload
+            if (initData.platformFields && Array.isArray(initData.platformFields)) {
+              console.log('[EmbedPage] 🔌 Initializing Platform Fields:', initData.platformFields.length);
+              platformFieldStore.setFields(initData.platformFields);
+            }
+
+            // Register all data sources with manager
+            if (schema.dataSources && Array.isArray(schema.dataSources)) {
+              schema.dataSources.forEach((ds: any) => {
+                console.log('[EmbedPage] 🔌 Registering DataSource:', ds.id, ds.type);
+                dataSourceManager.registerDataSource(ds).catch(err => {
+                  console.error('[EmbedPage] Failed to register data source:', ds.id, err);
+                });
+              });
+            }
+
             loadFromSchema(schema);
           }
           break;
@@ -356,7 +396,7 @@ export default function EmbedPage() {
           const eventData = message.payload;
           if (eventData && (eventData.event === 'updateData' || message.event === 'updateData')) {
             const data = eventData.payload || eventData.data;
-            console.log('[EmbedPage] 收到 updateData', data);
+            // console.log('[EmbedPage] 收到 updateData', data);
 
             // 1. Update variables (legacy)
             updateVariables(data);
@@ -364,11 +404,19 @@ export default function EmbedPage() {
             // 2. Bridge to PlatformFieldAdapter (for ds.__platform__)
             if (data && typeof data === 'object') {
               Object.entries(data).forEach(([fieldId, value]) => {
+                // console.log('[EmbedPage] 📤 Dispatching platformData:', fieldId, value);
                 window.postMessage({
                   type: 'thingsvis:platformData',
                   payload: { fieldId, value, timestamp: Date.now() }
-                }, window.origin);
+                }, '*');
               });
+            }
+          } else if (eventData && eventData.event === 'updateSchema') {
+            // Handle schema/fields update
+            const fields = eventData.payload;
+            console.log('[EmbedPage]  received updateSchema:', fields);
+            if (Array.isArray(fields)) {
+              platformFieldStore.setFields(fields);
             }
           }
           break;

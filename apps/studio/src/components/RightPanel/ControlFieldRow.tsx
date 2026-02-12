@@ -59,6 +59,14 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeId, field.path]);
 
+  // Handle external binding updates (initial load, undo/redo)
+  // Only sync if transitioning to/from 'static' to avoid interfering with Field/Expr preference
+  useEffect(() => {
+    if (persistedMode !== mode && (mode === 'static' || persistedMode === 'static')) {
+      setMode(persistedMode);
+    }
+  }, [persistedMode]);
+
   // Keep UI drafts in sync with persisted binding expression.
   useEffect(() => {
     if (!binding) {

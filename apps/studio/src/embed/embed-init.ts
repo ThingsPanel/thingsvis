@@ -151,6 +151,7 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
     position: node.position || { x: 100, y: 100 },
     size: node.size || { width: 200, height: 80 },
     props: node.props || {},
+    data: node.data || [],              // 🔑 保留字段绑定表达式
     thingModelBindings: node.thingModelBindings || [],
     grid: node.grid,
   }));

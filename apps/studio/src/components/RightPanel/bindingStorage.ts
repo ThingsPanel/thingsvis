@@ -71,5 +71,6 @@ export function removeBinding(bindings: DataBinding[] | undefined, targetProp: s
 export function detectBindingMode(bindings: DataBinding[] | undefined, targetProp: string): BindingMode {
   const binding = getBinding(bindings, targetProp);
   if (!binding) return 'static';
-  return parseFieldBindingExpression(binding.expression) ? 'field' : 'expr';
+  const isField = parseFieldBindingExpression(binding.expression || '');
+  return isField ? 'field' : 'expr';
 }
