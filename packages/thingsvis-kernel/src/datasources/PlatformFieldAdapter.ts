@@ -40,6 +40,9 @@ export class PlatformFieldAdapter extends BaseAdapter {
             if (event.data.type === 'thingsvis:platformData') {
                 const { fieldId, value, timestamp } = event.data.payload;
 
+                // Debug log
+                console.log('[PlatformAdapter] 📥 Received:', fieldId, value);
+
                 // Cache the field data
                 this.platformDataCache.set(fieldId, {
                     value,
@@ -54,22 +57,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
         window.addEventListener('message', this.messageListener);
     }
 
-    /**
-     * Request initial field data from host platform
-     */
-    private requestInitialData() {
-        const fieldIds = Object.values(this.fieldMappings);
-
-        if (fieldIds.length > 0) {
-            window.parent.postMessage({
-                type: 'thingsvis:requestFieldData',
-                payload: {
-                    dataSourceId: this.config?.id,
-                    fieldIds,
-                }
-            }, '*');
-        }
-    }
+    // ... (requestInitialData omitted)
 
     /**
      * Update component data based on field mappings
@@ -78,12 +66,16 @@ export class PlatformFieldAdapter extends BaseAdapter {
         // Map platform field data to component properties
         const mappedData: Record<string, any> = {};
 
+        console.log('[PlatformAdapter] 🔄 Mappings:', JSON.stringify(this.fieldMappings));
+
         for (const [componentProp, fieldId] of Object.entries(this.fieldMappings)) {
             const fieldData = this.platformDataCache.get(fieldId);
             if (fieldData) {
                 mappedData[componentProp] = fieldData.value;
             }
         }
+
+        console.log('[PlatformAdapter] 📤 Emitting:', mappedData);
 
         // Emit data update event using BaseAdapter method
         this.emitData(mappedData);
