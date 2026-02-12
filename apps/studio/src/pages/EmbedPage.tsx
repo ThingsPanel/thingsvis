@@ -323,12 +323,29 @@ export default function EmbedPage() {
             console.log('[EmbedPage] 收到 thingsvis:editor-init', message.payload.data);
             // 构造符合 loadFromSchema 期望的 schema 对象
             const initData = message.payload.data;
+
+            // 自动注入平台数据源 (如果不存在)
+            const dataSources = initData.dataSources || [];
+            const hasPlatformSource = dataSources.some((ds: any) => ds.id === '__platform__');
+
+            if (!hasPlatformSource) {
+              console.log('[EmbedPage] 🔌 自动注入 __platform__ 数据源');
+              dataSources.push({
+                id: '__platform__',
+                name: 'System Platform',
+                type: 'PLATFORM_FIELD',
+                config: {
+                  fieldMappings: {}
+                }
+              });
+            }
+
             const schema = {
               id: initData.meta?.id,
               name: initData.meta?.name,
               canvas: initData.canvas,
               nodes: initData.nodes,
-              dataSources: initData.dataSources
+              dataSources: dataSources
             };
             loadFromSchema(schema);
           }
@@ -340,7 +357,19 @@ export default function EmbedPage() {
           if (eventData && (eventData.event === 'updateData' || message.event === 'updateData')) {
             const data = eventData.payload || eventData.data;
             console.log('[EmbedPage] 收到 updateData', data);
+
+            // 1. Update variables (legacy)
             updateVariables(data);
+
+            // 2. Bridge to PlatformFieldAdapter (for ds.__platform__)
+            if (data && typeof data === 'object') {
+              Object.entries(data).forEach(([fieldId, value]) => {
+                window.postMessage({
+                  type: 'thingsvis:platformData',
+                  payload: { fieldId, value, timestamp: Date.now() }
+                }, window.origin);
+              });
+            }
           }
           break;
       }

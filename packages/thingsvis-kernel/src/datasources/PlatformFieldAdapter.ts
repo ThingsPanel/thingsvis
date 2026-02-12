@@ -57,28 +57,47 @@ export class PlatformFieldAdapter extends BaseAdapter {
         window.addEventListener('message', this.messageListener);
     }
 
-    // ... (requestInitialData omitted)
+    /**
+     * Request initial field data from host platform
+     */
+    private requestInitialData() {
+        const fieldIds = Object.values(this.fieldMappings);
+
+        if (fieldIds.length > 0) {
+            window.parent.postMessage({
+                type: 'thingsvis:requestFieldData',
+                payload: {
+                    dataSourceId: this.config?.id,
+                    fieldIds,
+                }
+            }, '*');
+        }
+    }
 
     /**
      * Update component data based on field mappings
      */
     private updateData() {
-        // Map platform field data to component properties
-        const mappedData: Record<string, any> = {};
+        // Prepare data object with all platform fields (support dynamic bindings)
+        const allData: Record<string, any> = {};
 
-        console.log('[PlatformAdapter] 🔄 Mappings:', JSON.stringify(this.fieldMappings));
+        // 1. Convert cache to flat object
+        for (const [fieldId, data] of this.platformDataCache.entries()) {
+            allData[fieldId] = data.value;
+        }
 
-        for (const [componentProp, fieldId] of Object.entries(this.fieldMappings)) {
-            const fieldData = this.platformDataCache.get(fieldId);
-            if (fieldData) {
-                mappedData[componentProp] = fieldData.value;
+        // 2. Apply explicit mappings if any (legacy support)
+        if (this.fieldMappings && Object.keys(this.fieldMappings).length > 0) {
+            for (const [componentProp, fieldId] of Object.entries(this.fieldMappings)) {
+                const fieldData = this.platformDataCache.get(fieldId);
+                if (fieldData) {
+                    allData[componentProp] = fieldData.value;
+                }
             }
         }
 
-        console.log('[PlatformAdapter] 📤 Emitting:', mappedData);
-
         // Emit data update event using BaseAdapter method
-        this.emitData(mappedData);
+        this.emitData(allData);
     }
 
     /**
