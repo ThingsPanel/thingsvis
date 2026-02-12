@@ -32,7 +32,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # ========================================
-      # Build ThingsVis Server (Next.js standalone)
+      # Build all packages via turbo (respects dependency order)
+      # packages/* → apps/server + apps/studio
       # ========================================
       - name: Generate Prisma Client
         working-directory: apps/server
@@ -40,23 +41,12 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma generate
 
-      - name: Build Server
-        working-directory: apps/server
+      - name: Build all packages
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm run build
 
-      # ========================================
-      # Build ThingsVis Studio (static SPA)
-      # ========================================
-      - name: Build Studio
-        working-directory: apps/studio
-        run: pnpm run build
-
-      # ========================================
-      # Build Plugins (optional, don't fail deploy)
-      # ========================================
       - name: Build Plugins
         run: pnpm run build:plugins
         continue-on-error: true
@@ -135,7 +125,6 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # pm2 start (server.js is the standalone entry)
             NODE_ENV=production pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
             NODE_ENV=production pm2 restart thingsvis-server --update-env
             pm2 save
