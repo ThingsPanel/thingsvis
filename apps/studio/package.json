@@ -38,13 +38,14 @@
     "react-router-dom": "^6.22.0",
     "selecto": "^1.26.3",
     "tailwind-merge": "^3.3.1",
-    "zod": "^3.23.0"
+    "zod": "^3.23.0",
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
     "@module-federation/rspack": "^0.6.0",
+    "@playwright/test": "^1.58.0",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
-    "@playwright/test": "^1.58.0",
     "@types/react-router-dom": "^5.3.3",
     "autoprefixer": "^10.4.16",
     "postcss": "^8.4.32",

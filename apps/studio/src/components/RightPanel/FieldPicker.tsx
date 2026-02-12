@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import type { KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
-import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 
 import { listFieldPaths, type FieldPathInfo } from './fieldPath';
 
@@ -25,10 +25,8 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
 
-  // Get platform fields from service config
-  // 注意：在可视化嵌入场景 (saveTarget='self') 中，platformFields 为空
-  const serviceConfig = resolveEditorServiceConfig();
-  const platformFields = serviceConfig.platformFields || [];
+  // 🆕 从 Store 订阅平台字段（支持动态更新）
+  const platformFields = usePlatformFieldStore((s: { fields: any[] }) => s.fields);
   const hasPlatformFields = platformFields.length > 0;
 
   const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
@@ -39,7 +37,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
 
   // Check if selected source is platform fields
   const isEmbedded = isEmbedMode();
-  
+
   // 只有在嵌入模式且有平台字段时才使用平台字段模式
   const usePlatformFieldsMode = isEmbedded && hasPlatformFields;
 

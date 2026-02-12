@@ -48,6 +48,19 @@ const ensureListener = () => {
       const eventPayload = data.payload
       if (eventName) {
         emit(eventName, eventPayload)
+
+        // 🆕 数据流桥接: 将 updateData 批量数据转换为 Kernel 期望的单字段 platformData 事件
+        if (eventName === 'updateData') {
+          const dataMap = eventPayload?.payload || eventPayload?.data || eventPayload
+          if (dataMap && typeof dataMap === 'object') {
+            Object.entries(dataMap).forEach(([fieldId, value]) => {
+              window.postMessage({
+                type: 'thingsvis:platformData',
+                payload: { fieldId, value, timestamp: Date.now() }
+              }, '*')
+            })
+          }
+        }
       }
       return
     }

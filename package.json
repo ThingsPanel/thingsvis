@@ -26,6 +26,7 @@
     "vis-cli": "workspace:*"
   },
   "dependencies": {
-    "lucide-react": "^0.563.0"
+    "lucide-react": "^0.563.0",
+    "zustand": "^4.5.0"
   }
 }

@@ -10,6 +10,9 @@
 
 import { updateEmbeddedConfig, initSaveStrategy, type SaveTarget } from '../lib/storage/saveStrategy';
 import { apiClient } from '../lib/api/client';
+import { platformFieldStore } from '../lib/stores/platformFieldStore';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
+import { on as onEmbedEvent } from './embed-mode';
 
 // 存储嵌入模式的 token（由宿主通过 URL 传递）
 let embedToken: string | null = null;
@@ -197,6 +200,22 @@ export function initEmbedModeFromUrl(isAuthenticated: boolean): void {
       if (saveTarget === 'host' || saveTarget === 'self') {
         updateEmbeddedConfig({ saveTarget });
       }
+
+      // 🆕 从 URL 加载平台字段（向后兼容）
+      const serviceConfig = resolveEditorServiceConfig();
+      if (serviceConfig.platformFields && serviceConfig.platformFields.length > 0) {
+        platformFieldStore.setFields(serviceConfig.platformFields);
+        console.log('[EmbedInit] 从 URL 加载了', serviceConfig.platformFields.length, '个平台字段');
+      }
+
+      // 🆕 监听宿主端动态发送的字段更新
+      onEmbedEvent('updateSchema', (eventPayload: any) => {
+        const fields = eventPayload?.payload || eventPayload;
+        if (Array.isArray(fields) && fields.length > 0) {
+          platformFieldStore.setFields(fields);
+          console.log('[EmbedInit] 收到 updateSchema，更新了', fields.length, '个平台字段');
+        }
+      });
     }
   } else {
 
