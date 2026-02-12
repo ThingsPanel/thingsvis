@@ -85,6 +85,9 @@ jobs:
           done
           echo "✅ Plugins packaged"
 
+          # --- Config ---
+          cp .deploy/thingsvis.conf deploy/thingsvis.conf
+
           # Create tarball
           cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
@@ -117,6 +120,9 @@ jobs:
             mkdir -p /tmp/thingsvis-deploy
             tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
 
+            # --- Deploy Nginx Config ---
+            cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
+            
             # --- Deploy Server ---
             echo ">>> Deploying Server..."
             pm2 stop thingsvis-server 2>/dev/null || true
@@ -125,8 +131,8 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            NODE_ENV=production PORT=3001 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production PORT=3001 pm2 restart thingsvis-server --update-env
+            NODE_ENV=production PORT=7051 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production PORT=7051 pm2 restart thingsvis-server --update-env
             pm2 save
 
             # --- Deploy Studio ---
