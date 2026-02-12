@@ -125,8 +125,8 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            NODE_ENV=production pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production pm2 restart thingsvis-server --update-env
+            NODE_ENV=production PORT=3001 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production PORT=3001 pm2 restart thingsvis-server --update-env
             pm2 save
 
             # --- Deploy Studio ---
