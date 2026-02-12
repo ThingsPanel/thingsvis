@@ -1,0 +1,166 @@
+name: Deploy to Test Server
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ========================================
+      # Build ThingsVis Server (Next.js standalone)
+      # ========================================
+      - name: Generate Prisma Client
+        working-directory: apps/server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma generate
+
+      - name: Build Server
+        working-directory: apps/server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+        run: pnpm run build
+
+      # ========================================
+      # Build ThingsVis Studio (static SPA)
+      # ========================================
+      - name: Build Studio
+        working-directory: apps/studio
+        run: pnpm run build
+
+      # ========================================
+      # Build Plugins (optional, don't fail deploy)
+      # ========================================
+      - name: Build Plugins
+        run: pnpm run build:plugins
+        continue-on-error: true
+
+      # ========================================
+      # Package artifacts
+      # ========================================
+      - name: Package artifacts
+        run: |
+          mkdir -p deploy/server deploy/studio deploy/plugins
+
+          # --- Server: Next.js standalone ---
+          # standalone contains server.js + node_modules (minimal)
+          if [ -d "apps/server/.next/standalone" ]; then
+            # Copy the standalone root (node_modules, package.json, server.js)
+            cp -r apps/server/.next/standalone/. deploy/server/
+            # Copy static files
+            mkdir -p deploy/server/apps/server/.next/static
+            cp -r apps/server/.next/static/. deploy/server/apps/server/.next/static/
+            # Copy public folder
+            if [ -d "apps/server/public" ]; then
+              cp -r apps/server/public deploy/server/apps/server/public
+            fi
+            echo "✅ Server packaged"
+          else
+            echo "❌ No standalone build found!"
+            exit 1
+          fi
+
+          # --- Studio: static SPA ---
+          cp -r apps/studio/dist/. deploy/studio/
+          echo "✅ Studio packaged"
+
+          # --- Plugins ---
+          for dir in plugins/*/; do
+            if [ -d "${dir}dist" ]; then
+              plugin_name=$(basename "$dir")
+              cp -r "${dir}dist" "deploy/plugins/${plugin_name}"
+            fi
+          done
+          echo "✅ Plugins packaged"
+
+          # Create tarball
+          cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
+          echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
+
+      # ========================================
+      # Deploy to server
+      # ========================================
+      - name: Upload to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: 22
+          source: "thingsvis-deploy.tar.gz"
+          target: "/tmp"
+
+      - name: Deploy and restart services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          port: 22
+          script: |
+            set -e
+            echo "=== Deploying ThingsVis ==="
+
+            # Extract
+            mkdir -p /tmp/thingsvis-deploy
+            tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+
+            # --- Deploy Server ---
+            echo ">>> Deploying Server..."
+            pm2 stop thingsvis-server 2>/dev/null || true
+            sleep 1
+            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+            cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+            cd /opt/thingsvis/server
+
+            # pm2 start (server.js is the standalone entry point)
+            # The .env file is already on the server from initial setup
+            NODE_ENV=production pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production pm2 restart thingsvis-server --update-env
+            pm2 save
+
+            # --- Deploy Studio ---
+            echo ">>> Deploying Studio..."
+            rm -rf /var/www/thingsvis-studio/*
+            cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+
+            # --- Deploy Plugins ---
+            echo ">>> Deploying Plugins..."
+            if [ -d "/tmp/thingsvis-deploy/plugins" ] && [ "$(ls -A /tmp/thingsvis-deploy/plugins 2>/dev/null)" ]; then
+              cp -rf /tmp/thingsvis-deploy/plugins/. /var/www/thingsvis-plugins/
+            fi
+
+            # Reload nginx
+            nginx -t && systemctl reload nginx
+
+            # Cleanup
+            rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
+
+            echo "=== Deployment complete ==="
+            pm2 list
