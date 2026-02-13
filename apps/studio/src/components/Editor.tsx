@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import { useParams } from "react-router-dom"
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -97,6 +98,7 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
+import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
 import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
@@ -295,23 +297,40 @@ export default function Editor() {
     () => store.temporal.getState()
   )
 
+
+  const { dashboardId } = useParams<{ dashboardId: string }>()
+
   // Resolve initial project id from URL/hash, last-opened id, or recents.
-  const resolveInitialProjectId = (): string => {
-    // 1) URL hash query: #/editor?projectId=...
+  // Strategy Pattern: Route > Query > Storage > Generic
+  const resolveInitialProjectId = useCallback((): string => {
+    // 0) Priority: Route Path Parameter (New App Mode)
+    // URL: /editor/:dashboardId
+    if (dashboardId) {
+      console.log('[Editor] Strategy: Using Route Param ID:', dashboardId);
+      return dashboardId;
+    }
+
+    // 1) URL hash query: #/editor?projectId=... (Legacy / Dev)
     try {
       const hash = window.location.hash || ''
       const qIndex = hash.indexOf('?')
       if (qIndex >= 0) {
         const params = new URLSearchParams(hash.slice(qIndex + 1))
         const fromHash = params.get('projectId')
-        if (fromHash) return fromHash
+        if (fromHash) {
+          console.log('[Editor] Strategy: Using Query Param ID:', fromHash);
+          return fromHash
+        }
       }
     } catch { }
 
-    // 2) localStorage last opened project
+    // 2) localStorage last opened project (Fallback)
     try {
       const last = localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY)
-      if (last) return last
+      if (last) {
+        console.log('[Editor] Strategy: Using LocalStorage ID:', last);
+        return last
+      }
     } catch { }
 
     // 3) first recent project
@@ -320,7 +339,7 @@ export default function Editor() {
 
     // 4) new
     return crypto.randomUUID()
-  }
+  }, [dashboardId])
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId()
@@ -457,8 +476,15 @@ export default function Editor() {
               bootstrappingRef.current = false;
               setIsBootstrapping(false);
               return;
-            } else {
-              console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
+            }
+
+            // 🛑 New Mode Guard: If we are in Widget Mode but somehow got here with a non-host ID,
+            // we should STILL not try to load from cloud if we are adhering to strict isolation.
+            // However, for now, we'll assume if it's not a host-project ID, it might be a legacy embed case.
+            // Ideally: if (isEmbedMode()) { return; }
+
+            console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
+            try {
               const cloudProject = await storage.get(projectId);
               console.log('[Editor] Bootstrap: 云端项目结果:', cloudProject);
               if (cloudProject) {
@@ -484,6 +510,9 @@ export default function Editor() {
                   switchProject(cloudProject.meta.projectId).catch(console.error);
                 }
               }
+            } catch (err) {
+              console.error('[Editor] Bootstrap: Cloud load failed', err);
+              // Fallback to empty project is handled below if loaded remains null
             }
           } else {
             console.log('[Editor] Bootstrap: 从本地加载项目', projectId);
@@ -1857,7 +1886,7 @@ export default function Editor() {
                               className="w-full h-20 object-cover rounded-md border border-border"
                             />
                             <button
-                              onClick={() => setCanvasConfig({ ...canvasConfig, thumbnail: undefined })}
+                              onClick={() => setCanvasConfig({ ...canvasConfig, thumbnail: "" })}
                               className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
                             >
                               ×
@@ -1869,16 +1898,18 @@ export default function Editor() {
                               type="file"
                               accept="image/*"
                               className="hidden"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (file) {
-                                  const reader = new FileReader();
-                                  reader.onload = (ev) => {
-                                    const base64 = ev.target?.result as string;
-                                    setCanvasConfig({ ...canvasConfig, thumbnail: base64 });
+                                  try {
+                                    // Process image (resize & compress)
+                                    const thumbnail = await processThumbnailFile(file);
+                                    setCanvasConfig({ ...canvasConfig, thumbnail });
                                     markDirty();
-                                  };
-                                  reader.readAsDataURL(file);
+                                  } catch (error) {
+                                    console.error('Failed to process thumbnail', error);
+                                    alert(language === "zh" ? "缩略图处理失败" : "Failed to process thumbnail");
+                                  }
                                 }
                               }}
                             />

@@ -51,7 +51,7 @@ export async function generateThumbnailFromElement(
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')
-    
+
     if (!ctx) {
       throw new Error('Could not get canvas context')
     }
@@ -81,7 +81,7 @@ export async function generateThumbnailFromElement(
     // Fallback: use a placeholder or the element's background
     return canvas.toDataURL('image/jpeg', quality)
   } catch (error) {
-    
+
     return generatePlaceholderThumbnail(options)
   }
 }
@@ -123,7 +123,7 @@ export function generateThumbnailFromCanvas(
 
     return canvas.toDataURL('image/jpeg', quality)
   } catch (error) {
-    
+
     return generatePlaceholderThumbnail(options)
   }
 }
@@ -200,7 +200,7 @@ async function renderSvgToDataUrl(svgElement: SVGElement): Promise<string | null
     const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' })
     return URL.createObjectURL(blob)
   } catch (error) {
-    
+
     return null
   }
 }
@@ -238,10 +238,10 @@ function drawScaledImage(
 
   // Calculate scale to fit while maintaining aspect ratio
   const scale = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight)
-  
+
   const scaledWidth = sourceWidth * scale
   const scaledHeight = sourceHeight * scale
-  
+
   // Center the image
   const x = (targetWidth - scaledWidth) / 2
   const y = (targetHeight - scaledHeight) / 2
@@ -273,4 +273,44 @@ export function compressThumbnail(
   }
 
   return result
+}
+
+/**
+ * Process a user-uploaded file for use as a thumbnail.
+ * Resizes and compresses the image.
+ * 
+ * @param file - The uploaded file
+ * @returns Compressed base64 thumbnail string
+ */
+export async function processThumbnailFile(file: File): Promise<string> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await loadImage(url)
+
+    // Create canvas for resizing
+    const canvas = document.createElement('canvas')
+    const width = STORAGE_CONSTANTS.THUMBNAIL_WIDTH
+    const height = STORAGE_CONSTANTS.THUMBNAIL_HEIGHT
+
+    // Set explicit size
+    canvas.width = width
+    canvas.height = height
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Could not get canvas context')
+
+    // Fill white background (for transparent PNGs)
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(0, 0, width, height)
+
+    // Draw scaled image (fit within bounds)
+    drawScaledImage(ctx, img, width, height)
+
+    // return compressed jpeg
+    return canvas.toDataURL('image/jpeg', 0.8)
+  } catch (error) {
+    console.error('Thumbnail processing failed:', error)
+    // Fallback? Retrun original as base64? No, might be too big.
+    throw error
+  }
 }

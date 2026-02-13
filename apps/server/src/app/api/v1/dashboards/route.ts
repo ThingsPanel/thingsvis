@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
         project: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true } },
-        thumbnail: true,
+        // thumbnail: true, // Excluded for performance (lazy loading)
       },
       orderBy: { updatedAt: 'desc' },
       skip: (page - 1) * limit,

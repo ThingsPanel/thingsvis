@@ -1,0 +1,10 @@
+{
+    "platform": "thingspanel",
+    "platformToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImE5YzI0YmEwLTczOGQtOTQ3Ny02MDUzLTM0ZWQ4YThjZDNjMiIsImVtYWlsIjoidGVzdEB0ZXN0LmNuIiwiY3JlYXRlX3RpbWUiOiIyMDI2LTAyLTEzVDAxOjM5OjIzLjY3NzE5NDAzWiIsImF1dGhvcml0eSI6IlRFTkFOVF9BRE1JTiIsInRlbmFudF9pZCI6IjYzYTRiNTI5IiwiZXhwIjoxNzczNTM4NzYzfQ.214E3XOadAhpNJ_e0jjku_KlAeYOdS1LBiSKA9ebQ9Q",
+    "userInfo": {
+        "email": "test@test.cn",
+        "name": "test",
+        "tenantId": "63a4b529",
+        "id": "a9c24ba0-738d-9477-6053-34ed8a8cd3c2"
+    }
+}

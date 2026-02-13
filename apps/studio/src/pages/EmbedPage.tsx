@@ -322,6 +322,11 @@ export default function EmbedPage() {
   // Handle messages from parent window
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      // Debug: Log all incoming messages for troubleshooting
+      if (typeof event.data === 'object' && event.data?.type) {
+        // console.log('[EmbedPage] 📩 Received message:', event.data.type, event.data);
+      }
+
       // Store the origin of the parent for responses
       if (event.source === window.parent) {
         parentOrigin.current = event.origin;
@@ -331,6 +336,7 @@ export default function EmbedPage() {
 
       switch (message.type) {
         case 'LOAD_DASHBOARD':
+          // console.log('[EmbedPage] 🚀 Handling LOAD_DASHBOARD', message.payload);
           loadFromSchema(message.payload);
           break;
         case 'UPDATE_VARIABLES':
@@ -345,7 +351,7 @@ export default function EmbedPage() {
           // payload 结构: { data: { ...canvas, ...nodes }, config: { ... } }
           // EmbedPage expect pure schema in message.payload.data
           if (message.payload && message.payload.data) {
-            console.log('[EmbedPage] 收到 thingsvis:editor-init', message.payload.data);
+            // console.log('[EmbedPage] 收到 thingsvis:editor-init', message.payload.data);
             // 构造符合 loadFromSchema 期望的 schema 对象
             const initData = message.payload.data;
 
