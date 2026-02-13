@@ -338,7 +338,7 @@ export default function Editor() {
     if (recent) return recent
 
     // 4) new
-    return crypto.randomUUID()
+    return generateId()
   }, [dashboardId])
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
