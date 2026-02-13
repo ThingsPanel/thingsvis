@@ -1,4 +1,6 @@
 
+import { messageLogger } from './message-router'
+
 /**
  * Embed Mode Communication Layer
  * 
@@ -28,6 +30,9 @@ const ensureListener = () => {
     // 简单的协议解析
     const data = event.data as EmbedEventMessage | undefined
     if (!data || typeof data !== 'object') return
+
+    // Phase 0: 统一日志
+    messageLogger.logInbound(event)
 
     // 1. Init (loadWidgetConfig)
     if (data.type === 'thingsvis:editor-init') {
@@ -120,6 +125,8 @@ export const on = (event: EmbedEventName, handler: EmbedEventHandler) => {
  */
 export const requestSave = (payload: any) => {
   if (window.parent && window.parent !== window) {
+    // Phase 0: 统一日志
+    messageLogger.logOutbound('thingsvis:host-save', payload)
     // 使用标准的 message type
     window.parent.postMessage({ type: 'thingsvis:host-save', payload }, '*')
   } else {

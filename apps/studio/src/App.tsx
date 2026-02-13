@@ -5,7 +5,7 @@ import { ProjectProvider } from './contexts/ProjectContext';
 import { LoginPage, RegisterPage, HomePage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
 import ImageUploadSettingsPage from './pages/ImageUploadSettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import Editor from './components/Editor';
+import EditorShell from './components/EditorShell';
 import './index.css';
 
 /**
@@ -33,28 +33,28 @@ export default function App() {
             {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            
+
             {/* Home page - shows project list */}
             <Route path="/" element={<HomePage />} />
-            
-            {/* Editor Routes */}
-            <Route path="/editor" element={<Editor />} />
-            <Route path="/editor/:dashboardId" element={<Editor />} />
-            
+
+            {/* Editor Routes — EditorShell wraps Editor with Strategy Pattern */}
+            <Route path="/editor" element={<EditorShell />} />
+            <Route path="/editor/:dashboardId" element={<EditorShell />} />
+
             {/* Data Sources */}
             <Route path="/data-sources" element={<DataSourcesPage />} />
-            
+
             {/* Settings */}
             <Route path="/settings/image-upload" element={<ImageUploadSettingsPage />} />
-            
+
             {/* Preview Routes */}
             <Route path="/preview" element={<PreviewPage />} />
             <Route path="/preview/:dashboardId" element={<PreviewPage />} />
-            
+
             {/* Embed Route - for iframe embedding */}
             <Route path="/embed" element={<EmbedPage />} />
             <Route path="/embed/:dashboardId" element={<EmbedPage />} />
-            
+
             {/* Catch all - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
