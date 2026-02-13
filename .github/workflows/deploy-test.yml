@@ -12,7 +12,7 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,8 +32,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # ========================================
-      # Build all packages via turbo (respects dependency order)
-      # packages/* → apps/server + apps/studio
+      # Build all packages via turbo
       # ========================================
       - name: Generate Prisma Client
         working-directory: apps/server
@@ -41,11 +40,15 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma generate
 
-      - name: Build all packages
+      - name: Build Server + Studio
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
+
+      - name: Build Preview
+        run: pnpm turbo run build --filter=preview
+        continue-on-error: true
 
       - name: Build Plugins
         run: pnpm run build:plugins
@@ -56,7 +59,7 @@ jobs:
       # ========================================
       - name: Package artifacts
         run: |
-          mkdir -p deploy/server deploy/studio deploy/plugins
+          mkdir -p deploy/server deploy/studio deploy/preview deploy/plugins
 
           # --- Server: Next.js standalone ---
           if [ -d "apps/server/.next/standalone" ]; then
@@ -73,8 +76,21 @@ jobs:
           fi
 
           # --- Studio: static SPA ---
-          cp -r apps/studio/dist/. deploy/studio/
-          echo "✅ Studio packaged"
+          if [ -d "apps/studio/dist" ]; then
+            cp -r apps/studio/dist/. deploy/studio/
+            echo "✅ Studio packaged"
+          else
+            echo "❌ Studio dist not found!"
+            exit 1
+          fi
+
+          # --- Preview: static SPA ---
+          if [ -d "apps/preview/dist" ]; then
+            cp -r apps/preview/dist/. deploy/preview/
+            echo "✅ Preview packaged"
+          else
+            echo "⚠️  Preview dist not found, skipping"
+          fi
 
           # --- Plugins ---
           for dir in plugins/*/; do
@@ -116,6 +132,12 @@ jobs:
             set -e
             echo "=== Deploying ThingsVis ==="
 
+            # Ensure directories exist
+            mkdir -p /opt/thingsvis/server
+            mkdir -p /var/www/thingsvis-studio
+            mkdir -p /var/www/thingsvis-preview
+            mkdir -p /var/www/thingsvis-plugins
+
             # Extract
             mkdir -p /tmp/thingsvis-deploy
             tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
@@ -131,6 +153,11 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
+            # Source .env if exists
+            if [ -f /opt/thingsvis/server/.env ]; then
+              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            fi
+
             NODE_ENV=production PORT=7051 AUTH_TRUST_HOST=true pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
             NODE_ENV=production PORT=7051 AUTH_TRUST_HOST=true pm2 restart thingsvis-server --update-env
             pm2 save
@@ -139,6 +166,16 @@ jobs:
             echo ">>> Deploying Studio..."
             rm -rf /var/www/thingsvis-studio/*
             cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+
+            # --- Deploy Preview ---
+            echo ">>> Deploying Preview..."
+            if [ -d "/tmp/thingsvis-deploy/preview" ] && [ "$(ls -A /tmp/thingsvis-deploy/preview 2>/dev/null)" ]; then
+              rm -rf /var/www/thingsvis-preview/*
+              cp -rf /tmp/thingsvis-deploy/preview/. /var/www/thingsvis-preview/
+              echo "✅ Preview deployed"
+            else
+              echo "⚠️  No preview artifacts, skipping"
+            fi
 
             # --- Deploy Plugins ---
             echo ">>> Deploying Plugins..."
@@ -152,5 +189,9 @@ jobs:
             # Cleanup
             rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
 
+            echo ""
             echo "=== Deployment complete ==="
             pm2 list
+            echo ""
+            echo "🔗 Studio:  http://47.92.253.145:7050/"
+            echo "🔗 Preview: http://47.92.253.145:7050/preview/"
