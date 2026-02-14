@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom"
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
+
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { useAuth } from "@/lib/auth/AuthContext"
 import { useProject } from '@/contexts/ProjectContext'
@@ -15,32 +15,14 @@ import {
   Type,
   ImageIcon,
   Hand,
-  Moon,
-  Sun,
-  Eye,
-  Upload,
   Search,
   Layers,
   Grid3x3,
   BarChart3,
   Box,
-  Undo2,
-  Redo2,
   Scan,
   PanelRightClose,
-  PanelRightOpen,
-  Maximize,
-  Monitor,
-  Menu,
-  FolderOpen,
   Save,
-  FileDown,
-  FileUp,
-  Settings,
-  HelpCircle,
-  Languages,
-  Share2,
-  Users,
   Video,
   Gauge,
   Clock,
@@ -63,19 +45,8 @@ import {
   EyeOff,
   Lock,
   X,
-  Minus,
-  Plus,
-  Database,
-  LogOut,
-  Minimize,
 } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+
 import { type KernelState, type KernelActions } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
@@ -83,7 +54,7 @@ import { GridStackCanvas } from '@thingsvis/ui'
 import ComponentsList from './LeftPanel/ComponentsList'
 import LayerPanel from './LeftPanel/LayerPanel'
 import PropsPanel from './RightPanel/PropsPanel'
-import { SaveIndicator } from './SaveIndicator'
+
 import { ShortcutHelpPanel } from './ShortcutHelpPanel'
 import { ProjectDialog } from './ProjectDialog'
 // Data source management moved to separate page: #/data-sources
@@ -98,12 +69,14 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
-import { isEmbedMode, messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/message-router'
-import { processThumbnailFile } from '../lib/storage/thumbnail'
+import { messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/message-router'
+
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
-import { dataSourceManager } from '@thingsvis/kernel'
-import { platformFieldStore } from '@/lib/stores/platformFieldStore'
+import { EditorBottomBar } from './EditorBottomBar'
+import { CanvasSettingsPanel } from './RightPanel/CanvasSettingsPanel'
+import { EditorTopNav } from './EditorTopNav'
+
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -185,9 +158,7 @@ export interface EditorHandle {
 const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
   const { currentProject, switchProject } = useProject()
-  // Refs for event cleanup (to avoid leaks in async init)
-  const schemaUnsubRef = useRef<() => void>();
-  const dataUnsubRef = useRef<() => void>();
+
 
   // Fullscreen state for Embed Mode
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -366,7 +337,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId()
     // 🆕 embed 模式默认使用 grid 布局
-    const defaultMode = isEmbedMode() ? "grid" : "fixed"
+    const defaultMode = embedVisibility.isEmbedded ? "grid" : "fixed"
     return {
       // Meta - 基础身份
       id: initialId,
@@ -453,7 +424,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // Helper to identify Widget Mode
   // Phase 1.6: 优先使用 props.isWidgetMode（由策略提供），回退到内联检测
-  const isWidgetMode = props.isWidgetMode ?? (isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-')));
+  const isWidgetMode = props.isWidgetMode ?? (embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-')));
 
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
@@ -496,7 +467,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             // If we are in embed mode and the project ID is assigned by Host (e.g. 'widget' or 'embed-*'),
             // it means the project data comes from postMessage, NOT from the cloud.
             // Fetching from cloud will return 404 and cause fallback to empty project, wiping out our init data.
-            const isHostProject = isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-'));
+            const isHostProject = embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-'));
 
             if (isHostProject) {
               console.log('[Editor] Bootstrap: Host-managed project (Widget Mode), skipping cloud load.');
@@ -510,7 +481,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             // 🛑 New Mode Guard: If we are in Widget Mode but somehow got here with a non-host ID,
             // we should STILL not try to load from cloud if we are adhering to strict isolation.
             // However, for now, we'll assume if it's not a host-project ID, it might be a legacy embed case.
-            // Ideally: if (isEmbedMode()) { return; }
+            // Ideally: if (embedVisibility.isEmbedded) { return; }
 
             console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
             try {
@@ -698,7 +669,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // Ensure preview loads the latest saved content
     await saveNow()
 
-    if (isEmbedMode()) {
+    if (embedVisibility.isEmbedded) {
       // 🆕 Embed Mode specific routing
       // Use internal hash routing to stay within the iframe/context
       // unless user specifically wants popups (which is rare in dashboards)
@@ -731,7 +702,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // Ensure latest content is saved before publishing
     await saveNow()
 
-    if (isEmbedMode()) {
+    if (embedVisibility.isEmbedded) {
       // In embed mode, notify the host to handle publish
       messageRouter.send('tv:publish', undefined, { projectId })
       return
@@ -822,7 +793,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // Handle embed mode init event - load initial data from host
   useEffect(() => {
-    if (!isEmbedMode()) return;
+    if (!embedVisibility.isEmbedded) return;
 
     const unsubscribe = onEmbedEvent('init', async (payload: EmbedInitPayload) => {
       console.log('[Editor] 📥 收到 embed init 事件:', payload);
@@ -850,99 +821,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
       }));
 
-      // 🔌 Handle Platform Fields from Init Payload (Race Condition Fix)
-      const initPayload = payload as any; // Cast to access platformFields
-      if (initPayload.data && initPayload.data.platformFields && Array.isArray(initPayload.data.platformFields)) {
-        console.log('[Editor] 🔌 Initializing Platform Fields from Init:', initPayload.data.platformFields.length);
-        platformFieldStore.setFields(initPayload.data.platformFields);
-      }
-
-      // 🔌 Ensure __platform__ data source exists
-      const initData = payload.data;
-      if (initData) {
-        // Register datasources if provided, or check if we need to inject platform
-        // Note: Kernel might load dataSources from schema, but we want to be sure adapter is ready.
-        if (!initData.dataSources?.some((ds: any) => ds.id === '__platform__')) {
-          // Inject if missing in payload, effectively ensuring it exists in the loaded project
-          // Actually, ProjectDialog or Kernel loadPage handles this?
-          // Logic in EmbedPage.tsx: manually injects into schema.
-          // Here we might need to rely on what `processed` returns?
-          // processed.project is used? No, Editor uses `projectStorage`.
-
-          // In Widget mode, we might not have a full project structure in storage yet.
-          // We can manually register the adapter with DataSourceManager to be safe.
-          dataSourceManager.registerDataSource({
-            id: '__platform__',
-            name: 'System Platform',
-            type: 'PLATFORM_FIELD',
-            config: { source: 'ThingsPanel', fieldMappings: {} }
-          });
-        }
-      }
-
-      // Initialize project with data - cleaned up invalid check
-
-
-      // 🔌 Handle schema update (platform fields)
-      schemaUnsubRef.current = onEmbedEvent('updateSchema', (payload: any) => {
-        const fields = payload; // payload is fields array? or { event, payload }?
-        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'tv:event'
-        // define onEmbedEvent implementation?
-        // If onEmbedEvent wraps 'tv:event', let's assume payload matches the event payload.
-        // Client.ts: this.send('tv:event', { event: 'updateSchema', payload: fields })
-        // If onEmbedEvent('updateSchema') triggers when event.event === 'updateSchema', then payload argument IS fields.
-        // Let's assume based on updateData usage (payload is data).
-        if (Array.isArray(fields)) {
-          console.log('[Editor] 🔌 Received updateSchema:', fields.length);
-          platformFieldStore.setFields(fields);
-        }
-      });
-
-      // 🔑 监听 updateData 事件 (用于 Widget 模式实时数据推送)
-      dataUnsubRef.current = onEmbedEvent('updateData', (payload: any) => {
-        // console.log('[Editor] 收到 updateData:', payload);
-        const data = payload || {};
-
-        // 1. Bridge to PlatformFieldAdapter (for ds.__platform__ bindings)
-        if (data && typeof data === 'object') {
-          Object.entries(data).forEach(([fieldId, value]) => {
-            window.postMessage({
-              type: 'tv:platform-data',
-              payload: { fieldId, value, timestamp: Date.now() }
-            }, '*');
-          });
-        }
-
-        // 遍历所有节点，检查是否有物模型绑定
-        const state = store.getState();
-        Object.values(state.nodesById).forEach(nodeState => {
-          const schema = nodeState.schemaRef as any;
-          const bindings = schema.thingModelBindings || [];
-
-          if (bindings.length > 0) {
-            // 有绑定，尝试更新属性
-            const newProps = { ...schema.props };
-            let changed = false;
-
-            bindings.forEach((binding: any) => {
-              // 绑定的目标属性 (例如 'value', 'data')
-              const targetProp = binding.targetProp;
-              // 数据源字段 ID (例如 'temperature', 'humidity')
-              const fieldId = binding.metricsId || binding.key;
-
-              if (targetProp && fieldId && data[fieldId] !== undefined) {
-                newProps[targetProp] = data[fieldId];
-                changed = true;
-              }
-            });
-
-            if (changed) {
-              // 更新节点属性
-              store.getState().updateNode(schema.id, { props: newProps });
-            }
-          }
-        });
-      });
+      // updateData listener: 已由 WidgetModeStrategy.setupListeners() 处理 (含 thingModelBindings)
 
       // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
       let nodesToLoad = processed.nodes;
@@ -1007,8 +886,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
     return () => {
       unsubscribe();
-      if (schemaUnsubRef.current) schemaUnsubRef.current();
-      if (dataUnsubRef.current) dataUnsubRef.current();
     }
   }, [])
 
@@ -1018,7 +895,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // 🆕 在 bootstrapping 完成后发送握手请求
   useEffect(() => {
-    if (!isEmbedMode()) return
+    if (!embedVisibility.isEmbedded) return
     if (bootstrappingRef.current) return // 还在加载中
     if (isBootstrapping) return
 
@@ -1324,226 +1201,58 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       )}
 
       {/* Top Navigation Bar */}
-      <div className={`absolute ${isEmbedMode() ? 'top-4' : 'top-4'} left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}>
-        {/* Left Side: Logo (Menu), Title, Status */}
-        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
-                  <Menu className="h-4 w-4 text-white" />
-                </div>
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 mt-2">
-              <DropdownMenuItem className="gap-2" onClick={() => setShowProjectDialog(true)}>
-                <FolderOpen className="h-4 w-4" />
-                {language === "zh" ? "打开项目" : "Open Project"}
-                <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={() => saveNow()}>
-                <Save className="h-4 w-4" />
-                {language === "zh" ? "保存" : "Save"}
-                <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2" onClick={async () => {
-                if (isEmbedMode()) {
-                  await saveNow()
-                  window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`
-                } else {
-                  window.open('#/data-sources', '_blank')
-                }
-              }}>
-                <Database className="h-4 w-4" />
-                {language === "zh" ? "数据源管理" : "Data Sources"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2">
-                <FileUp className="h-4 w-4" />
-                {language === "zh" ? "导入配置" : "Import Config"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
-                <FileDown className="h-4 w-4" />
-                {language === "zh" ? "导出配置" : "Export Config"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="gap-2">
-                <Settings className="h-4 w-4" />
-                {language === "zh" ? "设置" : "Settings"}
-              </DropdownMenuItem>
-              <DropdownMenuItem className="gap-2">
-                <HelpCircle className="h-4 w-4" />
-                {language === "zh" ? "帮助" : "Help"}
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {!authLoading && isAuthenticated && user ? (
-                <>
-                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    <div className="font-medium text-foreground">{user.name || user.email}</div>
-                    <div className="text-xs">{user.email}</div>
-                  </div>
-                  <DropdownMenuItem
-                    className="gap-2 text-red-600 dark:text-red-400"
-                    onClick={() => {
-                      logout()
-                      window.location.hash = '#/'
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {language === "zh" ? "退出登录" : "Logout"}
-                  </DropdownMenuItem>
-                </>
-              ) : !authLoading ? (
-                <DropdownMenuItem
-                  className="gap-2"
-                  onClick={() => window.location.hash = '#/login'}
-                >
-                  <Users className="h-4 w-4" />
-                  {language === "zh" ? "登录" : "Login"}
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Input
-            placeholder="未命名项目"
-            className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
-            value={canvasConfig.name}
-            onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-            style={{ width: `${Math.max(100, Math.min(150, (canvasConfig.name?.length || 6) * 14 + 16))}px` }}
-          />
-
-          <SaveIndicator
-            status={saveState.status}
-            lastSavedAt={saveState.lastSavedAt}
-            error={saveState.error}
-            language={language}
-            className="ml-1 pr-2"
-          />
-        </div>
-
-        {/* Center Side: Tools */}
-        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!embedVisibility.showToolbar ? 'invisible' : ''}`}>
-          {tools.filter(tool => {
-            // In grid mode, hide drawing tools
-            if (canvasConfig.mode === 'grid') {
-              return !['rectangle', 'circle', 'line', 'text'].includes(tool.id)
-            }
-            return true
-          }).map((tool) => {
-            const Icon = tool.icon
-            const isActive = activeTool === tool.id
-
-            return (
-              <Button
-                key={tool.id}
-                variant="ghost"
-                size="icon"
-                className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${isActive
-                  ? "bg-[#6965db]/10 text-[#6965db] shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
-                  }`}
-                onClick={() => setActiveTool(tool.id)}
-                title={tool.label}
-              >
-                <Icon className={`h-4.5 w-4.5 ${isActive ? "stroke-[2.5px]" : "stroke-2"}`} />
-              </Button>
-            )
-          })}
-        </div>
-
-        {/* Right Side: Language, Theme, Preview, Publish */}
-        <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!embedVisibility.showTopRight ? 'invisible' : ''}`}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
-                <Languages className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="mt-2">
-              <DropdownMenuItem onClick={() => setLanguage("zh")}>
-                <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setLanguage("en")}>
-                <span className={language === "en" ? "font-semibold" : ""}>English</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none" onClick={toggleTheme}>
-            {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-          </Button>
-
-          {!showRightPanel && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
-              onClick={() => setShowRightPanel(true)}
-              title={language === "zh" ? "显示属性面板" : "Show Properties"}
-            >
-              <PanelRightOpen className="h-4 w-4" />
-            </Button>
-          )}
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={() => saveNow()}
-            disabled={saveState.status === 'saving'}
-          >
-            <Save className="h-4 w-4" />
-            <span className="text-sm font-medium">{language === "zh" ? "保存" : "Save"}</span>
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={openPreview}
-          >
-            <Eye className="h-4 w-4" />
-            <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
-          </Button>
-
-          <Button
-            size="sm"
-            className="h-8 gap-1.5 rounded-md bg-[#6965db] hover:bg-[#5851db] text-white px-4 shadow-md shadow-[#6965db]/20 focus:ring-0 focus:outline-none transition-all"
-            onClick={openPublish}
-          >
-            <Upload className="h-3.5 w-3.5" />
-            <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
-          </Button>
-
-          {/* Fullscreen Button (Embed Mode Only) */}
-          {isEmbedMode() && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
-              onClick={() => {
-                if (!document.fullscreenElement) {
-                  document.documentElement.requestFullscreen().catch(() => { })
-                } else {
-                  if (document.exitFullscreen) {
-                    document.exitFullscreen()
-                  }
-                }
-              }}
-              title={language === "zh"
-                ? (document.fullscreenElement ? "退出全屏" : "全屏")
-                : (document.fullscreenElement ? "Exit Fullscreen" : "Fullscreen")}
-            >
-              {document.fullscreenElement ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-            </Button>
-          )}
-        </div>
-      </div>
+      <EditorTopNav
+        language={language}
+        canvasMode={canvasConfig.mode}
+        tools={tools}
+        activeTool={activeTool}
+        isDarkMode={isDarkMode}
+        isEmbedded={embedVisibility.isEmbedded}
+        showTopLeft={embedVisibility.showTopLeft}
+        showToolbar={embedVisibility.showToolbar}
+        showTopRight={embedVisibility.showTopRight}
+        showRightPanel={showRightPanel}
+        isFullscreen={!!document.fullscreenElement}
+        saveStatus={saveState.status}
+        lastSavedAt={saveState.lastSavedAt}
+        saveError={saveState.error}
+        isSaving={saveState.status === 'saving'}
+        isAuthenticated={isAuthenticated}
+        authLoading={authLoading}
+        user={user as any}
+        projectName={canvasConfig.name}
+        projectId={projectId}
+        onToolChange={setActiveTool}
+        onProjectNameChange={(name: string) => setCanvasConfig({ ...canvasConfig, name })}
+        onSave={() => saveNow()}
+        onPreview={openPreview}
+        onPublish={openPublish}
+        onToggleTheme={toggleTheme}
+        onToggleRightPanel={() => setShowRightPanel(true)}
+        onToggleFullscreen={() => {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => { })
+          } else if (document.exitFullscreen) {
+            document.exitFullscreen()
+          }
+        }}
+        onOpenProjectDialog={() => setShowProjectDialog(true)}
+        onOpenDataSources={async () => {
+          if (embedVisibility.isEmbedded) {
+            await saveNow()
+            window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`
+          } else {
+            window.open('#/data-sources', '_blank')
+          }
+        }}
+        onLogout={() => { logout(); window.location.hash = '#/' }}
+        onLogin={() => { window.location.hash = '#/login' }}
+        onLanguageChange={setLanguage}
+      />
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className={`absolute left-4 ${isEmbedMode()
+        <aside className={`absolute left-4 ${embedVisibility.isEmbedded
           ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
             ? 'top-20' // 顶部工具栏显示时留出空间
             : 'top-4'
@@ -1588,117 +1297,30 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         </aside>
       )}
 
-      {/* Bottom Left Controls: Zoom & Undo/Redo */}
-      <div className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${embedVisibility.showLibrary ? 'left-[324px]' : 'left-4'}`}>
-        {/* Zoom Controls */}
-        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-            onClick={() => setZoom(Math.max(10, zoom - 10))}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-
-          <div className="w-[48px] px-0.5">
-            <Input
-              value={zoomInput + "%"}
-              onChange={(e) => {
-                // Allow user to type, stripping % for state
-                const val = e.target.value.replace(/%/g, '')
-                setZoomInput(val)
-              }}
-              onBlur={handleZoomInputBlur}
-              onKeyDown={handleZoomInputKeyDown}
-              className="h-6 text-sm font-medium text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:bg-background/50 p-0 tabular-nums shadow-none hover:bg-background/40 transition-colors rounded-sm"
-            />
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-            onClick={() => setZoom(Math.min(500, zoom + 10))}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-          <div className="w-px h-4 bg-border mx-1" />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-            title={language === "zh" ? "适应窗口" : "Best Fit"}
-            onClick={() => {
-              const leftPanelWidth = embedVisibility.showLibrary ? 320 : 0
-              const rightPanelWidth = (embedVisibility.showProps && showRightPanel) ? 340 : 0
-              const availableWidth = window.innerWidth - leftPanelWidth - rightPanelWidth - 60
-              const availableHeight = window.innerHeight - 150
-
-              const canvasW = canvasConfig.width || 1920
-              const canvasH = canvasConfig.height || 1080
-
-              const scaleW = availableWidth / canvasW
-              const scaleH = availableHeight / canvasH
-
-              const bestFit = Math.min(scaleW, scaleH)
-              setZoom(Math.floor(Math.max(10, Math.min(500, bestFit * 90))))
-            }}
-          >
-            <Maximize className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-            title={language === "zh" ? "100% 视图" : "100% View"}
-            onClick={() => setZoom(100)}
-          >
-            <Monitor className="h-4 w-4" />
-          </Button>
-        </div>
-
-        {/* Undo/Redo Controls */}
-        <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
-            disabled={!canUndo}
-            onClick={handleUndo}
-            title={language === "zh" ? "撤销" : "Undo"}
-          >
-            <Undo2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
-            disabled={!canRedo}
-            onClick={handleRedo}
-            title={language === "zh" ? "重做" : "Redo"}
-          >
-            <Redo2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Bottom Right: Help Button (Floating) */}
-      <div className="absolute bottom-4 right-4 z-40 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-full shadow-lg border border-border bg-[#f0f0f7]/90 dark:bg-[#1a1a24]/90 hover:bg-background text-muted-foreground hover:text-foreground transition-all"
-          onClick={() => setShowShortcuts(true)}
-          title={language === "zh" ? "快捷键帮助 (?)" : "Shortcuts (?)"}
-        >
-          <HelpCircle className="h-5 w-5" />
-        </Button>
-      </div>
+      {/* Bottom Controls: Zoom, Undo/Redo, Help */}
+      <EditorBottomBar
+        language={language}
+        zoom={zoom}
+        zoomInput={zoomInput}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        showLibrary={embedVisibility.showLibrary}
+        showProps={embedVisibility.showProps}
+        showRightPanel={showRightPanel}
+        canvasWidth={canvasConfig.width}
+        canvasHeight={canvasConfig.height}
+        onZoomChange={setZoom}
+        onZoomInputChange={setZoomInput}
+        onZoomInputBlur={handleZoomInputBlur}
+        onZoomInputKeyDown={handleZoomInputKeyDown}
+        onUndo={handleUndo}
+        onRedo={handleRedo}
+        onShowShortcuts={() => setShowShortcuts(true)}
+      />
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className={`absolute right-4 ${isEmbedMode()
+        <aside className={`absolute right-4 ${embedVisibility.isEmbedded
           ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
             ? 'top-20' // 顶部工具栏显示时留出空间
             : 'top-4'
@@ -1729,247 +1351,36 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onUserEdit={markDirty}
                 />
               ) : (
-                <>
-                  {/* Canvas Settings */}
-                  <div className="space-y-4 pb-4 border-b border-border">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {language === "zh" ? "基础信息" : "Basic Info"}
-                    </h3>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
-                      <Input
-                        value={canvasConfig.projectName || currentProject?.name || (language === "zh" ? "未命名项目" : "Untitled Project")}
-                        readOnly
-                        disabled
-                        className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
-                      <Input
-                        value={canvasConfig.name}
-                        onChange={(e) => setCanvasConfig({ ...canvasConfig, name: e.target.value })}
-                        className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
-                      <Input
-                        value={canvasConfig.id}
-                        readOnly
-                        className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                      />
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "缩略图" : "Thumbnail"}</label>
-                      <div className="flex items-center gap-2">
-                        {canvasConfig.thumbnail ? (
-                          <div className="relative group w-full">
-                            <img
-                              src={canvasConfig.thumbnail}
-                              alt="Thumbnail"
-                              className="w-full h-20 object-cover rounded-md border border-border"
-                            />
-                            <button
-                              onClick={() => setCanvasConfig({ ...canvasConfig, thumbnail: "" })}
-                              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        ) : (
-                          <label className="flex-1 h-20 border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-[#6965db] transition-colors">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0];
-                                if (file) {
-                                  try {
-                                    // Process image (resize & compress)
-                                    const thumbnail = await processThumbnailFile(file);
-                                    setCanvasConfig({ ...canvasConfig, thumbnail });
-                                    markDirty();
-                                  } catch (error) {
-                                    console.error('Failed to process thumbnail', error);
-                                    alert(language === "zh" ? "缩略图处理失败" : "Failed to process thumbnail");
-                                  }
-                                }
-                              }}
-                            />
-                            <span className="text-xs text-muted-foreground">
-                              {language === "zh" ? "点击上传缩略图" : "Click to upload"}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pb-4 border-b border-border">
-                    <h3 className="text-sm font-semibold text-foreground">
-                      {language === "zh" ? "画布配置" : "Canvas Config"}
-                    </h3>
-
-                    <div className="space-y-3">
-                      <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
-                      <select
-                        value={canvasConfig.mode}
-                        onChange={(e) => {
-                          const newMode = e.target.value as "fixed" | "infinite" | "grid";
-                          if (newMode !== canvasConfig.mode) {
-                            const hasNodes = Object.keys(store.getState().nodesById).length > 0;
-                            // 嵌入模式下跳过 confirm 对话框（iframe 中 confirm 可能被阻止）
-                            const shouldProceed = isEmbedMode() ? true : !hasNodes || window.confirm(
-                              language === "zh"
-                                ? "切换布局模式将清空当前画布，是否继续？"
-                                : "Switching layout mode will clear the current canvas. Continue?"
-                            );
-                            if (!shouldProceed) return;
-                            if (hasNodes) {
-                              store.getState().loadPage({
-                                id: canvasConfig.id,
-                                type: 'page' as const,
-                                version: '1.0.0',
-                                nodes: [],
-                                config: {
-                                  mode: newMode,
-                                  width: canvasConfig.width,
-                                  height: canvasConfig.height,
-                                  theme: canvasConfig.theme, // Fix lint: Add theme
-                                },
-                              });
-                              markDirty();
-                            }
-                            setCanvasConfig({ ...canvasConfig, mode: newMode });
-                            // Reset zoom to 80% on mode switch settings
-                            // Use setTimeout to ensure this happens after any auto-fit logic
-                            setTimeout(() => {
-                              setZoom(80)
-                              setZoomInput("80")
-                            }, 50)
-                          }
-                        }}
-                        className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
-                      >
-                        <option value="grid">{language === "zh" ? "栅格布局" : "Grid Layout"}</option>
-                        <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                        <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
-                      </select>
-                    </div>
-
-                    {canvasConfig.mode === 'grid' ? (
-                      <div className="space-y-3">
-                        {/* Canvas size for grid mode */}
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.width}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.height}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                        </div>
-                        {/* Grid settings */}
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "列数" : "Cols"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridCols ?? 24}
-                              min={1}
-                              max={48}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridCols: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "行高" : "Row H"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridRowHeight ?? 10}
-                              min={5}
-                              max={200}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridRowHeight: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "间距" : "Gap"}</label>
-                            <Input
-                              type="number"
-                              value={canvasConfig.gridGap ?? 5}
-                              min={0}
-                              max={50}
-                              onChange={(e) => setCanvasConfig({ ...canvasConfig, gridGap: Number(e.target.value) })}
-                              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                            />
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
-                        </p>
-                        {/* 屏幕自适应选项 */}
-                        <div className="flex items-center justify-between pt-2">
-                          <label className="text-sm font-medium">
-                            {language === "zh" ? "屏幕自适应" : "Full Width Preview"}
-                          </label>
-                          <input
-                            type="checkbox"
-                            checked={canvasConfig.fullWidthPreview ?? false}
-                            onChange={(e) => setCanvasConfig({
-                              ...canvasConfig,
-                              fullWidthPreview: e.target.checked
-                            })}
-                            className="h-4 w-4 rounded border-gray-300 accent-[#6965db]"
-                          />
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          {language === "zh"
-                            ? "勾选后预览页面画布撑满容器宽度，无背景阴影"
-                            : "When checked, preview canvas fills container width without shadow"}
-                        </p>
-                      </div>
-                    ) : canvasConfig.mode === 'fixed' ? (
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
-                          <Input
-                            type="number"
-                            value={canvasConfig.width}
-                            onChange={(e) => setCanvasConfig({ ...canvasConfig, width: Number(e.target.value) })}
-                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
-                          <Input
-                            type="number"
-                            value={canvasConfig.height}
-                            onChange={(e) => setCanvasConfig({ ...canvasConfig, height: Number(e.target.value) })}
-                            className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </>
+                <CanvasSettingsPanel
+                  language={language}
+                  canvasConfig={canvasConfig}
+                  currentProjectName={currentProject?.name}
+                  isEmbedded={embedVisibility.isEmbedded}
+                  onConfigChange={setCanvasConfig}
+                  onLayoutModeChange={(newMode: 'fixed' | 'infinite' | 'grid') => {
+                    const hasNodes = Object.keys(store.getState().nodesById).length > 0;
+                    const shouldProceed = embedVisibility.isEmbedded ? true : !hasNodes || window.confirm(
+                      language === "zh"
+                        ? "切换布局模式将清空当前画布，是否继续？"
+                        : "Switching layout mode will clear the current canvas. Continue?"
+                    );
+                    if (!shouldProceed) return false;
+                    if (hasNodes) {
+                      store.getState().loadPage({
+                        id: canvasConfig.id,
+                        type: 'page' as const,
+                        version: '1.0.0',
+                        nodes: [],
+                        config: { mode: newMode, width: canvasConfig.width, height: canvasConfig.height, theme: canvasConfig.theme },
+                      });
+                      markDirty();
+                    }
+                    return true;
+                  }}
+                  onClearCanvas={() => { }}
+                  onMarkDirty={markDirty}
+                  onZoomReset={() => { setTimeout(() => { setZoom(80); setZoomInput("80") }, 50) }}
+                />
               )}
             </div>
           </div>
