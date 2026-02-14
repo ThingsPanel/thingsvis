@@ -56,12 +56,30 @@ Editor.tsx: **2167 → 1908 行** (-259)
 
 ---
 
+### 5.5: Init Handler 瘦身 ✅
+
+从 Editor.tsx 的 embed init handler 中移除了 **96 行重复代码**：
+
+| 移除内容 | 行数 | 迁移到 |
+|----------|------|--------|
+| Platform fields 初始化 | ~8行 | `WidgetModeStrategy.bootstrap()` |
+| `__platform__` 数据源注册 | ~24行 | `WidgetModeStrategy.bootstrap()` |
+| updateSchema 监听器 | ~14行 | `WidgetModeStrategy.setupListeners()` |
+| updateData 监听器 + thingModelBindings | ~44行 | `WidgetModeStrategy.setupListeners()` |
+| schemaUnsubRef/dataUnsubRef 声明+清理 | ~6行 | 删除 (不再需要) |
+
+同时移除了 `platformFieldStore` 和 `dataSourceManager` 的 import — Editor.tsx 不再直接访问这些模块。
+
+Editor.tsx: **2167 → 1821 行** (-346, -16%)
+
+---
+
 ## 最终指标
 
 | 指标 | Phase 4 结束 | Phase 5 结束 | 目标 |
 |------|-------------|-------------|------|
 | `embed/` 文件数 | 3 | **1** (`message-router.ts`) | 1 ✅ |
-| Editor.tsx 行数 | 2167 | **1908** | <1000 🟡 |
+| Editor.tsx 行数 | 2167 | **1821** | <1000 🟡 |
 | Hotfix 注释 | 1 | **0** | 0 ✅ |
 | `isEmbedMode()` | 17 | **0** | 0 ✅ |
 | 消息协议 | 1 (`tv:`) | 1 | 1 ✅ |

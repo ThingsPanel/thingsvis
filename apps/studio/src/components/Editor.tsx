@@ -102,8 +102,7 @@ import { messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPa
 import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
-import { dataSourceManager } from '@thingsvis/kernel'
-import { platformFieldStore } from '@/lib/stores/platformFieldStore'
+
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -185,9 +184,7 @@ export interface EditorHandle {
 const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
   const { currentProject, switchProject } = useProject()
-  // Refs for event cleanup (to avoid leaks in async init)
-  const schemaUnsubRef = useRef<() => void>();
-  const dataUnsubRef = useRef<() => void>();
+
 
   // Fullscreen state for Embed Mode
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -850,99 +847,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
       }));
 
-      // 🔌 Handle Platform Fields from Init Payload (Race Condition Fix)
-      const initPayload = payload as any; // Cast to access platformFields
-      if (initPayload.data && initPayload.data.platformFields && Array.isArray(initPayload.data.platformFields)) {
-        console.log('[Editor] 🔌 Initializing Platform Fields from Init:', initPayload.data.platformFields.length);
-        platformFieldStore.setFields(initPayload.data.platformFields);
-      }
-
-      // 🔌 Ensure __platform__ data source exists
-      const initData = payload.data;
-      if (initData) {
-        // Register datasources if provided, or check if we need to inject platform
-        // Note: Kernel might load dataSources from schema, but we want to be sure adapter is ready.
-        if (!initData.dataSources?.some((ds: any) => ds.id === '__platform__')) {
-          // Inject if missing in payload, effectively ensuring it exists in the loaded project
-          // Actually, ProjectDialog or Kernel loadPage handles this?
-          // Logic in EmbedPage.tsx: manually injects into schema.
-          // Here we might need to rely on what `processed` returns?
-          // processed.project is used? No, Editor uses `projectStorage`.
-
-          // In Widget mode, we might not have a full project structure in storage yet.
-          // We can manually register the adapter with DataSourceManager to be safe.
-          dataSourceManager.registerDataSource({
-            id: '__platform__',
-            name: 'System Platform',
-            type: 'PLATFORM_FIELD',
-            config: { source: 'ThingsPanel', fieldMappings: {} }
-          });
-        }
-      }
-
-      // Initialize project with data - cleaned up invalid check
-
-
-      // 🔌 Handle schema update (platform fields)
-      schemaUnsubRef.current = onEmbedEvent('updateSchema', (payload: any) => {
-        const fields = payload; // payload is fields array? or { event, payload }?
-        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'tv:event'
-        // define onEmbedEvent implementation?
-        // If onEmbedEvent wraps 'tv:event', let's assume payload matches the event payload.
-        // Client.ts: this.send('tv:event', { event: 'updateSchema', payload: fields })
-        // If onEmbedEvent('updateSchema') triggers when event.event === 'updateSchema', then payload argument IS fields.
-        // Let's assume based on updateData usage (payload is data).
-        if (Array.isArray(fields)) {
-          console.log('[Editor] 🔌 Received updateSchema:', fields.length);
-          platformFieldStore.setFields(fields);
-        }
-      });
-
-      // 🔑 监听 updateData 事件 (用于 Widget 模式实时数据推送)
-      dataUnsubRef.current = onEmbedEvent('updateData', (payload: any) => {
-        // console.log('[Editor] 收到 updateData:', payload);
-        const data = payload || {};
-
-        // 1. Bridge to PlatformFieldAdapter (for ds.__platform__ bindings)
-        if (data && typeof data === 'object') {
-          Object.entries(data).forEach(([fieldId, value]) => {
-            window.postMessage({
-              type: 'tv:platform-data',
-              payload: { fieldId, value, timestamp: Date.now() }
-            }, '*');
-          });
-        }
-
-        // 遍历所有节点，检查是否有物模型绑定
-        const state = store.getState();
-        Object.values(state.nodesById).forEach(nodeState => {
-          const schema = nodeState.schemaRef as any;
-          const bindings = schema.thingModelBindings || [];
-
-          if (bindings.length > 0) {
-            // 有绑定，尝试更新属性
-            const newProps = { ...schema.props };
-            let changed = false;
-
-            bindings.forEach((binding: any) => {
-              // 绑定的目标属性 (例如 'value', 'data')
-              const targetProp = binding.targetProp;
-              // 数据源字段 ID (例如 'temperature', 'humidity')
-              const fieldId = binding.metricsId || binding.key;
-
-              if (targetProp && fieldId && data[fieldId] !== undefined) {
-                newProps[targetProp] = data[fieldId];
-                changed = true;
-              }
-            });
-
-            if (changed) {
-              // 更新节点属性
-              store.getState().updateNode(schema.id, { props: newProps });
-            }
-          }
-        });
-      });
+      // updateData listener: 已由 WidgetModeStrategy.setupListeners() 处理 (含 thingModelBindings)
 
       // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
       let nodesToLoad = processed.nodes;
@@ -1007,8 +912,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
     return () => {
       unsubscribe();
-      if (schemaUnsubRef.current) schemaUnsubRef.current();
-      if (dataUnsubRef.current) dataUnsubRef.current();
     }
   }, [])
 

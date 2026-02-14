@@ -16,6 +16,7 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { onEmbedEvent, messageRouter, MSG_TYPES, processEmbedInitPayload, type EmbedInitPayload } from '../embed/message-router'
 import { platformFieldStore } from '../lib/stores/platformFieldStore'
 import { dataSourceManager } from '@thingsvis/kernel'
+import { store } from '../lib/store'
 
 // ─── 策略实现 ───
 
@@ -150,6 +151,32 @@ export class WidgetModeStrategy implements EditorStrategy {
                     }, '*')
                 })
             }
+
+            // 遍历所有节点，检查物模型绑定并更新属性
+            const kernelState = store.getState()
+            Object.values(kernelState.nodesById).forEach(nodeState => {
+                const schema = nodeState.schemaRef as any
+                const bindings = schema.thingModelBindings || []
+
+                if (bindings.length > 0) {
+                    const newProps = { ...schema.props }
+                    let changed = false
+
+                    bindings.forEach((binding: any) => {
+                        const targetProp = binding.targetProp
+                        const fieldId = binding.metricsId || binding.key
+
+                        if (targetProp && fieldId && data[fieldId] !== undefined) {
+                            newProps[targetProp] = data[fieldId]
+                            changed = true
+                        }
+                    })
+
+                    if (changed) {
+                        kernelState.updateNode(schema.id, { props: newProps })
+                    }
+                }
+            })
         })
         cleanups.push(dataUnsub)
 
