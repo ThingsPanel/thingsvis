@@ -264,6 +264,249 @@ class MessageRouter {
 
 export const messageRouter = new MessageRouter()
 
+// ─── embed-mode.ts 合并 (Phase 5.1) ───
+// 以下功能从 embed-mode.ts 合并到此文件，成为唯一的通信层
+
+type EmbedEventName = 'init' | 'triggerSave' | string
+type EmbedEventHandler = (payload: any) => void
+
+/** 简短事件名 → 消息类型 映射 */
+const EVENT_TO_MSG_TYPE: Record<string, string> = {
+    'init': MSG_TYPES.INIT,
+    'triggerSave': MSG_TYPES.TRIGGER_SAVE,
+}
+
+// 跟踪是否已注册 editor-event 解包器
+let editorEventHandlerSetup = false
+
+/**
+ * 确保 tv:event 通用容器消息被解包为具体事件
+ * 同时桥接 updateData → platformData
+ */
+const ensureEditorEventHandler = () => {
+    if (editorEventHandlerSetup) return
+    editorEventHandlerSetup = true
+
+    messageRouter.on(MSG_TYPES.EDITOR_EVENT, (payload: any) => {
+        const eventName = payload?.event || (payload?.payload && payload.payload.event)
+        const eventPayload = payload
+        if (eventName) {
+            // 桥接: 将 editor-event 解包后重新 emit 为具体事件名
+            messageRouter.emit(eventName, eventPayload)
+
+            // 数据流桥接: updateData → platformData
+            if (eventName === 'updateData') {
+                const dataMap = eventPayload?.payload || eventPayload?.data || eventPayload
+                if (dataMap && typeof dataMap === 'object') {
+                    Object.entries(dataMap).forEach(([fieldId, value]) => {
+                        window.postMessage({
+                            type: MSG_TYPES.PLATFORM_DATA,
+                            payload: { fieldId, value, timestamp: Date.now() }
+                        }, '*')
+                    })
+                }
+            }
+        }
+    })
+}
+
+/**
+ * 监听 Host 事件 (替代原 embed-mode.on)
+ * 支持简短事件名: on('init', handler) / on('triggerSave', handler)
+ * 也支持完整消息类型: on('tv:init', handler)
+ */
+export const onEmbedEvent = (event: EmbedEventName, handler: EmbedEventHandler): (() => void) => {
+    ensureEditorEventHandler()
+    const msgType = EVENT_TO_MSG_TYPE[event] || event
+    return messageRouter.on(msgType, handler)
+}
+
+/** 向 Host 发送保存数据 */
+export const requestSave = (payload: any): void => {
+    messageRouter.send(MSG_TYPES.HOST_SAVE, payload)
+}
+
+/** 获取初始数据 (兼容 API，总是返回 null) */
+export const getInitialData = () => null
+
+/** 获取编辑模式 */
+export const getEditMode = () => (isEmbedMode() ? 'embedded' : 'standalone')
+
+// ─── embed-init.ts 合并 (Phase 5.2) ───
+// 嵌入模式初始化逻辑，从 embed-init.ts 合并
+
+import { updateEmbeddedConfig, initSaveStrategy, type SaveTarget } from '../lib/storage/saveStrategy'
+import { apiClient } from '../lib/api/client'
+import { platformFieldStore } from '../lib/stores/platformFieldStore'
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config'
+
+// 存储嵌入模式的 token（由宿主通过 URL 传递）
+let embedToken: string | null = null
+
+/** 配置 API Client 使用嵌入模式的 token */
+export function configureEmbedApiClient(token: string, baseUrl?: string): void {
+    embedToken = token
+    apiClient.configure({
+        getToken: () => embedToken,
+    })
+}
+
+/** 获取当前嵌入模式的 token */
+export function getEmbedToken(): string | null {
+    return embedToken
+}
+
+export interface EmbedInitPayload {
+    data?: {
+        meta?: {
+            id?: string
+            name?: string
+            version?: string
+            thumbnail?: string
+        }
+        canvas?: {
+            mode?: string
+            width?: number
+            height?: number
+            background?: string
+            gridCols?: number
+            gridRowHeight?: number
+            gridGap?: number
+            fullWidthPreview?: boolean
+            theme?: string
+            gridSettings?: {
+                cols?: number
+                rowHeight?: number
+                gap?: number
+                compactVertical?: boolean
+                responsive?: boolean
+            }
+        }
+        nodes?: any[]
+        dataSources?: any[]
+    }
+    config?: {
+        saveTarget?: SaveTarget
+        mode?: string
+        apiConfig?: {
+            baseURL?: string
+        }
+    }
+}
+
+export interface ProcessedEmbedData {
+    projectId: string
+    projectName: string
+    canvas: {
+        mode: string
+        width: number
+        height: number
+        background: string
+        gridCols: number
+        gridRowHeight: number
+        gridGap: number
+        fullWidthPreview: boolean
+    }
+    nodes: any[]
+    dataSources: any[]
+    saveTarget: SaveTarget
+    thumbnail?: string
+}
+
+/** 处理宿主传来的初始化数据 */
+export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmbedData | null {
+    if (!payload?.data) {
+        console.warn('[EmbedInit] 无效的 payload，缺少 data')
+        return null
+    }
+
+    const data = payload.data
+    const config = payload.config || {}
+
+    const projectId = data.meta?.id || `embed-${Date.now()}`
+    const projectName = data.meta?.name || 'Embedded Project'
+    const thumbnail = data.meta?.thumbnail
+    const saveTarget: SaveTarget = config.saveTarget || 'self'
+
+    updateEmbeddedConfig({ projectId, projectName, saveTarget })
+
+    const canvas = {
+        mode: data.canvas?.mode || 'grid',
+        width: data.canvas?.width || 1920,
+        height: data.canvas?.height || 1080,
+        background: data.canvas?.background || '#1a1a1a',
+        gridCols: data.canvas?.gridCols ?? 24,
+        gridRowHeight: data.canvas?.gridRowHeight ?? 50,
+        gridGap: data.canvas?.gridGap ?? 5,
+        fullWidthPreview: data.canvas?.fullWidthPreview ?? false,
+    }
+
+    const nodes = (data.nodes || []).map((node: any, index: number) => ({
+        id: node.id || `node-${Date.now()}-${index}`,
+        type: node.type,
+        position: node.position || { x: 100, y: 100 },
+        size: node.size || { width: 200, height: 80 },
+        props: node.props || {},
+        data: node.data || [],
+        thingModelBindings: node.thingModelBindings || [],
+        grid: node.grid,
+    }))
+
+    return {
+        projectId,
+        projectName,
+        canvas,
+        nodes,
+        dataSources: data.dataSources || [],
+        saveTarget,
+        thumbnail,
+    }
+}
+
+/** 从 URL 参数解析嵌入配置并初始化 SaveStrategy */
+export function initEmbedModeFromUrl(isAuthenticated: boolean): void {
+    const hash = window.location.hash || ''
+    const queryIndex = hash.indexOf('?')
+
+    if (queryIndex >= 0) {
+        const params = new URLSearchParams(hash.slice(queryIndex + 1))
+        const saveTarget = params.get('saveTarget')
+        const mode = params.get('mode')
+        const token = params.get('token')
+
+        if (mode === 'embedded') {
+            if (token) {
+                configureEmbedApiClient(token)
+            } else {
+                console.warn('[EmbedInit] ⚠️ 未找到 token，将使用默认认证')
+            }
+
+            initSaveStrategy({
+                isAuthenticated: isAuthenticated || !!token,
+                embeddedProjectId: undefined,
+            })
+
+            if (saveTarget === 'host' || saveTarget === 'self') {
+                updateEmbeddedConfig({ saveTarget })
+            }
+
+            // 从 URL 加载平台字段（向后兼容）
+            const serviceConfig = resolveEditorServiceConfig()
+            if (serviceConfig.platformFields && serviceConfig.platformFields.length > 0) {
+                platformFieldStore.setFields(serviceConfig.platformFields)
+            }
+
+            // 监听宿主端动态发送的字段更新
+            onEmbedEvent('updateSchema', (eventPayload: any) => {
+                const fields = eventPayload?.payload || eventPayload
+                if (Array.isArray(fields) && fields.length > 0) {
+                    platformFieldStore.setFields(fields)
+                }
+            })
+        }
+    }
+}
+
 // 向后兼容 Phase 0 的 messageLogger API
 export const messageLogger = {
     logInbound: (event: MessageEvent) => messageRouter.logInbound(event),
@@ -278,3 +521,4 @@ if (typeof window !== 'undefined') {
     ; (window as any).__tvMessageRouter = messageRouter
         ; (window as any).__tvMessageLog = messageLogger
 }
+

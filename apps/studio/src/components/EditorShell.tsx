@@ -18,8 +18,7 @@ import { useEditorStrategy } from '../hooks/useEditorStrategy'
 import Editor from './Editor'
 import type { EditorHandle } from './Editor'
 import { useParams } from 'react-router-dom'
-import { on as onEmbedEvent } from '../embed/embed-mode'
-import { messageRouter, MSG_TYPES } from '../embed/message-router'
+import { onEmbedEvent, messageRouter, MSG_TYPES } from '../embed/message-router'
 
 // ─── Strategy Context ───
 

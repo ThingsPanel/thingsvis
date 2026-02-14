@@ -98,9 +98,7 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
-import { isEmbedMode, messageRouter, MSG_TYPES } from '../embed/message-router'
-import { on as onEmbedEvent, getInitialData, getEditMode } from '../embed/embed-mode'
-import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
+import { isEmbedMode, messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/message-router'
 import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
@@ -260,10 +258,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     }
   }, [embedVisibility.isEmbedded, isAuthenticated])
 
-  // Debug: Log authentication state
-  useEffect(() => {
 
-  }, [isAuthenticated, authLoading, user])
 
   // Prompt project creation after login if no project exists
   useEffect(() => {
@@ -497,7 +492,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           let loaded: ProjectFile | null = null;
 
           if (storage.isCloud) {
-            // 🛑 Hotfix: Embed Mode handling
+            // Widget Mode: Host-managed project should not fetch from cloud
             // If we are in embed mode and the project ID is assigned by Host (e.g. 'widget' or 'embed-*'),
             // it means the project data comes from postMessage, NOT from the cloud.
             // Fetching from cloud will return 404 and cause fallback to empty project, wiping out our init data.
@@ -1008,82 +1003,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       console.log('[Editor] ✅ embed init 处理完成, projectId:', processed.projectId);
     });
 
-    // Also check if initial data is already available (in case init was received before this effect ran)
-    const initialData = getInitialData() as EmbedInitPayload | null;
-    if (initialData) {
-      (async () => {
-        console.log('[Editor] 📥 发现已有初始数据，处理中...');
-        const processed = processEmbedInitPayload(initialData);
-        if (processed) {
-          // 🔍 DEBUG LOGS
-          console.group('[Editor] 处理 Init Payload');
-          console.log('Processed Canvas:', processed.canvas);
-          console.log('Nodes count:', processed.nodes.length);
-          console.groupEnd();
 
-          setCanvasConfig(prev => ({
-            ...prev,
-            id: processed.projectId,
-            name: processed.projectName,
-            mode: processed.canvas.mode as any,
-            width: processed.canvas.width,
-            height: processed.canvas.height,
-            bgValue: processed.canvas.background,
-            gridCols: processed.canvas.gridCols,
-            gridRowHeight: processed.canvas.gridRowHeight,
-            gridGap: processed.canvas.gridGap,
-            fullWidthPreview: processed.canvas.fullWidthPreview,
-            thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
-          }));
-
-          // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
-          let nodesToLoad = processed.nodes;
-          if (processed.saveTarget === 'self' && processed.projectId) {
-            console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
-            try {
-              const cloudAdapter = createCloudStorageAdapter();
-              const cloudProject = await cloudAdapter.get(processed.projectId);
-              if (cloudProject && cloudProject.schema.nodes.length > 0) {
-                console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
-                nodesToLoad = cloudProject.schema.nodes;
-              }
-            } catch (err) {
-              console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
-            }
-          }
-
-          if (nodesToLoad.length > 0) {
-            store.getState().loadPage({
-              id: processed.projectId,
-              type: 'page' as const,
-              version: '1.0.0',
-              nodes: nodesToLoad,
-              config: {
-                mode: processed.canvas.mode as any,
-                width: processed.canvas.width,
-                height: processed.canvas.height,
-                theme: 'dark',
-                gridSettings: {
-                  cols: processed.canvas.gridCols ?? 24,
-                  rowHeight: processed.canvas.gridRowHeight ?? 50,
-                  gap: processed.canvas.gridGap ?? 5,
-                  compactVertical: false,
-                  responsive: false,
-                  minW: 1,
-                  minH: 1,
-                  showGridLines: true,
-                  breakpoints: []
-                },
-              },
-            });
-
-            try {
-              store.temporal.getState().clear?.();
-            } catch { }
-          }
-        }
-      })();
-    }
 
     return () => {
       unsubscribe();

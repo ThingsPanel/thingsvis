@@ -13,9 +13,7 @@
 
 import type { EditorStrategy, UIVisibilityConfig } from './EditorStrategy'
 import type { ProjectFile } from '../lib/storage/schemas'
-import { on as onEmbedEvent } from '../embed/embed-mode'
-import { processEmbedInitPayload, type EmbedInitPayload } from '../embed/embed-init'
-import { messageRouter, MSG_TYPES } from '../embed/message-router'
+import { onEmbedEvent, messageRouter, MSG_TYPES, processEmbedInitPayload, type EmbedInitPayload } from '../embed/message-router'
 import { platformFieldStore } from '../lib/stores/platformFieldStore'
 import { dataSourceManager } from '@thingsvis/kernel'
 

@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './index.css';
 import { setPreviewRegistryUrl } from "@thingsvis/ui";
-import { configureEmbedApiClient } from './embed/embed-init';
+import { configureEmbedApiClient } from './embed/message-router';
 
 // If PREVIEW_REGISTRY_URL is set in the environment or injected at runtime, configure the UI loader.
 try {
