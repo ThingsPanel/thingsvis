@@ -13,9 +13,9 @@
 
 import type { EditorStrategy, UIVisibilityConfig } from './EditorStrategy'
 import type { ProjectFile } from '../lib/storage/schemas'
-import { on as onEmbedEvent, requestSave } from '../embed/embed-mode'
+import { on as onEmbedEvent } from '../embed/embed-mode'
 import { processEmbedInitPayload, type EmbedInitPayload } from '../embed/embed-init'
-import { messageLogger } from '../embed/message-router'
+import { messageRouter, MSG_TYPES } from '../embed/message-router'
 import { platformFieldStore } from '../lib/stores/platformFieldStore'
 import { dataSourceManager } from '@thingsvis/kernel'
 
@@ -42,7 +42,7 @@ export class WidgetModeStrategy implements EditorStrategy {
             // 监听 init 事件
             const unsub = onEmbedEvent('init', (payload: EmbedInitPayload) => {
                 console.log('[WidgetModeStrategy] Received init from host')
-                messageLogger.logInbound({ data: { type: 'thingsvis:editor-init', payload } } as any)
+                // 日志由 messageRouter 自动记录
 
                 const processed = processEmbedInitPayload(payload)
                 if (!processed) {
@@ -121,7 +121,7 @@ export class WidgetModeStrategy implements EditorStrategy {
             },
         }
 
-        requestSave(exportData)
+        messageRouter.send(MSG_TYPES.HOST_SAVE, exportData)
     }
 
     /**
@@ -155,17 +155,11 @@ export class WidgetModeStrategy implements EditorStrategy {
         })
         cleanups.push(dataUnsub)
 
-        // 监听 Host 主动请求保存
-        const handleRequestSave = (event: MessageEvent) => {
-            if (event.data?.type === 'thingsvis:request-save') {
-                console.log('[WidgetModeStrategy] Host requested save')
-                messageLogger.logInbound(event)
-                // 这个需要 Editor 端提供 getProjectState 回调
-                // 暂时由 EditorShell 中的 useEffect 处理
-            }
-        }
-        window.addEventListener('message', handleRequestSave)
-        cleanups.push(() => window.removeEventListener('message', handleRequestSave))
+        // 监听 Host 主动请求保存 (由 EditorShell 处理实际保存, 这里只做日志)
+        const requestSaveUnsub = messageRouter.on(MSG_TYPES.REQUEST_SAVE, () => {
+            console.log('[WidgetModeStrategy] Host requested save (handled by EditorShell)')
+        })
+        cleanups.push(requestSaveUnsub)
 
         return () => {
             cleanups.forEach(fn => fn())

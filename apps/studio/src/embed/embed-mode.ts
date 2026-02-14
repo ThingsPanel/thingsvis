@@ -1,137 +1,97 @@
 
-import { messageLogger } from './message-router'
+import { messageRouter, MSG_TYPES } from './message-router'
 
 /**
  * Embed Mode Communication Layer
- * 
- * 极简版 PostMessage 通信封装
- * 只负责:
- * 1. 监听 Host 消息 (init, triggerSave, event)
- * 2. 发送 Host 消息 (host-save)
+ *
+ * Phase 2: 现在委托给 MessageRouter 统一管理。
+ * 保留 API 签名以与现有消费者兼容 (Editor.tsx, EditorShell.tsx)。
+ *
+ * 职责:
+ * 1. isEmbedMode() — 检测是否在嵌入模式
+ * 2. on() — 注册 Host 事件处理器 (委托给 messageRouter)
+ * 3. requestSave() — 发送保存数据给 Host
  */
 
 type EmbedEventName = 'init' | 'triggerSave' | string
 type EmbedEventHandler = (payload: any) => void
 
-interface EmbedEventMessage {
-  type: string;
-  payload?: any;
-  event?: string; // 兼容旧协议 { type: 'thingsvis:editor-event', event: '...' }
+// ─── 事件名 → 消息类型 映射 ───
+// embed-mode 使用简短事件名，messageRouter 使用完整消息类型
+
+const EVENT_TO_MSG_TYPE: Record<string, string> = {
+  'init': MSG_TYPES.INIT,
+  'triggerSave': MSG_TYPES.TRIGGER_SAVE,
 }
 
-const listeners = new Map<EmbedEventName, Set<EmbedEventHandler>>()
-let listening = false
-
-const ensureListener = () => {
-  if (listening) return
-  listening = true
-
-  window.addEventListener('message', (event: MessageEvent) => {
-    // 简单的协议解析
-    const data = event.data as EmbedEventMessage | undefined
-    if (!data || typeof data !== 'object') return
-
-    // Phase 0: 统一日志
-    messageLogger.logInbound(event)
-
-    // 1. Init (loadWidgetConfig)
-    if (data.type === 'thingsvis:editor-init') {
-      emit('init', data.payload)
-      return
-    }
-
-    // 2. Trigger Save (triggerSave)
-    if (data.type === 'thingsvis:editor-trigger-save') {
-      emit('triggerSave', data.payload)
-      return
-    }
-
-    // 3. Generic Event (pushData, updateSchema)
-    if (data.type === 'thingsvis:editor-event') {
-      // 兼容 payload.event 或者是 data.event
-      const eventName = data.event || (data.payload && data.payload.event)
-      const eventPayload = data.payload
-      if (eventName) {
-        emit(eventName, eventPayload)
-
-        // 🆕 数据流桥接: 将 updateData 批量数据转换为 Kernel 期望的单字段 platformData 事件
-        if (eventName === 'updateData') {
-          const dataMap = eventPayload?.payload || eventPayload?.data || eventPayload
-          if (dataMap && typeof dataMap === 'object') {
-            Object.entries(dataMap).forEach(([fieldId, value]) => {
-              window.postMessage({
-                type: 'thingsvis:platformData',
-                payload: { fieldId, value, timestamp: Date.now() }
-              }, '*')
-            })
-          }
-        }
-      }
-      return
-    }
-  })
-}
-
-const emit = (event: EmbedEventName, payload: any) => {
-  const handlers = listeners.get(event)
-  if (!handlers) return
-  handlers.forEach((handler) => {
-    try {
-      handler(payload)
-    } catch (e) {
-      console.error('[EmbedMode] Handler error:', e)
-    }
-  })
-}
+// 反向: 某些消息类型需要桥接为特殊处理
+// thingsvis:editor-event 是一个通用容器，内部的 event 字段才是真正的事件名
 
 /**
  * 判断当前是否处于嵌入模式
- * 只要在 Iframe 中，或者 URL 显式指定，都视为嵌入模式
  */
 export const isEmbedMode = (): boolean => {
   try {
     const url = new URL(window.location.href)
-    // 支持 hash 参数和 query 参数
     const fromHash = url.hash.includes('mode=embedded') || url.hash.includes('embedded=1')
     const fromQuery = url.searchParams.get('mode') === 'embedded' || url.searchParams.get('embedded') === '1'
-
-    // 检查是否在 Iframe 中
     const inIframe = window.parent !== window
-
     return fromHash || fromQuery || inIframe
   } catch {
     return false
   }
 }
 
+// 跟踪是否已注册 editor-event 解包器
+let editorEventHandlerSetup = false
+
+/**
+ * 确保 editor-event 通用容器消息被解包为具体事件
+ */
+const ensureEditorEventHandler = () => {
+  if (editorEventHandlerSetup) return
+  editorEventHandlerSetup = true
+
+  messageRouter.on(MSG_TYPES.EDITOR_EVENT, (payload: any) => {
+    const eventName = payload?.event || (payload?.payload && payload.payload.event)
+    const eventPayload = payload
+    if (eventName) {
+      // 桥接: 将 editor-event 解包后重新 emit 为具体事件名
+      messageRouter.emit(eventName, eventPayload)
+
+      // 🆕 数据流桥接: updateData → platformData
+      if (eventName === 'updateData') {
+        const dataMap = eventPayload?.payload || eventPayload?.data || eventPayload
+        if (dataMap && typeof dataMap === 'object') {
+          Object.entries(dataMap).forEach(([fieldId, value]) => {
+            window.postMessage({
+              type: MSG_TYPES.PLATFORM_DATA,
+              payload: { fieldId, value, timestamp: Date.now() }
+            }, '*')
+          })
+        }
+      }
+    }
+  })
+}
+
 /**
  * 监听 Host 事件
+ * 保持与原 API 兼容: on('init', handler) / on('triggerSave', handler) / on('updateSchema', handler)
  */
-export const on = (event: EmbedEventName, handler: EmbedEventHandler) => {
-  ensureListener()
-  const set = listeners.get(event) ?? new Set<EmbedEventHandler>()
-  set.add(handler)
-  listeners.set(event, set)
-  return () => {
-    const next = listeners.get(event)
-    if (!next) return
-    next.delete(handler)
-    if (next.size === 0) listeners.delete(event)
-  }
+export const on = (event: EmbedEventName, handler: EmbedEventHandler): (() => void) => {
+  ensureEditorEventHandler()
+
+  // 将简短事件名映射到消息类型
+  const msgType = EVENT_TO_MSG_TYPE[event] || event
+  return messageRouter.on(msgType, handler)
 }
 
 /**
  * 向 Host 发送保存数据
  */
-export const requestSave = (payload: any) => {
-  if (window.parent && window.parent !== window) {
-    // Phase 0: 统一日志
-    messageLogger.logOutbound('thingsvis:host-save', payload)
-    // 使用标准的 message type
-    window.parent.postMessage({ type: 'thingsvis:host-save', payload }, '*')
-  } else {
-    console.warn('[EmbedMode] Not in iframe, cannot request save to host')
-  }
+export const requestSave = (payload: any): void => {
+  messageRouter.send(MSG_TYPES.HOST_SAVE, payload)
 }
 
 // 辅助函数，保持兼容性

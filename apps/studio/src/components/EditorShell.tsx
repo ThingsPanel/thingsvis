@@ -18,7 +18,8 @@ import { useEditorStrategy } from '../hooks/useEditorStrategy'
 import Editor from './Editor'
 import type { EditorHandle } from './Editor'
 import { useParams } from 'react-router-dom'
-import { on as onEmbedEvent, requestSave } from '../embed/embed-mode'
+import { on as onEmbedEvent } from '../embed/embed-mode'
+import { messageRouter, MSG_TYPES } from '../embed/message-router'
 
 // ─── Strategy Context ───
 
@@ -58,34 +59,28 @@ export default function EditorShell() {
     useEffect(() => {
         if (!isWidget) return
 
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data?.type === 'thingsvis:request-save') {
-                if (!editorRef.current) {
-                    console.warn('[EditorShell] request-save: Editor ref not ready')
-                    return
-                }
-                console.log('[EditorShell] 收到 Host request-save，通过策略保存')
-                const state = editorRef.current.getProjectState()
-
-                // request-save 使用 wrapped 格式 (与 Host SDK 的 on('thingsvis:save-config') 兼容)
-                const payload = {
-                    config: {
-                        meta: state.meta,
-                        canvas: state.canvas,
-                        nodes: state.nodes,
-                        dataSources: state.dataSources,
-                    }
-                }
-                window.parent.postMessage({
-                    type: 'thingsvis:host-save',
-                    payload,
-                }, '*')
-                console.log('[EditorShell] 已发送 thingsvis:host-save (request-save 路径)')
+        const unsubscribe = messageRouter.on(MSG_TYPES.REQUEST_SAVE, () => {
+            if (!editorRef.current) {
+                console.warn('[EditorShell] request-save: Editor ref not ready')
+                return
             }
-        }
+            console.log('[EditorShell] 收到 Host request-save，通过策略保存')
+            const state = editorRef.current.getProjectState()
 
-        window.addEventListener('message', handleMessage)
-        return () => window.removeEventListener('message', handleMessage)
+            // request-save 使用 wrapped 格式 (与 Host SDK 的 on('thingsvis:save-config') 兼容)
+            const payload = {
+                config: {
+                    meta: state.meta,
+                    canvas: state.canvas,
+                    nodes: state.nodes,
+                    dataSources: state.dataSources,
+                }
+            }
+            messageRouter.send(MSG_TYPES.HOST_SAVE, payload)
+            console.log('[EditorShell] 已发送 host-save (request-save 路径)')
+        })
+
+        return unsubscribe
     }, [isWidget])
 
     // ─── Strategy Listeners (updateSchema, updateData 等) ───
