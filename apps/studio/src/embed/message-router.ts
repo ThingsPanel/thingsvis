@@ -30,9 +30,15 @@ export const MSG_TYPES = {
     READY: 'thingsvis:ready',
     REQUEST_INIT: 'thingsvis:request-init-data',
 
-    // Viewer
+    // Viewer (Host → Guest)
     LOAD_DASHBOARD: 'LOAD_DASHBOARD',
+    UPDATE_VARIABLES: 'UPDATE_VARIABLES',
+    SET_TOKEN: 'SET_TOKEN',
     VIEWER_READY: 'READY',
+
+    // Viewer (Guest → Host)
+    LOADED: 'LOADED',
+    ERROR: 'ERROR',
 
     // Internal
     PLATFORM_DATA: 'thingsvis:platformData',

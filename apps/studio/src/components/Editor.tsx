@@ -1118,14 +1118,46 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     }
   }, [isBootstrapping])
 
+  // ─── Phase 3.2: Bidirectional Canvas Sync ───
+  // Forward: canvasConfig → kernel (when user changes mode/width/height in UI)
+  // Reverse: kernel → canvasConfig (when external source changes canvas, e.g. loadPage)
+  const syncingRef = useRef(false)
+
   useEffect(() => {
-    // Sync canvas state to kernel store when config changes
+    if (syncingRef.current) return
+    syncingRef.current = true
     store.getState().updateCanvas({
       mode: canvasConfig.mode,
       width: canvasConfig.width,
       height: canvasConfig.height
     })
+    syncingRef.current = false
   }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height])
+
+  useEffect(() => {
+    const unsubscribe = store.subscribe((state) => {
+      if (syncingRef.current) return
+      const kernelCanvas = state.canvas
+      setCanvasConfig(prev => {
+        if (
+          prev.mode === kernelCanvas.mode &&
+          prev.width === kernelCanvas.width &&
+          prev.height === kernelCanvas.height
+        ) return prev
+
+        syncingRef.current = true
+        const next = {
+          ...prev,
+          mode: kernelCanvas.mode,
+          width: kernelCanvas.width,
+          height: kernelCanvas.height,
+        }
+        syncingRef.current = false
+        return next
+      })
+    })
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     const { setGridSettings } = store.getState()
