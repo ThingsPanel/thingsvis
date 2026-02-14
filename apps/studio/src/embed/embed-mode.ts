@@ -1,5 +1,8 @@
 
-import { messageRouter, MSG_TYPES } from './message-router'
+import { messageRouter, MSG_TYPES, isEmbedMode } from './message-router'
+
+// Re-export isEmbedMode as canonical source is now message-router.ts
+export { isEmbedMode }
 
 /**
  * Embed Mode Communication Layer
@@ -8,7 +11,7 @@ import { messageRouter, MSG_TYPES } from './message-router'
  * 保留 API 签名以与现有消费者兼容 (Editor.tsx, EditorShell.tsx)。
  *
  * 职责:
- * 1. isEmbedMode() — 检测是否在嵌入模式
+ * 1. isEmbedMode() — 检测是否在嵌入模式 (re-export from message-router)
  * 2. on() — 注册 Host 事件处理器 (委托给 messageRouter)
  * 3. requestSave() — 发送保存数据给 Host
  */
@@ -17,29 +20,9 @@ type EmbedEventName = 'init' | 'triggerSave' | string
 type EmbedEventHandler = (payload: any) => void
 
 // ─── 事件名 → 消息类型 映射 ───
-// embed-mode 使用简短事件名，messageRouter 使用完整消息类型
-
 const EVENT_TO_MSG_TYPE: Record<string, string> = {
   'init': MSG_TYPES.INIT,
   'triggerSave': MSG_TYPES.TRIGGER_SAVE,
-}
-
-// 反向: 某些消息类型需要桥接为特殊处理
-// thingsvis:editor-event 是一个通用容器，内部的 event 字段才是真正的事件名
-
-/**
- * 判断当前是否处于嵌入模式
- */
-export const isEmbedMode = (): boolean => {
-  try {
-    const url = new URL(window.location.href)
-    const fromHash = url.hash.includes('mode=embedded') || url.hash.includes('embedded=1')
-    const fromQuery = url.searchParams.get('mode') === 'embedded' || url.searchParams.get('embedded') === '1'
-    const inIframe = window.parent !== window
-    return fromHash || fromQuery || inIframe
-  } catch {
-    return false
-  }
 }
 
 // 跟踪是否已注册 editor-event 解包器

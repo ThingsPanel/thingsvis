@@ -98,14 +98,14 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
+import { isEmbedMode, messageRouter, MSG_TYPES } from '../embed/message-router'
+import { on as onEmbedEvent, getInitialData, getEditMode } from '../embed/embed-mode'
+import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
 import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
-import { isEmbedMode, on as onEmbedEvent, getInitialData, getEditMode } from '../embed/embed-mode'
 import { dataSourceManager } from '@thingsvis/kernel'
 import { platformFieldStore } from '@/lib/stores/platformFieldStore'
-import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
-import { initSaveStrategy, updateEmbeddedConfig, getEffectiveProjectId } from '../lib/storage/saveStrategy'
 import { uploadFile } from "@/lib/api/uploads"
 import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 
@@ -738,7 +738,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
     if (isEmbedMode()) {
       // In embed mode, notify the host to handle publish
-      window.parent.postMessage({ type: 'tv:publish', projectId }, '*')
+      messageRouter.send('tv:publish', undefined, { projectId })
       return
     }
 
@@ -1103,19 +1103,15 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     if (isBootstrapping) return
 
     console.log('🆕 [Editor] Bootstrapping 完成，发送握手请求')
-    if (window.parent && window.parent !== window) {
-      // 发送 ready 消息
-      window.parent.postMessage({ type: 'tv:ready' }, '*')
-      console.log('✅ [Editor] 已发送 tv:ready')
+    // 发送 ready 消息
+    messageRouter.send(MSG_TYPES.READY)
+    console.log('✅ [Editor] 已发送 tv:ready')
 
-      // 主动请求初始数据
-      setTimeout(() => {
-        if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'tv:request-init' }, '*')
-          console.log('📨 [Editor] 已发送 tv:request-init (延迟100ms)')
-        }
-      }, 100) // 轻微延迟确保 ready 消息先到达
-    }
+    // 主动请求初始数据
+    setTimeout(() => {
+      messageRouter.send(MSG_TYPES.REQUEST_INIT)
+      console.log('📨 [Editor] 已发送 tv:request-init (延迟100ms)')
+    }, 100) // 轻微延迟确保 ready 消息先到达
   }, [isBootstrapping])
 
   // ─── Phase 3.2: Bidirectional Canvas Sync ───

@@ -19,7 +19,7 @@ type Props = {
   language?: string;
 };
 
-import { isEmbedMode } from '@/embed/embed-mode';
+import { isEmbedMode } from '@/embed/message-router';
 
 export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, language }: Props) {
   const { states } = useDataSourceRegistry(kernelStore);

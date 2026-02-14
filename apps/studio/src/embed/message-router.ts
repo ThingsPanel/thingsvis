@@ -46,6 +46,21 @@ export const MSG_TYPES = {
 
 export type MessageType = typeof MSG_TYPES[keyof typeof MSG_TYPES]
 
+// ─── Embed 模式检测 ───
+// 从 embed-mode.ts 提升为 canonical 版本
+/** 检查当前页面是否运行在嵌入模式中 (URL 参数 / iframe) */
+export const isEmbedMode = (): boolean => {
+    try {
+        const url = new URL(window.location.href)
+        const fromHash = url.hash.includes('mode=embedded') || url.hash.includes('embedded=1')
+        const fromQuery = url.searchParams.get('mode') === 'embedded' || url.searchParams.get('embedded') === '1'
+        const inIframe = window.parent !== window
+        return fromHash || fromQuery || inIframe
+    } catch {
+        return false
+    }
+}
+
 // ─── 日志级别 ───
 
 type LogLevel = 'verbose' | 'normal' | 'silent'
@@ -90,15 +105,16 @@ class MessageRouter {
 
     /**
      * 发送消息给 Host (parent window)
+     * @param extra — 附加到消息顶层的字段 (如 projectId, requestId)
      */
-    send(type: string, payload?: any): void {
+    send(type: string, payload?: any, extra?: Record<string, any>): void {
         if (!window.parent || window.parent === window) {
             console.warn('[MessageRouter] Not in iframe, cannot send:', type)
             return
         }
 
         this.logOutbound(type, payload)
-        window.parent.postMessage({ type, payload }, '*')
+        window.parent.postMessage({ type, payload, ...extra }, '*')
     }
 
     /**
