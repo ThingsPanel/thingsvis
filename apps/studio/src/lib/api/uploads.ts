@@ -22,7 +22,7 @@ export interface UploadProgress {
 }
 
 
-const API_BASE_URL = 'http://localhost:3001';
+const API_BASE_URL = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001';
 
 /**
  * Upload a file to the server.

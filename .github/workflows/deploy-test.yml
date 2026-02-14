@@ -92,11 +92,14 @@ jobs:
             echo "⚠️  Preview dist not found, skipping"
           fi
 
-          # --- Plugins ---
-          for dir in plugins/*/; do
+          # --- Plugins (two-level: plugins/category/name/dist) ---
+          for dir in plugins/*/*/; do
             if [ -d "${dir}dist" ]; then
-              plugin_name=$(basename "$dir")
-              cp -r "${dir}dist" "deploy/plugins/${plugin_name}"
+              # Preserve category/name structure: e.g. basic/indicator
+              rel_path="${dir#plugins/}"
+              rel_path="${rel_path%/}"
+              mkdir -p "deploy/plugins/${rel_path}"
+              cp -r "${dir}dist" "deploy/plugins/${rel_path}/"
             fi
           done
           echo "✅ Plugins packaged"

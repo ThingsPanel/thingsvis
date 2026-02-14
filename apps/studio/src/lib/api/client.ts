@@ -4,7 +4,9 @@
  * Handles all HTTP requests to the backend with automatic token management.
  */
 
-const DEFAULT_API_BASE_URL = 'http://localhost:3001/api/v1';
+const DEFAULT_API_BASE_URL = typeof window !== 'undefined'
+  ? `${window.location.origin}/api/v1`
+  : 'http://localhost:3001/api/v1';
 const TOKEN_KEY = 'thingsvis_token'; // Must match AuthContext
 
 export interface ApiClientConfig {
