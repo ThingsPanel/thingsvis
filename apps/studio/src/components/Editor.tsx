@@ -98,7 +98,7 @@ import type { ProjectFile } from '../lib/storage/schemas'
 import { recentProjects } from '../lib/storage/recentProjects'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
 import { STORAGE_CONSTANTS } from '../lib/storage/constants'
-import { isEmbedMode, messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/message-router'
+import { messageRouter, MSG_TYPES, onEmbedEvent, getEditMode, processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/message-router'
 import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
@@ -366,7 +366,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId()
     // 🆕 embed 模式默认使用 grid 布局
-    const defaultMode = isEmbedMode() ? "grid" : "fixed"
+    const defaultMode = embedVisibility.isEmbedded ? "grid" : "fixed"
     return {
       // Meta - 基础身份
       id: initialId,
@@ -453,7 +453,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // Helper to identify Widget Mode
   // Phase 1.6: 优先使用 props.isWidgetMode（由策略提供），回退到内联检测
-  const isWidgetMode = props.isWidgetMode ?? (isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-')));
+  const isWidgetMode = props.isWidgetMode ?? (embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-')));
 
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
@@ -496,7 +496,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             // If we are in embed mode and the project ID is assigned by Host (e.g. 'widget' or 'embed-*'),
             // it means the project data comes from postMessage, NOT from the cloud.
             // Fetching from cloud will return 404 and cause fallback to empty project, wiping out our init data.
-            const isHostProject = isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-'));
+            const isHostProject = embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-'));
 
             if (isHostProject) {
               console.log('[Editor] Bootstrap: Host-managed project (Widget Mode), skipping cloud load.');
@@ -510,7 +510,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             // 🛑 New Mode Guard: If we are in Widget Mode but somehow got here with a non-host ID,
             // we should STILL not try to load from cloud if we are adhering to strict isolation.
             // However, for now, we'll assume if it's not a host-project ID, it might be a legacy embed case.
-            // Ideally: if (isEmbedMode()) { return; }
+            // Ideally: if (embedVisibility.isEmbedded) { return; }
 
             console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
             try {
@@ -698,7 +698,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // Ensure preview loads the latest saved content
     await saveNow()
 
-    if (isEmbedMode()) {
+    if (embedVisibility.isEmbedded) {
       // 🆕 Embed Mode specific routing
       // Use internal hash routing to stay within the iframe/context
       // unless user specifically wants popups (which is rare in dashboards)
@@ -731,7 +731,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // Ensure latest content is saved before publishing
     await saveNow()
 
-    if (isEmbedMode()) {
+    if (embedVisibility.isEmbedded) {
       // In embed mode, notify the host to handle publish
       messageRouter.send('tv:publish', undefined, { projectId })
       return
@@ -822,7 +822,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // Handle embed mode init event - load initial data from host
   useEffect(() => {
-    if (!isEmbedMode()) return;
+    if (!embedVisibility.isEmbedded) return;
 
     const unsubscribe = onEmbedEvent('init', async (payload: EmbedInitPayload) => {
       console.log('[Editor] 📥 收到 embed init 事件:', payload);
@@ -1018,7 +1018,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   // 🆕 在 bootstrapping 完成后发送握手请求
   useEffect(() => {
-    if (!isEmbedMode()) return
+    if (!embedVisibility.isEmbedded) return
     if (bootstrappingRef.current) return // 还在加载中
     if (isBootstrapping) return
 
@@ -1324,7 +1324,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       )}
 
       {/* Top Navigation Bar */}
-      <div className={`absolute ${isEmbedMode() ? 'top-4' : 'top-4'} left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}>
+      <div className={`absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}>
         {/* Left Side: Logo (Menu), Title, Status */}
         <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!embedVisibility.showTopLeft ? 'invisible' : ''}`}>
           <DropdownMenu>
@@ -1347,7 +1347,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
               </DropdownMenuItem>
               <DropdownMenuItem className="gap-2" onClick={async () => {
-                if (isEmbedMode()) {
+                if (embedVisibility.isEmbedded) {
                   await saveNow()
                   window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`
                 } else {
@@ -1517,7 +1517,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           </Button>
 
           {/* Fullscreen Button (Embed Mode Only) */}
-          {isEmbedMode() && (
+          {embedVisibility.isEmbedded && (
             <Button
               variant="ghost"
               size="icon"
@@ -1543,7 +1543,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {/* Left Panel: Assets & Layers */}
       {embedVisibility.showLibrary && (
-        <aside className={`absolute left-4 ${isEmbedMode()
+        <aside className={`absolute left-4 ${embedVisibility.isEmbedded
           ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
             ? 'top-20' // 顶部工具栏显示时留出空间
             : 'top-4'
@@ -1698,7 +1698,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {/* Right Panel - Properties */}
       {embedVisibility.showProps && showRightPanel && (
-        <aside className={`absolute right-4 ${isEmbedMode()
+        <aside className={`absolute right-4 ${embedVisibility.isEmbedded
           ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
             ? 'top-20' // 顶部工具栏显示时留出空间
             : 'top-4'
@@ -1825,7 +1825,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                           if (newMode !== canvasConfig.mode) {
                             const hasNodes = Object.keys(store.getState().nodesById).length > 0;
                             // 嵌入模式下跳过 confirm 对话框（iframe 中 confirm 可能被阻止）
-                            const shouldProceed = isEmbedMode() ? true : !hasNodes || window.confirm(
+                            const shouldProceed = embedVisibility.isEmbedded ? true : !hasNodes || window.confirm(
                               language === "zh"
                                 ? "切换布局模式将清空当前画布，是否继续？"
                                 : "Switching layout mode will clear the current canvas. Continue?"

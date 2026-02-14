@@ -19,7 +19,6 @@ type Props = {
   language?: string;
 };
 
-import { isEmbedMode } from '@/embed/message-router';
 
 export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, language }: Props) {
   const { states } = useDataSourceRegistry(kernelStore);
@@ -35,11 +34,8 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, 
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
 
-  // Check if selected source is platform fields
-  const isEmbedded = isEmbedMode();
-
-  // 只有在嵌入模式且有平台字段时才使用平台字段模式
-  const usePlatformFieldsMode = isEmbedded && hasPlatformFields;
+  // 平台字段仅在嵌入模式下由宿主注入，有平台字段即表示处于嵌入模式
+  const usePlatformFieldsMode = hasPlatformFields;
 
   // In embedded mode with platform fields, if no source is selected, default to platform source
   const effectiveDataSourceId = (usePlatformFieldsMode && !selectedDataSourceId) ? '__platform__' : selectedDataSourceId;

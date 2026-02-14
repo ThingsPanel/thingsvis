@@ -45,6 +45,17 @@ Editor.tsx: **2167 → 1908 行** (-259)
 
 ---
 
+### 5.4: `isEmbedMode()` 15→**0** in components/ ✅
+
+| 文件 | 数量 | 替换为 |
+|------|------|--------|
+| `Editor.tsx` | 14 | `embedVisibility.isEmbedded` (已由 props 计算) |
+| `FieldPicker.tsx` | 1 | `hasPlatformFields` (简化逻辑) |
+
+同时移除了 `isEmbedMode` 的 import — Editor.tsx 不再依赖此函数。
+
+---
+
 ## 最终指标
 
 | 指标 | Phase 4 结束 | Phase 5 结束 | 目标 |
@@ -52,7 +63,7 @@ Editor.tsx: **2167 → 1908 行** (-259)
 | `embed/` 文件数 | 3 | **1** (`message-router.ts`) | 1 ✅ |
 | Editor.tsx 行数 | 2167 | **1908** | <1000 🟡 |
 | Hotfix 注释 | 1 | **0** | 0 ✅ |
-| `isEmbedMode()` | 17 | **15** | 0 🟡 |
+| `isEmbedMode()` | 17 | **0** | 0 ✅ |
 | 消息协议 | 1 (`tv:`) | 1 | 1 ✅ |
 | 编译 | 通过 | **通过** (3060.2 kB) | ✅ |
 
