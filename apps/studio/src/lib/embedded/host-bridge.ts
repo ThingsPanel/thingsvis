@@ -82,7 +82,7 @@ export const saveToHost = async (payload: WebChartConfig): Promise<void> => {
   }
 
   if (window.parent && window.parent !== window) {
-    window.parent.postMessage({ type: 'thingsvis:host-save', payload }, '*')
+    window.parent.postMessage({ type: 'tv:save', payload }, '*')
     return
   }
 
@@ -103,7 +103,7 @@ export const requestSaveToHost = async (payload: {
 
     // Register one-time response listener
     const handleResponse = (event: MessageEvent) => {
-      if (event.data.type === 'thingsvis:saveResponse' && event.data.requestId === requestId) {
+      if (event.data.type === 'tv:save-response' && event.data.requestId === requestId) {
         window.removeEventListener('message', handleResponse)
         resolve(event.data.payload)
       }
@@ -113,7 +113,7 @@ export const requestSaveToHost = async (payload: {
 
     // Send save request
     window.parent.postMessage({
-      type: 'thingsvis:requestSave',
+      type: 'tv:request-save',
       requestId,
       payload
     }, '*')

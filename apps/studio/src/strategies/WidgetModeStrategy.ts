@@ -4,8 +4,8 @@
  * Phase 1.3: 将 Editor.tsx 中 Widget Mode 的 embed 通信逻辑提取到此处。
  *
  * 职责:
- * 1. bootstrap: 等待 Host 的 `thingsvis:editor-init` 消息
- * 2. save:      通过 postMessage 发送 `thingsvis:host-save` 给 Host
+ * 1. bootstrap: 等待 Host 的 `tv:init` 消息
+ * 2. save:      通过 postMessage 发送 `tv:save` 给 Host
  * 3. listeners: 处理 updateData / updateSchema 实时推送
  *
  * ⛔ 不允许 import 任何 Cloud API / storage adapter 模块
@@ -147,7 +147,7 @@ export class WidgetModeStrategy implements EditorStrategy {
                 // 桥接到 PlatformFieldAdapter
                 Object.entries(data).forEach(([fieldId, value]) => {
                     window.postMessage({
-                        type: 'thingsvis:platformData',
+                        type: 'tv:platform-data',
                         payload: { fieldId, value, timestamp: Date.now() }
                     }, '*')
                 })

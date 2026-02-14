@@ -36,8 +36,8 @@ type EmbedMessage =
   | { type: 'READY' }
   | { type: 'ERROR'; payload: string }
   | { type: 'LOADED'; payload: { id?: string; name?: string } }
-  | { type: 'thingsvis:editor-init'; payload: any }
-  | { type: 'thingsvis:editor-event'; payload: any; event?: string };
+  | { type: 'tv:init'; payload: any }
+  | { type: 'tv:event'; payload: any; event?: string };
 
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();

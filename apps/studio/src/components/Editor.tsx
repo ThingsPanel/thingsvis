@@ -738,7 +738,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
     if (isEmbedMode()) {
       // In embed mode, notify the host to handle publish
-      window.parent.postMessage({ type: 'thingsvis:publish', projectId }, '*')
+      window.parent.postMessage({ type: 'tv:publish', projectId }, '*')
       return
     }
 
@@ -891,10 +891,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       // 🔌 Handle schema update (platform fields)
       schemaUnsubRef.current = onEmbedEvent('updateSchema', (payload: any) => {
         const fields = payload; // payload is fields array? or { event, payload }?
-        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'thingsvis:editor-event'
+        // Client.ts sends: { event: 'updateSchema', payload: fields } inside 'tv:event'
         // define onEmbedEvent implementation?
-        // If onEmbedEvent wraps 'thingsvis:message', let's assume payload matches the event payload.
-        // Client.ts: this.send('thingsvis:editor-event', { event: 'updateSchema', payload: fields })
+        // If onEmbedEvent wraps 'tv:event', let's assume payload matches the event payload.
+        // Client.ts: this.send('tv:event', { event: 'updateSchema', payload: fields })
         // If onEmbedEvent('updateSchema') triggers when event.event === 'updateSchema', then payload argument IS fields.
         // Let's assume based on updateData usage (payload is data).
         if (Array.isArray(fields)) {
@@ -912,7 +912,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         if (data && typeof data === 'object') {
           Object.entries(data).forEach(([fieldId, value]) => {
             window.postMessage({
-              type: 'thingsvis:platformData',
+              type: 'tv:platform-data',
               payload: { fieldId, value, timestamp: Date.now() }
             }, '*');
           });
@@ -1093,7 +1093,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   }, [])
 
   // Phase 1.8: request-save 逻辑已迁移到 EditorShell.tsx
-  // EditorShell 监听 'thingsvis:request-save' 并通过 editorRef 获取数据
+  // EditorShell 监听 'tv:request-save' 并通过 editorRef 获取数据
 
 
   // 🆕 在 bootstrapping 完成后发送握手请求
@@ -1105,14 +1105,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     console.log('🆕 [Editor] Bootstrapping 完成，发送握手请求')
     if (window.parent && window.parent !== window) {
       // 发送 ready 消息
-      window.parent.postMessage({ type: 'thingsvis:ready' }, '*')
-      console.log('✅ [Editor] 已发送 thingsvis:ready')
+      window.parent.postMessage({ type: 'tv:ready' }, '*')
+      console.log('✅ [Editor] 已发送 tv:ready')
 
       // 主动请求初始数据
       setTimeout(() => {
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'thingsvis:request-init-data' }, '*')
-          console.log('📨 [Editor] 已发送 thingsvis:request-init-data (延迟100ms)')
+          window.parent.postMessage({ type: 'tv:request-init' }, '*')
+          console.log('📨 [Editor] 已发送 tv:request-init (延迟100ms)')
         }
       }, 100) // 轻微延迟确保 ready 消息先到达
     }

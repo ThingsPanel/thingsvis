@@ -38,7 +38,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
     private subscribeToHostData() {
         this.messageListener = (event: MessageEvent) => {
             // Security: In production, verify event.origin
-            if (event.data.type === 'thingsvis:platformData') {
+            if (event.data.type === 'tv:platform-data') {
                 const { fieldId, value, timestamp } = event.data.payload;
 
                 // Debug log

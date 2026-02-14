@@ -16,19 +16,19 @@
  */
 
 // ─── 消息类型常量 ───
-// 保留现有 thingsvis: 前缀，Phase 3 再统一为 tv:
+// Phase 3.1: 统一为 tv: 前缀
 
 export const MSG_TYPES = {
-    // Host → Guest
-    INIT: 'thingsvis:editor-init',
-    TRIGGER_SAVE: 'thingsvis:editor-trigger-save',
-    REQUEST_SAVE: 'thingsvis:request-save',
-    EDITOR_EVENT: 'thingsvis:editor-event',
+    // Host → Guest (Editor)
+    INIT: 'tv:init',
+    TRIGGER_SAVE: 'tv:trigger-save',
+    REQUEST_SAVE: 'tv:request-save',
+    EDITOR_EVENT: 'tv:event',
 
     // Guest → Host
-    HOST_SAVE: 'thingsvis:host-save',
-    READY: 'thingsvis:ready',
-    REQUEST_INIT: 'thingsvis:request-init-data',
+    HOST_SAVE: 'tv:save',
+    READY: 'tv:ready',
+    REQUEST_INIT: 'tv:request-init',
 
     // Viewer (Host → Guest)
     LOAD_DASHBOARD: 'LOAD_DASHBOARD',
@@ -41,7 +41,7 @@ export const MSG_TYPES = {
     ERROR: 'ERROR',
 
     // Internal
-    PLATFORM_DATA: 'thingsvis:platformData',
+    PLATFORM_DATA: 'tv:platform-data',
 } as const
 
 export type MessageType = typeof MSG_TYPES[keyof typeof MSG_TYPES]
@@ -177,7 +177,7 @@ class MessageRouter {
         if (!type) return
 
         // 仅记录 ThingsVis 相关消息
-        if (!type.startsWith('thingsvis:') && !type.startsWith('tv:') &&
+        if (!type.startsWith('tv:') &&
             !['LOAD_DASHBOARD', 'UPDATE_VARIABLES', 'SET_TOKEN', 'READY', 'LOADED', 'ERROR'].includes(type)) {
             return
         }

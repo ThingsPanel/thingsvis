@@ -40,7 +40,7 @@ export class SaveTargetHandler {
 
             // Register one-time response listener
             const handleResponse = (event: MessageEvent) => {
-                if (event.data.type === 'thingsvis:saveResponse' && event.data.requestId === requestId) {
+                if (event.data.type === 'tv:save-response' && event.data.requestId === requestId) {
                     window.removeEventListener('message', handleResponse);
 
                     const { success, data, error } = event.data.payload;
@@ -56,7 +56,7 @@ export class SaveTargetHandler {
 
             // Send save request to host
             window.parent.postMessage({
-                type: 'thingsvis:requestSave',
+                type: 'tv:request-save',
                 requestId,
                 payload
             }, '*');
