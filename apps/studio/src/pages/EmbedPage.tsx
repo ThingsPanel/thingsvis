@@ -19,6 +19,7 @@ import { getDashboard } from '@/lib/api/dashboards';
 import { store } from '@/lib/store';
 import { loadPlugin } from '@/plugins/pluginResolver';
 import { platformFieldStore } from '@/lib/stores/platformFieldStore';
+import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 
 interface EmbedState {
   isLoading: boolean;
@@ -35,8 +36,8 @@ type EmbedMessage =
   | { type: 'READY' }
   | { type: 'ERROR'; payload: string }
   | { type: 'LOADED'; payload: { id?: string; name?: string } }
-  | { type: 'thingsvis:editor-init'; payload: any }
-  | { type: 'thingsvis:editor-event'; payload: any; event?: string };
+  | { type: 'tv:init'; payload: any }
+  | { type: 'tv:event'; payload: any; event?: string };
 
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
@@ -47,6 +48,7 @@ export default function EmbedPage() {
     variables: {},
   });
   const parentOrigin = useRef<string>('*');
+  const cleanupRef = useRef<Array<() => void>>([]);
 
   // Add declaration for debug globals
   if (typeof window !== 'undefined') {
@@ -139,10 +141,10 @@ export default function EmbedPage() {
 
 
 
-  // Send message to parent window
+  // Send message to parent window (Phase 3: via messageRouter)
   const postToParent = useCallback((message: EmbedMessage) => {
     if (window.parent !== window) {
-      window.parent.postMessage(message, parentOrigin.current);
+      messageRouter.send(message.type, (message as any).payload);
     }
   }, []);
 
@@ -319,118 +321,94 @@ export default function EmbedPage() {
     // TODO: Dispatch variable update to kernel when variable system is implemented
   }, []);
 
-  // Handle messages from parent window
+  // Phase 3: Handle messages from parent via messageRouter
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      // Debug: Log all incoming messages for troubleshooting
-      if (typeof event.data === 'object' && event.data?.type) {
-        // console.log('[EmbedPage] 📩 Received message:', event.data.type, event.data);
+    const cleanups: Array<() => void> = [];
+
+    // LOAD_DASHBOARD
+    cleanups.push(messageRouter.on(MSG_TYPES.LOAD_DASHBOARD, (payload: any) => {
+      loadFromSchema(payload);
+    }));
+
+    // UPDATE_VARIABLES
+    cleanups.push(messageRouter.on(MSG_TYPES.UPDATE_VARIABLES, (payload: any) => {
+      updateVariables(payload);
+    }));
+
+    // SET_TOKEN
+    cleanups.push(messageRouter.on(MSG_TYPES.SET_TOKEN, (payload: any) => {
+      localStorage.setItem('thingsvis_token', payload);
+    }));
+
+    // thingsvis:editor-init (兼容标准嵌入协议)
+    cleanups.push(messageRouter.on(MSG_TYPES.INIT, (payload: any) => {
+      if (payload && payload.data) {
+        const initData = payload.data;
+        const schema = {
+          id: initData.meta?.id,
+          name: initData.meta?.name,
+          canvas: initData.canvas,
+          nodes: initData.nodes,
+          dataSources: initData.dataSources || [],
+        };
+
+        // 自动注入 __platform__ 数据源
+        if (!schema.dataSources?.some((ds: any) => ds.id === '__platform__')) {
+          if (!schema.dataSources) schema.dataSources = [];
+          schema.dataSources.push({
+            id: '__platform__',
+            name: 'System Platform',
+            type: 'PLATFORM_FIELD',
+            config: { fieldMappings: {} },
+          });
+        }
+
+        // Platform Fields
+        if (initData.platformFields && Array.isArray(initData.platformFields)) {
+          platformFieldStore.setFields(initData.platformFields);
+        }
+
+        // Register data sources
+        if (schema.dataSources && Array.isArray(schema.dataSources)) {
+          schema.dataSources.forEach((ds: any) => {
+            dataSourceManager.registerDataSource(ds).catch((err: any) => {
+              console.error('[EmbedPage] Failed to register data source:', ds.id, err);
+            });
+          });
+        }
+
+        loadFromSchema(schema);
       }
+    }));
 
-      // Store the origin of the parent for responses
-      if (event.source === window.parent) {
-        parentOrigin.current = event.origin;
+    // thingsvis:editor-event (updateData / updateSchema)
+    cleanups.push(messageRouter.on(MSG_TYPES.EDITOR_EVENT, (eventData: any) => {
+      if (!eventData) return;
+      const eventName = eventData.event;
+
+      if (eventName === 'updateData') {
+        const data = eventData.payload || eventData.data;
+        updateVariables(data);
+
+        // Bridge to PlatformFieldAdapter
+        if (data && typeof data === 'object') {
+          Object.entries(data).forEach(([fieldId, value]) => {
+            window.postMessage({
+              type: MSG_TYPES.PLATFORM_DATA,
+              payload: { fieldId, value, timestamp: Date.now() },
+            }, '*');
+          });
+        }
+      } else if (eventName === 'updateSchema') {
+        const fields = eventData.payload;
+        if (Array.isArray(fields)) {
+          platformFieldStore.setFields(fields);
+        }
       }
+    }));
 
-      const message = event.data as EmbedMessage;
-
-      switch (message.type) {
-        case 'LOAD_DASHBOARD':
-          // console.log('[EmbedPage] 🚀 Handling LOAD_DASHBOARD', message.payload);
-          loadFromSchema(message.payload);
-          break;
-        case 'UPDATE_VARIABLES':
-          updateVariables(message.payload);
-          break;
-        case 'SET_TOKEN':
-          localStorage.setItem('thingsvis_token', message.payload);
-          break;
-
-        // 🟢 兼容 Standard Embed Protocol (thingsvis:*)
-        case 'thingsvis:editor-init':
-          // payload 结构: { data: { ...canvas, ...nodes }, config: { ... } }
-          // EmbedPage expect pure schema in message.payload.data
-          if (message.payload && message.payload.data) {
-            // console.log('[EmbedPage] 收到 thingsvis:editor-init', message.payload.data);
-            // 构造符合 loadFromSchema 期望的 schema 对象
-            const initData = message.payload.data;
-
-            const schema = {
-              id: initData.meta?.id,
-              name: initData.meta?.name,
-              canvas: initData.canvas,
-              nodes: initData.nodes,
-              dataSources: initData.dataSources || []
-            };
-
-            // 自动注入平台数据源 (如果不存在)
-            if (!schema.dataSources?.some((ds: any) => ds.id === '__platform__')) {
-              console.log('[EmbedPage] 🔌 自动注入 __platform__ 数据源');
-              if (!schema.dataSources) schema.dataSources = [];
-              schema.dataSources.push({
-                id: '__platform__',
-                name: 'System Platform',
-                type: 'PLATFORM_FIELD',
-                config: {
-                  fieldMappings: {}
-                }
-              });
-            }
-
-            // Populate platformFieldStore if fields are provided in init payload
-            if (initData.platformFields && Array.isArray(initData.platformFields)) {
-              console.log('[EmbedPage] 🔌 Initializing Platform Fields:', initData.platformFields.length);
-              platformFieldStore.setFields(initData.platformFields);
-            }
-
-            // Register all data sources with manager
-            if (schema.dataSources && Array.isArray(schema.dataSources)) {
-              schema.dataSources.forEach((ds: any) => {
-                console.log('[EmbedPage] 🔌 Registering DataSource:', ds.id, ds.type);
-                dataSourceManager.registerDataSource(ds).catch(err => {
-                  console.error('[EmbedPage] Failed to register data source:', ds.id, err);
-                });
-              });
-            }
-
-            loadFromSchema(schema);
-          }
-          break;
-
-        case 'thingsvis:editor-event':
-          // payload 结构: { event: 'updateData', payload: { ... } }
-          const eventData = message.payload;
-          if (eventData && (eventData.event === 'updateData' || message.event === 'updateData')) {
-            const data = eventData.payload || eventData.data;
-            // console.log('[EmbedPage] 收到 updateData', data);
-
-            // 1. Update variables (legacy)
-            updateVariables(data);
-
-            // 2. Bridge to PlatformFieldAdapter (for ds.__platform__)
-            if (data && typeof data === 'object') {
-              Object.entries(data).forEach(([fieldId, value]) => {
-                // console.log('[EmbedPage] 📤 Dispatching platformData:', fieldId, value);
-                window.postMessage({
-                  type: 'thingsvis:platformData',
-                  payload: { fieldId, value, timestamp: Date.now() }
-                }, '*');
-              });
-            }
-          } else if (eventData && eventData.event === 'updateSchema') {
-            // Handle schema/fields update
-            const fields = eventData.payload;
-            console.log('[EmbedPage]  received updateSchema:', fields);
-            if (Array.isArray(fields)) {
-              platformFieldStore.setFields(fields);
-            }
-          }
-          break;
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    cleanupRef.current = cleanups;
+    return () => cleanups.forEach(fn => fn());
   }, [loadFromSchema, updateVariables]);
 
   // Initial load from URL params

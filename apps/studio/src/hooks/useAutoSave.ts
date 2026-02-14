@@ -23,7 +23,7 @@ import {
   useSaveStrategy,
   type SavePayload
 } from '../lib/storage/saveStrategy'
-import { requestSave as sendToHost } from '../embed/embed-mode'
+import { requestSave as sendToHost } from '../embed/message-router'
 
 // =============================================================================
 // Hook Options

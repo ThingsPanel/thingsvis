@@ -1,25 +1,24 @@
 /**
  * EditorShell — Strategy-Driven Editor Entry Point
  *
- * Phase 1.4: 轻量入口，自动选择 EditorStrategy 并传递给现有 Editor。
+ * Phase 1.7: 充当 Editor.tsx 的策略协调层。
  *
- * 当前实现策略:
- * - 不重写 Editor.tsx 的 UI (2199 行)
- * - 通过 StrategyContext 向 Editor 注入策略实例
- * - Editor.tsx 逐步改写为使用 context 中的策略替代内联逻辑
- * - 最终 Editor.tsx 可以缩减为纯 UI 外壳
+ * 职责:
+ * 1. 根据 URL / 环境选择 EditorStrategy (Widget / App)
+ * 2. 通过 props 将策略配置 (UI 可见性、isWidgetMode) 传递给 Editor
+ * 3. 通过 ref 获取 Editor 的 getProjectState，实现策略保存
+ * 4. 管理 Widget Mode 的 triggerSave / request-save 监听
  *
- * 这样做的好处:
- * 1. 不一次性重写，降低风险
- * 2. 可以渐进式迁移
- * 3. 旧 Editor 保持可用
+ * Editor.tsx 只负责 UI 和画布逻辑，不再关心自己处于哪种模式。
  */
 
-import React, { createContext, useContext, useEffect, useRef } from 'react'
+import React, { createContext, useContext, useEffect, useRef, useCallback } from 'react'
 import type { EditorStrategy } from '../strategies/EditorStrategy'
 import { useEditorStrategy } from '../hooks/useEditorStrategy'
 import Editor from './Editor'
+import type { EditorHandle } from './Editor'
 import { useParams } from 'react-router-dom'
+import { onEmbedEvent, messageRouter, MSG_TYPES } from '../embed/message-router'
 
 // ─── Strategy Context ───
 
@@ -34,26 +33,79 @@ export function useStrategy(): EditorStrategy | null {
 
 export default function EditorShell() {
     const { dashboardId } = useParams<{ dashboardId: string }>()
-    const { strategy, isWidget, isApp } = useEditorStrategy(dashboardId)
-    const listenerCleanup = useRef<(() => void) | null>(null)
+    const { strategy, isWidget } = useEditorStrategy(dashboardId)
+    const editorRef = useRef<EditorHandle>(null)
 
-    // Setup strategy listeners
+    // ─── Widget Mode: 监听 triggerSave 事件 ───
+    // 当 SDK 的 triggerSave 触发时，从 Editor 获取状态并通过策略保存
+    useEffect(() => {
+        if (!isWidget) return
+
+        const unsubscribe = onEmbedEvent('triggerSave', () => {
+            if (!editorRef.current) {
+                console.warn('[EditorShell] triggerSave: Editor ref not ready')
+                return
+            }
+            console.log('[EditorShell] triggerSave: 通过策略保存')
+            const state = editorRef.current.getProjectState()
+            strategy.save(state)
+        })
+
+        return unsubscribe
+    }, [isWidget, strategy])
+
+    // ─── Widget Mode: 监听 Host 主动请求保存 (request-save) ───
+    useEffect(() => {
+        if (!isWidget) return
+
+        const unsubscribe = messageRouter.on(MSG_TYPES.REQUEST_SAVE, () => {
+            if (!editorRef.current) {
+                console.warn('[EditorShell] request-save: Editor ref not ready')
+                return
+            }
+            console.log('[EditorShell] 收到 Host request-save，通过策略保存')
+            const state = editorRef.current.getProjectState()
+
+            // request-save 使用 wrapped 格式 (与 Host SDK 的 on('thingsvis:save-config') 兼容)
+            const payload = {
+                config: {
+                    meta: state.meta,
+                    canvas: state.canvas,
+                    nodes: state.nodes,
+                    dataSources: state.dataSources,
+                }
+            }
+            messageRouter.send(MSG_TYPES.HOST_SAVE, payload)
+            console.log('[EditorShell] 已发送 host-save (request-save 路径)')
+        })
+
+        return unsubscribe
+    }, [isWidget])
+
+    // ─── Strategy Listeners (updateSchema, updateData 等) ───
     useEffect(() => {
         if (strategy.setupListeners) {
-            listenerCleanup.current = strategy.setupListeners()
-        }
-        return () => {
-            listenerCleanup.current?.()
-            listenerCleanup.current = null
+            const cleanup = strategy.setupListeners()
+            return cleanup
         }
     }, [strategy])
 
-    // Cleanup on unmount
+    // ─── Cleanup on unmount ───
     useEffect(() => {
         return () => {
             strategy.dispose()
         }
     }, [strategy])
+
+    // ─── 策略保存回调 (供 Editor 内部按钮调用) ───
+    const handleStrategySave = useCallback(() => {
+        if (!editorRef.current) return
+        const state = editorRef.current.getProjectState()
+        strategy.save(state)
+    }, [strategy])
+
+    // ─── 获取策略的 UI 可见性配置 ───
+    const visibility = strategy.getUIVisibility()
 
     console.log(
         `[EditorShell] Rendering with ${isWidget ? 'Widget' : 'App'} strategy`
@@ -61,7 +113,12 @@ export default function EditorShell() {
 
     return (
         <EditorStrategyContext.Provider value={strategy}>
-            <Editor />
+            <Editor
+                ref={editorRef}
+                embedVisibility={isWidget ? visibility : undefined}
+                isWidgetMode={isWidget}
+                onStrategySave={handleStrategySave}
+            />
         </EditorStrategyContext.Provider>
     )
 }

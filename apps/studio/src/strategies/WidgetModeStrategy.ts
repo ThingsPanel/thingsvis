@@ -4,8 +4,8 @@
  * Phase 1.3: 将 Editor.tsx 中 Widget Mode 的 embed 通信逻辑提取到此处。
  *
  * 职责:
- * 1. bootstrap: 等待 Host 的 `thingsvis:editor-init` 消息
- * 2. save:      通过 postMessage 发送 `thingsvis:host-save` 给 Host
+ * 1. bootstrap: 等待 Host 的 `tv:init` 消息
+ * 2. save:      通过 postMessage 发送 `tv:save` 给 Host
  * 3. listeners: 处理 updateData / updateSchema 实时推送
  *
  * ⛔ 不允许 import 任何 Cloud API / storage adapter 模块
@@ -13,9 +13,7 @@
 
 import type { EditorStrategy, UIVisibilityConfig } from './EditorStrategy'
 import type { ProjectFile } from '../lib/storage/schemas'
-import { on as onEmbedEvent, requestSave } from '../embed/embed-mode'
-import { processEmbedInitPayload, type EmbedInitPayload } from '../embed/embed-init'
-import { messageLogger } from '../embed/message-router'
+import { onEmbedEvent, messageRouter, MSG_TYPES, processEmbedInitPayload, type EmbedInitPayload } from '../embed/message-router'
 import { platformFieldStore } from '../lib/stores/platformFieldStore'
 import { dataSourceManager } from '@thingsvis/kernel'
 
@@ -42,7 +40,7 @@ export class WidgetModeStrategy implements EditorStrategy {
             // 监听 init 事件
             const unsub = onEmbedEvent('init', (payload: EmbedInitPayload) => {
                 console.log('[WidgetModeStrategy] Received init from host')
-                messageLogger.logInbound({ data: { type: 'thingsvis:editor-init', payload } } as any)
+                // 日志由 messageRouter 自动记录
 
                 const processed = processEmbedInitPayload(payload)
                 if (!processed) {
@@ -121,7 +119,7 @@ export class WidgetModeStrategy implements EditorStrategy {
             },
         }
 
-        requestSave(exportData)
+        messageRouter.send(MSG_TYPES.HOST_SAVE, exportData)
     }
 
     /**
@@ -147,7 +145,7 @@ export class WidgetModeStrategy implements EditorStrategy {
                 // 桥接到 PlatformFieldAdapter
                 Object.entries(data).forEach(([fieldId, value]) => {
                     window.postMessage({
-                        type: 'thingsvis:platformData',
+                        type: 'tv:platform-data',
                         payload: { fieldId, value, timestamp: Date.now() }
                     }, '*')
                 })
@@ -155,17 +153,11 @@ export class WidgetModeStrategy implements EditorStrategy {
         })
         cleanups.push(dataUnsub)
 
-        // 监听 Host 主动请求保存
-        const handleRequestSave = (event: MessageEvent) => {
-            if (event.data?.type === 'thingsvis:request-save') {
-                console.log('[WidgetModeStrategy] Host requested save')
-                messageLogger.logInbound(event)
-                // 这个需要 Editor 端提供 getProjectState 回调
-                // 暂时由 EditorShell 中的 useEffect 处理
-            }
-        }
-        window.addEventListener('message', handleRequestSave)
-        cleanups.push(() => window.removeEventListener('message', handleRequestSave))
+        // 监听 Host 主动请求保存 (由 EditorShell 处理实际保存, 这里只做日志)
+        const requestSaveUnsub = messageRouter.on(MSG_TYPES.REQUEST_SAVE, () => {
+            console.log('[WidgetModeStrategy] Host requested save (handled by EditorShell)')
+        })
+        cleanups.push(requestSaveUnsub)
 
         return () => {
             cleanups.forEach(fn => fn())

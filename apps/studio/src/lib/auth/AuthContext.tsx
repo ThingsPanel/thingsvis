@@ -74,9 +74,9 @@ function getEmbedToken(): string | null {
     }
   }
 
-  // 3. 最后检查 embed-init 中设置的 token
+  // 3. 最后检查 message-router 中设置的 token
   try {
-    const { getEmbedToken: getInitToken } = require('../../embed/embed-init');
+    const { getEmbedToken: getInitToken } = require('../../embed/message-router');
     const initToken = getInitToken();
     if (initToken) {
 

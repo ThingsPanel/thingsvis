@@ -14,7 +14,7 @@ import type { EditorStrategy } from '../strategies/EditorStrategy'
 import { AppModeStrategy } from '../strategies/AppModeStrategy'
 import { WidgetModeStrategy } from '../strategies/WidgetModeStrategy'
 import { createCloudStorageAdapter } from '../lib/storage/adapter'
-import { isEmbedMode } from '../embed/embed-mode'
+import { isEmbedMode } from '../embed/message-router'
 
 interface UseEditorStrategyResult {
     strategy: EditorStrategy

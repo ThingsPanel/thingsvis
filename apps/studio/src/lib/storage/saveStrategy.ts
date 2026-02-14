@@ -16,7 +16,7 @@
  *   - 使用宿主传来的 dashboard ID
  */
 
-import { isEmbedMode, requestSave as sendToHost } from '../../embed/embed-mode';
+import { isEmbedMode, requestSave as sendToHost } from '../../embed/message-router';
 
 // =============================================================================
 // Types

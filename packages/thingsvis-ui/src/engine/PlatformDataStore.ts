@@ -34,7 +34,7 @@ class PlatformDataStoreClass {
         this.messageListener = (event: MessageEvent) => {
 
 
-            if (event.data?.type === 'thingsvis:platformData') {
+            if (event.data?.type === 'tv:platform-data') {
                 const { fieldId, value, timestamp } = event.data.payload || {};
 
                 if (fieldId !== undefined) {
