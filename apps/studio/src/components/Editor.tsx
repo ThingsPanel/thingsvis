@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react"
+import React, { useEffect, useState, useCallback, useMemo, useRef, useImperativeHandle } from "react"
 import { useParams } from "react-router-dom"
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
@@ -101,7 +101,7 @@ import { STORAGE_CONSTANTS } from '../lib/storage/constants'
 import { processThumbnailFile } from '../lib/storage/thumbnail'
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands'
 import { pickImage, ImageFileTooLargeError, openImagePicker } from './tools/imagePicker'
-import { isEmbedMode, on as onEmbedEvent, requestSave, getInitialData, getEditMode } from '../embed/embed-mode'
+import { isEmbedMode, on as onEmbedEvent, getInitialData, getEditMode } from '../embed/embed-mode'
 import { dataSourceManager } from '@thingsvis/kernel'
 import { platformFieldStore } from '@/lib/stores/platformFieldStore'
 import { processEmbedInitPayload, initEmbedModeFromUrl, type EmbedInitPayload } from '../embed/embed-init'
@@ -159,7 +159,32 @@ type CanvasConfigSchema = {
   gridEnabled: boolean
 }
 
-export default function Editor() {
+// ─── Editor Props & Handle (Phase 1.6) ───
+
+export interface EditorProps {
+  /** 策略提供的 UI 可见性配置，覆盖默认 URL 解析逻辑 */
+  embedVisibility?: {
+    showLibrary: boolean
+    showProps: boolean
+    showTopLeft: boolean
+    showToolbar: boolean
+    showTopRight: boolean
+    hideProjectDialog?: boolean
+  }
+  /** 是否为 Widget 模式 (禁用自动保存、跳过云端加载等) */
+  isWidgetMode?: boolean
+  /** 策略触发保存时的回调 */
+  onStrategySave?: () => void
+}
+
+export interface EditorHandle {
+  /** 获取当前项目状态 (用于策略保存) */
+  getProjectState: () => ProjectFile
+  /** 获取当前画布配置 */
+  getCanvasConfig: () => CanvasConfigSchema
+}
+
+const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
   const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth()
   const { currentProject, switchProject } = useProject()
   // Refs for event cleanup (to avoid leaks in async init)
@@ -197,18 +222,20 @@ export default function Editor() {
   }, [logout])
 
   // Embed mode UI visibility from URL params
+  // Phase 1.6: 优先使用策略提供的配置，回退到 URL 解析
   const embedVisibility = useMemo(() => {
     const params = new URLSearchParams(window.location.hash.split('?')[1] || '')
-    const isEmbedded = params.get('mode') === 'embedded'
+    const isEmbedded = params.get('mode') === 'embedded' || !!props.embedVisibility
     return {
       isEmbedded,
-      showLibrary: params.get('showLibrary') !== '0',
-      showProps: params.get('showProps') !== '0',
-      showTopLeft: params.get('showTopLeft') !== '0',
-      showToolbar: params.get('showToolbar') !== '0',
-      showTopRight: params.get('showTopRight') !== '0',
+      showLibrary: props.embedVisibility?.showLibrary ?? (params.get('showLibrary') !== '0'),
+      showProps: props.embedVisibility?.showProps ?? (params.get('showProps') !== '0'),
+      showTopLeft: props.embedVisibility?.showTopLeft ?? (params.get('showTopLeft') !== '0'),
+      showToolbar: props.embedVisibility?.showToolbar ?? (params.get('showToolbar') !== '0'),
+      showTopRight: props.embedVisibility?.showTopRight ?? (params.get('showTopRight') !== '0'),
+      hideProjectDialog: props.embedVisibility?.hideProjectDialog ?? false,
     }
-  }, [])
+  }, [props.embedVisibility])
 
   const kernelState = useSyncExternalStore(
     useCallback(subscribe => store.subscribe(subscribe), []),
@@ -423,8 +450,15 @@ export default function Editor() {
     }
   }, [projectId, canvasConfig])
 
+  // ─── Phase 1.6: Expose handle to EditorShell ───
+  useImperativeHandle(ref, () => ({
+    getProjectState,
+    getCanvasConfig: () => canvasConfig,
+  }), [getProjectState, canvasConfig])
+
   // Helper to identify Widget Mode
-  const isWidgetMode = isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-'));
+  // Phase 1.6: 优先使用 props.isWidgetMode（由策略提供），回退到内联检测
+  const isWidgetMode = props.isWidgetMode ?? (isEmbedMode() && (projectId === 'widget' || projectId.startsWith('embed-')));
 
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
@@ -788,72 +822,8 @@ export default function Editor() {
   // Enable keyboard shortcuts
   useKeyboardShortcuts({ registry: commandRegistry })
 
-  // Handle embed mode triggerSave event
-  useEffect(() => {
-    if (!isEmbedMode()) return;
-
-    const unsubscribe = onEmbedEvent('triggerSave', () => {
-      console.log('[Editor triggerSave] 📦 开始收集保存数据...');
-
-      // Collect all nodes with their thing model bindings
-      const state = store.getState() as KernelState;
-      console.log('[Editor triggerSave] Store state nodesById count:', Object.keys(state.nodesById).length);
-
-      const nodes = Object.values(state.nodesById).map(nodeState => {
-        const schema = nodeState.schemaRef as any;
-        // Debug log for each node's grid property
-        console.log(`[Editor triggerSave] Node ${schema.id} grid:`, JSON.stringify(schema.grid));
-        return {
-          id: schema.id,
-          type: schema.type,
-          position: schema.position,
-          size: schema.size,
-          props: schema.props,
-          // Include grid position for grid layout mode
-          grid: schema.grid,
-          // Include thing model bindings if present
-          thingModelBindings: schema.thingModelBindings || [],
-        };
-      });
-
-      console.log('[Editor triggerSave] 📊 Collected nodes:', nodes.map(n => ({ id: n.id, grid: n.grid })));
-
-      // Build export data for ThingsPanel
-      const exportData = {
-        canvas: {
-          mode: canvasConfig.mode,
-          width: canvasConfig.width,
-          height: canvasConfig.height,
-          background: canvasConfig.bgValue,
-          fullWidthPreview: canvasConfig.fullWidthPreview ?? false,
-        },
-        nodes,
-        // Collect all thing model bindings in flat format for easy access
-        dataBindings: nodes.flatMap(node =>
-          (node.thingModelBindings || []).map((binding: any) => ({
-            nodeId: node.id,
-            targetProp: binding.targetProp,
-            metricsId: binding.metricsId,
-            metricsName: binding.metricsName,
-            metricsType: binding.metricsType,
-            dataType: binding.dataType,
-            unit: binding.unit,
-          }))
-        ),
-        // Include thumbnail via meta and root (for compatibility)
-        thumbnail: canvasConfig.thumbnail,
-        meta: {
-          thumbnail: canvasConfig.thumbnail,
-        }
-      };
-
-
-      // Send to host
-      requestSave(exportData);
-    });
-
-    return unsubscribe;
-  }, [canvasConfig]);
+  // Phase 1.8: triggerSave 逻辑已迁移到 EditorShell.tsx
+  // EditorShell 通过 editorRef.getProjectState() 获取数据并调用 strategy.save()
 
   // Handle embed mode init event - load initial data from host
   useEffect(() => {
@@ -1062,7 +1032,6 @@ export default function Editor() {
             gridCols: processed.canvas.gridCols,
             gridRowHeight: processed.canvas.gridRowHeight,
             gridGap: processed.canvas.gridGap,
-            gridGap: processed.canvas.gridGap,
             fullWidthPreview: processed.canvas.fullWidthPreview,
             thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
           }));
@@ -1123,37 +1092,9 @@ export default function Editor() {
     }
   }, [])
 
-  // 🆕 监听 Host 主动触发的保存请求 (Widget Mode)
-  useEffect(() => {
-    if (!isWidgetMode) return;
+  // Phase 1.8: request-save 逻辑已迁移到 EditorShell.tsx
+  // EditorShell 监听 'thingsvis:request-save' 并通过 editorRef 获取数据
 
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data?.type === 'thingsvis:request-save') {
-        console.log('[Editor] 收到请求保存指令，手动发送数据');
-
-        // 由于 AutoSave 被禁用，saveNow() 可能不执行，故手动构建数据发送
-        const state = getProjectState();
-        const payload = {
-          config: {
-            meta: state.meta,
-            canvas: state.canvas,
-            nodes: state.nodes,
-            dataSources: state.dataSources
-          }
-        };
-
-        window.parent.postMessage({
-          type: 'thingsvis:host-save',
-          payload
-        }, '*');
-
-        console.log('[Editor] 已发送 thingsvis:host-save', payload);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [isWidgetMode, getProjectState]);
 
   // 🆕 在 bootstrapping 完成后发送握手请求
   useEffect(() => {
@@ -2194,5 +2135,6 @@ export default function Editor() {
 
     </div>
   )
-}
+})
 
+export default Editor
