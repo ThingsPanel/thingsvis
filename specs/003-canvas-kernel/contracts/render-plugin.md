@@ -3,7 +3,7 @@
 This contract defines how renderer plugins register with the kernel and how lifecycle and render updates are communicated.
 
 ## Plugin registration (synchronous)
-- registerPlugin(pluginMeta: { pluginId: string, version?: string, capabilities?: string[] }): void
+- registerPlugin(pluginMeta: { widgetId: string, version?: string, capabilities?: string[] }): void
 
 ## Plugin lifecycle (host calls)
 - mount(containerId: string, initialProps: Record<string, any>): { success: boolean }
@@ -16,7 +16,7 @@ This contract defines how renderer plugins register with the kernel and how life
 - NODE_REMOVE { nodeId: string }
 - NODE_SELECT { nodeIds: string[] }
 - RENDER_READY { viewId: string }
-- PLUGIN_ERROR { pluginId:string, nodeId?:string, error:{message,stack?} }
+- PLUGIN_ERROR { widgetId:string, nodeId?:string, error:{message,stack?} }
 
 ## Notes
 - Implementations MUST not assume synchronous DOM access; UI adapters provide mounting hooks and safe wrappers.

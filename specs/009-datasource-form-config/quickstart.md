@@ -13,7 +13,7 @@
 
 1. ✅ 熟悉 `packages/thingsvis-schema/src/datasource/index.ts` 中的现有 Schema
 2. ✅ 熟悉 `packages/thingsvis-kernel/src/datasources/` 中的 Adapter 实现
-3. ✅ 熟悉 `apps/studio/src/plugins/DataSourceConfig/` 中的表单组件
+3. ✅ 熟悉 `apps/studio/src/widgets/DataSourceConfig/` 中的表单组件
 4. ✅ 安装并运行过开发环境 (`pnpm dev`)
 
 ## Implementation Order
@@ -129,7 +129,7 @@ pnpm dev
 
 **目标**: 重构 RESTForm 和 WSForm，集成新组件
 
-**RESTForm 重构** (`apps/studio/src/plugins/DataSourceConfig/RESTForm.tsx`):
+**RESTForm 重构** (`apps/studio/src/widgets/DataSourceConfig/RESTForm.tsx`):
 
 ```tsx
 // 分区布局
@@ -158,7 +158,7 @@ pnpm dev
 </Section>
 ```
 
-**WSForm 重构** (`apps/studio/src/plugins/DataSourceConfig/WSForm.tsx`):
+**WSForm 重构** (`apps/studio/src/widgets/DataSourceConfig/WSForm.tsx`):
 
 ```tsx
 <Section title="基本配置">
@@ -216,9 +216,9 @@ pnpm dev
 ### UI 层
 - [ ] `apps/studio/src/components/ui/KeyValueEditor.tsx` (新建)
 - [ ] `apps/studio/src/components/ui/AuthSelector.tsx` (新建)
-- [ ] `apps/studio/src/plugins/DataSourceConfig/RESTForm.tsx` (修改)
-- [ ] `apps/studio/src/plugins/DataSourceConfig/WSForm.tsx` (修改)
-- [ ] `apps/studio/src/plugins/DataSourceConfig/sections/` (新建目录及组件)
+- [ ] `apps/studio/src/widgets/DataSourceConfig/RESTForm.tsx` (修改)
+- [ ] `apps/studio/src/widgets/DataSourceConfig/WSForm.tsx` (修改)
+- [ ] `apps/studio/src/widgets/DataSourceConfig/sections/` (新建目录及组件)
 
 ## Next Steps
 

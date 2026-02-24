@@ -1,6 +1,6 @@
-const { createPluginConfig } = require('../../../configs/rspack-plugin.config.js');
+const { createWidgetConfig } = require('../../../configs/rspack-widget.config.js');
 
-module.exports = createPluginConfig(__dirname, {
+module.exports = createWidgetConfig(__dirname, {
   port: {{DEV_SERVER_PORT}}
 });
 

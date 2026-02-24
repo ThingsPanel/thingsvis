@@ -21,7 +21,7 @@
 **Decision**: `registry.json` entries include a `version` string (or content hash) used to validate local cached bundles.
 
 **Rationale**:
-- Enables deterministic cache invalidation when a plugin is updated.
+- Enables deterministic cache invalidation when a widget is updated.
 - Keeps host behavior stable across deployments.
 
 **Alternatives considered**:

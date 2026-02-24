@@ -43,7 +43,7 @@ export { actionStack } from './history/ActionStack';
 // Export event bus
 export { EventBus, type EventHandler, eventBus } from './event-bus';
 import { eventBus as _eventBus } from './event-bus';
-export * from './events/pluginEvents';
+export * from './events/widgetEvents';
 // expose kernel eventBus to host apps via globalThis for loose coupling (used by UI loader)
 try {
   if (typeof globalThis !== 'undefined' && !(globalThis as any).__thingsvis_kernel_eventbus__) {
@@ -61,7 +61,7 @@ try {
 
 // Export kernel interfaces
 export { type IVisualComponent } from './interfaces/visual-component';
-export { type IPluginFactory } from './interfaces/plugin-factory';
+export { type IWidgetFactory } from './interfaces/widget-factory';
 
 // Export DataSource Management
 export { dataSourceManager, DataSourceManager } from './datasources/DataSourceManager';

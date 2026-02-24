@@ -10,7 +10,7 @@ export const ComponentRegistryEntrySchema = z.object({
   remoteName: z.string().min(1),
   remoteEntryUrl: z.string().url(),
   localEntryUrl: z.string().url().optional(), // 插件开发服务的地址 (如 http://localhost:3104/remoteEntry.js)
-  staticEntryUrl: z.string().optional(), // 宿主服务直接托管的静态编译地址 (如 /plugins/custom/cyber-clock/dist/remoteEntry.js)
+  staticEntryUrl: z.string().optional(), // 宿主服务直接托管的静态编译地址 (如 /widgets/custom/cyber-clock/dist/remoteEntry.js)
   debugSource: z.enum(['remote', 'local', 'static']).default('remote').optional(), // 调试模式下优先使用的来源
   exposedModule: z.literal('./Main'),
   version: z.string().min(1)

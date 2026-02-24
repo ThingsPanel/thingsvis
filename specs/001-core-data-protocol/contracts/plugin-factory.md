@@ -1,4 +1,4 @@
-# Contract: IPluginFactory Interface
+# Contract: IWidgetFactory Interface
 
 **Feature**: Core Data Protocol and Kernel Interfaces  
 **Date**: 2025-01-27  
@@ -7,7 +7,7 @@
 ## Interface Definition
 
 ```typescript
-interface IPluginFactory {
+interface IWidgetFactory {
   /**
    * Creates a new component instance of the specified type.
    * 
@@ -69,7 +69,7 @@ const component = kernel.createComponent('echarts-bar');
 Factories should maintain a mapping of component type strings to component constructors:
 
 ```typescript
-class MyPluginFactory implements IPluginFactory {
+class MyPluginFactory implements IWidgetFactory {
   private componentMap = new Map<string, () => IVisualComponent>([
     ['echarts-bar', () => new EchartsBarComponent()],
     ['custom-widget', () => new CustomWidgetComponent()],
@@ -116,7 +116,7 @@ Contract tests should verify:
 
 ## Relationship to IVisualComponent
 
-The `IPluginFactory` contract depends on the `IVisualComponent` contract:
+The `IWidgetFactory` contract depends on the `IVisualComponent` contract:
 - Factory must return instances that conform to `IVisualComponent`
 - Factory errors should not affect component lifecycle contracts
 - Component instances created by factory follow `IVisualComponent` lifecycle

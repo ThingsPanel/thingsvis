@@ -3,7 +3,7 @@ export { VisualEngine } from "./engine/VisualEngine";
 export { DataContainer } from "./components/DataContainer";
 export { HeadlessErrorBoundary } from "./components/HeadlessErrorBoundary";
 export { Button } from "./Button";
-export { getRegistryEntries, loadPlugin } from "./loader/dynamicLoader";
+export { getRegistryEntries, loadWidget } from "./loader/dynamicLoader";
 export { screenToCanvas, canvasToScreen } from "./utils/coords";
 export { setPreviewRegistryUrl } from "./loader/dynamicLoader";
 

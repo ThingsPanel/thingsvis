@@ -21,7 +21,7 @@
 
 ### Decision 4: Material Distribution (MF 2.0)
 - **Choice**: Module Federation 2.0 with dynamic remote loading.
-- **Rationale**: Allows plugins to be developed and deployed independently. `registry.json` serves as the index. The `dynamicLoader` in `thingsvis-ui` handles fetching the remote entry and initializing the plugin.
+- **Rationale**: Allows plugins to be developed and deployed independently. `registry.json` serves as the index. The `dynamicLoader` in `thingsvis-ui` handles fetching the remote entry and initializing the widget.
 
 ## Best Practices
 - **Isolation**: Use `SafeExecutor` in the kernel to wrap plugin lifecycle calls.

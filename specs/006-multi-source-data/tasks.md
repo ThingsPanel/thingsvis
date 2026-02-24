@@ -48,7 +48,7 @@ description: "Task list for Multi-type Data Source Integration implementation"
 - [x] T010 [US1] 在 `packages/thingsvis-kernel/src/datasources/DataSourceManager.ts` 中注册 `StaticAdapter`
 - [x] T011 [P] [US1] 在 `packages/thingsvis-ui/src/hooks/useDataSource.ts` 中实现基本的异步数据获取 Hook
 - [x] T012 [P] [US1] 在 `packages/thingsvis-ui/src/components/DataContainer.tsx` 中实现数据注入高阶组件 (HOC)
-- [x] T013 [US1] 在 `apps/studio/src/plugins/DataSourceConfig/StaticForm.tsx` 中实现静态数据源配置界面
+- [x] T013 [US1] 在 `apps/studio/src/widgets/DataSourceConfig/StaticForm.tsx` 中实现静态数据源配置界面
 
 ---
 
@@ -57,7 +57,7 @@ description: "Task list for Multi-type Data Source Integration implementation"
 - [x] T014 [P] [US2] 在 `packages/thingsvis-kernel/src/datasources/WSAdapter.ts` 中实现 WebSocket 适配器
 - [x] T016 [US2] 在 `packages/thingsvis-kernel/src/datasources/DataSourceManager.ts` 中支持流式数据更新推送至全局 Store
 - [x] T017 [P] [US2] 在 `packages/thingsvis-ui/src/hooks/useRealtimeData.ts` 中实现针对流式数据的订阅 Hook
-- [x] T018 [US2] 在 `apps/studio/src/plugins/DataSourceConfig/RealtimeForm.tsx` 中实现实时数据源配置界面
+- [x] T018 [US2] 在 `apps/studio/src/widgets/DataSourceConfig/RealtimeForm.tsx` 中实现实时数据源配置界面
 
 ---
 
@@ -66,7 +66,7 @@ description: "Task list for Multi-type Data Source Integration implementation"
 - [x] T019 [P] [US3] 在 `packages/thingsvis-kernel/src/datasources/RESTAdapter.ts` 中实现支持轮询的 REST 适配器
 - [x] T020 [US3] 在 `packages/thingsvis-kernel/src/datasources/BaseAdapter.ts` 中集成 `SafeExecutor` 调用逻辑
 - [x] T021 [P] [US3] 在 `packages/thingsvis-ui/src/hooks/useExpressionEvaluator.ts` 中实现 `{{ ... }}` 表达式解析 Hook
-- [x] T022 [US3] 在 `apps/studio/src/plugins/DataSourceConfig/RESTForm.tsx` 中实现带有代码编辑器的转换脚本配置界面
+- [x] T022 [US3] 在 `apps/studio/src/widgets/DataSourceConfig/RESTForm.tsx` 中实现带有代码编辑器的转换脚本配置界面
 
 ---
 

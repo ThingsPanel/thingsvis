@@ -19,13 +19,13 @@ pnpm install
 pnpm --filter preview dev
 ```
 
-## 3) Run the CLI to scaffold a plugin
+## 3) Run the CLI to scaffold a widget
 
 ```bash
 pnpm vis-cli create basic my-part
 ```
 
-## 4) Build and serve a plugin remote
+## 4) Build and serve a widget remote
 
 From the generated plugin directory:
 
@@ -35,11 +35,11 @@ pnpm dev
 
 ## 5) Add plugin to registry
 
-Update the statically served `registry.json` to include the plugin’s `componentId` mapped to its `remoteEntry.js` URL and version.
+Update the statically served `registry.json` to include the widget’s `componentId` mapped to its `remoteEntry.js` URL and version.
 
 ## 6) Verify isolation render (visual test)
 
-Open the plugin’s `spec.tsx` runner (or the host’s plugin-spec runner) and confirm:
+Open the widget’s `spec.tsx` runner (or the host’s plugin-spec runner) and confirm:
 - The component renders
 - Failures do not crash the host
 - Re-load works with network disabled after first load
@@ -50,7 +50,7 @@ Open the plugin’s `spec.tsx` runner (or the host’s plugin-spec runner) and c
 2. In the Preview UI, click **Load Spec** for that plugin once (to populate local cache).
 3. Disable network in browser devtools.
 4. Refresh Preview and click **Load Spec** again:
-   - Previously loaded plugins should still load (from local cache).
+   - Previously loaded widgets should still load (from local cache).
    - Plugins never loaded before should show a non-fatal error.
 
 

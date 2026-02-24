@@ -1,10 +1,10 @@
 /**
  * 属性面板控制配置
  * 
- * 使用 @thingsvis/plugin-sdk 的 createControlPanel Builder API
+ * 使用 @thingsvis/widget-sdk 的 createControlPanel Builder API
  */
 
-import { createControlPanel } from '@thingsvis/plugin-sdk';
+import { createControlPanel } from '@thingsvis/widget-sdk';
 
 export const controls = createControlPanel()
   // ============================================

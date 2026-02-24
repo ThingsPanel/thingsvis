@@ -12,7 +12,7 @@ interface DataContainerProps {
 
 /**
  * DataContainer: A component that resolves data bindings in props before rendering children.
- * Useful for React-based plugin renderers.
+ * Useful for React-based widget renderers.
  */
 export const DataContainer: React.FC<DataContainerProps> = ({ store, nodeId, children }) => {
   const kernelState = useSyncExternalStore(

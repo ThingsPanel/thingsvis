@@ -25,7 +25,7 @@ US1 — 设计者在 Studio 中搭建高性能多模式画布 (Priority: P1)
 - [ ] T013 [US1] Integrate Leafer adapter skeleton in `packages/thingsvis-ui/src/adapters/leafer-adapter.ts`
 - [ ] T014 [US1] Implement Fixed/Infinite/Reflow mode switching in `packages/thingsvis-ui/src/modes/mode-controller.ts`
 - [ ] T015 [US1] Wire kernel store -> VisualEngine subscription and initial render loop in `packages/thingsvis-ui/src/visual-engine/render-loop.ts`
-- [ ] T016 [US1] Create demo Studio integration example in `apps/studio/src/plugins/canvas-integration/CanvasDemo.tsx`
+- [ ] T016 [US1] Create demo Studio integration example in `apps/studio/src/widgets/canvas-integration/CanvasDemo.tsx`
 - [ ] T017 [US1] Add basic performance profiling overlay (fps, dirty count) in `packages/thingsvis-ui/src/debug/perf-overlay.tsx`
 - [ ] T018 [P] Add fixtures for 1k/5k/10k nodes in `specs/003-canvas-kernel/fixtures/{1k,5k,10k}.json`
 - [ ] T019 [US1] Benchmark script to load fixture and measure first-frame time in `specs/003-canvas-kernel/benchmarks/measure-first-frame.ts`

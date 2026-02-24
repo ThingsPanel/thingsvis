@@ -19,7 +19,7 @@ Based on plan.md, the project structure uses:
 - `apps/studio/src/components/tools/` - Creation tool layer
 - `apps/studio/src/lib/commands/` - Command system
 - `plugins/basic/` - Basic shape plugins (rectangle, circle)
-- `plugins/media/` - Media plugins (image)
+- `plugins/media/` - Media widgets (image)
 - `apps/studio/public/registry.json` - Component registry
 
 ---

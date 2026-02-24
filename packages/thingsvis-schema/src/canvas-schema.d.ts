@@ -17,7 +17,7 @@ export declare const Transform3DSchema: z.ZodObject<{
 }>;
 export declare const NodeSchema: z.ZodObject<{
     id: z.ZodString;
-    pluginId: z.ZodString;
+    widgetId: z.ZodString;
     props: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>>;
     x: z.ZodNumber;
     y: z.ZodNumber;
@@ -47,7 +47,7 @@ export declare const NodeSchema: z.ZodObject<{
     groupId: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     id: string;
-    pluginId: string;
+    widgetId: string;
     props: Record<string, any>;
     x: number;
     y: number;
@@ -67,7 +67,7 @@ export declare const NodeSchema: z.ZodObject<{
     groupId?: string | undefined;
 }, {
     id: string;
-    pluginId: string;
+    widgetId: string;
     x: number;
     y: number;
     props?: Record<string, any> | undefined;
@@ -148,7 +148,7 @@ export declare const GroupSchema: z.ZodObject<{
     memberIds: string[];
 }>;
 export declare const ErrorBoundaryContextSchema: z.ZodObject<{
-    pluginId: z.ZodString;
+    widgetId: z.ZodString;
     nodeId: z.ZodString;
     error: z.ZodOptional<z.ZodObject<{
         message: z.ZodString;
@@ -165,7 +165,7 @@ export declare const ErrorBoundaryContextSchema: z.ZodObject<{
     }>>;
     fallbackUI: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
 }, "strip", z.ZodTypeAny, {
-    pluginId: string;
+    widgetId: string;
     nodeId: string;
     error?: {
         message: string;
@@ -174,7 +174,7 @@ export declare const ErrorBoundaryContextSchema: z.ZodObject<{
     } | undefined;
     fallbackUI?: Record<string, any> | undefined;
 }, {
-    pluginId: string;
+    widgetId: string;
     nodeId: string;
     error?: {
         message: string;
@@ -192,7 +192,7 @@ export declare const PageSchema: z.ZodObject<{
     layoutRules: z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>;
     nodes: z.ZodDefault<z.ZodOptional<z.ZodArray<z.ZodObject<{
         id: z.ZodString;
-        pluginId: z.ZodString;
+        widgetId: z.ZodString;
         props: z.ZodDefault<z.ZodOptional<z.ZodRecord<z.ZodString, z.ZodAny>>>;
         x: z.ZodNumber;
         y: z.ZodNumber;
@@ -222,7 +222,7 @@ export declare const PageSchema: z.ZodObject<{
         groupId: z.ZodOptional<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
         id: string;
-        pluginId: string;
+        widgetId: string;
         props: Record<string, any>;
         x: number;
         y: number;
@@ -242,7 +242,7 @@ export declare const PageSchema: z.ZodObject<{
         groupId?: string | undefined;
     }, {
         id: string;
-        pluginId: string;
+        widgetId: string;
         x: number;
         y: number;
         props?: Record<string, any> | undefined;
@@ -267,7 +267,7 @@ export declare const PageSchema: z.ZodObject<{
     mode: "Fixed" | "Infinite" | "Reflow";
     nodes: {
         id: string;
-        pluginId: string;
+        widgetId: string;
         props: Record<string, any>;
         x: number;
         y: number;
@@ -300,7 +300,7 @@ export declare const PageSchema: z.ZodObject<{
     layoutRules?: Record<string, any> | undefined;
     nodes?: {
         id: string;
-        pluginId: string;
+        widgetId: string;
         x: number;
         y: number;
         props?: Record<string, any> | undefined;

@@ -44,7 +44,7 @@
 
 | 问题 | Studio Dockerfile 只 `COPY apps/studio/dist` → **plugins/ 目录完全不在镜像中** |
 |------|------|
-| 原因 | `registry.json` 里 `staticEntryUrl` 指向 `/plugins/basic/text/dist/remoteEntry.js`，但镜像内没这个文件 |
+| 原因 | `registry.json` 里 `staticEntryUrl` 指向 `/widgets/basic/text/dist/remoteEntry.js`，但镜像内没这个文件 |
 | 结果 | **编辑器工具栏空白，拖不出任何组件** |
 | 修复 | 方案 A：Studio Dockerfile 构建阶段也构建 plugins，COPY 到 nginx html<br/>方案 B：docker-compose 挂载 volume 或单独 plugins 容器 |
 
@@ -86,7 +86,7 @@
 3. 打开 http://localhost:3000 ✅       Studio rspack dev server
 4. 注册/登录                ✅ 能成功   dev 时 client.ts fallback 到 localhost:3001
 5. 加载 Widget              ⚠️         registry.json debugSource=static
-                                       → 需要先 pnpm build:plugins
+                                       → 需要先 pnpm build:widgets
 ```
 
 | 问题 | 说明 | 修复 |
@@ -436,9 +436,9 @@ EOF
 
 | 当前 | 目标 |
 |------|------|
-| `packages/thingsvis-plugin-sdk/` | `packages/thingsvis-widget-sdk/` |
+| `packages/thingsvis-widget-sdk/` | `packages/thingsvis-widget-sdk/` |
 | `plugins/` (顶级) | `widgets/` |
-| `PluginMainModule` / `definePlugin()` | `WidgetMainModule` / `defineWidget()` |
+| `WidgetMainModule` / `defineWidget()` | `WidgetMainModule` / `defineWidget()` |
 | _(完整映射见附录 B)_ | |
 
 - [ ] **P1** Phase 1：目录 + 包名重命名 → `pnpm install`
@@ -599,23 +599,23 @@ EOF
 
 | 当前 | 目标 |
 |------|------|
-| `packages/thingsvis-plugin-sdk/` | `packages/thingsvis-widget-sdk/` |
-| `@thingsvis/plugin-sdk` | `@thingsvis/widget-sdk` |
+| `packages/thingsvis-widget-sdk/` | `packages/thingsvis-widget-sdk/` |
+| `@thingsvis/widget-sdk` | `@thingsvis/widget-sdk` |
 | `plugins/` | `widgets/` |
-| `apps/studio/src/plugins/` | `apps/studio/src/widgets/` |
-| `apps/studio/public/plugins/` | `apps/studio/public/widgets/` |
-| `configs/rspack-plugin.config.js` | `configs/rspack-widget.config.js` |
+| `apps/studio/src/widgets/` | `apps/studio/src/widgets/` |
+| `apps/studio/public/widgets/` | `apps/studio/public/widgets/` |
+| `configs/rspack-widget.config.js` | `configs/rspack-widget.config.js` |
 
 ### 核心类型
 
 | 当前 | 目标 |
 |------|------|
-| `PluginMainModule` | `WidgetMainModule` |
-| `PluginControls` / `PluginControlsSchema` | `WidgetControls` / `WidgetControlsSchema` |
-| `PluginCategory` | `WidgetCategory` |
-| `IPluginFactory` | `IWidgetFactory` |
-| `definePlugin()` | `defineWidget()` |
-| `loadPlugin()` | `loadWidget()` |
-| `createPluginConfig()` | `createWidgetConfig()` |
-| `createPluginRenderer()` | `createWidgetRenderer()` |
-| `PLUGIN_LOAD_START/SUCCESS/FAILURE` | `WIDGET_LOAD_START/SUCCESS/FAILURE` |
+| `WidgetMainModule` | `WidgetMainModule` |
+| `WidgetControls` / `WidgetControlsSchema` | `WidgetControls` / `WidgetControlsSchema` |
+| `WidgetCategory` | `WidgetCategory` |
+| `IWidgetFactory` | `IWidgetFactory` |
+| `defineWidget()` | `defineWidget()` |
+| `loadWidget()` | `loadWidget()` |
+| `createWidgetConfig()` | `createWidgetConfig()` |
+| `createWidgetRenderer()` | `createWidgetRenderer()` |
+| `WIDGET_LOAD_START/SUCCESS/FAILURE` | `WIDGET_LOAD_START/SUCCESS/FAILURE` |

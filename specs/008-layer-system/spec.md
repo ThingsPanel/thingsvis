@@ -213,7 +213,7 @@
 export const NodeSchema = z.object({
   // ... 现有字段 ...
   id: z.string(),
-  pluginId: z.string(),
+  widgetId: z.string(),
   // ...
   
   // 图层相关字段（已存在，需确保正确使用）

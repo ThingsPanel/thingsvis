@@ -50,7 +50,7 @@ Status: PASS
 - Type Safety: PASS (no new `any` in shared contracts; keep typings explicit in Studio deps).
 - Backward Compatibility: PASS (no change to stored project format).
 - Simplicity & Performance: PASS (small, targeted feature).
-- Plugin Independence: PASS (not a plugin feature).
+- Plugin Independence: PASS (not a widget feature).
 
 Re-check after Phase 1 design: PASS
 

@@ -130,7 +130,7 @@ pnpm build --filter @thingsvis/schema
 pnpm build --filter @thingsvis/ui
 
 # 构建所有插件
-pnpm build:plugins
+pnpm build:widgets
 
 # 构建 studio 应用
 pnpm build --filter ./apps/studio
@@ -203,12 +203,12 @@ pnpm dev
 
 ### 插件 API
 
-每个插件必须导出一个符合 `PluginMainModule` 接口的 `Main` 模块：
+每个插件必须导出一个符合 `WidgetMainModule` 接口的 `Main` 模块：
 
 ```typescript
-import type { PluginMainModule } from '@thingsvis/schema';
+import type { WidgetMainModule } from '@thingsvis/schema';
 
-export const Main: PluginMainModule = {
+export const Main: WidgetMainModule = {
   componentId: 'category/name',
   create: () => {
     // 返回一个 Leafer 兼容的元素
@@ -224,7 +224,7 @@ export const Main: PluginMainModule = {
 
 ```json
 {
-  "remoteName": "thingsvis-plugin-basic-button",
+  "remoteName": "thingsvis-widget-basic-button",
   "remoteEntryUrl": "http://localhost:3100/remoteEntry.js",
   "componentId": "basic/button",
   "version": "0.0.1"
@@ -269,7 +269,7 @@ import {
 
 - `PageSchema` - 页面结构验证
 - `NodeSchema` - 节点/组件验证
-- `PluginMainModule` - 插件接口定义
+- `WidgetMainModule` - 插件接口定义
 - 所有数据结构的运行时验证
 
 ### @thingsvis/ui
@@ -427,7 +427,7 @@ ThingsVis 遵循严格的架构约束：
 
 1. 使用 `vis-cli` 生成新插件
 2. 遵循分类体系
-3. 导出有效的 `PluginMainModule`
+3. 导出有效的 `WidgetMainModule`
 4. 包含 `Spec` 组件进行视觉测试
 5. 保持插件自包含和隔离
 6. 对共享库 (React, LeaferJS) 使用 peer dependencies

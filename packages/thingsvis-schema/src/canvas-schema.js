@@ -7,7 +7,7 @@ export const Transform3DSchema = z.object({
 });
 export const NodeSchema = z.object({
     id: z.string(),
-    pluginId: z.string(),
+    widgetId: z.string(),
     props: z.record(z.any()).optional().default({}),
     x: z.number(),
     y: z.number(),
@@ -34,7 +34,7 @@ export const GroupSchema = z.object({
     memberIds: z.array(z.string()),
 });
 export const ErrorBoundaryContextSchema = z.object({
-    pluginId: z.string(),
+    widgetId: z.string(),
     nodeId: z.string(),
     error: z
         .object({ message: z.string(), stack: z.string().optional(), time: z.number() })

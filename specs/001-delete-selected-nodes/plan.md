@@ -44,7 +44,7 @@ Status: PASS
 - Type Safety: PASS (keep strict typing; avoid `any` in new command deps).
 - Backward Compatibility: PASS (no change to stored project format).
 - Simplicity & Performance: PASS (small, targeted change).
-- Plugin Independence: PASS (not a plugin feature).
+- Plugin Independence: PASS (not a widget feature).
 
 Re-check after Phase 1 design: PASS
 

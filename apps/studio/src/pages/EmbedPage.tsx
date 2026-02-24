@@ -17,7 +17,7 @@ import { dataSourceManager } from '@thingsvis/kernel';
 import type { PageSchemaType } from '@thingsvis/schema';
 import { getDashboard } from '@/lib/api/dashboards';
 import { store } from '@/lib/store';
-import { loadPlugin } from '@/plugins/pluginResolver';
+import { loadWidget } from '@/widgets/widgetResolver';
 import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 
@@ -149,8 +149,8 @@ export default function EmbedPage() {
   }, []);
 
   // Resolve plugin for canvas
-  const resolvePlugin = useCallback(async (type: string) => {
-    const { entry } = await loadPlugin(type);
+  const resolveWidget = useCallback(async (type: string) => {
+    const { entry } = await loadWidget(type);
     return entry;
   }, []);
 
@@ -488,7 +488,7 @@ export default function EmbedPage() {
         {isGridLayout ? (
           <GridStackCanvas
             store={store as any}
-            resolvePlugin={resolvePlugin as any}
+            resolveWidget={resolveWidget as any}
             width={fullWidthPreview ? undefined : canvasWidth}
             height={canvasHeight}
             settings={gridSettings}
@@ -498,7 +498,7 @@ export default function EmbedPage() {
         ) : (
           <CanvasView
             store={store as any}
-            resolvePlugin={resolvePlugin as any}
+            resolveWidget={resolveWidget as any}
             gridSize={0}
             snapToGrid={false}
             centeredMask={true} // Center the content

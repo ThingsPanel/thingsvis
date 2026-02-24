@@ -10,7 +10,7 @@ type Mode = 'fixed' | 'infinite' | 'grid';
 
 type Props = {
   store: KernelStore;
-  resolvePlugin?: (type: string) => Promise<any>;
+  resolveWidget?: (type: string) => Promise<any>;
   mode?: Mode;
   width?: number;
   height?: number;
@@ -30,7 +30,7 @@ type Props = {
 
 export const CanvasView: React.FC<Props> = ({
   store,
-  resolvePlugin,
+  resolveWidget,
   mode: propsMode,
   width: propsWidth,
   height: propsHeight,
@@ -218,13 +218,13 @@ export const CanvasView: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const mountEl = containerRef.current.querySelector('#visual-engine-mount') as HTMLDivElement | null;
-    const engine = new VisualEngine(store, { resolvePlugin, editable: interactive });
+    const engine = new VisualEngine(store, { resolveWidget, editable: interactive });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);
     return () => {
       engine.unmount();
     };
-  }, [store, resolvePlugin, interactive]);
+  }, [store, resolveWidget, interactive]);
 
   // Update VisualEngine viewport when zoom/offset changes
   useEffect(() => {

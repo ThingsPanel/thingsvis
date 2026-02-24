@@ -45,7 +45,7 @@ import { PropsSchema } from './schema';
 import { controls } from './controls';
 
 // Create the overlay instance
-function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
+function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   const element = document.createElement('div');
   element.style.width = '100%';
   element.style.height = '100%';
@@ -66,7 +66,7 @@ function createOverlay(ctx: PluginOverlayContext): PluginOverlayInstance {
 }
 
 // Export the module
-export const Main: PluginMainModule = {
+export const Main: WidgetMainModule = {
   ...metadata,
   schema: PropsSchema,
   controls,
@@ -180,13 +180,13 @@ This file tells the host application where to load your component from.
 {
   "components": {
     "my-category/my-component": {
-      "remoteName": "thingsvis_plugin_my_category_my_component",
+      "remoteName": "thingsvis_widget_my_category_my_component",
       "version": "1.0.0",
       "exposedModule": "./Main",
       
       "debugSource": "local", 
       "localEntryUrl": "http://localhost:3000/remoteEntry.js",
-      "staticEntryUrl": "/plugins/my-category/my-component/dist/remoteEntry.js"
+      "staticEntryUrl": "/widgets/my-category/my-component/dist/remoteEntry.js"
     }
   }
 }
@@ -205,7 +205,7 @@ Use this mode during development (`npm run dev`).
 #### 2. Compiled Debugging (`static`)
 Use this mode to test the production build (`npm run build`).
 -   **Config**: Set `"debugSource": "static"`
--   **URL**: Uses `staticEntryUrl` pointing to the built files served by the host (e.g., `/plugins/...`).
+-   **URL**: Uses `staticEntryUrl` pointing to the built files served by the host (e.g., `/widgets/...`).
 -   **Benefit**: Verifies that your production build works correctly in the real environment.
 
 ---

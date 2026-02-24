@@ -7,7 +7,7 @@ export type CachedRemoteEntry = {
   storedAt: string; // ISO
 };
 
-const store = createStore('thingsvis-plugin-cache', 'remote-entries');
+const store = createStore('thingsvis-widget-cache', 'remote-entries');
 
 function cacheKey(remoteEntryUrl: string) {
   return `remoteEntry:${remoteEntryUrl}`;

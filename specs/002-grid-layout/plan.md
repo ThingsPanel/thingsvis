@@ -38,7 +38,7 @@
 | **III. Type Safety & Predictability** | ✅ PASS | All new interfaces strictly typed. No `any` in public contracts. Grid coordinate constants documented. |
 | **IV. Backward Compatibility & Incremental Adoption** | ✅ PASS | Grid layout is opt-in (`layoutMode='grid'`). Fixed/infinite modes unchanged. Migration from px→grid is optional with fallback. |
 | **V. Simplicity & Performance** | ✅ PASS | GridSystem is headless/stateless engine. Computation offloaded from UI thread via batched updates. Minimal new abstractions (CoordinateMapper only). |
-| **VI. Plugin Independence** | ✅ PASS | Plugins unaffected—they render from props. Grid coordinates resolved to px before reaching plugin renderers. |
+| **VI. Plugin Independence** | ✅ PASS | Plugins unaffected—they render from props. Grid coordinates resolved to px before reaching widget renderers. |
 
 **Additional Constraints Check:**
 - ✅ Fits within existing package boundaries (kernel, schema, ui)

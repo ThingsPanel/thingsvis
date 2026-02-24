@@ -95,7 +95,7 @@ export const createNodeDropActionCommand = (pageId: string, payload: {
     execute() {
       const node = {
         id: nodeId,
-        pluginId: payload.componentType,
+        widgetId: payload.componentType,
         x: payload.position.x,
         y: payload.position.y,
         props: payload.initialProps ?? {}

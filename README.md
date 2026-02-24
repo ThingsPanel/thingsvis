@@ -130,7 +130,7 @@ pnpm build --filter @thingsvis/schema
 pnpm build --filter @thingsvis/ui
 
 # Build all plugins
-pnpm build:plugins
+pnpm build:widgets
 
 # Build studio app
 pnpm build --filter ./apps/studio
@@ -185,7 +185,7 @@ plugins/<category>/<name>/
 ├── public/
 │   └── index.html        # Dev server landing page
 └── src/
-    ├── index.ts          # Main plugin entry (exports Main module)
+    ├── index.ts          # Main widget entry (exports Main module)
     └── spec.tsx          # Visual isolation test component
 ```
 
@@ -198,17 +198,17 @@ cd plugins/<category>/<name>
 # Start the dev server (serves Module Federation remote)
 pnpm dev
 
-# The plugin will be available at http://localhost:<port>/remoteEntry.js
+# The widget will be available at http://localhost:<port>/remoteEntry.js
 ```
 
 ### Plugin API
 
-Each plugin must export a `Main` module conforming to the `PluginMainModule` interface:
+Each plugin must export a `Main` module conforming to the `WidgetMainModule` interface:
 
 ```typescript
-import type { PluginMainModule } from '@thingsvis/schema';
+import type { WidgetMainModule } from '@thingsvis/schema';
 
-export const Main: PluginMainModule = {
+export const Main: WidgetMainModule = {
   componentId: 'category/name',
   create: () => {
     // Return a Leafer-compatible element
@@ -224,7 +224,7 @@ Add your plugin to the registry file (`apps/preview/public/registry.json` or `ap
 
 ```json
 {
-  "remoteName": "thingsvis-plugin-basic-button",
+  "remoteName": "thingsvis-widget-basic-button",
   "remoteEntryUrl": "http://localhost:3100/remoteEntry.js",
   "componentId": "basic/button",
   "version": "0.0.1"
@@ -269,7 +269,7 @@ Zod-based runtime type validation and TypeScript types:
 
 - `PageSchema` - Page structure validation
 - `NodeSchema` - Node/component validation
-- `PluginMainModule` - Plugin interface definition
+- `WidgetMainModule` - Plugin interface definition
 - Runtime schema validation for all data structures
 
 ### @thingsvis/ui
@@ -427,7 +427,7 @@ Detailed documentation is available in the `docs/` directory:
 
 1. Use the `vis-cli` to scaffold new plugins
 2. Follow the category taxonomy
-3. Export a valid `PluginMainModule`
+3. Export a valid `WidgetMainModule`
 4. Include a `Spec` component for visual testing
 5. Keep plugins self-contained and isolated
 6. Use peer dependencies for shared libraries (React, LeaferJS)

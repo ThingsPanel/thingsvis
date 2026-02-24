@@ -12,7 +12,7 @@
 
 ## Entity: Node (Component Instance)
 - id: string
-- pluginId: string
+- widgetId: string
 - props: Record<string, any> (plugin config)
 - x: number
 - y: number
@@ -39,7 +39,7 @@
 - invariant: relative offsets stored for group transforms
 
 ## Entity: ErrorBoundaryContext
-- pluginId: string
+- widgetId: string
 - nodeId: string
 - error?: { message:string, stack?:string, time:number }
 - fallbackUI?: Record<string, any>

@@ -31,7 +31,7 @@ As a user, I want to drag a component from the left panel onto the central canva
 
 **Acceptance Scenarios**:
 1. **Given** a valid component entry in the left panel, **When** the user drags it onto the canvas and drops, **Then** a new instance appears at the drop location and is rendered using the component's default configuration.
-2. **Given** a plugin/component fails to load on drop, **When** the drop occurs, **Then** the UI shows a non-blocking error indicator and the canvas remains stable (no partial DOM artifacts).
+2. **Given** a widget/component fails to load on drop, **When** the drop occurs, **Then** the UI shows a non-blocking error indicator and the canvas remains stable (no partial DOM artifacts).
 
 ---
 
@@ -51,7 +51,7 @@ As a user, I want the editor's middle area (canvas placeholder) to be replaced w
 ### Edge Cases
 
 - What happens when `registry.json` contains duplicate remote names? System should dedupe by `remoteName` and surface a single entry with a de-duplication note in logs.  
-- What happens when a plugin remoteEntry URL is unreachable on drop? Show a non-blocking error toast and keep canvas consistent.  
+- What happens when a widget remoteEntry URL is unreachable on drop? Show a non-blocking error toast and keep canvas consistent.  
 - Drop during in-progress canvas re-render: ensure the drop is queued or rejected with a clear message.
 
 ## Requirements *(mandatory)*

@@ -3,11 +3,11 @@
 **Branch**: `007-widget-style`  
 **Date**: 2025-12-30
 
-This quickstart explains how to adopt the MVP workflow as (1) a plugin author and (2) a Studio user.
+This quickstart explains how to adopt the MVP workflow as (1) a widget author and (2) a Studio user.
 
 ## 1) Plugin author: declare Controls
 
-In the plugin’s `Main` export (Module Federation remote), provide:
+In the widget’s `Main` export (Module Federation remote), provide:
 
 - `schema`: existing Zod props schema (already supported)
 - `controls`: new serializable Controls definition (used by Studio to render the panel)
@@ -16,7 +16,7 @@ Example (conceptual):
 
 ```ts
 import { z } from 'zod';
-import type { PluginMainModule } from '@thingsvis/schema';
+import type { WidgetMainModule } from '@thingsvis/schema';
 
 const TextPropsSchema = z.object({
   text: z.string().default('请输入文本'),
@@ -24,7 +24,7 @@ const TextPropsSchema = z.object({
   fontSize: z.number().default(16),
 });
 
-export const Main: PluginMainModule = {
+export const Main: WidgetMainModule = {
   id: 'basic-text',
   schema: TextPropsSchema,
   controls: {

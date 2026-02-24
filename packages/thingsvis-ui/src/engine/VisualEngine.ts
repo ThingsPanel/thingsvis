@@ -1,9 +1,9 @@
 import type { KernelStore, KernelState, NodeState, ConnectionState, GridState } from '@thingsvis/kernel';
-import type { NodeSchemaType, PluginMainModule, GridSettings } from '@thingsvis/schema';
+import type { NodeSchemaType, WidgetMainModule, GridSettings } from '@thingsvis/schema';
 import { App, Rect, Group, Line } from 'leafer-ui';
 import { ExpressionEvaluator } from '@thingsvis/utils';
 import type { RendererFactory } from './renderers/types';
-import { createPluginRenderer } from './renderers/pluginRenderer';
+import { createWidgetRenderer } from './renderers/widgetRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
 import { GridOverlay } from './grid/GridOverlay';
 import { GridPlaceholder } from './grid/GridPlaceholder';
@@ -173,7 +173,7 @@ export class VisualEngine {
   constructor(
     private store: KernelStore,
     private opts?: {
-      resolvePlugin?: (type: string) => Promise<PluginMainModule>;
+      resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
     }
   ) {}
@@ -1107,12 +1107,12 @@ export class VisualEngine {
       return errorRenderer;
     }
 
-    // Schedule async plugin resolve
-    if (this.opts?.resolvePlugin && !this.pendingRendererLoad.get(type)) {
+    // Schedule async widget resolve
+    if (this.opts?.resolveWidget && !this.pendingRendererLoad.get(type)) {
       const p = (async () => {
         try {
-          const plugin = await this.opts!.resolvePlugin!(type);
-          this.rendererByType.set(type, createPluginRenderer(plugin, this.store, { editable: this.opts?.editable }));
+          const widget = await this.opts!.resolveWidget!(type);
+          this.rendererByType.set(type, createWidgetRenderer(widget, this.store, { editable: this.opts?.editable }));
           this.errorMessageByType.delete(type);
           this.failedRendererTypes.delete(type);
         } catch (e) {

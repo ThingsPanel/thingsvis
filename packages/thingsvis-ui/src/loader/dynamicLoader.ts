@@ -3,7 +3,7 @@ import type { ComponentRegistryEntry } from "@thingsvis/schema";
 // Lightweight cross-package event bridge:
 // - If kernel has injected a global event bus (`globalThis.__thingsvis_kernel_eventbus__`), use it.
 // - Otherwise dispatch DOM CustomEvents for apps to observe.
-function emitPluginEvent(eventName: string, payload: any) {
+function emitWidgetEvent(eventName: string, payload: any) {
   try {
     const globalBus = (globalThis as any).__thingsvis_kernel_eventbus__;
     if (globalBus && typeof globalBus.emit === "function") {
@@ -29,7 +29,7 @@ function emitPluginEvent(eventName: string, payload: any) {
  *
  * Provides:
  * - getRegistryEntries(url?)
- * - loadPlugin(remoteEntryUrl, exposedModule)
+ * - loadWidget(remoteEntryUrl, exposedModule)
  *
  * NOTE: MF2 runtime integration and sandbox wrapping will be implemented in following tasks.
  */
@@ -113,10 +113,10 @@ export function setPreviewRegistryUrl(url: string | undefined) {
   }
 }
 
-export async function loadPlugin(remoteEntryUrl: string, exposedModule: string): Promise<any> {
+export async function loadWidget(remoteEntryUrl: string, exposedModule: string): Promise<any> {
   // Emit start event
   try {
-    emitPluginEvent("plugin.load.start", { remoteName: exposedModule, remoteEntryUrl });
+    emitWidgetEvent("widget.load.start", { remoteName: exposedModule, remoteEntryUrl });
   } catch (e) {}
 
   // Placeholder loader:
@@ -127,7 +127,7 @@ export async function loadPlugin(remoteEntryUrl: string, exposedModule: string):
   
   const module = {
     create: (opts: any) => {
-      // plugin factory stub
+      // widget factory stub
       return {
         renderSpec: { type: "placeholder", props: {} },
         propsSchema: {}
@@ -136,10 +136,10 @@ export async function loadPlugin(remoteEntryUrl: string, exposedModule: string):
   };
 
   try {
-    emitPluginEvent("plugin.load.success", { remoteName: exposedModule, moduleInfo: { stub: true } });
+    emitWidgetEvent("widget.load.success", { remoteName: exposedModule, moduleInfo: { stub: true } });
   } catch (e) {
     try {
-      emitPluginEvent("plugin.load.failure", { remoteName: exposedModule, error: e });
+      emitWidgetEvent("widget.load.failure", { remoteName: exposedModule, error: e });
     } catch {}
   }
 

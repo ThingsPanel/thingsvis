@@ -108,16 +108,16 @@
 
 ## Phase 6: User Story 4 - Define Plugin Factory Interface (Priority: P2)
 
-**Goal**: Implement IPluginFactory interface in kernel package with create(type) method. This enables the kernel to dynamically create component instances from loaded plugins without requiring kernel recompilation.
+**Goal**: Implement IWidgetFactory interface in kernel package with create(type) method. This enables the kernel to dynamically create component instances from loaded widgets without requiring kernel recompilation.
 
-**Independent Test**: Create a factory class that implements IPluginFactory, register it with a test kernel, and verify the kernel can call create(type) with a component type string to obtain a new IVisualComponent instance. Verify error handling for unsupported component types.
+**Independent Test**: Create a factory class that implements IWidgetFactory, register it with a test kernel, and verify the kernel can call create(type) with a component type string to obtain a new IVisualComponent instance. Verify error handling for unsupported component types.
 
 ### Implementation for User Story 4
 
-- [x] T029 [US4] Create IPluginFactory interface in packages/thingsvis-kernel/src/interfaces/plugin-factory.ts with create(type: string): IVisualComponent method
-- [x] T030 [US4] Add JSDoc comments to IPluginFactory interface documenting contract, preconditions, postconditions, and error conditions in packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
-- [x] T031 [US4] Verify IPluginFactory interface has no any types (return type is IVisualComponent, parameter is string)
-- [x] T032 [US4] Export IPluginFactory from packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
+- [x] T029 [US4] Create IWidgetFactory interface in packages/thingsvis-kernel/src/interfaces/plugin-factory.ts with create(type: string): IVisualComponent method
+- [x] T030 [US4] Add JSDoc comments to IWidgetFactory interface documenting contract, preconditions, postconditions, and error conditions in packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
+- [x] T031 [US4] Verify IWidgetFactory interface has no any types (return type is IVisualComponent, parameter is string)
+- [x] T032 [US4] Export IWidgetFactory from packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
 
 **Checkpoint**: At this point, all user stories should be independently functional. Both kernel interfaces are defined and ready for plugin system integration.
 
@@ -128,7 +128,7 @@
 **Purpose**: Aggregate exports and ensure cross-package type safety
 
 - [x] T033 Update packages/thingsvis-schema/src/index.ts to export PageSchema, VisualComponentSchema, and all inferred types (IPage, IVisualComponent, IPageMeta, IPageConfig, IComponentIdentity, IComponentTransform, IComponentData, IComponentEvent)
-- [x] T034 Update packages/thingsvis-kernel/src/index.ts to export IVisualComponent from interfaces/visual-component.ts and IPluginFactory from interfaces/plugin-factory.ts
+- [x] T034 Update packages/thingsvis-kernel/src/index.ts to export IVisualComponent from interfaces/visual-component.ts and IWidgetFactory from interfaces/plugin-factory.ts
 - [x] T035 Update packages/thingsvis-kernel/src/index.ts to re-export existing EventBus and EventHandler types
 - [x] T036 Verify packages/thingsvis-kernel can import types from @thingsvis/schema without circular dependencies
 
@@ -140,7 +140,7 @@
 
 - [x] T037 [P] Run tsc --noEmit on packages/thingsvis-schema to verify no type errors
 - [x] T038 [P] Run tsc --noEmit on packages/thingsvis-kernel to verify no type errors
-- [x] T039 Verify no any types exist in exported interfaces (check IVisualComponent and IPluginFactory)
+- [x] T039 Verify no any types exist in exported interfaces (check IVisualComponent and IWidgetFactory)
 - [x] T040 Verify types are properly inferred from Zod schemas using z.infer (check IPage, IVisualComponent types)
 - [x] T041 Verify kernel package can import and use schema types without import errors
 - [x] T042 Build both packages using pnpm build to verify build succeeds
@@ -161,7 +161,7 @@
   - User Story 1 (Phase 3): Can start after Foundational - No dependencies on other stories
   - User Story 2 (Phase 4): Can start after Foundational - References VisualComponentSchema in PageSchema (T019 depends on T017)
   - User Story 3 (Phase 5): Can start after Foundational - No dependencies on other stories (interfaces only)
-  - User Story 4 (Phase 6): Depends on User Story 3 (IPluginFactory returns IVisualComponent)
+  - User Story 4 (Phase 6): Depends on User Story 3 (IWidgetFactory returns IVisualComponent)
 - **Integration (Phase 7)**: Depends on all user stories (Phases 3-6) completion
 - **Polish (Phase 8)**: Depends on Integration phase completion
 
@@ -170,7 +170,7 @@
 - **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
 - **User Story 2 (P1)**: Can start after Foundational (Phase 2) - Independent except T019 needs VisualComponentSchema from US2
 - **User Story 3 (P2)**: Can start after Foundational (Phase 2) - No dependencies on other stories
-- **User Story 4 (P2)**: Depends on User Story 3 - IPluginFactory.create() returns IVisualComponent
+- **User Story 4 (P2)**: Depends on User Story 3 - IWidgetFactory.create() returns IVisualComponent
 
 ### Within Each User Story
 
@@ -263,7 +263,7 @@ With multiple developers:
    - Developer B: User Story 2 (Component Schema) - packages/thingsvis-schema/src/component.ts
    - Developer C: User Story 3 (IVisualComponent) - packages/thingsvis-kernel/src/interfaces/visual-component.ts
 3. After User Story 3 completes:
-   - Developer C: User Story 4 (IPluginFactory) - packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
+   - Developer C: User Story 4 (IWidgetFactory) - packages/thingsvis-kernel/src/interfaces/plugin-factory.ts
 4. Team completes Integration & Polish together
 
 ---
@@ -278,5 +278,5 @@ With multiple developers:
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence
 - User Story 2 task T019 depends on T017 (VisualComponentSchema must exist before PageSchema references it)
-- User Story 4 depends on User Story 3 (IPluginFactory returns IVisualComponent)
+- User Story 4 depends on User Story 3 (IWidgetFactory returns IVisualComponent)
 

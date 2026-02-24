@@ -1,14 +1,14 @@
 /**
  * 组件主入口
  * 
- * 使用 @thingsvis/plugin-sdk 构建
+ * 使用 @thingsvis/widget-sdk 构建
  */
 
 import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import type { PluginMainModule } from '@thingsvis/schema';
+import type { WidgetMainModule } from '@thingsvis/schema';
 
 /**
  * 创建组件渲染实例
@@ -36,7 +36,7 @@ function update(rect: Rect, props: Props) {
 /**
  * 插件导出入口
  */
-export const Main: PluginMainModule = {
+export const Main: WidgetMainModule = {
   ...metadata,
   schema: PropsSchema,
   controls,

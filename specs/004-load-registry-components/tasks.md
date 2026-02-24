@@ -9,13 +9,13 @@
 
 - [x] T001 Create `apps/studio/src/components/CanvasView.tsx` scaffold that mounts a container `div` for the VisualEngine and exposes lifecycle hooks (`mount`, `unmount`) and a `dispatchToKernel` prop.  
 - [x] T002 Create `packages/thingsvis-ui/visual/leaferAdapter.ts` file with exported class `LeaferAdapter` and placeholder methods `init(viewportEl)`, `addNode(nodeId, renderSpec)`, `removeNode(nodeId)`, `updateNodeTransform(nodeId, transform)`.  
-- [x] T003 [P] Create `packages/thingsvis-ui/loader/dynamicLoader.ts` skeleton implementing `loadPlugin(remoteEntryUrl, exposedModule)` and `getRegistryEntries(url?)` signatures (MF2 runtime + ESM-fallback placeholders).  
+- [x] T003 [P] Create `packages/thingsvis-ui/loader/dynamicLoader.ts` skeleton implementing `loadWidget(remoteEntryUrl, exposedModule)` and `getRegistryEntries(url?)` signatures (MF2 runtime + ESM-fallback placeholders).  
 - [x] T004 [P] Create `packages/thingsvis-ui/utils/coords.ts` with `screenToCanvas(screenPoint, canvasConfig, viewportState)` and `canvasToScreen(worldPoint, canvasConfig, viewportState)` exports.  
 - [x] T005 Create `packages/thingsvis-kernel/commands/nodeDrop.ts` file with Command skeleton (export default Command object shape) and unit-test stub `packages/thingsvis-kernel/tests/nodeDrop.spec.ts`.  
 - [x] T006 Integrate SafeExecutor usage placeholder: add `packages/thingsvis-kernel/src/sandbox/ensureSafeExecution.ts` helper that documents how loader will call `SafeExecutor.run(fn)`.  
 - [x] T007 Add event hooks file `packages/thingsvis-kernel/src/events/pluginEvents.ts` exporting typed events `plugin.load.start|success|failure` and `node.created`.
  - [x] T002 Create `@thingsvis/ui/visual/leaferAdapter` (exported from package entrypoint) with exported class `LeaferAdapter` and placeholder methods `init(viewportEl)`, `addNode(nodeId, renderSpec)`, `removeNode(nodeId)`, `updateNodeTransform(nodeId, transform)`.  
- - [x] T003 [P] Create `@thingsvis/ui/loader/dynamicLoader` (exported from package entrypoint) skeleton implementing `loadPlugin(remoteEntryUrl, exposedModule)` and `getRegistryEntries(url?)` signatures (MF2 runtime + ESM-fallback placeholders).  
+ - [x] T003 [P] Create `@thingsvis/ui/loader/dynamicLoader` (exported from package entrypoint) skeleton implementing `loadWidget(remoteEntryUrl, exposedModule)` and `getRegistryEntries(url?)` signatures (MF2 runtime + ESM-fallback placeholders).  
  - [x] T004 [P] Create `@thingsvis/ui/utils/coords` (exported from package entrypoint) with `screenToCanvas(screenPoint, canvasConfig, viewportState)` and `canvasToScreen(worldPoint, canvasConfig, viewportState)` exports.  
  - [x] T005 Create `@thingsvis/kernel/commands/nodeDrop` (exported from package entrypoint) file with Command skeleton (export default Command object shape) and unit-test stub `@thingsvis/kernel/tests/nodeDrop.spec.ts`.  
  - [x] T006 Integrate SafeExecutor usage placeholder: add `@thingsvis/kernel/src/sandbox/ensureSafeExecution` helper that documents how loader will call `SafeExecutor.run(fn)`.  
@@ -91,11 +91,11 @@
 - [ ] T021 [US3] In `apps/studio/src/components/CanvasView.tsx`, call `LeaferAdapter.init(viewportEl)` on mount and switch UI from placeholder to mounted canvas when first node is added.  
 - [ ] T022 [US3] Implement `LeaferAdapter.addNode()` to accept a `renderSpec` returned from loaded plugin module and attach a visual primitive to the Leafer viewport (`packages/thingsvis-ui/visual/leaferAdapter.ts`).  
 - [ ] T023 [US3] Ensure `packages/thingsvis-ui/loader/dynamicLoader.ts` executes plugin factories under `SafeExecutor.run(fn)` and returns a safe factory wrapper to VisualEngine.  
-- [ ] T024 [US3] Add sandbox acceptance test `tests/plugins/misbehaving-plugin.spec.ts` that loads a plugin which throws on init and asserts editor remains responsive and component shows error state.
+- [ ] T024 [US3] Add sandbox acceptance test `tests/widgets/misbehaving-plugin.spec.ts` that loads a widget which throws on init and asserts editor remains responsive and component shows error state.
  - [ ] T021 [US3] In `apps/studio/src/components/CanvasView.tsx`, call `LeaferAdapter.init(viewportEl)` on mount and switch UI from placeholder to mounted canvas when first node is added.  
  - [ ] T022 [US3] Implement `LeaferAdapter.addNode()` to accept a `renderSpec` returned from loaded plugin module and attach a visual primitive to the Leafer viewport (implement in `@thingsvis/ui/visual/leaferAdapter`).  
  - [ ] T023 [US3] Ensure `@thingsvis/ui/loader/dynamicLoader` executes plugin factories under `SafeExecutor.run(fn)` and returns a safe factory wrapper to VisualEngine.  
- - [ ] T024 [US3] Add sandbox acceptance test `tests/plugins/misbehaving-plugin.spec.ts` that loads a plugin which throws on init and asserts editor remains responsive and component shows error state.
+ - [ ] T024 [US3] Add sandbox acceptance test `tests/widgets/misbehaving-plugin.spec.ts` that loads a widget which throws on init and asserts editor remains responsive and component shows error state.
 
 ---
 

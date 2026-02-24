@@ -3,7 +3,7 @@
 **Branch**: `007-widget-style`  
 **Date**: 2025-12-30
 
-This contract specifies the serializable Controls schema a plugin may export, and how Studio interprets it.
+This contract specifies the serializable Controls schema a widget may export, and how Studio interprets it.
 
 ## Goals
 
@@ -13,7 +13,7 @@ This contract specifies the serializable Controls schema a plugin may export, an
 
 ## Producer / Consumer
 
-- **Producer**: Plugin package (Module Federation remote), exporting `Main: PluginMainModule`.
+- **Producer**: Plugin package (Module Federation remote), exporting `Main: WidgetMainModule`.
 - **Consumer**: Studio application, when rendering the right-side properties panel.
 
 ## Data Shape (MVP)
@@ -51,7 +51,7 @@ type ControlGroup = {
   fields: ControlField[];
 };
 
-type PluginControls = {
+type WidgetControls = {
   groups: ControlGroup[];
 };
 ```

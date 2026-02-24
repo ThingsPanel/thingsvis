@@ -10,7 +10,7 @@ Define the contract between the Editor (L2), Kernel (L0), and plugin loader (L1)
   - Input: optional URL override
   - Output: validated array of `ComponentRegistryEntry`
 
-- loadPlugin(remoteEntryUrl: string, exposedModule: string): Promise<PluginModule>
+- loadWidget(remoteEntryUrl: string, exposedModule: string): Promise<PluginModule>
   - The loader returns a module factory that can be executed inside `SafeExecutor`.
 
 ## Kernel Command: node.drop

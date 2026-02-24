@@ -59,7 +59,7 @@ apps/studio/
 
 packages/thingsvis-schema/
 └── src/
-  ├── plugin-module.ts                        # Extend PluginMainModule to include controls
+  ├── plugin-module.ts                        # Extend WidgetMainModule to include controls
   └── (new) plugin-controls.ts                # Controls contract (React-free)
 
 plugins/basic/text/

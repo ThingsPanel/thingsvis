@@ -6,7 +6,7 @@ import type { PageSchemaType } from '@thingsvis/schema'
 import { CanvasView, GridStackCanvas } from '@thingsvis/ui'
 
 import { store } from '../lib/store'
-import { loadPlugin } from '../plugins/pluginResolver'
+import { loadWidget } from '../widgets/widgetResolver'
 import { projectStorage } from '../lib/storage/projectStorage'
 import * as previewSession from '../lib/storage/previewSession'
 import * as dashboardsApi from '../lib/api/dashboards'
@@ -74,8 +74,8 @@ export default function PreviewPage() {
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange)
   }, [])
 
-  const resolvePlugin = useCallback(async (type: string) => {
-    const { entry } = await loadPlugin(type)
+  const resolveWidget = useCallback(async (type: string) => {
+    const { entry } = await loadWidget(type)
     return entry
   }, [])
 
@@ -239,7 +239,7 @@ export default function PreviewPage() {
         {isGridLayout ? (
           <GridStackCanvas
             store={store as any}
-            resolvePlugin={resolvePlugin as any}
+            resolveWidget={resolveWidget as any}
             width={canvasWidth}
             height={canvasHeight}
             settings={gridSettings}
@@ -248,7 +248,7 @@ export default function PreviewPage() {
         ) : (
           <CanvasView
             store={store as any}
-            resolvePlugin={resolvePlugin as any}
+            resolveWidget={resolveWidget as any}
             gridSize={0}
             snapToGrid={false}
             centeredMask={false}

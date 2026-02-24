@@ -25,9 +25,9 @@ This document consolidates Phase 0 decisions. Each item includes the decision, r
 - **Alternatives considered**:
   - **`query`-based context** (e.g., `query.data.*`). Rejected because current runtime uses `ds` and changing it would be breaking.
 
-## Decision 3 — Add a serializable Controls definition to plugin entry
+## Decision 3 — Add a serializable Controls definition to widget entry
 
-- **Decision**: Extend `PluginMainModule` to optionally include a serializable `controls` definition.
+- **Decision**: Extend `WidgetMainModule` to optionally include a serializable `controls` definition.
 - **Rationale**:
   - Keeps the schema package React-free while giving Studio enough information to generate a panel.
   - Allows incremental adoption (components without `controls` keep using existing hand-written panels).

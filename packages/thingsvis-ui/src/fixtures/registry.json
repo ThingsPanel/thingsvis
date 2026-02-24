@@ -3,42 +3,42 @@
   "generatedAt": "dev-fallback",
   "components": {
     "basic/rect": {
-      "remoteName": "thingsvis_plugin_basic_rect",
+      "remoteName": "thingsvis_widget_basic_rect",
       "remoteEntryUrl": "http://localhost:3101/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",
       "name": "矩形"
     },
     "layout/text": {
-      "remoteName": "thingsvis_plugin_layout_text",
+      "remoteName": "thingsvis_widget_layout_text",
       "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",
       "name": "文本"
     },
     "basic/switch": {
-      "remoteName": "thingsvis_plugin_basic_switch",
+      "remoteName": "thingsvis_widget_basic_switch",
       "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",
       "name": "开关"
     },
     "media/image": {
-      "remoteName": "thingsvis_plugin_media_image",
+      "remoteName": "thingsvis_widget_media_image",
       "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",
       "name": "图片"
     },
     "custom/cyber-clock": {
-      "remoteName": "thingsvis_plugin_custom_cyber_clock",
+      "remoteName": "thingsvis_widget_custom_cyber_clock",
       "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",
       "name": "赛博时钟"
     },
     "chart/echarts-bar": {
-      "remoteName": "thingsvis_plugin_chart_echarts_bar",
+      "remoteName": "thingsvis_widget_chart_echarts_bar",
       "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
       "exposedModule": "./Main",
       "version": "0.0.1",

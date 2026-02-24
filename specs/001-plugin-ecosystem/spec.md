@@ -11,7 +11,7 @@
 
 A page author can select a standard component (rectangle, text, image) and see it render on the canvas in the product.
 
-**Why this priority**: This is the smallest end-to-end proof that the plugin layer works and delivers immediate user-visible value.
+**Why this priority**: This is the smallest end-to-end proof that the widget layer works and delivers immediate user-visible value.
 
 **Independent Test**: With only the registry + loader + these standard components available, an author can add each component and see it render without any other plugins.
 
@@ -27,7 +27,7 @@ A page author can select a standard component (rectangle, text, image) and see i
 
 A page author can keep using previously used components even when the network is slow or unavailable.
 
-**Why this priority**: Offline resilience is a core differentiator for a plugin ecosystem and reduces disruption during demos and real usage.
+**Why this priority**: Offline resilience is a core differentiator for a widget ecosystem and reduces disruption during demos and real usage.
 
 **Independent Test**: After a component has been loaded once, the product can render it again with the network disabled.
 
@@ -48,8 +48,8 @@ A developer can generate a new plugin skeleton for a chosen component category, 
 
 **Acceptance Scenarios**:
 
-1. **Given** the developer provides a valid category and name, **When** they create a plugin skeleton, **Then** a new plugin folder appears with a consistent structure for that category.
-2. **Given** the developer adds minimal rendering logic, **When** they run the plugin’s isolated render verification, **Then** the component renders without relying on other plugins.
+1. **Given** the developer provides a valid category and name, **When** they create a widget skeleton, **Then** a new plugin folder appears with a consistent structure for that category.
+2. **Given** the developer adds minimal rendering logic, **When** they run the widget’s isolated render verification, **Then** the component renders without relying on other plugins.
 
 ---
 
@@ -74,7 +74,7 @@ A developer can generate a new plugin skeleton for a chosen component category, 
 
 1. **No Internal Package Imports**: Plugins MUST NOT import from `@thingsvis/*` packages (kernel, schema, ui, utils). These are internal packages for the host application only.
 
-2. **Inline Type Definitions**: Plugins MUST define their own types inline. The plugin entry interface is a "contract by convention" - the host expects a specific shape, but plugins define it themselves:
+2. **Inline Type Definitions**: Plugins MUST define their own types inline. The widget entry interface is a "contract by convention" - the host expects a specific shape, but plugins define it themselves:
 
    ```typescript
    // ✅ CORRECT: Inline type definition
@@ -90,7 +90,7 @@ A developer can generate a new plugin skeleton for a chosen component category, 
    };
    
    // ❌ WRONG: Importing from internal packages
-   import { type PluginMainModule } from '@thingsvis/schema';
+   import { type WidgetMainModule } from '@thingsvis/schema';
    ```
 
 3. **Allowed Dependencies**: Plugins may only depend on:
@@ -103,13 +103,13 @@ A developer can generate a new plugin skeleton for a chosen component category, 
    - `leafer-ui` (for canvas rendering)
    - Other standard libraries as needed
 
-5. **Duck Typing**: The host uses duck typing to validate plugin exports. If a plugin exports an object with the expected shape, it will work. No strict type imports are required or allowed.
+5. **Duck Typing**: The host uses duck typing to validate plugin exports. If a widget exports an object with the expected shape, it will work. No strict type imports are required or allowed.
 
 **Rationale**: This ensures that:
 - Third-party developers can build plugins in isolation
 - Plugins can be distributed independently (npm, CDN, etc.)
 - Breaking changes in internal packages don't break existing plugins
-- The plugin ecosystem can grow beyond the core team
+- The widget ecosystem can grow beyond the core team
 
 ### Functional Requirements
 
@@ -117,7 +117,7 @@ A developer can generate a new plugin skeleton for a chosen component category, 
 - **FR-002**: The product MUST support a simple static registry artifact that maps `componentId` → “component bundle location” and can be served without a backend service.
 - **FR-003**: The loader MUST store and reuse previously loaded component bundles locally so the product can render previously used components without network access.
 - **FR-004**: When a component cannot be loaded (network, registry, or bundle failure), the product MUST show a clear failure state without crashing the whole canvas/page.
-- **FR-005**: The plugin build output MUST be compatible with the host’s plugin loading mechanism and MUST avoid duplicating the host’s core shared libraries (to prevent version skew and bundle bloat).
+- **FR-005**: The widget build output MUST be compatible with the host’s plugin loading mechanism and MUST avoid duplicating the host’s core shared libraries (to prevent version skew and bundle bloat).
 - **FR-006**: The repository MUST include MVP plugins for `basic/rect`, `layout/text`, and `media/image`, each usable by the host product as “standard parts.”
 - **FR-007**: The repository MUST include one “AI generated example” plugin (`custom/cyber-clock`) that can be loaded and rendered like any other component.
 - **FR-008**: Each plugin MUST include an isolated render verification (“visual test”) that demonstrates it renders in isolation.
@@ -133,7 +133,7 @@ A developer can generate a new plugin skeleton for a chosen component category, 
 - **FR-006**: The three standard components can be discovered by ID and each renders correctly in the host.
 - **FR-007**: The AI example component can be discovered by ID and renders correctly in the host.
 - **FR-008**: Each plugin has a single-plugin render verification that can be executed to confirm it renders in isolation.
-- **FR-009**: The CLI can generate a plugin skeleton for a given category and name, and the generated output includes the expected structure plus the plugin’s isolated render verification.
+- **FR-009**: The CLI can generate a widget skeleton for a given category and name, and the generated output includes the expected structure plus the widget’s isolated render verification.
 
 ### Key Entities *(include if feature involves data)*
 

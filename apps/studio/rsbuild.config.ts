@@ -21,11 +21,10 @@ export default defineConfig({
       copyOnBuild: true,
     },
     proxy: {
-      // Proxy API requests to demo.thingspanel.cn
+      // Proxy API requests to local ThingsVis server
       '/api': {
-        target: 'http://demo.thingspanel.cn',
+        target: 'http://localhost:8000',
         changeOrigin: true,
-        secure: false,
       },
     },
   },
@@ -36,17 +35,17 @@ export default defineConfig({
   dev: {
     setupMiddlewares: [
       (middlewares, server) => {
-        // Serve plugins directory at /plugins path
+        // Serve widgets directory at /widgets path
         const sirv = require('sirv');
-        const pluginsDir = path.resolve(__dirname, '../../plugins');
-        const pluginsHandler = sirv(pluginsDir, { dev: true, etag: true });
+        const widgetsDir = path.resolve(__dirname, '../../widgets');
+        const widgetsHandler = sirv(widgetsDir, { dev: true, etag: true });
         middlewares.unshift(
           (req: any, res: any, next: any) => {
-            if (req.url?.startsWith('/plugins/')) {
-              // Strip /plugins prefix for sirv to find the file
+            if (req.url?.startsWith('/widgets/')) {
+              // Strip /widgets prefix for sirv to find the file
               const originalUrl = req.url;
-              req.url = req.url.replace('/plugins', '');
-              pluginsHandler(req, res, () => {
+              req.url = req.url.replace('/widgets', '');
+              widgetsHandler(req, res, () => {
                 // Restore original URL if not handled
                 req.url = originalUrl;
                 next();

@@ -50,7 +50,7 @@ Plugin developers need a standardized interface contract for visual components s
 
 **Acceptance Scenarios**:
 
-1. **Given** a plugin developer creates a visual component, **When** they implement the kernel interface, **Then** the component exposes mount, update, resize, and unmount methods that the kernel can call.
+1. **Given** a widget developer creates a visual component, **When** they implement the kernel interface, **Then** the component exposes mount, update, resize, and unmount methods that the kernel can call.
 2. **Given** the kernel needs to mount a component, **When** it calls the mount method with an element and props, **Then** the component initializes and attaches to the provided element.
 3. **Given** component properties change, **When** the kernel calls the update method, **Then** the component reflects the new property values.
 4. **Given** the viewport or container size changes, **When** the kernel calls the resize method, **Then** the component adjusts its layout accordingly.
@@ -62,13 +62,13 @@ Plugin developers need a standardized interface contract for visual components s
 
 Plugin system developers need a standardized factory interface for creating component instances so that plugins can be dynamically loaded and instantiated by type identifier without requiring kernel recompilation.
 
-**Why this priority**: The factory interface enables the plugin architecture. Without it, the kernel cannot dynamically create component instances from loaded plugins, preventing the extensible plugin system from functioning.
+**Why this priority**: The factory interface enables the widget architecture. Without it, the kernel cannot dynamically create component instances from loaded widgets, preventing the extensible plugin system from functioning.
 
-**Independent Test**: Create a factory class that implements the plugin factory interface, register it with the kernel, and verify the kernel can call the create method with a component type string to obtain a new component instance. The factory should return components that conform to the kernel interface.
+**Independent Test**: Create a factory class that implements the widget factory interface, register it with the kernel, and verify the kernel can call the create method with a component type string to obtain a new component instance. The factory should return components that conform to the kernel interface.
 
 **Acceptance Scenarios**:
 
-1. **Given** a plugin provides a factory implementation, **When** the kernel requests a component by type, **Then** the factory returns a component instance conforming to the kernel interface.
+1. **Given** a widget provides a factory implementation, **When** the kernel requests a component by type, **Then** the factory returns a component instance conforming to the kernel interface.
 2. **Given** the kernel attempts to create an unknown component type, **When** the factory cannot create the component, **Then** the system handles the error gracefully without crashing.
 
 ---
@@ -79,7 +79,7 @@ Plugin system developers need a standardized factory interface for creating comp
 - How does the system handle invalid enum values in page config (e.g., mode set to "invalid-mode")?
 - What happens when component transform values are negative or exceed reasonable bounds?
 - How does the system handle missing or malformed data configuration in components?
-- What happens when a component type string doesn't match any registered plugin factory?
+- What happens when a component type string doesn't match any registered widget factory?
 - How does the system handle component mount failures (e.g., invalid element provided)?
 - What happens when update or resize methods are called before mount?
 - How does the system handle unmount being called multiple times on the same component?
@@ -100,7 +100,7 @@ Plugin system developers need a standardized factory interface for creating comp
 - **FR-008**: System MUST define a VisualComponentSchema that validates component events as an array of objects with trigger, action, and payload fields.
 - **FR-009**: System MUST export TypeScript types inferred from Zod schemas (e.g., IPage, IVisualComponentData) from the schema package.
 - **FR-010**: System MUST define an IVisualComponent interface in the kernel package with methods: mount(el, props), update(props), resize(w, h), and unmount().
-- **FR-011**: System MUST define an IPluginFactory interface in the kernel package with a create(type) method that returns a component instance conforming to IVisualComponent.
+- **FR-011**: System MUST define an IWidgetFactory interface in the kernel package with a create(type) method that returns a component instance conforming to IVisualComponent.
 - **FR-012**: System MUST ensure the kernel package imports and uses types from the schema package for type safety.
 
 ### Key Entities *(include if feature involves data)*

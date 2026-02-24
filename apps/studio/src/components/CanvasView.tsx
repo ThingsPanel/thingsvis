@@ -27,7 +27,7 @@ export type StudioCanvasHandle = {
 const CanvasView = forwardRef<StudioCanvasHandle, {
   pageId: string;
   store: any;
-  resolvePlugin?: (t: string) => Promise<any>;
+  resolveWidget?: (t: string) => Promise<any>;
   activeTool: string;
   lineToolProps?: Record<string, unknown>;
   lineContinuous?: boolean;
@@ -39,7 +39,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   onImagePickerRequest?: () => void;
   onImagePickerComplete?: () => void;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolvePlugin, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
+  { pageId, store, activeTool, resolveWidget, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -128,7 +128,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     // Attempt to read plugin info from dataTransfer
-    const payload = e.dataTransfer.getData("application/thingsvis-plugin") || e.dataTransfer.getData("text/plain");
+    const payload = e.dataTransfer.getData("application/thingsvis-widget") || e.dataTransfer.getData("text/plain");
     let entry: any = null;
     try {
       entry = payload ? JSON.parse(payload) : null;
@@ -209,7 +209,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     >
       <UI_CanvasView
         store={store}
-        resolvePlugin={resolvePlugin}
+        resolveWidget={resolveWidget}
         mode={state.canvas.mode}
         width={state.canvas.width}
         height={state.canvas.height}

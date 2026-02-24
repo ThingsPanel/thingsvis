@@ -34,6 +34,6 @@ pnpm --filter @thingsvis/preview dev
 - Trigger Undo (Ctrl/Cmd+Z) and ensure the node is removed (Kernel history snapshot equality).
 
 5. Tests:
-- Run kernel unit tests and e2e scenario for the misbehaving-plugin sandbox test (see `tests/plugins/misbehaving-plugin.spec.ts`).
+- Run kernel unit tests and e2e scenario for the misbehaving-plugin sandbox test (see `tests/widgets/misbehaving-plugin.spec.ts`).
 
 

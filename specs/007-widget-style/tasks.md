@@ -18,9 +18,9 @@
 **⚠️ CRITICAL**: Complete this phase before starting any user story tasks.
 
 - [X] T003 Add serializable Controls contract schema/types in packages/thingsvis-schema/src/plugin-controls.ts
-- [X] T004 Extend PluginMainModule to include optional controls in packages/thingsvis-schema/src/plugin-module.ts
+- [X] T004 Extend WidgetMainModule to include optional controls in packages/thingsvis-schema/src/plugin-module.ts
 - [X] T005 Export Controls contract from packages/thingsvis-schema/src/index.ts
-- [X] T006 [P] Add Controls safe-parse helper for Studio in apps/studio/src/plugins/getPluginControls.ts
+- [X] T006 [P] Add Controls safe-parse helper for Studio in apps/studio/src/widgets/getWidgetControls.ts
 - [X] T007 [P] Implement binding read/write helpers (static/field/expr) in apps/studio/src/components/RightPanel/bindingStorage.ts
 - [X] T008 [P] Implement depth/size-limited field path traversal in apps/studio/src/components/RightPanel/fieldPath.ts
 - [X] T009 [P] Implement Field Picker UI (dataSource + field selection) in apps/studio/src/components/RightPanel/FieldPicker.tsx
@@ -71,7 +71,7 @@
 - [X] T021 [US3] Add Expr editor UI for Controls fields in apps/studio/src/components/RightPanel/ControlFieldRow.tsx
 - [X] T022 [US3] Validate expression format (`/^\{\{.*\}\}$/`) and block invalid saves in apps/studio/src/components/RightPanel/ControlFieldRow.tsx
 - [X] T023 [US3] Implement binding mode detection heuristic (field vs expr) in apps/studio/src/components/RightPanel/bindingStorage.ts
-- [X] T024 [US3] Surface dev-only diagnostics when Controls are invalid and fallback is used in apps/studio/src/plugins/getPluginControls.ts
+- [X] T024 [US3] Surface dev-only diagnostics when Controls are invalid and fallback is used in apps/studio/src/widgets/getWidgetControls.ts
 
 **Checkpoint**: US3 acceptance scenario in `spec.md` passes for at least one field.
 
@@ -109,7 +109,7 @@
 
 ### Foundational (after T005)
 
-- T006 (apps/studio/src/plugins/getPluginControls.ts)
+- T006 (apps/studio/src/widgets/getWidgetControls.ts)
 - T007 (apps/studio/src/components/RightPanel/bindingStorage.ts)
 - T008 (apps/studio/src/components/RightPanel/fieldPath.ts)
 - T009 (apps/studio/src/components/RightPanel/FieldPicker.tsx)

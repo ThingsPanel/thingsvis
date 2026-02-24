@@ -34,7 +34,7 @@ program
     }
 
     const componentId = `${category}/${name}`;
-    const packageName = `thingsvis-plugin-${category}-${name}`;
+    const packageName = `thingsvis-widget-${category}-${name}`;
 
     let port = options.port;
     if (!port) {

@@ -9,14 +9,14 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { useSyncExternalStore } from 'react';
 import { GridStack } from 'gridstack';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
-import type { GridSettings, PluginOverlayContext } from '@thingsvis/schema';
+import type { GridSettings, WidgetOverlayContext } from '@thingsvis/schema';
 import { PropertyResolver } from '../engine/PropertyResolver';
 import { usePlatformData } from '../hooks/usePlatformData';
 
 export interface GridStackCanvasProps {
   store: KernelStore;
   settings?: GridSettings;
-  resolvePlugin?: (type: string) => Promise<any>;
+  resolveWidget?: (type: string) => Promise<any>;
   onNodeChange?: (nodeId: string, position: { x: number; y: number; w: number; h: number }) => void;
   onDropComponent?: (componentType: string, gridPosition: { x: number; y: number; w: number; h: number }) => void;
   /** Fixed width in pixels, or undefined for 100% */
@@ -35,12 +35,12 @@ export interface GridStackCanvasProps {
   onZoomChange?: (zoom: number) => void;
 }
 
-// Cache for loaded plugins
-const pluginCache = new Map<string, any>();
-// Track which nodes have been rendered with plugins
-const renderedOverlays = new Map<string, { update?: (ctx: PluginOverlayContext) => void; destroy?: () => void }>();
+// Cache for loaded widgets
+const widgetCache = new Map<string, any>();
+// Track which nodes have been rendered with widgets
+const renderedOverlays = new Map<string, { update?: (ctx: WidgetOverlayContext) => void; destroy?: () => void }>();
 
-function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>): PluginOverlayContext {
+function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>): WidgetOverlayContext {
   const schema = node.schemaRef as any;
   // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定和Platform字段绑定）
   const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources, platformData);
@@ -60,7 +60,7 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?
 export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   store,
   settings,
-  resolvePlugin,
+  resolveWidget,
   onNodeChange,
   onDropComponent,
   width,
@@ -97,7 +97,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   // Handle drop from external drag source (ComponentsList)
   const handleDragOver = useCallback((e: React.DragEvent) => {
     if (!interactive) return;
-    if (e.dataTransfer.types.includes('application/thingsvis-plugin')) {
+    if (e.dataTransfer.types.includes('application/thingsvis-widget')) {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'copy';
     }
@@ -106,7 +106,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   const handleDrop = useCallback((e: React.DragEvent) => {
     if (!interactive) return;
     e.preventDefault();
-    const data = e.dataTransfer.getData('application/thingsvis-plugin');
+    const data = e.dataTransfer.getData('application/thingsvis-widget');
     if (!data || !onDropComponent) return;
 
     try {
@@ -300,9 +300,9 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         grid.makeWidget(itemEl);
       }
 
-      // Load and render the actual plugin
-      if (resolvePlugin) {
-        loadAndRenderPlugin(node, nodeType, contentEl);
+      // Load and render the actual widget
+      if (resolveWidget) {
+        loadAndRenderWidget(node, nodeType, contentEl);
       }
     });
 
@@ -319,27 +319,27 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         if (el) grid.removeWidget(el, true);
       }
     });
-  }, [nodes, resolvePlugin]);
+  }, [nodes, resolveWidget]);
 
-  // Function to load plugin and render overlay
-  const loadAndRenderPlugin = useCallback(async (node: NodeState, nodeType: string, contentEl: HTMLElement) => {
-    if (!resolvePlugin) return;
+  // Function to load widget and render overlay
+  const loadAndRenderWidget = useCallback(async (node: NodeState, nodeType: string, contentEl: HTMLElement) => {
+    if (!resolveWidget) return;
 
     try {
       // Check cache first
-      let plugin = pluginCache.get(nodeType);
-      if (!plugin) {
-        plugin = await resolvePlugin(nodeType);
-        pluginCache.set(nodeType, plugin);
+      let widget = widgetCache.get(nodeType);
+      if (!widget) {
+        widget = await resolveWidget(nodeType);
+        widgetCache.set(nodeType, widget);
       }
 
       // Clear loading placeholder
       contentEl.innerHTML = '';
 
-      // If plugin has createOverlay, use it
-      if (plugin.createOverlay) {
+      // If widget has createOverlay, use it
+      if (widget.createOverlay) {
         const context = nodeToOverlayContext(node, store);
-        const overlay = plugin.createOverlay(context);
+        const overlay = widget.createOverlay(context);
 
         if (overlay.element) {
           overlay.element.style.width = '100%';
@@ -360,7 +360,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#e53e3e;font-size:12px;">Error: ${nodeType}</div>`;
     }
-  }, [resolvePlugin, store]);
+  }, [resolveWidget, store]);
 
   // Update existing overlays when node props change (for data source and platform data updates)
   // Note: We watch dataSources and platformData explicitly since props may contain bindings

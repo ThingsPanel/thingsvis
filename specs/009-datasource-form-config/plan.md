@@ -83,7 +83,7 @@ apps/studio/src/
 │       └── InitMessagesSection.tsx
 ```
 
-**Structure Decision**: 遵循现有 monorepo 结构，Schema 层扩展在 `packages/thingsvis-schema`，Kernel 层增强在 `packages/thingsvis-kernel`，UI 层新组件在 `apps/studio/src/components/ui` (可复用) 和 `apps/studio/src/plugins/DataSourceConfig` (表单专用)。
+**Structure Decision**: 遵循现有 monorepo 结构，Schema 层扩展在 `packages/thingsvis-schema`，Kernel 层增强在 `packages/thingsvis-kernel`，UI 层新组件在 `apps/studio/src/components/ui` (可复用) 和 `apps/studio/src/widgets/DataSourceConfig` (表单专用)。
 
 ## Complexity Tracking
 

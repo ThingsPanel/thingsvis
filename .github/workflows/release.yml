@@ -67,14 +67,14 @@ jobs:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
-      - name: Build Plugins
-        run: pnpm run build:plugins
+      - name: Build Widgets
+        run: pnpm run build:widgets
 
       # ── Package tar.gz ─────────────────────────────────────
       - name: Package release archive
         run: |
           VERSION="${{ steps.version.outputs.tag }}"
-          mkdir -p release/server release/studio release/plugins
+          mkdir -p release/server release/studio release/widgets
 
           # Server (Next.js standalone)
           cp -r apps/server/.next/standalone/. release/server/
@@ -94,16 +94,16 @@ jobs:
           # Studio (static SPA)
           [ -d apps/studio/dist ] && cp -r apps/studio/dist/. release/studio/ && echo "✅ Studio packaged"
 
-          # Plugins
-          for dir in plugins/*/*/; do
+          # Widgets
+          for dir in widgets/*/*/; do
             if [ -d "${dir}dist" ]; then
-              rel_path="${dir#plugins/}"
+              rel_path="${dir#widgets/}"
               rel_path="${rel_path%/}"
-              mkdir -p "release/plugins/${rel_path}"
-              cp -r "${dir}dist" "release/plugins/${rel_path}/"
+              mkdir -p "release/widgets/${rel_path}"
+              cp -r "${dir}dist" "release/widgets/${rel_path}/"
             fi
           done
-          echo "✅ Plugins packaged"
+          echo "✅ Widgets packaged"
 
           # Nginx config + docker-compose
           cp .deploy/thingsvis.conf release/thingsvis.conf 2>/dev/null || echo "⚠️  No nginx config found"

@@ -14,9 +14,9 @@ Implement the L1 Plugin Layer by introducing a registry-driven Module Federation
 ### Implementation Outline (what we will build)
 
 - **Build system (shared plugins config)**:
-  - Add `F:/coding/thingsvis/configs/rspack-plugin.config.js` as the shared Rspack configuration used by all plugin packages.
+  - Add `F:/coding/thingsvis/configs/rspack-widget.config.js` as the shared Rspack configuration used by all plugin packages.
   - It discovers `src/index.ts` (or fails with a clear error) and configures MF2 with:
-    - `name` derived from the plugin’s `package.json`
+    - `name` derived from the widget’s `package.json`
     - `exposes: { './Main': './src/index' }`
     - `shared` singletons for `react`, `react-dom`, `leafer-ui`, and `@thingsvis/*`
   - MVP constraint: disable plugin code-splitting to keep the remote loadable from a cached `remoteEntry.js`.
@@ -107,10 +107,10 @@ apps/
 packages/
 ├── thingsvis-kernel/          # UniversalLoader + cache boundary, store/event-bus, safe executor
 ├── thingsvis-schema/          # Zod types; registry types can live here if shared across host/plugin
-└── thingsvis-ui/              # VisualEngine + headless error boundary; consumes plugin renderers
+└── thingsvis-ui/              # VisualEngine + headless error boundary; consumes widget renderers
 
 configs/
-└── rspack-plugin.config.js    # Shared plugin Rspack + MF2 config (used by all plugins)
+└── rspack-widget.config.js    # Shared plugin Rspack + MF2 config (used by all plugins)
 
 tools/
 └── cli/                       # vis-cli (scaffold generator)

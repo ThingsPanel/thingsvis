@@ -227,13 +227,13 @@ class MyChartComponent implements IVisualComponent {
 }
 ```
 
-### Implementing IPluginFactory
+### Implementing IWidgetFactory
 
 ```typescript
-import { IPluginFactory, IVisualComponent } from '@thingsvis/kernel';
+import { IWidgetFactory, IVisualComponent } from '@thingsvis/kernel';
 import { MyChartComponent } from './my-chart-component';
 
-class MyPluginFactory implements IPluginFactory {
+class MyPluginFactory implements IWidgetFactory {
   private componentMap = new Map<string, () => IVisualComponent>([
     ['echarts-bar', () => new MyChartComponent()],
     ['custom-widget', () => new CustomWidgetComponent()],
@@ -308,7 +308,7 @@ Complete example combining schemas and interfaces:
 
 ```typescript
 import { PageSchema, VisualComponentSchema } from '@thingsvis/schema';
-import { IPluginFactory, IVisualComponent } from '@thingsvis/kernel';
+import { IWidgetFactory, IVisualComponent } from '@thingsvis/kernel';
 
 // 1. Validate page schema
 const pageData = { /* ... */ };
@@ -320,7 +320,7 @@ if (!pageResult.success) {
 const page = pageResult.data;
 
 // 2. Create components from page definition
-const factory: IPluginFactory = /* ... */;
+const factory: IWidgetFactory = /* ... */;
 
 for (const componentData of page.content.nodes) {
   // Validate component schema

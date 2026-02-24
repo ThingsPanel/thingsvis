@@ -14,7 +14,7 @@
     "@thingsvis/schema": "workspace:*"
   },
   "dependencies": {
-    "@thingsvis/plugin-sdk": "workspace:*"
+    "@thingsvis/widget-sdk": "workspace:*"
   },
   "devDependencies": {
     "@rspack/cli": "^1.0.0",

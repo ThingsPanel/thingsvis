@@ -5,11 +5,11 @@
 
 ## Purpose
 
-Define what a plugin must expose via Module Federation so the host can instantiate and render it.
+Define what a widget must expose via Module Federation so the host can instantiate and render it.
 
 ## Exposed Module Name
 
-- Each plugin remote MUST expose `./Main` (mapped to `./src/index` in the plugin package).
+- Each plugin remote MUST expose `./Main` (mapped to `./src/index` in the widget package).
 
 ## Export Shape (MVP)
 
@@ -18,7 +18,7 @@ Each plugin’s `./Main` module exports:
 ```ts
 export type ComponentId = string; // e.g. "basic/rect"
 
-export type PluginMainModule = {
+export type WidgetMainModule = {
   componentId: ComponentId;
   /**
    * Creates a new renderer instance for this component.

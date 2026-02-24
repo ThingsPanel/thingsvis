@@ -3,6 +3,7 @@
 > **优先级**：🔴 P0 发版阻塞
 > **预估工时**：0.5-1 人天
 > **前置依赖**：TASK-01（仓库迁移后操作）
+> **状态**：✅ 已完成（2026-02-24）— LICENSE(Apache-2.0)、.env.example、ErrorBoundary、版本号→0.1.0、preview 删除、release.yml 修复
 
 ---
 

@@ -149,7 +149,7 @@ Panel Plugin
 
 ```typescript
 // Grafana 的 module.ts
-export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
+export const widget = new PanelPlugin<Options, FieldConfig>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
   .useFieldConfig({
@@ -326,13 +326,13 @@ export const controls = generateControls(PropsSchema, {
 
 ### 1. SDK 层面 - 让开发者只关注核心
 
-#### 1.1 创建 `@thingsvis/plugin-sdk` 包
+#### 1.1 创建 `@thingsvis/widget-sdk` 包
 
 ```typescript
 // 开发者只需：
-import { definePlugin, createOverlay } from '@thingsvis/plugin-sdk';
+import { defineWidget, createOverlay } from '@thingsvis/widget-sdk';
 
-export default definePlugin({
+export default defineWidget({
   id: 'chart-echarts-line',
   name: '折线图',
   category: 'chart',
@@ -524,8 +524,8 @@ export const controls = generateControls(PropsSchema, {
 
 ### Phase 1: SDK 基础 (2周)
 
-- [ ] 创建 `@thingsvis/plugin-sdk` 包
-- [ ] 实现 `definePlugin()` 简化入口
+- [ ] 创建 `@thingsvis/widget-sdk` 包
+- [ ] 实现 `defineWidget()` 简化入口
 - [ ] 抽取 `generateControls` 到公共包
 - [ ] 预置 BasePropsSchema
 

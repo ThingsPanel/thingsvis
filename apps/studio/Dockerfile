@@ -1,5 +1,5 @@
 # ===================================
-# Stage 1: Build Studio + Plugins
+# Stage 1: Build Studio + Widgets
 # ===================================
 FROM node:20-alpine AS builder
 
@@ -11,7 +11,7 @@ RUN npm install -g pnpm@8
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/studio/package.json ./apps/studio/
 COPY packages/ ./packages/
-COPY plugins/ ./plugins/
+COPY widgets/ ./widgets/
 COPY configs/ ./configs/
 
 RUN pnpm install --frozen-lockfile
@@ -22,9 +22,9 @@ COPY apps/studio ./apps/studio
 WORKDIR /app/apps/studio
 RUN pnpm build
 
-# Build Plugins
+# Build Widgets
 WORKDIR /app
-RUN pnpm run build:plugins || echo "Warning: some plugins failed to build"
+RUN pnpm run build:widgets || echo "Warning: some widgets failed to build"
 
 # ===================================
 # Stage 2: Serve with Nginx
@@ -34,20 +34,20 @@ FROM nginx:alpine
 # Copy Studio SPA
 COPY --from=builder /app/apps/studio/dist /usr/share/nginx/html
 
-# Copy Plugin build outputs
-COPY --from=builder /app/plugins /tmp/plugins-src
+# Copy Widget build outputs
+COPY --from=builder /app/widgets /tmp/widgets-src
 
-# Copy only dist folders from plugins into nginx html
-RUN mkdir -p /usr/share/nginx/html/plugins && \
-    for dir in /tmp/plugins-src/*/*/; do \
+# Copy only dist folders from widgets into nginx html
+RUN mkdir -p /usr/share/nginx/html/widgets && \
+    for dir in /tmp/widgets-src/*/*/; do \
     if [ -d "${dir}dist" ]; then \
-    rel_path="${dir#/tmp/plugins-src/}"; \
+    rel_path="${dir#/tmp/widgets-src/}"; \
     rel_path="${rel_path%/}"; \
-    mkdir -p "/usr/share/nginx/html/plugins/${rel_path}"; \
-    cp -r "${dir}dist" "/usr/share/nginx/html/plugins/${rel_path}/"; \
+    mkdir -p "/usr/share/nginx/html/widgets/${rel_path}"; \
+    cp -r "${dir}dist" "/usr/share/nginx/html/widgets/${rel_path}/"; \
     fi; \
     done && \
-    rm -rf /tmp/plugins-src
+    rm -rf /tmp/widgets-src
 
 # Nginx config: SPA fallback + API reverse proxy + static cache
 RUN printf 'server {\n\

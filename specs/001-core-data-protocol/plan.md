@@ -74,7 +74,7 @@ packages/
     │   ├── index.ts          # Aggregates exports from interfaces/
     │   ├── interfaces/
     │   │   ├── visual-component.ts    # IVisualComponent interface
-    │   │   └── plugin-factory.ts      # IPluginFactory interface
+    │   │   └── plugin-factory.ts      # IWidgetFactory interface
     │   └── event-bus.ts      # Existing EventBus (unchanged)
     ├── package.json
     ├── tsconfig.json
@@ -144,7 +144,7 @@ No violations. This feature aligns with all constitution principles:
    - Document method contracts and expected behavior
 
 5. **Kernel Package - Plugin Factory Interface** (`packages/thingsvis-kernel/src/interfaces/plugin-factory.ts`):
-   - Define `IPluginFactory` interface with `create(type: string)` method
+   - Define `IWidgetFactory` interface with `create(type: string)` method
    - Return type must be `IVisualComponent` or throw error
    - Ensure no `any` types in interface definition
    - Document factory contract and error handling
@@ -163,7 +163,7 @@ No violations. This feature aligns with all constitution principles:
 **Output**: 
 - `data-model.md` - Entity relationships and validation rules
 - `contracts/visual-component.md` - IVisualComponent contract specification
-- `contracts/plugin-factory.md` - IPluginFactory contract specification
+- `contracts/plugin-factory.md` - IWidgetFactory contract specification
 - `quickstart.md` - Usage examples and integration guide
 
 ### Phase 2: Validation & Documentation

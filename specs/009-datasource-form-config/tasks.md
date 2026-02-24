@@ -74,10 +74,10 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 1
 
-- [X] T020 [US1] Create HeadersSection component in `apps/studio/src/plugins/DataSourceConfig/sections/HeadersSection.tsx` using KeyValueEditor
-- [X] T021 [US1] Create AuthSection component in `apps/studio/src/plugins/DataSourceConfig/sections/AuthSection.tsx` using AuthSelector
-- [X] T022 [US1] Create TimeoutSection component in `apps/studio/src/plugins/DataSourceConfig/sections/TimeoutSection.tsx` (number input with 1-300 range)
-- [X] T023 [US1] Refactor RESTForm to use section layout in `apps/studio/src/plugins/DataSourceConfig/RESTForm.tsx` - integrate HeadersSection, AuthSection, TimeoutSection
+- [X] T020 [US1] Create HeadersSection component in `apps/studio/src/widgets/DataSourceConfig/sections/HeadersSection.tsx` using KeyValueEditor
+- [X] T021 [US1] Create AuthSection component in `apps/studio/src/widgets/DataSourceConfig/sections/AuthSection.tsx` using AuthSelector
+- [X] T022 [US1] Create TimeoutSection component in `apps/studio/src/widgets/DataSourceConfig/sections/TimeoutSection.tsx` (number input with 1-300 range)
+- [X] T023 [US1] Refactor RESTForm to use section layout in `apps/studio/src/widgets/DataSourceConfig/RESTForm.tsx` - integrate HeadersSection, AuthSection, TimeoutSection
 - [X] T024 [US1] Add form validation for required fields (URL) and timeout range in RESTForm
 - [X] T025 [US1] Update "Test Connection" logic to use enhanced RESTAdapter with auth/headers/timeout
 
@@ -93,8 +93,8 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 2
 
-- [X] T026 [US2] Create BodySection component in `apps/studio/src/plugins/DataSourceConfig/sections/BodySection.tsx` using JsonEditor with real-time validation
-- [X] T027 [US2] Integrate BodySection into RESTForm with conditional visibility (show only for POST/PUT) in `apps/studio/src/plugins/DataSourceConfig/RESTForm.tsx`
+- [X] T026 [US2] Create BodySection component in `apps/studio/src/widgets/DataSourceConfig/sections/BodySection.tsx` using JsonEditor with real-time validation
+- [X] T027 [US2] Integrate BodySection into RESTForm with conditional visibility (show only for POST/PUT) in `apps/studio/src/widgets/DataSourceConfig/RESTForm.tsx`
 - [X] T028 [US2] Add JSON validation error display in BodySection (parse error message from Zod/JSON.parse)
 - [X] T029 [US2] Update RESTAdapter to send body with Content-Type: application/json in `packages/thingsvis-kernel/src/datasources/RESTAdapter.ts`
 
@@ -110,8 +110,8 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 3
 
-- [X] T030 [US3] Create ReconnectSection component in `apps/studio/src/plugins/DataSourceConfig/sections/ReconnectSection.tsx` (enabled switch, maxAttempts, initialInterval, exponentialBackoff toggle, maxInterval)
-- [X] T031 [US3] Refactor WSForm to use section layout in `apps/studio/src/plugins/DataSourceConfig/WSForm.tsx` - integrate ReconnectSection
+- [X] T030 [US3] Create ReconnectSection component in `apps/studio/src/widgets/DataSourceConfig/sections/ReconnectSection.tsx` (enabled switch, maxAttempts, initialInterval, exponentialBackoff toggle, maxInterval)
+- [X] T031 [US3] Refactor WSForm to use section layout in `apps/studio/src/widgets/DataSourceConfig/WSForm.tsx` - integrate ReconnectSection
 - [X] T032 [US3] Add form validation for reconnect config (ranges: maxAttempts 0-100, intervals valid numbers)
 - [X] T033 [US3] Add connection status display showing current reconnect attempt count in WSForm
 
@@ -127,8 +127,8 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 4
 
-- [X] T034 [US4] Create HeartbeatSection component in `apps/studio/src/plugins/DataSourceConfig/sections/HeartbeatSection.tsx` (enabled switch, interval, message input)
-- [X] T035 [US4] Integrate HeartbeatSection into WSForm in `apps/studio/src/plugins/DataSourceConfig/WSForm.tsx`
+- [X] T034 [US4] Create HeartbeatSection component in `apps/studio/src/widgets/DataSourceConfig/sections/HeartbeatSection.tsx` (enabled switch, interval, message input)
+- [X] T035 [US4] Integrate HeartbeatSection into WSForm in `apps/studio/src/widgets/DataSourceConfig/WSForm.tsx`
 - [X] T036 [US4] Add form validation for heartbeat config (interval 5-300 range)
 
 **Checkpoint**: WebSocket heartbeat configuration fully functional - User Story 4 complete ✅
@@ -143,8 +143,8 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 5
 
-- [X] T037 [US5] Create InitMessagesSection component in `apps/studio/src/plugins/DataSourceConfig/sections/InitMessagesSection.tsx` (list with add/remove, each item is a textarea)
-- [X] T038 [US5] Integrate InitMessagesSection into WSForm in `apps/studio/src/plugins/DataSourceConfig/WSForm.tsx`
+- [X] T037 [US5] Create InitMessagesSection component in `apps/studio/src/widgets/DataSourceConfig/sections/InitMessagesSection.tsx` (list with add/remove, each item is a textarea)
+- [X] T038 [US5] Integrate InitMessagesSection into WSForm in `apps/studio/src/widgets/DataSourceConfig/WSForm.tsx`
 - [X] T039 [US5] Add ordering controls (move up/down) for init messages in InitMessagesSection
 
 **Checkpoint**: WebSocket init messages configuration fully functional - User Story 5 complete ✅
@@ -159,8 +159,8 @@ Based on plan.md project structure:
 
 ### Implementation for User Story 6
 
-- [X] T040 [US6] Create ProtocolsSection component in `apps/studio/src/plugins/DataSourceConfig/sections/ProtocolsSection.tsx` (comma-separated input or tag input)
-- [X] T041 [US6] Integrate ProtocolsSection into WSForm in `apps/studio/src/plugins/DataSourceConfig/WSForm.tsx`
+- [X] T040 [US6] Create ProtocolsSection component in `apps/studio/src/widgets/DataSourceConfig/sections/ProtocolsSection.tsx` (comma-separated input or tag input)
+- [X] T041 [US6] Integrate ProtocolsSection into WSForm in `apps/studio/src/widgets/DataSourceConfig/WSForm.tsx`
 
 **Checkpoint**: WebSocket subprotocols configuration fully functional - User Story 6 complete ✅
 

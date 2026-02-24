@@ -13,7 +13,7 @@
 
 ## Path Conventions
 
-- **Monorepo (ThingsVis)**: `apps/studio/`, `apps/preview/`, `packages/thingsvis-kernel/`, `packages/thingsvis-schema/`, `packages/thingsvis-ui/`, `packages/plugins/*`
+- **Monorepo (ThingsVis)**: `apps/studio/`, `apps/preview/`, `packages/thingsvis-kernel/`, `packages/thingsvis-schema/`, `packages/thingsvis-ui/`, `packages/widgets/*`
 - **Tests**: colocate per package when possible; integration/contract tests can live under `apps/*/tests/` or `packages/*/tests/`
 
 ---
@@ -23,7 +23,7 @@
 **Purpose**: Project initialization and basic structure
 
 - [x] T001 [P] Create `specs/005-studio-kernel-integration/contracts/kernel-actions.md` if not already present
-- [x] T002 Initialize `apps/studio/src/plugins/registryClient.ts` to fetch `registry.json` from dev/preview server
+- [x] T002 Initialize `apps/studio/src/widgets/registryClient.ts` to fetch `registry.json` from dev/preview server
 
 ---
 
@@ -96,12 +96,12 @@
 
 **Goal**: Ensure all edits are undoable and single component failures do not crash the app.
 
-**Independent Test**: Perform multiple edits, Undo/Redo them. Trigger a plugin error and verify only that node shows an error placeholder.
+**Independent Test**: Perform multiple edits, Undo/Redo them. Trigger a widget error and verify only that node shows an error placeholder.
 
 ### Implementation for User Story 4
 
 - [x] T020 [US4] Implement `Command` wrapper for `Moveable` interactions to ensure discrete history steps in `apps/studio/src/lib/StudioCmdStack.ts`
-- [x] T021 [P] [US4] Integrate `HeadlessErrorBoundary` in `packages/thingsvis-ui/src/engine/renderers/pluginRenderer.ts`
+- [x] T021 [P] [US4] Integrate `HeadlessErrorBoundary` in `packages/thingsvis-ui/src/engine/renderers/widgetRenderer.ts`
 - [x] T022 [US4] Configure `zundo` (temporal) history limit and filters in `packages/thingsvis-kernel/src/store/KernelStore.ts`
 - [x] T023 [P] [US4] Add E2E tests for Undo/Redo stability in `apps/studio/tests/dnd-undo.spec.ts`
 

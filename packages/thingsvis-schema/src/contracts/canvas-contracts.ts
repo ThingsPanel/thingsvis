@@ -6,7 +6,7 @@ export type CanvasNode = Node;
 export type CanvasSelectionState = SelectionState;
 
 export interface RegisterPluginMeta {
-  pluginId: string;
+  widgetId: string;
   version?: string;
   capabilities?: string[];
 }

@@ -90,7 +90,7 @@ apps/
       │       ├── constants.ts               # add tool command ids/shortcuts
       │       └── defaultCommands.ts         # register tool commands
       └── plugins/
-          └── pluginResolver.ts              # registry-based plugin loading
+          └── widgetResolver.ts              # registry-based plugin loading
 
 plugins/
 ├── basic/

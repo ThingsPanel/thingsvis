@@ -135,7 +135,7 @@ export default function ComponentsList({ onInsert: _onInsert, language }: { onIn
       staticEntryUrl: entry.staticEntryUrl,
       exposedModule: entry.exposedModule,
     });
-    e.dataTransfer.setData("application/thingsvis-plugin", payload);
+    e.dataTransfer.setData("application/thingsvis-widget", payload);
     e.dataTransfer.effectAllowed = "copy";
   }
 

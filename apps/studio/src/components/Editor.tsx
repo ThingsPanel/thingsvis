@@ -58,8 +58,8 @@ import PropsPanel from './RightPanel/PropsPanel'
 import { ShortcutHelpPanel } from './ShortcutHelpPanel'
 import { ProjectDialog } from './ProjectDialog'
 // Data source management moved to separate page: #/data-sources
-import { loadPlugin } from '../plugins/pluginResolver'
-import { extractDefaults } from '../plugins/schemaUtils'
+import { loadWidget } from '../widgets/widgetResolver'
+import { extractDefaults } from '../widgets/schemaUtils'
 import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
@@ -981,7 +981,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   const handleAddNode = useCallback(async (componentType: string) => {
     try {
-      const { entry } = await loadPlugin(componentType)
+      const { entry } = await loadWidget(componentType)
       const defaultProps = extractDefaults(entry.schema)
       const now = Date.now()
 
@@ -1105,8 +1105,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     { key: "?", action: language === "zh" ? "快捷键帮助" : "Keyboard Shortcuts" },
   ]
 
-  const resolvePlugin = useCallback(async (type: string) => {
-    const { entry } = await loadPlugin(type);
+  const resolveWidget = useCallback(async (type: string) => {
+    const { entry } = await loadWidget(type);
     return entry;
   }, []);
 
@@ -1134,7 +1134,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               compactVertical: true,
               responsive: [],
             }}
-            resolvePlugin={resolvePlugin}
+            resolveWidget={resolveWidget}
             onNodeChange={(nodeId, position) => {
               // Update node grid position in kernel store
               const state = store.getState();
@@ -1149,7 +1149,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             onDropComponent={async (componentType, gridPosition) => {
               // Handle component dropped from sidebar
               try {
-                const { entry } = await loadPlugin(componentType);
+                const { entry } = await loadWidget(componentType);
                 const defaultProps = extractDefaults(entry.schema);
                 const now = Date.now();
                 const node = {
@@ -1177,7 +1177,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             pageId={canvasConfig.id}
             store={store}
             activeTool={activeTool}
-            resolvePlugin={resolvePlugin}
+            resolveWidget={resolveWidget}
             zoom={zoom / 100}
             onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             onUserEdit={markDirty}

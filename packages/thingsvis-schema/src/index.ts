@@ -48,7 +48,7 @@ export {
   type GridPosition,
 } from './grid';
 
-// Export plugin registry schemas and types (L1 plugin layer)
+// Export widget registry schemas and types (L1 widget layer)
 export {
   ComponentRegistrySchema,
   ComponentRegistryEntrySchema,
@@ -56,11 +56,11 @@ export {
   type ComponentRegistryEntry
 } from './component-registry';
 
-// Export plugin remote module contract types (L1 plugin layer)
-export { type PluginMainModule, type PluginComponentId, type PluginOverlayContext } from './plugin-module';
+// Export widget remote module contract types (L1 widget layer)
+export { type WidgetMainModule, type WidgetComponentId, type WidgetOverlayContext } from './widget-module';
 
-// Export plugin controls contract types/schemas (Studio dynamic panel)
-export * from './plugin-controls';
+// Export widget controls contract types/schemas (Studio dynamic panel)
+export * from './widget-controls';
 
 // Export datasource schemas and types
 export * from './datasource/index';

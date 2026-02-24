@@ -5,16 +5,16 @@
   "width": 1920,
   "height": 1080,
   "nodes": [
-    {"id":"n-1","pluginId":"basic/rect","x":0,"y":0,"width":100,"height":80},
-    {"id":"n-2","pluginId":"basic/rect","x":120,"y":0,"width":100,"height":80},
-    {"id":"n-3","pluginId":"basic/rect","x":240,"y":0,"width":100,"height":80},
-    {"id":"n-4","pluginId":"basic/rect","x":360,"y":0,"width":100,"height":80},
-    {"id":"n-5","pluginId":"basic/rect","x":480,"y":0,"width":100,"height":80},
-    {"id":"n-6","pluginId":"basic/rect","x":600,"y":0,"width":100,"height":80},
-    {"id":"n-7","pluginId":"basic/rect","x":720,"y":0,"width":100,"height":80},
-    {"id":"n-8","pluginId":"basic/rect","x":840,"y":0,"width":100,"height":80},
-    {"id":"n-9","pluginId":"basic/rect","x":960,"y":0,"width":100,"height":80},
-    {"id":"n-10","pluginId":"basic/rect","x":1080,"y":0,"width":100,"height":80}
+    {"id":"n-1","widgetId":"basic/rect","x":0,"y":0,"width":100,"height":80},
+    {"id":"n-2","widgetId":"basic/rect","x":120,"y":0,"width":100,"height":80},
+    {"id":"n-3","widgetId":"basic/rect","x":240,"y":0,"width":100,"height":80},
+    {"id":"n-4","widgetId":"basic/rect","x":360,"y":0,"width":100,"height":80},
+    {"id":"n-5","widgetId":"basic/rect","x":480,"y":0,"width":100,"height":80},
+    {"id":"n-6","widgetId":"basic/rect","x":600,"y":0,"width":100,"height":80},
+    {"id":"n-7","widgetId":"basic/rect","x":720,"y":0,"width":100,"height":80},
+    {"id":"n-8","widgetId":"basic/rect","x":840,"y":0,"width":100,"height":80},
+    {"id":"n-9","widgetId":"basic/rect","x":960,"y":0,"width":100,"height":80},
+    {"id":"n-10","widgetId":"basic/rect","x":1080,"y":0,"width":100,"height":80}
     // NOTE: truncated — in practice generate up to 1000 nodes via script
   ]
 }
