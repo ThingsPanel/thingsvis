@@ -10,7 +10,8 @@ Thumbs.db
 .idea/
 .vscode/
 .next/
-
+.claude/
+deploy/
 *.tar
 *.tar.gz
 *.zip
@@ -18,8 +19,6 @@ Thumbs.db
 .cursor/
 .cursorrules
 .specify/
-
-.tmp/
 
 test_*.js
 *_request.json
@@ -29,9 +28,7 @@ sso_request.json
 *.sqlite
 *.sqlite3
 
+.tmp/
 apps/server/public/uploads/
 
-# 部署临时产物
-deploy/
 
-.claude/
