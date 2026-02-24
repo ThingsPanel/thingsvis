@@ -21,8 +21,6 @@ deploy/
 .specify/
 
 test_*.js
-*_request.json
-sso_request.json
 
 *.db
 *.sqlite
