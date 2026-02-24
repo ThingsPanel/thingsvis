@@ -161,8 +161,8 @@ jobs:
               export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
             fi
 
-            NODE_ENV=production PORT=7051 AUTH_TRUST_HOST=true pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production PORT=7051 AUTH_TRUST_HOST=true pm2 restart thingsvis-server --update-env
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true pm2 restart thingsvis-server --update-env
             pm2 save
 
             # --- Deploy Studio ---
