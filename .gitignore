@@ -11,21 +11,27 @@ Thumbs.db
 .vscode/
 .next/
 
-# 构建产物打包文件
 *.tar
 *.tar.gz
 *.zip
 
-# AI 编辑器工具配置（本地专用）
-.claude/
 .cursor/
 .cursorrules
 .specify/
 
-# 临时目录
 .tmp/
 
-# 测试/调试脚本（本地专用）
 test_*.js
 *_request.json
 sso_request.json
+
+*.db
+*.sqlite
+*.sqlite3
+
+apps/server/public/uploads/
+
+# 部署临时产物
+deploy/
+
+.claude/

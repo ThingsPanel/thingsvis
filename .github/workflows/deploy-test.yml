@@ -196,5 +196,5 @@ jobs:
             echo "=== Deployment complete ==="
             pm2 list
             echo ""
-            echo "🔗 Studio:  http://47.92.253.145:7050/"
-            echo "🔗 Preview: http://47.92.253.145:7050/preview/"
+            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST }}:7050/"
+            echo "🔗 Preview: http://${{ secrets.DEPLOY_HOST }}:7050/preview/"
