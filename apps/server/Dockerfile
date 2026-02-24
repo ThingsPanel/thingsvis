@@ -36,7 +36,7 @@ COPY . .
 WORKDIR /app/apps/server
 ARG DATABASE_URL="file:./prisma/dev.db"
 ARG AUTH_SECRET="build-placeholder-secret-replace-in-production"
-ARG AUTH_URL="http://localhost:3001"
+ARG AUTH_URL="http://localhost:8000"
 
 RUN npx prisma generate
 RUN pnpm build
@@ -50,7 +50,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=3001
+ENV PORT=8000
 ENV AUTH_TRUST_HOST=true
 
 # Copy Next.js standalone output
@@ -63,13 +63,16 @@ COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
 COPY --from=builder /app/apps/server/node_modules/.prisma ./apps/server/node_modules/.prisma
 COPY --from=builder /app/apps/server/node_modules/@prisma ./apps/server/node_modules/@prisma
 
+# Copy seed script + dependencies for first-run seeding
+COPY --from=builder /app/apps/server/scripts ./apps/server/scripts
+
 # Entrypoint script: run prisma db push then start server
 COPY apps/server/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
-EXPOSE 3001
+EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3001/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/api/health || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]

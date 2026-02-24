@@ -1,5 +1,5 @@
 # ===================================
-# Stage 1: Build
+# Stage 1: Build Studio + Plugins
 # ===================================
 FROM node:20-alpine AS builder
 
@@ -11,32 +11,70 @@ RUN npm install -g pnpm@8
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/studio/package.json ./apps/studio/
 COPY packages/ ./packages/
+COPY plugins/ ./plugins/
+COPY configs/ ./configs/
 
 RUN pnpm install --frozen-lockfile
 
 COPY apps/studio ./apps/studio
 
+# Build Studio
 WORKDIR /app/apps/studio
 RUN pnpm build
+
+# Build Plugins
+WORKDIR /app
+RUN pnpm run build:plugins || echo "Warning: some plugins failed to build"
 
 # ===================================
 # Stage 2: Serve with Nginx
 # ===================================
 FROM nginx:alpine
 
+# Copy Studio SPA
 COPY --from=builder /app/apps/studio/dist /usr/share/nginx/html
 
-# SPA fallback: all routes serve index.html
+# Copy Plugin build outputs
+COPY --from=builder /app/plugins /tmp/plugins-src
+
+# Copy only dist folders from plugins into nginx html
+RUN mkdir -p /usr/share/nginx/html/plugins && \
+    for dir in /tmp/plugins-src/*/*/; do \
+    if [ -d "${dir}dist" ]; then \
+    rel_path="${dir#/tmp/plugins-src/}"; \
+    rel_path="${rel_path%/}"; \
+    mkdir -p "/usr/share/nginx/html/plugins/${rel_path}"; \
+    cp -r "${dir}dist" "/usr/share/nginx/html/plugins/${rel_path}/"; \
+    fi; \
+    done && \
+    rm -rf /tmp/plugins-src
+
+# Nginx config: SPA fallback + API reverse proxy + static cache
 RUN printf 'server {\n\
-    listen 80;\n\
+    listen 3000;\n\
     root /usr/share/nginx/html;\n\
     index index.html;\n\
+    \n\
     # Gzip\n\
     gzip on;\n\
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;\n\
+    \n\
+    # API reverse proxy\n\
+    location /api/ {\n\
+    proxy_pass http://thingsvis-server:8000;\n\
+    proxy_set_header Host $host;\n\
+    proxy_set_header X-Real-IP $remote_addr;\n\
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+    proxy_set_header X-Forwarded-Proto $scheme;\n\
+    proxy_read_timeout 300s;\n\
+    client_max_body_size 50m;\n\
+    }\n\
+    \n\
+    # SPA fallback\n\
     location / {\n\
     try_files $uri $uri/ /index.html;\n\
     }\n\
+    \n\
     # Cache static assets\n\
     location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff2?)$ {\n\
     expires 1y;\n\
@@ -48,8 +86,8 @@ RUN chown -R nginx:nginx /usr/share/nginx/html \
     && chmod -R 755 /usr/share/nginx/html
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
 
-EXPOSE 80
+EXPOSE 3000
 
 CMD ["nginx", "-g", "daemon off;"]

@@ -2,7 +2,7 @@ import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
 import { ProjectProvider } from './contexts/ProjectContext';
-import { LoginPage, RegisterPage, HomePage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
+import { LoginPage, RegisterPage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
 import ImageUploadSettingsPage from './pages/ImageUploadSettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import EditorShell from './components/EditorShell';
@@ -35,7 +35,7 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Home page - shows project list */}
-            <Route path="/" element={<HomePage />} />
+            <Route path="/" element={<Navigate to="/editor" replace />} />
 
             {/* Editor Routes — EditorShell wraps Editor with Strategy Pattern */}
             <Route path="/editor" element={<EditorShell />} />

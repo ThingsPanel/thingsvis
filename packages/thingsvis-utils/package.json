@@ -1,6 +1,6 @@
 {
   "name": "@thingsvis/utils",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": false,
   "main": "dist/index.cjs",
   "module": "dist/index.mjs",
@@ -27,5 +27,3 @@
     "ts-loader": "^9.5.1"
   }
 }
-
-

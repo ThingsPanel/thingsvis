@@ -3,22 +3,16 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
-// CORS configuration
-const allowedOrigins = [
+// CORS configuration — configurable via ALLOWED_ORIGINS env var
+const defaultOrigins = [
   'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:5002',  // ThingsPanel frontend
-  'http://localhost:5173',  // Vue Host
-  'http://127.0.0.1:3000',
-  'http://127.0.0.1:3001',
-  'http://127.0.0.1:5002',
-  'http://127.0.0.1:5173',
-  'http://c.thingspanel.cn',   // ThingsPanel 测试环境
-  'https://c.thingspanel.cn',  // ThingsPanel 测试环境 (HTTPS)
-  'http://47.92.253.145',      // ThingsVis 测试服务器
-  'http://47.92.253.145:3000', // ThingsVis Studio
-  'http://47.92.253.145:3001', // ThingsVis Server
+  'http://localhost:8000',
+  'http://localhost:5173',  // Vite dev server
 ]
+
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : defaultOrigins
 
 function corsMiddleware(req: NextRequest) {
   const origin = req.headers.get('origin')
@@ -50,12 +44,15 @@ async function hasValidBearerToken(req: NextRequest): Promise<boolean> {
   if (!authHeader?.startsWith('Bearer ')) return false
 
   const token = authHeader.substring(7)
-  const secret = new TextEncoder().encode(
-    process.env.AUTH_SECRET || 'thingsvis-dev-secret-key'
-  )
+  const secret = process.env.AUTH_SECRET
+  if (!secret) {
+    console.error('AUTH_SECRET is not set — token validation will fail')
+    return false
+  }
+  const encodedSecret = new TextEncoder().encode(secret)
 
   try {
-    await jwtVerify(token, secret)
+    await jwtVerify(token, encodedSecret)
     return true
   } catch {
     return false
@@ -115,3 +112,4 @@ export default auth(async (req) => {
 export const config = {
   matcher: ['/api/:path*'],
 }
+

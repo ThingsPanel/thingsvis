@@ -20,3 +20,4 @@ export * from "./utils/grid-mapper";
 export { GridOverlay } from "./engine/grid/GridOverlay";
 export { GridPlaceholder } from "./engine/grid/GridPlaceholder";
 export { GridStackCanvas } from "./components/GridStackCanvas";
+export { WidgetErrorBoundary } from "./components/WidgetErrorBoundary";

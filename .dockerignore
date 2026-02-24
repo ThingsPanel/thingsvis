@@ -1,13 +1,34 @@
 node_modules/
 .git/
+.turbo/
+.pnpm-store/
+.vscode/
+.idea/
+.cursor/
+.cursorrules
+.claude/
+.specify/
+.tmp/
+
+# Large analysis/internal dirs
+excalidraw-analysis/
+specs/
+docs/
+
+# Build outputs (rebuilt in Docker)
 dist/
 build/
-*.log
-*.log*
+.next/
+
+# Environment files
 .env*
-coverage/
-.DS_Store
-Dockerfile*
-.dockerignore
+!.env.example
 
-
+# Database & temp files
+*.db
+*.sqlite
+*.sqlite3
+*.log
+*.tar
+*.tar.gz
+*.zip

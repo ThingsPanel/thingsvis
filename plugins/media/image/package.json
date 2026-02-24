@@ -1,6 +1,6 @@
 {
   "name": "thingsvis-plugin-media-image",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "rspack serve --port 3106",

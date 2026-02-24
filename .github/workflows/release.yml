@@ -67,19 +67,14 @@ jobs:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
-      - name: Build Preview
-        run: pnpm turbo run build --filter=preview
-        continue-on-error: true
-
       - name: Build Plugins
         run: pnpm run build:plugins
-        continue-on-error: true
 
       # ── Package tar.gz ─────────────────────────────────────
       - name: Package release archive
         run: |
           VERSION="${{ steps.version.outputs.tag }}"
-          mkdir -p release/server release/studio release/preview release/plugins
+          mkdir -p release/server release/studio release/plugins
 
           # Server (Next.js standalone)
           cp -r apps/server/.next/standalone/. release/server/
@@ -93,11 +88,11 @@ jobs:
           # Copy prisma schema for db init
           cp -r apps/server/prisma release/server/apps/server/prisma
 
+          # Copy seed script
+          [ -d apps/server/scripts ] && cp -r apps/server/scripts release/server/apps/server/scripts
+
           # Studio (static SPA)
           [ -d apps/studio/dist ] && cp -r apps/studio/dist/. release/studio/ && echo "✅ Studio packaged"
-
-          # Preview (static SPA)
-          [ -d apps/preview/dist ] && cp -r apps/preview/dist/. release/preview/ && echo "✅ Preview packaged"
 
           # Plugins
           for dir in plugins/*/*/; do
@@ -167,23 +162,11 @@ jobs:
             DATABASE_URL=file:./prisma/dev.db
             AUTH_SECRET=${{ secrets.AUTH_SECRET }}
 
-      - name: Build & push Preview image
-        uses: docker/build-push-action@v5
-        with:
-          context: apps/preview
-          file: apps/preview/Dockerfile
-          push: true
-          tags: |
-            ${{ env.IMAGE_PREFIX }}-preview:${{ needs.build-artifacts.outputs.version }}
-            ${{ env.IMAGE_PREFIX }}-preview:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Studio image (nginx + static files built in job 1 — build separately)
+      # Studio image (nginx + static files + plugins)
       - name: Build & push Studio image
         uses: docker/build-push-action@v5
         with:
-          context: apps/studio
+          context: .
           file: apps/studio/Dockerfile
           push: true
           tags: |
@@ -255,9 +238,12 @@ jobs:
             |------|------|
             | Server (API) | `ghcr.io/${{ github.repository_owner }}/thingsvis-server:${{ needs.build-artifacts.outputs.version }}` |
             | Studio (编辑器) | `ghcr.io/${{ github.repository_owner }}/thingsvis-studio:${{ needs.build-artifacts.outputs.version }}` |
-            | Preview (预览) | `ghcr.io/${{ github.repository_owner }}/thingsvis-preview:${{ needs.build-artifacts.outputs.version }}` |
 
             ### 访问地址
-            - Studio（编辑器）: `http://your-host:7050`
-            - Preview（预览）: `http://your-host:7051`
-            - Server（API）: `http://your-host:3001`
+            - Studio（编辑器）: `http://your-host:3000`
+            - Server（API）: `http://your-host:8000`
+
+            ### 默认账号
+            - Email: `admin@thingsvis.io`
+            - Password: `admin123`
+            - ⚠️ 请登录后立即修改密码！

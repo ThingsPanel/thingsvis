@@ -7,6 +7,7 @@ build/
 Thumbs.db
 *.log
 .env*
+!.env.example
 .idea/
 .vscode/
 .next/
@@ -29,4 +30,6 @@ test_*.js
 .tmp/
 apps/server/public/uploads/
 
-
+# Internal-only directories (not for public repo)
+excalidraw-analysis/
+specs/

@@ -1,5 +1,14 @@
-// 数据库初始化种子脚本
-// 创建初始租户和测试用户
+/**
+ * Seed script — creates a default tenant + admin user for first deployment.
+ * 
+ * Usage:
+ *   pnpm seed
+ *   # or: npx tsx scripts/seed.ts
+ * 
+ * Default credentials:
+ *   email:    admin@thingsvis.io
+ *   password: admin123
+ */
 
 import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcryptjs'
@@ -7,111 +16,47 @@ import { hash } from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-    console.log('🌱 开始数据库种子...')
+    const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@thingsvis.io'
+    const password = process.env.SEED_ADMIN_PASSWORD ?? 'admin123'
+    const name = process.env.SEED_ADMIN_NAME ?? 'Admin'
 
-    // 1. 创建默认租户
-    console.log('📦 创建默认租户...')
-    const tenant = await prisma.tenant.upsert({
-        where: { slug: 'default' },
-        update: {},
-        create: {
-            name: 'Default Tenant',
-            slug: 'default',
-            plan: 'FREE',
-            settings: JSON.stringify({
-                allowPublicSharing: true,
-                maxProjects: 10
-            })
-        }
-    })
-    console.log(`✅ 租户创建: ${tenant.name} (${tenant.id})`)
+    // Check if admin already exists
+    const existing = await prisma.user.findUnique({ where: { email } })
+    if (existing) {
+        console.log(`✅ Admin user "${email}" already exists, skipping seed.`)
+        return
+    }
 
-    // 2. 创建测试用户
-    console.log('👤 创建测试用户...')
-    const passwordHash = await hash('password123', 10)
-
-    const adminUser = await prisma.user.upsert({
-        where: { email: 'admin@thingsvis.com' },
-        update: {},
-        create: {
-            email: 'admin@thingsvis.com',
-            name: 'Admin User',
-            passwordHash,
-            role: 'ADMIN',
-            tenantId: tenant.id
-        }
-    })
-    console.log(`✅ 管理员用户: ${adminUser.email}`)
-
-    const testUser = await prisma.user.upsert({
-        where: { email: 'test@thingsvis.com' },
-        update: {},
-        create: {
-            email: 'test@thingsvis.com',
-            name: 'Test User',
-            passwordHash,
-            role: 'EDITOR',
-            tenantId: tenant.id
-        }
-    })
-    console.log(`✅ 测试用户: ${testUser.email}`)
-
-    // 3. 创建示例项目
-    console.log('📁 创建示例项目...')
-    const project = await prisma.project.upsert({
-        where: { id: 'demo-project-001' },
-        update: {},
-        create: {
-            id: 'demo-project-001',
-            name: 'Demo Project',
-            description: '示例项目，包含示例仪表板',
-            tenantId: tenant.id,
-            createdById: adminUser.id
-        }
-    })
-    console.log(`✅ 项目创建: ${project.name}`)
-
-    // 4. 创建示例Dashboard
-    console.log('📊 创建示例仪表板...')
-    const dashboard = await prisma.dashboard.create({
+    // Create default tenant
+    const tenant = await prisma.tenant.create({
         data: {
-            name: 'Demo Dashboard',
-            version: 1,
-            canvasConfig: JSON.stringify({
-                mode: 'infinite',
-                width: 1920,
-                height: 1080,
-                background: '#1a1a1a'
-            }),
-            nodes: JSON.stringify([
-                {
-                    id: 'text-node-1',
-                    type: 'basic/text',
-                    position: { x: 100, y: 100 },
-                    size: { width: 200, height: 80 },
-                    props: {
-                        text: 'Welcome to ThingsVis!',
-                        fontSize: 24,
-                        color: '#ffffff'
-                    }
-                }
-            ]),
-            dataSources: JSON.stringify([]),
-            projectId: project.id,
-            createdById: adminUser.id
-        }
+            name: 'Default Workspace',
+            slug: 'default',
+        },
     })
-    console.log(`✅ 仪表板创建: ${dashboard.name}`)
+    console.log(`✅ Created tenant: ${tenant.name} (${tenant.id})`)
 
-    console.log('\n🎉 种子数据创建完成!\n')
-    console.log('📋 测试账号:')
-    console.log('  Email: admin@thingsvis.com or test@thingsvis.com')
-    console.log('  Password: password123\n')
+    // Create admin user
+    const passwordHash = await hash(password, 12)
+    const user = await prisma.user.create({
+        data: {
+            email,
+            name,
+            passwordHash,
+            role: 'OWNER',
+            tenantId: tenant.id,
+        },
+    })
+    console.log(`✅ Created admin user: ${user.email} (${user.id})`)
+    console.log(`\n📝 Default credentials:`)
+    console.log(`   Email:    ${email}`)
+    console.log(`   Password: ${password}`)
+    console.log(`\n⚠️  Please change the password after first login!`)
 }
 
 main()
     .catch((e) => {
-        console.error('❌ 种子失败:', e)
+        console.error('❌ Seed failed:', e)
         process.exit(1)
     })
     .finally(async () => {

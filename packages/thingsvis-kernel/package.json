@@ -1,6 +1,6 @@
 {
   "name": "@thingsvis/kernel",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -35,4 +35,3 @@
     "ts-loader": "^9.5.1"
   }
 }
-

@@ -12,7 +12,7 @@ services:
     container_name: thingsvis-server
     restart: unless-stopped
     ports:
-      - "3001:3001"
+      - "8000:8000"
     env_file:
       - .env
     environment:
@@ -20,10 +20,10 @@ services:
       - HOSTNAME=0.0.0.0
       - AUTH_TRUST_HOST=true
     volumes:
-      # 持久化 SQLite 数据库（生产环境建议改用 PostgreSQL）
+      # 持久化数据库（PostgreSQL 外置时可移除此 volume）
       - thingsvis-db:/app/apps/server/prisma
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/health" ]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -35,24 +35,15 @@ services:
     container_name: thingsvis-studio
     restart: unless-stopped
     ports:
-      - "7050:80"
+      - "3000:3000"
     depends_on:
       server:
         condition: service_healthy
-
-  # ─── Preview (预览 SPA + Nginx) ────────────────────
-  preview:
-    image: ghcr.io/thingspanel/thingsvis-preview:latest
-    container_name: thingsvis-preview
-    restart: unless-stopped
-    ports:
-      - "7051:80"
 
 volumes:
   thingsvis-db:
     driver: local
 
 # ─── 访问地址 ─────────────────────────────────────────
-# Studio  (编辑器): http://localhost:7050
-# Preview (预览):   http://localhost:7051
-# Server  (API):    http://localhost:3001
+# Studio  (编辑器): http://localhost:3000
+# Server  (API):    http://localhost:8000
