@@ -46,9 +46,6 @@ jobs:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
-      - name: Build Preview
-        run: pnpm turbo run build --filter=preview
-        continue-on-error: true
 
       - name: Build Plugins
         run: pnpm run build:plugins
@@ -59,7 +56,7 @@ jobs:
       # ========================================
       - name: Package artifacts
         run: |
-          mkdir -p deploy/server deploy/studio deploy/preview deploy/plugins
+          mkdir -p deploy/server deploy/studio deploy/plugins
 
           # --- Server: Next.js standalone ---
           if [ -d "apps/server/.next/standalone" ]; then
@@ -84,13 +81,7 @@ jobs:
             exit 1
           fi
 
-          # --- Preview: static SPA ---
-          if [ -d "apps/preview/dist" ]; then
-            cp -r apps/preview/dist/. deploy/preview/
-            echo "✅ Preview packaged"
-          else
-            echo "⚠️  Preview dist not found, skipping"
-          fi
+
 
           # --- Plugins (two-level: plugins/category/name/dist) ---
           for dir in plugins/*/*/; do
@@ -138,7 +129,7 @@ jobs:
             # Ensure directories exist
             mkdir -p /opt/thingsvis/server
             mkdir -p /var/www/thingsvis-studio
-            mkdir -p /var/www/thingsvis-preview
+
             mkdir -p /var/www/thingsvis-plugins
 
             # Extract
@@ -170,15 +161,7 @@ jobs:
             rm -rf /var/www/thingsvis-studio/*
             cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
 
-            # --- Deploy Preview ---
-            echo ">>> Deploying Preview..."
-            if [ -d "/tmp/thingsvis-deploy/preview" ] && [ "$(ls -A /tmp/thingsvis-deploy/preview 2>/dev/null)" ]; then
-              rm -rf /var/www/thingsvis-preview/*
-              cp -rf /tmp/thingsvis-deploy/preview/. /var/www/thingsvis-preview/
-              echo "✅ Preview deployed"
-            else
-              echo "⚠️  No preview artifacts, skipping"
-            fi
+
 
             # --- Deploy Plugins ---
             echo ">>> Deploying Plugins..."
@@ -197,4 +180,3 @@ jobs:
             pm2 list
             echo ""
             echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST }}:7050/"
-            echo "🔗 Preview: http://${{ secrets.DEPLOY_HOST }}:7050/preview/"

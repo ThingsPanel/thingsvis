@@ -22,19 +22,19 @@ let pendingPreviewData: { projectId: string; data: any } | null = null
  */
 export function createSession(projectId: string): string {
   const token = crypto.randomUUID()
-  
+
   const session: PreviewSession = {
     token,
     projectId,
     createdAt: Date.now(),
   }
-  
+
   // Use localStorage instead of sessionStorage for cross-origin support
   localStorage.setItem(
     STORAGE_CONSTANTS.PREVIEW_SESSION_KEY,
     JSON.stringify(session)
   )
-  
+
   return token
 }
 
@@ -46,24 +46,24 @@ export function createSession(projectId: string): string {
 export function consumeSession(token: string): string | null {
   const stored = localStorage.getItem(STORAGE_CONSTANTS.PREVIEW_SESSION_KEY)
   if (!stored) return null
-  
+
   try {
     const session: PreviewSession = JSON.parse(stored)
-    
+
     // Check if token matches
     if (session.token !== token) {
       return null
     }
-    
+
     // Check if session is expired (5 minute TTL)
     if (Date.now() - session.createdAt > STORAGE_CONSTANTS.SESSION_TTL_MS) {
       localStorage.removeItem(STORAGE_CONSTANTS.PREVIEW_SESSION_KEY)
       return null
     }
-    
+
     // Delete session after use (one-time)
     localStorage.removeItem(STORAGE_CONSTANTS.PREVIEW_SESSION_KEY)
-    
+
     return session.projectId
   } catch {
     return null
@@ -98,14 +98,14 @@ export function clearPreviewData(): void {
 export function openPreview(projectId: string, mode: PreviewMode = 'user'): void {
   // Create session token
   const token = createSession(projectId)
-  
+
   // Build preview URL
   const previewPath = getPreviewPath()
   const url = new URL(previewPath, window.location.origin)
   url.searchParams.set('session', token)
   url.searchParams.set('mode', mode)
   url.searchParams.set('projectId', projectId)
-  
+
   // Open in new tab
   window.open(url.toString(), '_blank')
 }
@@ -121,11 +121,11 @@ export function setupPreviewMessageListener(): () => void {
     if (!isDevMode && event.origin !== window.location.origin) {
       return
     }
-    
+
     if (event.data?.type === 'THINGSVIS_REQUEST_PROJECT_DATA') {
       const { projectId } = event.data
       const previewData = getPreviewData()
-      
+
       if (previewData && previewData.projectId === projectId) {
         // Send data back to preview window
         event.source?.postMessage({
@@ -133,45 +133,34 @@ export function setupPreviewMessageListener(): () => void {
           projectId,
           data: previewData.data,
         }, { targetOrigin: '*' })
-        
+
         // Clear after sending
         clearPreviewData()
       }
     }
   }
-  
+
   window.addEventListener('message', handler)
   return () => window.removeEventListener('message', handler)
 }
 
 /**
- * Get the path to the preview application.
- * In development, preview runs on a different port.
+ * Get the path to the preview page.
+ * Preview is a built-in route within Studio (no separate app).
  */
 function getPreviewPath(): string {
-  // In development, studio runs on port 3000 and preview on port 8080
-  // Check if we're on localhost with port 3000 (studio dev server)
-  const isDevStudio = window.location.hostname === 'localhost' && 
-    (window.location.port === '3000' || window.location.port === '3001')
-  
-  if (isDevStudio) {
-    // In dev, preview runs on port 8080 (rspack default)
-    return 'http://localhost:8080/'
-  }
-  
-  // In production, preview is a sibling directory
   return '/preview/'
 }
 
 /**
  * Parse preview URL parameters
  */
-export function parsePreviewParams(): { 
+export function parsePreviewParams(): {
   token: string | null
-  mode: PreviewMode 
+  mode: PreviewMode
 } {
   const params = new URLSearchParams(window.location.search)
-  
+
   return {
     token: params.get('session'),
     mode: (params.get('mode') as PreviewMode) || 'dev',
@@ -187,7 +176,7 @@ export function parsePreviewParams(): {
  */
 export async function enterFullscreen(element?: HTMLElement): Promise<void> {
   const target = element || document.documentElement
-  
+
   try {
     if (target.requestFullscreen) {
       await target.requestFullscreen()
@@ -199,7 +188,7 @@ export async function enterFullscreen(element?: HTMLElement): Promise<void> {
       await (target as any).msRequestFullscreen()
     }
   } catch (error) {
-    
+
   }
 }
 
@@ -218,7 +207,7 @@ export async function exitFullscreen(): Promise<void> {
       await (document as any).msExitFullscreen()
     }
   } catch (error) {
-    
+
   }
 }
 
