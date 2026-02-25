@@ -3,7 +3,7 @@ import { generateControls } from './lib/types';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['title', 'showLegend'],
+        Content: ['title', 'showLegend', 'showXAxis', 'showYAxis'],
         Style: ['primaryColor'],
         Data: ['data'],
     },
@@ -13,6 +13,8 @@ export const controls = generateControls(PropsSchema, {
     },
     bindings: {
         title: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
         primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         data: { enabled: true, modes: ['static', 'field', 'expr'] },
     },

@@ -12,7 +12,7 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
-    const { title, data, primaryColor, showLegend } = props;
+    const { title, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
 
     // 根据亮暗色主题自动适配文本颜色和坐标轴辅助线颜色
     const textColor = isDark ? '#ddd' : '#333';
@@ -55,14 +55,21 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
             source: data
         } : undefined,
         xAxis: {
+            show: showXAxis !== false,
             type: 'category',
             axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
             axisLine: { lineStyle: { color: splitLineColor } },
+            // 补充刻度展示属性
+            axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
         },
         yAxis: {
+            show: showYAxis !== false,
             type: 'value',
             splitLine: { lineStyle: { color: splitLineColor } },
             axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
+            // 补充刻度展示属性
+            axisLine: { show: true, lineStyle: { color: splitLineColor } },
+            axisTick: { show: true, lineStyle: { color: splitLineColor } },
         },
         series: [
             {

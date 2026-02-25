@@ -14,6 +14,12 @@ export const PropsSchema = z.object({
   /** 是否显示图例 */
   showLegend: z.boolean().default(true).describe('显示图例'),
 
+  /** 显示X轴刻度 */
+  showXAxis: z.boolean().default(true).describe('显示X轴'),
+
+  /** 显示Y轴刻度 */
+  showYAxis: z.boolean().default(true).describe('显示Y轴'),
+
   /** 是否平滑曲线 */
   smooth: z.boolean().default(true).describe('平滑曲线'),
 

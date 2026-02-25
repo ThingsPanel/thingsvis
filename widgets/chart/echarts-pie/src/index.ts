@@ -14,7 +14,7 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
 function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
     const { title, data, showLegend, isDoughnut } = props;
 
-    const textColor = isDark ? '#ddd' : '#333';
+    const textColor = isDark ? '#fff' : '#333';
 
     return {
         backgroundColor: 'transparent',
