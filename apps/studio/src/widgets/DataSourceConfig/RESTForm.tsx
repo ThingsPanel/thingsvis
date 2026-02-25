@@ -7,12 +7,9 @@ import { HeadersSection, AuthSection, TimeoutSection, BodySection } from './sect
 interface RESTFormProps {
   config: RESTConfig;
   onChange: (config: RESTConfig) => void;
-  language: 'zh' | 'en';
 }
 
-export const RESTForm: React.FC<RESTFormProps> = ({ config, onChange, language }) => {
-  const label = (zh: string, en: string) => language === 'zh' ? zh : en;
-
+export const RESTForm: React.FC<RESTFormProps> = ({ config, onChange}) => {
   const handleChange = <K extends keyof RESTConfig>(field: K, value: RESTConfig[K]) => {
     onChange({ ...config, [field]: value });
   };

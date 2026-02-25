@@ -23,7 +23,7 @@ type Props = {
   onUserEdit?: () => void;
 };
 
-export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }: Props) {
+export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
     () => kernelStore.getState() as KernelState
@@ -79,9 +79,6 @@ export default function PropsPanel({ nodeId, kernelStore, language, onUserEdit }
     kernelStore.getState().updateNode(nodeId, changes);
     onUserEdit?.();
   }
-
-  const labelZh = (zh: string, en: string) => language === "zh" ? zh : en;
-
   const addBinding = () => {
     // 默认绑定到 text 属性
     const newBindings = [...bindings, { targetProp: 'text', expression: '{{ ds.<id>.data.<path> }}' }];

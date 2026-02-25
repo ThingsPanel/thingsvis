@@ -6,6 +6,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +34,7 @@ import {
 
 export default function ImageUploadSettingsPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('pages');
   const [settings, setSettings] = useState<ImageUploadSettings>({
     storageType: 'local',
   });
@@ -69,8 +71,8 @@ export default function ImageUploadSettingsPage() {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
-      
-      alert('保存设置失败');
+
+      alert(t('imageUpload.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -87,9 +89,9 @@ export default function ImageUploadSettingsPage() {
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            返回
+            {t('imageUpload.back')}
           </Button>
-          <h1 className="text-xl font-bold">图片上传设置</h1>
+          <h1 className="text-xl font-bold">{t('imageUpload.title')}</h1>
         </div>
       </header>
 
@@ -97,15 +99,15 @@ export default function ImageUploadSettingsPage() {
       <main className="max-w-4xl mx-auto px-6 py-8">
         <Card>
           <CardHeader>
-            <CardTitle>存储配置</CardTitle>
+            <CardTitle>{t('imageUpload.storageConfig')}</CardTitle>
             <CardDescription>
-              选择图片存储方式。默认使用本地存储（IndexedDB + Object URL），也可以配置OSS云存储。
+              {t('imageUpload.storageConfigDesc')}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Storage Type Selection */}
             <div className="space-y-2">
-              <Label>存储方式</Label>
+              <Label>{t('imageUpload.storageMode')}</Label>
               <Select
                 value={settings.storageType}
                 onValueChange={handleStorageTypeChange}
@@ -117,20 +119,20 @@ export default function ImageUploadSettingsPage() {
                   <SelectItem value="local">
                     <div className="flex items-center gap-2">
                       <HardDrive className="h-4 w-4" />
-                      <span>本地存储（IndexedDB）</span>
+                      <span>{t('imageUpload.localMode')}</span>
                     </div>
                   </SelectItem>
                   <SelectItem value="oss">
                     <div className="flex items-center gap-2">
                       <Cloud className="h-4 w-4" />
-                      <span>OSS 云存储</span>
+                      <span>{t('imageUpload.cloudMode')}</span>
                     </div>
                   </SelectItem>
                 </SelectContent>
               </Select>
               {settings.storageType === 'local' && (
                 <p className="text-sm text-gray-500">
-                  图片将保存在浏览器IndexedDB中，通过Object URL访问。适合离线使用，不占用画布数据体积。
+                  {t('imageUpload.localModeDesc')}
                 </p>
               )}
             </div>
@@ -138,8 +140,8 @@ export default function ImageUploadSettingsPage() {
             {/* OSS Configuration */}
             {settings.storageType === 'oss' && (
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-medium">OSS 配置</h3>
-                
+                <h3 className="font-medium">{t('imageUpload.ossConfig')}</h3>
+
                 <div className="space-y-2">
                   <Label htmlFor="endpoint">Endpoint</Label>
                   <Input
@@ -161,7 +163,7 @@ export default function ImageUploadSettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="region">Region (可选)</Label>
+                  <Label htmlFor="region">{t('imageUpload.regionOptional')}</Label>
                   <Input
                     id="region"
                     placeholder="cn-hangzhou"
@@ -193,9 +195,9 @@ export default function ImageUploadSettingsPage() {
                 </div>
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
-                  <p className="font-medium mb-1">⚠️ 安全提示</p>
+                  <p className="font-medium mb-1">{t('imageUpload.securityWarning')}</p>
                   <p>
-                    Access Key 将保存在浏览器本地存储中。生产环境建议通过后端代理上传，避免暴露密钥。
+                    {t('imageUpload.securityWarningDesc')}
                   </p>
                 </div>
               </div>
@@ -209,11 +211,11 @@ export default function ImageUploadSettingsPage() {
                 className="gap-2"
               >
                 <Save className="h-4 w-4" />
-                {isSaving ? '保存中...' : '保存设置'}
+                {isSaving ? t('imageUpload.saving') : t('imageUpload.saveButton')}
               </Button>
               {saveSuccess && (
                 <span className="text-sm text-green-600 font-medium">
-                  ✓ 设置已保存
+                  {t('imageUpload.saved')}
                 </span>
               )}
             </div>

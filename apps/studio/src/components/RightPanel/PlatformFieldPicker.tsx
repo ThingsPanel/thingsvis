@@ -8,7 +8,6 @@ import type { PlatformField } from '@/lib/embedded/service-config'
 interface PlatformFieldPickerProps {
     platformFields: PlatformField[]
     onSelectField: (field: PlatformField) => void
-    language?: 'zh' | 'en'
 }
 
 /**

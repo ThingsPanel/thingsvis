@@ -21,16 +21,11 @@ interface ReconnectSectionProps {
   /** Callback when reconnect policy changes */
   onChange: (reconnect: ReconnectPolicy) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
   reconnect,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   const handleChange = <K extends keyof ReconnectPolicy>(
     field: K,
     value: ReconnectPolicy[K]

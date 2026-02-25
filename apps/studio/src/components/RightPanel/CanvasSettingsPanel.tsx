@@ -6,9 +6,6 @@
 import React from 'react'
 import { Input } from '@/components/ui/input'
 import { processThumbnailFile } from '../../lib/storage/thumbnail'
-
-type Language = 'zh' | 'en'
-
 export interface CanvasConfig {
     id: string
     name: string
@@ -26,7 +23,6 @@ export interface CanvasConfig {
 }
 
 interface CanvasSettingsPanelProps {
-    language: Language
     canvasConfig: Record<string, any>
     currentProjectName?: string
     isEmbedded: boolean
@@ -37,8 +33,7 @@ interface CanvasSettingsPanelProps {
     onZoomReset: () => void
 }
 
-export function CanvasSettingsPanel({
-    language, canvasConfig, currentProjectName, isEmbedded,
+export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedded,
     onConfigChange, onLayoutModeChange, onClearCanvas,
     onMarkDirty, onZoomReset,
 }: CanvasSettingsPanelProps) {

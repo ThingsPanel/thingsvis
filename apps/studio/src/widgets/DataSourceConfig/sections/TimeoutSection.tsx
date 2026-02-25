@@ -20,7 +20,6 @@ interface TimeoutSectionProps {
   /** Callback when timeout changes */
   onChange: (timeout: number) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 const MIN_TIMEOUT = 1;
@@ -29,11 +28,7 @@ const DEFAULT_TIMEOUT = 30;
 
 export const TimeoutSection: React.FC<TimeoutSectionProps> = ({
   timeout,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   const isValid = timeout >= MIN_TIMEOUT && timeout <= MAX_TIMEOUT;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

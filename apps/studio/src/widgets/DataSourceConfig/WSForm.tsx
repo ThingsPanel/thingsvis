@@ -12,12 +12,9 @@ import {
 interface WSFormProps {
   config: WSConfig;
   onChange: (config: WSConfig) => void;
-  language: 'zh' | 'en';
 }
 
-export const WSForm: React.FC<WSFormProps> = ({ config, onChange, language }) => {
-  const label = (zh: string, en: string) => language === 'zh' ? zh : en;
-
+export const WSForm: React.FC<WSFormProps> = ({ config, onChange}) => {
   const handleChange = <K extends keyof WSConfig>(field: K, value: WSConfig[K]) => {
     onChange({ ...config, [field]: value });
   };

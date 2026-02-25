@@ -33,8 +33,7 @@ function allowedModes(field: ControlField): BindingMode[] {
   return normalized.length ? normalized : ['static'];
 }
 
-export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode, language }: Props) {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
+export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode}: Props) {
   const modes = useMemo(() => allowedModes(field), [field]);
 
   const persistedMode = useMemo(() => detectBindingMode(bindings, field.path), [bindings, field.path]);
@@ -395,17 +394,13 @@ function NodeSelector({
   kernelStore,
   currentNodeId,
   value,
-  onChange,
-  language,
-}: {
+  onChange}: {
   kernelStore: KernelStore;
   currentNodeId: string;
   value: string;
   onChange: (nodeId: string) => void;
   language?: string;
 }) {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
   // 订阅 store 获取所有节点
   const nodesById = useSyncExternalStore(
     useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),

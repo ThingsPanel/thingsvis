@@ -102,10 +102,9 @@ export function ShortcutHelpPanel({
 interface ShortcutCategoryProps {
   category: CommandCategory
   commands: Command[]
-  language: 'zh' | 'en'
 }
 
-function ShortcutCategory({ category, commands, language }: ShortcutCategoryProps) {
+function ShortcutCategory({ category, commands}: ShortcutCategoryProps) {
   const label = language === 'zh'
     ? CATEGORY_LABELS[category]?.zh
     : CATEGORY_LABELS[category]?.en
@@ -130,10 +129,9 @@ function ShortcutCategory({ category, commands, language }: ShortcutCategoryProp
 
 interface ShortcutRowProps {
   command: Command
-  language: 'zh' | 'en'
 }
 
-function ShortcutRow({ command, language }: ShortcutRowProps) {
+function ShortcutRow({ command}: ShortcutRowProps) {
   const label = language === 'zh' && command.labelZh
     ? command.labelZh
     : command.label

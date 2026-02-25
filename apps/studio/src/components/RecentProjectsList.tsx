@@ -26,7 +26,6 @@ export interface RecentProjectsListProps {
   /** Whether the list is disabled */
   disabled?: boolean
   /** Language for localization - derived from i18n if not provided */
-  language?: 'zh' | 'en'
   /** Maximum number of items to show */
   maxItems?: number
 }

@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,24 +23,26 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const { register } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation('pages');
 
   // 错误消息映射
   const getErrorMessage = (error: string): string => {
-    const errorMap: Record<string, string> = {
-      'Invalid credentials': '身份验证失败，请重试',
-      'Email already registered': '该邮箱已被注册，请直接登录',
-      'Email already exists': '该邮箱已被注册，请直接登录',
-      'Validation failed': '输入的信息格式不正确，请检查后重试',
-      'Invalid email': '请输入有效的邮箱地址',
-      'Password too short': '密码至少需要8个字符',
-      'Network error': '网络连接失败，请检查网络后重试',
-      'Failed to fetch': '无法连接到服务器，请稍后重试',
-      'Internal server error': '服务器出错了，请稍后重试',
+    const errorKeyMap: Record<string, string> = {
+      'Invalid credentials': 'register.errors.invalidCredentials',
+      'Email already registered': 'register.errors.emailAlreadyRegistered',
+      'Email already exists': 'register.errors.emailAlreadyRegistered',
+      'Validation failed': 'register.errors.validationFailed',
+      'Invalid email': 'register.errors.invalidEmail',
+      'Password too short': 'register.errors.passwordTooShort',
+      'Network error': 'register.errors.networkError',
+      'Failed to fetch': 'register.errors.fetchFailed',
+      'Internal server error': 'register.errors.serverError',
     };
-    return errorMap[error] || `注册失败：${error}`;
+    const key = errorKeyMap[error];
+    return key ? t(key) : `${t('register.errors.defaultError')}: ${error}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,17 +50,17 @@ export default function RegisterPage() {
     setError('');
 
     if (!agreedToTerms) {
-      setError('请先同意服务条款和隐私政策');
+      setError(t('register.errors.agreeToTerms'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('两次输入的密码不一致');
+      setError(t('register.errors.passwordMismatch'));
       return;
     }
 
     if (password.length < 8) {
-      setError('密码至少需要8个字符');
+      setError(t('register.errors.passwordTooShort'));
       return;
     }
 
@@ -65,16 +68,16 @@ export default function RegisterPage() {
 
     try {
       const result = await register({ email, password, name: name || undefined });
-      
+
       if (result.success) {
-        navigate('/login', { 
-          state: { message: '注册成功！请登录。' }
+        navigate('/login', {
+          state: { message: t('register.successMessage') }
         });
       } else {
-        setError(getErrorMessage(result.error || '注册失败'));
+        setError(getErrorMessage(result.error || t('register.errors.defaultError')));
       }
     } catch (err) {
-      setError('注册过程中发生错误，请稍后重试');
+      setError(t('register.errors.unexpectedError'));
     } finally {
       setIsLoading(false);
     }
@@ -84,12 +87,12 @@ export default function RegisterPage() {
     <div className="min-h-screen w-full flex bg-background">
       {/* Left Side - Brand & Visuals */}
       <div className="hidden lg:flex w-1/2 bg-primary relative overflow-hidden flex-col items-center justify-center text-primary-foreground p-12">
-         {/* Abstract Background Pattern */}
+        {/* Abstract Background Pattern */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
-           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid-pattern-reg" width="60" height="60" patternUnits="userSpaceOnUse">
-                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M 60 0 L 0 0 0 60" fill="none" stroke="currentColor" strokeWidth="1.5" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid-pattern-reg)" />
@@ -98,14 +101,14 @@ export default function RegisterPage() {
 
         {/* Decorative Elements - Different from Login for variety */}
         <div className="absolute top-1/4 right-1/4 opacity-20 animate-pulse delay-75">
-            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/></svg>
+          <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5" /></svg>
         </div>
 
         <div className="relative z-10 max-w-lg text-center space-y-8">
-           <div className="space-y-4">
-            <h1 className="text-4xl font-[800] tracking-tight">加入 ThingsVis</h1>
+          <div className="space-y-4">
+            <h1 className="text-4xl font-[800] tracking-tight">{t('register.brandTitle')}</h1>
             <p className="text-lg opacity-90 font-medium leading-relaxed">
-              与数万名开发者和设计师一起，<br/>构建未来的数据体验。
+              {t('register.brandTagline')}
             </p>
           </div>
         </div>
@@ -118,14 +121,14 @@ export default function RegisterPage() {
             <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted border border-transparent group-hover:border-border transition-all">
               <ArrowLeft size={18} />
             </div>
-            <span>返回首页</span>
+            <span>{t('register.backToHome')}</span>
           </Link>
         </div>
 
         <div className="w-full max-w-[400px] space-y-6">
           <div className="space-y-2 text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight">创建账号</h2>
-            <p className="text-muted-foreground">免费开始您的可视化之旅</p>
+            <h2 className="text-3xl font-bold tracking-tight">{t('register.title')}</h2>
+            <p className="text-muted-foreground">{t('register.subtitle')}</p>
           </div>
 
           {error && (
@@ -136,27 +139,27 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-             {/* Name Field */}
+            {/* Name Field */}
             <div className="space-y-2">
-              <Label htmlFor="name">昵称</Label>
+              <Label htmlFor="name">{t('register.name')}</Label>
               <div className="relative">
                 <Input
                   id="name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="您的称呼"
+                  placeholder={t('register.namePlaceholder')}
                   className="pl-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
                 />
-                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                 </div>
               </div>
             </div>
 
             {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="email">邮箱</Label>
+              <Label htmlFor="email">{t('register.email')}</Label>
               <div className="relative">
                 <Input
                   id="email"
@@ -168,14 +171,14 @@ export default function RegisterPage() {
                   required
                 />
                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
                 </div>
               </div>
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password">密码</Label>
+              <Label htmlFor="password">{t('register.password')}</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -183,11 +186,11 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
-                  placeholder="至少8位字符"
+                  placeholder={t('register.passwordPlaceholder')}
                   required
                 />
-                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                 </div>
                 <button
                   type="button"
@@ -201,7 +204,7 @@ export default function RegisterPage() {
 
             {/* Confirm Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">确认密码</Label>
+              <Label htmlFor="confirmPassword">{t('register.confirmPassword')}</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -209,11 +212,11 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
-                  placeholder="再次输入密码"
+                  placeholder={t('register.confirmPasswordPlaceholder')}
                   required
                 />
-                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
                 </div>
                 <button
                   type="button"
@@ -224,38 +227,38 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
-            
+
             {/* Terms Agreement */}
             <div className="flex items-start space-x-2 pt-2">
-               <input
-                 id="terms"
-                 type="checkbox"
-                 className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 flex-shrink-0"
-                 checked={agreedToTerms}
-                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-               />
-               <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
-                 我已阅读并同意
-                 <Link to="/terms" className="text-primary hover:underline mx-1">服务条款</Link>
-                 和
-                 <Link to="/privacy" className="text-primary hover:underline mx-1">隐私政策</Link>
-               </label>
+              <input
+                id="terms"
+                type="checkbox"
+                className="mt-0.5 rounded border-gray-300 text-primary focus:ring-primary h-4 w-4 flex-shrink-0"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+              />
+              <label htmlFor="terms" className="text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                {t('register.agreeTerms')}
+                <Link to="/terms" className="text-primary hover:underline mx-1">{t('register.termsOfService')}</Link>
+                {t('register.and')}
+                <Link to="/privacy" className="text-primary hover:underline mx-1">{t('register.privacyPolicy')}</Link>
+              </label>
             </div>
 
             <Button type="submit" className="w-full h-11 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all mt-4" disabled={isLoading}>
-              {isLoading ? '注册中...' : '立即注册'}
+              {isLoading ? t('register.submitting') : t('register.submitButton')}
             </Button>
           </form>
 
           <div className="text-center text-sm pt-4">
-             <span className="text-muted-foreground">已有账号? </span>
-             <Link to="/login" className="font-semibold text-primary hover:underline">
-               直接登录
-             </Link>
+            <span className="text-muted-foreground">{t('register.hasAccount')}</span>
+            <Link to="/login" className="font-semibold text-primary hover:underline">
+              {t('register.login')}
+            </Link>
           </div>
         </div>
-         <div className="absolute bottom-6 text-xs text-muted-foreground/50">
-           &copy; {new Date().getFullYear()} ThingsVis. All rights reserved.
+        <div className="absolute bottom-6 text-xs text-muted-foreground/50">
+          &copy; {new Date().getFullYear()} ThingsVis. All rights reserved.
         </div>
       </div>
     </div>

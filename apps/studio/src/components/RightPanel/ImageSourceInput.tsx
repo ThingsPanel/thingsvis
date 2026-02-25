@@ -21,9 +21,7 @@ interface ImageSourceInputProps {
   language?: string;
 }
 
-export function ImageSourceInput({ value, onChange, language }: ImageSourceInputProps) {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
   const [mode, setMode] = useState<InputMode>(() => {
     if (!value) return 'upload';
     if (value.startsWith('data:image')) return 'base64';

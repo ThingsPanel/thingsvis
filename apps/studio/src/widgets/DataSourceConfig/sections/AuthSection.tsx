@@ -19,16 +19,11 @@ interface AuthSectionProps {
   /** Callback when auth configuration changes */
   onChange: (auth: AuthConfig) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const AuthSection: React.FC<AuthSectionProps> = ({
   auth,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   // Determine if auth is configured (not 'none')
   const hasAuth = auth.type !== 'none';
 

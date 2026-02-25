@@ -21,15 +21,11 @@ interface ProtocolsSectionProps {
   /** Callback when protocols change */
   onChange: (protocols: string[]) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const ProtocolsSection: React.FC<ProtocolsSectionProps> = ({
   protocols,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
+  onChange}) => {
   const [inputValue, setInputValue] = React.useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

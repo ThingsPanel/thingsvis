@@ -3,6 +3,7 @@
  * 从 Editor.tsx 提取的纯展示组件 (Phase 6.1)
  */
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Minus, Plus, Maximize, Monitor, Undo2, Redo2, HelpCircle } from 'lucide-react'
@@ -10,7 +11,6 @@ import { Minus, Plus, Maximize, Monitor, Undo2, Redo2, HelpCircle } from 'lucide
 type Language = 'zh' | 'en'
 
 interface EditorBottomBarProps {
-    language: Language
     zoom: number
     zoomInput: string
     canUndo: boolean
@@ -30,12 +30,13 @@ interface EditorBottomBarProps {
 }
 
 export function EditorBottomBar({
-    language, zoom, zoomInput, canUndo, canRedo,
+    zoom, zoomInput, canUndo, canRedo,
     showLibrary, showProps, showRightPanel,
     canvasWidth, canvasHeight,
     onZoomChange, onZoomInputChange, onZoomInputBlur, onZoomInputKeyDown,
     onUndo, onRedo, onShowShortcuts,
 }: EditorBottomBarProps) {
+    const { t } = useTranslation('editor')
     return (
         <>
             {/* Bottom Left Controls: Zoom & Undo/Redo */}
@@ -77,7 +78,7 @@ export function EditorBottomBar({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-                        title={language === "zh" ? "适应窗口" : "Best Fit"}
+                        title={t('bottomBar.bestFit')}
                         onClick={() => {
                             const leftPanelWidth = showLibrary ? 320 : 0
                             const rightPanelWidth = (showProps && showRightPanel) ? 340 : 0
@@ -100,7 +101,7 @@ export function EditorBottomBar({
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
-                        title={language === "zh" ? "100% 视图" : "100% View"}
+                        title={t('bottomBar.hundredPercent')}
                         onClick={() => onZoomChange(100)}
                     >
                         <Monitor className="h-4 w-4" />
@@ -115,7 +116,7 @@ export function EditorBottomBar({
                         className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
                         disabled={!canUndo}
                         onClick={onUndo}
-                        title={language === "zh" ? "撤销" : "Undo"}
+                        title={t('bottomBar.undo')}
                     >
                         <Undo2 className="h-4 w-4" />
                     </Button>
@@ -125,7 +126,7 @@ export function EditorBottomBar({
                         className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
                         disabled={!canRedo}
                         onClick={onRedo}
-                        title={language === "zh" ? "重做" : "Redo"}
+                        title={t('bottomBar.redo')}
                     >
                         <Redo2 className="h-4 w-4" />
                     </Button>
@@ -139,7 +140,7 @@ export function EditorBottomBar({
                     size="icon"
                     className="h-9 w-9 rounded-full shadow-lg border border-border bg-[#f0f0f7]/90 dark:bg-[#1a1a24]/90 hover:bg-background text-muted-foreground hover:text-foreground transition-all"
                     onClick={onShowShortcuts}
-                    title={language === "zh" ? "快捷键帮助 (?)" : "Shortcuts (?)"}
+                    title={t('bottomBar.shortcutsHelp')}
                 >
                     <HelpCircle className="h-5 w-5" />
                 </Button>

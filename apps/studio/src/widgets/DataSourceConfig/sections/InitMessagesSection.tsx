@@ -20,16 +20,11 @@ interface InitMessagesSectionProps {
   /** Callback when messages change */
   onChange: (messages: string[]) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const InitMessagesSection: React.FC<InitMessagesSectionProps> = ({
   initMessages,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   const handleAdd = () => {
     onChange([...initMessages, '']);
   };

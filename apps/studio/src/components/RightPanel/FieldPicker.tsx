@@ -20,16 +20,13 @@ type Props = {
 };
 
 
-export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes, language }: Props) {
+export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}: Props) {
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
 
   // 🆕 从 Store 订阅平台字段（支持动态更新）
   const platformFields = usePlatformFieldStore((s: { fields: any[] }) => s.fields);
   const hasPlatformFields = platformFields.length > 0;
-
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
   // Use controlled value, or default to first data source if none selected
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';

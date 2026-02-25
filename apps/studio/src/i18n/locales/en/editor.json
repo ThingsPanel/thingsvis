@@ -122,7 +122,12 @@
     "bottomBar": {
         "zoom": "Zoom",
         "canvasInfo": "Canvas Info",
-        "nodeCount": "{{count}} nodes"
+        "nodeCount": "{{count}} nodes",
+        "bestFit": "Best Fit",
+        "hundredPercent": "100% View",
+        "undo": "Undo",
+        "redo": "Redo",
+        "shortcutsHelp": "Shortcuts (?)"
     },
     "alerts": {
         "imageTooLarge": "Image file is too large. Please select an image smaller than 10MB.",

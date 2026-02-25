@@ -4,12 +4,9 @@ import { Label } from '@/components/ui/label';
 interface TransformationEditorProps {
   code: string;
   onChange: (code: string) => void;
-  language: 'zh' | 'en';
 }
 
-export const TransformationEditor: React.FC<TransformationEditorProps> = ({ code, onChange, language }) => {
-  const label = (zh: string, en: string) => language === 'zh' ? zh : en;
-
+export const TransformationEditor: React.FC<TransformationEditorProps> = ({ code, onChange}) => {
   return (
     <div className="space-y-2">
       <Label className="text-sm uppercase font-bold text-[#6965db]">

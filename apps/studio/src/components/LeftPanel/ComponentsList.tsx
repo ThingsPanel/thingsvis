@@ -64,7 +64,7 @@ const CATEGORY_DEFS = [
   { key: "custom", labelZh: "自定义", labelEn: "Custom", Icon: Sparkles },
 ] as const;
 
-export default function ComponentsList({ onInsert: _onInsert, language }: { onInsert: (type: string) => void; language: string }) {
+export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type: string) => void; language: string }) {
   const [entries, setEntries] = useState<ComponentRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

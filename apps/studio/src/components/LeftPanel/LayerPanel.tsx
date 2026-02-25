@@ -30,7 +30,6 @@ import type { KernelState, LayerGroup } from '@thingsvis/kernel';
 
 interface LayerPanelProps {
   store: any;
-  language: 'zh' | 'en';
   searchQuery?: string;
   onUserEdit?: () => void;
 }
@@ -58,7 +57,7 @@ type LayerListEntry =
   | { kind: 'group'; data: GroupData }
   | { kind: 'item'; data: LayerItemData };
 
-export default function LayerPanel({ store, language, searchQuery = '', onUserEdit }: LayerPanelProps) {
+export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerPanelProps) {
   const state = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState
@@ -359,9 +358,6 @@ export default function LayerPanel({ store, language, searchQuery = '', onUserEd
       inputRef.current.select();
     }
   }, [editingId]);
-
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
   if (filteredEntries.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">

@@ -21,7 +21,6 @@ interface HeartbeatSectionProps {
   /** Callback when heartbeat configuration changes */
   onChange: (heartbeat: HeartbeatConfig) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 const MIN_INTERVAL = 5;
@@ -29,11 +28,7 @@ const MAX_INTERVAL = 300;
 
 export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
   heartbeat,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   const handleChange = <K extends keyof HeartbeatConfig>(
     field: K,
     value: HeartbeatConfig[K]

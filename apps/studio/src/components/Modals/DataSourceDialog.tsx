@@ -38,10 +38,9 @@ interface DataSourceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   store: KernelStore;
-  language: 'zh' | 'en';
 }
 
-export function DataSourceDialog({ open, onOpenChange, store, language }: DataSourceDialogProps) {
+export function DataSourceDialog({ open, onOpenChange, store}: DataSourceDialogProps) {
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -60,9 +59,6 @@ export function DataSourceDialog({ open, onOpenChange, store, language }: DataSo
     config: { value: {} },
     transformation: ''
   });
-
-  const label = (zh: string, en: string) => language === 'zh' ? zh : en;
-
   const jsonExtensions = useMemo(() => [json()], [])
 
   const syncStaticJsonTextFromConfig = (configValue: unknown) => {

@@ -18,16 +18,11 @@ interface BodySectionProps {
   /** Callback when body changes */
   onChange: (body: string) => void;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const BodySection: React.FC<BodySectionProps> = ({
   body,
-  onChange,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  onChange}) => {
   return (
     <FormSection
       title={t('请求体', 'Request Body')}

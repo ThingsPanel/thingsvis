@@ -21,17 +21,12 @@ interface HeadersSectionProps {
   /** Current auth configuration (for conflict detection) */
   auth?: AuthConfig;
   /** Current language */
-  language: 'zh' | 'en';
 }
 
 export const HeadersSection: React.FC<HeadersSectionProps> = ({
   headers,
   onChange,
-  auth,
-  language,
-}) => {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en);
-
+  auth}) => {
   // Detect if auth is set and would conflict with manual Authorization header
   const authUsesHeader = auth?.type === 'bearer' || auth?.type === 'basic' || 
     (auth?.type === 'apiKey' && auth?.location === 'header');

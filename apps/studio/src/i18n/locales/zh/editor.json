@@ -122,7 +122,12 @@
     "bottomBar": {
         "zoom": "缩放",
         "canvasInfo": "画布信息",
-        "nodeCount": "{{count}} 个节点"
+        "nodeCount": "{{count}} 个节点",
+        "bestFit": "适应窗口",
+        "hundredPercent": "100% 视图",
+        "undo": "撤销",
+        "redo": "重做",
+        "shortcutsHelp": "快捷键帮助 (?)"
     },
     "alerts": {
         "imageTooLarge": "图片文件过大，请选择小于 10MB 的图片",

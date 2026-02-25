@@ -13,7 +13,6 @@ interface DataSourceSelectorProps {
     platformFields?: Array<{ id: string; name: string; type: string; dataType: string }>;
     value?: string;
     onChange: (value: string) => void;
-    language: 'zh' | 'en';
     placeholder?: string;
 }
 
@@ -21,12 +20,8 @@ export function DataSourceSelector({
     dataSources,
     platformFields = [],
     value = '',
-    onChange,
-    language,
-    placeholder
+    onChangeplaceholder
 }: DataSourceSelectorProps) {
-    const label = (zh: string, en: string) => language === 'zh' ? zh : en;
-
     const hasDataSources = Object.keys(dataSources).length > 0;
     const hasPlatformFields = platformFields.length > 0;
 

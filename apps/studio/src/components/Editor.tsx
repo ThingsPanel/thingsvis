@@ -85,8 +85,6 @@ import { uploadImage as uploadToLocal } from "@/lib/imageUpload"
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
 type Tool = "select" | "rectangle" | "circle" | "line" | "text" | "image" | "pan"
-type Language = "zh" | "en"
-
 function DataPanel(_props: { store: typeof store; language: Language }) {
   return null;
 }
@@ -1273,7 +1271,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {/* Bottom Controls: Zoom, Undo/Redo, Help */}
       <EditorBottomBar
-        language={language}
         zoom={zoom}
         zoomInput={zoomInput}
         canUndo={canUndo}

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity, ArrowLeft, CheckCircle, AlertCircle, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +49,7 @@ export default function DataSourcesPage() {
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const [language] = useState<'zh' | 'en'>('zh');
+  const { t } = useTranslation('pages');
 
   // Toast state
   const [toast, setToast] = useState<{ message: string; visible: boolean; type?: 'success' | 'error' }>({
@@ -79,7 +80,7 @@ export default function DataSourcesPage() {
     transformation: ''
   });
 
-  const label = (zh: string, en: string) => language === 'zh' ? zh : en;
+
 
   const jsonExtensions = useMemo(() => [json()], []);
 
@@ -103,15 +104,12 @@ export default function DataSourcesPage() {
 
   const handleSave = async () => {
     if (!editingSource.id) {
-      showToast(label('请输入数据源 ID', 'Please enter Source ID'), 'error');
+      showToast(t('dataSources.enterSourceId'), 'error');
       return;
     }
 
     if (!isValidDataSourceId(editingSource.id)) {
-      showToast(label(
-        '数据源 ID 格式无效。只能包含字母、数字和下划线。',
-        'Invalid Source ID format. Only letters, numbers and underscores allowed.'
-      ), 'error');
+      showToast(t('dataSources.invalidSourceId'), 'error');
       return;
     }
 
@@ -121,7 +119,7 @@ export default function DataSourcesPage() {
         setStaticJsonError(null);
         editingSource.config = { value: parsed };
       } catch {
-        setStaticJsonError(label('JSON 格式不正确', 'Invalid JSON'));
+        setStaticJsonError(t('dataSources.invalidJson'));
         return;
       }
     }
@@ -136,10 +134,10 @@ export default function DataSourcesPage() {
       });
       setIsAdding(false);
       setSelectedId(editingSource.id);
-      showToast(label('数据源保存成功！', 'Data source saved successfully!'), 'success');
+      showToast(t('dataSources.saveSuccess'), 'success');
 
     } catch (e) {
-      showToast(label('保存失败: ' + String(e), 'Save failed: ' + String(e)), 'error');
+      showToast(t('dataSources.saveFailed') + String(e), 'error');
     }
   };
 
@@ -187,10 +185,10 @@ export default function DataSourcesPage() {
       await dataSourceManager.unregisterDataSource(sourceToDelete);
       if (selectedId === sourceToDelete) setSelectedId(null);
 
-      showToast(label('数据源已删除', 'Data source deleted'), 'success');
+      showToast(t('dataSources.deleted'), 'success');
     } catch (error) {
       console.error('Failed to delete data source:', error);
-      showToast(label('删除失败', 'Delete failed'), 'error');
+      showToast(t('dataSources.deleteFailed'), 'error');
     } finally {
       setDeleteDialogOpen(false);
       setSourceToDelete(null);
@@ -237,18 +235,15 @@ export default function DataSourcesPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{label('确认删除', 'Confirm Delete')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('dataSources.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {label(
-                `确定要删除数据源 "${sourceNameToDelete}" 吗？此操作无法撤销。`,
-                `Are you sure you want to delete data source "${sourceNameToDelete}"? This action cannot be undone.`
-              )}
+              {t('dataSources.confirmDeleteDesc', { name: sourceNameToDelete })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{label('取消', 'Cancel')}</AlertDialogCancel>
+            <AlertDialogCancel>{t('dataSources.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              {label('删除', 'Delete')}
+              {t('dataSources.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -264,8 +259,8 @@ export default function DataSourcesPage() {
             <Database className="h-6 w-6 text-[#6965db]" />
           </div>
           <div>
-            <h1 className="text-lg font-semibold">{label('数据源中心', 'Data Source Center')}</h1>
-            <p className="text-sm text-muted-foreground">{label('管理全局数据连接与实时状态', 'Manage global data connections and status')}</p>
+            <h1 className="text-lg font-semibold">{t('dataSources.centerTitle')}</h1>
+            <p className="text-sm text-muted-foreground">{t('dataSources.centerSubtitle')}</p>
           </div>
         </div>
       </header>
@@ -274,14 +269,14 @@ export default function DataSourcesPage() {
         {/* Sidebar */}
         <div className="w-72 border-r border-border bg-muted/10 flex flex-col shrink-0">
           <div className="p-4 flex items-center justify-between gap-2">
-            <div className="text-sm font-medium text-muted-foreground">{label('已配置列表', 'Configured Sources')}</div>
+            <div className="text-sm font-medium text-muted-foreground">{t('dataSources.configuredSources')}</div>
             <Button
               onClick={startAdding}
               size="sm"
               className="bg-[#6965db] hover:bg-[#5851db] h-8 text-sm font-medium"
             >
               <Plus className="h-4 w-4" />
-              {label('新增数据源', 'Add')}
+              {t('dataSources.addNew')}
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
@@ -307,7 +302,7 @@ export default function DataSourcesPage() {
               </div>
             ))}
             {Object.keys(states).length === 0 && !isAdding && (
-              <div className="py-16 text-center text-muted-foreground/40 text-sm italic">{label('暂无配置', 'Empty')}</div>
+              <div className="py-16 text-center text-muted-foreground/40 text-sm italic">{t('dataSources.empty')}</div>
             )}
           </div>
         </div>
@@ -321,13 +316,13 @@ export default function DataSourcesPage() {
                 <section className="space-y-4">
                   <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                     <div className="w-1 h-5 bg-[#6965db] rounded-full" />
-                    {label('1. 基本信息', '1. Basic Information')}
+                    {t('dataSources.basicInfo')}
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">{label('标识 ID', 'Source ID')}</label>
+                      <label className="text-sm font-medium text-muted-foreground">{t('dataSources.sourceId')}</label>
                       <Input
-                        placeholder={label('唯一标识，如 my_data', 'Unique ID, e.g. my_data')}
+                        placeholder={t('dataSources.sourceIdPlaceholder')}
                         value={editingSource.id}
                         onChange={(e) => {
                           // 只允许输入字母、数字和下划线
@@ -337,12 +332,12 @@ export default function DataSourcesPage() {
                         disabled={!!selectedId && !isAdding}
                         className="font-mono text-sm h-10"
                       />
-                      <p className="text-xs text-muted-foreground">{label('只能包含字母、数字和下划线，如 my_data', 'Only letters, numbers and underscores allowed, e.g. my_data')}</p>
+                      <p className="text-xs text-muted-foreground">{t('dataSources.sourceIdHint')}</p>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">{label('数据源名称', 'Source Name')}</label>
+                      <label className="text-sm font-medium text-muted-foreground">{t('dataSources.sourceName')}</label>
                       <Input
-                        placeholder={label('便于识别的名称', 'Display name for easy identification')}
+                        placeholder={t('dataSources.sourceNamePlaceholder')}
                         value={editingSource.name || ''}
                         onChange={(e) => setEditingSource({ ...editingSource, name: e.target.value })}
                         className="text-sm h-10"
@@ -351,7 +346,7 @@ export default function DataSourcesPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-muted-foreground">{label('连接协议', 'Protocol')}</label>
+                      <label className="text-sm font-medium text-muted-foreground">{t('dataSources.protocol')}</label>
                       <div className="flex gap-1 p-1 bg-muted rounded-md h-10">
                         {[
                           { id: 'STATIC', icon: FileJson, label: 'JSON' },
@@ -402,11 +397,11 @@ export default function DataSourcesPage() {
                   <section className="space-y-4">
                     <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                       <div className="w-1 h-5 bg-[#6965db] rounded-full" />
-                      {label('2. 协议配置', '2. Protocol Config')}
+                      {t('dataSources.protocolConfig')}
                     </div>
                     <div className="p-5 rounded-md border border-border bg-muted/5 min-h-[320px]">
-                      {editingSource.type === 'REST' && <RESTForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} language={language} />}
-                      {editingSource.type === 'WS' && <WSForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} language={language} />}
+                      {editingSource.type === 'REST' && <RESTForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} />}
+                      {editingSource.type === 'WS' && <WSForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} />}
                       {editingSource.type === 'STATIC' && (
                         <div className="space-y-2">
                           <div className="rounded-md border border-input overflow-hidden bg-muted/20">
@@ -422,7 +417,7 @@ export default function DataSourcesPage() {
                                   setEditingSource({ ...editingSource, config: { value: parsed } });
                                   setStaticJsonError(null);
                                 } catch {
-                                  setStaticJsonError(label('JSON 格式不正确', 'Invalid JSON'));
+                                  setStaticJsonError(t('dataSources.invalidJson'));
                                 }
                               }}
                             />
@@ -438,12 +433,11 @@ export default function DataSourcesPage() {
                   <section className="space-y-4">
                     <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                       <div className="w-1 h-5 bg-[#6965db] rounded-full" />
-                      {label('3. 数据转换', '3. Transformation')}
+                      {t('dataSources.transformation')}
                     </div>
                     <TransformationEditor
                       code={editingSource.transformation}
                       onChange={(code) => setEditingSource({ ...editingSource, transformation: code })}
-                      language={language}
                     />
                   </section>
                 </div>
@@ -455,7 +449,7 @@ export default function DataSourcesPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-base font-semibold text-foreground">
                       <Activity className="h-5 w-5 text-[#6965db]" />
-                      {label('实时运行预览', 'Live Preview')}
+                      {t('dataSources.livePreview')}
                     </div>
                     {selectedId && states[selectedId] && (
                       <div className="flex items-center gap-4 text-sm">
@@ -473,7 +467,7 @@ export default function DataSourcesPage() {
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-2 py-12">
                         <Info className="h-6 w-6" />
-                        <p>{label('等待数据推送或轮询...', 'Waiting for data...')}</p>
+                        <p>{t('dataSources.waitingForData')}</p>
                       </div>
                     )}
                   </div>
@@ -482,20 +476,20 @@ export default function DataSourcesPage() {
 
               {/* Footer Actions */}
               <div className="fixed bottom-0 left-72 right-0 p-4 bg-card/90 backdrop-blur-md border-t border-border flex justify-end gap-3">
-                <Button variant="outline" onClick={goBack} className="h-10 px-6 rounded-md">{label('返回编辑器', 'Back to Editor')}</Button>
+                <Button variant="outline" onClick={goBack} className="h-10 px-6 rounded-md">{t('dataSources.backToEditor')}</Button>
                 <Button
                   onClick={handleSave}
                   className="h-10 px-10 bg-[#6965db] hover:bg-[#5851db] font-bold shadow-lg shadow-[#6965db]/20 rounded-md"
                 >
-                  {label('保存并连接', 'Save & Connect')}
+                  {t('dataSources.saveAndConnect')}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/40">
               <Database className="h-20 w-20 mb-6" />
-              <p className="text-base font-medium">{label('从左侧选择一个数据源开始配置', 'Select a data source to begin')}</p>
-              <p className="text-sm mt-2">{label('或点击"新增"按钮创建新数据源', 'Or click "Add" to create a new one')}</p>
+              <p className="text-base font-medium">{t('dataSources.selectToBegin')}</p>
+              <p className="text-sm mt-2">{t('dataSources.orClickAdd')}</p>
             </div>
           )}
         </div>
