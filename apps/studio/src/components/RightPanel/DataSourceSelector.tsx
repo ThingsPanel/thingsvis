@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Database, Zap } from 'lucide-react';
 import {
     Select,
@@ -20,15 +21,17 @@ export function DataSourceSelector({
     dataSources,
     platformFields = [],
     value = '',
-    onChangeplaceholder
+    onChange,
+    placeholder
 }: DataSourceSelectorProps) {
+    const { t } = useTranslation('editor');
     const hasDataSources = Object.keys(dataSources).length > 0;
     const hasPlatformFields = platformFields.length > 0;
 
     if (!hasDataSources && !hasPlatformFields) {
         return (
             <div className="text-xs text-muted-foreground italic p-2 border border-dashed rounded">
-                {label('暂无可用数据源', 'No data sources available')}
+                {t('dataSourceSelector.noDataSources')}
             </div>
         );
     }
@@ -44,7 +47,7 @@ export function DataSourceSelector({
                     <>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2 border-b">
                             <Database className="h-3 w-3" />
-                            {label('数据源管理器', 'Data Sources')}
+                            {t('dataSourceSelector.dataSources')}
                         </div>
                         {Object.keys(dataSources).map((id) => (
                             <SelectItem key={id} value={`ds.${id}.data`} className="text-sm font-mono cursor-pointer">
@@ -64,7 +67,7 @@ export function DataSourceSelector({
                     <>
                         <div className={`px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-2 border-b ${hasDataSources ? 'mt-2' : ''}`}>
                             <Zap className="h-3 w-3" />
-                            {label('平台字段', 'Platform Fields')}
+                            {t('dataSourceSelector.platformFields')}
                         </div>
                         {platformFields.map((field) => (
                             <SelectItem key={field.id} value={`platform.${field.id}`} className="text-sm font-mono cursor-pointer">

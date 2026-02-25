@@ -24,7 +24,7 @@ type Props = {
   propsValue: unknown;
   bindings: DataBinding[] | undefined;
   updateNode: (changes: any) => void;
-  language?: string;
+  
 };
 
 function allowedModes(field: ControlField): BindingMode[] {
@@ -229,7 +229,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               currentNodeId={nodeId}
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(v) => setStatic(v)}
-              language={language}
+              
             />
           )}
 
@@ -326,7 +326,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
             <ImageSourceInput
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(v) => setStatic(v)}
-              language={language}
+              
             />
           )}
 
@@ -345,7 +345,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
         <FieldPicker
           kernelStore={kernelStore}
           value={fieldSelection}
-          language={language}
+          
           onChange={(next) => {
             setFieldSelection(next);
             if (next?.dataSourceId && next.fieldPath) {
@@ -399,7 +399,7 @@ function NodeSelector({
   currentNodeId: string;
   value: string;
   onChange: (nodeId: string) => void;
-  language?: string;
+  
 }) {
   // 订阅 store 获取所有节点
   const nodesById = useSyncExternalStore(

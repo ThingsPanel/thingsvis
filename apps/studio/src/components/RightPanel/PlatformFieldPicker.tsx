@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react'
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -18,8 +19,10 @@ interface PlatformFieldPickerProps {
 export function PlatformFieldPicker({
     platformFields,
     onSelectField,
-    language = 'zh'
+    
 }: PlatformFieldPickerProps) {
+    const { t } = useTranslation('editor');
+
     // Group fields by dataType
     const groupedFields = useMemo(() => {
         const groups: Record<string, PlatformField[]> = {
@@ -38,9 +41,9 @@ export function PlatformFieldPicker({
     }, [platformFields])
 
     const dataTypeLabels = {
-        telemetry: language === 'zh' ? '遥测数据' : 'Telemetry',
-        attribute: language === 'zh' ? '属性数据' : 'Attributes',
-        command: language === 'zh' ? '命令' : 'Commands'
+        telemetry: t('platformPicker.telemetry'),
+        attribute: t('platformPicker.attributes'),
+        command: t('platformPicker.commands')
     }
 
     const dataTypeColors = {
@@ -69,12 +72,10 @@ export function PlatformFieldPicker({
             <div className="px-4 py-8 text-center text-muted-foreground">
                 <Database className="mx-auto h-12 w-12 opacity-20 mb-3" />
                 <p className="text-sm">
-                    {language === 'zh' ? '暂无平台字段' : 'No platform fields available'}
+                    {t('platformPicker.noFields')}
                 </p>
                 <p className="text-xs mt-2 opacity-60">
-                    {language === 'zh'
-                        ? '请在ThingsPanel中配置设备物模型'
-                        : 'Please configure device model in ThingsPanel'}
+                    {t('platformPicker.noFieldsTip')}
                 </p>
             </div>
         )
@@ -86,7 +87,7 @@ export function PlatformFieldPicker({
             <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-md">
                 <Database className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">
-                    {language === 'zh' ? '平台字段' : 'Platform Fields'}
+                    {t('platformPicker.title')}
                 </span>
                 <Badge variant="secondary  " className="ml-auto text-xs">
                     {platformFields.length}
@@ -97,9 +98,7 @@ export function PlatformFieldPicker({
             <div className="flex items-start gap-2 px-3 py-2 bg-blue-500/5 rounded-md border border-blue-500/10">
                 <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                 <p className="text-xs text-blue-600/90">
-                    {language === 'zh'
-                        ? '点击字段可创建数据源绑定，支持实时数据推送'
-                        : 'Click field to create data binding with real-time updates'}
+                    {t('platformPicker.bindingTip')}
                 </p>
             </div>
 

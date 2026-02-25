@@ -148,5 +148,19 @@
         "library": "Library",
         "layers": "Layers"
     },
-    "loading": "Loading..."
+    "loading": "Loading...",
+    "platformPicker": {
+        "telemetry": "Telemetry",
+        "attributes": "Attributes",
+        "commands": "Commands",
+        "noFields": "No platform fields available",
+        "noFieldsTip": "Please configure device model in ThingsPanel",
+        "title": "Platform Fields",
+        "bindingTip": "Click field to create data binding with real-time updates"
+    },
+    "dataSourceSelector": {
+        "noDataSources": "No data sources available",
+        "dataSources": "Data Sources",
+        "platformFields": "Platform Fields"
+    }
 }

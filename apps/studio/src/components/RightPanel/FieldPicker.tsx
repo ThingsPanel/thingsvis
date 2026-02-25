@@ -16,7 +16,7 @@ type Props = {
   onChange: (next: FieldPickerValue | null) => void;
   maxDepth?: number;
   maxNodes?: number;
-  language?: string;
+  
 };
 
 

@@ -18,7 +18,7 @@ type InputMode = 'upload' | 'url' | 'base64';
 interface ImageSourceInputProps {
   value: string;
   onChange: (value: string) => void;
-  language?: string;
+  
 }
 
 export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {

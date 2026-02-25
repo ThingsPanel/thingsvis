@@ -1,4 +1,5 @@
 import React from 'react'
+import i18n from '@/i18n'
 
 interface ErrorBoundaryProps {
     children: React.ReactNode
@@ -87,7 +88,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                                 color: '#fff',
                             }}
                         >
-                            Something went wrong
+                            {i18n.t('errorBoundary.title', 'Something went wrong', { ns: 'common' })}
                         </h1>
                         <p
                             style={{
@@ -97,7 +98,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                                 lineHeight: 1.6,
                             }}
                         >
-                            An unexpected error occurred. You can try retrying or reloading the page.
+                            {i18n.t('errorBoundary.description', 'An unexpected error occurred. You can try retrying or reloading the page.', { ns: 'common' })}
                         </p>
                         {this.state.error && (
                             <pre
@@ -131,7 +132,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                                     fontWeight: 500,
                                 }}
                             >
-                                Retry
+                                {i18n.t('retry', 'Retry', { ns: 'common' })}
                             </button>
                             <button
                                 onClick={this.handleReload}
@@ -146,7 +147,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                                     fontWeight: 500,
                                 }}
                             >
-                                Reload Page
+                                {i18n.t('errorBoundary.reload', 'Reload Page', { ns: 'common' })}
                             </button>
                         </div>
                     </div>

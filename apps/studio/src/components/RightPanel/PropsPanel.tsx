@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSyncExternalStore } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Trash2, Database, Link2 } from "lucide-react";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
 import type { WidgetMainModule } from "@thingsvis/schema";
@@ -19,11 +20,13 @@ import ControlFieldRow from "./ControlFieldRow";
 type Props = {
   nodeId: string;
   kernelStore: KernelStore;
-  language: string;
   onUserEdit?: () => void;
 };
 
-export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
+export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
+  const { t, i18n } = useTranslation('editor');
+  
+
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
     () => kernelStore.getState() as KernelState
@@ -102,7 +105,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
   const renderGeometry = () => (
     <div className="space-y-3 px-1">
       <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-        {labelZh("几何布局", "Geometry")}
+        {t('propsPanel.geometryTitle')}
       </h3>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
@@ -129,7 +132,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">
-              {labelZh("宽度", "Width")}
+              {t('propsPanel.width')}
             </label>
             <Input
               type="number"
@@ -140,7 +143,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">
-              {labelZh("高度", "Height")}
+              {t('propsPanel.height')}
             </label>
             <Input
               type="number"
@@ -155,7 +158,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-muted-foreground">
-            {labelZh("旋转", "Rotation")}
+            {t('propsPanel.rotation')}
           </label>
           <Input
             type="number"
@@ -205,8 +208,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
                     propsValue={schema.props?.[field.path]}
                     bindings={schema.data}
                     updateNode={updateNode}
-                    language={language}
-                  />
+                    />
                 ))}
               </div>
             </div>
@@ -231,10 +233,10 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
     return (
       <Tabs defaultValue="style" className="w-full">
         <TabsList className={`grid w-full ${tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2'} mb-4`}>
-          <TabsTrigger value="style" className="text-sm">{labelZh("样式", "Style")}</TabsTrigger>
-          <TabsTrigger value="data" className="text-sm">{labelZh("数据", "Data")}</TabsTrigger>
+          <TabsTrigger value="style" className="text-sm">{t('propsPanel.style')}</TabsTrigger>
+          <TabsTrigger value="data" className="text-sm">{t('propsPanel.data')}</TabsTrigger>
           {showPlatformTab && (
-            <TabsTrigger value="platform" className="text-sm">{labelZh("平台", "Platform")}</TabsTrigger>
+            <TabsTrigger value="platform" className="text-sm">{t('propsPanel.platform')}</TabsTrigger>
           )}
         </TabsList>
 
@@ -251,18 +253,18 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
           {/* Basic Props */}
           <div className="space-y-3 pt-4 border-t border-border px-1">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              {labelZh("文本配置", "Content")}
+              {t('propsPanel.contentTitle')}
             </h3>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">{labelZh("文本内容", "Text")}</label>
+              <label className="text-sm font-medium text-muted-foreground">{t('propsPanel.textContent')}</label>
               <textarea
                 value={schema.props?.text || ''}
                 onChange={(e) => updateNode({ props: { text: e.target.value } })}
                 className="w-full h-20 p-2 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-none"
-                placeholder={labelZh("输入静态文本", "Enter static text")}
+                placeholder={t('propsPanel.staticTextPlaceholder')}
               />
               <p className="text-sm text-muted-foreground italic">
-                {labelZh("注：若在'数据'面板配置了绑定，此处的静态值将被覆盖。", "Note: If data binding is set, this static value will be overridden.")}
+                {t('propsPanel.dataBindingNote')}
               </p>
             </div>
           </div>
@@ -270,10 +272,10 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
           {/* Style Section */}
           <div className="space-y-3 pt-4 border-t border-border px-1">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              {labelZh("样式属性", "Style")}
+              {t('propsPanel.styleTitle')}
             </h3>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">{labelZh("颜色", "Fill")}</label>
+              <label className="text-sm font-medium text-muted-foreground">{t('propsPanel.fillColor')}</label>
               <div className="flex gap-2">
                 <Input
                   type="color"
@@ -290,7 +292,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">{labelZh("字号", "Font Size")}</label>
+              <label className="text-sm font-medium text-muted-foreground">{t('propsPanel.fontSize')}</label>
               <Input
                 type="number"
                 value={schema.props?.fontSize || 16}
@@ -305,7 +307,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider flex items-center gap-2">
               <Link2 className="h-3 w-3 text-[#6965db]" />
-              {labelZh("数据绑定", "Data Bindings")}
+              {t('propsPanel.dataBindingsTitle')}
             </h3>
             <Button size="icon" variant="ghost" className="h-6 w-6" onClick={addBinding}>
               <Plus className="h-3.5 w-3.5" />
@@ -326,19 +328,19 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-muted-foreground">
-                    {labelZh("目标属性", "Target Prop")}
+                    {t('propsPanel.targetProp')}
                   </label>
                   <Input
                     value={binding.targetProp}
                     onChange={(e) => updateBinding(index, 'targetProp', e.target.value)}
-                    placeholder={labelZh("例如：text / fill / fontSize", "e.g. text / fill / fontSize")}
+                    placeholder={t('propsPanel.targetPropPlaceholder')}
                     className="h-8 text-sm"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-muted-foreground">
-                    {labelZh("数据源", "Data Source")}
+                    {t('propsPanel.dataSourceTitle')}
                   </label>
                   <DataSourceSelector
                     dataSources={dataSources}
@@ -356,13 +358,12 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
                       newBindings[index] = updatedBinding;
                       updateNode({ data: newBindings });
                     }}
-                    language={language as 'zh' | 'en'}
-                  />
+                    />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-muted-foreground flex items-center justify-between">
-                    <span>{labelZh("表达式", "Expression")}</span>
+                    <span>{t('propsPanel.expressionTitle')}</span>
                     <Database className="h-2.5 w-2.5 opacity-50" />
                   </label>
                   <textarea
@@ -372,7 +373,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
                     className="w-full h-16 p-2 text-sm font-mono rounded-sm border border-input bg-muted/20 focus:ring-1 focus:ring-ring focus:outline-none resize-none"
                   />
                   <p className="text-xs text-muted-foreground italic">
-                    {labelZh("💡 提示：可以手动编辑表达式添加路径，如 ", "💡 Tip: Manually edit to add path, e.g. ")}
+                    {t('propsPanel.expressionTip')}
                     <code className="px-1 py-0.5 bg-muted rounded text-[10px]">
                       {`{{ ds.mydata.data.temperature }}`}
                     </code>
@@ -383,14 +384,14 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
 
             {bindings.length === 0 && (
               <div className="text-center py-8 text-muted-foreground/40 text-sm italic">
-                {labelZh("暂无绑定，点击上方 + 号添加", "No bindings yet. Click + to add one.")}
+                {t('propsPanel.noBindingsHint')}
               </div>
             )}
           </div>
 
           <div className="pt-4 space-y-2">
             <h4 className="text-sm font-medium text-muted-foreground">
-              {labelZh("活跃数据源参考", "Active Data Sources")}
+              {t('propsPanel.activeDataSources')}
             </h4>
             <div className="grid grid-cols-1 gap-1">
               {Object.keys(dataSources).map(id => (
@@ -402,7 +403,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
               ))}
               {Object.keys(dataSources).length === 0 && (
                 <span className="text-sm text-muted-foreground italic">
-                  {labelZh("未检测到活跃数据源", "No active sources detected")}
+                  {t('propsPanel.noActiveSources')}
                 </span>
               )}
             </div>
@@ -417,10 +418,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
               if (platformFields.length === 0) {
                 return (
                   <div className="text-center py-8 text-muted-foreground/40 text-sm italic">
-                    {labelZh(
-                      "非嵌入模式或未配置平台字段",
-                      "Not in embedded mode or no platform fields configured"
-                    )}
+                    {t('propsPanel.noPlatformFields')}
                   </div>
                 )
               }
@@ -440,8 +438,7 @@ export default function PropsPanel({ nodeId, kernelStoreonUserEdit }: Props) {
                     ]
                     updateNode({ data: newBindings })
                   }}
-                  language={language as 'zh' | 'en'}
-                />
+                  />
               )
             })()}
           </TabsContent>
