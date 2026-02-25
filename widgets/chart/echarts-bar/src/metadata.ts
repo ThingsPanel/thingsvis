@@ -8,6 +8,6 @@ export const metadata = {
     category: 'chart',
     icon: 'BarChart3',
     version: '1.0.0',
-    defaultSize: { width: 400, height: 300 },
+    defaultSize: { width: 300, height: 200 },
     resizable: true,
 } as const;

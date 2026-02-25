@@ -17,6 +17,6 @@ export const metadata = {
   category: 'chart',
   icon: 'LineChart',
   version: '1.0.0',
-  defaultSize: { width: 400, height: 300 },
+  defaultSize: { width: 300, height: 200 },
   resizable: true, // 图表组件支持调整尺寸
 } as const;

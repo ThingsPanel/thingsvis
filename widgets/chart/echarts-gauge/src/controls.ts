@@ -13,6 +13,7 @@ export const controls = generateControls(PropsSchema, {
     },
     bindings: {
         title: { enabled: true, modes: ['static', 'field', 'expr'] },
+        max: { enabled: true, modes: ['static', 'field', 'expr'] },
         primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         data: { enabled: true, modes: ['static', 'field', 'expr'] },
     },
