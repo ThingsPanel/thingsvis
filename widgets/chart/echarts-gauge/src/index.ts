@@ -1,5 +1,5 @@
 /**
- * ECharts 饼图主入口 (极致精简版 + 数据驱动)
+ * ECharts 仪表盘主入口 (极致精简版 + 数据驱动)
  */
 
 import * as echarts from 'echarts';
@@ -12,9 +12,11 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
-    const { title, data, showLegend, isDoughnut } = props;
+    const { title, data, primaryColor, max } = props;
 
     const textColor = isDark ? '#ddd' : '#333';
+    const splitLineColor = isDark ? '#ffffff20' : '#00000010';
+    const axisLineColor = isDark ? '#333' : '#E6EBF8';
 
     return {
         backgroundColor: 'transparent',
@@ -25,33 +27,66 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
             top: '5%',
         } : undefined,
         tooltip: {
-            trigger: 'item',
-        },
-        legend: {
-            show: showLegend,
-            bottom: '5%',
-            left: 'center',
-            textStyle: { color: textColor },
+            formatter: '{b} : {c}'
         },
         dataset: Array.isArray(data) && data.length > 0 ? {
             source: data
         } : undefined,
         series: [
             {
-                type: 'pie',
-                radius: isDoughnut ? ['40%', '70%'] : '70%',
-                center: ['50%', '50%'],
-                itemStyle: {
-                    borderRadius: 5,
-                    borderColor: isDark ? '#141414' : '#fff',
-                    borderWidth: 2
+                type: 'gauge',
+                max: max,
+                center: ['50%', '55%'], // 稍微往下移一点给标题留空间
+                radius: '85%',
+                axisLine: {
+                    lineStyle: {
+                        width: 15, // 圆环拉伸成宽条状更现代
+                        color: [
+                            [1, axisLineColor] // 默认背景轨
+                        ]
+                    }
                 },
-                label: {
-                    color: textColor,
+                progress: {
                     show: true,
-                    // 默认显示百分比风格会显得更专业
-                    formatter: '{b}: {d}%'
+                    width: 15,
+                    itemStyle: {
+                        color: primaryColor, // 进度条采用主色调
+                    }
                 },
+                pointer: {
+                    icon: 'path://M12.8,0.7l12,40.1H0.7L12.8,0.7z',
+                    length: '65%',
+                    width: 6,
+                    offsetCenter: [0, '-10%'],
+                    itemStyle: {
+                        color: primaryColor
+                    }
+                },
+                axisTick: { show: false }, // 隐藏小刻度
+                splitLine: {
+                    length: 15,
+                    lineStyle: {
+                        width: 2,
+                        color: splitLineColor
+                    }
+                },
+                axisLabel: {
+                    color: textColor,
+                    distance: 25,
+                    fontSize: 12
+                },
+                detail: {
+                    valueAnimation: true,
+                    formatter: '{value}',
+                    fontSize: 24,
+                    color: textColor,
+                    offsetCenter: [0, '60%']
+                },
+                title: {
+                    offsetCenter: [0, '30%'],
+                    color: textColor,
+                    fontSize: 14
+                }
             },
         ],
     };
@@ -97,7 +132,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
             currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
             isDark = newCtx.theme?.isDark ?? false;
 
-            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series'] });
 
             if (newCtx.size) {
                 scheduleResize();

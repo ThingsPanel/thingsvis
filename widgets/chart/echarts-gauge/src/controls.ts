@@ -3,7 +3,7 @@ import { generateControls } from './lib/types';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['title', 'showLegend'],
+        Content: ['title', 'max'],
         Style: ['primaryColor'],
         Data: ['data'],
     },

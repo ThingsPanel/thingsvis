@@ -23,3 +23,10 @@
 - **How it was tested**: Automated Node script generated zero output exceptions, parsing and pushing dictionaries directly into `editor.json` synchronously. Panel drop-downs and input overlays properly fall back to standard visual output matching expected visual behavior.
 - **Key decisions & rationale**: Because standard usage like `t('静态', 'static')` operates on dynamic English "value injection" for fallbacks when keys are dropped, populating the root dict tree is safer, more maintainable, and prevents altering the React codebase components, thereby eliminating logical regression risk.
 - **Time/Iteration count**: 3
+
+## Sub-task 4: ECharts Widget Simplification & Gauge Creation
+- **What was done**: Radically stripped back echarts-line, echarts-bar, and echarts-pie schemas/panels to an extreme minimalist state. Excluded static JSON input for dataset configuration, opting for pure data-bound fields. Extended ctx.theme variables inside render definitions to natively skin axis, text, & bounding boxes. Created echarts-gauge (dashboard gauge widget) enforcing the same standards.
+- **What succeeded**: Minimized Zod schema to merely 	itle, primaryColor, showLegend, max, and data. UI configuration properties instantly mapped dataset directly without arbitrary manual JSON composition.
+- **How it was tested**: Ran pnpm build:widgets & pnpm registry:generate resulting in success output without type errors.
+- **Key decisions & rationale**: Based on Grafana's philosophical decoupling of Data Source capabilities from panel visuals, static complex options were heavily abstracted into smart ECharts logic defaulting to adaptive layouts and dynamic theme hooks.
+- **Time/Iteration count**: 1

@@ -1,28 +1,37 @@
 /**
- * ECharts 柱状图主入口 (Overlay 模板)
- *
- * 基于 echarts-line 参考实现，
- * 使用 bar series 替代 line series。
+ * ECharts 柱状图主入口 (极致精简版 + 数据驱动)
  */
 
 import * as echarts from 'echarts';
 import { metadata } from './metadata';
-import { PropsSchema, getDefaultProps, type Props, type DataPoint } from './schema';
+import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
 
 /**
- * 根据 Props 生成 ECharts Option
+ * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props): echarts.EChartsOption {
-    const { title, data, barColor, showLegend, showLabel, barWidth, barBorderRadius } = props;
+function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
+    const { title, data, primaryColor, showLegend } = props;
+
+    // 根据亮暗色主题自动适配文本颜色和坐标轴辅助线颜色
+    const textColor = isDark ? '#ddd' : '#333';
+    const splitLineColor = isDark ? '#ffffff20' : '#00000010';
+
+    // 智能构建渐变色
+    const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: primaryColor },
+        { offset: 1, color: primaryColor + '40' } // 加点透明度
+    ]);
 
     return {
-        title: {
+        // 背景完全交给上层容器或 theme
+        backgroundColor: 'transparent',
+        title: title ? {
             text: title,
             left: 'center',
-            textStyle: { fontSize: 14 },
-        },
+            textStyle: { fontSize: 14, color: textColor },
+        } : undefined,
         tooltip: {
             trigger: 'axis',
             axisPointer: { type: 'shadow' },
@@ -30,33 +39,35 @@ function buildOption(props: Props): echarts.EChartsOption {
         legend: {
             show: showLegend,
             bottom: 0,
+            textStyle: { color: textColor },
         },
         grid: {
             left: '3%',
             right: '4%',
             bottom: showLegend ? '15%' : '3%',
-            top: title ? '15%' : '3%',
+            top: title ? '15%' : '8%',
             containLabel: true,
         },
+        // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
+        dataset: Array.isArray(data) && data.length > 0 ? {
+            source: data
+        } : undefined,
         xAxis: {
             type: 'category',
-            data: data.map((d: DataPoint) => d.name),
+            axisLabel: { color: textColor },
+            axisLine: { lineStyle: { color: splitLineColor } },
         },
         yAxis: {
             type: 'value',
+            splitLine: { lineStyle: { color: splitLineColor } },
+            axisLabel: { color: textColor },
         },
         series: [
             {
                 type: 'bar',
-                data: data.map((d: DataPoint) => d.value),
-                barWidth,
                 itemStyle: {
-                    color: barColor,
-                    borderRadius: [barBorderRadius, barBorderRadius, 0, 0],
-                },
-                label: {
-                    show: showLabel,
-                    position: 'top',
+                    color: gradientColor,
+                    borderRadius: [4, 4, 0, 0], // 给点微小圆角更精致
                 },
             },
         ],
@@ -75,13 +86,11 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     // 合并默认值和传入的 props
     const defaults = getDefaultProps();
     let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
-
-    // 应用背景色
-    element.style.backgroundColor = currentProps.backgroundColor;
+    let isDark = ctx.theme?.isDark ?? false;
 
     // 初始化 ECharts
     const chart = echarts.init(element);
-    chart.setOption(buildOption(currentProps));
+    chart.setOption(buildOption(currentProps, isDark));
 
     const scheduleResize = () => {
         try {
@@ -93,10 +102,8 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
         }
     };
 
-    // 首次挂载后触发一次 resize
     scheduleResize();
 
-    // 监听容器尺寸变化
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
         ro = new ResizeObserver(() => scheduleResize());
@@ -105,17 +112,17 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 
     return {
         element,
-
         update: (newCtx: WidgetOverlayContext) => {
-            currentProps = { ...currentProps, ...(newCtx.props as Partial<Props>) };
-            element.style.backgroundColor = currentProps.backgroundColor;
-            chart.setOption(buildOption(currentProps));
+            currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
+            isDark = newCtx.theme?.isDark ?? false;
+
+            // 使用 notMerge: false, lazyUpdate: false
+            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
 
             if (newCtx.size) {
                 scheduleResize();
             }
         },
-
         destroy: () => {
             ro?.disconnect();
             chart.dispose();

@@ -58,28 +58,22 @@ export default defineWidget({
 |------|--------|------|
 | ECharts 柱状图 `echarts-bar` | 2-3h | 基于 SDK defineWidget + echarts-line 参考 |
 | ECharts 饼图 `echarts-pie` | 2-3h | 同上 |
-| MQTT 数据源 UI + Adapter | 1d | IoT 核心功能，连接 ThingsPanel |
+| ECharts 仪表盘 `echarts-gauge` | 3-4h | |
+| 通用数值卡片 | 2-3h | |
+| 表格 Table | 4-6h | |
+| 开关 Switch / 按钮 / 滑块 | 5-8h | |
+| 视频流 / Iframe | 4-6h | |
+| uPlot 时序图 | 1-2d | |
 
 ### 任务清单
 - [ ] **P1** 开发 ECharts 柱状图组件（使用 SDK defineWidget）
 - [ ] **P1** 开发 ECharts 饼图组件（使用 SDK defineWidget）
-- [ ] **P1** MQTT 数据源 Adapter 开发
-
----
-
-## P2 后续组件（v0.2.0 规划）
-
-| 组件 | 工作量 |
-|------|--------|
-| ECharts 仪表盘 `echarts-gauge` | 3-4h |
-| 通用数值卡片 | 2-3h |
-| 表格 Table | 4-6h |
-| 开关 Switch / 按钮 / 滑块 | 5-8h |
-| 视频流 / Iframe | 4-6h |
-| uPlot 时序图 | 1-2d |
-
-### 任务清单
-- [ ] **P2** 各后续组件按需开发
+- [ ] **P1** 开发 ECharts 仪表盘 `echarts-gauge`
+- [ ] **P1** 开发 通用数值卡片
+- [ ] **P1** 开发 表格 Table
+- [ ] **P1** 开发 开关 Switch / 按钮 / 滑块
+- [ ] **P1** 开发 视频流 / Iframe
+- [ ] **P1** 开发 uPlot 时序图
 
 ---
 
@@ -91,4 +85,3 @@ export default defineWidget({
 4. 新组件在编辑器中可正常拖拽、配置、渲染
 5. `registry.json` 中正确注册
 6. 组件属性面板可配置
-7. 组件支持数据绑定（如 MQTT）

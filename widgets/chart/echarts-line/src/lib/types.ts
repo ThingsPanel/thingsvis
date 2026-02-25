@@ -120,7 +120,15 @@ export type WidgetMainModule = {
 type ZodShape = Record<string, z.ZodTypeAny>;
 
 function zodTypeToKind(zodType: z.ZodTypeAny): ControlKind {
-  const typeName = zodType._def?.typeName;
+  let current = zodType;
+  while (current._def?.innerType) {
+    const typeName = current._def.typeName;
+    if (typeName && !['ZodDefault', 'ZodOptional', 'ZodNullable'].includes(typeName)) {
+      break;
+    }
+    current = current._def.innerType;
+  }
+  const typeName = current._def?.typeName;
   switch (typeName) {
     case 'ZodNumber': return 'number';
     case 'ZodBoolean': return 'boolean';
@@ -180,7 +188,7 @@ export function generateControls(
   const { groups: groupConfig = {}, overrides = {}, bindings = {} } = config;
 
   const allFields: Record<string, ControlField> = {};
-  
+
   for (const [key, zodType] of Object.entries(shape)) {
     const field: ControlField = {
       path: key,
@@ -197,22 +205,22 @@ export function generateControls(
   const groups: ControlGroup[] = [];
   const usedKeys = new Set<string>();
   const groupOrder: Array<'Content' | 'Style' | 'Data' | 'Advanced'> = ['Content', 'Style', 'Data', 'Advanced'];
-  
+
   for (const groupId of groupOrder) {
     const fieldKeys = groupConfig[groupId];
     if (fieldKeys && fieldKeys.length > 0) {
       const fields = fieldKeys
         .map((key) => allFields[key])
         .filter((field): field is ControlField => field !== undefined);
-      
+
       fields.forEach((field) => usedKeys.add(field.path));
-      
+
       if (fields.length > 0) {
         groups.push({
           id: groupId,
-          label: groupId === 'Content' ? '内容' : 
-                 groupId === 'Style' ? '样式' : 
-                 groupId === 'Data' ? '数据' : '高级',
+          label: groupId === 'Content' ? '内容' :
+            groupId === 'Style' ? '样式' :
+              groupId === 'Data' ? '数据' : '高级',
           fields,
         });
       }
@@ -222,7 +230,7 @@ export function generateControls(
   const remainingFields = Object.entries(allFields)
     .filter(([key]) => !usedKeys.has(key))
     .map(([, field]) => field);
-  
+
   if (remainingFields.length > 0) {
     const advancedGroup = groups.find((g) => g.id === 'Advanced');
     if (advancedGroup) {

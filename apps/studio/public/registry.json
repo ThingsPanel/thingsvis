@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-25T07:14:22.863Z",
+  "generatedAt": "2026-02-25T11:50:52.995Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -50,6 +50,16 @@
       "version": "0.0.1",
       "icon": "BarChart3",
       "name": "柱状图"
+    },
+    "chart/echarts-gauge": {
+      "remoteName": "thingsvis_widget_chart_echarts_gauge",
+      "remoteEntryUrl": "http://localhost:3204/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-gauge/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "Gauge",
+      "name": "仪表盘"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_widget_chart_echarts_line",
