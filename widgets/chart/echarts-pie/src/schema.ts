@@ -9,7 +9,7 @@ export const PropsSchema = z.object({
     title: z.string().default('').describe('图表标题'),
 
     /** 主色调 (供扩展用或单色场景，但饼图默认使用ECharts自带的色板最佳) */
-    primaryColor: z.string().default('#5470c6').describe('主色调'),
+    primaryColor: z.string().default('#6965db').describe('主色调'),
 
     /** 是否显示图例 */
     showLegend: z.boolean().default(true).describe('显示图例'),

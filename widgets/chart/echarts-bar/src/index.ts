@@ -11,7 +11,7 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
+function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
     const { title, data, primaryColor, showLegend } = props;
 
     // 根据亮暗色主题自动适配文本颜色和坐标轴辅助线颜色
@@ -30,7 +30,8 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         title: title ? {
             text: title,
             left: 'center',
-            textStyle: { fontSize: 14, color: textColor },
+            textStyle: { fontSize: Math.round(14 * scale), color: textColor },
+            top: Math.round(10 * scale),
         } : undefined,
         tooltip: {
             trigger: 'axis',
@@ -39,13 +40,13 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         legend: {
             show: showLegend,
             bottom: 0,
-            textStyle: { color: textColor },
+            textStyle: { color: textColor, fontSize: Math.round(12 * scale) },
         },
         grid: {
             left: '3%',
             right: '4%',
-            bottom: showLegend ? 40 : 10,
-            top: title ? 40 : 20,
+            bottom: showLegend ? Math.round(35 * scale) : Math.round(10 * scale),
+            top: title ? Math.round(35 * scale) : Math.round(15 * scale),
             containLabel: true,
         },
         // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
@@ -55,13 +56,13 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         } : undefined,
         xAxis: {
             type: 'category',
-            axisLabel: { color: textColor },
+            axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
             axisLine: { lineStyle: { color: splitLineColor } },
         },
         yAxis: {
             type: 'value',
             splitLine: { lineStyle: { color: splitLineColor } },
-            axisLabel: { color: textColor },
+            axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
         },
         series: [
             {
@@ -93,12 +94,19 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 
     // 初始化 ECharts
     const chart = echarts.init(element);
-    chart.setOption(buildOption(currentProps, isDark));
+    chart.setOption(buildOption(currentProps, isDark, 1));
 
     const scheduleResize = () => {
         try {
             requestAnimationFrame(() => {
-                if (!chart.isDisposed()) chart.resize();
+                if (!chart.isDisposed()) {
+                    chart.resize();
+                    const cw = element.clientWidth || 300;
+                    const ch = element.clientHeight || 200;
+                    const minDim = Math.min(cw, ch);
+                    const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+                    chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+                }
             });
         } catch {
             if (!chart.isDisposed()) chart.resize();
@@ -119,10 +127,8 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
             currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
             isDark = newCtx.theme?.isDark ?? false;
 
-            // 使用 notMerge: false, lazyUpdate: false
-            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
-
-            if (newCtx.size) {
+            // scheduleResize 将处理 setOption（包含 scale 逻辑）
+            if (newCtx.size || !newCtx.size) {
                 scheduleResize();
             }
         },

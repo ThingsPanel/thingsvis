@@ -11,7 +11,7 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
+function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
     const { title, data, showLegend, isDoughnut } = props;
 
     const textColor = isDark ? '#ddd' : '#333';
@@ -21,8 +21,8 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         title: title ? {
             text: title,
             left: 'center',
-            textStyle: { fontSize: 14, color: textColor },
-            top: 10,
+            textStyle: { fontSize: Math.round(14 * scale), color: textColor },
+            top: Math.round(10 * scale),
         } : undefined,
         tooltip: {
             trigger: 'item',
@@ -31,7 +31,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
             show: showLegend,
             bottom: 10,
             left: 'center',
-            textStyle: { color: textColor },
+            textStyle: { color: textColor, fontSize: Math.round(12 * scale) },
         },
         dataset: Array.isArray(data) && data.length > 0 ? {
             source: data
@@ -39,7 +39,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         series: [
             {
                 type: 'pie',
-                radius: isDoughnut ? ['35%', '60%'] : '60%',
+                radius: isDoughnut ? ['30%', '48%'] : '48%',
                 center: ['50%', '45%'],
                 itemStyle: {
                     borderRadius: 5,
@@ -47,12 +47,22 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
                     borderWidth: 2
                 },
                 encode: { value: 'value', itemName: 'name' }, // 明确指定 dataset 的字段映射
+                labelLine: {
+                    length: Math.round(10 * scale),
+                    length2: Math.round(15 * scale),
+                    smooth: true,
+                },
+                avoidLabelOverlap: true,
+                minAngle: 10,
                 label: {
                     color: textColor,
                     show: true,
-                    // 默认显示百分比风格会显得更专业
+                    fontSize: Math.max(10, Math.round(12 * scale)),
+                    position: 'outer',
+                    distanceToLabelLine: 5,
+                    // 不进行人为的截断，交给充裕的边距展示完整标签
                     formatter: '{b}: {d}%'
-                },
+                }
             },
         ],
     };
@@ -69,15 +79,21 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 
     const defaults = getDefaultProps();
     let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
-    let isDark = ctx.theme?.isDark ?? false;
-
+    let isDark = ctx.theme?.isDark ?? false;    // 初始化 ECharts
     const chart = echarts.init(element);
-    chart.setOption(buildOption(currentProps, isDark));
+    chart.setOption(buildOption(currentProps, isDark, 1));
 
     const scheduleResize = () => {
         try {
             requestAnimationFrame(() => {
-                if (!chart.isDisposed()) chart.resize();
+                if (!chart.isDisposed()) {
+                    chart.resize();
+                    const cw = element.clientWidth || 300;
+                    const ch = element.clientHeight || 200;
+                    const minDim = Math.min(cw, ch);
+                    const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+                    chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series'] });
+                }
             });
         } catch {
             if (!chart.isDisposed()) chart.resize();
@@ -98,9 +114,9 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
             currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
             isDark = newCtx.theme?.isDark ?? false;
 
-            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series'] });
 
-            if (newCtx.size) {
+            if (newCtx.size || !newCtx.size) {
                 scheduleResize();
             }
         },

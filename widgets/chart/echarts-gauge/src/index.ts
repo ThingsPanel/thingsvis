@@ -11,7 +11,7 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
+function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
     const { title, data, primaryColor, max } = props;
 
     const textColor = isDark ? '#ddd' : '#333';
@@ -23,83 +23,32 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         title: title ? {
             text: title,
             left: 'center',
-            textStyle: { fontSize: 14, color: textColor },
-            top: 10,
+            textStyle: { fontSize: Math.round(14 * scale), color: textColor },
+            top: Math.round(10 * scale),
         } : undefined,
         tooltip: {
-            formatter: '{b} : {c}'
+            formatter: '{a} <br/>{b} : {c}'
         },
-        dataset: Array.isArray(data) && data.length > 0 ? {
-            source: data
-        } : undefined,
         series: [
             {
+                name: title || '数值',
                 type: 'gauge',
                 max: max,
-                center: ['50%', '55%'],
-                radius: '80%',
-                startAngle: 210,
-                endAngle: -30,
-                splitNumber: 5,
-                itemStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                        { offset: 0, color: primaryColor + '40' },
-                        { offset: 1, color: primaryColor }
-                    ]),
-                    shadowColor: 'rgba(0,0,0,0.1)',
-                    shadowBlur: 10,
-                },
                 progress: {
                     show: true,
-                    width: 14,
-                    roundCap: true
-                },
-                axisLine: {
-                    roundCap: true,
-                    lineStyle: {
-                        width: 14,
-                        color: [[1, axisLineColor]]
-                    }
-                },
-                pointer: {
-                    show: true,
-                    length: '60%',
-                    width: 6,
                     itemStyle: { color: primaryColor }
-                },
-                axisTick: {
-                    show: true,
-                    distance: -20,
-                    length: 8,
-                    lineStyle: { color: splitLineColor, width: 2 }
-                },
-                splitLine: {
-                    show: true,
-                    distance: -20,
-                    length: 14,
-                    lineStyle: { color: splitLineColor, width: 3 }
-                },
-                axisLabel: {
-                    show: true,
-                    distance: 25,
-                    color: textColor,
-                    fontSize: 12
-                },
-                title: {
-                    show: true,
-                    offsetCenter: [0, '30%'],
-                    fontSize: 14,
-                    color: textColor
                 },
                 detail: {
                     valueAnimation: true,
                     formatter: '{value}',
-                    fontSize: 36,
-                    fontWeight: 700,
                     color: textColor,
-                    offsetCenter: [0, '65%']
-                }
-            },
+                    fontSize: Math.round(28 * scale)
+                },
+                pointer: {
+                    itemStyle: { color: primaryColor }
+                },
+                data: Array.isArray(data) && data.length > 0 ? [{ value: data[0]?.value || 0, name: data[0]?.name || title }] : [{ value: 50, name: 'SCORE' }]
+            }
         ],
     };
 }
@@ -118,12 +67,19 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     let isDark = ctx.theme?.isDark ?? false;
 
     const chart = echarts.init(element);
-    chart.setOption(buildOption(currentProps, isDark));
+    chart.setOption(buildOption(currentProps, isDark, 1));
 
     const scheduleResize = () => {
         try {
             requestAnimationFrame(() => {
-                if (!chart.isDisposed()) chart.resize();
+                if (!chart.isDisposed()) {
+                    chart.resize();
+                    const cw = element.clientWidth || 300;
+                    const ch = element.clientHeight || 200;
+                    const minDim = Math.min(cw, ch);
+                    const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+                    chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series'] });
+                }
             });
         } catch {
             if (!chart.isDisposed()) chart.resize();

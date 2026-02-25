@@ -9,14 +9,14 @@ export const PropsSchema = z.object({
     title: z.string().default('').describe('图表标题'),
 
     /** 主色调 */
-    primaryColor: z.string().default('#5470c6').describe('主色调'),
+    primaryColor: z.string().default('#6965db').describe('主色调'),
 
     /** 刻度最大值 */
     max: z.number().default(100).describe('最大值'),
 
     /** 数据集 */
     data: z.array(z.any()).default([
-        { name: '综合评分', value: 85 }
+        { name: '评分', value: 85 }
     ]).describe('数据集'),
 });
 
