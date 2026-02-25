@@ -50,6 +50,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         },
         // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
         dataset: Array.isArray(data) && data.length > 0 ? {
+            dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || '数值' }],
             source: data
         } : undefined,
         xAxis: {
@@ -66,8 +67,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
             {
                 type: 'bar',
                 // 确保 ECharts 正确提取 dataset 中的 name (X轴) 和 value (Y轴) 并且作为图例/Tooltip显示
-                encode: { x: 'name', y: 'value', itemName: 'name', tooltip: ['value'] },
-                name: '数值',
+                encode: { x: 'name', y: 'value', tooltip: ['value'] },
                 itemStyle: {
                     color: gradientColor,
                     borderRadius: [4, 4, 0, 0], // 给点微小圆角更精致

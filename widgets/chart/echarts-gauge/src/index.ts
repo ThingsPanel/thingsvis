@@ -36,44 +36,68 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
             {
                 type: 'gauge',
                 max: max,
-                center: ['50%', '60%'], // 整体往下沉
-                radius: '100%', // 撑满外框
-                startAngle: 200,
-                endAngle: -20,
+                center: ['50%', '55%'],
+                radius: '80%',
+                startAngle: 210,
+                endAngle: -30,
+                splitNumber: 5,
                 itemStyle: {
-                    color: primaryColor, // 进度条采用主色调
+                    color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+                        { offset: 0, color: primaryColor + '40' },
+                        { offset: 1, color: primaryColor }
+                    ]),
+                    shadowColor: 'rgba(0,0,0,0.1)',
+                    shadowBlur: 10,
                 },
                 progress: {
                     show: true,
-                    width: 20,
-                    roundCap: true // 圆润风格
+                    width: 14,
+                    roundCap: true
                 },
                 axisLine: {
                     roundCap: true,
                     lineStyle: {
-                        width: 20, // 背景轨
+                        width: 14,
                         color: [[1, axisLineColor]]
                     }
                 },
                 pointer: {
-                    show: false, // 隐藏老气的指针，采用更现代的纯环形数字显示
+                    show: true,
+                    length: '60%',
+                    width: 6,
+                    itemStyle: { color: primaryColor }
                 },
-                axisTick: { show: false }, // 隐藏小刻度
-                splitLine: { show: false }, // 隐藏分割线
-                axisLabel: { show: false }, // 隐藏外围刻度文字，保持极简
+                axisTick: {
+                    show: true,
+                    distance: -20,
+                    length: 8,
+                    lineStyle: { color: splitLineColor, width: 2 }
+                },
+                splitLine: {
+                    show: true,
+                    distance: -20,
+                    length: 14,
+                    lineStyle: { color: splitLineColor, width: 3 }
+                },
+                axisLabel: {
+                    show: true,
+                    distance: 25,
+                    color: textColor,
+                    fontSize: 12
+                },
                 title: {
                     show: true,
-                    offsetCenter: [0, '25%'], // 标题放在中间下方
-                    fontSize: 16,
+                    offsetCenter: [0, '30%'],
+                    fontSize: 14,
                     color: textColor
                 },
                 detail: {
                     valueAnimation: true,
                     formatter: '{value}',
-                    fontSize: 40,
-                    fontWeight: 'bolder',
+                    fontSize: 36,
+                    fontWeight: 700,
                     color: textColor,
-                    offsetCenter: [0, '-15%'] // 数字本身放在正中间稍上的位置
+                    offsetCenter: [0, '65%']
                 }
             },
         ],

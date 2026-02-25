@@ -46,6 +46,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
       containLabel: true,
     },
     dataset: Array.isArray(data) && data.length > 0 ? {
+      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || '数值' }],
       source: data
     } : undefined,
     xAxis: {
@@ -61,8 +62,7 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
     series: [
       {
         type: 'line',
-        name: '数值',
-        encode: { x: 'name', y: 'value', itemName: 'name', tooltip: ['value'] },
+        encode: { x: 'name', y: 'value', tooltip: ['value'] },
         smooth: smooth,
         showSymbol: false,
         itemStyle: {
