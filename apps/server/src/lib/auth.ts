@@ -2,12 +2,16 @@ import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 import { prisma } from './db'
+import authConfig from './auth.config'
 
+/**
+ * Full NextAuth configuration with Credentials provider.
+ * This file imports PrismaClient and is NOT Edge-compatible.
+ * Use only in server-side code (API routes, server components).
+ * For middleware, import from auth.config.ts instead.
+ */
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  session: { strategy: 'jwt' },
-  pages: {
-    signIn: '/login',
-  },
+  ...authConfig,
   providers: [
     Credentials({
       name: 'credentials',
@@ -41,22 +45,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string
-        token.role = user.role as string
-        token.tenantId = user.tenantId as string
-      }
-      return token
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as string
-        session.user.tenantId = token.tenantId as string
-      }
-      return session
-    },
-  },
 })

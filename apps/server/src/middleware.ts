@@ -1,7 +1,10 @@
-import { auth } from '@/lib/auth'
+import NextAuth from 'next-auth'
+import authConfig from '@/lib/auth.config'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
+
+const { auth } = NextAuth(authConfig)
 
 // CORS configuration — configurable via ALLOWED_ORIGINS env var
 const allowedOriginsStr = process.env.ALLOWED_ORIGINS || '*'

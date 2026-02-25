@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { compare } from 'bcryptjs'
 import { SignJWT } from 'jose'
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 import { z } from 'zod'
 
 const LoginSchema = z.object({
@@ -83,7 +84,19 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('[Auth] Login error:', error)
+    logger.error({
+      msg: 'Login API Error',
+      err: error,
+      path: '/api/v1/auth/login'
+    })
+
+    // Check if it's a Prisma connection error
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'P1001') {
+        return NextResponse.json({ error: 'Database connection failed. Is the database running?' }, { status: 503 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/db'
+import { logger } from '@/lib/logger'
 import { RegisterSchema } from '@/lib/validators/auth'
 
 export async function POST(request: NextRequest) {
@@ -78,7 +79,19 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
-    console.error('[Auth] Register error:', error)
+    logger.error({
+      msg: 'Register API Error',
+      err: error,
+      path: '/api/v1/auth/register'
+    })
+
+    // Check if it's a Prisma connection error
+    if (error && typeof error === 'object' && 'code' in error) {
+      if (error.code === 'P1001') {
+        return NextResponse.json({ error: 'Database connection failed. Is the database running?' }, { status: 503 })
+      }
+    }
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
