@@ -4,6 +4,7 @@
  * 在右侧面板未选中节点时显示
  */
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { processThumbnailFile } from '../../lib/storage/thumbnail'
 export interface CanvasConfig {
@@ -33,22 +34,24 @@ interface CanvasSettingsPanelProps {
     onZoomReset: () => void
 }
 
-export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedded,
+export function CanvasSettingsPanel({ canvasConfig, currentProjectName, isEmbedded,
     onConfigChange, onLayoutModeChange, onClearCanvas,
     onMarkDirty, onZoomReset,
 }: CanvasSettingsPanelProps) {
+    const { t } = useTranslation('editor')
+
     return (
         <>
             {/* Basic Info */}
             <div className="space-y-4 pb-4 border-b border-border">
                 <h3 className="text-sm font-semibold text-foreground">
-                    {language === "zh" ? "基础信息" : "Basic Info"}
+                    {t('canvas.basicInfo')}
                 </h3>
 
                 <div className="space-y-3">
-                    <label className="text-sm font-medium">{language === "zh" ? "项目名称" : "Project Name"}</label>
+                    <label className="text-sm font-medium">{t('canvas.projectName')}</label>
                     <Input
-                        value={canvasConfig.projectName || currentProjectName || (language === "zh" ? "未命名项目" : "Untitled Project")}
+                        value={canvasConfig.projectName || currentProjectName || t('canvas.untitledProject')}
                         readOnly
                         disabled
                         className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
@@ -56,7 +59,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-sm font-medium">{language === "zh" ? "页面名称" : "Page Name"}</label>
+                    <label className="text-sm font-medium">{t('canvas.pageName')}</label>
                     <Input
                         value={canvasConfig.name}
                         onChange={(e) => onConfigChange({ ...canvasConfig, name: e.target.value })}
@@ -65,7 +68,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-sm font-medium">{language === "zh" ? "页面ID" : "Page ID"}</label>
+                    <label className="text-sm font-medium">{t('canvas.pageId')}</label>
                     <Input
                         value={canvasConfig.id}
                         readOnly
@@ -74,7 +77,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                 </div>
 
                 <div className="space-y-3">
-                    <label className="text-sm font-medium">{language === "zh" ? "缩略图" : "Thumbnail"}</label>
+                    <label className="text-sm font-medium">{t('canvas.thumbnail')}</label>
                     <div className="flex items-center gap-2">
                         {canvasConfig.thumbnail ? (
                             <div className="relative group w-full">
@@ -105,13 +108,13 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                                                 onMarkDirty();
                                             } catch (error) {
                                                 console.error('Failed to process thumbnail', error);
-                                                alert(language === "zh" ? "缩略图处理失败" : "Failed to process thumbnail");
+                                                alert(t('canvas.thumbnailFailed'));
                                             }
                                         }
                                     }}
                                 />
                                 <span className="text-xs text-muted-foreground">
-                                    {language === "zh" ? "点击上传缩略图" : "Click to upload"}
+                                    {t('canvas.clickToUpload')}
                                 </span>
                             </label>
                         )}
@@ -122,11 +125,11 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
             {/* Canvas Config */}
             <div className="space-y-4 pb-4 border-b border-border">
                 <h3 className="text-sm font-semibold text-foreground">
-                    {language === "zh" ? "画布配置" : "Canvas Config"}
+                    {t('canvas.settings')}
                 </h3>
 
                 <div className="space-y-3">
-                    <label className="text-sm font-medium">{language === "zh" ? "布局模式" : "Layout Mode"}</label>
+                    <label className="text-sm font-medium">{t('canvas.mode')}</label>
                     <select
                         value={canvasConfig.mode}
                         onChange={(e) => {
@@ -142,9 +145,9 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                         }}
                         className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
-                        <option value="grid">{language === "zh" ? "栅格布局" : "Grid Layout"}</option>
-                        <option value="fixed">{language === "zh" ? "固定尺寸" : "Fixed Size"}</option>
-                        <option value="infinite">{language === "zh" ? "无限画布" : "Infinite Canvas"}</option>
+                        <option value="grid">{t('canvas.modeGrid')}</option>
+                        <option value="fixed">{t('canvas.modeFixed')}</option>
+                        <option value="infinite">{t('canvas.modeInfinite')}</option>
                     </select>
                 </div>
 
@@ -153,7 +156,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                         {/* Canvas size for grid mode */}
                         <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                                <label className="text-sm font-medium">{t('canvas.width')}</label>
                                 <Input
                                     type="number"
                                     value={canvasConfig.width}
@@ -162,7 +165,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                                <label className="text-sm font-medium">{t('canvas.height')}</label>
                                 <Input
                                     type="number"
                                     value={canvasConfig.height}
@@ -174,7 +177,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                         {/* Grid settings */}
                         <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">{language === "zh" ? "列数" : "Cols"}</label>
+                                <label className="text-sm font-medium">{t('canvas.gridCols')}</label>
                                 <Input
                                     type="number"
                                     value={canvasConfig.gridCols ?? 24}
@@ -185,7 +188,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">{language === "zh" ? "行高" : "Row H"}</label>
+                                <label className="text-sm font-medium">{t('canvas.gridRowHeight')}</label>
                                 <Input
                                     type="number"
                                     value={canvasConfig.gridRowHeight ?? 10}
@@ -196,7 +199,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">{language === "zh" ? "间距" : "Gap"}</label>
+                                <label className="text-sm font-medium">{t('canvas.gridGap')}</label>
                                 <Input
                                     type="number"
                                     value={canvasConfig.gridGap ?? 5}
@@ -208,12 +211,12 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {language === "zh" ? "栅格布局模式下，组件自动吸附到网格" : "In grid layout mode, widgets snap to grid"}
+                            {t('canvas.gridSnapTip')}
                         </p>
                         {/* 屏幕自适应选项 */}
                         <div className="flex items-center justify-between pt-2">
                             <label className="text-sm font-medium">
-                                {language === "zh" ? "屏幕自适应" : "Full Width Preview"}
+                                {t('canvas.fullWidthPreview')}
                             </label>
                             <input
                                 type="checkbox"
@@ -226,15 +229,13 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                             />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                            {language === "zh"
-                                ? "勾选后预览页面画布撑满容器宽度，无背景阴影"
-                                : "When checked, preview canvas fills container width without shadow"}
+                            {t('canvas.fullWidthTip')}
                         </p>
                     </div>
                 ) : canvasConfig.mode === 'fixed' ? (
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "宽度" : "Width"}</label>
+                            <label className="text-sm font-medium">{t('canvas.width')}</label>
                             <Input
                                 type="number"
                                 value={canvasConfig.width}
@@ -243,7 +244,7 @@ export function CanvasSettingsPanel({canvasConfig, currentProjectName, isEmbedde
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">{language === "zh" ? "高度" : "Height"}</label>
+                            <label className="text-sm font-medium">{t('canvas.height')}</label>
                             <Input
                                 type="number"
                                 value={canvasConfig.height}

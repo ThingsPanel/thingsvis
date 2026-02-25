@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-24T10:42:37.969Z",
+  "generatedAt": "2026-02-25T07:14:22.863Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -41,6 +41,16 @@
       "icon": "Type",
       "name": "基础文本"
     },
+    "chart/echarts-bar": {
+      "remoteName": "thingsvis_widget_chart_echarts_bar",
+      "remoteEntryUrl": "http://localhost:3202/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-bar/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "BarChart3",
+      "name": "柱状图"
+    },
     "chart/echarts-line": {
       "remoteName": "thingsvis_widget_chart_echarts_line",
       "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
@@ -50,6 +60,16 @@
       "version": "0.0.1",
       "icon": "BarChart3",
       "name": "折线图"
+    },
+    "chart/echarts-pie": {
+      "remoteName": "thingsvis_widget_chart_echarts_pie",
+      "remoteEntryUrl": "http://localhost:3203/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-pie/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "PieChart",
+      "name": "饼图"
     },
     "media/image": {
       "remoteName": "thingsvis_widget_media_image",

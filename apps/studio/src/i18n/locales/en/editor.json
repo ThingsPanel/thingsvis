@@ -89,7 +89,17 @@
         "gridGap": "Gap",
         "showGrid": "Show Grid",
         "fullWidthPreview": "Full Width Preview",
-        "homeFlag": "Set as Home"
+        "homeFlag": "Set as Home",
+        "basicInfo": "Basic Info",
+        "projectName": "Project Name",
+        "pageName": "Page Name",
+        "pageId": "Page ID",
+        "thumbnail": "Thumbnail",
+        "clickToUpload": "Click to upload",
+        "thumbnailFailed": "Failed to process thumbnail",
+        "gridSnapTip": "In grid layout mode, widgets snap to grid",
+        "fullWidthTip": "When checked, preview canvas fills container width without shadow",
+        "untitledProject": "Untitled Project"
     },
     "shortcuts": {
         "title": "Keyboard Shortcuts",

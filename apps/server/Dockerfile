@@ -34,9 +34,9 @@ COPY . .
 
 # Generate Prisma client + build server
 WORKDIR /app/apps/server
-ARG DATABASE_URL="file:./prisma/dev.db"
+ARG DATABASE_URL="postgresql://thingsvis:thingsvis_password@thingsvis-postgres:5432/thingsvis_db?schema=public"
 ARG AUTH_SECRET="build-placeholder-secret-replace-in-production"
-ARG AUTH_URL="http://localhost:8000"
+ARG AUTH_URL="http://localhost:${PORT:-8000}"
 
 RUN npx prisma generate
 RUN pnpm build
@@ -50,7 +50,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=8000
+ENV PORT=${PORT:-8000}
 ENV AUTH_TRUST_HOST=true
 
 # Copy Next.js standalone output
@@ -70,9 +70,9 @@ COPY --from=builder /app/apps/server/scripts ./apps/server/scripts
 COPY apps/server/docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod +x ./docker-entrypoint.sh
 
-EXPOSE 8000
+EXPOSE ${PORT}
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health || exit 1
 
 ENTRYPOINT ["./docker-entrypoint.sh"]

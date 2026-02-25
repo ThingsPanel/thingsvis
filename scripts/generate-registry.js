@@ -70,7 +70,7 @@ function generate() {
                 remoteName,
                 remoteEntryUrl: devPort
                     ? `http://localhost:${devPort}/remoteEntry.js`
-                    : `http://localhost:3100/remoteEntry.js`,
+                    : ``,
                 staticEntryUrl: `/widgets/${componentId}/dist/remoteEntry.js`,
                 debugSource: 'static',
                 exposedModule: './Main',

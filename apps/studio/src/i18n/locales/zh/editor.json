@@ -89,7 +89,17 @@
         "gridGap": "间距",
         "showGrid": "显示网格",
         "fullWidthPreview": "预览撑满宽度",
-        "homeFlag": "设为首页"
+        "homeFlag": "设为首页",
+        "basicInfo": "基础信息",
+        "projectName": "项目名称",
+        "pageName": "页面名称",
+        "pageId": "页面ID",
+        "thumbnail": "缩略图",
+        "clickToUpload": "点击上传缩略图",
+        "thumbnailFailed": "缩略图处理失败",
+        "gridSnapTip": "栅格布局模式下，组件自动吸附到网格",
+        "fullWidthTip": "勾选后预览页面画布撑满容器宽度，无背景阴影",
+        "untitledProject": "未命名项目"
     },
     "shortcuts": {
         "title": "快捷键",

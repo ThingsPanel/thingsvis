@@ -15,7 +15,7 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3000,
+    port: Number(process.env.PORT) || 3000,
     publicDir: {
       name: 'public',
       copyOnBuild: true,
@@ -23,7 +23,7 @@ export default defineConfig({
     proxy: {
       // Proxy API requests to local ThingsVis server
       '/api': {
-        target: 'http://localhost:8000',
+        target: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
         changeOrigin: true,
       },
     },

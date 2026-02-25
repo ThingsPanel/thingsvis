@@ -41,6 +41,7 @@ export interface ProjectDialogProps {
   /** Current project for export */
   currentProject?: ProjectFile | null
   /** Language for localization */
+  language?: 'zh' | 'en'
 }
 
 // =============================================================================

@@ -64,7 +64,10 @@ const CATEGORY_DEFS = [
   { key: "custom", labelZh: "自定义", labelEn: "Custom", Icon: Sparkles },
 ] as const;
 
-export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type: string) => void; language: string }) {
+import { useTranslation } from "react-i18next";
+
+export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (type: string) => void }) {
+  const { t } = useTranslation('editor');
   const [entries, setEntries] = useState<ComponentRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -203,7 +206,7 @@ export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder={language === "zh" ? "搜索组件..." : "Search components..."}
+            placeholder={t('components.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-8 text-sm"
@@ -215,7 +218,7 @@ export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type
       <div className="flex-1 overflow-y-auto p-2">
         {!hasResults && searchQuery ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            {language === "zh" ? "未找到匹配的组件" : "No components found"}
+            {t('components.noResults')}
           </div>
         ) : (
           <Accordion
@@ -225,7 +228,7 @@ export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type
             className="space-y-2"
           >
             {CATEGORY_DEFS.map((c) => {
-              const label = language === "zh" ? c.labelZh : c.labelEn;
+              const label = t(`components.categories.${c.key}`);
               const items = filteredCategoriesMap[c.key] ?? [];
               const Icon = c.Icon;
 
@@ -240,7 +243,7 @@ export default function ComponentsList({ onInsert: _onInsert}: { onInsert: (type
                   <AccordionContent className="pt-2 pb-1 px-2">
                     {items.length === 0 ? (
                       <div className="text-sm text-muted-foreground px-2 py-1.5">
-                        {language === "zh" ? "暂无组件" : "No components"}
+                        {t('components.noComponents')}
                       </div>
                     ) : (
                       <div className="space-y-3">

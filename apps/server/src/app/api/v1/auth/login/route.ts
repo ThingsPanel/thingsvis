@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
     const secret = new TextEncoder().encode(
       process.env.AUTH_SECRET || 'thingsvis-dev-secret-key'
     )
-    
+
     const expiresAt = Date.now() + TOKEN_EXPIRY * 1000
-    
+
     const token = await new SignJWT({
       sub: user.id,
       email: user.email,
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    
+    console.error('[Auth] Login error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
