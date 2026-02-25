@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import type { ControlField, DataBinding } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
@@ -24,7 +25,7 @@ type Props = {
   propsValue: unknown;
   bindings: DataBinding[] | undefined;
   updateNode: (changes: any) => void;
-  
+
 };
 
 function allowedModes(field: ControlField): BindingMode[] {
@@ -33,7 +34,8 @@ function allowedModes(field: ControlField): BindingMode[] {
   return normalized.length ? normalized : ['static'];
 }
 
-export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode}: Props) {
+export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode }: Props) {
+  const { t } = useTranslation('editor');
   const modes = useMemo(() => allowedModes(field), [field]);
 
   const persistedMode = useMemo(() => detectBindingMode(bindings, field.path), [bindings, field.path]);
@@ -229,7 +231,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               currentNodeId={nodeId}
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(v) => setStatic(v)}
-              
+
             />
           )}
 
@@ -326,7 +328,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
             <ImageSourceInput
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(v) => setStatic(v)}
-              
+
             />
           )}
 
@@ -345,7 +347,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
         <FieldPicker
           kernelStore={kernelStore}
           value={fieldSelection}
-          
+
           onChange={(next) => {
             setFieldSelection(next);
             if (next?.dataSourceId && next.fieldPath) {
@@ -394,13 +396,14 @@ function NodeSelector({
   kernelStore,
   currentNodeId,
   value,
-  onChange}: {
-  kernelStore: KernelStore;
-  currentNodeId: string;
-  value: string;
-  onChange: (nodeId: string) => void;
-  
-}) {
+  onChange }: {
+    kernelStore: KernelStore;
+    currentNodeId: string;
+    value: string;
+    onChange: (nodeId: string) => void;
+
+  }) {
+  const { t } = useTranslation('editor');
   // 订阅 store 获取所有节点
   const nodesById = useSyncExternalStore(
     useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),
