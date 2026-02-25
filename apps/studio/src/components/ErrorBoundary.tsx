@@ -1,14 +1,16 @@
-import React from 'react'
-import i18n from '@/i18n'
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, RefreshCw, Undo2 } from 'lucide-react';
 
 interface ErrorBoundaryProps {
-    children: React.ReactNode
-    fallback?: React.ReactNode
+    children: React.ReactNode;
+    fallback?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
-    hasError: boolean
-    error: Error | null
+    hasError: boolean;
+    error: Error | null;
 }
 
 /**
@@ -47,111 +49,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             }
 
             return (
-                <div
-                    style={{
-                        minHeight: '100vh',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: '#1a1a2e',
-                        color: '#e0e0e0',
-                        fontFamily: 'system-ui, -apple-system, sans-serif',
-                    }}
-                >
-                    <div
-                        style={{
-                            maxWidth: '480px',
-                            padding: '48px',
-                            textAlign: 'center',
-                        }}
-                    >
-                        <div
-                            style={{
-                                width: '64px',
-                                height: '64px',
-                                margin: '0 auto 24px',
-                                borderRadius: '16px',
-                                background: 'linear-gradient(135deg, #e74c3c, #c0392b)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '28px',
-                            }}
-                        >
-                            ⚠️
-                        </div>
-                        <h1
-                            style={{
-                                fontSize: '24px',
-                                fontWeight: 600,
-                                marginBottom: '12px',
-                                color: '#fff',
-                            }}
-                        >
-                            {i18n.t('errorBoundary.title', 'Something went wrong', { ns: 'common' })}
-                        </h1>
-                        <p
-                            style={{
-                                fontSize: '14px',
-                                marginBottom: '24px',
-                                color: '#aaa',
-                                lineHeight: 1.6,
-                            }}
-                        >
-                            {i18n.t('errorBoundary.description', 'An unexpected error occurred. You can try retrying or reloading the page.', { ns: 'common' })}
-                        </p>
-                        {this.state.error && (
-                            <pre
-                                style={{
-                                    fontSize: '12px',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    background: 'rgba(255,255,255,0.05)',
-                                    color: '#e74c3c',
-                                    overflow: 'auto',
-                                    maxHeight: '120px',
-                                    textAlign: 'left',
-                                    marginBottom: '24px',
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                }}
-                            >
-                                {this.state.error.message}
-                            </pre>
-                        )}
-                        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                            <button
-                                onClick={this.handleRetry}
-                                style={{
-                                    padding: '10px 24px',
-                                    borderRadius: '8px',
-                                    border: 'none',
-                                    background: '#6965db',
-                                    color: '#fff',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {i18n.t('retry', 'Retry', { ns: 'common' })}
-                            </button>
-                            <button
-                                onClick={this.handleReload}
-                                style={{
-                                    padding: '10px 24px',
-                                    borderRadius: '8px',
-                                    border: '1px solid rgba(255,255,255,0.2)',
-                                    background: 'transparent',
-                                    color: '#e0e0e0',
-                                    cursor: 'pointer',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                }}
-                            >
-                                {i18n.t('errorBoundary.reload', 'Reload Page', { ns: 'common' })}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <ErrorFallback
+                    error={this.state.error}
+                    onRetry={this.handleRetry}
+                    onReload={this.handleReload}
+                />
             )
         }
 
@@ -159,4 +61,54 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     }
 }
 
-export default ErrorBoundary
+function ErrorFallback({ error, onRetry, onReload }: { error: Error | null; onRetry: () => void; onReload: () => void }) {
+    const { t } = useTranslation('common');
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-background/50 backdrop-blur-sm p-4">
+            <div className="max-w-md w-full p-8 rounded-xl border bg-card text-card-foreground shadow-lg text-center space-y-6">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-6">
+                    <AlertTriangle className="w-8 h-8" />
+                </div>
+
+                <div className="space-y-2">
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        {t('errorBoundary.title')}
+                    </h1>
+                    <p className="text-sm text-muted-foreground">
+                        {t('errorBoundary.description')}
+                    </p>
+                </div>
+
+                {error && (
+                    <div className="relative">
+                        <pre className="text-xs p-4 rounded-lg bg-muted text-muted-foreground overflow-auto max-h-32 text-left border font-mono">
+                            {error.message}
+                        </pre>
+                    </div>
+                )}
+
+                <div className="flex items-center justify-center gap-4 pt-2">
+                    <Button
+                        onClick={onRetry}
+                        variant="default"
+                        className="gap-2"
+                    >
+                        <Undo2 className="w-4 h-4" />
+                        {t('retry')}
+                    </Button>
+                    <Button
+                        onClick={onReload}
+                        variant="outline"
+                        className="gap-2"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                        {t('errorBoundary.reload')}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default ErrorBoundary;
