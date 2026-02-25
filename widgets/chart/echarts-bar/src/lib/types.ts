@@ -66,6 +66,8 @@ export type WidgetOverlayContext = {
   size?: { width: number; height: number };
   /** 组件属性（已解析） */
   props?: Record<string, unknown>;
+  /** 主题信息 */
+  theme?: { isDark: boolean };
 };
 
 /** DOM Overlay 实例 */

@@ -5,6 +5,7 @@ export const metadata = {
     icon: 'Gauge',
     version: '1.0.0',
     description: 'ECharts 仪表盘',
+    defaultSize: { width: 300, height: 200 },
     locales: {
         zh: {
             'widget.echarts-gauge.name': '仪表盘',

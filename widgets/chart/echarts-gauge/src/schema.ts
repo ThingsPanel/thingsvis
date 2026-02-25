@@ -16,8 +16,8 @@ export const PropsSchema = z.object({
 
     /** 数据集 */
     data: z.array(z.any()).default([
-        { value: 50, name: '评分' }
-    ]).describe('数据集（勿配静态JSON）'),
+        { name: '综合评分', value: 85 }
+    ]).describe('数据集'),
 });
 
 /** 属性类型 */

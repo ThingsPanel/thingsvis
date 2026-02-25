@@ -22,10 +22,14 @@ export const PropsSchema = z.object({
 
   /** 数据集 */
   data: z.array(z.any()).default([
-    { name: 'A', value: 150 },
-    { name: 'B', value: 230 },
-    { name: 'C', value: 224 },
-  ]).describe('数据集（勿配静态JSON）'),
+    { name: '周一', value: 150 },
+    { name: '周二', value: 230 },
+    { name: '周三', value: 224 },
+    { name: '周四', value: 218 },
+    { name: '周五', value: 135 },
+    { name: '周六', value: 147 },
+    { name: '周日', value: 260 },
+  ]).describe('数据集'),
 });
 
 /** 属性类型 */

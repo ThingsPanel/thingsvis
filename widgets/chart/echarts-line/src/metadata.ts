@@ -19,4 +19,24 @@ export const metadata = {
   version: '1.0.0',
   defaultSize: { width: 300, height: 200 },
   resizable: true, // 图表组件支持调整尺寸
+  locales: {
+    zh: {
+      'widget.echarts-line.name': 'ECharts 折线图',
+      'widget.echarts-line.title': '图表标题',
+      'widget.echarts-line.primaryColor': '主色调',
+      'widget.echarts-line.data': '数据集',
+      'widget.echarts-line.showLegend': '显示图例',
+      'widget.echarts-line.smooth': '平滑曲线',
+      'widget.echarts-line.showArea': '显示阴影面积'
+    },
+    en: {
+      'widget.echarts-line.name': 'ECharts Line Chart',
+      'widget.echarts-line.title': 'Chart Title',
+      'widget.echarts-line.primaryColor': 'Primary Color',
+      'widget.echarts-line.data': 'Dataset',
+      'widget.echarts-line.showLegend': 'Show Legend',
+      'widget.echarts-line.smooth': 'Smooth Curve',
+      'widget.echarts-line.showArea': 'Show Area Shadow'
+    }
+  }
 } as const;

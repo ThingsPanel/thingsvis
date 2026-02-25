@@ -7,6 +7,9 @@ The Thingsvis platform uses React components spanning multiple editor panels. Cu
 - React hooks, particularly `useTranslation`, must be initialized exactly within the functional component's block rendering scope, even on private component definitions within the same file (e.g. `NodeSelector`). 
 - When new user interface tabs (e.g., Target Property, Data Source Bindings, Platform configurations) are merged into the `PropsPanel`, `locale/*/editor.json` paths must explicitly accompany frontend UI definitions.
 
+### Schema and Widget Property Editor
+- `generateControls` function drives the side panel UX. A critical behavior discovered: wrapping Zod schemas in `default()` creates `ZodDefault` interceptor layers, requiring recursive unwrapping to read the actual `ZodBoolean` or `ZodNumber` node in `zodTypeToKind`, without which it falls back to a string `<input>`.
+
 ## Current State
 - Missing `t` translation variable injected on `ControlFieldRow.tsx`. Fixed by explicitly importing and defining `useTranslation` in both internal components to prevent runtime ReferenceErrors during node type specific panel configuration setups.
 - Discovered 19 missing multi-lingual JSON identifiers (missing keys) within `propsPanel` category. Restored dictionaries on `zh` and `en` definitions correctly avoiding raw uppercase placeholder names from bleeding into the visual editor.

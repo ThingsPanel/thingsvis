@@ -125,7 +125,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     e.preventDefault();
   }
 
-  function handleDrop(e: React.DragEvent) {
+  async function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     // Attempt to read plugin info from dataTransfer
     const payload = e.dataTransfer.getData("application/thingsvis-widget") || e.dataTransfer.getData("text/plain");
@@ -155,10 +155,21 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     const worldX = (localX - vpState.offsetX) / vpState.zoom;
     const worldY = (localY - vpState.offsetY) / vpState.zoom;
 
+    // Fetch the remote/local widget bundle to get exact default properties.
+    let widgetModule: any = null;
+    if (resolveWidget && entry.type) {
+      try {
+        widgetModule = await resolveWidget(entry.type);
+      } catch (err) {
+        // Fallback down below if module could not be lazy-loaded 
+      }
+    }
+
     const nodeId = generateId("node");
+    const moduleDefs = widgetModule?.entry || widgetModule; // handle both {entry: Main} and direct Main returns
     // 对于 resizable: false 的组件，不设置 size（由内容撑开）
-    const isResizable = (entry as any)?.resizable !== false;
-    const pluginDefaultSize = (entry as any)?.defaultSize;
+    const isResizable = moduleDefs?.resizable !== false && (entry as any)?.resizable !== false;
+    const pluginDefaultSize = moduleDefs?.defaultSize || (entry as any)?.defaultSize;
 
     const node = {
       id: nodeId,

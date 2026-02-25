@@ -44,8 +44,8 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         grid: {
             left: '3%',
             right: '4%',
-            bottom: showLegend ? '15%' : '3%',
-            top: title ? '15%' : '8%',
+            bottom: showLegend ? 40 : 10,
+            top: title ? 40 : 20,
             containLabel: true,
         },
         // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
@@ -65,6 +65,9 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         series: [
             {
                 type: 'bar',
+                // 确保 ECharts 正确提取 dataset 中的 name (X轴) 和 value (Y轴) 并且作为图例/Tooltip显示
+                encode: { x: 'name', y: 'value', itemName: 'name', tooltip: ['value'] },
+                name: '数值',
                 itemStyle: {
                     color: gradientColor,
                     borderRadius: [4, 4, 0, 0], // 给点微小圆角更精致

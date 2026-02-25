@@ -22,14 +22,14 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
             text: title,
             left: 'center',
             textStyle: { fontSize: 14, color: textColor },
-            top: '5%',
+            top: 10,
         } : undefined,
         tooltip: {
             trigger: 'item',
         },
         legend: {
             show: showLegend,
-            bottom: '5%',
+            bottom: 10,
             left: 'center',
             textStyle: { color: textColor },
         },
@@ -39,13 +39,14 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
         series: [
             {
                 type: 'pie',
-                radius: isDoughnut ? ['40%', '70%'] : '70%',
-                center: ['50%', '50%'],
+                radius: isDoughnut ? ['35%', '60%'] : '60%',
+                center: ['50%', '45%'],
                 itemStyle: {
                     borderRadius: 5,
                     borderColor: isDark ? '#141414' : '#fff',
                     borderWidth: 2
                 },
+                encode: { value: 'value', itemName: 'name' }, // 明确指定 dataset 的字段映射
                 label: {
                     color: textColor,
                     show: true,

@@ -41,8 +41,8 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
     grid: {
       left: '3%',
       right: '4%',
-      bottom: showLegend ? '15%' : '3%',
-      top: title ? '15%' : '8%',
+      bottom: showLegend ? 40 : 10,
+      top: title ? 40 : 20,
       containLabel: true,
     },
     dataset: Array.isArray(data) && data.length > 0 ? {
@@ -61,6 +61,8 @@ function buildOption(props: Props, isDark: boolean): echarts.EChartsOption {
     series: [
       {
         type: 'line',
+        name: '数值',
+        encode: { x: 'name', y: 'value', itemName: 'name', tooltip: ['value'] },
         smooth: smooth,
         showSymbol: false,
         itemStyle: {

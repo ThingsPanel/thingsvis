@@ -19,10 +19,14 @@ export const PropsSchema = z.object({
      * 抛弃显式定义维度，交由 ECharts Dataset 自动推导
      */
     data: z.array(z.any()).default([
-        { name: 'A', value: 120 },
-        { name: 'B', value: 200 },
-        { name: 'C', value: 150 },
-    ]).describe('数据集（勿配静态JSON）'),
+        { name: '周一', value: 120 },
+        { name: '周二', value: 200 },
+        { name: '周三', value: 150 },
+        { name: '周四', value: 80 },
+        { name: '周五', value: 70 },
+        { name: '周六', value: 110 },
+        { name: '周日', value: 130 },
+    ]).describe('数据集'),
 });
 
 /** 属性类型 */

@@ -8,15 +8,15 @@ import type { KernelStore, KernelState } from "@thingsvis/kernel";
 type GridLayoutHandlers = {
   colWidth: number;
   effectiveCols: number;
-  onDragStart: (nodeId: string) => void;
-  onDragMove: (nodeId: string, pixelX: number, pixelY: number) => void;
-  onDragEnd: (nodeId: string) => void;
-  onResizeStart: (nodeId: string) => void;
-  onResizeMove: (nodeId: string, pixelWidth: number, pixelHeight: number) => void;
-  onResizeEnd: (nodeId: string) => void;
+  onDragStart: (nodeId: string, pixelPos: { x: number; y: number }) => void;
+  onDragMove: (pixelPos: { x: number; y: number }) => void;
+  onDragEnd: () => void;
+  onResizeStart: (nodeId: string, handle: any) => void;
+  onResizeMove: (pixelDelta: { dx: number; dy: number }) => void;
+  onResizeEnd: () => void;
   getGridPosition: (nodeId: string) => { x: number; y: number; w: number; h: number } | null;
-  getPixelRect: (nodeId: string) => { x: number; y: number; width: number; height: number } | null;
-  snapPixelToGrid: (pixelX: number, pixelY: number) => { x: number; y: number };
+  getPixelRect: (gridPos: any) => { x: number; y: number; width: number; height: number } | null;
+  snapPixelToGrid: (pixel: { x: number, y: number }) => { x: number; y: number };
 };
 
 type Props = {
@@ -61,13 +61,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         moveableRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        
+
       }
       try {
         selectoRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        
+
       }
       moveableRef.current = null;
       selectoRef.current = null;
@@ -96,7 +96,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
     try {
       // Use dragContainer (outer, unscaled) for Moveable to match Selecto's coordinate system
       const dragContainer = dragContainerRef?.current || container;
-      
+
       moveableRef.current = new Moveable(dragContainer, {
         target: [],
         draggable: true,
@@ -132,21 +132,21 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       selectoRef.current.on("dragStart", (e) => {
         const inputEvent = e.inputEvent;
         const target = inputEvent.target as HTMLElement;
-        
+
         // Check if clicking on a Moveable control element
         if (moveableRef.current?.isMoveableElement(target)) {
           e.stop();
           return;
         }
-        
+
         // Check if clicking on an already selected target
         const selectedTargets = (kernelStore.getState() as KernelState).selection.nodeIds
           .map(id => dragContainer.querySelector(`[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
-        
+
         if (selectedTargets.some(t => t === target || t.contains(target))) {
           e.stop();
-          
+
           // Trigger Moveable drag since we're clicking on a selected target
           // Use setTimeout to ensure the event is processed after Selecto stops
           setTimeout(() => {
@@ -176,7 +176,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         e.selected.forEach(el => {
           el.classList.remove("selecting");
         });
-        
+
         const getId = (el: Element | null | undefined) => el?.getAttribute?.("data-node-id") || null;
         const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
         const inputEvent = e.inputEvent as MouseEvent | undefined;
@@ -229,7 +229,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
         const nodeId = target.getAttribute('data-node-id');
         const selectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
-        
+
         // If clicking on an unselected node without Ctrl/Meta, select it first
         // This enables single-node drag even when selectByClick is disabled
         if (nodeId && !selectedIds.includes(nodeId)) {
@@ -238,7 +238,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             kernelStore.getState().selectNode(nodeId);
           }
         }
-        
+
         // Re-read selection after potential update
         const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
         const isMultiDrag = !!nodeId && currentSelectedIds.length > 1 && currentSelectedIds.includes(nodeId);
@@ -258,7 +258,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
             el.style.willChange = 'transform';
             el.style.transform = '';
           }
-          
+
           // Save overlay's original zIndex and rotation, then elevate zIndex for drag visibility
           const overlayEl = findOverlayElement(id);
           if (overlayEl) {
@@ -288,7 +288,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         }
         return rootContainer.querySelector(`[data-overlay-node-id="${nodeId}"]`) as HTMLElement | null;
       };
-      
+
       // Store original overlay zIndex values to restore after drag
       const originalOverlayZIndexRef: Record<string, string> = {};
       // Track overlay rotation to preserve during drag
@@ -479,7 +479,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         for (const t of targets) {
           t.style.willChange = '';
           const nodeId = t.getAttribute('data-node-id');
-          
+
           if (!isDrag) {
             t.style.transform = '';
             // Clear overlay transform too
@@ -505,7 +505,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           t.style.left = `${x}px`;
           t.style.top = `${y}px`;
           t.style.transform = '';
-          
+
           // Clear overlay transform - store update will reposition it
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
@@ -597,8 +597,8 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           // Store rotation in props._rotation since schema doesn't have rotation field in updateNode
           const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
           const currentProps = (node?.schemaRef as any)?.props ?? {};
-          kernelStore.getState().updateNode(nodeId, { 
-            props: { ...currentProps, _rotation: rotation } 
+          kernelStore.getState().updateNode(nodeId, {
+            props: { ...currentProps, _rotation: rotation }
           });
           onUserEdit?.();
         }
@@ -619,7 +619,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
     } catch (e) {
       // eslint-disable-next-line no-console
-      
+
     }
 
     return () => {
@@ -631,13 +631,13 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         moveableRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        
+
       }
       try {
         selectoRef.current?.destroy();
       } catch (e) {
         // eslint-disable-next-line no-console
-        
+
       }
       moveableRef.current = null;
       selectoRef.current = null;
@@ -648,25 +648,25 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
   useEffect(() => {
     if (!enabled) return;
     if (!moveableRef.current) return;
-    
+
     // Use dragContainerRef since Moveable is mounted there, fallback to containerRef
     const queryContainer = dragContainerRef?.current || containerRef.current;
     if (!queryContainer) return;
-    
+
     const selectedIds = state.selection.nodeIds;
-    
+
     // Function to update Moveable targets
     const updateTargets = () => {
       if (!moveableRef.current) {
         return;
       }
-      
+
       // Only select nodes that actually exist in the current state and are not locked
       const validSelectedIds = selectedIds.filter(id => {
         const node = state.nodesById[id];
         return !!node && !node.locked;
       });
-      
+
       // Lines should still be draggable when unconnected, but not resizable/rotatable.
       const anyLinesSelected = validSelectedIds.some(id => state.nodesById[id]?.schemaRef?.type === 'basic/line');
       const anyConnectedLinesSelected = validSelectedIds.some(id => {
@@ -675,7 +675,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         const props = (node.schemaRef as any)?.props || {};
         return !!(props.sourceNodeId || props.targetNodeId);
       });
-      
+
       const targets = validSelectedIds
         .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
@@ -687,9 +687,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       moveableRef.current.resizable = !hasLockedSelection && !anyLinesSelected;
       moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected;
       moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected;
-      
+
       moveableRef.current.target = targets;
-      
+
       // If we expected targets but found none, the DOM might not be ready yet
       // Schedule a retry after the next paint
       if (validSelectedIds.length > 0 && targets.length === 0) {
@@ -704,12 +704,12 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           }
         });
       }
-      
+
       return targets;
     };
-    
+
     const targets = updateTargets();
-    
+
     // Recalculate the position of the handles to match the DOM elements.
     // This is crucial when nodes are moved/restored via Undo/Redo.
     if (targets && targets.length > 0) {
