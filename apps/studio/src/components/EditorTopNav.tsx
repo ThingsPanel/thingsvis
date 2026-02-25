@@ -3,6 +3,7 @@
  * 从 Editor.tsx 提取的纯展示组件 (Phase 6.3)
  */
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,7 +17,6 @@ import {
     PanelRightOpen, Minimize, Maximize, type LucideIcon,
 } from 'lucide-react'
 
-type Language = 'zh' | 'en'
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'image' | 'pan'
 
 interface ToolItem {
@@ -26,7 +26,6 @@ interface ToolItem {
 }
 
 interface EditorTopNavProps {
-    language: Language
     canvasMode: 'fixed' | 'infinite' | 'grid'
     tools: ToolItem[]
     activeTool: Tool
@@ -62,19 +61,19 @@ interface EditorTopNavProps {
     onOpenDataSources: () => void
     onLogout: () => void
     onLogin: () => void
-    onLanguageChange: (lang: Language) => void
 }
 
 export function EditorTopNav({
-    language, canvasMode, tools, activeTool, isDarkMode,
+    canvasMode, tools, activeTool, isDarkMode,
     isEmbedded, showTopLeft, showToolbar, showTopRight, showRightPanel, isFullscreen,
     saveStatus, lastSavedAt, saveError, isSaving,
     isAuthenticated, authLoading, user,
     projectName, projectId,
     onToolChange, onProjectNameChange,
     onSave, onPreview, onPublish, onToggleTheme, onToggleRightPanel, onToggleFullscreen,
-    onOpenProjectDialog, onOpenDataSources, onLogout, onLogin, onLanguageChange,
+    onOpenProjectDialog, onOpenDataSources, onLogout, onLogin,
 }: EditorTopNavProps) {
+    const { t, i18n } = useTranslation('editor')
     return (
         <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
             {/* Left Side: Logo (Menu), Title, Status */}
@@ -90,35 +89,35 @@ export function EditorTopNav({
                     <DropdownMenuContent align="start" className="w-56 mt-2">
                         <DropdownMenuItem className="gap-2" onClick={onOpenProjectDialog}>
                             <FolderOpen className="h-4 w-4" />
-                            {language === "zh" ? "打开项目" : "Open Project"}
+                            {t('menu.openProject')}
                             <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2" onClick={onSave}>
                             <Save className="h-4 w-4" />
-                            {language === "zh" ? "保存" : "Save"}
+                            {t('menu.save')}
                             <span className="ml-auto text-sm text-muted-foreground">Ctrl+S</span>
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2" onClick={onOpenDataSources}>
                             <Database className="h-4 w-4" />
-                            {language === "zh" ? "数据源管理" : "Data Sources"}
+                            {t('menu.dataSources')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="gap-2">
                             <FileUp className="h-4 w-4" />
-                            {language === "zh" ? "导入配置" : "Import Config"}
+                            {t('menu.importConfig')}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2">
                             <FileDown className="h-4 w-4" />
-                            {language === "zh" ? "导出配置" : "Export Config"}
+                            {t('menu.exportConfig')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="gap-2">
                             <Settings className="h-4 w-4" />
-                            {language === "zh" ? "设置" : "Settings"}
+                            {t('menu.settings')}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2">
                             <HelpCircle className="h-4 w-4" />
-                            {language === "zh" ? "帮助" : "Help"}
+                            {t('menu.help')}
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {!authLoading && isAuthenticated && user ? (
@@ -132,20 +131,20 @@ export function EditorTopNav({
                                     onClick={onLogout}
                                 >
                                     <LogOut className="h-4 w-4" />
-                                    {language === "zh" ? "退出登录" : "Logout"}
+                                    {t('menu.logout')}
                                 </DropdownMenuItem>
                             </>
                         ) : !authLoading ? (
                             <DropdownMenuItem className="gap-2" onClick={onLogin}>
                                 <Users className="h-4 w-4" />
-                                {language === "zh" ? "登录" : "Login"}
+                                {t('menu.login')}
                             </DropdownMenuItem>
                         ) : null}
                     </DropdownMenuContent>
                 </DropdownMenu>
 
                 <Input
-                    placeholder="未命名项目"
+                    placeholder={t('topNav.untitledProject')}
                     className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
                     value={projectName}
                     onChange={(e) => onProjectNameChange(e.target.value)}
@@ -156,7 +155,6 @@ export function EditorTopNav({
                     status={saveStatus as any}
                     lastSavedAt={lastSavedAt}
                     error={saveError}
-                    language={language}
                     className="ml-1 pr-2"
                 />
             </div>
@@ -199,11 +197,11 @@ export function EditorTopNav({
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="mt-2">
-                        <DropdownMenuItem onClick={() => onLanguageChange("zh")}>
-                            <span className={language === "zh" ? "font-semibold" : ""}>中文</span>
+                        <DropdownMenuItem onClick={() => i18n.changeLanguage('zh')}>
+                            <span className={i18n.language === 'zh' ? 'font-semibold' : ''}>中文</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onLanguageChange("en")}>
-                            <span className={language === "en" ? "font-semibold" : ""}>English</span>
+                        <DropdownMenuItem onClick={() => i18n.changeLanguage('en')}>
+                            <span className={i18n.language === 'en' ? 'font-semibold' : ''}>English</span>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -218,7 +216,7 @@ export function EditorTopNav({
                         size="icon"
                         className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
                         onClick={onToggleRightPanel}
-                        title={language === "zh" ? "显示属性面板" : "Show Properties"}
+                        title={t('topNav.showProps')}
                     >
                         <PanelRightOpen className="h-4 w-4" />
                     </Button>
@@ -232,7 +230,7 @@ export function EditorTopNav({
                     disabled={isSaving}
                 >
                     <Save className="h-4 w-4" />
-                    <span className="text-sm font-medium">{language === "zh" ? "保存" : "Save"}</span>
+                    <span className="text-sm font-medium">{t('topNav.save')}</span>
                 </Button>
 
                 <Button
@@ -242,7 +240,7 @@ export function EditorTopNav({
                     onClick={onPreview}
                 >
                     <Eye className="h-4 w-4" />
-                    <span className="text-sm font-medium">{language === "zh" ? "预览" : "Preview"}</span>
+                    <span className="text-sm font-medium">{t('topNav.preview')}</span>
                 </Button>
 
                 <Button
@@ -251,7 +249,7 @@ export function EditorTopNav({
                     onClick={onPublish}
                 >
                     <Upload className="h-3.5 w-3.5" />
-                    <span className="text-sm font-medium">{language === "zh" ? "发布" : "Publish"}</span>
+                    <span className="text-sm font-medium">{t('topNav.publish')}</span>
                 </Button>
 
                 {/* Fullscreen Button (Embed Mode Only) */}
@@ -261,9 +259,7 @@ export function EditorTopNav({
                         size="icon"
                         className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
                         onClick={onToggleFullscreen}
-                        title={language === "zh"
-                            ? (isFullscreen ? "退出全屏" : "全屏")
-                            : (isFullscreen ? "Exit Fullscreen" : "Fullscreen")}
+                        title={isFullscreen ? t('topNav.exitFullscreen') : t('topNav.fullscreen')}
                     >
                         {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
                     </Button>

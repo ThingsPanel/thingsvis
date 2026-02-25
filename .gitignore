@@ -33,3 +33,6 @@ apps/server/public/uploads/
 # Internal-only directories (not for public repo)
 excalidraw-analysis/
 specs/
+
+# Auto-generated
+apps/studio/public/registry.json

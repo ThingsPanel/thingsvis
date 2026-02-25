@@ -3,11 +3,73 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ThingsVis 编辑器</title>
+    <title>ThingsVis — Industrial-grade Visualization Platform</title>
+    <meta name="description" content="ThingsVis is an open-source, low-code visualization platform for building interactive IoT dashboards with a drag-and-drop canvas editor." />
+
+    <!-- Open Graph / Social Preview -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="ThingsVis — Visualization Platform" />
+    <meta property="og:description" content="Open-source low-code visualization platform for IoT dashboards." />
+    <meta property="og:url" content="https://thingsvis.io" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- First-screen loading spinner (pure CSS, visible before React hydration) -->
+    <style>
+      #app-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1a1a2e;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      #app-loader.fade-out {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .loader-spinner {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #6965db, #8b5cf6);
+        animation: loader-pulse 1.2s ease-in-out infinite;
+      }
+      @keyframes loader-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(0.85); opacity: 0.6; }
+      }
+    </style>
   </head>
   <body>
+    <!-- Loading indicator shown before React renders -->
+    <div id="app-loader" aria-label="Loading ThingsVis...">
+      <div class="loader-spinner"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Hide loader after React mounts -->
+    <script>
+      const observer = new MutationObserver(() => {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          const loader = document.getElementById('app-loader');
+          if (loader) {
+            loader.classList.add('fade-out');
+            setTimeout(() => loader.remove(), 300);
+          }
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true });
+    </script>
   </body>
 </html>
+
 

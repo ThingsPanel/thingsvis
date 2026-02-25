@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -26,8 +27,6 @@ export interface ShortcutHelpPanelProps {
   open: boolean
   /** Callback when panel should close */
   onClose: () => void
-  /** Language for localization */
-  language?: 'zh' | 'en'
 }
 
 // =============================================================================
@@ -37,8 +36,10 @@ export interface ShortcutHelpPanelProps {
 export function ShortcutHelpPanel({
   open,
   onClose,
-  language = 'en',
 }: ShortcutHelpPanelProps) {
+  const { t, i18n } = useTranslation('editor')
+  const language = i18n.language as 'zh' | 'en'
+
   // Get all commands grouped by category
   const commandsByCategory = useMemo(() => {
     const commands = commandRegistry.getAll()
@@ -53,7 +54,7 @@ export function ShortcutHelpPanel({
 
     for (const command of commands) {
       if (!command.shortcut) continue
-      
+
       const list = grouped.get(command.category)
       if (list) {
         list.push(command)
@@ -69,7 +70,7 @@ export function ShortcutHelpPanel({
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {language === 'zh' ? '键盘快捷键' : 'Keyboard Shortcuts'}
+            {t('shortcuts.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -85,8 +86,8 @@ export function ShortcutHelpPanel({
         </div>
 
         <div className="mt-4 pt-4 border-t text-sm text-muted-foreground text-center">
-          {language === 'zh' 
-            ? '按 ? 或 Esc 关闭此面板' 
+          {language === 'zh'
+            ? '按 ? 或 Esc 关闭此面板'
             : 'Press ? or Esc to close this panel'}
         </div>
       </DialogContent>
@@ -105,8 +106,8 @@ interface ShortcutCategoryProps {
 }
 
 function ShortcutCategory({ category, commands, language }: ShortcutCategoryProps) {
-  const label = language === 'zh' 
-    ? CATEGORY_LABELS[category]?.zh 
+  const label = language === 'zh'
+    ? CATEGORY_LABELS[category]?.zh
     : CATEGORY_LABELS[category]?.en
 
   return (
@@ -133,12 +134,12 @@ interface ShortcutRowProps {
 }
 
 function ShortcutRow({ command, language }: ShortcutRowProps) {
-  const label = language === 'zh' && command.labelZh 
-    ? command.labelZh 
+  const label = language === 'zh' && command.labelZh
+    ? command.labelZh
     : command.label
 
-  const shortcutText = command.shortcut 
-    ? formatShortcut(command.shortcut) 
+  const shortcutText = command.shortcut
+    ? formatShortcut(command.shortcut)
     : ''
 
   return (

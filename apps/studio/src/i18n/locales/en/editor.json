@@ -1,0 +1,137 @@
+{
+    "menu": {
+        "openProject": "Open Project",
+        "save": "Save",
+        "dataSources": "Data Sources",
+        "importConfig": "Import Config",
+        "exportConfig": "Export Config",
+        "settings": "Settings",
+        "help": "Help",
+        "logout": "Logout",
+        "login": "Login"
+    },
+    "toolbar": {
+        "select": "Select",
+        "rectangle": "Rectangle",
+        "circle": "Circle",
+        "line": "Line",
+        "text": "Text",
+        "image": "Image",
+        "pan": "Pan"
+    },
+    "topNav": {
+        "save": "Save",
+        "preview": "Preview",
+        "publish": "Publish",
+        "showProps": "Show Properties",
+        "fullscreen": "Fullscreen",
+        "exitFullscreen": "Exit Fullscreen",
+        "untitledProject": "Untitled Project"
+    },
+    "saveIndicator": {
+        "saving": "Saving...",
+        "saved": "All changes saved",
+        "unsaved": "Unsaved changes",
+        "error": "Save failed",
+        "lastSaved": "Last saved at {{time}}"
+    },
+    "components": {
+        "title": "Components",
+        "searchPlaceholder": "Search components...",
+        "noResults": "No components found",
+        "noComponents": "No components",
+        "categories": {
+            "basic": "Basic",
+            "charts": "Charts",
+            "media": "Media",
+            "resources": "Resources",
+            "geo": "Geo",
+            "custom": "Custom"
+        }
+    },
+    "layers": {
+        "title": "Layers",
+        "noLayers": "No layers"
+    },
+    "propsPanel": {
+        "title": "Properties",
+        "noSelection": "Select a component to edit its properties",
+        "position": "Position",
+        "size": "Size",
+        "style": "Style",
+        "data": "Data",
+        "dataSource": "Data Source",
+        "selectDataSource": "Select Data Source",
+        "noDataSource": "No data source",
+        "width": "Width",
+        "height": "Height",
+        "x": "X",
+        "y": "Y",
+        "rotation": "Rotation",
+        "opacity": "Opacity",
+        "locked": "Locked",
+        "visible": "Visible"
+    },
+    "canvas": {
+        "settings": "Canvas Settings",
+        "mode": "Layout Mode",
+        "modeFixed": "Fixed",
+        "modeInfinite": "Infinite",
+        "modeGrid": "Grid",
+        "width": "Width",
+        "height": "Height",
+        "background": "Background",
+        "bgColor": "Background Color",
+        "bgImage": "Background Image",
+        "gridSize": "Grid Size",
+        "gridCols": "Columns",
+        "gridRowHeight": "Row Height",
+        "gridGap": "Gap",
+        "showGrid": "Show Grid",
+        "fullWidthPreview": "Full Width Preview",
+        "homeFlag": "Set as Home"
+    },
+    "shortcuts": {
+        "title": "Keyboard Shortcuts",
+        "close": "Close",
+        "open": "Open Project",
+        "save": "Save Project",
+        "undo": "Undo",
+        "redo": "Redo",
+        "selectTool": "Select Tool",
+        "rectangleTool": "Rectangle Tool",
+        "circleTool": "Circle Tool",
+        "textTool": "Text Tool",
+        "panCanvas": "Pan Canvas",
+        "deleteSelected": "Delete Selected",
+        "duplicate": "Duplicate",
+        "group": "Group"
+    },
+    "project": {
+        "openCanvas": "Open Canvas",
+        "newProject": "New Project",
+        "newCanvas": "New Canvas",
+        "noProjects": "No projects yet",
+        "noCanvas": "No canvas yet",
+        "projectName": "Project Name",
+        "inputProjectName": "Enter project name",
+        "createProject": "Create Project",
+        "deleteConfirm": "Are you sure you want to delete?",
+        "recent": "Recent"
+    },
+    "bottomBar": {
+        "zoom": "Zoom",
+        "canvasInfo": "Canvas Info",
+        "nodeCount": "{{count}} nodes"
+    },
+    "alerts": {
+        "imageTooLarge": "Image file is too large. Please select an image smaller than 10MB.",
+        "imageUploadFailed": "Image upload failed",
+        "switchLayoutConfirm": "Switching layout mode will clear the current canvas. Continue?"
+    },
+    "leftPanel": {
+        "library": "Library",
+        "layers": "Layers"
+    },
+    "loading": "Loading..."
+}

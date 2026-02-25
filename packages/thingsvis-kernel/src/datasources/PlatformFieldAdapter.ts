@@ -1,4 +1,4 @@
-import { BaseAdapter } from './BaseAdapter';
+﻿import { BaseAdapter } from './BaseAdapter';
 import type { DataSource, PlatformFieldConfig } from '@thingsvis/schema';
 
 /**
@@ -16,7 +16,6 @@ export class PlatformFieldAdapter extends BaseAdapter {
     }
 
     async connect(config: DataSource): Promise<void> {
-        console.log('[PlatformAdapter] 🟢 Connecting...', config);
         if (config.type !== 'PLATFORM_FIELD') {
             throw new Error('PlatformFieldAdapter requires PLATFORM_FIELD type');
         }
@@ -42,8 +41,6 @@ export class PlatformFieldAdapter extends BaseAdapter {
                 const { fieldId, value, timestamp } = event.data.payload;
 
                 // Debug log
-                console.log('[PlatformAdapter] 📥 Received:', fieldId, value);
-
                 // Cache the field data
                 this.platformDataCache.set(fieldId, {
                     value,

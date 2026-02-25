@@ -1,4 +1,4 @@
-/**
+﻿/**
  * AppModeStrategy — 云端 / 独立运行模式
  *
  * Phase 1.2: 将 Editor.tsx 中 App Mode 的 bootstrap/save 逻辑提取到此处。
@@ -54,17 +54,13 @@ export class AppModeStrategy implements EditorStrategy {
     }
 
     async bootstrap(projectId: string): Promise<ProjectFile | null> {
-        console.log('[AppModeStrategy] bootstrap:', projectId, 'cloud:', !!this.cloudAdapter)
-
         if (this.cloudAdapter) {
             // 云端模式: 从 Cloud API 加载
             try {
                 const cloudProject = await this.cloudAdapter.get(projectId)
                 if (cloudProject) {
-                    console.log('[AppModeStrategy] Loaded from cloud:', cloudProject.meta.name)
                     return toProjectFile(cloudProject)
                 }
-                console.log('[AppModeStrategy] Project not found in cloud, will create new')
                 return null
             } catch (err) {
                 console.error('[AppModeStrategy] Cloud load failed:', err)
@@ -73,15 +69,12 @@ export class AppModeStrategy implements EditorStrategy {
         }
 
         // 本地模式: 从 IndexedDB 加载
-        console.log('[AppModeStrategy] Loading from local storage')
         return projectStorage.load(projectId)
     }
 
     async save(projectState: ProjectFile): Promise<void> {
         // App Mode 的保存由 useAutoSave hook 处理
         // 这个方法作为手动保存的入口
-        console.log('[AppModeStrategy] save called for:', projectState.meta.id)
-
         if (this.cloudAdapter) {
             const storageProject: StorageProject = {
                 meta: {
@@ -129,7 +122,6 @@ export class AppModeStrategy implements EditorStrategy {
     }
 
     dispose(): void {
-        console.log('[AppModeStrategy] dispose')
         // App Mode 无需特殊清理
     }
 }

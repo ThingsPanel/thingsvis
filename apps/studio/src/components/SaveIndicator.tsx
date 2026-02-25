@@ -6,6 +6,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import type { SaveStatus } from '../lib/storage/types'
 
 // =============================================================================
@@ -19,8 +20,6 @@ export interface SaveIndicatorProps {
   lastSavedAt?: number | null
   /** Error message if status is 'error' */
   error?: string | null
-  /** UI language (optional) */
-  language?: 'zh' | 'en'
   /** Additional CSS classes */
   className?: string
 }
@@ -33,23 +32,22 @@ export function SaveIndicator({
   status,
   lastSavedAt,
   error,
-  language = 'zh',
   className = '',
 }: SaveIndicatorProps) {
-  const t = (zh: string, en: string) => (language === 'zh' ? zh : en)
+  const { t } = useTranslation('editor')
 
   const getStatusText = (): string => {
     switch (status) {
       case 'idle':
-        return lastSavedAt ? t('所有更改已保存', 'All changes saved') : ''
+        return lastSavedAt ? t('saveIndicator.saved') : ''
       case 'dirty':
-        return t('有未保存的更改', 'Unsaved changes')
+        return t('saveIndicator.unsaved')
       case 'saving':
-        return t('正在保存…', 'Saving...')
+        return t('saveIndicator.saving')
       case 'saved':
-        return t('所有更改已保存', 'All changes saved')
+        return t('saveIndicator.saved')
       case 'error':
-        return error || t('保存失败', 'Save failed')
+        return error || t('saveIndicator.error')
       default:
         return ''
     }

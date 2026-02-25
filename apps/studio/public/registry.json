@@ -1,34 +1,14 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2025-12-30T08:00:00.000Z",
+  "generatedAt": "2026-02-24T10:42:37.969Z",
   "components": {
-    "basic/text": {
-      "remoteName": "thingsvis_widget_basic_text",
-      "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
-      "staticEntryUrl": "/widgets/basic/text/dist/remoteEntry.js",
-      "debugSource": "static",
-      "exposedModule": "./Main",
-      "version": "1.0.0",
-      "icon": "Type",
-      "name": "基础文本"
-    },
-    "basic/rectangle": {
-      "remoteName": "thingsvis_widget_basic_rectangle",
-      "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
-      "staticEntryUrl": "/widgets/basic/rectangle/dist/remoteEntry.js",
-      "debugSource": "static",
-      "exposedModule": "./Main",
-      "version": "1.0.0",
-      "icon": "Square",
-      "name": "矩形"
-    },
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
       "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
       "staticEntryUrl": "/widgets/basic/circle/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0",
+      "version": "0.0.1",
       "icon": "Circle",
       "name": "圆形"
     },
@@ -38,18 +18,28 @@
       "staticEntryUrl": "/widgets/basic/line/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0",
+      "version": "0.0.1",
       "name": "连线"
     },
-    "media/image": {
-      "remoteName": "thingsvis_widget_media_image",
-      "remoteEntryUrl": "http://localhost:3106/remoteEntry.js",
-      "staticEntryUrl": "/widgets/media/image/dist/remoteEntry.js",
+    "basic/rectangle": {
+      "remoteName": "thingsvis_widget_basic_rectangle",
+      "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/rectangle/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0",
-      "icon": "Image",
-      "name": "图片"
+      "version": "0.0.1",
+      "icon": "Square",
+      "name": "矩形"
+    },
+    "basic/text": {
+      "remoteName": "thingsvis_widget_basic_text",
+      "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/text/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "Type",
+      "name": "基础文本"
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_widget_chart_echarts_line",
@@ -57,9 +47,19 @@
       "staticEntryUrl": "/widgets/chart/echarts-line/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "1.0.0",
+      "version": "0.0.1",
       "icon": "BarChart3",
       "name": "折线图"
+    },
+    "media/image": {
+      "remoteName": "thingsvis_widget_media_image",
+      "remoteEntryUrl": "http://localhost:3106/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/image/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "Image",
+      "name": "图片"
     }
   }
 }

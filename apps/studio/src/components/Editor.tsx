@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef, useImperativeHandle } from "react"
+﻿import React, { useEffect, useState, useCallback, useMemo, useRef, useImperativeHandle } from "react"
 import { useParams } from "react-router-dom"
+import { useTranslation } from 'react-i18next'
 import { useSyncExternalStore } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -177,7 +178,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [leftPanelTab, setLeftPanelTab] = useState<"components" | "layers">("components")
   // Data source dialog removed - now uses separate page
   const [searchQuery, setSearchQuery] = useState("")
-  const [language, setLanguage] = useState<Language>("zh")
+  const { t, i18n } = useTranslation('editor')
+  const language = i18n.language as Language
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
   // 跟踪云端模式下是否已选择画布（用于阻止用户在未选择画布时关闭对话框）
@@ -224,7 +226,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   useEffect(() => {
     if (embedVisibility.isEmbedded && !embedInitializedRef.current) {
       embedInitializedRef.current = true;
-      console.log('[Editor] 初始化嵌入模式 SaveStrategy');
       initEmbedModeFromUrl(isAuthenticated);
     }
   }, [embedVisibility.isEmbedded, isAuthenticated])
@@ -299,7 +300,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // 0) Priority: Route Path Parameter (New App Mode)
     // URL: /editor/:dashboardId
     if (dashboardId) {
-      console.log('[Editor] Strategy: Using Route Param ID:', dashboardId);
       return dashboardId;
     }
 
@@ -311,7 +311,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         const params = new URLSearchParams(hash.slice(qIndex + 1))
         const fromHash = params.get('projectId')
         if (fromHash) {
-          console.log('[Editor] Strategy: Using Query Param ID:', fromHash);
           return fromHash
         }
       }
@@ -321,7 +320,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     try {
       const last = localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY)
       if (last) {
-        console.log('[Editor] Strategy: Using LocalStorage ID:', last);
         return last
       }
     } catch { }
@@ -482,11 +480,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             // we should STILL not try to load from cloud if we are adhering to strict isolation.
             // However, for now, we'll assume if it's not a host-project ID, it might be a legacy embed case.
             // Ideally: if (embedVisibility.isEmbedded) { return; }
-
-            console.log('[Editor] Bootstrap: 从云端加载项目', projectId);
             try {
               const cloudProject = await storage.get(projectId);
-              console.log('[Editor] Bootstrap: 云端项目结果:', cloudProject);
               if (cloudProject) {
                 loaded = {
                   meta: {
@@ -515,7 +510,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               // Fallback to empty project is handled below if loaded remains null
             }
           } else {
-            console.log('[Editor] Bootstrap: 从本地加载项目', projectId);
             loaded = await projectStorage.load(projectId);
           }
 
@@ -720,7 +714,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       if (response.ok) {
         // 可以在这里显示成功提示，或者触发一个状态更新
-        console.log('[Editor] Dashboard published successfully')
       } else {
         console.error('[Editor] Failed to publish dashboard:', response.statusText)
       }
@@ -796,8 +789,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     if (!embedVisibility.isEmbedded) return;
 
     const unsubscribe = onEmbedEvent('init', async (payload: EmbedInitPayload) => {
-      console.log('[Editor] 📥 收到 embed init 事件:', payload);
-
       // 使用新的处理函数解析数据
       const processed = processEmbedInitPayload(payload);
       if (!processed) {
@@ -826,21 +817,12 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
       let nodesToLoad = processed.nodes;
       if (processed.saveTarget === 'self' && processed.projectId) {
-        console.log('[Editor] 📥 saveTarget=self，从云端获取节点数据（包含 data 绑定）');
         try {
           const cloudAdapter = createCloudStorageAdapter();
           const cloudProject = await cloudAdapter.get(processed.projectId);
           if (cloudProject && cloudProject.schema.nodes.length > 0) {
-            console.log('[Editor] ✅ 云端节点已获取，节点数:', cloudProject.schema.nodes.length);
-            console.log('[Editor] 云端节点 data 字段:', cloudProject.schema.nodes.map((n: any) => ({
-              id: n.id,
-              type: n.type,
-              hasData: !!n.data,
-              data: n.data
-            })));
             nodesToLoad = cloudProject.schema.nodes;
           } else {
-            console.log('[Editor] ⚠️ 云端无节点数据，使用宿主传来的节点');
           }
         } catch (err) {
           console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
@@ -878,8 +860,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           store.temporal.getState().clear?.();
         } catch { }
       }
-
-      console.log('[Editor] ✅ embed init 处理完成, projectId:', processed.projectId);
     });
 
 
@@ -898,12 +878,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     if (!embedVisibility.isEmbedded) return
     if (bootstrappingRef.current) return // 还在加载中
     if (isBootstrapping) return
-
-    console.log('🆕 [Editor] Bootstrapping 完成，发送握手请求')
     // 发送 ready 消息
     messageRouter.send(MSG_TYPES.READY)
-    console.log('✅ [Editor] 已发送 tv:ready')
-
     // 主动请求初始数据
     setTimeout(() => {
       messageRouter.send(MSG_TYPES.REQUEST_INIT)
@@ -1028,7 +1004,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       // Check max size 10MB (consistent with ImageSourceInput)
       if (file.size > 10 * 1024 * 1024) {
-        alert(language === 'zh' ? '图片文件过大，请选择小于 10MB 的图片' : 'Image file is too large. Please select an image smaller than 10MB.')
+        alert(t('alerts.imageTooLarge'))
         setActiveTool('select')
         setPendingImageUrl(undefined)
         return
@@ -1060,7 +1036,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Image picker error:', error)
-      alert(language === 'zh' ? '图片上传失败' : 'Image upload failed')
+      alert(t('alerts.imageUploadFailed'))
       setActiveTool('select')
       setPendingImageUrl(undefined)
     }
@@ -1090,19 +1066,19 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   ]
 
   const shortcuts = [
-    { key: "Ctrl/⌘ + O", action: language === "zh" ? "打开项目" : "Open Project" },
-    { key: "Ctrl/⌘ + S", action: language === "zh" ? "保存项目" : "Save Project" },
-    { key: "Ctrl/⌘ + Z", action: language === "zh" ? "撤销" : "Undo" },
-    { key: "Ctrl/⌘ + Shift + Z", action: language === "zh" ? "重做" : "Redo" },
-    { key: "V", action: language === "zh" ? "选择工具" : "Select Tool" },
-    { key: "R", action: language === "zh" ? "矩形工具" : "Rectangle Tool" },
-    { key: "O", action: language === "zh" ? "圆形工具" : "Circle Tool" },
-    { key: "T", action: language === "zh" ? "文本工具" : "Text Tool" },
-    { key: "H", action: language === "zh" ? "移动画布" : "Pan Canvas" },
-    { key: "Delete", action: language === "zh" ? "删除选中" : "Delete Selected" },
-    { key: "Ctrl/⌘ + D", action: language === "zh" ? "复制" : "Duplicate" },
-    { key: "Ctrl/⌘ + G", action: language === "zh" ? "成组" : "Group" },
-    { key: "?", action: language === "zh" ? "快捷键帮助" : "Keyboard Shortcuts" },
+    { key: "Ctrl/⌘ + O", action: t('shortcuts.open') },
+    { key: "Ctrl/⌘ + S", action: t('shortcuts.save') },
+    { key: "Ctrl/⌘ + Z", action: t('shortcuts.undo') },
+    { key: "Ctrl/⌘ + Shift + Z", action: t('shortcuts.redo') },
+    { key: "V", action: t('shortcuts.selectTool') },
+    { key: "R", action: t('shortcuts.rectangleTool') },
+    { key: "O", action: t('shortcuts.circleTool') },
+    { key: "T", action: t('shortcuts.textTool') },
+    { key: "H", action: t('shortcuts.panCanvas') },
+    { key: "Delete", action: t('shortcuts.deleteSelected') },
+    { key: "Ctrl/⌘ + D", action: t('shortcuts.duplicate') },
+    { key: "Ctrl/⌘ + G", action: t('shortcuts.group') },
+    { key: "?", action: t('shortcuts.title') },
   ]
 
   const resolveWidget = useCallback(async (type: string) => {
@@ -1194,7 +1170,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           <div className="text-center space-y-6 pointer-events-auto">
             <h2 className="text-3xl font-bold text-foreground">ThingsVis</h2>
             <p className="text-muted-foreground max-w-md">
-              {language === "zh" ? "正在加载..." : "Loading..."}
+              {t('loading')}
             </p>
           </div>
         </div>
@@ -1202,7 +1178,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {/* Top Navigation Bar */}
       <EditorTopNav
-        language={language}
         canvasMode={canvasConfig.mode}
         tools={tools}
         activeTool={activeTool}
@@ -1247,7 +1222,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         }}
         onLogout={() => { logout(); window.location.hash = '#/' }}
         onLogin={() => { window.location.hash = '#/login' }}
-        onLanguageChange={setLanguage}
       />
 
       {/* Left Panel: Assets & Layers */}
@@ -1268,7 +1242,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   }`}
               >
                 <Grid3x3 className="h-4 w-4" />
-                {language === "zh" ? "组件库" : "Library"}
+                {t('leftPanel.library')}
               </button>
               <button
                 onClick={() => setLeftPanelTab("layers")}
@@ -1278,7 +1252,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   }`}
               >
                 <Layers className="h-4 w-4" />
-                {language === "zh" ? "图层" : "Layers"}
+                {t('leftPanel.layers')}
               </button>
             </div>
 
@@ -1328,7 +1302,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           } bottom-4 w-80 z-40`}>
           <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <h2 className="text-sm font-semibold">{language === "zh" ? "属性" : "Properties"}</h2>
+              <h2 className="text-sm font-semibold">{t('propsPanel.title')}</h2>
               <button
                 className="p-1 hover:bg-accent rounded"
                 onClick={() => {
@@ -1360,9 +1334,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onLayoutModeChange={(newMode: 'fixed' | 'infinite' | 'grid') => {
                     const hasNodes = Object.keys(store.getState().nodesById).length > 0;
                     const shouldProceed = embedVisibility.isEmbedded ? true : !hasNodes || window.confirm(
-                      language === "zh"
-                        ? "切换布局模式将清空当前画布，是否继续？"
-                        : "Switching layout mode will clear the current canvas. Continue?"
+                      t('alerts.switchLayoutConfirm')
                     );
                     if (!shouldProceed) return false;
                     if (hasNodes) {
@@ -1391,7 +1363,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       <ShortcutHelpPanel
         open={showShortcuts}
         onClose={() => setShowShortcuts(false)}
-        language={language}
       />
 
       {/* Project Dialog */}

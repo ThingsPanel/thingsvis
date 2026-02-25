@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Message Router — Unified postMessage Communication Center
  *
  * Phase 2: 类型安全的消息路由中心，统一管理所有 postMessage 通信。
@@ -213,8 +213,6 @@ class MessageRouter {
             'color: #4CAF50; font-weight: bold',
             'color: #81C784; font-weight: normal',
         )
-        console.log('Origin:', event.origin)
-        console.log('Payload:', data.payload)
         console.log('Time:', new Date(entry.timestamp).toLocaleTimeString())
         console.groupEnd()
     }
@@ -237,7 +235,6 @@ class MessageRouter {
             'color: #2196F3; font-weight: bold',
             'color: #64B5F6; font-weight: normal',
         )
-        console.log('Payload:', payload)
         console.log('Time:', new Date(entry.timestamp).toLocaleTimeString())
         console.groupEnd()
     }

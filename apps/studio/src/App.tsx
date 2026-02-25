@@ -5,6 +5,7 @@ import { ProjectProvider } from './contexts/ProjectContext';
 import { LoginPage, RegisterPage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
 import ImageUploadSettingsPage from './pages/ImageUploadSettingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import EditorShell from './components/EditorShell';
 import './index.css';
 
@@ -16,51 +17,49 @@ import './index.css';
  *   /           - Home page (project list)
  *   /login      - Login page
  *   /register   - Registration page
- *   /editor     - Dashboard editor
- *   /editor/:id - Edit specific dashboard
- *   /data-sources - Data sources management
- *   /settings/image-upload - Image upload settings
+ *   /editor     - Dashboard editor (protected)
+ *   /editor/:id - Edit specific dashboard (protected)
+ *   /data-sources - Data sources management (protected)
+ *   /settings/image-upload - Image upload settings (protected)
  *   /preview    - Dashboard preview
  *   /preview/:id - Preview specific dashboard
  *   /embed      - Embeddable preview page for iframe
  */
 export default function App() {
   return (
-    <AuthProvider>
-      <ProjectProvider>
-        <HashRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <ProjectProvider>
+          <HashRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-            {/* Home page - shows project list */}
-            <Route path="/" element={<Navigate to="/editor" replace />} />
+              {/* Home page - shows project list */}
+              <Route path="/" element={<Navigate to="/editor" replace />} />
 
-            {/* Editor Routes — EditorShell wraps Editor with Strategy Pattern */}
-            <Route path="/editor" element={<EditorShell />} />
-            <Route path="/editor/:dashboardId" element={<EditorShell />} />
+              {/* Protected Routes — require authentication */}
+              <Route path="/editor" element={<ProtectedRoute><EditorShell /></ProtectedRoute>} />
+              <Route path="/editor/:dashboardId" element={<ProtectedRoute><EditorShell /></ProtectedRoute>} />
+              <Route path="/data-sources" element={<ProtectedRoute><DataSourcesPage /></ProtectedRoute>} />
+              <Route path="/settings/image-upload" element={<ProtectedRoute><ImageUploadSettingsPage /></ProtectedRoute>} />
 
-            {/* Data Sources */}
-            <Route path="/data-sources" element={<DataSourcesPage />} />
+              {/* Preview Routes — public for sharing */}
+              <Route path="/preview" element={<PreviewPage />} />
+              <Route path="/preview/:dashboardId" element={<PreviewPage />} />
 
-            {/* Settings */}
-            <Route path="/settings/image-upload" element={<ImageUploadSettingsPage />} />
+              {/* Embed Route - for iframe embedding */}
+              <Route path="/embed" element={<EmbedPage />} />
+              <Route path="/embed/:dashboardId" element={<EmbedPage />} />
 
-            {/* Preview Routes */}
-            <Route path="/preview" element={<PreviewPage />} />
-            <Route path="/preview/:dashboardId" element={<PreviewPage />} />
-
-            {/* Embed Route - for iframe embedding */}
-            <Route path="/embed" element={<EmbedPage />} />
-            <Route path="/embed/:dashboardId" element={<EmbedPage />} />
-
-            {/* Catch all - redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </HashRouter>
-      </ProjectProvider>
-    </AuthProvider>
+              {/* Catch all - redirect to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </HashRouter>
+        </ProjectProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

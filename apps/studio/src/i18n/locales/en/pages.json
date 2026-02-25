@@ -1,0 +1,85 @@
+{
+    "login": {
+        "title": "Welcome back",
+        "subtitle": "Sign in to your account",
+        "email": "Email",
+        "password": "Password",
+        "forgotPassword": "Forgot password?",
+        "submitButton": "Sign In",
+        "submitting": "Signing in...",
+        "guestMode": "Guest Mode (No login required)",
+        "noAccount": "Don't have an account?",
+        "register": "Sign up free",
+        "backToHome": "Back to home",
+        "brandTagline": "Start your visualization journey.\nProfessional, efficient, unlimited possibilities.",
+        "errors": {
+            "invalidCredentials": "Invalid email or password",
+            "invalidEmailOrPassword": "Invalid email or password, please try again",
+            "invalidFormat": "Please enter a valid email and password",
+            "userNotFound": "Account not found, please register first",
+            "invalidEmail": "Please enter a valid email address",
+            "networkError": "Network connection failed, please check your network",
+            "fetchFailed": "Unable to connect to server, please try again later",
+            "serverError": "Server error, please try again later",
+            "defaultError": "Login failed, please check your email and password",
+            "unexpectedError": "An error occurred during login, please try again later"
+        }
+    },
+    "register": {
+        "title": "Create Account",
+        "subtitle": "Register a new ThingsVis account",
+        "name": "Username",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm Password",
+        "submitButton": "Sign Up",
+        "submitting": "Signing up...",
+        "hasAccount": "Already have an account?",
+        "login": "Sign In",
+        "backToHome": "Back to home",
+        "brandTagline": "Create your personal visualization workspace.",
+        "errors": {
+            "passwordMismatch": "Passwords do not match",
+            "emailExists": "This email is already registered",
+            "weakPassword": "Password is too weak",
+            "defaultError": "Registration failed, please try again later"
+        }
+    },
+    "dataSources": {
+        "title": "Data Sources",
+        "addNew": "Add Data Source",
+        "edit": "Edit",
+        "delete": "Delete",
+        "test": "Test Connection",
+        "testing": "Testing...",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "noDataSources": "No data sources",
+        "types": {
+            "rest": "REST API",
+            "websocket": "WebSocket",
+            "mqtt": "MQTT"
+        },
+        "form": {
+            "name": "Name",
+            "type": "Type",
+            "url": "URL",
+            "method": "Method",
+            "headers": "Headers",
+            "body": "Body",
+            "auth": "Authentication",
+            "timeout": "Timeout",
+            "heartbeat": "Heartbeat",
+            "reconnect": "Reconnect",
+            "protocols": "Protocols",
+            "initMessages": "Initial Messages",
+            "transformation": "Transformation"
+        }
+    },
+    "imageUpload": {
+        "title": "Image Upload Settings",
+        "uploadMode": "Upload Mode",
+        "localMode": "Local Storage",
+        "cloudMode": "Cloud Storage"
+    }
+}

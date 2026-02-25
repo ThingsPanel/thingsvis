@@ -1,4 +1,4 @@
-/**
+﻿/**
  * EditorShell — Strategy-Driven Editor Entry Point
  *
  * Phase 1.7: 充当 Editor.tsx 的策略协调层。
@@ -46,7 +46,6 @@ export default function EditorShell() {
                 console.warn('[EditorShell] triggerSave: Editor ref not ready')
                 return
             }
-            console.log('[EditorShell] triggerSave: 通过策略保存')
             const state = editorRef.current.getProjectState()
             strategy.save(state)
         })
@@ -63,7 +62,6 @@ export default function EditorShell() {
                 console.warn('[EditorShell] request-save: Editor ref not ready')
                 return
             }
-            console.log('[EditorShell] 收到 Host request-save，通过策略保存')
             const state = editorRef.current.getProjectState()
 
             // request-save 使用 wrapped 格式 (与 Host SDK 的 on('thingsvis:save-config') 兼容)
@@ -106,11 +104,6 @@ export default function EditorShell() {
 
     // ─── 获取策略的 UI 可见性配置 ───
     const visibility = strategy.getUIVisibility()
-
-    console.log(
-        `[EditorShell] Rendering with ${isWidget ? 'Widget' : 'App'} strategy`
-    )
-
     return (
         <EditorStrategyContext.Provider value={strategy}>
             <Editor

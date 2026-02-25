@@ -1,4 +1,4 @@
-/**
+﻿/**
  * WidgetModeStrategy — 物模型组件 (Host 管数据) 模式
  *
  * Phase 1.3: 将 Editor.tsx 中 Widget Mode 的 embed 通信逻辑提取到此处。
@@ -33,14 +33,11 @@ export class WidgetModeStrategy implements EditorStrategy {
      * 如果 Host 不发送 init (timeout)，则 resolve(null) 创建空项目。
      */
     async bootstrap(projectId: string): Promise<ProjectFile | null> {
-        console.log('[WidgetModeStrategy] bootstrap: waiting for host init, projectId:', projectId)
-
         return new Promise<ProjectFile | null>((resolve) => {
             this.initResolve = resolve
 
             // 监听 init 事件
             const unsub = onEmbedEvent('init', (payload: EmbedInitPayload) => {
-                console.log('[WidgetModeStrategy] Received init from host')
                 // 日志由 messageRouter 自动记录
 
                 const processed = processEmbedInitPayload(payload)
@@ -108,8 +105,6 @@ export class WidgetModeStrategy implements EditorStrategy {
      * save: 通过 postMessage 发送保存数据给 Host
      */
     async save(projectState: ProjectFile): Promise<void> {
-        console.log('[WidgetModeStrategy] save: sending to host')
-
         const exportData = {
             canvas: projectState.canvas,
             nodes: projectState.nodes,
@@ -133,7 +128,6 @@ export class WidgetModeStrategy implements EditorStrategy {
         const schemaUnsub = onEmbedEvent('updateSchema', (payload: any) => {
             const fields = payload
             if (Array.isArray(fields)) {
-                console.log('[WidgetModeStrategy] updateSchema:', fields.length, 'fields')
                 platformFieldStore.setFields(fields)
             }
         })
@@ -204,7 +198,6 @@ export class WidgetModeStrategy implements EditorStrategy {
     }
 
     dispose(): void {
-        console.log('[WidgetModeStrategy] dispose')
         this.unsubscribers.forEach(fn => fn())
         this.unsubscribers = []
         this.initResolve = null

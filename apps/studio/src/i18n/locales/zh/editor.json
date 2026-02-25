@@ -1,0 +1,137 @@
+{
+    "menu": {
+        "openProject": "打开项目",
+        "save": "保存",
+        "dataSources": "数据源管理",
+        "importConfig": "导入配置",
+        "exportConfig": "导出配置",
+        "settings": "设置",
+        "help": "帮助",
+        "logout": "退出登录",
+        "login": "登录"
+    },
+    "toolbar": {
+        "select": "选择",
+        "rectangle": "矩形",
+        "circle": "圆形",
+        "line": "线条",
+        "text": "文本",
+        "image": "图片",
+        "pan": "平移"
+    },
+    "topNav": {
+        "save": "保存",
+        "preview": "预览",
+        "publish": "发布",
+        "showProps": "显示属性面板",
+        "fullscreen": "全屏",
+        "exitFullscreen": "退出全屏",
+        "untitledProject": "未命名项目"
+    },
+    "saveIndicator": {
+        "saving": "正在保存…",
+        "saved": "所有更改已保存",
+        "unsaved": "有未保存的更改",
+        "error": "保存失败",
+        "lastSaved": "上次保存于 {{time}}"
+    },
+    "components": {
+        "title": "组件",
+        "searchPlaceholder": "搜索组件...",
+        "noResults": "未找到匹配的组件",
+        "noComponents": "暂无组件",
+        "categories": {
+            "basic": "基础组件",
+            "charts": "图表组件",
+            "media": "媒体展示",
+            "resources": "资源组件",
+            "geo": "地理信息",
+            "custom": "自定义"
+        }
+    },
+    "layers": {
+        "title": "图层",
+        "noLayers": "暂无图层"
+    },
+    "propsPanel": {
+        "title": "属性",
+        "noSelection": "选择一个组件来编辑属性",
+        "position": "位置",
+        "size": "尺寸",
+        "style": "样式",
+        "data": "数据",
+        "dataSource": "数据源",
+        "selectDataSource": "选择数据源",
+        "noDataSource": "无数据源",
+        "width": "宽度",
+        "height": "高度",
+        "x": "X 坐标",
+        "y": "Y 坐标",
+        "rotation": "旋转",
+        "opacity": "透明度",
+        "locked": "锁定",
+        "visible": "可见"
+    },
+    "canvas": {
+        "settings": "画布设置",
+        "mode": "布局模式",
+        "modeFixed": "固定",
+        "modeInfinite": "无限",
+        "modeGrid": "网格",
+        "width": "宽度",
+        "height": "高度",
+        "background": "背景",
+        "bgColor": "背景色",
+        "bgImage": "背景图片",
+        "gridSize": "网格大小",
+        "gridCols": "列数",
+        "gridRowHeight": "行高",
+        "gridGap": "间距",
+        "showGrid": "显示网格",
+        "fullWidthPreview": "预览撑满宽度",
+        "homeFlag": "设为首页"
+    },
+    "shortcuts": {
+        "title": "快捷键",
+        "close": "关闭",
+        "open": "打开项目",
+        "save": "保存项目",
+        "undo": "撤销",
+        "redo": "重做",
+        "selectTool": "选择工具",
+        "rectangleTool": "矩形工具",
+        "circleTool": "圆形工具",
+        "textTool": "文本工具",
+        "panCanvas": "移动画布",
+        "deleteSelected": "删除选中",
+        "duplicate": "复制",
+        "group": "成组"
+    },
+    "project": {
+        "openCanvas": "打开画布",
+        "newProject": "新建项目",
+        "newCanvas": "新建画布",
+        "noProjects": "还没有项目",
+        "noCanvas": "还没有画布",
+        "projectName": "项目名称",
+        "inputProjectName": "输入项目名称",
+        "createProject": "创建项目",
+        "deleteConfirm": "确定要删除吗？",
+        "recent": "最近打开"
+    },
+    "bottomBar": {
+        "zoom": "缩放",
+        "canvasInfo": "画布信息",
+        "nodeCount": "{{count}} 个节点"
+    },
+    "alerts": {
+        "imageTooLarge": "图片文件过大，请选择小于 10MB 的图片",
+        "imageUploadFailed": "图片上传失败",
+        "switchLayoutConfirm": "切换布局模式将清空当前画布，是否继续？"
+    },
+    "leftPanel": {
+        "library": "组件库",
+        "layers": "图层"
+    },
+    "loading": "正在加载..."
+}

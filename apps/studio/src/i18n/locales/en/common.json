@@ -1,0 +1,21 @@
+{
+    "appName": "ThingsVis",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "search": "Search",
+    "retry": "Retry",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "reset": "Reset",
+    "yes": "Yes",
+    "no": "No",
+    "or": "Or",
+    "noData": "No data"
+}

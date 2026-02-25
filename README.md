@@ -7,9 +7,9 @@
 ## 🌟 Features
 
 - **Canvas-Based Editor**: Intuitive drag-and-drop interface for creating visualizations
-- **Plugin Ecosystem**: Extensible architecture with 7-category component taxonomy
+- **Widget Ecosystem**: Extensible architecture with widget-based component taxonomy
 - **Micro-Kernel Design**: Strict separation between UI-free kernel logic and visual components
-- **Module Federation 2.0**: Dynamic plugin loading with offline caching support
+- **Module Federation 2.0**: Dynamic widget loading with offline caching support
 - **High Performance**: Optimized for ≥50 FPS rendering with support for 1000+ nodes
 - **Type-Safe**: Built with TypeScript 5.x in strict mode with Zod runtime validation
 - **Undo/Redo System**: Full command pattern implementation with history management
@@ -22,25 +22,22 @@
 ```
 thingsvis/
 ├── apps/
-│   ├── studio/          # Main editor application
-│   └── preview/         # Simple host for testing plugins
+│   ├── studio/              # Main editor application
+│   └── server/              # Backend API server (Next.js)
 ├── packages/
 │   ├── thingsvis-kernel/    # UI-free core logic
 │   ├── thingsvis-schema/    # Zod-based type definitions
 │   ├── thingsvis-ui/        # Headless visual components
-│   └── thingsvis-utils/     # Shared utilities
-├── plugins/
-│   ├── basic/           # Basic components (rect, text, etc.)
-│   ├── layout/          # Layout components
-│   ├── media/           # Media components (image, video)
-│   ├── chart/           # Chart components
-│   ├── custom/          # Custom components
-│   ├── data/            # Data components
-│   └── interaction/     # Interaction components
+│   ├── thingsvis-utils/     # Shared utilities
+│   └── thingsvis-widget-sdk/# Widget development SDK
+├── widgets/
+│   ├── basic/               # Basic components (rect, text, circle, line)
+│   ├── chart/               # Chart components (echarts-line)
+│   └── media/               # Media components (image)
 ├── tools/
-│   └── cli/             # vis-cli for scaffolding plugins
-├── configs/             # Shared build configurations
-└── specs/               # Detailed feature specifications (Source of Truth)
+│   └── cli/                 # vis-cli for scaffolding widgets
+├── configs/                 # Shared build configurations
+└── docs/                    # Documentation and dev tasks
 ```
 
 ### Core Technologies
@@ -87,11 +84,11 @@ pnpm dev
 
 The studio will be available at `http://localhost:3000` (or the port shown in terminal).
 
-#### Run the Preview App
+#### Quick Start with Docker
 
 ```bash
-# Start the preview/testing app
-pnpm dev --filter ./apps/preview
+# Start all services (studio + server + database)
+docker-compose up -d
 ```
 
 #### Run the Backend Server
@@ -99,7 +96,7 @@ pnpm dev --filter ./apps/preview
 The backend server is required for features like authentication and project management.
 
 1. Setup environment variables:
-   Copy `.env.example` to `.env` in `packages/thingsvis-server/`.
+   Copy `.env.example` to `.env` in `apps/server/`.
 
 2. Initialize the database:
    ```bash
@@ -113,7 +110,7 @@ The backend server is required for features like authentication and project mana
    pnpm dev --filter @thingsvis/server
    ```
 
-   The server will be available at `http://localhost:3001`.
+   The server will be available at `http://localhost:8000`.
 
 ### Building
 
@@ -146,15 +143,15 @@ pnpm typecheck
 pnpm typecheck --filter @thingsvis/kernel
 ```
 
-## 🔌 Plugin Development
+## 🔌 Widget Development
 
-ThingsVis uses a powerful CLI tool to scaffold new plugins quickly.
+ThingsVis uses a powerful CLI tool to scaffold new widgets quickly.
 
-### Create a New Plugin
+### Create a New Widget
 
 ```bash
-# Scaffold a new plugin
-pnpm vis-cli create <category> <plugin-name>
+# Scaffold a new widget
+pnpm vis-cli create <category> <widget-name>
 
 # Example: Create a basic button component
 pnpm vis-cli create basic button
@@ -172,16 +169,16 @@ pnpm vis-cli create chart line-chart
 - `data` - Data-related components
 - `interaction` - Interactive components
 
-### Plugin Structure
+### Widget Structure
 
-Each generated plugin includes:
+Each generated widget includes:
 
 ```
-plugins/<category>/<name>/
-├── package.json          # Plugin package configuration
+widgets/<category>/<name>/
+├── package.json          # Widget package configuration
 ├── rspack.config.js      # Build configuration
 ├── tsconfig.json         # TypeScript configuration
-├── README.md             # Plugin documentation
+├── README.md             # Widget documentation
 ├── public/
 │   └── index.html        # Dev server landing page
 └── src/
@@ -189,11 +186,11 @@ plugins/<category>/<name>/
     └── spec.tsx          # Visual isolation test component
 ```
 
-### Develop a Plugin
+### Develop a Widget
 
 ```bash
-# Navigate to your plugin directory
-cd plugins/<category>/<name>
+# Navigate to your widget directory
+cd widgets/<category>/<name>
 
 # Start the dev server (serves Module Federation remote)
 pnpm dev
@@ -201,9 +198,9 @@ pnpm dev
 # The widget will be available at http://localhost:<port>/remoteEntry.js
 ```
 
-### Plugin API
+### Widget API
 
-Each plugin must export a `Main` module conforming to the `WidgetMainModule` interface:
+Each widget must export a `Main` module conforming to the `WidgetMainModule` interface:
 
 ```typescript
 import type { WidgetMainModule } from '@thingsvis/schema';
@@ -218,9 +215,9 @@ export const Main: WidgetMainModule = {
 };
 ```
 
-### Register Your Plugin
+### Register Your Widget
 
-Add your plugin to the registry file (`apps/preview/public/registry.json` or `apps/studio/public/registry.json`):
+Add your widget to the registry file (`apps/studio/public/registry.json`):
 
 ```json
 {
@@ -233,11 +230,11 @@ Add your plugin to the registry file (`apps/preview/public/registry.json` or `ap
 
 ### Visual Testing
 
-Each plugin includes a `spec.tsx` file for isolated visual testing:
+Each widget includes a `spec.tsx` file for isolated visual testing:
 
-1. Start your plugin dev server: `pnpm dev`
-2. Open the preview app: `pnpm dev --filter ./apps/preview`
-3. Select your plugin from the spec runner
+1. Start your widget dev server: `pnpm dev`
+2. Open the studio app: `pnpm dev --filter ./apps/studio`
+3. Add your widget from the component panel
 4. Verify rendering and error isolation
 
 ## 📦 Package Overview
@@ -371,19 +368,15 @@ ThingsVis follows strict architectural constraints:
 5. **Build Strategy**: Rspack + Module Federation 2.0
 6. **State Management**: Zustand + Immer for immutable updates
 
-### Plugin Ecosystem
+### Widget Ecosystem
 
-**7-Category Taxonomy:**
+**Widget Categories:**
 
-1. **Basic** - Fundamental UI elements (rect, text, circle)
-2. **Layout** - Layout and container components
+1. **Basic** - Fundamental UI elements (rectangle, text, circle, line)
+2. **Chart** - Data visualization (ECharts line, bar, pie)
 3. **Media** - Images, videos, and media players
-4. **Chart** - Data visualization and charts
-5. **Custom** - Custom/specialized components
-6. **Data** - Data-related components
-7. **Interaction** - Interactive elements and controls
 
-**Plugin Features:**
+**Widget Features:**
 
 - Dynamic loading via Module Federation
 - Offline caching with IndexedDB
@@ -393,12 +386,7 @@ ThingsVis follows strict architectural constraints:
 
 ## 📚 Documentation
 
-Detailed documentation is available in the `docs/` directory:
-
--   **[Development Guide](docs/development/guide.md)**: Environment setup, workflow, and git conventions.
--   **[Spec-Kit Cheatsheet](docs/development/spec-kit.md)**: AI-driven development workflows.
--   **[Component Development](docs/component/development.md)**: How to build custom plugins.
--   **[Data Source Configuration](docs/datasource/configuration.md)**: Configuring REST (Auth, Headers), WebSocket (Heartbeat, Reconnect), and MQTT.
+Documentation is available in the `docs/` directory. See `docs/dev-tasks/` for the release task list and development roadmap.
 
 ## 🤝 Contributing
 
@@ -423,18 +411,18 @@ Detailed documentation is available in the `docs/` directory:
 - **Comments**: Document complex logic and public APIs
 - **Testing**: Add tests for new features (when test framework is configured)
 
-### Plugin Development Guidelines
+### Widget Development Guidelines
 
-1. Use the `vis-cli` to scaffold new plugins
+1. Use the `vis-cli` to scaffold new widgets
 2. Follow the category taxonomy
 3. Export a valid `WidgetMainModule`
 4. Include a `Spec` component for visual testing
-5. Keep plugins self-contained and isolated
+5. Keep widgets self-contained and isolated
 6. Use peer dependencies for shared libraries (React, LeaferJS)
 
 ## 📄 License
 
-[Add your license information here]
+This project is licensed under the [Apache License 2.0](LICENSE).
 
 ## 🙏 Acknowledgments
 

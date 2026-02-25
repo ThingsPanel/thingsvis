@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useEditorStrategy Hook
  *
  * Phase 1: 根据当前 URL / 运行环境自动选择 EditorStrategy 实例。
@@ -39,7 +39,6 @@ export function useEditorStrategy(projectId?: string): UseEditorStrategyResult {
 
         // Widget Mode: 嵌入 + saveTarget=host
         if (embedded && saveTarget === 'host') {
-            console.log('[useEditorStrategy] → WidgetModeStrategy')
             return new WidgetModeStrategy()
         }
 

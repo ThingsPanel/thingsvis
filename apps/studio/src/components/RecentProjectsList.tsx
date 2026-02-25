@@ -6,6 +6,7 @@
  */
 
 import React, { useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Trash2, FileText } from 'lucide-react'
 import { recentProjects } from '../lib/storage/recentProjects'
@@ -24,7 +25,7 @@ export interface RecentProjectsListProps {
   refreshKey?: number
   /** Whether the list is disabled */
   disabled?: boolean
-  /** Language for localization */
+  /** Language for localization - derived from i18n if not provided */
   language?: 'zh' | 'en'
   /** Maximum number of items to show */
   maxItems?: number
@@ -39,20 +40,20 @@ export function RecentProjectsList({
   onRemove,
   refreshKey,
   disabled = false,
-  language = 'en',
+  language: langProp,
   maxItems = 10,
 }: RecentProjectsListProps) {
+  const { t, i18n } = useTranslation('editor')
+  const language = langProp || (i18n.language as 'zh' | 'en')
   const projects = useMemo(() => {
     return recentProjects.get().slice(0, maxItems)
   }, [maxItems, refreshKey])
-
-  const t = language === 'zh' ? translations.zh : translations.en
 
   if (projects.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         <FileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-        <p className="text-sm">{t.noProjects}</p>
+        <p className="text-sm">{t('project.noProjects')}</p>
       </div>
     )
   }
@@ -128,8 +129,8 @@ function formatDate(timestamp: number, language: 'zh' | 'en'): string {
   } else if (diffDays === 1) {
     return language === 'zh' ? '昨天' : 'Yesterday'
   } else if (diffDays < 7) {
-    return language === 'zh' 
-      ? `${diffDays} 天前` 
+    return language === 'zh'
+      ? `${diffDays} 天前`
       : `${diffDays} days ago`
   } else {
     return date.toLocaleDateString(language === 'zh' ? 'zh-CN' : 'en-US', {
@@ -137,19 +138,6 @@ function formatDate(timestamp: number, language: 'zh' | 'en'): string {
       day: 'numeric',
     })
   }
-}
-
-// =============================================================================
-// Translations
-// =============================================================================
-
-const translations = {
-  en: {
-    noProjects: 'No recent projects',
-  },
-  zh: {
-    noProjects: '暂无最近项目',
-  },
 }
 
 export default RecentProjectsList

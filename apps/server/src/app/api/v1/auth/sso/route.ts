@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { SignJWT } from 'jose'
 import { prisma } from '@/lib/db'
 import { SSOExchangeSchema } from '@/lib/validators/auth'
@@ -66,8 +66,6 @@ export async function POST(request: NextRequest) {
         let body
         try {
             const text = await request.text()
-            console.log('[SSO] Received request, body length:', text.length)
-
             if (!text || text.trim().length === 0) {
                 console.error('[SSO] Empty request body')
                 const response = NextResponse.json(
@@ -114,20 +112,12 @@ export async function POST(request: NextRequest) {
         //     { status: 401 }
         //   )
         // }
-
-        console.log(`[SSO] Token exchange request from ${platform}:`, {
-            userId: userInfo.id,
-            email: userInfo.email,
-            tenantId: userInfo.tenantId,
-        })
-
         // 1. Find or create tenant
         let tenant = await prisma.tenant.findUnique({
             where: { slug: `${platform}-${userInfo.tenantId}` },
         })
 
         if (!tenant) {
-            console.log(`[SSO] Creating new tenant for ${platform}: ${userInfo.tenantId}`)
             tenant = await prisma.tenant.create({
                 data: {
                     name: `${platform} - ${userInfo.tenantId}`,
@@ -149,8 +139,6 @@ export async function POST(request: NextRequest) {
         })
 
         if (!user) {
-            console.log(`[SSO] Creating new user for ${platform}: ${userInfo.email}`)
-
             // Check if email already exists (for migration scenarios)
             const existingUser = await prisma.user.findUnique({
                 where: { email: userInfo.email },
@@ -220,9 +208,6 @@ export async function POST(request: NextRequest) {
             .setIssuedAt()
             .setExpirationTime(`${REFRESH_TOKEN_EXPIRY}s`)
             .sign(secret)
-
-        console.log(`[SSO] Token exchange successful for user ${user.email}`)
-
         const response = NextResponse.json({
             accessToken,
             refreshToken,

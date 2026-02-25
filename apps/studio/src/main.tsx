@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './i18n'; // Initialize i18next before React renders
 import './index.css';
 import { setPreviewRegistryUrl } from "@thingsvis/ui";
 import { configureEmbedApiClient } from './embed/message-router';
