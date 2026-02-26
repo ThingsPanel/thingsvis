@@ -25,7 +25,7 @@ type Props = {
 
 export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const { t, i18n } = useTranslation('editor');
-  
+
 
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
@@ -196,7 +196,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
           return (
             <div key={group.id} className="space-y-3 pt-4 border-t border-border px-1">
               <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                {group.label ?? group.id}
+                {t(group.label ?? group.id, { defaultValue: group.label ?? group.id })}
               </h3>
               <div className="space-y-3">
                 {visibleFields.map((field) => (
@@ -208,7 +208,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                     propsValue={schema.props?.[field.path]}
                     bindings={schema.data}
                     updateNode={updateNode}
-                    />
+                  />
                 ))}
               </div>
             </div>
@@ -358,7 +358,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                       newBindings[index] = updatedBinding;
                       updateNode({ data: newBindings });
                     }}
-                    />
+                  />
                 </div>
 
                 <div className="space-y-1.5">
@@ -438,7 +438,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                     ]
                     updateNode({ data: newBindings })
                   }}
-                  />
+                />
               )
             })()}
           </TabsContent>

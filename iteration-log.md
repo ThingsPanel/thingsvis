@@ -20,3 +20,11 @@
 - **How it was tested**: Pnpm build 没有我们本地代码的类型错误，逻辑与类型对应。
 - **Key decisions & rationale**: CLI 内置 zh.json/en.json 是让未来的开发者开箱即用拥抱多语言的最佳方法。
 - **Time/Iteration count**: 1
+
+## Sub-task 3: 修复组件面板 (PropsPanel & ControlFieldRow) 多语言漏翻与 vis-cli 更新归档
+- **What was done**: 1) 为 PropsPanel 与 ControlFieldRow 的 group.label/field.label 和选项配置增加了 `t()` 国际化包裹机制，并支持 defaultValue 作为 fallback；2) 挖掘了 Zod schema 中的各种遗留中文中文描述，作为 fallback 键全局补充到了中英双语的 editor.json 核心字典中。
+- **What was tried & failed**: 直接让每个旧组件 schema 用 `.describe('widgets...')` 修改成本较高，转为基座自动兜底映射方案。
+- **What succeeded**: i18next 结合 defaultValue 与字典 fallback 拦截所有旧中文文本（如：“图表标题”、“不透明度”、“数据源”）。
+- **How it was tested**: 结合用户截图比对（如：Properties 原先为中文现在恢复，同时选项中原先是中文也能够全部正确被 t() 函数解析翻译成对应的英文 Chart Title）。
+- **Key decisions & rationale**: 在基座底层进行 t() 包装，极大节省全局历史代码升级的工作负担。
+- **Time/Iteration count**: 1

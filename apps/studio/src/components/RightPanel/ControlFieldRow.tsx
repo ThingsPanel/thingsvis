@@ -134,7 +134,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-sm font-medium text-muted-foreground">{field.label}</label>
+        <label className="text-sm font-medium text-muted-foreground">{t(field.label, { defaultValue: field.label })}</label>
 
         {modes.length > 1 && (
           <select
@@ -244,7 +244,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               <option value="">{t('(请选择)', '(select)')}</option>
               {field.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.label, { defaultValue: opt.label })}
                 </option>
               ))}
             </select>
@@ -299,7 +299,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                       : 'text-muted-foreground hover:text-foreground'
                       }`}
                   >
-                    {IconComponent ? <IconComponent className="w-4 h-4" /> : opt.label}
+                    {IconComponent ? <IconComponent className="w-4 h-4" /> : t(opt.label, { defaultValue: opt.label })}
                   </button>
                 );
               })}
