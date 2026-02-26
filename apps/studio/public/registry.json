@@ -152,7 +152,7 @@
       "name": "uPlot时序图",
       "i18n": {
         "zh": "uPlot时序图",
-        "en": "uPlot时序图"
+        "en": "uPlot Line Chart"
       }
     },
     "indicator/number-card": {
@@ -180,7 +180,7 @@
       "name": "网页容器",
       "i18n": {
         "zh": "网页容器",
-        "en": "网页容器"
+        "en": "Iframe"
       }
     },
     "media/image": {
@@ -194,7 +194,7 @@
       "name": "图片",
       "i18n": {
         "zh": "图片",
-        "en": "图片"
+        "en": "Image"
       }
     }
   }

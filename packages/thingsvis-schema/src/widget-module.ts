@@ -45,6 +45,7 @@ export type WidgetOverlayContext = {
   position?: { x: number; y: number };
   size?: { width: number; height: number };
   props?: Record<string, unknown>;
+  theme?: string;
 };
 
 /**
