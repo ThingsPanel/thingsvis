@@ -6,7 +6,7 @@ import type { PageSchemaType } from '@thingsvis/schema'
 import { CanvasView, GridStackCanvas } from '@thingsvis/ui'
 
 import { store } from '../lib/store'
-import { loadWidget } from '../widgets/widgetResolver'
+import { loadWidget } from '../lib/registry/componentLoader'
 import { projectStorage } from '../lib/storage/projectStorage'
 import * as previewSession from '../lib/storage/previewSession'
 import * as dashboardsApi from '../lib/api/dashboards'
@@ -252,6 +252,8 @@ export default function PreviewPage() {
             gridSize={0}
             snapToGrid={false}
             centeredMask={false}
+            interactive={false}
+            panEnabled={false}
           />
         )}
       </div>

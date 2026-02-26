@@ -17,7 +17,7 @@ import { dataSourceManager } from '@thingsvis/kernel';
 import type { PageSchemaType } from '@thingsvis/schema';
 import { getDashboard } from '@/lib/api/dashboards';
 import { store } from '@/lib/store';
-import { loadWidget } from '@/widgets/widgetResolver';
+import { loadWidget } from '@/lib/registry/componentLoader';
 import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 

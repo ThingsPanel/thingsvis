@@ -13,8 +13,8 @@ import { resolveEditorServiceConfig } from "@/lib/embedded/service-config";
 import { PlatformFieldPicker } from "./PlatformFieldPicker";
 import { DataSourceSelector } from "./DataSourceSelector";
 
-import { loadWidget } from "@/widgets/widgetResolver";
-import { getWidgetControls } from "@/widgets/getWidgetControls";
+import { loadWidget } from "@/lib/registry/componentLoader";
+import { getWidgetControls } from "@/lib/registry/getControls";
 import ControlFieldRow from "./ControlFieldRow";
 import type { I18nLabel } from '@thingsvis/schema';
 

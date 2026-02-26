@@ -122,10 +122,12 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
 
   // Drop handlers for studio: compute coords and dispatch node add via store
   function handleDragOver(e: React.DragEvent) {
+    if (isPanTool) return;
     e.preventDefault();
   }
 
   async function handleDrop(e: React.DragEvent) {
+    if (isPanTool) return;
     e.preventDefault();
     // Attempt to read plugin info from dataTransfer
     const payload = e.dataTransfer.getData("application/thingsvis-widget") || e.dataTransfer.getData("text/plain");
@@ -229,6 +231,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         centeredMask={true}
         panEnabled={activeTool === 'pan'}
         zoomEnabled={activeTool === 'pan'}
+        interactive={activeTool !== 'pan'}
         zoom={zoom}
         onViewportChange={(newVp) => {
           // Only update state if values actually changed to avoid infinite loop

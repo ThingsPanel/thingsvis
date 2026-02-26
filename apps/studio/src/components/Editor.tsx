@@ -48,7 +48,7 @@ import {
   X,
 } from "lucide-react"
 
-import { type KernelState, type KernelActions } from '@thingsvis/kernel'
+import { type KernelState, type KernelActions, dataSourceManager } from '@thingsvis/kernel'
 import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import { GridStackCanvas } from '@thingsvis/ui'
@@ -67,8 +67,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 // Data source management moved to separate page: #/data-sources
-import { loadWidget } from '../widgets/widgetResolver'
-import { extractDefaults } from '../widgets/schemaUtils'
+import { loadWidget } from '../lib/registry/componentLoader'
+import { extractDefaults } from '../lib/registry/schemaUtils'
 import { store } from '../lib/store'
 import { useAutoSave } from '../hooks/useAutoSave'
 import { useHistoryState } from '../hooks/useHistoryState'
@@ -429,7 +429,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         homeFlag: canvasConfig.homeFlag,
       },
       nodes: nodes,
-      dataSources: canvasConfig.dataSources,
+      dataSources: dataSourceManager.getAllConfigs(),
     }
   }, [projectId, canvasConfig])
 
@@ -659,6 +659,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     const state = store.getState()
     let prevNodesById: any = state.nodesById
     let prevLayerOrder: any = state.layerOrder
+    let prevDataSourceStates: any = (state as any).dataSourceStates
 
     const unsubscribe = store.subscribe(() => {
       if (bootstrappingRef.current) return
@@ -666,11 +667,13 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       const currentState = store.getState()
       const nodesById = currentState.nodesById
       const layerOrder = currentState.layerOrder
+      const dataSourceStates = (currentState as any).dataSourceStates
 
       // 比较引用是否变化（zustand 在状态变化时会创建新引用）
-      if (nodesById !== prevNodesById || layerOrder !== prevLayerOrder) {
+      if (nodesById !== prevNodesById || layerOrder !== prevLayerOrder || dataSourceStates !== prevDataSourceStates) {
         prevNodesById = nodesById
         prevLayerOrder = layerOrder
+        prevDataSourceStates = dataSourceStates
         markDirty()
       }
     })
