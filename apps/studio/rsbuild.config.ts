@@ -2,6 +2,69 @@ import { defineConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import { ModuleFederationPlugin } from '@module-federation/rspack';
 import path from 'path';
+import fs from 'fs';
+
+// -- 自动生成 Registry 插件 --
+class GenerateRegistryPlugin {
+  apply(compiler: any) {
+    compiler.hooks.beforeCompile.tap('GenerateRegistryPlugin', () => {
+      const ROOT = path.resolve(__dirname, '../../');
+      const WIDGETS_DIR = path.join(ROOT, 'widgets');
+      const OUTPUT = path.join(__dirname, 'public/registry.json');
+
+      const sanitizeMfName = (name: string) => String(name).replace(/[^a-zA-Z0-9_]/g, '_');
+      const extractDevPort = (scripts: any) => {
+        const match = (scripts?.dev || '').match(/--port\s+(\d+)/);
+        return match ? parseInt(match[1], 10) : null;
+      };
+
+      if (!fs.existsSync(WIDGETS_DIR)) return;
+
+      const components: Record<string, any> = {};
+      const categories = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true }).filter(d => d.isDirectory());
+
+      for (const category of categories) {
+        const categoryPath = path.join(WIDGETS_DIR, category.name);
+        const widgets = fs.readdirSync(categoryPath, { withFileTypes: true }).filter(d => d.isDirectory());
+
+        for (const widget of widgets) {
+          const pkgPath = path.join(categoryPath, widget.name, 'package.json');
+          if (!fs.existsSync(pkgPath)) continue;
+
+          try {
+            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+            const meta = pkg.thingsvis || {};
+            const componentId = `${category.name}/${widget.name}`;
+            const devPort = extractDevPort(pkg.scripts);
+
+            components[componentId] = {
+              remoteName: sanitizeMfName(pkg.name),
+              remoteEntryUrl: devPort ? `http://localhost:${devPort}/remoteEntry.js` : ``,
+              staticEntryUrl: `/widgets/${componentId}/dist/remoteEntry.js`,
+              debugSource: 'static',
+              exposedModule: './Main',
+              version: pkg.version || '0.0.1',
+              ...(meta.icon && { icon: meta.icon }),
+              ...(meta.displayName && { name: meta.displayName }),
+            };
+          } catch (e) {
+            console.warn(`[GenerateRegistryPlugin] Failed to parse ${pkgPath}`, e);
+          }
+        }
+      }
+
+      const registry = {
+        schemaVersion: 1,
+        generatedAt: new Date().toISOString(),
+        components,
+      };
+
+      fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
+      fs.writeFileSync(OUTPUT, JSON.stringify(registry, null, 2) + '\n', 'utf8');
+      console.log(`[GenerateRegistryPlugin] Auto-generated registry.json with ${Object.keys(components).length} components`);
+    });
+  }
+}
 
 export default defineConfig({
   plugins: [pluginReact()],
@@ -76,6 +139,7 @@ export default defineConfig({
             '@thingsvis/utils': { singleton: true, eager: true, requiredVersion: false },
           },
         }),
+        new GenerateRegistryPlugin(),
       ]);
     }
   }

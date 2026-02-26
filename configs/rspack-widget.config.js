@@ -74,6 +74,9 @@ function createWidgetConfig(pluginDir, opts = {}) {
       uniqueName: mfName,
       publicPath: 'auto'
     },
+    performance: {
+      hints: false // 关闭打包含体积过大的警告
+    },
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json']
     },
@@ -101,6 +104,9 @@ function createWidgetConfig(pluginDir, opts = {}) {
           ]
         }
       ]
+    },
+    experiments: {
+      css: true
     },
     optimization: {
       // 重要：为了支持离线/Blob加载 remoteEntry.js，MVP 阶段禁止组件拆分 chunk。

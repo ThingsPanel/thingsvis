@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-25T11:50:52.995Z",
+  "generatedAt": "2026-02-26T01:33:21.110Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -30,6 +30,26 @@
       "version": "0.0.1",
       "icon": "Square",
       "name": "矩形"
+    },
+    "basic/switch": {
+      "remoteName": "thingsvis_widget_basic_switch",
+      "remoteEntryUrl": "http://localhost:3207/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/switch/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "ToggleRight",
+      "name": "开关"
+    },
+    "basic/table": {
+      "remoteName": "thingsvis_widget_basic_table",
+      "remoteEntryUrl": "http://localhost:3206/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/table/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "Table2",
+      "name": "表格"
     },
     "basic/text": {
       "remoteName": "thingsvis_widget_basic_text",
@@ -80,6 +100,36 @@
       "version": "0.0.1",
       "icon": "PieChart",
       "name": "饼图"
+    },
+    "chart/uplot-line": {
+      "remoteName": "thingsvis_widget_chart_uplot_line",
+      "remoteEntryUrl": "http://localhost:3209/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/uplot-line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "LineChart",
+      "name": "uPlot时序图"
+    },
+    "indicator/number-card": {
+      "remoteName": "thingsvis_widget_indicator_number_card",
+      "remoteEntryUrl": "http://localhost:3205/remoteEntry.js",
+      "staticEntryUrl": "/widgets/indicator/number-card/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "Hash",
+      "name": "数值卡片"
+    },
+    "media/iframe": {
+      "remoteName": "thingsvis_widget_media_iframe",
+      "remoteEntryUrl": "http://localhost:3208/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/iframe/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "AppWindow",
+      "name": "网页容器"
     },
     "media/image": {
       "remoteName": "thingsvis_widget_media_image",

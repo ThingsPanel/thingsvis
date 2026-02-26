@@ -7,9 +7,8 @@
     "dev": "turbo run dev",
     "dev:all": "turbo run dev --filter=studio --filter=@thingsvis/server",
     "build": "turbo run build",
-    "build:widgets": "turbo run build --filter=\"thingsvis-widget-*\" && pnpm registry:generate",
+    "build:widgets": "turbo run build --filter=\"thingsvis-widget-*\"",
     "dev:widgets": "turbo run dev --filter=\"thingsvis-widget-*\"",
-    "registry:generate": "node scripts/generate-registry.js",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js"
