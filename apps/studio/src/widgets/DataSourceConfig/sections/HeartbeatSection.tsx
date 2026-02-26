@@ -1,14 +1,9 @@
 /**
  * HeartbeatSection: WebSocket heartbeat/keep-alive configuration section
- * 
- * Provides controls for configuring periodic heartbeat messages
- * to keep the connection alive.
- * 
- * @feature 009-datasource-form-config
- * @user-story US4
  */
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,23 +11,17 @@ import { HeartbeatConfig, DEFAULT_HEARTBEAT_CONFIG } from '@thingsvis/schema';
 import { cn } from '@/lib/utils';
 
 interface HeartbeatSectionProps {
-  /** Current heartbeat configuration */
   heartbeat: HeartbeatConfig;
-  /** Callback when heartbeat configuration changes */
   onChange: (heartbeat: HeartbeatConfig) => void;
-  /** Current language */
 }
 
 const MIN_INTERVAL = 5;
 const MAX_INTERVAL = 300;
 
-export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
-  heartbeat,
-  onChange}) => {
-  const handleChange = <K extends keyof HeartbeatConfig>(
-    field: K,
-    value: HeartbeatConfig[K]
-  ) => {
+export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({ heartbeat, onChange }) => {
+  const { t } = useTranslation('editor');
+
+  const handleChange = <K extends keyof HeartbeatConfig>(field: K, value: HeartbeatConfig[K]) => {
     onChange({ ...heartbeat, [field]: value });
   };
 
@@ -40,17 +29,14 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
 
   return (
     <FormSection
-      title={t('datasource.heartbeat', 'Heartbeat')}
-      description={t(
-        heartbeat.enabled ? '心跳已启用' : '定期发送消息保持连接',
-        heartbeat.enabled ? 'Heartbeat enabled' : 'Send periodic messages to keep connection alive'
-      )}
+      title={t('datasource.heartbeat')}
+      description={heartbeat.enabled ? t('datasource.heartbeatEnabled') : t('datasource.heartbeatDisabled')}
       defaultCollapsed={!heartbeat.enabled}
     >
       <div className="space-y-4">
         {/* Enabled Toggle */}
         <div className="flex items-center justify-between">
-          <Label>{t('datasource.enableHeartbeat', 'Enable Heartbeat')}</Label>
+          <Label>{t('datasource.enableHeartbeat')}</Label>
           <button
             type="button"
             onClick={() => handleChange('enabled', !heartbeat.enabled)}
@@ -72,7 +58,7 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
           <>
             {/* Interval */}
             <div className="space-y-2">
-              <Label>{t('common.interval', 'Interval')}</Label>
+              <Label>{t('common.interval')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -80,38 +66,27 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
                   max={MAX_INTERVAL}
                   value={heartbeat.interval}
                   onChange={(e) => handleChange('interval', parseInt(e.target.value) || 30)}
-                  className={cn(
-                    'w-20 h-8 text-sm',
-                    !isIntervalValid && 'border-destructive'
-                  )}
+                  className={cn('w-20 h-8 text-sm', !isIntervalValid && 'border-destructive')}
                 />
-                <span className="text-sm text-muted-foreground">{t('common.seconds', 'seconds')}</span>
+                <span className="text-sm text-muted-foreground">{t('common.seconds')}</span>
               </div>
               {!isIntervalValid && (
                 <p className="text-sm text-destructive">
-                  {t(
-                    `间隔必须在 ${MIN_INTERVAL}-${MAX_INTERVAL} 秒之间`,
-                    `Interval must be between ${MIN_INTERVAL} and ${MAX_INTERVAL} seconds`
-                  )}
+                  {t('datasource.intervalError', { min: MIN_INTERVAL, max: MAX_INTERVAL })}
                 </p>
               )}
             </div>
 
             {/* Message */}
             <div className="space-y-2">
-              <Label>{t('datasource.heartbeatMessage', 'Heartbeat Message')}</Label>
+              <Label>{t('datasource.heartbeatMessage')}</Label>
               <Input
                 value={heartbeat.message}
                 onChange={(e) => handleChange('message', e.target.value)}
-                placeholder={t('datasource.pingExample', 'e.g., ping or {"type":"ping"}')}
+                placeholder={t('datasource.pingExample')}
                 className="h-8 text-sm font-mono"
               />
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  '可以是纯文本或 JSON 格式',
-                  'Can be plain text or JSON format'
-                )}
-              </p>
+              <p className="text-xs text-muted-foreground">{t('datasource.heartbeatFormat')}</p>
             </div>
           </>
         )}

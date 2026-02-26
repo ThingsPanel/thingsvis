@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 
 interface TransformationEditorProps {
@@ -6,11 +7,13 @@ interface TransformationEditorProps {
   onChange: (code: string) => void;
 }
 
-export const TransformationEditor: React.FC<TransformationEditorProps> = ({ code, onChange}) => {
+export const TransformationEditor: React.FC<TransformationEditorProps> = ({ code, onChange }) => {
+  const { t } = useTranslation('editor');
+
   return (
     <div className="space-y-2">
       <Label className="text-sm uppercase font-bold text-[#6965db]">
-        {label('数据转换 (JS)', 'Transformation (JS)')}
+        {t('datasource.transformation')}
       </Label>
       <div className="relative group">
         <textarea
@@ -23,10 +26,7 @@ export const TransformationEditor: React.FC<TransformationEditorProps> = ({ code
           JavaScript Sandbox
         </div>
       </div>
-      <p className="text-sm text-muted-foreground">
-        {label('可用变量: data (原始数据)', 'Available: data (raw input)')}
-      </p>
+      <p className="text-sm text-muted-foreground">{t('datasource.transformationHint')}</p>
     </div>
   );
 };
-

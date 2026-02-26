@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Upload, Link2, Code, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,10 +19,11 @@ type InputMode = 'upload' | 'url' | 'base64';
 interface ImageSourceInputProps {
   value: string;
   onChange: (value: string) => void;
-  
+
 }
 
-export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
+export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
+  const { t } = useTranslation('editor');
   const [mode, setMode] = useState<InputMode>(() => {
     if (!value) return 'upload';
     if (value.startsWith('data:image')) return 'base64';
@@ -193,7 +195,7 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
         <Input
           value={urlInput}
           onChange={(e) => handleUrlChange(e.target.value)}
-          placeholder={t('https://example.com/image.jpg', 'https://example.com/image.jpg')}
+          placeholder="https://example.com/image.jpg"
           className="h-8 text-xs font-mono"
         />
       )}
