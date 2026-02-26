@@ -41,18 +41,16 @@ export const Main = defineWidget({
             track.style.position = 'relative';
             track.style.transition = 'background-color 0.2s ease';
             track.style.boxSizing = 'border-box';
-            track.style.padding = '2px';
             track.style.minWidth = '40px';
             track.style.minHeight = '20px';
 
             // Thumb styling
-            thumb.style.height = '100%';
+            thumb.style.height = 'calc(100% - 4px)';
             thumb.style.aspectRatio = '1 / 1';
             thumb.style.backgroundColor = '#ffffff';
             thumb.style.borderRadius = '50%';
             thumb.style.position = 'absolute';
             thumb.style.top = '2px';
-            thumb.style.bottom = '2px';
             thumb.style.left = value ? 'calc(100% - 2px)' : '2px';
             thumb.style.transform = value ? 'translateX(-100%)' : 'translateX(0)';
             thumb.style.transition = 'all 0.2s ease';
