@@ -31,7 +31,7 @@ export const Main = defineWidget({
         table.appendChild(tbody);
 
         const updateView = () => {
-            const { columns, data, headerBg, headerColor, rowBg, rowColor, borderColor } = currentProps;
+            const { columns, data, headerBg, headerColor, rowBg, rowColor, borderColor, fontSize } = currentProps;
 
             const finalHeaderBg = headerBg === '#f3f4f6' && isDark ? '#141414' : headerBg;
             const finalHeaderColor = headerColor === '#374151' && isDark ? '#d1d5db' : headerColor;
@@ -53,7 +53,7 @@ export const Main = defineWidget({
                 th.style.borderBottom = `1px solid ${finalBorderColor}`;
                 th.style.textAlign = 'left';
                 th.style.fontWeight = '600';
-                th.style.fontSize = '14px';
+                th.style.fontSize = `${fontSize || 14}px`;
                 trHead.appendChild(th);
             });
             thead.appendChild(trHead);
@@ -69,7 +69,7 @@ export const Main = defineWidget({
                     td.style.color = finalRowColor;
                     td.style.padding = '8px 12px';
                     td.style.borderBottom = `1px solid ${finalBorderColor}`;
-                    td.style.fontSize = '14px';
+                    td.style.fontSize = `${fontSize || 14}px`;
                     tr.appendChild(td);
                 });
                 tbody.appendChild(tr);

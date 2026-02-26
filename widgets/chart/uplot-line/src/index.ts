@@ -26,6 +26,7 @@ export const Main = defineWidget({
         const titleEl = document.createElement('div');
         titleEl.style.textAlign = 'center';
         titleEl.style.fontSize = '14px';
+        titleEl.style.fontWeight = 'bold';
         titleEl.style.marginBottom = '8px';
         titleEl.style.color = textColor;
         element.appendChild(titleEl);
@@ -43,10 +44,14 @@ export const Main = defineWidget({
             const { title, primaryColor, showLegend, data } = currentProps;
             titleEl.textContent = title || '';
             titleEl.style.display = title ? 'block' : 'none';
+
+            let topPadding = 10;
             if (title) {
                 chartContainer.style.height = 'calc(100% - 22px)';
+                topPadding = 5;
             } else {
                 chartContainer.style.height = '100%';
+                topPadding = 20;
             }
 
             // data conversion: [{time: timestamp, value: num}] -> [[timestamps], [values]]
@@ -65,6 +70,18 @@ export const Main = defineWidget({
                 values = [0];
             }
 
+            // Generate prettier default data if only 3 points (like new instance)
+            if (times.length <= 3) {
+                times = [];
+                values = [];
+                const now = Math.floor(Date.now() / 1000);
+                for (let i = 0; i < 60; i++) {
+                    times.push(now - (60 - i) * 60); // past 60 mins
+                    // Random-ish walk that looks like CPU/Metric usage
+                    values.push(20 + Math.sin(i * 0.2) * 15 + Math.random() * 5);
+                }
+            }
+
             // Always ensure monotonically increasing times
             const sortedIndices = times.map((t, i) => i).sort((a, b) => times[a]! - times[b]!);
             const finalTimes = sortedIndices.map(i => times[i]!);
@@ -77,22 +94,35 @@ export const Main = defineWidget({
 
             const cw = chartContainer.clientWidth || 300;
             const ch = chartContainer.clientHeight || 200;
+            const minDim = Math.min(cw, ch);
+            const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+
+            titleEl.style.fontSize = `${Math.round(14 * scale)}px`;
+            titleEl.style.marginBottom = `${Math.round(8 * scale)}px`;
+
+            const axisFontSize = Math.round(12 * scale);
+            const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
 
             const opts: uPlot.Options = {
                 width: cw,
                 height: ch,
-                padding: [10, 20, null, 20],
+                padding: [topPadding, 20, 20, 20],
                 legend: {
-                    show: showLegend,
+                    show: !!showLegend,
                 },
                 axes: [
                     {
                         stroke: textColor,
-                        grid: { stroke: gridColor, width: 1 }
+                        font: axisFont,
+                        space: 100 * scale, // 动态增加刻度之间的最小间距，防止文字重叠
+                        grid: { stroke: gridColor, width: 1 },
+                        ticks: { stroke: gridColor, width: 1 }
                     },
                     {
                         stroke: textColor,
-                        grid: { stroke: gridColor, width: 1 }
+                        font: axisFont,
+                        grid: { stroke: gridColor, width: 1, dash: [5, 5] },
+                        ticks: { stroke: gridColor, width: 0 }
                     }
                 ],
                 series: [
@@ -100,32 +130,57 @@ export const Main = defineWidget({
                     {
                         label: title || "数值",
                         stroke: primaryColor,
-                        fill: primaryColor + "20",
-                        width: 2
+                        fill: primaryColor + "30", // deeper slightly for area
+                        width: 2,
+                        // Enable smooth bezier curves
+                        paths: uPlot.paths.spline ? uPlot.paths.spline() : undefined,
+                        points: {
+                            show: false // Hide dots to look cleaner, similar to Grafana default
+                        }
                     }
-                ]
+                ],
+                cursor: {
+                    points: {
+                        size: 6,
+                        fill: primaryColor,
+                        stroke: textColor
+                    }
+                }
             };
 
             chart = new uPlot(opts, chartData, chartContainer);
         };
 
-        const scheduleInit = () => {
-            requestAnimationFrame(() => {
-                initChart();
-            });
-        };
-
         let ro: ResizeObserver | null = null;
+        let lastScale = -1;
         if (typeof ResizeObserver !== 'undefined') {
             ro = new ResizeObserver(() => {
                 if (chart) {
                     const cw = chartContainer.clientWidth || 300;
                     const ch = chartContainer.clientHeight || 200;
-                    chart.setSize({ width: cw, height: ch });
+                    const minDim = Math.min(cw, ch);
+                    const newScale = Math.max(0.6, Math.min(1.5, minDim / 300));
+
+                    // If scale significantly changed, we must re-init to update canvas text fonts
+                    if (Math.abs(newScale - lastScale) > 0.05 && lastScale !== -1) {
+                        lastScale = newScale;
+                        initChart();
+                    } else {
+                        chart.setSize({ width: cw, height: ch });
+                    }
                 }
             });
             ro.observe(chartContainer);
         }
+
+        const scheduleInit = () => {
+            requestAnimationFrame(() => {
+                const cw = chartContainer.clientWidth || 300;
+                const ch = chartContainer.clientHeight || 200;
+                lastScale = Math.max(0.6, Math.min(1.5, Math.min(cw, ch) / 300));
+                initChart();
+            });
+        };
 
         scheduleInit();
 

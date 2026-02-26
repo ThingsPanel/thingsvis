@@ -4,7 +4,7 @@ import { generateControls } from '@thingsvis/widget-sdk';
 export const controls = generateControls(PropsSchema, {
     groups: {
         Data: ['columns', 'data'],
-        Style: ['headerBg', 'headerColor', 'rowBg', 'rowColor', 'borderColor'],
+        Style: ['headerBg', 'headerColor', 'rowBg', 'rowColor', 'borderColor', 'fontSize'],
     },
     overrides: {
         columns: { kind: 'json' },

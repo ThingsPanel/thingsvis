@@ -29,6 +29,9 @@ export const PropsSchema = z.object({
 
     /** 边框颜色 */
     borderColor: z.string().default('#e5e7eb').describe('边框颜色'),
+
+    /** 文字大小 */
+    fontSize: z.number().default(14).describe('文字大小(px)'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

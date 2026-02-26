@@ -11,7 +11,7 @@ export const PropsSchema = z.object({
     unit: z.string().default('次').describe('单位'),
 
     /** 数值颜色 */
-    valueColor: z.string().default('#3b82f6').describe('数值颜色'),
+    valueColor: z.string().default('#6965db').describe('数值颜色'),
 
     /** 标题颜色 */
     titleColor: z.string().default('#6b7280').describe('标题颜色'),

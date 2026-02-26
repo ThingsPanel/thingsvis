@@ -61,6 +61,16 @@ export const Main = defineWidget({
 
         updateView();
 
+        track.style.cursor = 'pointer';
+        track.addEventListener('click', () => {
+            // In preview/real mode, make it visibly toggleable locally if no remote state overriding is locking it 
+            currentProps.value = !currentProps.value;
+            updateView();
+
+            // Dispatch a custom event so other parts of the system could potentially listen to it in the future
+            element.dispatchEvent(new CustomEvent('change', { detail: { value: currentProps.value } }));
+        });
+
         return {
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;

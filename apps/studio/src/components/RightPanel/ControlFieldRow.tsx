@@ -309,7 +309,10 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           {/* JSON Editor (basic textarea for now) */}
           {field.kind === 'json' && (
             <textarea
-              value={typeof propsValue === 'object' ? JSON.stringify(propsValue, null, 2) : String(propsValue ?? '{}')}
+              value={(() => {
+                const valToSerialize = propsValue !== undefined ? propsValue : (field.default !== undefined ? field.default : {});
+                return typeof valToSerialize === 'object' ? JSON.stringify(valToSerialize, null, 2) : String(valToSerialize);
+              })()}
               onChange={(e) => {
                 try {
                   const parsed = JSON.parse(e.target.value);
