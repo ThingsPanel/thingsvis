@@ -568,6 +568,17 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               dataSources: (loaded.dataSources as any) ?? prev.dataSources,
             }))
 
+            // Restore data source connections from saved config
+            if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
+              for (const ds of loaded.dataSources) {
+                try {
+                  await dataSourceManager.registerDataSource(ds as any, false)
+                } catch (e) {
+                  console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e)
+                }
+              }
+            }
+
             // Sync grid settings to kernel store if in grid mode
             if (loaded.canvas.mode === 'grid') {
               store.getState().setGridSettings({
@@ -1478,6 +1489,19 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             dataSources: (project.dataSources as any) ?? prev.dataSources,
             thumbnail: project.meta.thumbnail || "", // Load thumbnail from project meta
           }))
+
+          // Restore data source connections from loaded project
+          if (project.dataSources && Array.isArray(project.dataSources)) {
+            for (const ds of project.dataSources as any[]) {
+              try {
+                dataSourceManager.registerDataSource(ds, false).catch(e => {
+                  console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e)
+                })
+              } catch (e) {
+                console.warn(`[Editor] Failed to restore data source:`, e)
+              }
+            }
+          }
 
           // 关闭对话框
           setShowProjectDialog(false)
