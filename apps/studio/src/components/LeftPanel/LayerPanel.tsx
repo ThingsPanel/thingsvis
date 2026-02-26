@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react';
 import { useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Eye,
   EyeOff,
@@ -30,6 +31,7 @@ import type { KernelState, LayerGroup } from '@thingsvis/kernel';
 
 interface LayerPanelProps {
   store: any;
+  language?: string;
   searchQuery?: string;
   onUserEdit?: () => void;
 }
@@ -57,7 +59,8 @@ type LayerListEntry =
   | { kind: 'group'; data: GroupData }
   | { kind: 'item'; data: LayerItemData };
 
-export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerPanelProps) {
+export default function LayerPanel({ store, searchQuery = '', onUserEdit }: LayerPanelProps) {
+  const { t } = useTranslation();
   const state = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState
@@ -362,8 +365,8 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Layers className="h-8 w-8 mb-2 opacity-50" />
-        <p className="text-sm">{t('layersPanel.empty', 'No layers')}</p>
-        <p className="text-xs mt-1">{t('layersPanel.addHint', 'Add components to see layers')}</p>
+        <p className="text-sm">{t('layersPanel.empty')}</p>
+        <p className="text-xs mt-1">{t('layersPanel.addHint')}</p>
       </div>
     );
   }
@@ -376,9 +379,8 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
     return (
       <div
         key={item.id}
-        className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-          isSelected ? 'bg-accent' : 'hover:bg-accent/50'
-        } ${indent ? 'ml-4' : ''}`}
+        className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${isSelected ? 'bg-accent' : 'hover:bg-accent/50'
+          } ${indent ? 'ml-4' : ''}`}
         onClick={(e) => handleSelect(item.id, e)}
         onDoubleClick={() => handleDoubleClick(item)}
         draggable
@@ -435,7 +437,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
           <button
             onClick={(e) => handleToggleVisible(item.id, e)}
             className="p-1 hover:bg-muted rounded"
-            title={item.visible ? t('common.hide', 'Hide') : t('common.show', 'Show')}
+            title={item.visible ? t('common.hide') : t('common.show')}
           >
             {item.visible ? (
               <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -446,7 +448,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
           <button
             onClick={(e) => handleToggleLock(item.id, e)}
             className="p-1 hover:bg-muted rounded"
-            title={item.locked ? t('common.unlock', 'Unlock') : t('common.lock', 'Lock')}
+            title={item.locked ? t('common.unlock') : t('common.lock')}
           >
             {item.locked ? (
               <Lock className="h-3.5 w-3.5 text-primary" />
@@ -468,25 +470,25 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => handleBringToFront([item.id])}>
                 <ChevronsUp className="h-4 w-4 mr-2" />
-                {t('layersPanel.bringToFront', 'Bring to Front')}
+                {t('layersPanel.bringToFront')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBringForward([item.id])}>
                 <ArrowUp className="h-4 w-4 mr-2" />
-                {t('layersPanel.bringForward', 'Bring Forward')}
+                {t('layersPanel.bringForward')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSendBackward([item.id])}>
                 <ArrowDown className="h-4 w-4 mr-2" />
-                {t('layersPanel.sendBackward', 'Send Backward')}
+                {t('layersPanel.sendBackward')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSendToBack([item.id])}>
                 <ChevronsDown className="h-4 w-4 mr-2" />
-                {t('layersPanel.sendToBack', 'Send to Back')}
+                {t('layersPanel.sendToBack')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {selectedIds.length > 1 && (
                 <DropdownMenuItem onClick={handleCreateGroup}>
                   <FolderPlus className="h-4 w-4 mr-2" />
-                  {t('layersPanel.group', 'Group')}
+                  {t('layersPanel.group')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -495,7 +497,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                {t('common.delete', 'Delete')}
+                {t('common.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -513,9 +515,8 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
       <div key={group.id} className="space-y-0.5">
         {/* Group Header */}
         <div
-          className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${
-            allMembersSelected ? 'bg-accent' : 'hover:bg-accent/50'
-          }`}
+          className={`group flex items-center gap-1.5 px-2 py-1.5 rounded cursor-pointer transition-colors ${allMembersSelected ? 'bg-accent' : 'hover:bg-accent/50'
+            }`}
           onClick={(e) => handleSelectGroup(group.id, e)}
           onDoubleClick={() => handleGroupDoubleClick(group)}
         >
@@ -575,7 +576,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <button
               onClick={(e) => handleToggleGroupVisible(group.id, e)}
               className="p-1 hover:bg-muted rounded"
-              title={group.visible ? t('layersPanel.hideGroup', 'Hide Group') : t('layersPanel.showGroup', 'Show Group')}
+              title={group.visible ? t('layersPanel.hideGroup') : t('layersPanel.showGroup')}
             >
               {group.visible ? (
                 <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -586,7 +587,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <button
               onClick={(e) => handleToggleGroupLock(group.id, e)}
               className="p-1 hover:bg-muted rounded"
-              title={group.locked ? t('layersPanel.unlockGroup', 'Unlock Group') : t('layersPanel.lockGroup', 'Lock Group')}
+              title={group.locked ? t('layersPanel.unlockGroup') : t('layersPanel.lockGroup')}
             >
               {group.locked ? (
                 <Lock className="h-3.5 w-3.5 text-primary" />
@@ -608,16 +609,16 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => handleBringToFront(group.members.map((m) => m.id))}>
                   <ChevronsUp className="h-4 w-4 mr-2" />
-                  {t('layersPanel.bringToFront', 'Bring to Front')}
+                  {t('layersPanel.bringToFront')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSendToBack(group.members.map((m) => m.id))}>
                   <ChevronsDown className="h-4 w-4 mr-2" />
-                  {t('layersPanel.sendToBack', 'Send to Back')}
+                  {t('layersPanel.sendToBack')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleUngroup(group.id)}>
                   <Ungroup className="h-4 w-4 mr-2" />
-                  {t('layersPanel.ungroup', 'Ungroup')}
+                  {t('layersPanel.ungroup')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -625,7 +626,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  {t('layersPanel.deleteGroup', 'Delete Group')}
+                  {t('layersPanel.deleteGroup')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
