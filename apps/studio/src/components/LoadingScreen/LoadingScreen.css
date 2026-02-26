@@ -1,4 +1,4 @@
-/* LoadingScreen.css */
+/* LoadingScreen.css - 参考大厂设计 */
 
 .loading-screen {
   position: fixed;
@@ -7,106 +7,147 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #0a0a0f 0%, #111118 100%);
+  background: #fafafa;
   gap: 40px;
   z-index: 9999;
 }
 
+/* Logo 容器 */
 .logo-container {
   position: relative;
-  width: 160px;
-  height: 160px;
-  perspective: 600px;
+  width: 120px;
+  height: 120px;
+  transform-style: preserve-3d;
 }
 
-/* 波浪层 - 核心动画 */
-.wave-layer {
+/* 三层方块 */
+.cube-layer {
   position: absolute;
-  width: 90px;
-  height: 90px;
+  width: 88px;
+  height: 88px;
   left: 50%;
-  transform: translateX(-50%) rotateX(60deg) rotateZ(45deg);
-  border-radius: 10px;
+  top: 50%;
+  margin-left: -44px;
+  margin-top: -44px;
+  border-radius: 16px;
+  transform: rotateX(55deg) rotateZ(45deg);
+}
+
+.cube-layer-1 {
+  background: linear-gradient(135deg, #6965db 0%, #5a56c8 100%);
   box-shadow: 
-    0 4px 20px rgba(105, 101, 219, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.wave-layer-1 {
-  top: 0;
-  background: linear-gradient(135deg, #b8b4f8, #8b87e0);
-  animation: wave 1.8s ease-in-out infinite;
+    0 8px 28px rgba(105, 101, 219, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   z-index: 3;
+  animation: cube-float 2s ease-in-out infinite;
 }
 
-.wave-layer-2 {
-  top: 20px;
-  background: linear-gradient(135deg, #8b87e0, #6e6ad0);
-  animation: wave 1.8s ease-in-out infinite;
-  animation-delay: 0.15s;
+.cube-layer-2 {
+  background: linear-gradient(135deg, #8b87e0 0%, #6965db 100%);
+  box-shadow: 0 8px 24px rgba(105, 101, 219, 0.3);
   z-index: 2;
+  transform: rotateX(55deg) rotateZ(45deg) translateZ(-18px);
+  animation: cube-float 2s ease-in-out infinite 0.15s;
 }
 
-.wave-layer-3 {
-  top: 40px;
-  background: linear-gradient(135deg, #6e6ad0, #6965db);
-  animation: wave 1.8s ease-in-out infinite;
-  animation-delay: 0.3s;
+.cube-layer-3 {
+  background: linear-gradient(135deg, #a8a4f0 0%, #8b87e0 100%);
+  box-shadow: 0 8px 20px rgba(105, 101, 219, 0.2);
   z-index: 1;
+  transform: rotateX(55deg) rotateZ(45deg) translateZ(-36px);
+  animation: cube-float 2s ease-in-out infinite 0.3s;
 }
 
-@keyframes wave {
-  0%, 100% { 
-    transform: translateX(-50%) translateY(0) rotateX(60deg) rotateZ(45deg);
-    opacity: 0.85;
+@keyframes cube-float {
+  0%, 100% {
+    transform: rotateX(55deg) rotateZ(45deg) translateZ(var(--z-offset, 0));
   }
-  50% { 
-    transform: translateX(-50%) translateY(-18px) rotateX(60deg) rotateZ(45deg);
-    opacity: 1;
-    box-shadow: 0 12px 40px rgba(105, 101, 219, 0.5);
+  50% {
+    transform: rotateX(55deg) rotateZ(45deg) translateZ(calc(var(--z-offset, 0) + 10px));
   }
+}
+
+.cube-layer-1 { --z-offset: 0; }
+.cube-layer-2 { --z-offset: -18px; }
+.cube-layer-3 { --z-offset: -36px; }
+
+/* 品牌区域 */
+.brand-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 .brand-name {
   font-size: 28px;
   font-weight: 600;
-  color: #fff;
-  letter-spacing: 3px;
+  color: #1a1a2e;
+  letter-spacing: -0.3px;
 }
 
-.progress-wrapper {
-  width: 280px;
+.brand-tagline {
+  font-size: 14px;
+  color: #8a8a9a;
+  font-weight: 400;
+}
+
+/* 进度区域 - Linear 风格 */
+.progress-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
+  width: 260px;
 }
 
 .progress-bar {
-  height: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
+  width: 100%;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 100px;
   overflow: hidden;
+  position: relative;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6965db, #a8a4f0, #6965db);
-  background-size: 200% 100%;
-  border-radius: 4px;
-  transition: width 0.15s ease-out;
-  animation: shimmer 2s linear infinite;
+  background: linear-gradient(90deg, #6965db 0%, #8b87e0 100%);
+  border-radius: 100px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+/* 进度条光晕 */
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  animation: progress-shine 1.5s ease-in-out infinite;
 }
 
-.progress-info {
-  display: flex;
-  justify-content: space-between;
+@keyframes progress-shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.progress-text {
   font-size: 13px;
+  color: #9a9aa0;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
-.status-text { color: rgba(255, 255, 255, 0.5); }
-.progress-percent { color: #a8a4f0; font-weight: 500; }
+/* 背景装饰 */
+.loading-screen::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(105, 101, 219, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
