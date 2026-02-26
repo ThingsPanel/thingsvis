@@ -25,6 +25,10 @@
     },
     "thingsvis": {
         "displayName": "开关",
-        "icon": "ToggleRight"
+        "icon": "ToggleRight",
+        "i18n": {
+            "zh": "开关",
+            "en": "Switch"
+        }
     }
 }

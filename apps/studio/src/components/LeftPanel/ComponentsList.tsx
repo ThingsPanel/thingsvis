@@ -67,7 +67,7 @@ const CATEGORY_DEFS = [
 import { useTranslation } from "react-i18next";
 
 export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (type: string) => void }) {
-  const { t } = useTranslation('editor');
+  const { t, i18n } = useTranslation('editor');
   const [entries, setEntries] = useState<ComponentRegistryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +94,8 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
               version: entry.version,
               displayName: entry.name ?? key, // Use entry.name (中文名称) if available, fallback to key
               iconUrl: (entry as any).iconUrl ?? "",
-              icon: (entry as any).icon ?? ""
+              icon: (entry as any).icon ?? "",
+              i18n: entry.i18n
             } as ComponentRegistryEntry;
 
             (baseEntry as any).componentId = key;
@@ -178,7 +179,9 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
 
     for (const [cat, items] of Object.entries(entriesByCategory)) {
       const matchedItems = items.filter((entry) => {
-        const displayName = ((entry as any).displayName ?? entry.remoteName).toLowerCase();
+        const i18nData = (entry as any).i18n;
+        const fallbackName = (entry as any).displayName ?? entry.remoteName;
+        const displayName = (i18nData?.[i18n.language] ?? fallbackName).toLowerCase();
         const componentId = ((entry as any).componentId ?? entry.remoteName).toLowerCase();
         return displayName.includes(query) || componentId.includes(query);
       });
@@ -265,7 +268,7 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                       src={(entry as any).iconUrl}
-                                      alt={(entry as any).displayName ?? entry.remoteName}
+                                      alt={(entry as any).i18n?.[i18n.language] ?? (entry as any).displayName ?? entry.remoteName}
                                       className="w-6 h-6 object-contain"
                                     />
                                   ) : (
@@ -274,7 +277,7 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                                 </div>
                                 <div className="leading-tight text-center">
                                   <div className="text-sm text-foreground font-medium">
-                                    {(entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
+                                    {(entry as any).i18n?.[i18n.language] ?? (entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
                                   </div>
                                   {/* <div className="text-xs text-muted-foreground">
                                 {(((entry as any).componentId ?? entry.remoteName) as string).split("/").slice(-1)[0] || entry.remoteName}

@@ -25,6 +25,10 @@
     },
     "thingsvis": {
         "displayName": "数值卡片",
-        "icon": "Hash"
+        "icon": "Hash",
+        "i18n": {
+            "zh": "数值卡片",
+            "en": "Number Card"
+        }
     }
 }

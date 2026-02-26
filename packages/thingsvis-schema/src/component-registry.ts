@@ -13,7 +13,10 @@ export const ComponentRegistryEntrySchema = z.object({
   staticEntryUrl: z.string().optional(), // 宿主服务直接托管的静态编译地址 (如 /widgets/custom/cyber-clock/dist/remoteEntry.js)
   debugSource: z.enum(['remote', 'local', 'static']).default('remote').optional(), // 调试模式下优先使用的来源
   exposedModule: z.literal('./Main'),
-  version: z.string().min(1)
+  version: z.string().min(1),
+  name: z.string().optional(),
+  icon: z.string().optional(),
+  i18n: z.record(z.string()).optional()
 });
 
 export const ComponentRegistrySchema = z.object({

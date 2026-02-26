@@ -26,6 +26,10 @@
     },
     "thingsvis": {
         "displayName": "仪表盘",
-        "icon": "Gauge"
+        "icon": "Gauge",
+        "i18n": {
+            "zh": "仪表盘",
+            "en": "Gauge"
+        }
     }
 }

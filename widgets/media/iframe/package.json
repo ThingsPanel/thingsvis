@@ -25,6 +25,10 @@
     },
     "thingsvis": {
         "displayName": "网页容器",
-        "icon": "AppWindow"
+        "icon": "AppWindow",
+        "i18n": {
+            "zh": "网页容器",
+            "en": "网页容器"
+        }
     }
 }

@@ -23,13 +23,13 @@ export const PropsSchema = z.object({
       { x: 0, y: 0.5 },
       { x: 1, y: 0.5 },
     ])
-    .describe('折线路径点'),
+    .describe('props.linePoints'),
 
   // =========================
   // Style (Stroke)
   // =========================
 
-  renderStyle: z.enum(['line', 'pipe']).default('line').describe('风格'),
+  renderStyle: z.enum(['line', 'pipe']).default('line').describe('props.lineRenderStyle'),
   stroke: z.string().default('#000000').describe('props.color'),
   // Manual width in px. (Backward compatible: old saved values may still be 'thin'|'medium'|'thick'.)
   strokeWidth: z.number().min(1).max(50).default(4).describe('props.thickness'),
@@ -96,9 +96,9 @@ export const PropsSchema = z.object({
   // =========================
 
   /** @deprecated 使用 arrowStart 和 arrowEnd 替代 */
-  direction: z.enum(['none', 'forward', 'reverse', 'bidirectional']).default('forward').describe('箭头方向（兼容）'),
+  direction: z.enum(['none', 'forward', 'reverse', 'bidirectional']).default('forward').describe('props.arrowDirLegacy'),
   /** @deprecated 使用 strokeStyle 替代 */
-  dashPattern: z.string().default('').describe('虚线 (SVG stroke-dasharray)'),
+  dashPattern: z.string().default('').describe('props.dashPatternLegacy'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

@@ -25,6 +25,10 @@
     },
     "thingsvis": {
         "displayName": "表格",
-        "icon": "Table2"
+        "icon": "Table2",
+        "i18n": {
+            "zh": "表格",
+            "en": "Table"
+        }
     }
 }

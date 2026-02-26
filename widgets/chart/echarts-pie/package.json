@@ -26,6 +26,10 @@
     },
     "thingsvis": {
         "displayName": "饼图",
-        "icon": "PieChart"
+        "icon": "PieChart",
+        "i18n": {
+            "zh": "饼图",
+            "en": "Pie Chart"
+        }
     }
 }

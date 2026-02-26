@@ -26,6 +26,10 @@
     },
     "thingsvis": {
         "displayName": "uPlot时序图",
-        "icon": "LineChart"
+        "icon": "LineChart",
+        "i18n": {
+            "zh": "uPlot时序图",
+            "en": "uPlot时序图"
+        }
     }
 }

@@ -36,3 +36,11 @@
 - **How it was tested**: 编译通过，并启动 dev server 确认双语切换平滑正常。
 - **Key decisions & rationale**: 虽然直接使用中文做 i18n Key 能在业务迭代初期偷懒，但在组件库生态需要开放时将会是致命短板。这是正确、规范也是最值得的长效投资。
 - **Time/Iteration count**: 1
+
+## Sub-task 5: 规范跨平台 Widget 名称级国际化注入架构
+- **What was done**: 1) 为 `@thingsvis/schema` 层的 `ComponentRegistryEntrySchema` 新增了 `i18n` 可选多语言映射块；2) 跑脚本遍历现有 10 余个组件的 `package.json`，在 `thingsvis` 内增加了双语翻译 (`{"zh": "圆形", "en": "Circle"}`)；3) 改造了构建时脚本 `scripts/generate-registry.js`，让其打包时自动抽取提取 `i18n` 数据合并至 `registry.json` 中；4) 更新了左侧核心面板 `ComponentsList.tsx` 的读取，实现了微冷启动生命周期的热刷新；5) 完善了 `vis-cli` 脚手架生成的 `package.json` 会自带多语言。
+- **What was tried & failed**: 直接强拿 `metadata.ts` 失败。因为大屏刚加载左侧面板时并不会且不应该触发这部分非必要的 JS 流浪载入开销。
+- **What succeeded**: 效仿 VSCode Extension 的 `package.nls.json`，走静态读取合并路线是完美的微架构。
+- **How it was tested**: 重新使用 `pnpm registry:generate` 并启动服务，左侧几十个组件名称完美双语秒切无卡顿无网络新请求。
+- **Key decisions & rationale**: 组件面板属于宿主的静态“市场橱窗”，而渲染在画布中央的属于“隔离微服务”。对于橱窗采用提取收集的单点分发静态 Manifest，才是解决这种"冷启动翻译"的最佳且唯一正确手段，也保证了第三方生态接入门槛（只用配 JSON 就能自带多语言）。
+- **Time/Iteration count**: 1

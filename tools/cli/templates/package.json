@@ -23,7 +23,13 @@
     "ts-loader": "^9.5.1",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17"
+  },
+  "thingsvis": {
+    "displayName": "{{DISPLAY_NAME}}",
+    "icon": "Box",
+    "i18n": {
+      "zh": "{{DISPLAY_NAME}}",
+      "en": "{{COMPONENT_ID}}"
+    }
   }
 }
-
-

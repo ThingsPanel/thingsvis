@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
     /** 当前状态 */
-    value: z.boolean().default(true).describe('当前状态'),
+    value: z.boolean().default(true).describe('props.switchStatus'),
 
     /** 开启颜色 */
     activeColor: z.string().default('#6965db').describe('props.activeColor'),

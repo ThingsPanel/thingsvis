@@ -134,7 +134,7 @@ export function generateControls(
     } else {
       groups.push({
         id: 'Advanced',
-        label: '高级',
+        label: 'Advanced',
         expanded: false,
         fields: remainingFields,
       });
@@ -149,11 +149,5 @@ export function generateControls(
 // ============================================================================
 
 function getGroupLabel(id: ControlGroupId): string {
-  const labels: Record<ControlGroupId, string> = {
-    Content: '内容',
-    Style: '样式',
-    Data: '数据',
-    Advanced: '高级',
-  };
-  return labels[id];
+  return id;
 }

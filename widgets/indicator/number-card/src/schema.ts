@@ -11,16 +11,16 @@ export const PropsSchema = z.object({
     unit: z.string().default('次').describe('props.unit'),
 
     /** 数值颜色 */
-    valueColor: z.string().default('#6965db').describe('数值颜色'),
+    valueColor: z.string().default('#6965db').describe('props.valueColor'),
 
     /** 标题颜色 */
-    titleColor: z.string().default('#6b7280').describe('标题颜色'),
+    titleColor: z.string().default('#6b7280').describe('props.titleColor'),
 
     /** 背景色 */
     backgroundColor: z.string().default('#ffffff').describe('props.bgColor'),
 
     /** 圆角半径 */
-    borderRadius: z.number().default(8).describe('圆角半径'),
+    borderRadius: z.number().default(8).describe('props.borderRadius'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

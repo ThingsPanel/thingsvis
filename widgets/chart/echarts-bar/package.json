@@ -26,6 +26,10 @@
     },
     "thingsvis": {
         "displayName": "柱状图",
-        "icon": "BarChart3"
+        "icon": "BarChart3",
+        "i18n": {
+            "zh": "柱状图",
+            "en": "Bar Chart"
+        }
     }
 }

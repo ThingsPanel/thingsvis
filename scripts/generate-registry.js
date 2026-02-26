@@ -77,6 +77,7 @@ function generate() {
                 version: pkg.version || '0.0.1',
                 ...(meta.icon && { icon: meta.icon }),
                 ...(meta.displayName && { name: meta.displayName }),
+                ...(meta.i18n && { i18n: meta.i18n }),
             };
 
             console.log(`  ✅ ${componentId} → ${remoteName} (port: ${devPort || 'default'})`);

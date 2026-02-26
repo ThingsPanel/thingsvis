@@ -15,7 +15,7 @@ export const PropsSchema = z.object({
     showLegend: z.boolean().default(true).describe('props.showLegend'),
 
     /** 是否为环形图 */
-    isDoughnut: z.boolean().default(false).describe('是否为环形图'),
+    isDoughnut: z.boolean().default(false).describe('props.isDonut'),
 
     /** 数据集 */
     data: z.array(z.any()).default([

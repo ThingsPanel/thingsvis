@@ -38,13 +38,22 @@ program
 
     let port = options.port;
     if (!port) {
-      const result = await prompts({
-        type: 'number',
-        name: 'port',
-        message: 'Dev server port for this plugin?',
-        initial: 3200
-      });
+      const result = await prompts([
+        {
+          type: 'number',
+          name: 'port',
+          message: 'Dev server port for this plugin?',
+          initial: 3200
+        },
+        {
+          type: 'text',
+          name: 'displayName',
+          message: 'Display name for this plugin (e.g., My Widget)?',
+          initial: name
+        }
+      ]);
       port = Number(result.port) || 3200;
+      (options as any).displayName = result.displayName || name;
     }
 
     const templateDir = path.join(repoRoot, 'tools', 'cli', 'templates');
@@ -52,7 +61,8 @@ program
       PACKAGE_NAME: packageName,
       COMPONENT_ID: componentId,
       CATEGORY: category,
-      DEV_SERVER_PORT: port
+      DEV_SERVER_PORT: port,
+      DISPLAY_NAME: (options as any).displayName || name
     });
 
     // eslint-disable-next-line no-console

@@ -26,7 +26,7 @@ export const PropsSchema = z.object({
   // ========================================
   
   /** 字号（像素） */
-  fontSize: z.number().min(8).max(200).default(16).describe('字号'),
+  fontSize: z.number().min(8).max(200).default(16).describe('props.fontSize'),
   
   /** 字体 */
   fontFamily: z.enum([
@@ -42,42 +42,42 @@ export const PropsSchema = z.object({
     'PingFang SC',
     'SimHei',
     'SimSun',
-  ]).default('sans-serif').describe('字体'),
+  ]).default('sans-serif').describe('props.fontFamily'),
   
   /** 字重 */
-  fontWeight: z.enum(['normal', 'bold', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']).default('normal').describe('字重'),
+  fontWeight: z.enum(['normal', 'bold', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']).default('normal').describe('props.fontWeight'),
   
   /** 字体样式（斜体） */
-  fontStyle: z.enum(['normal', 'italic', 'oblique']).default('normal').describe('斜体'),
+  fontStyle: z.enum(['normal', 'italic', 'oblique']).default('normal').describe('props.fontStyle'),
 
   // ========================================
   // 排版属性
   // ========================================
   
   /** 文本对齐 */
-  textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('对齐方式'),
+  textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('props.textAlign'),
   
   /** 垂直对齐 */
   verticalAlign: z.enum(['top', 'middle', 'bottom']).default('top').describe('props.alignVertical'),
   
   /** 行高 */
-  lineHeight: z.number().min(0.5).max(5).default(1.4).describe('行高'),
+  lineHeight: z.number().min(0.5).max(5).default(1.4).describe('props.lineHeight'),
   
   /** 字间距 */
-  letterSpacing: z.number().min(-10).max(50).default(0).describe('字间距'),
+  letterSpacing: z.number().min(-10).max(50).default(0).describe('props.letterSpacing'),
   
   /** 文本装饰 */
-  textDecoration: z.enum(['none', 'underline', 'line-through']).default('none').describe('装饰线'),
+  textDecoration: z.enum(['none', 'underline', 'line-through']).default('none').describe('props.textDecoration'),
 
   // ========================================
   // 颜色属性
   // ========================================
   
   /** 文字颜色 */
-  fill: z.string().default('#333333').describe('文字颜色'),
+  fill: z.string().default('#333333').describe('props.textColor'),
   
   /** 背景颜色 */
-  backgroundColor: z.string().default('transparent').describe('背景颜色'),
+  backgroundColor: z.string().default('transparent').describe('props.bgColor'),
 
   // ========================================
   // 效果属性
@@ -87,26 +87,26 @@ export const PropsSchema = z.object({
   opacity: z.number().min(0).max(1).default(1).describe('props.opacity'),
   
   /** 文字阴影 */
-  textShadowEnabled: z.boolean().default(false).describe('启用阴影'),
+  textShadowEnabled: z.boolean().default(false).describe('props.textShadowEnabled'),
   
   /** 阴影颜色 */
-  textShadowColor: z.string().default('rgba(0,0,0,0.3)').describe('阴影颜色'),
+  textShadowColor: z.string().default('rgba(0,0,0,0.3)').describe('props.textShadowColor'),
   
   /** 阴影模糊 */
-  textShadowBlur: z.number().min(0).max(50).default(4).describe('阴影模糊'),
+  textShadowBlur: z.number().min(0).max(50).default(4).describe('props.textShadowBlur'),
   
   /** 阴影 X 偏移 */
-  textShadowOffsetX: z.number().min(-50).max(50).default(1).describe('阴影X偏移'),
+  textShadowOffsetX: z.number().min(-50).max(50).default(1).describe('props.textShadowOffsetX'),
   
   /** 阴影 Y 偏移 */
-  textShadowOffsetY: z.number().min(-50).max(50).default(1).describe('阴影Y偏移'),
+  textShadowOffsetY: z.number().min(-50).max(50).default(1).describe('props.textShadowOffsetY'),
 
   // ========================================
   // 其他属性
   // ========================================
   
   /** 内边距 */
-  padding: z.number().min(0).max(100).default(0).describe('内边距'),
+  padding: z.number().min(0).max(100).default(0).describe('props.padding'),
 });
 
 /** 属性类型（用于 TypeScript 类型推导） */

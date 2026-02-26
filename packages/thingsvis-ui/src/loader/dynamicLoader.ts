@@ -60,7 +60,8 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
           version: entry.version,
           displayName: entry.name ?? key,
           iconUrl: entry.iconUrl,
-          icon: entry.icon
+          icon: entry.icon,
+          i18n: entry.i18n
         } as ComponentRegistryEntry;
         (mapped as any).componentId = key;
         return mapped;
@@ -68,11 +69,11 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
     } else {
       // fallback to bundled fixture
       // eslint-disable-next-line no-console
-      
+
     }
   } catch (e) {
     // eslint-disable-next-line no-console
-    
+
   }
 
   // Load built-in fixture as last resort (works during dev when preview public isn't mounted)
@@ -93,7 +94,8 @@ export async function getRegistryEntries(url?: string): Promise<ComponentRegistr
         version: entry.version,
         displayName: entry.name ?? key,
         iconUrl: entry.iconUrl,
-        icon: entry.icon
+        icon: entry.icon,
+        i18n: entry.i18n
       } as ComponentRegistryEntry;
       (mapped as any).componentId = key;
       return mapped;
@@ -117,14 +119,14 @@ export async function loadWidget(remoteEntryUrl: string, exposedModule: string):
   // Emit start event
   try {
     emitWidgetEvent("widget.load.start", { remoteName: exposedModule, remoteEntryUrl });
-  } catch (e) {}
+  } catch (e) { }
 
   // Placeholder loader:
   // 1) Try MF2 runtime (to be implemented)
   // 2) Fallback: dynamic import from blob (dev only)
   // For now return a simple stub module to allow integration tests to proceed.
   // eslint-disable-next-line no-console
-  
+
   const module = {
     create: (opts: any) => {
       // widget factory stub
@@ -140,7 +142,7 @@ export async function loadWidget(remoteEntryUrl: string, exposedModule: string):
   } catch (e) {
     try {
       emitWidgetEvent("widget.load.failure", { remoteName: exposedModule, error: e });
-    } catch {}
+    } catch { }
   }
 
   return module;
