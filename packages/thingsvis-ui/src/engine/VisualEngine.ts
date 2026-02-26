@@ -176,7 +176,7 @@ export class VisualEngine {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
     }
-  ) {}
+  ) { }
 
   /**
    * 构建连接节点信息，用于 line 插件的节点连接功能
@@ -189,9 +189,9 @@ export class VisualEngine {
   ): Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> {
     const result: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> = {};
     const props = (node.schemaRef as any).props || {};
-    
+
     const nodeIds = [props.sourceNodeId, props.targetNodeId].filter(Boolean) as string[];
-    
+
     for (const nodeId of nodeIds) {
       const linkedNode = allNodes[nodeId];
       if (linkedNode && linkedNode.schemaRef) {
@@ -203,7 +203,7 @@ export class VisualEngine {
         };
       }
     }
-    
+
     return result;
   }
 
@@ -224,7 +224,7 @@ export class VisualEngine {
       tree: {}
     });
     this.root = this.app.tree as unknown as Group;
-    
+
     // Create a dedicated layer for connections (rendered below nodes)
     this.connRoot = new Group();
     this.root.addAt(this.connRoot, 0);
@@ -247,6 +247,15 @@ export class VisualEngine {
     this.syncGridState(state);
   }
 
+  setEditable(editable: boolean) {
+    if (!this.opts) this.opts = {};
+    if (this.opts.editable === editable) return;
+    this.opts.editable = editable;
+
+    // We only update the opts flag. DOM pointer events are handled by proxy-layer
+    // in CanvasView, which blocks interactions effectively when panning.
+  }
+
   unmount() {
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
@@ -255,12 +264,12 @@ export class VisualEngine {
     }
     this.overlayRoot = undefined;
     this.containerEl = undefined;
-    
+
     // Clean up resize observer
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     this.lastContainerWidth = undefined;
-    
+
     // Clean up grid layers
     this.gridOverlay?.dispose();
     this.gridOverlay = undefined;
@@ -269,7 +278,7 @@ export class VisualEngine {
     this.gridRoot = undefined;
     this.lastGridSettings = undefined;
     this.lastGridPreview = undefined;
-    
+
     this.app?.destroy?.();
     this.app = undefined;
     this.root = undefined;
@@ -302,7 +311,7 @@ export class VisualEngine {
     this.root.scaleY = zoom;
     this.root.x = offsetX;
     this.root.y = offsetY;
-    
+
     // Also update overlay root position
     if (this.overlayRoot) {
       this.overlayRoot.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${zoom})`;
@@ -315,12 +324,12 @@ export class VisualEngine {
    */
   private initGridLayers() {
     if (!this.root) return;
-    
+
     // Create grid root group to hold overlay and placeholder
     this.gridRoot = new Group();
     // Add grid root at index 0 (below connections and nodes)
     this.root.addAt(this.gridRoot, 0);
-    
+
     // Grid overlay and placeholder will be lazily created when grid mode is active
   }
 
@@ -329,33 +338,33 @@ export class VisualEngine {
    */
   private setupResizeObserver() {
     if (!this.containerEl) return;
-    
+
     this.lastContainerWidth = this.containerEl.clientWidth;
-    
+
     this.resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const newWidth = entry.contentRect.width;
-        
+
         // Only update if width changed significantly (avoid subpixel jitter)
-        if (this.lastContainerWidth !== undefined && 
-            Math.abs(newWidth - this.lastContainerWidth) < 1) {
+        if (this.lastContainerWidth !== undefined &&
+          Math.abs(newWidth - this.lastContainerWidth) < 1) {
           continue;
         }
-        
+
         this.lastContainerWidth = newWidth;
-        
+
         // Update grid state with new container width
         const state = this.store.getState() as KernelState;
         if (state.canvas?.mode === 'grid' && state.updateGridContainerWidth) {
           state.updateGridContainerWidth(newWidth);
         }
-        
+
         // Force re-sync of grid overlay with new dimensions
         this.lastGridSettings = undefined; // Force settings update
         this.syncGridState(state);
       }
     });
-    
+
     this.resizeObserver.observe(this.containerEl);
   }
 
@@ -364,36 +373,36 @@ export class VisualEngine {
    */
   private syncGridState(state: KernelState) {
     if (!this.root || !this.gridRoot || !this.containerEl) return;
-    
+
     const gridState = state.gridState;
     const canvasMode = state.canvas?.mode;
     const isGridMode = canvasMode === 'grid';
-    
+
     // If not in grid mode, hide/dispose grid elements
     if (!isGridMode) {
       this.gridOverlay?.setVisible(false);
       this.gridPlaceholder?.hide();
       return;
     }
-    
+
     const settings = gridState?.settings;
     if (!settings) return;
-    
+
     const containerWidth = this.containerEl.clientWidth;
     const containerHeight = this.containerEl.clientHeight;
-    
+
     const cols = gridState?.effectiveCols ?? settings.cols ?? 24;
     const renderSettings: GridSettings = {
       ...settings,
       cols,
     };
-    
+
     // Initialize or update grid overlay
     if (!this.gridOverlay) {
       this.gridOverlay = new GridOverlay();
       this.gridRoot.add(this.gridOverlay.getGroup());
     }
-    
+
     // Check if settings changed
     const settingsChanged = JSON.stringify(renderSettings) !== JSON.stringify(this.lastGridSettings);
     if (settingsChanged) {
@@ -405,35 +414,35 @@ export class VisualEngine {
         visible: true
       });
     }
-    
+
     this.gridOverlay.setVisible(true);
-    
+
     // Initialize grid placeholder (rendered above nodes in overlay layer)
     if (!this.gridPlaceholder) {
       this.gridPlaceholder = new GridPlaceholder();
       // Add placeholder above grid overlay but still in grid root
       this.gridRoot.add(this.gridPlaceholder.getGroup());
     }
-    
+
     // Update placeholder from preview state
     const preview = gridState?.preview;
     const previewChanged = JSON.stringify(preview) !== JSON.stringify(this.lastGridPreview);
-    
+
     if (previewChanged) {
       this.lastGridPreview = preview;
-      
+
       if (preview?.active && preview.targetPosition) {
         const previewRect = gridToPixel(preview.targetPosition, renderSettings, containerWidth);
         this.gridPlaceholder.updatePosition(previewRect, true);
         this.gridPlaceholder.show();
-        
+
         // Update ghost overlays for affected items
         if (preview.affectedItems && preview.affectedItems.length > 0) {
           // Look up affected item positions from gridState
           const affectedNodes = preview.affectedItems
             .map(id => state.nodesById[id])
             .filter((node): node is NodeState => !!node && !!node.schemaRef);
-          
+
           const ghostRects = affectedNodes.map(node => {
             const gridPos = (node.schemaRef as any).grid;
             if (!gridPos) return null;
@@ -441,7 +450,7 @@ export class VisualEngine {
               ...gridToPixel(gridPos, renderSettings, containerWidth)
             };
           }).filter((rect): rect is { x: number; y: number; width: number; height: number } => rect !== null);
-          
+
           this.gridPlaceholder.updateGhosts(ghostRects);
         } else {
           this.gridPlaceholder.updateGhosts([]);
@@ -458,7 +467,7 @@ export class VisualEngine {
   sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = [], layerOrder: string[] = []) {
     if (!this.app || !this.root || this.isSyncing) return;
     this.isSyncing = true;
-    
+
     try {
       const root = this.root;
 
@@ -485,9 +494,9 @@ export class VisualEngine {
           this.syncSingleNode(node, root, nodes);
         } catch (e) {
           // Log error but don't let it break other nodes
-          
+
           this.errorMessageByNode.set(node.id, e instanceof Error ? e.message : String(e));
-          
+
           // Try to create an error placeholder for this node
           try {
             if (!this.instanceMap.has(node.id)) {
@@ -496,7 +505,7 @@ export class VisualEngine {
               this.instanceMap.set(node.id, { instance, renderer: errorRenderer });
             }
           } catch (placeholderError) {
-            
+
           }
         }
       });
@@ -566,7 +575,7 @@ export class VisualEngine {
    */
   private syncSingleNode(node: NodeState, root: Group, allNodes: Record<string, NodeState>) {
     if (!node.visible) return;
-    
+
     const existing = this.instanceMap.get(node.id);
     const type = node.schemaRef?.type;
     if (!type || typeof type !== 'string') {
@@ -606,7 +615,7 @@ export class VisualEngine {
       let overlayBox: HTMLDivElement | undefined;
       let overlayInst: { destroy?: () => void } | undefined;
       const isResizable = rendererToUse.resizable !== false;
-      
+
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
@@ -615,19 +624,19 @@ export class VisualEngine {
         // Add data attribute for TransformControls to find and sync transforms during drag
         overlayBox.setAttribute('data-overlay-node-id', node.id);
         this.overlayRoot.appendChild(overlayBox);
-        
+
         // 根据 resizable 属性决定定位方式
         this.positionOverlayBox(overlayBox, node, isResizable);
-        
+
         try {
           // 构建 linkedNodes 用于节点连接功能
           const linkedNodes = this.buildLinkedNodes(node, allNodes);
           const contextWithLinks = { ...node, linkedNodes };
-          
+
           const ov = rendererToUse.createOverlay(contextWithLinks);
           overlayInst = ov;
           overlayBox.appendChild(ov.element);
-          
+
           // 对于自适应尺寸组件，在下一帧同步占位符尺寸
           if (!isResizable) {
             requestAnimationFrame(() => {
@@ -652,7 +661,7 @@ export class VisualEngine {
           }
         } catch (e) {
           // overlay 失败不影响主渲染
-          
+
           if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
           overlayBox = undefined;
         }
@@ -682,7 +691,7 @@ export class VisualEngine {
     const isResizable = existing.renderer.resizable !== false;
     if (existing.overlayBox) {
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
-      
+
       // 对于自适应尺寸组件，同步占位符尺寸
       if (!isResizable && existing.overlayInst) {
         requestAnimationFrame(() => {
@@ -711,10 +720,10 @@ export class VisualEngine {
       // 构建 linkedNodes 用于节点连接功能
       const linkedNodes = this.buildLinkedNodes(node, allNodes);
       const linkedKey = JSON.stringify(linkedNodes);
-      
+
       // 获取当前 state 用于解析数据绑定
       const state = this.store.getState() as KernelState;
-      
+
       // 计算数据绑定相关的缓存 key
       // 需要包含：props + data bindings + 绑定相关的数据源数据
       const dataBindings = (node.schemaRef as any).data || [];
@@ -738,7 +747,7 @@ export class VisualEngine {
         });
         dataSourceKey = JSON.stringify(referencedData);
       }
-      
+
       // Only call updateOverlay if props, linkedNodes, or data source values actually changed
       const propsKey = JSON.stringify((node.schemaRef as any).props || {}) + linkedKey + dataSourceKey;
       const lastPropsKey = this.lastNodePropsCache.get(node.id);
@@ -759,7 +768,7 @@ export class VisualEngine {
     if (!this.connRoot) return;
 
     const currentConnIds = new Set(connections.map(c => c.id));
-    
+
     // Remove old connections
     for (const [id, line] of Array.from(this.connectionMap.entries())) {
       if (!currentConnIds.has(id)) {
@@ -1121,7 +1130,7 @@ export class VisualEngine {
           this.failedRendererTypes.add(type);
           this.errorMessageByType.set(type, e instanceof Error ? e.message : String(e));
           // eslint-disable-next-line no-console
-          
+
         }
       })();
       this.pendingRendererLoad.set(type, p);
@@ -1163,10 +1172,10 @@ export class VisualEngine {
     const { x, y } = schema.position ?? { x: 0, y: 0 };
     // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
     const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
-    
+
     box.style.left = `${x}px`;
     box.style.top = `${y}px`;
-    
+
     if (isResizable) {
       // 固定尺寸组件：使用 schema 中定义的尺寸
       const width = schema.size?.width ?? 0;

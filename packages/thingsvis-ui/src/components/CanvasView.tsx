@@ -224,7 +224,15 @@ export const CanvasView: React.FC<Props> = ({
     return () => {
       engine.unmount();
     };
-  }, [store, resolveWidget, interactive]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [store, resolveWidget]);
+
+  // Update interactivity dynamically without fully remixing the engine
+  useEffect(() => {
+    if (engineRef.current) {
+      engineRef.current.setEditable(interactive);
+    }
+  }, [interactive]);
 
   // Update VisualEngine viewport when zoom/offset changes
   useEffect(() => {
