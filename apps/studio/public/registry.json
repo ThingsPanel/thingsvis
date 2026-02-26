@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-26T04:30:16.233Z",
+  "generatedAt": "2026-02-26T04:37:44.278Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -10,7 +10,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Circle",
-      "name": "圆形"
+      "name": "圆形",
+      "i18n": {
+        "zh": "圆形",
+        "en": "Circle"
+      }
     },
     "basic/line": {
       "remoteName": "thingsvis_widget_basic_line",
@@ -19,7 +23,11 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "连线"
+      "name": "连线",
+      "i18n": {
+        "zh": "连线",
+        "en": "Line"
+      }
     },
     "basic/rectangle": {
       "remoteName": "thingsvis_widget_basic_rectangle",
@@ -29,7 +37,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Square",
-      "name": "矩形"
+      "name": "矩形",
+      "i18n": {
+        "zh": "矩形",
+        "en": "Rectangle"
+      }
     },
     "basic/switch": {
       "remoteName": "thingsvis_widget_basic_switch",
@@ -39,7 +51,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "ToggleRight",
-      "name": "开关"
+      "name": "开关",
+      "i18n": {
+        "zh": "开关",
+        "en": "Switch"
+      }
     },
     "basic/table": {
       "remoteName": "thingsvis_widget_basic_table",
@@ -49,7 +65,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "Table2",
-      "name": "表格"
+      "name": "表格",
+      "i18n": {
+        "zh": "表格",
+        "en": "Table"
+      }
     },
     "basic/text": {
       "remoteName": "thingsvis_widget_basic_text",
@@ -59,7 +79,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Type",
-      "name": "基础文本"
+      "name": "基础文本",
+      "i18n": {
+        "zh": "基础文本",
+        "en": "Text"
+      }
     },
     "chart/echarts-bar": {
       "remoteName": "thingsvis_widget_chart_echarts_bar",
@@ -69,7 +93,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "BarChart3",
-      "name": "柱状图"
+      "name": "柱状图",
+      "i18n": {
+        "zh": "柱状图",
+        "en": "Bar Chart"
+      }
     },
     "chart/echarts-gauge": {
       "remoteName": "thingsvis_widget_chart_echarts_gauge",
@@ -79,7 +107,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Gauge",
-      "name": "仪表盘"
+      "name": "仪表盘",
+      "i18n": {
+        "zh": "仪表盘",
+        "en": "Gauge"
+      }
     },
     "chart/echarts-line": {
       "remoteName": "thingsvis_widget_chart_echarts_line",
@@ -89,7 +121,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "BarChart3",
-      "name": "折线图"
+      "name": "折线图",
+      "i18n": {
+        "zh": "折线图",
+        "en": "Line Chart"
+      }
     },
     "chart/echarts-pie": {
       "remoteName": "thingsvis_widget_chart_echarts_pie",
@@ -99,7 +135,11 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "PieChart",
-      "name": "饼图"
+      "name": "饼图",
+      "i18n": {
+        "zh": "饼图",
+        "en": "Pie Chart"
+      }
     },
     "chart/uplot-line": {
       "remoteName": "thingsvis_widget_chart_uplot_line",
@@ -109,7 +149,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "LineChart",
-      "name": "uPlot时序图"
+      "name": "uPlot时序图",
+      "i18n": {
+        "zh": "uPlot时序图",
+        "en": "uPlot时序图"
+      }
     },
     "indicator/number-card": {
       "remoteName": "deleted_thingsvis_widget_indicator_number_card",
@@ -119,7 +163,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "Hash",
-      "name": "数值卡片"
+      "name": "数值卡片",
+      "i18n": {
+        "zh": "数值卡片",
+        "en": "Number Card"
+      }
     },
     "media/iframe": {
       "remoteName": "thingsvis_widget_media_iframe",
@@ -129,7 +177,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "AppWindow",
-      "name": "网页容器"
+      "name": "网页容器",
+      "i18n": {
+        "zh": "网页容器",
+        "en": "网页容器"
+      }
     },
     "media/image": {
       "remoteName": "thingsvis_widget_media_image",
@@ -139,7 +191,11 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "Image",
-      "name": "图片"
+      "name": "图片",
+      "i18n": {
+        "zh": "图片",
+        "en": "图片"
+      }
     }
   }
 }
