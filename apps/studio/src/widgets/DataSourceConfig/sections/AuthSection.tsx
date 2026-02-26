@@ -29,7 +29,7 @@ export const AuthSection: React.FC<AuthSectionProps> = ({
 
   return (
     <FormSection
-      title={t('认证配置', 'Authentication')}
+      title={t('datasource.auth', 'Authentication')}
       description={t(
         hasAuth ? '已配置认证方式' : '配置 API 访问认证',
         hasAuth ? 'Authentication configured' : 'Configure API authentication'

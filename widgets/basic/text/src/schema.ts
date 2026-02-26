@@ -19,7 +19,7 @@ export const PropsSchema = z.object({
   // ========================================
   
   /** 文本内容 */
-  text: z.string().default('请输入文本').describe('文本内容'),
+  text: z.string().default('请输入文本').describe('props.textContent'),
 
   // ========================================
   // 字体属性
@@ -58,7 +58,7 @@ export const PropsSchema = z.object({
   textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('对齐方式'),
   
   /** 垂直对齐 */
-  verticalAlign: z.enum(['top', 'middle', 'bottom']).default('top').describe('垂直对齐'),
+  verticalAlign: z.enum(['top', 'middle', 'bottom']).default('top').describe('props.alignVertical'),
   
   /** 行高 */
   lineHeight: z.number().min(0.5).max(5).default(1.4).describe('行高'),
@@ -84,7 +84,7 @@ export const PropsSchema = z.object({
   // ========================================
   
   /** 不透明度 */
-  opacity: z.number().min(0).max(1).default(1).describe('不透明度'),
+  opacity: z.number().min(0).max(1).default(1).describe('props.opacity'),
   
   /** 文字阴影 */
   textShadowEnabled: z.boolean().default(false).describe('启用阴影'),

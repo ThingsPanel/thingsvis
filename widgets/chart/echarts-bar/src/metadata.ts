@@ -13,10 +13,10 @@ export const metadata = {
     locales: {
         zh: {
             'widget.echarts-bar.name': 'ECharts 柱状图',
-            'widget.echarts-bar.title': '图表标题',
-            'widget.echarts-bar.primaryColor': '主色调',
-            'widget.echarts-bar.data': '数据集',
-            'widget.echarts-bar.showLegend': '显示图例'
+            'widget.echarts-bar.title': 'props.chartTitle',
+            'widget.echarts-bar.primaryColor': 'props.primaryColor',
+            'widget.echarts-bar.data': 'props.dataset',
+            'widget.echarts-bar.showLegend': 'props.showLegend'
         },
         en: {
             'widget.echarts-bar.name': 'ECharts Bar Chart',

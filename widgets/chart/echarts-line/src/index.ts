@@ -50,7 +50,7 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
       containLabel: true,
     },
     dataset: Array.isArray(data) && data.length > 0 ? {
-      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || '数值' }],
+      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || 'props.value' }],
       source: data
     } : undefined,
     xAxis: {

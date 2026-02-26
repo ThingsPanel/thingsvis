@@ -6,18 +6,18 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
     /** 图表标题 */
-    title: z.string().default('').describe('图表标题'),
+    title: z.string().default('').describe('props.chartTitle'),
 
     /** 主色调 */
-    primaryColor: z.string().default('#6965db').describe('主色调'),
+    primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
     /** 刻度最大值 */
-    max: z.number().default(100).describe('最大值'),
+    max: z.number().default(100).describe('props.max'),
 
     /** 数据集 */
     data: z.array(z.any()).default([
         { name: '评分', value: 85 }
-    ]).describe('数据集'),
+    ]).describe('props.dataset'),
 });
 
 /** 属性类型 */

@@ -66,7 +66,7 @@ export const InitMessagesSection: React.FC<InitMessagesSectionProps> = ({
 
   return (
     <FormSection
-      title={t('初始订阅消息', 'Initial Messages')}
+      title={t('datasource.initMessage', 'Initial Messages')}
       description={t(
         `连接后立即发送的消息 (${initMessages.length} 条)`,
         `Messages sent immediately after connection (${initMessages.length})`
@@ -76,7 +76,7 @@ export const InitMessagesSection: React.FC<InitMessagesSectionProps> = ({
       <div className="space-y-3">
         {initMessages.length === 0 && (
           <p className="text-sm text-muted-foreground py-2">
-            {t('暂无初始消息，点击下方按钮添加', 'No messages. Click Add to create one.')}
+            {t('datasource.noInitMessage', 'No messages. Click Add to create one.')}
           </p>
         )}
 
@@ -147,7 +147,7 @@ export const InitMessagesSection: React.FC<InitMessagesSectionProps> = ({
           className="w-full"
         >
           <Plus className="h-4 w-4 mr-1" />
-          {t('添加消息', 'Add Message')}
+          {t('datasource.addMessage', 'Add Message')}
         </Button>
       </div>
     </FormSection>

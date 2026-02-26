@@ -11,11 +11,11 @@ export const metadata = {
             'widget.table.name': '表格',
             'widget.table.columns': '表头配置',
             'widget.table.data': '表格数据',
-            'widget.table.headerBg': '表头背景色',
+            'widget.table.headerBg': 'props.headerBgColor',
             'widget.table.headerColor': '表头文字颜色',
             'widget.table.rowBg': '行背景色',
             'widget.table.rowColor': '行文字颜色',
-            'widget.table.borderColor': '边框颜色'
+            'widget.table.borderColor': 'props.borderColor'
         },
         en: {
             'widget.table.name': 'Table',

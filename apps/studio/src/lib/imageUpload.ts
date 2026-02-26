@@ -66,13 +66,13 @@ export function saveImageUploadSettings(settings: ImageUploadSettings): void {
 export async function uploadImage(file: File): Promise<string> {
   // Validate file type
   if (!file.type.startsWith('image/')) {
-    throw new Error('只支持图片文件');
+    throw new Error('upload.onlyImages');
   }
   
   // Validate file size (max 10MB)
   const maxSize = 10 * 1024 * 1024;
   if (file.size > maxSize) {
-    throw new Error('图片大小不能超过10MB');
+    throw new Error('upload.sizeLimit');
   }
 
   const settings = getImageUploadSettings();

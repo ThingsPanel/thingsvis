@@ -25,7 +25,7 @@ export const BodySection: React.FC<BodySectionProps> = ({
   onChange}) => {
   return (
     <FormSection
-      title={t('请求体', 'Request Body')}
+      title={t('datasource.reqBody', 'Request Body')}
       description={t(
         '以 JSON 格式配置请求体内容',
         'Configure request body in JSON format'

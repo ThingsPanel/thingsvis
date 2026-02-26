@@ -28,3 +28,11 @@
 - **How it was tested**: 结合用户截图比对（如：Properties 原先为中文现在恢复，同时选项中原先是中文也能够全部正确被 t() 函数解析翻译成对应的英文 Chart Title）。
 - **Key decisions & rationale**: 在基座底层进行 t() 包装，极大节省全局历史代码升级的工作负担。
 - **Time/Iteration count**: 1
+
+## Sub-task 4: 规范化 i18n Key (消除中文作为标识符的问题)
+- **What was done**: 深度重构了基座语言包 (`editor.json`)，将早期所有的中文硬编码键（如 `"暂无图层"` 或 `"显示图例"` 等 90+ 项）统统转化为了标准的语义化英文Token（如 `layersPanel.empty` 和 `props.showLegend`）。通过自研脚本自动处理并覆盖整个项目的 40 多个源码文件，批量把中文替换成了正确的英文字典键名。
+- **What was tried & failed**: 手动排查非常容易遗漏，并且导致系统崩溃死角，利用 AST 与 正则精准注入降低风险。
+- **What succeeded**: 系统成功从架构根本上消除了用中文当 Key 取字典值的常见反面模式。
+- **How it was tested**: 编译通过，并启动 dev server 确认双语切换平滑正常。
+- **Key decisions & rationale**: 虽然直接使用中文做 i18n Key 能在业务迭代初期偷懒，但在组件库生态需要开放时将会是致命短板。这是正确、规范也是最值得的长效投资。
+- **Time/Iteration count**: 1

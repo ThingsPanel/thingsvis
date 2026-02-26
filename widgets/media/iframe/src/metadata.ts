@@ -11,7 +11,7 @@ export const metadata = {
             'widget.iframe.name': '网页容器',
             'widget.iframe.src': '网页地址',
             'widget.iframe.borderWidth': '边框宽度',
-            'widget.iframe.borderColor': '边框颜色',
+            'widget.iframe.borderColor': 'props.borderColor',
             'widget.iframe.borderRadius': '圆角半径'
         },
         en: {

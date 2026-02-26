@@ -128,7 +128,7 @@ export const Main = defineWidget({
                 series: [
                     {},
                     {
-                        label: title || "数值",
+                        label: title || "props.value",
                         stroke: primaryColor,
                         fill: primaryColor + "30", // deeper slightly for area
                         width: 2,

@@ -841,6 +841,6 @@ const translations = {
     confirmDeleteDashboard: '确定删除此画布吗？',
     deleteDashboardError: '删除画布失败。',
     cancel: '取消',
-    confirm: '删除',
+    confirm: 'common.delete',
   },
 }

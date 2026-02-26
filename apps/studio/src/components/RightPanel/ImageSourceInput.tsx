@@ -50,13 +50,13 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      setError(t('只支持图片文件', 'Only image files are supported'));
+      setError(t('upload.onlyImages', 'Only image files are supported'));
       return;
     }
 
     // 验证文件大小（最大 10MB）
     if (file.size > 10 * 1024 * 1024) {
-      setError(t('图片大小不能超过10MB', 'Image size cannot exceed 10MB'));
+      setError(t('upload.sizeLimit', 'Image size cannot exceed 10MB'));
       return;
     }
 
@@ -72,7 +72,7 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
         onChange(result.data.url);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('上传失败', 'Upload failed'));
+      setError(err instanceof Error ? err.message : t('upload.failed', 'Upload failed'));
     } finally {
       setIsUploading(false);
       // 重置 file input
@@ -119,31 +119,31 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
         <button
           type="button"
           onClick={() => handleModeChange('upload')}
-          title={t('上传图片', 'Upload Image')}
+          title={t('upload.button', 'Upload Image')}
           className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'upload'
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
         >
           <Upload className="w-3.5 h-3.5" />
-          {t('上传', 'Upload')}
+          {t('upload.action', 'Upload')}
         </button>
         <button
           type="button"
           onClick={() => handleModeChange('url')}
-          title={t('输入链接', 'Enter URL')}
+          title={t('upload.inputUrl', 'Enter URL')}
           className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'url'
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
         >
           <Link2 className="w-3.5 h-3.5" />
-          {t('链接', 'URL')}
+          {t('upload.url', 'URL')}
         </button>
         <button
           type="button"
           onClick={() => handleModeChange('base64')}
-          title={t('输入Base64', 'Enter Base64')}
+          title={t('upload.inputBase64', 'Enter Base64')}
           className={`flex-1 px-2 py-1.5 text-xs font-medium rounded-md transition-all flex items-center justify-center gap-1.5 ${mode === 'base64'
             ? 'bg-primary text-primary-foreground shadow-sm'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
@@ -162,16 +162,16 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
               {isUploading ? (
                 <>
                   <Loader2 className="w-5 h-5 mb-1.5 text-muted-foreground animate-spin" />
-                  <p className="text-xs text-muted-foreground">{t('上传中...', 'Uploading...')}</p>
+                  <p className="text-xs text-muted-foreground">{t('upload.uploading', 'Uploading...')}</p>
                 </>
               ) : (
                 <>
                   <Upload className="w-5 h-5 mb-1.5 text-muted-foreground group-hover:text-accent-foreground transition-colors" />
                   <p className="text-xs font-medium text-muted-foreground group-hover:text-accent-foreground transition-colors">
-                    {t('点击上传图片', 'Click to upload')}
+                    {t('upload.clickToUpload', 'Click to upload')}
                   </p>
                   <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                    {t('上传到服务器 (Max 10MB)', 'Upload to server (Max 10MB)')}
+                    {t('upload.uploadToServer', 'Upload to server (Max 10MB)')}
                   </p>
                 </>
               )}
@@ -203,7 +203,7 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
         <textarea
           value={base64Input}
           onChange={(e) => handleBase64Change(e.target.value)}
-          placeholder={t('data:image/png;base64,... 或 Base64字符串', 'data:image/png;base64,... or Base64 string')}
+          placeholder={t('upload.base64Example', 'data:image/png;base64,... or Base64 string')}
           className="w-full h-20 p-2 text-[10px] font-mono leading-tight rounded-md border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-none"
         />
       )}
@@ -225,7 +225,7 @@ export function ImageSourceInput({ value, onChange}: ImageSourceInputProps) {
             size="icon"
             className="h-5 w-5 hover:bg-muted hover:text-foreground -mr-1"
             onClick={handleClear}
-            title={t('清除', 'Clear')}
+            title={t('common.clear', 'Clear')}
           >
             <X className="w-3.5 h-3.5" />
           </Button>

@@ -84,13 +84,13 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
   return (
     <div className="space-y-2">
       <div className="space-y-1">
-        <label className="text-sm font-medium text-muted-foreground">{t('数据源', 'Data Source')}</label>
+        <label className="text-sm font-medium text-muted-foreground">{t('binding.dataSource', 'Data Source')}</label>
         {usePlatformFieldsMode ? (
           <div className="w-full h-8 px-3 flex items-center text-sm rounded-sm border border-input bg-muted/50 text-muted-foreground cursor-not-allowed">
             {isPlatformSource ? (
-              <span>{t('平台字段', 'Platform Fields')}</span>
+              <span>{t('binding.platformField', 'Platform Fields')}</span>
             ) : (
-              <span>{selectedDataSourceId || t('(未选择)', '(none)')}</span>
+              <span>{selectedDataSourceId || t('binding.notSelected', '(none)')}</span>
             )}
           </div>
         ) : (
@@ -102,12 +102,12 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
             }}
             className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
           >
-            <option value="">{t('(请选择数据源)', '(select a data source)')}</option>
+            <option value="">{t('binding.selectDataSource', '(select a data source)')}</option>
 
             {/* Platform Fields Option - 只在有平台字段时显示 */}
             {hasPlatformFields && (
               <option value="__platform__">
-                🔌 {t('平台字段 (Platform Fields)', 'Platform Fields')}
+                🔌 {t('binding.platformFieldsLabel', 'Platform Fields')}
               </option>
             )}
 
@@ -125,7 +125,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
       </div>
 
       <div className="space-y-1">
-        <label className="text-sm font-medium text-muted-foreground">{t('字段', 'Field')}</label>
+        <label className="text-sm font-medium text-muted-foreground">{t('binding.field', 'Field')}</label>
         <select
           value={selectedFieldPath}
           onChange={(e) => {
@@ -135,7 +135,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
           className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
           disabled={!effectiveDataSourceId || (dsStatus === 'loading' && !isPlatformSource)}
         >
-          <option value="">{t('(请选择字段)', '(select a field)')}</option>
+          <option value="">{t('binding.selectField', '(select a field)')}</option>
           {isPlatformSource ? (
             // Platform fields with labels
             platformFields.map((field) => (
@@ -152,7 +152,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
               const isComplexType = type === 'object' || type === 'array';
               return (
                 <option key={p} value={p}>
-                  {icon} {p}{isComplexType ? t(' (需选子字段)', ' (select child)') : ''}
+                  {icon} {p}{isComplexType ? t('binding.needChildField', ' (select child)') : ''}
                 </option>
               );
             })
@@ -160,27 +160,27 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}:
         </select>
         {dsStatus === 'loading' && !isPlatformSource && (
           <p className="text-xs text-muted-foreground">
-            {t('数据加载中...', 'Loading data...')}
+            {t('common.loadingData', 'Loading data...')}
           </p>
         )}
         {dsStatus === 'error' && dsState?.error && (
           <p className="text-xs text-destructive">
-            {t('数据源错误: ', 'Data source error: ')}{dsState.error}
+            {t('binding.dataSourceError', 'Data source error: ')}{dsState.error}
           </p>
         )}
         {dsStatus === 'connected' && paths.length === 0 && snapshot === null && !isPlatformSource && (
           <p className="text-xs text-muted-foreground">
-            {t('数据源暂无数据，请检查配置或等待数据推送。', 'No data available. Check config or wait for data.')}
+            {t('binding.noDataHint', 'No data available. Check config or wait for data.')}
           </p>
         )}
         {truncated && (
           <p className="text-xs text-muted-foreground">
-            {t('字段列表已截断（深度/数量限制）。', 'Field list truncated (depth/size limit).')}
+            {t('binding.fieldTruncated', 'Field list truncated (depth/size limit).')}
           </p>
         )}
         {isPlatformSource && platformFields.length > 0 && selectedFieldPath && (
           <p className="text-xs text-muted-foreground">
-            💡 {t('平台字段由外部应用提供', 'Platform field provided by host app')}
+            💡 {t('binding.externalProvided', 'Platform field provided by host app')}
           </p>
         )}
         {/* 警告：选择了对象或数组类型的字段 */}

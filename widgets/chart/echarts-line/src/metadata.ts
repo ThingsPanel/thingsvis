@@ -22,11 +22,11 @@ export const metadata = {
   locales: {
     zh: {
       'widget.echarts-line.name': 'ECharts 折线图',
-      'widget.echarts-line.title': '图表标题',
-      'widget.echarts-line.primaryColor': '主色调',
-      'widget.echarts-line.data': '数据集',
-      'widget.echarts-line.showLegend': '显示图例',
-      'widget.echarts-line.smooth': '平滑曲线',
+      'widget.echarts-line.title': 'props.chartTitle',
+      'widget.echarts-line.primaryColor': 'props.primaryColor',
+      'widget.echarts-line.data': 'props.dataset',
+      'widget.echarts-line.showLegend': 'props.showLegend',
+      'widget.echarts-line.smooth': 'props.smoothCurve',
       'widget.echarts-line.showArea': '显示阴影面积'
     },
     en: {

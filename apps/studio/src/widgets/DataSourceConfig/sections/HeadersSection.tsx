@@ -35,15 +35,15 @@ export const HeadersSection: React.FC<HeadersSectionProps> = ({
 
   return (
     <FormSection
-      title={t('请求头', 'Headers')}
-      description={t('添加自定义 HTTP 请求头', 'Add custom HTTP headers')}
+      title={t('datasource.headers', 'Headers')}
+      description={t('datasource.addHeader', 'Add custom HTTP headers')}
       defaultCollapsed={Object.keys(headers).length === 0}
     >
       <KeyValueEditor
         value={headers}
         onChange={onChange}
-        keyPlaceholder={t('请求头名称', 'Header Name')}
-        valuePlaceholder={t('请求头值', 'Header Value')}
+        keyPlaceholder={t('datasource.headerName', 'Header Name')}
+        valuePlaceholder={t('datasource.headerValue', 'Header Value')}
         warningKeys={warningKeys}
         warningMessage={t(
           '此请求头将与认证配置冲突，认证配置优先',

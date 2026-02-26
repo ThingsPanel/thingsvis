@@ -40,7 +40,7 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
 
   return (
     <FormSection
-      title={t('重连策略', 'Reconnection')}
+      title={t('datasource.reconnectStrategy', 'Reconnection')}
       description={t(
         reconnect.enabled ? '自动重连已启用' : '自动重连已禁用',
         reconnect.enabled ? 'Auto-reconnect enabled' : 'Auto-reconnect disabled'
@@ -50,7 +50,7 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
       <div className="space-y-4">
         {/* Enabled Toggle */}
         <div className="flex items-center justify-between">
-          <Label>{t('启用自动重连', 'Enable Auto-Reconnect')}</Label>
+          <Label>{t('datasource.enableReconnect', 'Enable Auto-Reconnect')}</Label>
           <button
             type="button"
             onClick={() => handleChange('enabled', !reconnect.enabled)}
@@ -72,7 +72,7 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
           <>
             {/* Max Attempts */}
             <div className="space-y-2">
-              <Label>{t('最大重连次数', 'Max Attempts')}</Label>
+              <Label>{t('datasource.maxReconnect', 'Max Attempts')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -86,14 +86,14 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
                   )}
                 />
                 <span className="text-sm text-muted-foreground">
-                  {t('(0 = 无限)', '(0 = unlimited)')}
+                  {t('datasource.zeroUnlimited', '(0 = unlimited)')}
                 </span>
               </div>
             </div>
 
             {/* Initial Interval */}
             <div className="space-y-2">
-              <Label>{t('初始重连间隔', 'Initial Interval')}</Label>
+              <Label>{t('datasource.initInterval', 'Initial Interval')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -107,16 +107,16 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
                     !isInitialIntervalValid && 'border-destructive'
                   )}
                 />
-                <span className="text-sm text-muted-foreground">{t('秒', 'sec')}</span>
+                <span className="text-sm text-muted-foreground">{t('common.seconds', 'sec')}</span>
               </div>
             </div>
 
             {/* Exponential Backoff Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <Label>{t('指数退避', 'Exponential Backoff')}</Label>
+                <Label>{t('datasource.exponentialBackoff', 'Exponential Backoff')}</Label>
                 <p className="text-xs text-muted-foreground">
-                  {t('每次重连间隔翻倍', 'Double delay after each attempt')}
+                  {t('datasource.doubleInterval', 'Double delay after each attempt')}
                 </p>
               </div>
               <button
@@ -139,7 +139,7 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
             {/* Max Interval */}
             {reconnect.useExponentialBackoff && (
               <div className="space-y-2">
-                <Label>{t('最大重连间隔', 'Max Interval')}</Label>
+                <Label>{t('datasource.maxInterval', 'Max Interval')}</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -152,7 +152,7 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({
                       !isMaxIntervalValid && 'border-destructive'
                     )}
                   />
-                  <span className="text-sm text-muted-foreground">{t('秒', 'sec')}</span>
+                  <span className="text-sm text-muted-foreground">{t('common.seconds', 'sec')}</span>
                 </div>
               </div>
             )}

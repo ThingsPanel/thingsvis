@@ -6,13 +6,13 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
     /** 图表标题 */
-    title: z.string().default('').describe('图表标题'),
+    title: z.string().default('').describe('props.chartTitle'),
 
     /** 主色调 (供扩展用或单色场景，但饼图默认使用ECharts自带的色板最佳) */
-    primaryColor: z.string().default('#6965db').describe('主色调'),
+    primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
     /** 是否显示图例 */
-    showLegend: z.boolean().default(true).describe('显示图例'),
+    showLegend: z.boolean().default(true).describe('props.showLegend'),
 
     /** 是否为环形图 */
     isDoughnut: z.boolean().default(false).describe('是否为环形图'),
@@ -22,7 +22,7 @@ export const PropsSchema = z.object({
         { name: '直接访问', value: 335 },
         { name: '邮件营销', value: 310 },
         { name: '联盟广告', value: 234 },
-    ]).describe('数据集'),
+    ]).describe('props.dataset'),
 });
 
 /** 属性类型 */

@@ -13,10 +13,10 @@ export const metadata = {
     locales: {
         zh: {
             'widget.echarts-pie.name': 'ECharts 饼图',
-            'widget.echarts-pie.title': '图表标题',
-            'widget.echarts-pie.primaryColor': '主色调',
-            'widget.echarts-pie.data': '数据集',
-            'widget.echarts-pie.showLegend': '显示图例'
+            'widget.echarts-pie.title': 'props.chartTitle',
+            'widget.echarts-pie.primaryColor': 'props.primaryColor',
+            'widget.echarts-pie.data': 'props.dataset',
+            'widget.echarts-pie.showLegend': 'props.showLegend'
         },
         en: {
             'widget.echarts-pie.name': 'ECharts Pie Chart',

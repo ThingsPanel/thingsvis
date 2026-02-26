@@ -62,7 +62,7 @@ export const ProtocolsSection: React.FC<ProtocolsSectionProps> = ({
 
   return (
     <FormSection
-      title={t('子协议', 'Subprotocols')}
+      title={t('datasource.subProtocol', 'Subprotocols')}
       description={t(
         '配置 WebSocket 子协议 (Sec-WebSocket-Protocol)',
         'Configure WebSocket subprotocols (Sec-WebSocket-Protocol)'

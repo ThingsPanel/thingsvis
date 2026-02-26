@@ -6,19 +6,19 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
     /** 图表标题 */
-    title: z.string().default('').describe('图表标题'),
+    title: z.string().default('').describe('props.chartTitle'),
 
     /** 主色调 */
-    primaryColor: z.string().default('#6965db').describe('主色调'),
+    primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
     /** 是否显示图例 */
-    showLegend: z.boolean().default(true).describe('显示图例'),
+    showLegend: z.boolean().default(true).describe('props.showLegend'),
 
     /** 显示X轴刻度 */
-    showXAxis: z.boolean().default(true).describe('显示X轴'),
+    showXAxis: z.boolean().default(true).describe('props.showXAxis'),
 
     /** 显示Y轴刻度 */
-    showYAxis: z.boolean().default(true).describe('显示Y轴'),
+    showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 
     /** 
      * 数据集 
@@ -32,7 +32,7 @@ export const PropsSchema = z.object({
         { name: '周五', value: 70 },
         { name: '周六', value: 110 },
         { name: '周日', value: 130 },
-    ]).describe('数据集'),
+    ]).describe('props.dataset'),
 });
 
 /** 属性类型 */

@@ -9,10 +9,10 @@ export const metadata = {
     locales: {
         zh: {
             'widget.uplot-line.name': '高性能时序图',
-            'widget.uplot-line.title': '图表标题',
-            'widget.uplot-line.primaryColor': '主色调',
-            'widget.uplot-line.data': '数据集',
-            'widget.uplot-line.showLegend': '显示图例',
+            'widget.uplot-line.title': 'props.chartTitle',
+            'widget.uplot-line.primaryColor': 'props.primaryColor',
+            'widget.uplot-line.data': 'props.dataset',
+            'widget.uplot-line.showLegend': 'props.showLegend',
         },
         en: {
             'widget.uplot-line.name': 'uPlot Chart',

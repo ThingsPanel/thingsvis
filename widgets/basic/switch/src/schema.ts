@@ -5,10 +5,10 @@ export const PropsSchema = z.object({
     value: z.boolean().default(true).describe('当前状态'),
 
     /** 开启颜色 */
-    activeColor: z.string().default('#6965db').describe('开启颜色'),
+    activeColor: z.string().default('#6965db').describe('props.activeColor'),
 
     /** 关闭颜色 */
-    inactiveColor: z.string().default('#d1d5db').describe('关闭颜色'),
+    inactiveColor: z.string().default('#d1d5db').describe('props.inactiveColor'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

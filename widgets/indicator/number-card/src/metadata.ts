@@ -9,12 +9,12 @@ export const metadata = {
     locales: {
         zh: {
             'widget.number-card.name': '数值卡片',
-            'widget.number-card.title': '标题',
-            'widget.number-card.value': '数值',
-            'widget.number-card.unit': '单位',
+            'widget.number-card.title': 'props.title',
+            'widget.number-card.value': 'props.value',
+            'widget.number-card.unit': 'props.unit',
             'widget.number-card.valueColor': '数值颜色',
             'widget.number-card.titleColor': '标题颜色',
-            'widget.number-card.backgroundColor': '背景色',
+            'widget.number-card.backgroundColor': 'props.bgColor',
             'widget.number-card.borderRadius': '圆角半径'
         },
         en: {

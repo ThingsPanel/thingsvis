@@ -31,7 +31,7 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
         },
         series: [
             {
-                name: title || '数值',
+                name: title || 'props.value',
                 type: 'gauge',
                 max: max,
                 progress: {

@@ -40,7 +40,7 @@ export const TimeoutSection: React.FC<TimeoutSectionProps> = ({
 
   return (
     <FormSection
-      title={t('超时设置', 'Timeout')}
+      title={t('datasource.timeout', 'Timeout')}
       description={t(
         `请求超时时间 (${MIN_TIMEOUT}-${MAX_TIMEOUT} 秒)`,
         `Request timeout (${MIN_TIMEOUT}-${MAX_TIMEOUT} seconds)`
@@ -61,7 +61,7 @@ export const TimeoutSection: React.FC<TimeoutSectionProps> = ({
             )}
           />
           <span className="text-sm text-muted-foreground">
-            {t('秒', 'seconds')}
+            {t('common.seconds', 'seconds')}
           </span>
         </div>
         {!isValid && (

@@ -10,8 +10,8 @@ export const metadata = {
         zh: {
             'widget.switch.name': '开关',
             'widget.switch.value': '当前状态',
-            'widget.switch.activeColor': '开启颜色',
-            'widget.switch.inactiveColor': '关闭颜色'
+            'widget.switch.activeColor': 'props.activeColor',
+            'widget.switch.inactiveColor': 'props.inactiveColor'
         },
         en: {
             'widget.switch.name': 'Switch',

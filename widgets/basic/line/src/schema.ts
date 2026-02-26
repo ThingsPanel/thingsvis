@@ -14,7 +14,7 @@ export const PropsSchema = z.object({
   kind: z
     .enum(['polyline', 'straight', 'curve', 'mind'])
     .default('straight')
-    .describe('线型'),
+    .describe('props.lineStyle'),
 
   /** 路径点（支持 0..1 的归一化坐标；或直接使用像素） */
   points: z
@@ -30,66 +30,66 @@ export const PropsSchema = z.object({
   // =========================
 
   renderStyle: z.enum(['line', 'pipe']).default('line').describe('风格'),
-  stroke: z.string().default('#000000').describe('颜色'),
+  stroke: z.string().default('#000000').describe('props.color'),
   // Manual width in px. (Backward compatible: old saved values may still be 'thin'|'medium'|'thick'.)
-  strokeWidth: z.number().min(1).max(50).default(4).describe('粗细'),
-  strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid').describe('线型'),
-  opacity: z.number().min(0).max(1).default(1).describe('透明度'),
-  lineCap: z.enum(['butt', 'round', 'square']).default('round').describe('端点样式'),
-  borderWidth: z.number().min(0).max(20).default(0).describe('外框宽度(px)'),
-  borderColor: z.string().default('#ffffff').describe('外框颜色'),
+  strokeWidth: z.number().min(1).max(50).default(4).describe('props.thickness'),
+  strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid').describe('props.lineStyle'),
+  opacity: z.number().min(0).max(1).default(1).describe('props.opacityAlias'),
+  lineCap: z.enum(['butt', 'round', 'square']).default('round').describe('props.lineCap'),
+  borderWidth: z.number().min(0).max(20).default(0).describe('props.borderWidthPx'),
+  borderColor: z.string().default('#ffffff').describe('props.borderColorAlias'),
 
   // =========================
   // Sloppiness (Hand-drawn style)
   // =========================
 
-  sloppiness: z.enum(['none', 'low', 'high']).default('none').describe('粗糙度'),
+  sloppiness: z.enum(['none', 'low', 'high']).default('none').describe('props.roughness'),
 
   // =========================
   // Arrow
   // =========================
 
   /** 线条类型：直线、曲线、折线 */
-  arrowType: z.enum(['straight', 'curved', 'elbow']).default('straight').describe('箭头类型'),
+  arrowType: z.enum(['straight', 'curved', 'elbow']).default('straight').describe('props.arrowType'),
 
   /** 起点箭头样式 */
-  arrowStart: z.enum(['none', 'arrow']).default('none').describe('起点箭头'),
+  arrowStart: z.enum(['none', 'arrow']).default('none').describe('props.startArrow'),
 
   /** 终点箭头样式 */
-  arrowEnd: z.enum(['none', 'arrow']).default('arrow').describe('终点箭头'),
+  arrowEnd: z.enum(['none', 'arrow']).default('arrow').describe('props.endArrow'),
 
-  arrowSize: z.number().min(4).max(40).default(12).describe('大小'),
+  arrowSize: z.number().min(4).max(40).default(12).describe('props.size'),
 
   // =========================
   // Pipe Style (管道样式)
   // =========================
 
   /** 管道背景色（仅管道模式生效） */
-  pipeBackground: z.string().default('#000000').describe('管道背景'),
+  pipeBackground: z.string().default('#000000').describe('props.pipeBg'),
 
   // =========================
   // Flow (Animation)
   // =========================
 
-  flowEnabled: z.boolean().default(false).describe('启用流动'),
-  flowSpeed: z.number().min(0).max(1000).default(120).describe('速度(px/s)'),
-  flowSpacing: z.number().min(2).max(200).default(16).describe('间距(px)'),
-  flowLength: z.number().min(1).max(100).default(8).describe('流动长度(px)'),
+  flowEnabled: z.boolean().default(false).describe('props.enableFlow'),
+  flowSpeed: z.number().min(0).max(1000).default(120).describe('props.speedPxS'),
+  flowSpacing: z.number().min(2).max(200).default(16).describe('props.spacingPx'),
+  flowLength: z.number().min(1).max(100).default(8).describe('props.flowLengthPx'),
   /** 流动颜色，默认黑色 */
-  flowColor: z.string().default('#000000').describe('流动颜色'),
+  flowColor: z.string().default('#000000').describe('props.flowColor'),
 
   // =========================
   // Node Binding (节点连接)
   // =========================
 
   /** 起点绑定的节点 ID */
-  sourceNodeId: z.string().optional().describe('起点节点'),
+  sourceNodeId: z.string().optional().describe('props.sourceNode'),
   /** 起点在节点上的位置 (0-1) */
-  sourceAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('起点锚点'),
+  sourceAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('props.sourceAnchor'),
   /** 终点绑定的节点 ID */
-  targetNodeId: z.string().optional().describe('终点节点'),
+  targetNodeId: z.string().optional().describe('props.targetNode'),
   /** 终点在节点上的位置 */
-  targetAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('终点锚点'),
+  targetAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional().describe('props.targetAnchor'),
 
   // =========================
   // Legacy (backward compatibility)

@@ -51,7 +51,7 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
         },
         // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
         dataset: Array.isArray(data) && data.length > 0 ? {
-            dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || '数值' }],
+            dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || 'props.value' }],
             source: data
         } : undefined,
         xAxis: {

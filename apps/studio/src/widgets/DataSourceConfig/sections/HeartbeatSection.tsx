@@ -40,7 +40,7 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
 
   return (
     <FormSection
-      title={t('心跳保活', 'Heartbeat')}
+      title={t('datasource.heartbeat', 'Heartbeat')}
       description={t(
         heartbeat.enabled ? '心跳已启用' : '定期发送消息保持连接',
         heartbeat.enabled ? 'Heartbeat enabled' : 'Send periodic messages to keep connection alive'
@@ -50,7 +50,7 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
       <div className="space-y-4">
         {/* Enabled Toggle */}
         <div className="flex items-center justify-between">
-          <Label>{t('启用心跳', 'Enable Heartbeat')}</Label>
+          <Label>{t('datasource.enableHeartbeat', 'Enable Heartbeat')}</Label>
           <button
             type="button"
             onClick={() => handleChange('enabled', !heartbeat.enabled)}
@@ -72,7 +72,7 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
           <>
             {/* Interval */}
             <div className="space-y-2">
-              <Label>{t('发送间隔', 'Interval')}</Label>
+              <Label>{t('common.interval', 'Interval')}</Label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
@@ -85,7 +85,7 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
                     !isIntervalValid && 'border-destructive'
                   )}
                 />
-                <span className="text-sm text-muted-foreground">{t('秒', 'seconds')}</span>
+                <span className="text-sm text-muted-foreground">{t('common.seconds', 'seconds')}</span>
               </div>
               {!isIntervalValid && (
                 <p className="text-sm text-destructive">
@@ -99,11 +99,11 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({
 
             {/* Message */}
             <div className="space-y-2">
-              <Label>{t('心跳消息', 'Heartbeat Message')}</Label>
+              <Label>{t('datasource.heartbeatMessage', 'Heartbeat Message')}</Label>
               <Input
                 value={heartbeat.message}
                 onChange={(e) => handleChange('message', e.target.value)}
-                placeholder={t('例如: ping 或 {"type":"ping"}', 'e.g., ping or {"type":"ping"}')}
+                placeholder={t('datasource.pingExample', 'e.g., ping or {"type":"ping"}')}
                 className="h-8 text-sm font-mono"
               />
               <p className="text-xs text-muted-foreground">

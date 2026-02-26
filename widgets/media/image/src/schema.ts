@@ -17,7 +17,7 @@ export const PropsSchema = z.object({
   // ========================================
   
   /** 透明度 */
-  opacity: z.number().min(0).max(1).default(1).describe('透明度'),
+  opacity: z.number().min(0).max(1).default(1).describe('props.opacityAlias'),
   
   /** 对象填充方式 */
   objectFit: z.enum(['contain', 'cover', 'fill', 'none']).default('fill').describe('填充方式'),
@@ -26,7 +26,7 @@ export const PropsSchema = z.object({
   cornerRadius: z.number().min(0).max(100).default(0).describe('圆角半径'),
   
   /** 边框颜色 */
-  borderColor: z.string().default('transparent').describe('边框颜色'),
+  borderColor: z.string().default('transparent').describe('props.borderColor'),
   
   /** 边框宽度 */
   borderWidth: z.number().min(0).max(20).default(0).describe('边框宽度'),

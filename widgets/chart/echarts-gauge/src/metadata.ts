@@ -9,10 +9,10 @@ export const metadata = {
     locales: {
         zh: {
             'widget.echarts-gauge.name': '仪表盘',
-            'widget.echarts-gauge.title': '图表标题',
-            'widget.echarts-gauge.primaryColor': '主色调',
-            'widget.echarts-gauge.data': '数据集',
-            'widget.echarts-gauge.max': '最大值'
+            'widget.echarts-gauge.title': 'props.chartTitle',
+            'widget.echarts-gauge.primaryColor': 'props.primaryColor',
+            'widget.echarts-gauge.data': 'props.dataset',
+            'widget.echarts-gauge.max': 'props.max'
         },
         en: {
             'widget.echarts-gauge.name': 'Gauge Chart',

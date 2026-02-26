@@ -362,8 +362,8 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
     return (
       <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
         <Layers className="h-8 w-8 mb-2 opacity-50" />
-        <p className="text-sm">{t('暂无图层', 'No layers')}</p>
-        <p className="text-xs mt-1">{t('添加组件到画布以查看图层', 'Add components to see layers')}</p>
+        <p className="text-sm">{t('layersPanel.empty', 'No layers')}</p>
+        <p className="text-xs mt-1">{t('layersPanel.addHint', 'Add components to see layers')}</p>
       </div>
     );
   }
@@ -435,7 +435,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
           <button
             onClick={(e) => handleToggleVisible(item.id, e)}
             className="p-1 hover:bg-muted rounded"
-            title={item.visible ? t('隐藏', 'Hide') : t('显示', 'Show')}
+            title={item.visible ? t('common.hide', 'Hide') : t('common.show', 'Show')}
           >
             {item.visible ? (
               <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -446,7 +446,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
           <button
             onClick={(e) => handleToggleLock(item.id, e)}
             className="p-1 hover:bg-muted rounded"
-            title={item.locked ? t('解锁', 'Unlock') : t('锁定', 'Lock')}
+            title={item.locked ? t('common.unlock', 'Unlock') : t('common.lock', 'Lock')}
           >
             {item.locked ? (
               <Lock className="h-3.5 w-3.5 text-primary" />
@@ -468,25 +468,25 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => handleBringToFront([item.id])}>
                 <ChevronsUp className="h-4 w-4 mr-2" />
-                {t('置于顶层', 'Bring to Front')}
+                {t('layersPanel.bringToFront', 'Bring to Front')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleBringForward([item.id])}>
                 <ArrowUp className="h-4 w-4 mr-2" />
-                {t('上移一层', 'Bring Forward')}
+                {t('layersPanel.bringForward', 'Bring Forward')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSendBackward([item.id])}>
                 <ArrowDown className="h-4 w-4 mr-2" />
-                {t('下移一层', 'Send Backward')}
+                {t('layersPanel.sendBackward', 'Send Backward')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleSendToBack([item.id])}>
                 <ChevronsDown className="h-4 w-4 mr-2" />
-                {t('置于底层', 'Send to Back')}
+                {t('layersPanel.sendToBack', 'Send to Back')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               {selectedIds.length > 1 && (
                 <DropdownMenuItem onClick={handleCreateGroup}>
                   <FolderPlus className="h-4 w-4 mr-2" />
-                  {t('成组', 'Group')}
+                  {t('layersPanel.group', 'Group')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -495,7 +495,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                {t('删除', 'Delete')}
+                {t('common.delete', 'Delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -575,7 +575,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <button
               onClick={(e) => handleToggleGroupVisible(group.id, e)}
               className="p-1 hover:bg-muted rounded"
-              title={group.visible ? t('隐藏组', 'Hide Group') : t('显示组', 'Show Group')}
+              title={group.visible ? t('layersPanel.hideGroup', 'Hide Group') : t('layersPanel.showGroup', 'Show Group')}
             >
               {group.visible ? (
                 <Eye className="h-3.5 w-3.5 text-muted-foreground" />
@@ -586,7 +586,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
             <button
               onClick={(e) => handleToggleGroupLock(group.id, e)}
               className="p-1 hover:bg-muted rounded"
-              title={group.locked ? t('解锁组', 'Unlock Group') : t('锁定组', 'Lock Group')}
+              title={group.locked ? t('layersPanel.unlockGroup', 'Unlock Group') : t('layersPanel.lockGroup', 'Lock Group')}
             >
               {group.locked ? (
                 <Lock className="h-3.5 w-3.5 text-primary" />
@@ -608,16 +608,16 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem onClick={() => handleBringToFront(group.members.map((m) => m.id))}>
                   <ChevronsUp className="h-4 w-4 mr-2" />
-                  {t('置于顶层', 'Bring to Front')}
+                  {t('layersPanel.bringToFront', 'Bring to Front')}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleSendToBack(group.members.map((m) => m.id))}>
                   <ChevronsDown className="h-4 w-4 mr-2" />
-                  {t('置于底层', 'Send to Back')}
+                  {t('layersPanel.sendToBack', 'Send to Back')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => handleUngroup(group.id)}>
                   <Ungroup className="h-4 w-4 mr-2" />
-                  {t('取消成组', 'Ungroup')}
+                  {t('layersPanel.ungroup', 'Ungroup')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
@@ -625,7 +625,7 @@ export default function LayerPanel({ storesearchQuery = '', onUserEdit }: LayerP
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  {t('删除组', 'Delete Group')}
+                  {t('layersPanel.deleteGroup', 'Delete Group')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

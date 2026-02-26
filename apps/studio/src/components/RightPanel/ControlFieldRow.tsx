@@ -121,11 +121,11 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
   const modeLabel = (m: BindingMode) => {
     switch (m) {
       case 'static':
-        return t('静态', 'static');
+        return t('binding.static', 'static');
       case 'field':
-        return t('字段', 'field');
+        return t('binding.field', 'field');
       case 'expr':
-        return t('表达式', 'expr');
+        return t('binding.expression', 'expr');
       default:
         return m;
     }
@@ -197,7 +197,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               <button
                 type="button"
                 onClick={() => setStatic('transparent')}
-                title={t('透明', 'Transparent')}
+                title={t('common.transparent', 'Transparent')}
                 className={`w-6 h-6 rounded-sm border flex-shrink-0 ${propsValue === 'transparent'
                   ? 'ring-2 ring-ring ring-offset-1'
                   : 'border-input'
@@ -219,7 +219,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               <Input
                 value={typeof propsValue === 'string' ? propsValue : ''}
                 onChange={(e) => setStatic(e.target.value)}
-                placeholder={t('透明 / #hex / rgba()', 'transparent / #hex / rgba()')}
+                placeholder={t('common.transparentInput', 'transparent / #hex / rgba()')}
                 className="h-8 flex-1 text-sm font-mono"
               />
             </div>
@@ -241,7 +241,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               onChange={(e) => setStatic(e.target.value)}
               className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
             >
-              <option value="">{t('(请选择)', '(select)')}</option>
+              <option value="">{t('common.pleaseSelect', '(select)')}</option>
               {field.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {t(opt.label, { defaultValue: opt.label })}
@@ -260,7 +260,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                 className="w-4 h-4 rounded border-input"
               />
               <span className="text-sm text-muted-foreground">
-                {propsValue ? t('开启', 'On') : t('关闭', 'Off')}
+                {propsValue ? t('common.on', 'On') : t('common.off', 'Off')}
               </span>
             </label>
           )}
@@ -376,7 +376,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
           />
           {!exprIsValid && (
             <p className="text-xs text-destructive">
-              {t('表达式必须使用 {{ }} 包裹。', 'Expression must be wrapped in {{ }}.')}
+              {t('binding.exprTip', 'Expression must be wrapped in {{ }}.')}
             </p>
           )}
         </>
@@ -384,7 +384,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
 
       {showOverriddenHint && (
         <p className="text-xs text-muted-foreground italic">
-          {t('静态值已被绑定覆盖。', 'Static value is overridden by binding.')}
+          {t('binding.overridden', 'Static value is overridden by binding.')}
         </p>
       )}
     </div>
@@ -430,7 +430,7 @@ function NodeSelector({
       onChange={(e) => onChange(e.target.value)}
       className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
     >
-      <option value="">{t('(无连接)', '(none)')}</option>
+      <option value="">{t('binding.noConnection', '(none)')}</option>
       {nodeOptions.map((node) => (
         <option key={node.id} value={node.id}>
           {node.label}

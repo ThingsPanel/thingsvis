@@ -50,7 +50,7 @@ export function ImageUploader({
       setImageUrl(url);
       onUpload?.(url);
     } catch (err) {
-      setError(err instanceof Error ? err.message : '上传失败');
+      setError(err instanceof Error ? err.message : 'upload.failed');
     } finally {
       setIsUploading(false);
     }
@@ -91,7 +91,7 @@ export function ImageUploader({
           <div className="flex flex-col items-center justify-center pt-5 pb-6">
             <Upload className="w-8 h-8 mb-2 text-gray-400" />
             <p className="text-sm text-gray-500">
-              {isUploading ? '上传中...' : '点击上传图片'}
+              {isUploading ? 'upload.uploading' : 'upload.clickToUpload'}
             </p>
           </div>
           <input

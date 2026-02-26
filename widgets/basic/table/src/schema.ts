@@ -16,7 +16,7 @@ export const PropsSchema = z.object({
     ]).describe('表格数据'),
 
     /** 表头背景色 */
-    headerBg: z.string().default('#f3f4f6').describe('表头背景色'),
+    headerBg: z.string().default('#f3f4f6').describe('props.headerBgColor'),
 
     /** 表头文字颜色 */
     headerColor: z.string().default('#374151').describe('表头文字颜色'),
@@ -28,7 +28,7 @@ export const PropsSchema = z.object({
     rowColor: z.string().default('#1f2937').describe('行文字颜色'),
 
     /** 边框颜色 */
-    borderColor: z.string().default('#e5e7eb').describe('边框颜色'),
+    borderColor: z.string().default('#e5e7eb').describe('props.borderColor'),
 
     /** 文字大小 */
     fontSize: z.number().default(14).describe('文字大小(px)'),

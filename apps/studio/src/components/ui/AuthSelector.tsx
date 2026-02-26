@@ -32,7 +32,7 @@ const AUTH_TYPES = [
 ] as const;
 
 const API_KEY_LOCATIONS = [
-  { value: 'header', label: '请求头' },
+  { value: 'header', label: 'datasource.headers' },
   { value: 'query', label: '查询参数' },
 ] as const;
 
