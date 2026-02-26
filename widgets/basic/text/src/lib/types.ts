@@ -230,9 +230,7 @@ export function generateControls(
       if (fields.length > 0) {
         groups.push({
           id: groupId,
-          label: groupId === 'Content' ? '内容' : 
-                 groupId === 'Style' ? '样式' : 
-                 groupId === 'Data' ? '数据' : '高级',
+          label: groupId,
           fields,
         });
       }
