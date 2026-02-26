@@ -252,8 +252,15 @@ export class VisualEngine {
     if (this.opts.editable === editable) return;
     this.opts.editable = editable;
 
-    // We only update the opts flag. DOM pointer events are handled by proxy-layer
-    // in CanvasView, which blocks interactions effectively when panning.
+    // Need to explicitly lock down all underlying Leafer objects
+    // because proxy-layer pointerEvents="none" means events PASS THROUGH
+    // to the VisualEngine layer below, triggering component dragging.
+    const cursor = editable ? 'pointer' : 'default';
+    for (const entry of this.instanceMap.values()) {
+      if (entry.instance && typeof entry.instance.set === 'function') {
+        entry.instance.set({ draggable: editable, cursor });
+      }
+    }
   }
 
   unmount() {
