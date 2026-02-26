@@ -187,6 +187,10 @@
     "Content": "Content",
     "Style": "Style",
     "Data": "Data",
+    "Font": "Font",
+    "Layout": "Layout",
+    "Shadow": "Shadow",
+    "Advanced": "Advanced",
     "layersPanel": {
         "empty": "No layers",
         "addHint": "Add components to see layers",

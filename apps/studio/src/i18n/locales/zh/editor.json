@@ -187,6 +187,10 @@
     "Content": "内容",
     "Style": "样式",
     "Data": "数据",
+    "Font": "字体",
+    "Layout": "排版",
+    "Shadow": "阴影",
+    "Advanced": "高级",
     "layersPanel": {
         "empty": "暂无图层",
         "addHint": "添加组件到画布以查看图层",

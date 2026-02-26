@@ -58,7 +58,8 @@
       "label_55": "Offset X",
       "label_56": "Offset Y",
       "label_57": "Shadow",
-      "label_58": "Padding"
+      "label_58": "Padding",
+      "label_59": "Enter text (supports line breaks)"
     }
   }
 }

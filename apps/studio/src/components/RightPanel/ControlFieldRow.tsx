@@ -168,7 +168,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(e) => setStatic(e.target.value)}
               className="h-8 text-sm"
-              placeholder={field.placeholder}
+              placeholder={field.placeholder ? t(field.placeholder, { defaultValue: field.placeholder }) : undefined}
             />
           )}
 
@@ -177,7 +177,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               value={typeof propsValue === 'string' ? propsValue : ''}
               onChange={(e) => setStatic(e.target.value)}
               className="w-full h-20 p-2 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none resize-y"
-              placeholder={field.placeholder}
+              placeholder={field.placeholder ? t(field.placeholder, { defaultValue: field.placeholder }) : undefined}
             />
           )}
 

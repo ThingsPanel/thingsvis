@@ -14,7 +14,7 @@ export const controls = createControlPanel()
     builder.addCustom('text', 'textarea', {
       label: 'widgets.thingsvis-widget-basic-text.label_1',
       binding: true,
-      placeholder: '请输入文本（支持换行）',
+      placeholder: 'widgets.thingsvis-widget-basic-text.label_59',
     });
   })
 
