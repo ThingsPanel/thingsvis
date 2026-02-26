@@ -1,0 +1,112 @@
+/* LoadingScreen.css */
+
+.loading-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0a0a0f 0%, #111118 100%);
+  gap: 40px;
+  z-index: 9999;
+}
+
+.logo-container {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  perspective: 600px;
+}
+
+/* 波浪层 - 核心动画 */
+.wave-layer {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  left: 50%;
+  transform: translateX(-50%) rotateX(60deg) rotateZ(45deg);
+  border-radius: 10px;
+  box-shadow: 
+    0 4px 20px rgba(105, 101, 219, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.wave-layer-1 {
+  top: 0;
+  background: linear-gradient(135deg, #b8b4f8, #8b87e0);
+  animation: wave 1.8s ease-in-out infinite;
+  z-index: 3;
+}
+
+.wave-layer-2 {
+  top: 20px;
+  background: linear-gradient(135deg, #8b87e0, #6e6ad0);
+  animation: wave 1.8s ease-in-out infinite;
+  animation-delay: 0.15s;
+  z-index: 2;
+}
+
+.wave-layer-3 {
+  top: 40px;
+  background: linear-gradient(135deg, #6e6ad0, #6965db);
+  animation: wave 1.8s ease-in-out infinite;
+  animation-delay: 0.3s;
+  z-index: 1;
+}
+
+@keyframes wave {
+  0%, 100% { 
+    transform: translateX(-50%) translateY(0) rotateX(60deg) rotateZ(45deg);
+    opacity: 0.85;
+  }
+  50% { 
+    transform: translateX(-50%) translateY(-18px) rotateX(60deg) rotateZ(45deg);
+    opacity: 1;
+    box-shadow: 0 12px 40px rgba(105, 101, 219, 0.5);
+  }
+}
+
+.brand-name {
+  font-size: 28px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 3px;
+}
+
+.progress-wrapper {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progress-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6965db, #a8a4f0, #6965db);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  transition: width 0.15s ease-out;
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.status-text { color: rgba(255, 255, 255, 0.5); }
+.progress-percent { color: #a8a4f0; font-weight: 500; }

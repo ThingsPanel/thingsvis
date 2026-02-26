@@ -1,6 +1,13 @@
 {
   "appName": "ThingsVis",
   "loading": "Loading...",
+  "loadingScreen": {
+    "starting": "Starting...",
+    "initEngine": "Initializing visualization engine...",
+    "loadingComponents": "Loading component library...",
+    "ready": "Getting ready...",
+    "completed": "Loading completed"
+  },
   "save": "Save",
   "cancel": "Cancel",
   "confirm": "Confirm",

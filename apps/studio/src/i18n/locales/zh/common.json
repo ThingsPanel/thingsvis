@@ -1,6 +1,13 @@
 {
   "appName": "ThingsVis",
   "loading": "加载中...",
+  "loadingScreen": {
+    "starting": "正在启动...",
+    "initEngine": "初始化可视化引擎...",
+    "loadingComponents": "加载组件库...",
+    "ready": "准备就绪...",
+    "completed": "加载完成"
+  },
   "save": "保存",
   "cancel": "取消",
   "confirm": "确认",
