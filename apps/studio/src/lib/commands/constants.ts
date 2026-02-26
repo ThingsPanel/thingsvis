@@ -93,13 +93,5 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
 } as const
 
 // =============================================================================
-// Category Labels
+// Removed Category Labels (handled by i18n directly)
 // =============================================================================
-
-export const CATEGORY_LABELS = {
-  tool: { en: 'Tools', zh: '工具' },
-  edit: { en: 'Edit', zh: '编辑' },
-  view: { en: 'View', zh: '视图' },
-  project: { en: 'Project', zh: '项目' },
-  help: { en: 'Help', zh: '帮助' },
-} as const

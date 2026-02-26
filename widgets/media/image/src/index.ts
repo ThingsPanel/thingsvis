@@ -9,6 +9,9 @@ import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
+import zh from './locales/zh.json';
+import en from './locales/en.json';
+
 
 /**
  * 创建透明占位 Rect（用于 Leafer 层选择交互）

@@ -10,6 +10,9 @@ import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import type { WidgetMainModule } from '@thingsvis/schema';
 
+import zh from './locales/zh.json';
+import en from './locales/en.json';
+
 /**
  * 创建组件渲染实例
  */
@@ -42,6 +45,10 @@ export const Main: WidgetMainModule = {
   controls,
   create,
   update,
+  locales: {
+    zh,
+    en
+  }
 };
 
 export default Main;

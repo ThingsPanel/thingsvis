@@ -9,6 +9,7 @@ ThingsVis: A dynamic widget visualization platform. Custom Widget SDK (`@thingsv
 
 ## Current State
 `TASK-06 (缺失组件补齐)` 已完成所有的必选 P1 组件。
+`TASK-11 (国际化i18n多语言)` 正在进行，Phase 1 的所有编辑器旧模式 (`labelZh`) 已清理完毕。准备进军 Widget 部分及 `vis-cli`。
 
 ## Known Issues / Risks
 - 目前缺少集成测试及真实验证环境下的渲染测试。

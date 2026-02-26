@@ -56,12 +56,12 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 // Match v0code top-level accordion keys/labels exactly
 const CATEGORY_DEFS = [
-  { key: "basic", labelZh: "基础组件", labelEn: "Basic", Icon: Box },
-  { key: "charts", labelZh: "图表组件", labelEn: "Charts", Icon: BarChart3 },
-  { key: "media", labelZh: "媒体展示", labelEn: "Media", Icon: Film },
-  { key: "resources", labelZh: "资源组件", labelEn: "Resources", Icon: Folder },
-  { key: "geo", labelZh: "地理信息", labelEn: "Geo", Icon: Globe },
-  { key: "custom", labelZh: "自定义", labelEn: "Custom", Icon: Sparkles },
+  { key: "basic", Icon: Box },
+  { key: "charts", Icon: BarChart3 },
+  { key: "media", Icon: Film },
+  { key: "resources", Icon: Folder },
+  { key: "geo", Icon: Globe },
+  { key: "custom", Icon: Sparkles },
 ] as const;
 
 import { useTranslation } from "react-i18next";

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-26T02:43:30.309Z",
+  "generatedAt": "2026-02-26T03:27:05.801Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -110,6 +110,16 @@
       "version": "0.1.0",
       "icon": "LineChart",
       "name": "uPlot时序图"
+    },
+    "indicator/number-card": {
+      "remoteName": "deleted_thingsvis_widget_indicator_number_card",
+      "remoteEntryUrl": "http://localhost:3205/remoteEntry.js",
+      "staticEntryUrl": "/widgets/indicator/number-card/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.1.0",
+      "icon": "Hash",
+      "name": "数值卡片"
     },
     "media/iframe": {
       "remoteName": "thingsvis_widget_media_iframe",

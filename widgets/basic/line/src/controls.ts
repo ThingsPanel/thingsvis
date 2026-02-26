@@ -54,68 +54,68 @@ export const controls = generateControls(PropsSchema, {
   },
   overrides: {
     // 颜色选择器
-    stroke: { kind: 'color', label: '颜色' },
-    pipeBackground: { kind: 'color', label: '管道背景' },
-    flowColor: { kind: 'color', label: '流动颜色' },
+    stroke: { kind: 'color', label: 'widgets.thingsvis-widget-basic-line.label_1' },
+    pipeBackground: { kind: 'color', label: 'widgets.thingsvis-widget-basic-line.label_2' },
+    flowColor: { kind: 'color', label: 'widgets.thingsvis-widget-basic-line.label_3' },
 
     // 节点选择器
-    sourceNodeId: { kind: 'nodeSelect', label: '起点节点' },
-    targetNodeId: { kind: 'nodeSelect', label: '终点节点' },
+    sourceNodeId: { kind: 'nodeSelect', label: 'widgets.thingsvis-widget-basic-line.label_4' },
+    targetNodeId: { kind: 'nodeSelect', label: 'widgets.thingsvis-widget-basic-line.label_5' },
 
     // 渲染样式
     renderStyle: {
-      label: '风格',
+      label: 'widgets.thingsvis-widget-basic-line.label_6',
       options: [
-        { label: '线条', value: 'line' },
-        { label: '管道', value: 'pipe' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_7', value: 'line' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_8', value: 'pipe' },
       ],
     },
 
     // 线型
     kind: {
-      label: '路线',
+      label: 'widgets.thingsvis-widget-basic-line.label_9',
       options: [
-        { label: '直线', value: 'straight' },
-        { label: '折线', value: 'polyline' },
-        { label: '曲线', value: 'curve' },
-        { label: '脑图', value: 'mind' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_10', value: 'straight' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_11', value: 'polyline' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_12', value: 'curve' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_13', value: 'mind' },
       ],
     },
 
     // 线条样式
     strokeStyle: {
-      label: '线型',
+      label: 'widgets.thingsvis-widget-basic-line.label_14',
       options: [
-        { label: '实线', value: 'solid' },
-        { label: '虚线', value: 'dashed' },
-        { label: '点线', value: 'dotted' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_15', value: 'solid' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_16', value: 'dashed' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_17', value: 'dotted' },
       ],
     },
 
-    strokeWidth: { label: '粗细' },
-    opacity: { label: '透明度' },
+    strokeWidth: { label: 'widgets.thingsvis-widget-basic-line.label_18' },
+    opacity: { label: 'widgets.thingsvis-widget-basic-line.label_19' },
 
     // 箭头
     arrowStart: {
-      label: '起点箭头',
+      label: 'widgets.thingsvis-widget-basic-line.label_20',
       options: [
-        { label: '无', value: 'none' },
-        { label: '箭头', value: 'arrow' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_21', value: 'none' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_22', value: 'arrow' },
       ],
     },
     arrowEnd: {
-      label: '终点箭头',
+      label: 'widgets.thingsvis-widget-basic-line.label_23',
       options: [
-        { label: '无', value: 'none' },
-        { label: '箭头', value: 'arrow' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_24', value: 'none' },
+        { label: 'widgets.thingsvis-widget-basic-line.label_25', value: 'arrow' },
       ],
     },
-    arrowSize: { label: '箭头大小' },
+    arrowSize: { label: 'widgets.thingsvis-widget-basic-line.label_26' },
 
     // 流动动画
-    flowEnabled: { label: '启用流动' },
-    flowSpeed: { label: '流动速度' },
-    flowSpacing: { label: '流动间距' },
-    flowLength: { label: '流动长度' },
+    flowEnabled: { label: 'widgets.thingsvis-widget-basic-line.label_27' },
+    flowSpeed: { label: 'widgets.thingsvis-widget-basic-line.label_28' },
+    flowSpacing: { label: 'widgets.thingsvis-widget-basic-line.label_29' },
+    flowLength: { label: 'widgets.thingsvis-widget-basic-line.label_30' },
   },
 });

@@ -3,6 +3,9 @@ import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, getStrokeWidthPx, getStrokeDasharray, type Props } from './schema';
 import { controls } from './controls';
 import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance, LinkedNodeInfo } from './lib/types';
+import zh from './locales/zh.json';
+import en from './locales/en.json';
+
 
 type Pt = { x: number; y: number };
 type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
@@ -838,6 +841,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 }
 
 export const Main: WidgetMainModule = {
+  locales: { zh, en },
   ...metadata,
   schema: PropsSchema,
   controls,

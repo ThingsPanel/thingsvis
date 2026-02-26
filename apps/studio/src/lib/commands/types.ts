@@ -20,9 +20,6 @@ export interface Command {
   /** Display label in English */
   label: string
 
-  /** Display label in Chinese (optional) */
-  labelZh?: string
-
   /** Keyboard shortcut, e.g., ['mod', 's'] */
   shortcut?: ShortcutKey[]
 

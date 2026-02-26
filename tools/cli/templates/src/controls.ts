@@ -13,17 +13,17 @@ export const controls = createControlPanel()
   .addGroup('Style', (builder) => {
     builder
       .addColor('fill', {
-        label: '填充颜色',
+        label: 'widgets.{{PACKAGE_NAME}}.fillColor',
         binding: true,
       })
       .addSlider('opacity', {
-        label: '不透明度',
+        label: 'widgets.{{PACKAGE_NAME}}.opacity',
         min: 0,
         max: 1,
         step: 0.01,
         default: 1,
         binding: true,
       });
-  }, { label: '样式' })
+  }, { label: 'widgets.{{PACKAGE_NAME}}.style' })
 
   .build();

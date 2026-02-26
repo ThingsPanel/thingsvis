@@ -7,6 +7,9 @@ import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
+import zh from './locales/zh.json';
+import en from './locales/en.json';
+
 
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
@@ -150,6 +153,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
  * 插件主模块
  */
 export const Main: WidgetMainModule = {
+  locales: { zh, en },
   ...metadata,
   schema: PropsSchema,
   controls,

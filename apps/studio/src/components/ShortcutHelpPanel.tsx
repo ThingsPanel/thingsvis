@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/dialog'
 import { commandRegistry } from '../lib/commands/CommandRegistry'
 import { formatShortcut } from '../lib/commands/shortcutDisplay'
-import { CATEGORY_LABELS } from '../lib/commands/constants'
 import type { Command, CommandCategory } from '../lib/commands/types'
 
 // =============================================================================
@@ -37,8 +36,7 @@ export function ShortcutHelpPanel({
   open,
   onClose,
 }: ShortcutHelpPanelProps) {
-  const { t, i18n } = useTranslation('editor')
-  const language = i18n.language as 'zh' | 'en'
+  const { t } = useTranslation('editor')
 
   // Get all commands grouped by category
   const commandsByCategory = useMemo(() => {
@@ -70,7 +68,7 @@ export function ShortcutHelpPanel({
       <DialogContent className="sm:max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {t('shortcuts.title')}
+            {t('shortcuts.title', { defaultValue: 'Keyboard Shortcuts' })}
           </DialogTitle>
         </DialogHeader>
 
@@ -80,15 +78,12 @@ export function ShortcutHelpPanel({
               key={category}
               category={category}
               commands={commands}
-              language={language}
             />
           ))}
         </div>
 
         <div className="mt-4 pt-4 border-t text-sm text-muted-foreground text-center">
-          {language === 'zh'
-            ? '按 ? 或 Esc 关闭此面板'
-            : 'Press ? or Esc to close this panel'}
+          {t('shortcuts.closeHint', { defaultValue: 'Press ? or Esc to close this panel' })}
         </div>
       </DialogContent>
     </Dialog>
@@ -104,19 +99,17 @@ interface ShortcutCategoryProps {
   commands: Command[]
 }
 
-function ShortcutCategory({ category, commands}: ShortcutCategoryProps) {
-  const label = language === 'zh'
-    ? CATEGORY_LABELS[category]?.zh
-    : CATEGORY_LABELS[category]?.en
+function ShortcutCategory({ category, commands }: ShortcutCategoryProps) {
+  const { t } = useTranslation('editor')
 
   return (
     <div>
       <h3 className="text-sm font-semibold mb-2 text-foreground">
-        {label || category}
+        {t(`shortcuts.categories.${category}`, { defaultValue: category })}
       </h3>
       <div className="space-y-1">
         {commands.map((command) => (
-          <ShortcutRow key={command.id} command={command} language={language} />
+          <ShortcutRow key={command.id} command={command} />
         ))}
       </div>
     </div>
@@ -131,10 +124,9 @@ interface ShortcutRowProps {
   command: Command
 }
 
-function ShortcutRow({ command}: ShortcutRowProps) {
-  const label = language === 'zh' && command.labelZh
-    ? command.labelZh
-    : command.label
+function ShortcutRow({ command }: ShortcutRowProps) {
+  const { t } = useTranslation('editor')
+  const label = t(`shortcuts.commands.${command.id}`, { defaultValue: command.label })
 
   const shortcutText = command.shortcut
     ? formatShortcut(command.shortcut)

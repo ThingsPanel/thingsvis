@@ -65,6 +65,11 @@ export type WidgetMainModule = {
   icon?: string;
   version?: string;
   /**
+   * i18n resources defined by the widget.
+   * e.g. { zh: { editor: { "widget.my-widget": { text: "..." } } } }
+   */
+  locales?: Record<string, any>;
+  /**
    * Create a Leafer-compatible renderer instance (usually a Leafer UI node).
    * The host is responsible for mounting/updating/destroying it.
    * 

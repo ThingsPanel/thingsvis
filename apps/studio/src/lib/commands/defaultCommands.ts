@@ -105,8 +105,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
       'project',
       async () => {
         await deps.saveProject()
-      },
-      { labelZh: '保存' }
+      }
     )
   )
 
@@ -116,8 +115,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.PROJECT_OPEN,
         'Open',
         'project',
-        () => deps.openProjectDialog!(),
-        { labelZh: '打开' }
+        () => deps.openProjectDialog!()
       )
     )
   }
@@ -128,8 +126,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.PROJECT_EXPORT,
         'Export',
         'project',
-        () => deps.exportProject!(),
-        { labelZh: '导出' }
+        () => deps.exportProject!()
       )
     )
   }
@@ -142,8 +139,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         'project',
         async () => {
           await deps.openPreview!()
-        },
-        { labelZh: '预览' }
+        }
       )
     )
   }
@@ -154,8 +150,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.AUTH_LOGOUT,
         'Logout',
         'project',
-        () => deps.logout!(),
-        { labelZh: '退出登录' }
+        () => deps.logout!()
       )
     )
   }
@@ -170,43 +165,37 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.TOOL_SELECT,
         'Select',
         'tool',
-        () => deps.setTool!('select'),
-        { labelZh: '选择' }
+        () => deps.setTool!('select')
       ),
       createCommand(
         COMMAND_IDS.TOOL_RECTANGLE,
         'Rectangle',
         'tool',
-        () => deps.setTool!('rectangle'),
-        { labelZh: '矩形' }
+        () => deps.setTool!('rectangle')
       ),
       createCommand(
         COMMAND_IDS.TOOL_CIRCLE,
         'Circle',
         'tool',
-        () => deps.setTool!('circle'),
-        { labelZh: '圆形' }
+        () => deps.setTool!('circle')
       ),
       createCommand(
         COMMAND_IDS.TOOL_TEXT,
         'Text',
         'tool',
-        () => deps.setTool!('text'),
-        { labelZh: '文本' }
+        () => deps.setTool!('text')
       ),
       createCommand(
         COMMAND_IDS.TOOL_IMAGE,
         'Image',
         'tool',
-        () => deps.setTool!('image'),
-        { labelZh: '图片' }
+        () => deps.setTool!('image')
       ),
       createCommand(
         COMMAND_IDS.TOOL_PAN,
         'Pan',
         'tool',
-        () => deps.setTool!('pan'),
-        { labelZh: '平移' }
+        () => deps.setTool!('pan')
       )
     )
   }
@@ -221,11 +210,9 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.EDIT_UNDO,
         'Undo',
         'edit',
-        () => deps.undo!(),
-        {
-          labelZh: '撤销',
-          when: deps.canUndo,
-        }
+        () => deps.undo!(), {
+        when: deps.canUndo,
+      }
       )
     )
   }
@@ -236,11 +223,9 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.EDIT_REDO,
         'Redo',
         'edit',
-        () => deps.redo!(),
-        {
-          labelZh: '重做',
-          when: deps.canRedo,
-        }
+        () => deps.redo!(), {
+        when: deps.canRedo,
+      }
       )
     )
   }
@@ -270,8 +255,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
           if (selectedNodes.length > 0) {
             copyNodes(selectedNodes)
           }
-        },
-        { labelZh: '复制' }
+        }
       )
     )
   }
@@ -299,11 +283,9 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
           // Atomic insert + select
           deps.applyNodeInsertAndSelect!(newNodes, newIds)
-        },
-        {
-          labelZh: '粘贴',
-          when: () => hasClipboardContent(),
-        }
+        }, {
+        when: () => hasClipboardContent(),
+      }
       )
     )
   }
@@ -345,14 +327,12 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
           // Atomic insert + select
           deps.applyNodeInsertAndSelect!(newNodes, newIds)
+        }, {
+        when: () => {
+          const state = deps.getKernelState!()
+          return state.selection.nodeIds.length > 0
         },
-        {
-          labelZh: '复制选择',
-          when: () => {
-            const state = deps.getKernelState!()
-            return state.selection.nodeIds.length > 0
-          },
-        }
+      }
       )
     )
   }
@@ -378,17 +358,15 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
           if (deletableIds.length === 0) return
           deps.deleteNodes!(deletableIds)
+        }, {
+        when: () => {
+          const state = deps.getKernelState!()
+          return state.selection.nodeIds.some(id => {
+            const node = state.nodesById[id]
+            return !!node && !node.locked
+          })
         },
-        {
-          labelZh: '删除',
-          when: () => {
-            const state = deps.getKernelState!()
-            return state.selection.nodeIds.some(id => {
-              const node = state.nodesById[id]
-              return !!node && !node.locked
-            })
-          },
-        }
+      }
       )
     )
   }
@@ -403,8 +381,7 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         COMMAND_IDS.HELP_SHORTCUTS,
         'Keyboard Shortcuts',
         'help',
-        () => deps.showShortcutsPanel!(),
-        { labelZh: '键盘快捷键' }
+        () => deps.showShortcutsPanel!()
       )
     )
   }
@@ -429,8 +406,7 @@ export function registerSaveCommand(saveProject: () => Promise<void>): void {
       COMMAND_IDS.PROJECT_SAVE,
       'Save',
       'project',
-      saveProject,
-      { labelZh: '保存' }
+      saveProject
     )
   )
 }

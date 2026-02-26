@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets.{{PACKAGE_NAME}}": {
+            "style": "Style",
+            "fillColor": "Fill Color",
+            "opacity": "Opacity"
+        }
+    }
+}

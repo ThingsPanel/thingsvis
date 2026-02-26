@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets.{{PACKAGE_NAME}}": {
+            "style": "样式",
+            "fillColor": "填充颜色",
+            "opacity": "不透明度"
+        }
+    }
+}
