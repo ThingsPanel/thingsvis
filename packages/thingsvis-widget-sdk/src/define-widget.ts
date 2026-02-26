@@ -53,6 +53,8 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
   version?: string;
   /** Zod Schema 定义属性 */
   schema: z.ZodObject<TProps>;
+  /** 多语言翻译配置 (可选) */
+  locales?: Record<string, Record<string, string>>;
   /** 
    * 控件配置
    * 
@@ -71,13 +73,15 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
    * 
    * @param el - DOM 容器元素
    * @param props - 组件属性
+   * @param ctx - 组件上下文（位置、尺寸、主题等）
    * @returns 生命周期方法
    */
   render: (
     el: HTMLElement,
-    props: z.infer<z.ZodObject<TProps>>
+    props: z.infer<z.ZodObject<TProps>>,
+    ctx: WidgetOverlayContext
   ) => {
-    update?: (props: z.infer<z.ZodObject<TProps>>) => void;
+    update?: (props: z.infer<z.ZodObject<TProps>>, ctx: WidgetOverlayContext) => void;
     destroy?: () => void;
   };
 };
@@ -114,13 +118,13 @@ function normalizeSimpleGroupConfig(
         // { fieldName: { kind: 'color', binding: true } }
         for (const [fieldName, config] of Object.entries(field)) {
           fieldNames.push(fieldName);
-          
+
           // 提取非 binding 的属性作为 override
           const { binding, ...rest } = config;
           if (rest.kind || rest.label || rest.placeholder || rest.description || rest.options) {
             overrides[fieldName] = rest;
           }
-          
+
           if (binding === true || enableAllBindings) {
             bindings[fieldName] = defaultBinding;
           } else if (typeof binding === 'object') {
@@ -188,6 +192,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     version = '1.0.0',
     schema,
     controls: controlsConfig,
+    locales,
     enableAllBindings = false,
     render,
   } = config;
@@ -223,13 +228,13 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     let currentProps = { ...defaultProps, ...(ctx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
 
     // 调用渲染函数
-    const lifecycle = render(element, currentProps);
+    const lifecycle = render(element, currentProps, ctx);
 
     return {
       element,
       update: (newCtx: WidgetOverlayContext) => {
         currentProps = { ...defaultProps, ...(newCtx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
-        lifecycle.update?.(currentProps);
+        lifecycle.update?.(currentProps, newCtx);
       },
       destroy: () => {
         lifecycle.destroy?.();
@@ -245,6 +250,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     version,
     schema,
     controls,
+    locales,
     createOverlay,
   };
 }

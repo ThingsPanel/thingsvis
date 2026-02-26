@@ -1,6 +1,6 @@
 export const metadata = {
     id: 'chart-echarts-gauge',
-    name: '仪表盘',
+    name: 'widget.echarts-gauge.name',
     category: 'chart' as const,
     icon: 'Gauge',
     version: '1.0.0',

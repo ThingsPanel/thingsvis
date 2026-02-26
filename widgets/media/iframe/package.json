@@ -1,15 +1,14 @@
 {
-    "name": "thingsvis-widget-chart-echarts-bar",
-    "version": "0.0.1",
+    "name": "thingsvis-widget-media-iframe",
+    "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "rspack serve --port 3202",
+        "dev": "rspack serve --port 3208",
         "build": "rspack build",
         "typecheck": "tsc -p tsconfig.json --noEmit"
     },
     "dependencies": {
         "@thingsvis/widget-sdk": "workspace:*",
-        "echarts": "^5.5.0",
         "zod": "^3.22.4"
     },
     "peerDependencies": {
@@ -25,7 +24,7 @@
         "@types/react-dom": "^18.2.17"
     },
     "thingsvis": {
-        "displayName": "柱状图",
-        "icon": "BarChart3"
+        "displayName": "网页容器",
+        "icon": "AppWindow"
     }
 }

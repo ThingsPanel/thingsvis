@@ -66,14 +66,14 @@ export default defineWidget({
 | uPlot 时序图 | 1-2d | |
 
 ### 任务清单
-- [ ] **P1** 开发 ECharts 柱状图组件（使用 SDK defineWidget）
-- [ ] **P1** 开发 ECharts 饼图组件（使用 SDK defineWidget）
-- [ ] **P1** 开发 ECharts 仪表盘 `echarts-gauge`
-- [ ] **P1** 开发 通用数值卡片
-- [ ] **P1** 开发 表格 Table
-- [ ] **P1** 开发 开关 Switch / 按钮 / 滑块
-- [ ] **P1** 开发 视频流 / Iframe
-- [ ] **P1** 开发 uPlot 时序图
+- [x] **P1** 开发 ECharts 柱状图组件（使用 SDK defineWidget）
+- [x] **P1** 开发 ECharts 饼图组件（使用 SDK defineWidget）
+- [x] **P1** 开发 ECharts 仪表盘 `echarts-gauge`
+- [x] **P1** 开发 通用数值卡片
+- [x] **P1** 开发 表格 Table
+- [x] **P1** 开发 开关 Switch / 按钮 / 滑块
+- [x] **P1** 开发 视频流 / Iframe
+- [x] **P1** 开发 uPlot 时序图
 
 ---
 

@@ -6,7 +6,7 @@ import * as echarts from 'echarts';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
+
 
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
@@ -53,74 +53,66 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
     };
 }
 
-/**
- * 创建 ECharts Overlay 实例
- */
-function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
-    const element = document.createElement('div');
-    element.style.width = '100%';
-    element.style.height = '100%';
-    element.style.pointerEvents = 'auto';
+import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
-    const defaults = getDefaultProps();
-    let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
-    let isDark = ctx.theme?.isDark ?? false;
-
-    const chart = echarts.init(element);
-    chart.setOption(buildOption(currentProps, isDark, 1));
-
-    const scheduleResize = () => {
-        try {
-            requestAnimationFrame(() => {
-                if (!chart.isDisposed()) {
-                    chart.resize();
-                    const cw = element.clientWidth || 300;
-                    const ch = element.clientHeight || 200;
-                    const minDim = Math.min(cw, ch);
-                    const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-                    chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series'] });
-                }
-            });
-        } catch {
-            if (!chart.isDisposed()) chart.resize();
-        }
-    };
-
-    scheduleResize();
-
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== 'undefined') {
-        ro = new ResizeObserver(() => scheduleResize());
-        ro.observe(element);
-    }
-
-    return {
-        element,
-        update: (newCtx: WidgetOverlayContext) => {
-            currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
-            isDark = newCtx.theme?.isDark ?? false;
-
-            chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series'] });
-
-            if (newCtx.size) {
-                scheduleResize();
-            }
-        },
-        destroy: () => {
-            ro?.disconnect();
-            chart.dispose();
-        },
-    };
-}
-
-/**
- * 插件主模块
- */
-export const Main: WidgetMainModule = {
-    ...metadata,
+export const Main = defineWidget({
+    id: metadata.id,
+    name: metadata.name,
+    category: metadata.category,
+    icon: metadata.icon,
+    version: metadata.version,
+    locales: metadata.locales,
     schema: PropsSchema,
     controls,
-    createOverlay,
-};
+    render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
+        let currentProps = props;
+        let isDark = (ctx as any).theme?.isDark ?? false;
+
+        const chart = echarts.init(element);
+        chart.setOption(buildOption(currentProps, isDark, 1));
+
+        const scheduleResize = () => {
+            try {
+                requestAnimationFrame(() => {
+                    if (!chart.isDisposed()) {
+                        chart.resize();
+                        const cw = element.clientWidth || 300;
+                        const ch = element.clientHeight || 200;
+                        const minDim = Math.min(cw, ch);
+                        const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+                        chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series'] });
+                    }
+                });
+            } catch {
+                if (!chart.isDisposed()) chart.resize();
+            }
+        };
+
+        scheduleResize();
+
+        let ro: ResizeObserver | null = null;
+        if (typeof ResizeObserver !== 'undefined') {
+            ro = new ResizeObserver(() => scheduleResize());
+            ro.observe(element);
+        }
+
+        return {
+            update: (newProps: Props, newCtx: WidgetOverlayContext) => {
+                currentProps = newProps;
+                isDark = (newCtx as any).theme?.isDark ?? false;
+
+                chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series'] });
+
+                if (newCtx.size) {
+                    scheduleResize();
+                }
+            },
+            destroy: () => {
+                ro?.disconnect();
+                chart.dispose();
+            },
+        };
+    }
+});
 
 export default Main;
