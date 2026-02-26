@@ -6,6 +6,12 @@
 
 import type { z } from 'zod';
 
+/**
+ * i18n label 类型：可以是字符串或多语言 map
+ * 与 @thingsvis/schema 中的 I18nLabel 保持结构兼容
+ */
+export type I18nLabel = string | Record<string, string>;
+
 // ============================================================================
 // 绑定模式
 // ============================================================================
@@ -70,7 +76,7 @@ export type ControlKind =
 
 /** 下拉选项 */
 export type ControlOption = {
-  label: string;
+  label: I18nLabel;
   value: string | number;
   /** Lucide 图标名称（用于 segmented 等控件） */
   icon?: string;
@@ -84,8 +90,8 @@ export type ControlOption = {
 export type ControlField = {
   /** 属性路径（映射到 props 的 key） */
   path: string;
-  /** 显示标签 */
-  label: string;
+  /** 显示标签（支持字符串 i18n key 或 { en, zh, ... } 多语言 map） */
+  label: I18nLabel;
   /** 控件类型 */
   kind: ControlKind;
   /** 下拉选项（select/multiSelect/radio/segmented 使用） */
@@ -121,7 +127,7 @@ export type ControlGroupId = 'Content' | 'Style' | 'Data' | 'Advanced';
 /** 控件分组 */
 export type ControlGroup = {
   id: ControlGroupId | string;
-  label?: string;
+  label?: I18nLabel;
   /** 是否默认展开 */
   expanded?: boolean;
   fields: ControlField[];

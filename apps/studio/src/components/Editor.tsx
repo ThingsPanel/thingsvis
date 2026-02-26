@@ -58,6 +58,14 @@ import PropsPanel from './RightPanel/PropsPanel'
 
 import { ShortcutHelpPanel } from './ShortcutHelpPanel'
 import { ProjectDialog } from './ProjectDialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 // Data source management moved to separate page: #/data-sources
 import { loadWidget } from '../widgets/widgetResolver'
 import { extractDefaults } from '../widgets/schemaUtils'
@@ -181,9 +189,22 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [showProjectDialog, setShowProjectDialog] = useState(false)
   // 跟踪云端模式下是否已选择画布（用于阻止用户在未选择画布时关闭对话框）
-  const [hasSelectedDashboard, setHasSelectedDashboard] = useState(false)
+  // 惰性初始化：如果 localStorage 已有上次打开的项目 ID，视为已选择过，刷新后不再强制弹窗
+  const [hasSelectedDashboard, setHasSelectedDashboard] = useState(() => {
+    try {
+      return !!localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY)
+    } catch {
+      return false
+    }
+  })
   // Image picker state for image tool (stores Object URL)
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined)
+  // 切换画布布局确认弹窗状态（替代原生 window.confirm）
+  const [confirmLayoutSwitch, setConfirmLayoutSwitch] = useState<{
+    open: boolean
+    newMode: 'fixed' | 'infinite' | 'grid'
+    onConfirm: () => void
+  }>({ open: false, newMode: 'fixed', onConfirm: () => { } })
 
   const handleLogout = useCallback(() => {
     logout()
@@ -1330,20 +1351,27 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onConfigChange={setCanvasConfig}
                   onLayoutModeChange={(newMode: 'fixed' | 'infinite' | 'grid') => {
                     const hasNodes = Object.keys(store.getState().nodesById).length > 0;
-                    const shouldProceed = embedVisibility.isEmbedded ? true : !hasNodes || window.confirm(
-                      t('alerts.switchLayoutConfirm')
-                    );
-                    if (!shouldProceed) return false;
-                    if (hasNodes) {
-                      store.getState().loadPage({
-                        id: canvasConfig.id,
-                        type: 'page' as const,
-                        version: '1.0.0',
-                        nodes: [],
-                        config: { mode: newMode, width: canvasConfig.width, height: canvasConfig.height, theme: canvasConfig.theme },
-                      });
-                      markDirty();
+                    // 嵌入模式或画布为空：直接切换，无需确认
+                    if (embedVisibility.isEmbedded || !hasNodes) {
+                      setCanvasConfig(prev => ({ ...prev, mode: newMode }))
+                      return true;
                     }
+                    // 有节点时：打开自定义确认弹窗，替代原生 window.confirm
+                    setConfirmLayoutSwitch({
+                      open: true,
+                      newMode,
+                      onConfirm: () => {
+                        store.getState().loadPage({
+                          id: canvasConfig.id,
+                          type: 'page' as const,
+                          version: '1.0.0',
+                          nodes: [],
+                          config: { mode: newMode, width: canvasConfig.width, height: canvasConfig.height, theme: canvasConfig.theme },
+                        });
+                        setCanvasConfig(prev => ({ ...prev, mode: newMode }))
+                        markDirty();
+                      },
+                    })
                     return true;
                   }}
                   onClearCanvas={() => { }}
@@ -1361,6 +1389,38 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         open={showShortcuts}
         onClose={() => setShowShortcuts(false)}
       />
+
+      {/* 切换布局模式确认弹窗（替代原生 window.confirm） */}
+      <Dialog
+        open={confirmLayoutSwitch.open}
+        onOpenChange={(open) => setConfirmLayoutSwitch(prev => ({ ...prev, open }))}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{t('alerts.switchLayoutTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('alerts.switchLayoutConfirm')}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmLayoutSwitch(prev => ({ ...prev, open: false }))}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                confirmLayoutSwitch.onConfirm()
+                setConfirmLayoutSwitch(prev => ({ ...prev, open: false }))
+              }}
+            >
+              {t('common.confirm')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Project Dialog */}
       <ProjectDialog

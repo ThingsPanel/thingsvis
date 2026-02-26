@@ -6,6 +6,18 @@ import { z } from 'zod';
  * IMPORTANT: This file must remain React-free.
  */
 
+/**
+ * i18n label: 可以是简单字符串，也可以是多语言 map
+ * 简单字符串: Studio 会尝试把它当 i18n key 查找，找不到则原文输出
+ * 多语言 map: Studio 按当前语言取对应字段，第三方 SDK 组件不需要在 locale 文件里注册
+ * 示例: { en: 'Primary Color', zh: '主色调' }
+ */
+export const I18nLabelSchema = z.union([
+  z.string().min(1),
+  z.record(z.string(), z.string()),
+]);
+export type I18nLabel = z.infer<typeof I18nLabelSchema>;
+
 export const BindingModeSchema = z.enum(['static', 'field', 'expr', 'rule']);
 export type BindingMode = z.infer<typeof BindingModeSchema>;
 
@@ -57,7 +69,7 @@ export const ControlKindSchema = z.enum([
 export type ControlKind = z.infer<typeof ControlKindSchema>;
 
 export const ControlOptionSchema = z.object({
-  label: z.string(),
+  label: I18nLabelSchema,
   value: z.union([z.string(), z.number()]),
   /** Lucide 图标名称（用于 segmented 等控件） */
   icon: z.string().optional()
@@ -73,8 +85,8 @@ export type ControlBinding = z.infer<typeof ControlBindingSchema>;
 export const ControlFieldSchema = z.object({
   /** 属性路径（映射到 props 的 key） */
   path: z.string().min(1),
-  /** 显示标签 */
-  label: z.string().min(1),
+  /** 显示标签（支持字符串 i18n key 或 { en, zh, ... } 多语言 map） */
+  label: I18nLabelSchema,
   /** 控件类型 */
   kind: ControlKindSchema,
   /** 下拉选项（select/multiSelect/radio/segmented 使用） */
@@ -107,7 +119,7 @@ export type ControlGroupId = z.infer<typeof ControlGroupIdSchema>;
 
 export const ControlGroupSchema = z.object({
   id: ControlGroupIdSchema,
-  label: z.string().optional(),
+  label: I18nLabelSchema.optional(),
   /** 是否默认展开 */
   expanded: z.boolean().optional(),
   fields: z.array(ControlFieldSchema)

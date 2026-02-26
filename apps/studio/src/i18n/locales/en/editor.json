@@ -161,7 +161,8 @@
     "alerts": {
         "imageTooLarge": "Image file is too large. Please select an image smaller than 10MB.",
         "imageUploadFailed": "Image upload failed",
-        "switchLayoutConfirm": "Switching layout mode will clear the current canvas. Continue?"
+        "switchLayoutConfirm": "Switching layout mode will clear the current canvas. Continue?",
+        "switchLayoutTitle": "Switch Layout Mode"
     },
     "leftPanel": {
         "library": "Library",
@@ -215,7 +216,9 @@
         "loadingData": "Loading data...",
         "clear": "Clear",
         "interval": "Interval",
-        "seconds": "seconds"
+        "seconds": "seconds",
+        "cancel": "Cancel",
+        "confirm": "Continue"
     },
     "binding": {
         "static": "static",

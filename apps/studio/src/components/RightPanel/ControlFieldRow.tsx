@@ -7,6 +7,7 @@ import * as LucideIcons from 'lucide-react';
 
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
 import ImageSourceInput from './ImageSourceInput';
+import { resolveLabel } from './PropsPanel';
 import {
   detectBindingMode,
   getBinding,
@@ -35,7 +36,8 @@ function allowedModes(field: ControlField): BindingMode[] {
 }
 
 export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindings, updateNode }: Props) {
-  const { t } = useTranslation('editor');
+  const { t, i18n } = useTranslation('editor');
+  const lang = i18n.language;
   const modes = useMemo(() => allowedModes(field), [field]);
 
   const persistedMode = useMemo(() => detectBindingMode(bindings, field.path), [bindings, field.path]);
@@ -134,7 +136,15 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <label className="text-sm font-medium text-muted-foreground">{t(field.label, { defaultValue: field.label })}</label>
+        <label className="text-sm font-medium text-muted-foreground">
+          {
+            typeof field.label === 'object'
+              // map 格式：直接取当前语言，第三方 SDK 组件自带多语言
+              ? resolveLabel(field.label, lang)
+              // 字符串：尝试当 i18n key 查（内置组件），找不到则原文输出
+              : t(field.label, { defaultValue: field.label })
+          }
+        </label>
 
         {modes.length > 1 && (
           <select
@@ -241,10 +251,14 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
               onChange={(e) => setStatic(e.target.value)}
               className="w-full h-8 px-3 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-ring focus:outline-none"
             >
-              <option value="">{t('common.pleaseSelect', '(select)')}</option>
+              <option value="">{t('common.pleaseSelect')}</option>
               {field.options.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {t(opt.label, { defaultValue: opt.label })}
+                  {
+                    typeof opt.label === 'object'
+                      ? resolveLabel(opt.label, lang)
+                      : t(opt.label, { defaultValue: opt.label })
+                  }
                 </option>
               ))}
             </select>
@@ -260,7 +274,7 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                 className="w-4 h-4 rounded border-input"
               />
               <span className="text-sm text-muted-foreground">
-                {propsValue ? t('common.on', 'On') : t('common.off', 'Off')}
+                {propsValue ? t('common.on') : t('common.off')}
               </span>
             </label>
           )}
@@ -293,13 +307,18 @@ export function ControlFieldRow({ kernelStore, nodeId, field, propsValue, bindin
                   <button
                     key={opt.value}
                     onClick={() => setStatic(opt.value)}
-                    title={opt.label}
+                    title={typeof opt.label === 'object' ? resolveLabel(opt.label, lang) : opt.label}
                     className={`px-3 py-1.5 text-sm rounded transition-colors flex items-center justify-center ${propsValue === opt.value
                       ? 'bg-background text-foreground shadow-sm'
                       : 'text-muted-foreground hover:text-foreground'
                       }`}
                   >
-                    {IconComponent ? <IconComponent className="w-4 h-4" /> : t(opt.label, { defaultValue: opt.label })}
+                    {IconComponent
+                      ? <IconComponent className="w-4 h-4" />
+                      : typeof opt.label === 'object'
+                        ? resolveLabel(opt.label, lang)
+                        : t(opt.label, { defaultValue: opt.label })
+                    }
                   </button>
                 );
               })}

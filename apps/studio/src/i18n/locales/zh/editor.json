@@ -161,7 +161,8 @@
     "alerts": {
         "imageTooLarge": "图片文件过大，请选择小于 10MB 的图片",
         "imageUploadFailed": "图片上传失败",
-        "switchLayoutConfirm": "切换布局模式将清空当前画布，是否继续？"
+        "switchLayoutConfirm": "切换布局模式将清空当前画布，是否继续？",
+        "switchLayoutTitle": "切换布局模式"
     },
     "leftPanel": {
         "library": "组件库",
@@ -215,7 +216,9 @@
         "loadingData": "数据加载中...",
         "clear": "清除",
         "interval": "发送间隔",
-        "seconds": "秒"
+        "seconds": "秒",
+        "cancel": "取消",
+        "confirm": "继续"
     },
     "binding": {
         "static": "静态",

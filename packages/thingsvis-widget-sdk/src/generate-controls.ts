@@ -148,6 +148,11 @@ export function generateControls(
 // 辅助函数
 // ============================================================================
 
+/**
+ * 返回分组 ID，由 Studio 的 PropsPanel 通过 t() 查询（Content/Style/Data/Advanced 均在 editor.json 中有对应的翻译）
+ * 第三方 SDK 开发者若需自定义分组名称，可在 controls.groups 中直接设置 label: { en: 'My Group', zh: '我的分组' }
+ */
 function getGroupLabel(id: ControlGroupId): string {
+  // 直接返回 id，将其当作 i18n key，让 Studio 的 t(id) 自动查找里面已定义的翻译
   return id;
 }

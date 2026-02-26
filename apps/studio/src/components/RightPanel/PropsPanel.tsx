@@ -16,6 +16,18 @@ import { DataSourceSelector } from "./DataSourceSelector";
 import { loadWidget } from "@/widgets/widgetResolver";
 import { getWidgetControls } from "@/widgets/getWidgetControls";
 import ControlFieldRow from "./ControlFieldRow";
+import type { I18nLabel } from '@thingsvis/schema';
+
+/**
+ * 解析 I18nLabel——支持字符串和多语言 map
+ * 字符串: PropsPanel 层优先尝试作为 i18n key，外层由 ControlFieldRow 的 t() 处理
+ * Map: 按当前语言取对应字段，找不到则 fallback 到 en，再找不到则取第一个值
+ */
+export function resolveLabel(label: I18nLabel | undefined, lang: string): string {
+  if (!label) return '';
+  if (typeof label === 'string') return label;
+  return label[lang] ?? label['en'] ?? Object.values(label)[0] ?? '';
+}
 
 type Props = {
   nodeId: string;
@@ -196,7 +208,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
           return (
             <div key={group.id} className="space-y-3 pt-4 border-t border-border px-1">
               <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-                {t(group.label ?? group.id, { defaultValue: group.label ?? group.id })}
+                {resolveLabel(group.label, i18n.language) || t(group.id, { defaultValue: group.id })}
               </h3>
               <div className="space-y-3">
                 {visibleFields.map((field) => (
