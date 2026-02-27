@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
     /** 网页地址 */
-    src: z.string().default('https://cn.bing.com/').describe('props.iframeUrl'),
+    src: z.string().default('https://thingspanel.io/').describe('props.iframeUrl'),
 
     /** 边框宽度 */
     borderWidth: z.number().default(0).describe('props.borderWidth'),

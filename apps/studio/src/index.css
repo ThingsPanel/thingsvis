@@ -80,26 +80,51 @@
   /* Dawn (晨曦白) - 高明度，极简现代 */
   --w-bg: 0 0% 100%;
   --w-fg: 240 10% 15%;
-  --w-axis: 0 0% 0% 0.1;
-  /* 兼容 RGBA 写法的弱化线 */
+  --w-axis: 0 0% 0% / 0.1;
   --w-border: 0 0% 90%;
   --w-canvas-bg: 0 0% 96%;
   --w-canvas-dot: 0 0% 85%;
   --w-primary: 243 58% 63%;
-  /* #6965DB */
+
+  /*
+   * Override Tailwind dark-mode variables to prevent .dark class
+   * from cascading into the canvas. Dawn theme = light palette.
+   */
+  --background: 0 0% 96%;
+  --foreground: 240 10% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 15%;
+  --muted: 240 1% 95%;
+  --muted-foreground: 240 2% 55%;
+  --border: 0 0% 90%;
 }
 
 .theme-midnight {
   /* Midnight (午夜蓝) - 专业大屏深灰蓝色调 */
   --w-bg: 222 47% 14%;
   --w-fg: 210 40% 98%;
-  --w-axis: 0 0% 100% 0.15;
-  /* 白色的极弱透明度线 */
+  --w-axis: 0 0% 100% / 0.15;
   --w-border: 217 32% 17%;
   --w-canvas-bg: 222 47% 11%;
   --w-canvas-dot: 222 20% 25%;
   --w-primary: 243 58% 63%;
-  /* #6965DB */
+
+  /*
+   * Override Tailwind dark-mode variables to match midnight palette.
+   * This ensures canvas components use midnight colors regardless
+   * of whether the editor itself is in light or dark mode.
+   */
+  --background: 222 47% 11%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 14%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222 47% 14%;
+  --popover-foreground: 210 40% 98%;
+  --muted: 217 32% 17%;
+  --muted-foreground: 210 20% 60%;
+  --border: 217 32% 17%;
 }
 
 /* Glassmorphism for Midnight theme (Widget components can opt-in) */
