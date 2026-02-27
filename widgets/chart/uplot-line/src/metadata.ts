@@ -2,7 +2,7 @@ export const metadata = {
     id: 'chart-uplot-line',
     name: 'widget.uplot-line.name',
     category: 'chart' as const,
-    icon: 'LineChart',
+    icon: 'Activity',
     version: '1.0.0',
     description: '时序图',
     defaultSize: { width: 400, height: 300 },
