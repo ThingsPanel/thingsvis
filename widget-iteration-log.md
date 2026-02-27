@@ -31,3 +31,24 @@
 **任务文件**: `.agents/tasks/widget-registry-fix-20260227.md`
 
 ---
+
+## 2026-02-27 - Text Widget 编辑体验优化
+
+**用户请求**: 检查一下文本 Widget 的问题并修复，现在存在编辑使用问题。无法方便的编辑使用。
+
+**问题分析**:
+1. WidgetMainModule 类型缺少 `resizable` 字段，导致编辑器无法正确识别组件尺寸特性
+2. Text widget 的 create() 函数使用完全透明填充，导致在画布上难以选中
+3. Metadata 中缺少 `defaultSize`，编辑器无法获知默认尺寸
+
+**修复内容**:
+1. 在 `packages/thingsvis-schema/src/widget-module.ts` 中添加 `resizable` 和 `defaultSize` 类型定义
+2. 修改 `widgets/basic/text/src/index.ts` 中的 create() 函数，添加轻微背景色和边框便于选择
+3. 在 `widgets/basic/text/src/metadata.ts` 中添加 `defaultSize`
+4. 重新构建 text widget 并更新到 studio
+
+**验证结果**: ✅ Registry validated OK
+
+**任务文件**: `.agents/tasks/text-widget-fix-20260227.md`
+
+---

@@ -17,4 +17,5 @@ export const metadata = {
   icon: 'Type',
   version: '1.0.0',
   resizable: false, // 文本组件根据内容自适应尺寸
+  defaultSize: { width: 160, height: 40 },
 } as const;
