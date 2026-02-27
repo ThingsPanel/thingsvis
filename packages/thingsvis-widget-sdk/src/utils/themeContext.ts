@@ -18,16 +18,17 @@ export function resolveWidgetColors(element: HTMLElement): WidgetColors {
     }
     const computed = window.getComputedStyle(element);
 
-    // Helper 以修剪由于 css variable 设置可能产生的空格
     const getVar = (name: string, fallback: string) => {
         const val = computed.getPropertyValue(name).trim();
-        // 可能是 HSL 格式的数值如 "140 50% 10%" 或者是 hex
-        // 我们约定如果是 hsl(var(--xx)) 在此处无法直接消费，
-        // 为了支持 ECharts 最简单的方式是 CSS 里同时给到 rgb / hex 对应的变量，或者我们在此组合
-        // 对于 HSL 如果没带 hsl() 需要补足
         if (val) {
-            if (/^[0-9]+(\.[0-9]+)?\s+[0-9]+(\.[0-9]+)?%\s+[0-9]+(\.[0-9]+)?%/.test(val)) {
-                return `hsl(${val})`;
+            // Handle Tailwind style space-separated HSL values (e.g., "240 10% 15%" or "255 255 255 0.15")
+            // and convert them to valid standard CSS color strings like "hsla(240, 10%, 15%, 0.15)" or "hsl(...)"
+            const parts = val.split(/\s+/).filter(p => p !== '/');
+            if (parts.length >= 3 && parts[0] && /^[0-9.]/.test(parts[0])) {
+                if (parts.length >= 4) {
+                    return `hsla(${parts[0]}, ${parts[1]}, ${parts[2]}, ${parts[3]})`;
+                }
+                return `hsl(${parts[0]}, ${parts[1]}, ${parts[2]})`;
             }
             return val;
         }
