@@ -32,7 +32,7 @@ CanvasView (apps/studio)
 4. proxy-layer 中对应的 `node-proxy-target` 接收拖拽/选择事件
 
 ## Key Technical Decisions
-- **主题解耦**: IDE 主题与画布主题完全分离，画布使用 CSS Variables (`--w-bg`, `--w-fg`, `--w-axis`)
+- **主题解耦**: IDE 主题与画布主题完全分离，画布使用 CSS Variables (`--w-bg`, `--w-fg`, `--w-axis`, `--workspace-bg`)
 - **Widget 定义**: 新组件使用 `defineWidget()` API，旧组件使用 `create/createOverlay` 模式
 - **拖拽分层**: overlay 负责视觉渲染，proxy-layer 负责交互事件（Moveable/Selecto）
 - **构建部署**: Widget 通过 Rspack 构建，Module Federation 远程加载
@@ -41,6 +41,8 @@ CanvasView (apps/studio)
 
 ## Current State
 - 主题架构重构完成（CSS Variables 方案）
+- **工作区背景颜色已改为红色 (#ff3b30)** - 新增 `--workspace-bg` CSS 变量
+- **网格只在画布区域显示** - Fixed/Grid 模式下网格限定在 artboard 区域内绘制
 - **isDark 残留全面清理完成** — 所有 Widget 改用 `resolveWidgetColors()` 从 CSS 变量获取颜色
 - 编辑器 ↔ 画布主题彻底解耦完成
 - 仪表盘/饼图等组件拖拽修复完成
@@ -49,6 +51,8 @@ CanvasView (apps/studio)
 - **图层面板 (LayerPanel) 缺陷已修复** — 修复了未绑定关联 i18n 导致的多语言文本漏译，以及通过将底层 `getProjectState` 中 `nodes` 序列与 `layerOrder` 强写对齐的方法，根治了图层重新拖拽排序后保存失败的痛点。
 - **清除连线组件无关 Debug 信息** — 在 `LineConnectionTool.tsx` 中删除了左上角伴随产生的黄色 Debug 提示窗，避免干扰用户视线。
 - **UI 字体和布局优化完成** — 借鉴 Excalidraw 设置系统字体栈（14px 基础字号），组件库改为 3 列紧凑布局。
+- **左侧面板可折叠** — 默认隐藏，点击工具栏按钮可展开，增加关闭按钮
+- **UI 视觉风格优化** — 采用 Excalidraw 风格的柔和色调和阴影效果，圆角加大，边框更柔和
 - **组件命名规范化** — `uPlot时序图` 重命名为 `时序图`（英文 Time Series），去除技术实现细节暴露。
 
 ## Known Issues / Risks

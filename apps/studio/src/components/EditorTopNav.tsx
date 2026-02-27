@@ -14,7 +14,7 @@ import { SaveIndicator } from './SaveIndicator'
 import {
     Menu, FolderOpen, Save, Database, FileUp, FileDown, Settings,
     HelpCircle, LogOut, Users, Eye, Upload, Languages, Sun, Moon,
-    PanelRightOpen, Minimize, Maximize, type LucideIcon,
+    PanelRightOpen, PanelLeftOpen, Minimize, Maximize, type LucideIcon,
 } from 'lucide-react'
 
 type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'image' | 'pan'
@@ -35,6 +35,8 @@ interface EditorTopNavProps {
     showToolbar: boolean
     showTopRight: boolean
     showRightPanel: boolean
+    showLibrary: boolean
+    showLeftPanel: boolean
     isFullscreen: boolean
     // Save state
     saveStatus: string
@@ -56,6 +58,7 @@ interface EditorTopNavProps {
     onPublish: () => void
     onToggleTheme: () => void
     onToggleRightPanel: () => void
+    onToggleLeftPanel: () => void
     onToggleFullscreen: () => void
     onOpenProjectDialog: () => void
     onOpenDataSources: () => void
@@ -65,23 +68,23 @@ interface EditorTopNavProps {
 
 export function EditorTopNav({
     canvasMode, tools, activeTool, isDarkMode,
-    isEmbedded, showTopLeft, showToolbar, showTopRight, showRightPanel, isFullscreen,
+    isEmbedded, showTopLeft, showToolbar, showTopRight, showRightPanel, showLibrary, showLeftPanel, isFullscreen,
     saveStatus, lastSavedAt, saveError, isSaving,
     isAuthenticated, authLoading, user,
     projectName, projectId,
     onToolChange, onProjectNameChange,
-    onSave, onPreview, onPublish, onToggleTheme, onToggleRightPanel, onToggleFullscreen,
+    onSave, onPreview, onPublish, onToggleTheme, onToggleRightPanel, onToggleLeftPanel, onToggleFullscreen,
     onOpenProjectDialog, onOpenDataSources, onLogout, onLogin,
 }: EditorTopNavProps) {
     const { t, i18n } = useTranslation('editor')
     return (
         <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
             {/* Left Side: Logo (Menu), Title, Status */}
-            <div className={`glass rounded-md shadow-md border border-border flex items-center gap-4 px-4 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}>
+            <div className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                            <div className="h-8 w-8 rounded-md bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center">
+                            <div className="h-8 w-8 rounded-lg bg-[#6965db] hover:bg-[#5851db] flex items-center justify-center transition-colors shadow-sm">
                                 <Menu className="h-4 w-4 text-white" />
                             </div>
                         </div>
@@ -145,7 +148,7 @@ export function EditorTopNav({
 
                 <Input
                     placeholder={t('topNav.untitledProject')}
-                    className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium"
+                    className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium rounded-lg"
                     value={projectName}
                     onChange={(e) => onProjectNameChange(e.target.value)}
                     style={{ width: `${Math.max(100, Math.min(150, (projectName?.length || 6) * 14 + 16))}px` }}
@@ -160,7 +163,7 @@ export function EditorTopNav({
             </div>
 
             {/* Center Side: Tools */}
-            <div className={`glass rounded-md shadow-md border border-border flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!showToolbar ? 'invisible' : ''}`}>
+            <div className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!showToolbar ? 'invisible' : ''}`}>
                 {tools.filter(tool => {
                     if (canvasMode === 'grid') {
                         return !['rectangle', 'circle', 'line', 'text'].includes(tool.id)
@@ -175,9 +178,9 @@ export function EditorTopNav({
                             key={tool.id}
                             variant="ghost"
                             size="icon"
-                            className={`h-9 w-9 rounded-md transition-all focus:ring-0 focus:outline-none ${isActive
+                            className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${isActive
                                 ? "bg-[#6965db]/10 text-[#6965db] shadow-sm"
-                                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                                : "text-muted-foreground hover:text-foreground hover:bg-accent/80"
                                 }`}
                             onClick={() => onToolChange(tool.id)}
                             title={tool.label}
@@ -189,7 +192,7 @@ export function EditorTopNav({
             </div>
 
             {/* Right Side: Language, Theme, Preview, Publish */}
-            <div className={`glass rounded-md shadow-md border border-border flex items-center gap-2 px-3 py-2 pointer-events-auto ${!showTopRight ? 'invisible' : ''}`}>
+            <div className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-2 px-2 py-2 pointer-events-auto ${!showTopRight ? 'invisible' : ''}`}>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none">
@@ -210,11 +213,22 @@ export function EditorTopNav({
                     {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                 </Button>
 
+                {showLibrary && !showLeftPanel && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
+                        onClick={onToggleLeftPanel}
+                        title={t('topNav.showLibrary')}
+                    >
+                        <PanelLeftOpen className="h-4 w-4" />
+                    </Button>
+                )}
                 {!showRightPanel && (
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
                         onClick={onToggleRightPanel}
                         title={t('topNav.showProps')}
                     >
@@ -225,7 +239,7 @@ export function EditorTopNav({
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+                    className="h-8 gap-2 rounded-lg px-4 hover:bg-accent/80 focus:ring-0 focus:outline-none"
                     onClick={onSave}
                     disabled={isSaving}
                 >
@@ -236,7 +250,7 @@ export function EditorTopNav({
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 gap-2 rounded-md px-4 hover:bg-accent focus:ring-0 focus:outline-none"
+                    className="h-8 gap-2 rounded-lg px-4 hover:bg-accent/80 focus:ring-0 focus:outline-none"
                     onClick={onPreview}
                 >
                     <Eye className="h-4 w-4" />
@@ -257,7 +271,7 @@ export function EditorTopNav({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
                         onClick={onToggleFullscreen}
                         title={isFullscreen ? t('topNav.exitFullscreen') : t('topNav.fullscreen')}
                     >

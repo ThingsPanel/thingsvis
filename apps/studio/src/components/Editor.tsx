@@ -265,6 +265,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [zoom, setZoom] = useState(80)
   const [zoomInput, setZoomInput] = useState("80")
   const [showRightPanel, setShowRightPanel] = useState(true)
+  const [showLeftPanel, setShowLeftPanel] = useState(() => {
+    // When top-right controls are hidden, keep the library panel reachable by default.
+    return embedVisibility.showLibrary && !embedVisibility.showTopRight
+  })
 
   // Update zoom input when zoom changes externally
   useEffect(() => {
@@ -296,6 +300,22 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       setShowRightPanel(true)
     }
   }, [selectedElement])
+
+  // Keep left panel reachable under embed visibility constraints.
+  useEffect(() => {
+    if (!embedVisibility.showLibrary) {
+      setShowLeftPanel(false)
+      return
+    }
+    if (!embedVisibility.showTopRight) {
+      setShowLeftPanel(true)
+    }
+  }, [embedVisibility.showLibrary, embedVisibility.showTopRight])
+
+  // Toggle left panel
+  const toggleLeftPanel = useCallback(() => {
+    setShowLeftPanel(prev => !prev)
+  }, [])
 
   // Subscribe to temporal history
   const temporalSnapshot = useSyncExternalStore(
@@ -1213,6 +1233,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         showToolbar={embedVisibility.showToolbar}
         showTopRight={embedVisibility.showTopRight}
         showRightPanel={showRightPanel}
+        showLibrary={embedVisibility.showLibrary}
         isFullscreen={!!document.fullscreenElement}
         saveStatus={saveState.status}
         lastSavedAt={saveState.lastSavedAt}
@@ -1230,6 +1251,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         onPublish={openPublish}
         onToggleTheme={toggleTheme}
         onToggleRightPanel={() => setShowRightPanel(true)}
+        showLeftPanel={showLeftPanel}
+        onToggleLeftPanel={toggleLeftPanel}
         onToggleFullscreen={() => {
           if (!document.fullscreenElement) {
             document.documentElement.requestFullscreen().catch(() => { })
@@ -1251,35 +1274,46 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       />
 
       {/* Left Panel: Assets & Layers */}
-      {embedVisibility.showLibrary && (
+      {embedVisibility.showLibrary && showLeftPanel && (
         <aside className={`absolute left-4 ${embedVisibility.isEmbedded
           ? (embedVisibility.showTopLeft || embedVisibility.showTopRight)
             ? 'top-20' // 顶部工具栏显示时留出空间
             : 'top-4'
           : 'top-20'
           } bottom-4 z-40 w-72`}>
-          <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
-            <div className="flex border-b border-border">
-              <button
-                onClick={() => setLeftPanelTab("components")}
-                className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${leftPanelTab === "components"
-                  ? "text-foreground border-[#6965db] -mb-px"
-                  : "text-muted-foreground border-transparent hover:text-foreground"
-                  }`}
-              >
-                <Grid3x3 className="h-4 w-4" />
-                {t('leftPanel.library')}
-              </button>
-              <button
-                onClick={() => setLeftPanelTab("layers")}
-                className={`flex-1 flex items-center justify-center gap-2 px-2 py-3 text-sm font-semibold transition-colors border-b-2 ${leftPanelTab === "layers"
-                  ? "text-foreground border-[#6965db] -mb-px"
-                  : "text-muted-foreground border-transparent hover:text-foreground"
-                  }`}
-              >
-                <Layers className="h-4 w-4" />
-                {t('leftPanel.layers')}
-              </button>
+          <div className="glass rounded-xl shadow-2xl border border-border/50 h-full flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-2 py-2 border-b border-border/50">
+              <div className="flex flex-1">
+                <button
+                  onClick={() => setLeftPanelTab("components")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === "components"
+                    ? "text-foreground bg-accent/80 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                    }`}
+                >
+                  <Grid3x3 className="h-4 w-4" />
+                  {t('leftPanel.library')}
+                </button>
+                <button
+                  onClick={() => setLeftPanelTab("layers")}
+                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === "layers"
+                    ? "text-foreground bg-accent/80 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent/40"
+                    }`}
+                >
+                  <Layers className="h-4 w-4" />
+                  {t('leftPanel.layers')}
+                </button>
+              </div>
+              {embedVisibility.showTopRight && (
+                <button
+                  className="p-1.5 ml-2 hover:bg-accent rounded-lg transition-colors"
+                  onClick={() => setShowLeftPanel(false)}
+                  title={t('common.close')}
+                >
+                  <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+              )}
             </div>
 
             <div className="flex-1 overflow-y-auto p-3">
@@ -1303,7 +1337,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         zoomInput={zoomInput}
         canUndo={canUndo}
         canRedo={canRedo}
-        showLibrary={embedVisibility.showLibrary}
+        showLeftPanel={showLeftPanel}
         showProps={embedVisibility.showProps}
         showRightPanel={showRightPanel}
         canvasWidth={canvasConfig.width}
@@ -1325,11 +1359,11 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             : 'top-4'
           : 'top-20'
           } bottom-4 w-80 z-40`}>
-          <div className="glass rounded-md shadow-xl border border-border h-full flex flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <div className="glass rounded-xl shadow-2xl border border-border/50 h-full flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
               <h2 className="text-sm font-semibold">{t('propsPanel.title')}</h2>
               <button
-                className="p-1 hover:bg-accent rounded"
+                className="p-1.5 hover:bg-accent/80 rounded-lg transition-colors"
                 onClick={() => {
                   if (selectedElement) {
                     store.getState().selectNode(null)
@@ -1338,7 +1372,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   }
                 }}
               >
-                <X className="h-4 w-4" />
+                <X className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 space-y-4">

@@ -186,24 +186,50 @@ export const CanvasView: React.FC<Props> = ({
     const { zoom: vZoom, offset: vOffset } = viewportInfo;
     const step = gridSize * vZoom;
     if (step <= 0) return;
-    const rectW = rect.width;
-    const rectH = rect.height;
-    // compute origin for infinite pan
+
+    // Determine grid drawing area based on mode
+    // For fixed/grid mode: only draw grid within the artboard (canvas area)
+    // For infinite mode: draw grid across the entire container
+    let startX: number, startY: number, endX: number, endY: number;
+    
+    if (mode === 'fixed' || mode === 'grid') {
+      // Only draw grid within the canvas/artboard area
+      startX = Math.max(0, vOffset.x);
+      startY = Math.max(0, vOffset.y);
+      endX = Math.min(rect.width, vOffset.x + width * vZoom);
+      endY = Math.min(rect.height, vOffset.y + height * vZoom);
+    } else {
+      // Infinite mode: draw across entire container
+      startX = 0;
+      startY = 0;
+      endX = rect.width;
+      endY = rect.height;
+    }
+
+    // compute origin for infinite pan (aligned to step)
     const originX = vOffset.x % step;
     const originY = vOffset.y % step;
-    for (let x = originX; x < rectW; x += step) {
-      ctx.beginPath();
-      ctx.moveTo(x + 0.5, 0);
-      ctx.lineTo(x + 0.5, rectH);
-      ctx.stroke();
+    
+    // Draw vertical grid lines only within the defined area
+    for (let x = originX; x < endX; x += step) {
+      if (x >= startX) {
+        ctx.beginPath();
+        ctx.moveTo(x + 0.5, startY);
+        ctx.lineTo(x + 0.5, endY);
+        ctx.stroke();
+      }
     }
-    for (let y = originY; y < rectH; y += step) {
-      ctx.beginPath();
-      ctx.moveTo(0, y + 0.5);
-      ctx.lineTo(rectW, y + 0.5);
-      ctx.stroke();
+    
+    // Draw horizontal grid lines only within the defined area
+    for (let y = originY; y < endY; y += step) {
+      if (y >= startY) {
+        ctx.beginPath();
+        ctx.moveTo(startX, y + 0.5);
+        ctx.lineTo(endX, y + 0.5);
+        ctx.stroke();
+      }
     }
-  }, [gridSize, viewportInfo]);
+  }, [gridSize, viewportInfo, mode, width, height]);
 
   useEffect(() => {
     drawGrid();
@@ -330,7 +356,7 @@ export const CanvasView: React.FC<Props> = ({
 
   const maskStyle: React.CSSProperties = {
     position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'transparent',
     pointerEvents: 'none',
     zIndex: 10
   };
@@ -350,7 +376,7 @@ export const CanvasView: React.FC<Props> = ({
   } : {};
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', backgroundColor: 'hsl(var(--w-canvas-bg))' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', backgroundColor: 'hsl(var(--workspace-bg))' }}>
       {/* Artboard background (underneath grid and nodes) */}
       {(mode === 'fixed' || mode === 'grid') && (
         <div style={{

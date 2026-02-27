@@ -15,7 +15,7 @@ interface EditorBottomBarProps {
     zoomInput: string
     canUndo: boolean
     canRedo: boolean
-    showLibrary: boolean
+    showLeftPanel: boolean
     showProps: boolean
     showRightPanel: boolean
     canvasWidth: number
@@ -31,7 +31,7 @@ interface EditorBottomBarProps {
 
 export function EditorBottomBar({
     zoom, zoomInput, canUndo, canRedo,
-    showLibrary, showProps, showRightPanel,
+    showLeftPanel, showProps, showRightPanel,
     canvasWidth, canvasHeight,
     onZoomChange, onZoomInputChange, onZoomInputBlur, onZoomInputKeyDown,
     onUndo, onRedo, onShowShortcuts,
@@ -40,13 +40,13 @@ export function EditorBottomBar({
     return (
         <>
             {/* Bottom Left Controls: Zoom & Undo/Redo */}
-            <div className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${showLibrary ? 'left-[324px]' : 'left-4'}`}>
+            <div className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${showLeftPanel ? 'left-[324px]' : 'left-4'}`}>
                 {/* Zoom Controls */}
-                <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+                <div className="glass rounded-xl shadow-lg border border-border/60 flex items-center p-1.5">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 focus:ring-0 focus:outline-none"
                         onClick={() => onZoomChange(Math.max(10, zoom - 10))}
                     >
                         <Minus className="h-4 w-4" />
@@ -61,14 +61,14 @@ export function EditorBottomBar({
                             }}
                             onBlur={onZoomInputBlur}
                             onKeyDown={onZoomInputKeyDown}
-                            className="h-6 text-sm font-medium text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:bg-background/50 p-0 tabular-nums shadow-none hover:bg-background/40 transition-colors rounded-sm"
+                            className="h-6 text-sm font-medium text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:bg-accent/50 p-0 tabular-nums shadow-none hover:bg-accent/40 transition-colors rounded-md"
                         />
                     </div>
 
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 focus:ring-0 focus:outline-none"
                         onClick={() => onZoomChange(Math.min(500, zoom + 10))}
                     >
                         <Plus className="h-4 w-4" />
@@ -77,10 +77,10 @@ export function EditorBottomBar({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 focus:ring-0 focus:outline-none"
                         title={t('bottomBar.bestFit')}
                         onClick={() => {
-                            const leftPanelWidth = showLibrary ? 320 : 0
+                            const leftPanelWidth = showLeftPanel ? 320 : 0
                             const rightPanelWidth = (showProps && showRightPanel) ? 340 : 0
                             const availableWidth = window.innerWidth - leftPanelWidth - rightPanelWidth - 60
                             const availableHeight = window.innerHeight - 150
@@ -100,7 +100,7 @@ export function EditorBottomBar({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 focus:ring-0 focus:outline-none"
                         title={t('bottomBar.hundredPercent')}
                         onClick={() => onZoomChange(100)}
                     >
@@ -109,11 +109,11 @@ export function EditorBottomBar({
                 </div>
 
                 {/* Undo/Redo Controls */}
-                <div className="glass rounded-md shadow-md border border-border flex items-center p-1.5 gap-1 bg-[#f0f0f7]/50 dark:bg-[#1a1a24]/50">
+                <div className="glass rounded-xl shadow-lg border border-border/60 flex items-center p-1.5 gap-1">
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
                         disabled={!canUndo}
                         onClick={onUndo}
                         title={t('bottomBar.undo')}
@@ -123,7 +123,7 @@ export function EditorBottomBar({
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 rounded-md hover:bg-background/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
+                        className="h-8 w-8 rounded-lg hover:bg-accent/80 disabled:opacity-30 focus:ring-0 focus:outline-none"
                         disabled={!canRedo}
                         onClick={onRedo}
                         title={t('bottomBar.redo')}
@@ -138,7 +138,7 @@ export function EditorBottomBar({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 rounded-full shadow-lg border border-border bg-[#f0f0f7]/90 dark:bg-[#1a1a24]/90 hover:bg-background text-muted-foreground hover:text-foreground transition-all"
+                    className="h-9 w-9 rounded-full shadow-lg border border-border/60 glass hover:text-foreground transition-all"
                     onClick={onShowShortcuts}
                     title={t('bottomBar.shortcutsHelp')}
                 >
