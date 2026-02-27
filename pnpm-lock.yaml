@@ -404,6 +404,9 @@ importers:
 
   widgets/basic/circle:
     dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../packages/thingsvis-widget-sdk
       leafer-ui:
         specifier: ^1.0.0
         version: 1.12.0
@@ -438,6 +441,9 @@ importers:
 
   widgets/basic/line:
     dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../packages/thingsvis-widget-sdk
       leafer-ui:
         specifier: ^1.0.0
         version: 1.12.0
@@ -472,6 +478,9 @@ importers:
 
   widgets/basic/rectangle:
     dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../packages/thingsvis-widget-sdk
       leafer-ui:
         specifier: ^1.0.0
         version: 1.12.0
@@ -864,6 +873,9 @@ importers:
 
   widgets/media/image:
     dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../packages/thingsvis-widget-sdk
       leafer-ui:
         specifier: ^1.0.0
         version: 1.12.0

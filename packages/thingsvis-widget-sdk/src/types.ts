@@ -147,6 +147,8 @@ export type WidgetTheme = 'dawn' | 'midnight' | string;
 
 /** DOM Overlay 上下文 */
 export type WidgetOverlayContext = {
+  id?: string;
+  type?: string;
   /** 位置（画布坐标） */
   position?: { x: number; y: number };
   /** 尺寸 */
@@ -155,6 +157,14 @@ export type WidgetOverlayContext = {
   props?: Record<string, unknown>;
   /** 当前画布的主题上下文 (Dawn/Midnight) */
   theme?: WidgetTheme;
+  linkedNodes?: Record<
+    string,
+    {
+      id: string;
+      position: { x: number; y: number };
+      size: { width: number; height: number };
+    }
+  >;
 };
 
 /** DOM Overlay 实例 */
@@ -188,12 +198,14 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   icon?: string;
   /** 版本号 */
   version?: string;
+  locales?: Record<string, unknown>;
   /** Zod Schema */
   schema?: z.ZodType<TProps>;
   /** 控件配置 */
   controls?: WidgetControls;
+  create?: (ctx?: WidgetOverlayContext) => unknown;
   /** 
    * 创建 DOM Overlay
    */
-  createOverlay: (ctx: WidgetOverlayContext) => PluginOverlayInstance;
+  createOverlay?: (ctx: WidgetOverlayContext) => PluginOverlayInstance;
 };

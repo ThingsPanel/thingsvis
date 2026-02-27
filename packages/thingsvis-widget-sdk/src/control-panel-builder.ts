@@ -12,6 +12,7 @@ import type {
   ControlKind,
   ControlOption,
   ControlBinding,
+  I18nLabel,
   WidgetControls,
 } from './types';
 
@@ -133,6 +134,13 @@ export class FieldBuilder {
       showWhen: options.showWhen,
     });
     return this;
+  }
+
+  /**
+   * @deprecated Use addColorPicker() instead.
+   */
+  addColor(path: string, options: AddControlOptions = {}): this {
+    return this.addColorPicker(path, options);
   }
 
   /** 添加渐变选择器 */
@@ -411,7 +419,7 @@ export class ControlPanelBuilder {
   addGroup(
     id: ControlGroupId | string,
     builderFn: (builder: FieldBuilder) => void,
-    options: { label?: string; expanded?: boolean } = {}
+    options: { label?: I18nLabel; expanded?: boolean } = {}
   ): this {
     const fieldBuilder = new FieldBuilder();
     builderFn(fieldBuilder);

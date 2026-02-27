@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "../thingspanel-frontend-community"
+		},
+		{
+			"path": "../thingsvis-widget-creator"
 		}
 	],
 	"settings": {

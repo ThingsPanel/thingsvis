@@ -1,5 +1,5 @@
 import { PropsSchema } from './schema';
-import { generateControls } from './lib/types';
+import { generateControls } from '@thingsvis/widget-sdk';
 
 /**
  * 连线/管道配置面板

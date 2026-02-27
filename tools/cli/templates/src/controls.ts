@@ -12,7 +12,7 @@ export const controls = createControlPanel()
   // ============================================
   .addGroup('Style', (builder) => {
     builder
-      .addColor('fill', {
+      .addColorPicker('fill', {
         label: 'widgets.{{PACKAGE_NAME}}.fillColor',
         binding: true,
       })

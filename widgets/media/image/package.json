@@ -8,6 +8,7 @@
         "typecheck": "tsc -p tsconfig.json --noEmit"
     },
     "dependencies": {
+        "@thingsvis/widget-sdk": "workspace:*",
         "zod": "^3.22.4"
     },
     "peerDependencies": {

@@ -5,7 +5,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@thingsvis/schema": ["../../../packages/thingsvis-schema/src"]
+      "@thingsvis/schema": ["../../../packages/thingsvis-schema/src"],
+      "@thingsvis/widget-sdk": ["../../../packages/thingsvis-widget-sdk/src"]
     }
   },
   "include": ["src"]

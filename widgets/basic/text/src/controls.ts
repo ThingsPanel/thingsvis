@@ -71,7 +71,7 @@ export const controls = createControlPanel()
           { label: 'widgets.thingsvis-widget-basic-text.label_31', value: 'italic', icon: 'Italic' },
         ],
       });
-  }, { label: 'widgets.thingsvis-widget-basic-text.label_32' })
+  }, { label: { zh: '字体', en: 'Font' } })
 
   // ============================================
   // 排版分组
@@ -117,7 +117,7 @@ export const controls = createControlPanel()
           { label: 'widgets.thingsvis-widget-basic-text.label_47', value: 'line-through', icon: 'Strikethrough' },
         ],
       });
-  }, { label: 'widgets.thingsvis-widget-basic-text.label_48' })
+  }, { label: { zh: '排版', en: 'Layout' } })
 
   // ============================================
   // 颜色分组
@@ -178,7 +178,7 @@ export const controls = createControlPanel()
         default: 1,
         showWhen: { field: 'textShadowEnabled', value: true },
       });
-  }, { label: 'widgets.thingsvis-widget-basic-text.label_57', expanded: false })
+  }, { label: { zh: '阴影', en: 'Shadow' }, expanded: false })
 
   // ============================================
   // 高级分组

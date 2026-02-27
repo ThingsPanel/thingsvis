@@ -8,7 +8,7 @@ import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
+import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
 
 /**
  * 创建透明占位 Rect

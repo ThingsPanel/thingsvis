@@ -15,7 +15,7 @@ import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from './lib/types';
+import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 

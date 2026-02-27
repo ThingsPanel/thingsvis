@@ -1,5 +1,5 @@
 import { PropsSchema } from './schema';
-import { generateControls } from './lib/types';
+import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
   groups: {

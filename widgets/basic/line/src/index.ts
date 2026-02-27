@@ -2,13 +2,19 @@ import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, getStrokeWidthPx, getStrokeDasharray, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance, LinkedNodeInfo } from './lib/types';
+import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 
 type Pt = { x: number; y: number };
 type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
+
+type LinkedNodeInfo = {
+  id: string;
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+};
 
 /** 根据锚点类型计算节点上的连接点位置（世界坐标） */
 function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt {
@@ -780,7 +786,6 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     }
 
     flowTargets = [];
-    const isPipe = (props as any).renderStyle === 'pipe';
 
     // Flow animation logic
     if (props.flowEnabled && props.flowSpeed > 0) {
