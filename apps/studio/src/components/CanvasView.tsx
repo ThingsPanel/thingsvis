@@ -2,6 +2,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState, us
 import { useSyncExternalStore } from "react";
 import { CanvasView as UI_CanvasView, screenToCanvas, useGridLayout } from "@thingsvis/ui";
 import { action as kernelAction, actionStack, createNodeDropCommand, type KernelState } from "@thingsvis/kernel";
+import { validateCanvasTheme } from "@thingsvis/schema";
 import TransformControls from "./tools/TransformControls";
 import CreateToolLayer from "./tools/CreateToolLayer";
 import LineConnectionTool from "./tools/LineConnectionTool";
@@ -204,9 +205,8 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   const isPanTool = activeTool === 'pan';
   const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
 
-  // Normalize theme to valid CSS class: only 'dawn' | 'midnight'.
-  // Legacy values: 'dark' -> 'midnight', others ('light', 'auto', undefined) -> 'dawn'.
-  const normalizedTheme = theme === 'midnight' || theme === 'dark' ? 'midnight' : 'dawn';
+  // Normalize theme via registry
+  const normalizedTheme = validateCanvasTheme(theme);
 
   return (
     <div

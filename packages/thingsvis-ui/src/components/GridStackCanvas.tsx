@@ -9,6 +9,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { useSyncExternalStore } from 'react';
 import { GridStack } from 'gridstack';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
+import { validateCanvasTheme } from '@thingsvis/schema';
 import type { GridSettings, WidgetOverlayContext } from '@thingsvis/schema';
 import { PropertyResolver } from '../engine/PropertyResolver';
 import { usePlatformData } from '../hooks/usePlatformData';
@@ -473,9 +474,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     }
   }, [zoom, onZoomChange, fullWidth]);
 
-  // Normalize theme to valid CSS class: only 'dawn' | 'midnight'
-  // Legacy values: 'dark' -> 'midnight', others ('light', 'auto', undefined) -> 'dawn'
-  const normalizedTheme = theme === 'midnight' || theme === 'dark' ? 'midnight' : 'dawn';
+  // Normalize theme via registry
+  const normalizedTheme = validateCanvasTheme(theme);
 
   return (
     <div

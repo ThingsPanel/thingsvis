@@ -65,3 +65,5 @@ export * from './widget-controls';
 // Export datasource schemas and types
 export * from './datasource/index';
 
+// Export canvas theme registry
+export * from './theme-registry';

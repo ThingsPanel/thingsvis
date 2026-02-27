@@ -49,7 +49,7 @@ import {
 } from "lucide-react"
 
 import { type KernelState, type KernelActions, dataSourceManager } from '@thingsvis/kernel'
-import type { PageSchemaType, NodeSchemaType } from '@thingsvis/schema'
+import { type PageSchemaType, type NodeSchemaType, DEFAULT_CANVAS_THEME, validateCanvasTheme, type CanvasThemeId } from '@thingsvis/schema'
 import CanvasView from './CanvasView'
 import { GridStackCanvas } from '@thingsvis/ui'
 import ComponentsList from './LeftPanel/ComponentsList'
@@ -375,7 +375,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       gridCols: 24,
       gridRowHeight: 50,
       gridGap: 5,
-      theme: "dawn" as "dawn" | "midnight" | string,
+      theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
       gridSize: 20,
       bgType: "color" as "color" | "image",
       bgValue: "#1a1a1a",
@@ -544,7 +544,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 mode: loaded.canvas.mode,
                 width: loaded.canvas.width,
                 height: loaded.canvas.height,
-                theme: (loaded.canvas as any).theme || 'dawn',
+                theme: validateCanvasTheme((loaded.canvas as any).theme),
               }
             })
             // Update canvas config

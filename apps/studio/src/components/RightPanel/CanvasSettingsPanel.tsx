@@ -7,6 +7,7 @@ import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Input } from '@/components/ui/input'
 import { processThumbnailFile } from '../../lib/storage/thumbnail'
+import { CANVAS_THEMES, validateCanvasTheme } from '@thingsvis/schema'
 export interface CanvasConfig {
     id: string
     name: string
@@ -131,12 +132,15 @@ export function CanvasSettingsPanel({ canvasConfig, currentProjectName, isEmbedd
                 <div className="space-y-3">
                     <label className="text-sm font-medium">{t('canvas.theme') || 'Theme'}</label>
                     <select
-                        value={canvasConfig.theme || 'midnight'}
+                        value={validateCanvasTheme(canvasConfig.theme)}
                         onChange={(e) => onConfigChange({ ...canvasConfig, theme: e.target.value as any })}
                         className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
                     >
-                        <option value="midnight">{t('canvas.themeMidnight') || 'Midnight'}</option>
-                        <option value="dawn">{t('canvas.themeDawn') || 'Dawn'}</option>
+                        {Object.values(CANVAS_THEMES).map(tOpt => (
+                            <option key={tOpt.id} value={tOpt.id}>
+                                {t(tOpt.i18nKey as any) || tOpt.fallbackLabel}
+                            </option>
+                        ))}
                     </select>
                 </div>
 

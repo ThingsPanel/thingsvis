@@ -74,3 +74,18 @@
 - **测试方法与结果**: 浏览器自动化测试验证 4 种组合（编辑器亮/暗 × 画布 Dawn/Midnight），画布颜色均不受编辑器主题影响。
 - **关键决策与原因**: 不移除全局 dark class — Tailwind `dark:` 前缀和 Portal 弹出层依赖它。
 - **耗时/迭代次数**: 2
+
+---
+
+## Sub-task 11: 画布多主题架构中心化与注册表机制重构
+
+### 11.1 分析与解决
+- **已完成工作**:
+  废除了所有散落在组件中的脏代码（例如 `theme === 'midnight' || theme === 'dark' ? 'midnight' : 'dawn'` 的条件判断），实现了数据驱动的中心化多主题架构。
+  1. **新建核心注册表**: 在 `@thingsvis/schema` 增加了 `theme-registry.ts` 并通过 `index.ts` 对外导出。该文件内定义了只读常量 `CANVAS_THEMES` 对象，并且实现了专门的验证兜底函数 `validateCanvasTheme(themeValue)`。
+  2. **消除视图判断逻辑**: 分别清除了 `packages/thingsvis-ui/src/components/GridStackCanvas.tsx` 和 `apps/studio/src/components/CanvasView.tsx` 中写死的旧版映射与判断。现在视图层是纯净的应用层，直接使用 `validateCanvasTheme()` 的返回值作为 DOM class。
+  3. **下沉默认类型配置**: 在编辑器 `apps/studio/src/components/Editor.tsx`，使用 `DEFAULT_CANVAS_THEME` 常量替代了所有原先手写的字面量默认值（例如 `'dawn'` 和 `'midnight'`），彻底消除了 Typescript 的 Type Literal 硬编码。
+  4. **动态化面板渲染**: 修改了右侧面板 `CanvasSettingsPanel.tsx`。以前的下来选择菜单是硬编码 `<option>` 标签。现在直接遍历 `Object.values(CANVAS_THEMES)` 进行动态映射与呈现，使得以后每当你增加一个主题时，选项面板便实现“自动落位”。
+- **最终成功方案**: 建立严格的 Theme Registry 并封装 `validateCanvasTheme()`。在所有入口点进行校验。
+- **关键决策与原因**: 架构向着可插拔式、高扩展方向演进。避免 `if-else` 会随着未来比如深绿 (`forest`) 等主题的引入成倍产生债务。
+- **耗时/迭代次数**: 1
