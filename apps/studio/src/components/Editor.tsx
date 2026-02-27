@@ -1402,7 +1402,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         open={confirmLayoutSwitch.open}
         onOpenChange={(open) => setConfirmLayoutSwitch(prev => ({ ...prev, open }))}
       >
-        <DialogContent showCloseButton={false}>
+        <DialogContent showCloseButton={false} className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>{t('alerts.switchLayoutTitle')}</DialogTitle>
             <DialogDescription>

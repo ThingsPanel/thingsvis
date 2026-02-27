@@ -44,7 +44,9 @@ CanvasView (apps/studio)
 - 仪表盘/饼图等组件拖拽修复完成
 - 上传图片不显示问题已修复（rsbuild proxy 增加 /uploads 代理）
 - **网格(Grid)布局模式下拖拽平移及无阴影/无居中的表现错误已修复**（修正了 `GridStackCanvas.tsx` 中静默 CSS 解析问题）
-- **图层面板 (LayerPanel) 缺陷已修复** — 修复了未绑定关联 i18n 导致的多语言文本漏译，以及通过将底层 `getProjectState` 中 `nodes` 序列与 `layerOrder` 强对齐的方法，根治了图层重新拖拽排序后保存失败的痛点。
+- **图层面板 (LayerPanel) 缺陷已修复** — 修复了未绑定关联 i18n 导致的多语言文本漏译，以及通过将底层 `getProjectState` 中 `nodes` 序列与 `layerOrder` 强写对齐的方法，根治了图层重新拖拽排序后保存失败的痛点。
+- **清除连线组件无关 Debug 信息** — 在 `LineConnectionTool.tsx` 中删除了左上角伴随产生的黄色 Debug 提示窗，避免干扰用户视线。
+
 
 ## Known Issues / Risks
 1. **部分组件缺少 SDK 依赖**: circle、line、rectangle 等未在 package.json 引入 SDK

@@ -53,7 +53,7 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     const size = schema.size || { width: 100, height: 100 };
     const cx = pos.x + size.width / 2;
     const cy = pos.y + size.height / 2;
-    
+
     switch (anchor) {
       case 'top': return { x: cx, y: pos.y };
       case 'right': return { x: pos.x + size.width, y: cy };
@@ -68,7 +68,7 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   // 优先使用节点绑定的锚点；否则使用 props.points；再否则回退到线条 bbox 左右中心。
   const getEndpointWorldPositions = useCallback(() => {
     if (!selectedLine) return null;
-    
+
     const schema = selectedLine.schemaRef as any;
     const pos = schema.position || { x: 0, y: 0 };
     const size = schema.size || { width: 200, height: 40 };
@@ -132,7 +132,7 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
         end: { x: pos.x + lx, y: pos.y + ly },
       };
     }
-    
+
     // Fallback: bbox left/right center
     const startPos = { x: pos.x, y: pos.y + size.height / 2 };
     const endPos = { x: pos.x + size.width, y: pos.y + size.height / 2 };
@@ -143,16 +143,16 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   const screenToWorld = useCallback((screenX: number, screenY: number) => {
     const container = containerRef.current;
     if (!container) return { x: screenX, y: screenY };
-    
+
     const rect = container.getBoundingClientRect();
     const vp = getViewport();
-    
+
     // 屏幕坐标 → 容器内局部坐标 → 缩放变换还原 → 世界坐标
     const localX = screenX - rect.left;
     const localY = screenY - rect.top;
     const x = (localX - vp.offsetX) / vp.zoom;
     const y = (localY - vp.offsetY) / vp.zoom;
-    
+
     return { x, y };
   }, [containerRef, getViewport]);
 
@@ -160,30 +160,30 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   const worldToScreen = useCallback((worldX: number, worldY: number) => {
     const container = containerRef.current;
     if (!container) return { x: worldX, y: worldY };
-    
+
     const rect = container.getBoundingClientRect();
     const vp = getViewport();
-    
+
     // 世界坐标 → 缩放变换 → 容器内局部坐标 → 屏幕坐标
     const x = worldX * vp.zoom + vp.offsetX + rect.left;
     const y = worldY * vp.zoom + vp.offsetY + rect.top;
-    
+
     return { x, y };
   }, [containerRef, getViewport]);
 
   // 检测鼠标位置下的节点和最近锚点
   const detectNodeAndAnchor = useCallback((worldPos: { x: number; y: number }) => {
     const nodes = Object.values(state.nodesById);
-    
+
     for (const node of nodes) {
       if (node.id === selectedLineId) continue; // 跳过当前线条
       if (node.schemaRef?.type === 'basic/line') continue; // 跳过其他线条
       if (!node.visible) continue;
-      
+
       const schema = node.schemaRef as any;
       const pos = schema.position || { x: 0, y: 0 };
       const size = schema.size || { width: 100, height: 100 };
-      
+
       // 检查是否在节点范围内（扩大检测区域）
       const padding = 30;
       if (
@@ -196,7 +196,7 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
         const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
         let closestAnchor: AnchorType = 'center';
         let closestDist = Infinity;
-        
+
         for (const anchor of anchors) {
           const anchorPos = getAnchorWorldPosition(schema, anchor);
           const dist = Math.hypot(worldPos.x - anchorPos.x, worldPos.y - anchorPos.y);
@@ -205,11 +205,11 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
             closestAnchor = anchor;
           }
         }
-        
+
         return { nodeId: node.id, anchor: closestAnchor };
       }
     }
-    
+
     return null;
   }, [state.nodesById, selectedLineId]);
 
@@ -217,11 +217,11 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   const handleHandleMouseDown = useCallback((endpoint: 'start' | 'end', e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!selectedLineId) return;
-    
+
     const worldPos = screenToWorld(e.clientX, e.clientY);
-    
+
     setDragState({
       lineId: selectedLineId,
       endpoint,
@@ -234,25 +234,25 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   const handleHandleDoubleClick = useCallback((endpoint: 'start' | 'end', e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!selectedLineId) return;
-    
+
     const currentState = kernelStore.getState() as any;
     const updateNode = currentState.updateNode;
     if (!updateNode) return;
-    
+
     const node = state.nodesById[selectedLineId];
     const currentProps = (node?.schemaRef as any)?.props || {};
-    
+
     const propKey = endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
     const anchorKey = endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
-    
+
     // 如果当前端点有连接，则断开
     if (currentProps[propKey]) {
       const newProps = { ...currentProps };
       delete newProps[propKey];
       delete newProps[anchorKey];
-      
+
       updateNode(selectedLineId, { props: newProps });
       onUserEdit?.();
     }
@@ -261,11 +261,11 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   // 处理全局鼠标移动
   useEffect(() => {
     if (!dragState) return;
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       const worldPos = screenToWorld(e.clientX, e.clientY);
       setDragState((prev) => prev ? { ...prev, currentWorldPos: worldPos } : null);
-      
+
       // 检测悬停的节点和锚点
       const detected = detectNodeAndAnchor(worldPos);
       if (detected) {
@@ -276,7 +276,7 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
         setHoveredAnchor(null);
       }
     };
-    
+
     const handleMouseUp = () => {
       if (dragState) {
         const currentState = kernelStore.getState() as any;
@@ -346,10 +346,10 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
       setHoveredNodeId(null);
       setHoveredAnchor(null);
     };
-    
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-    
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -383,20 +383,19 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     const isConnected = isEndpointConnected(endpoint);
     const displayWorldPos = isDragging && dragState ? dragState.currentWorldPos : worldPos;
     const screenPos = worldToScreen(displayWorldPos.x, displayWorldPos.y);
-    
+
     // 已连接的端点显示绿色，未连接显示紫色
     const baseColor = isConnected ? 'green' : '[#6965db]';
     const borderColor = isConnected ? 'border-green-500' : 'border-[#6965db]';
     const hoverBg = isConnected ? 'hover:bg-green-500/20' : 'hover:bg-[#6965db]/20';
-    
+
     return (
       <div
         key={endpoint}
-        className={`absolute rounded-full border-2 cursor-grab transition-all duration-75 ${
-          isDragging 
-            ? 'bg-blue-500 border-blue-600 scale-125 shadow-lg' 
+        className={`absolute rounded-full border-2 cursor-grab transition-all duration-75 ${isDragging
+            ? 'bg-blue-500 border-blue-600 scale-125 shadow-lg'
             : `bg-white ${borderColor} ${hoverBg} hover:scale-110`
-        }`}
+          }`}
         style={{
           left: screenPos.x - handleSize / 2,
           top: screenPos.y - handleSize / 2,
@@ -414,12 +413,12 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   // 渲染连接线（拖拽时显示）
   const renderDragLine = () => {
     if (!dragState) return null;
-    
+
     // 获取拖拽起点：如果是 start 端点，用 end 作为起点，反之亦然
     const otherEndpoint = dragState.endpoint === 'start' ? endpoints.end : endpoints.start;
     const startScreenPos = worldToScreen(otherEndpoint.x, otherEndpoint.y);
     const endScreenPos = worldToScreen(dragState.currentWorldPos.x, dragState.currentWorldPos.y);
-    
+
     return (
       <svg
         className="fixed inset-0 pointer-events-none"
@@ -441,27 +440,26 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   // 渲染悬停节点的锚点
   const renderHoveredAnchors = () => {
     if (!hoveredNodeId) return null;
-    
+
     const node = state.nodesById[hoveredNodeId];
     if (!node) return null;
-    
+
     const schema = node.schemaRef as any;
     const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
-    
+
     return anchors.map((anchor) => {
       const anchorPos = getAnchorWorldPosition(schema, anchor);
       const screenPos = worldToScreen(anchorPos.x, anchorPos.y);
       const isActive = anchor === hoveredAnchor;
       const anchorSize = isActive ? 16 : 10;
-      
+
       return (
         <div
           key={anchor}
-          className={`absolute rounded-full border-2 pointer-events-none transition-all duration-100 ${
-            isActive 
-              ? 'bg-green-500 border-green-600 shadow-lg' 
+          className={`absolute rounded-full border-2 pointer-events-none transition-all duration-100 ${isActive
+              ? 'bg-green-500 border-green-600 shadow-lg'
               : 'bg-white border-gray-400'
-          }`}
+            }`}
           style={{
             left: screenPos.x - anchorSize / 2,
             top: screenPos.y - anchorSize / 2,
@@ -477,17 +475,17 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
   // 渲染节点高亮边框
   const renderNodeHighlight = () => {
     if (!hoveredNodeId) return null;
-    
+
     const node = state.nodesById[hoveredNodeId];
     if (!node) return null;
-    
+
     const schema = node.schemaRef as any;
     const pos = schema.position || { x: 0, y: 0 };
     const size = schema.size || { width: 100, height: 100 };
-    
+
     const topLeft = worldToScreen(pos.x, pos.y);
     const bottomRight = worldToScreen(pos.x + size.width, pos.y + size.height);
-    
+
     return (
       <div
         className="absolute border-2 border-green-500 border-dashed pointer-events-none"
@@ -505,23 +503,18 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
 
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 998 }}>
-      {/* Debug indicator */}
-      <div style={{ position: 'fixed', top: 10, left: 10, background: 'yellow', padding: 5, zIndex: 9999 }}>
-        Line selected: {selectedLineId?.slice(0,8)}
-      </div>
-      
       {/* 节点高亮 */}
       {renderNodeHighlight()}
-      
+
       {/* 端点手柄 */}
       <div className="pointer-events-auto">
         {renderHandle(endpoints.start, 'start')}
         {renderHandle(endpoints.end, 'end')}
       </div>
-      
+
       {/* 拖拽线 */}
       {renderDragLine()}
-      
+
       {/* 悬停锚点 */}
       {renderHoveredAnchors()}
     </div>
