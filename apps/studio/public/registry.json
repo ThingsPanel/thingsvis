@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-27T09:07:25.700Z",
+  "generatedAt": "2026-02-27T10:02:15.355Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -179,8 +179,8 @@
       "icon": "AppWindow",
       "name": "网页容器",
       "i18n": {
-        "zh": "网页容器",
-        "en": "网页容器"
+        "zh": "网页",
+        "en": "iframe"
       }
     },
     "media/image": {
@@ -195,6 +195,20 @@
       "i18n": {
         "zh": "图片",
         "en": "图片"
+      }
+    },
+    "media/video-player": {
+      "remoteName": "thingsvis_widget_media_video_player",
+      "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/video-player/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "Video",
+      "name": "video-player",
+      "i18n": {
+        "zh": "视频",
+        "en": "Video"
       }
     }
   }

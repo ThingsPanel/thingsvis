@@ -1,0 +1,13 @@
+{
+    "widgets.thingsvis-widget-media-video-player.src": "Video Stream URL",
+    "widgets.thingsvis-widget-media-video-player.mode": "Play Mode",
+    "widgets.thingsvis-widget-media-video-player.background": "Run in Background",
+    "widgets.thingsvis-widget-media-video-player.source": "Data Source",
+    "widgets.thingsvis-widget-media-video-player.objectFit": "Object Fit",
+    "widgets.thingsvis-widget-media-video-player.borderWidth": "Border Width",
+    "widgets.thingsvis-widget-media-video-player.borderColor": "Border Color",
+    "widgets.thingsvis-widget-media-video-player.borderRadius": "Border Radius",
+    "widgets.thingsvis-widget-media-video-player.style": "Style",
+    "widgets.thingsvis-widget-media-video-player.fillColor": "Fill Color",
+    "widgets.thingsvis-widget-media-video-player.opacity": "Opacity"
+}

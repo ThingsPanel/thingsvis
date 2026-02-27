@@ -27,8 +27,8 @@
         "displayName": "网页容器",
         "icon": "AppWindow",
         "i18n": {
-            "zh": "网页容器",
-            "en": "网页容器"
+            "zh": "网页",
+            "en": "iframe"
         }
     }
 }

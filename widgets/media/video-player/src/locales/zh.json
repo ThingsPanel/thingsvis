@@ -1,0 +1,13 @@
+{
+    "widgets.thingsvis-widget-media-video-player.src": "视频流地址",
+    "widgets.thingsvis-widget-media-video-player.mode": "播放模式",
+    "widgets.thingsvis-widget-media-video-player.background": "后台运行",
+    "widgets.thingsvis-widget-media-video-player.source": "数据源",
+    "widgets.thingsvis-widget-media-video-player.objectFit": "视频适配",
+    "widgets.thingsvis-widget-media-video-player.borderWidth": "边框宽度",
+    "widgets.thingsvis-widget-media-video-player.borderColor": "边框颜色",
+    "widgets.thingsvis-widget-media-video-player.borderRadius": "圆角",
+    "widgets.thingsvis-widget-media-video-player.style": "样式",
+    "widgets.thingsvis-widget-media-video-player.fillColor": "填充颜色",
+    "widgets.thingsvis-widget-media-video-player.opacity": "不透明度"
+}
