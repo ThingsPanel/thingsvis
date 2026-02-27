@@ -403,8 +403,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   // Function to get current project state for saving
   const getProjectState = useCallback((): ProjectFile => {
     const state = store.getState()
-    // Extract node schemas from NodeState (schemaRef contains the actual node data)
-    const nodes = Object.values(state.nodesById).map(nodeState => nodeState.schemaRef)
+    // Extract node schemas from NodeState (schemaRef contains the actual node data), preserving layer order
+    const nodes = state.layerOrder
+      .map(id => state.nodesById[id]?.schemaRef)
+      .filter((schema): schema is NodeSchemaType => Boolean(schema))
 
     return {
       meta: {

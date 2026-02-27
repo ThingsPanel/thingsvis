@@ -60,7 +60,7 @@ type LayerListEntry =
   | { kind: 'item'; data: LayerItemData };
 
 export default function LayerPanel({ store, searchQuery = '', onUserEdit }: LayerPanelProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation('editor');
   const state = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), [store]),
     () => store.getState() as KernelState

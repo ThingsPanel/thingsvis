@@ -1,31 +1,14 @@
-# Implementation Plan: 修复 GridStackCanvas 布局渲染及拖拽偏移
+# 实现计划 (Implementation Plan)
 
-## 1. 具体改动内容 (Changes to apply)
+## 修复 LayerPanel 多语言配置问题
+1. 定位 `f:\coding\thingsvis\apps\studio\src\components\LeftPanel\LayerPanel.tsx`，找到 `useTranslation()` 钩子调用点。
+2. 由于所引用的 `layersPanel` 及 `common` 对象存在于 `editor.json` 内（但 `i18n` 配置的默认命名空间是 `common`，加载了 `common.json`），使用 `const { t } = useTranslation('editor')` 指定命名空间。
 
-### 编辑目标
-**`packages/thingsvis-ui/src/components/GridStackCanvas.tsx`**
+## 修复拖拽后图层排序保存问题
+1. 深入分析 `packages/thingsvis-kernel` 及 `Editor.tsx`，核对持久化（保存）机制。发现由 `Editor.tsx` 中的 `getProjectState` 生成被保存的节点数据 (`ProjectFile.nodes`)。
+2. 旧代码逻辑使用无序的 `Object.values(state.nodesById)` 导出。
+3. 改为按照拖拽及新建维护的全局顺序参考 `state.layerOrder` 数组来执行映射：`state.layerOrder.map(id => state.nodesById[id]?.schemaRef).filter(...)`，从而确保 `nodes` 数组成员带有准确且稳定的视图依赖顺序。
 
-**修改点 1（第 521 行）：修正中心布局、平移属性及缩放解析失败**
-> 原本：
-> `transform: translate(calc(-50 % + ${panOffset.x}px), calc(-50 % + ${panOffset.y}px)) scale(${zoom}),`
-> 修改为：
-> `transform: translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom}),`
-* 说明：删除掉所有的 `-50 ` 和 `%` 之间的多余空格。
-
-**修改点 2（第 535 行）：修复 Padding 单位错误**
-> 原本：
-> `padding: ${margin} px,` 
-> 修改为：
-> `padding: ${margin}px,`
-* 说明：删除掉数值和 px 单位之间的多余空格，保证它是一个完整的如 "5px" 格式而非 "5 px"。
-
-## 2. 验证方式 (Verification Strategy)
-本次改动在前端视图发生直接视觉反馈：
-- **手动测试**（在 Rsbuild 浏览器页面）：
-   1. 在 Editor 里通过右面板“布局模式”切换为“网格”(Grid)。
-   2. 预期不点任何对象时，网格能够稳稳停留在 Editor 中间的 50% / 50% 轴线上，且其边框存在白色（`dawn` 主题）及轻微盒子阴影。
-   3. 在顶部点击工具栏的第三项“抓手”(Pan, `hand` icon)，使得鼠标变成 grab 图标。
-   4. 对着空白网格区域拖拽，期望整个白板由于 `panOffset.x / panOffset.y` 修改且被有效渲染到 `translate` 函数，画布产生平移跟手动画。
-   5. 检查 padding 的错误消失。
-
-通过以上极微小且无隐患的改动即可修复所有的布局不居中及拖动无效（实际上 React 层由于 mouseEvent 已经计算出来了 panOffset 变量并且触发了 rerender，但由于 CSS parse 错误直接丢弃了整条 declaration。这是十分经典的 CSS 静默解析特性）。
+## 验证与测试
+- 在本地热更新或刷新后，启动工作台并在左面板观察中文图层菜单列表无误。
+- 加入三个新组件（如基础模块或图表），通过鼠标拖拽将其顺序随意置换后，观察触发是否能写入项目文件，直接刷新验证位置是否稳定复原。
