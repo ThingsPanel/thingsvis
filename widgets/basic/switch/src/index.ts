@@ -15,7 +15,6 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
         element.style.width = '100%';
         element.style.height = '100%';
@@ -32,7 +31,8 @@ export const Main = defineWidget({
         const updateView = () => {
             const { value, activeColor, inactiveColor } = currentProps;
 
-            const finalInactiveColor = inactiveColor === '#d1d5db' && isDark ? '#374151' : inactiveColor;
+            // Use user-specified color directly; no isDark override needed
+            const finalInactiveColor = inactiveColor;
 
             // Track styling
             track.style.width = '100%';
@@ -74,7 +74,6 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
                 updateView();
             },
             destroy: () => {

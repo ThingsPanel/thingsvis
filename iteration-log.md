@@ -31,3 +31,30 @@
 - **测试方法与结果**: 需要重启 dev server 后验证，在浏览器中访问 `http://localhost:3000/uploads/tbJF7d_do9yFIvqDdsedl.jpg` 应能正常加载图片。
 - **关键决策与原因**: 选择在 rsbuild proxy 层面解决，而非修改前端 URL 拼接逻辑。因为 proxy 是开发环境的标准做法，生产环境通常由 Nginx/反向代理统一处理，不需要改前端代码。
 - **耗时/迭代次数**: 1
+
+---
+
+## Sub-task 9: isDark 残留全面清理 — 画布/组件暗色污染根治
+
+### 9.1 分析与解决
+- **已完成工作**:
+  全面清理了 TASK-14-C 中遗留的所有 `isDark` 硬编码。共涉及 10 个文件：
+  1. **SDK 类型层** (2 文件): 从 `thingsvis-widget-sdk/types.ts` 和 `thingsvis-schema/widget-module.ts` 的 `WidgetOverlayContext` 中移除 `isDark?: boolean` 字段。
+  2. **画布渲染器** (1 文件): `GridStackCanvas.tsx` 中的 `nodeToOverlayContext()` 不再下发 `isDark: theme === 'midnight'`。
+  3. **Widget 组件** (7 文件): 清除全部 8 个 widget 中的 `let isDark = true` 硬编码和基于 isDark 的颜色覆盖逻辑：
+     - `basic/table` — 移除默认颜色替换逻辑
+     - `basic/switch` — 移除 inactiveColor 替换逻辑
+     - `indicator/number-card` — 移除 backgroundColor/titleColor 替换逻辑
+     - `chart/echarts-line` — 移除变量声明和赋值
+     - `chart/echarts-pie` — 移除变量声明和赋值
+     - `chart/echarts-gauge` — 移除变量声明和赋值
+     - `chart/echarts-bar` — 移除变量声明和赋值
+     - `chart/uplot-line` — 移除变量声明和赋值，改用 resolveWidgetColors() 提取的 colors.fg/colors.axis
+- **尝试与失败记录**: multi_replace_file_content 工具对 switch 和 echarts-bar 文件产生了格式损坏，使用 write_to_file 完整覆盖后修复。
+- **最终成功方案**: 所有 Widget 改为通过 `resolveWidgetColors(element)` 从 DOM 的 CSS 变量（`--w-fg`, `--w-bg`, `--w-axis` 等）中获取颜色，不再使用二元的 isDark 标识。
+- **测试方法与结果**: `pnpm build:widgets` 全部 15 个组件编译成功，零错误。
+- **关键决策与原因**:
+  1. **保留 Editor.tsx 的 isDarkMode** — 这是编辑器 UI（工具栏、面板）的暗色模式，与画布主题独立。画布通过 `className={theme-${theme}}` 建立了独立的 CSS 变量作用域。
+  2. **不修改 widgetRenderer.ts** — 虽然 `nodeToOverlayContext()` 没传 theme 字段，但没有 widget 依赖 `ctx.theme`；所有 widget 通过 `getComputedStyle()` 从 DOM 树读取 CSS 变量，不需要 JS 层面传递 theme。
+  3. **widgetRenderer.ts 与 VisualEngine 的 theme 感知问题** — 固定/无限画布的渲染路径中，theme 通过 Studio CanvasView 的 `className={theme-${theme}}` 在 DOM 上生效，overlay element 作为其子元素自动继承 CSS 变量，因此无需额外传递。
+- **耗时/迭代次数**: 1

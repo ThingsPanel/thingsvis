@@ -67,7 +67,6 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
         const chart = echarts.init(element);
         chart.setOption(buildOption(currentProps, colors, 1));
@@ -101,7 +100,6 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
 
                 chart.setOption(buildOption(currentProps, colors), { replaceMerge: ['dataset', 'series'] });
 

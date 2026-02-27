@@ -9,23 +9,20 @@ import { controls } from './controls';
 import type { WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
 /**
- * 根据 Props 和 Theme 生成 ECharts Option
+ * Build ECharts option from props and theme colors
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
     const { title, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
 
-    // 根据亮暗色主题自动适配文本颜色和坐标轴辅助线颜色
     const textColor = colors?.fg ?? '#333';
     const splitLineColor = colors?.axis ?? '#00000010';
 
-    // 智能构建渐变色
     const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
         { offset: 0, color: primaryColor },
-        { offset: 1, color: primaryColor + '40' } // 加点透明度
+        { offset: 1, color: primaryColor + '40' }
     ]);
 
     return {
-        // 背景完全交给上层容器或 theme
         backgroundColor: 'transparent',
         title: title ? {
             text: title,
@@ -49,7 +46,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             top: title ? Math.round(35 * scale) : Math.round(15 * scale),
             containLabel: true,
         },
-        // 拥抱 Dataset 规范，无需显式指明 xAxis 和 series 内部 data
         dataset: Array.isArray(data) && data.length > 0 ? {
             dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || 'props.value' }],
             source: data
@@ -59,7 +55,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             type: 'category',
             axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
             axisLine: { lineStyle: { color: splitLineColor } },
-            // 补充刻度展示属性
             axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
         },
         yAxis: {
@@ -67,18 +62,16 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             type: 'value',
             splitLine: { lineStyle: { color: splitLineColor } },
             axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
-            // 补充刻度展示属性
             axisLine: { show: true, lineStyle: { color: splitLineColor } },
             axisTick: { show: true, lineStyle: { color: splitLineColor } },
         },
         series: [
             {
                 type: 'bar',
-                // 确保 ECharts 正确提取 dataset 中的 name (X轴) 和 value (Y轴) 并且作为图例/Tooltip显示
                 encode: { x: 'name', y: 'value', tooltip: ['value'] },
                 itemStyle: {
                     color: gradientColor,
-                    borderRadius: [4, 4, 0, 0], // 给点微小圆角更精致
+                    borderRadius: [4, 4, 0, 0],
                 },
             },
         ],
@@ -99,9 +92,8 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
-        // 初始化 ECharts
+        // Initialize ECharts
         const chart = echarts.init(element);
         chart.setOption(buildOption(currentProps, colors, 1));
 
@@ -134,9 +126,8 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
 
-                // scheduleResize 将处理 setOption（包含 scale 逻辑）
+                // scheduleResize handles setOption with scale logic
                 if (newCtx.size || !newCtx.size) {
                     scheduleResize();
                 }

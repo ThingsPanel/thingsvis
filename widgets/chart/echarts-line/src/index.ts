@@ -103,7 +103,6 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   const defaults = getDefaultProps();
   let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
   let colors: WidgetColors = resolveWidgetColors(element);
-  let isDark = true;
 
   const chart = echarts.init(element);
   chart.setOption(buildOption(currentProps, colors, 1));
@@ -138,7 +137,6 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     update: (newCtx: WidgetOverlayContext) => {
       currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
       colors = resolveWidgetColors(element);
-      isDark = true;
 
       // scheduleResize 处理比例缩放
       if (newCtx.size || !newCtx.size) {

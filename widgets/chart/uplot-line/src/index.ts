@@ -17,10 +17,10 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
+        // Use theme-aware colors from CSS variables
         const textColor = colors?.fg ?? '#333';
-        const gridColor = isDark ? '#ffffff20' : '#00000010';
+        const gridColor = colors?.axis ?? '#00000010';
 
         let chart: uPlot | null = null;
 
@@ -104,6 +104,11 @@ export const Main = defineWidget({
             const axisFontSize = Math.round(12 * scale);
             const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
 
+            // Re-resolve colors on each init to pick up CSS variable changes
+            const currentColors = resolveWidgetColors(element);
+            const currentTextColor = currentColors?.fg ?? '#333';
+            const currentGridColor = currentColors?.axis ?? '#00000010';
+
             const opts: uPlot.Options = {
                 width: cw,
                 height: ch,
@@ -113,17 +118,17 @@ export const Main = defineWidget({
                 },
                 axes: [
                     {
-                        stroke: textColor,
+                        stroke: currentTextColor,
                         font: axisFont,
-                        space: 100 * scale, // 动态增加刻度之间的最小间距，防止文字重叠
-                        grid: { stroke: gridColor, width: 1 },
-                        ticks: { stroke: gridColor, width: 1 }
+                        space: 100 * scale,
+                        grid: { stroke: currentGridColor, width: 1 },
+                        ticks: { stroke: currentGridColor, width: 1 }
                     },
                     {
-                        stroke: textColor,
+                        stroke: currentTextColor,
                         font: axisFont,
-                        grid: { stroke: gridColor, width: 1, dash: [5, 5] },
-                        ticks: { stroke: gridColor, width: 0 }
+                        grid: { stroke: currentGridColor, width: 1, dash: [5, 5] },
+                        ticks: { stroke: currentGridColor, width: 0 }
                     }
                 ],
                 series: [
@@ -131,12 +136,12 @@ export const Main = defineWidget({
                     {
                         label: title || "props.value",
                         stroke: primaryColor,
-                        fill: primaryColor + "30", // deeper slightly for area
+                        fill: primaryColor + "30",
                         width: 2,
                         // Enable smooth bezier curves
                         paths: uPlot.paths.spline ? uPlot.paths.spline() : undefined,
                         points: {
-                            show: false // Hide dots to look cleaner, similar to Grafana default
+                            show: false
                         }
                     }
                 ],
@@ -144,7 +149,7 @@ export const Main = defineWidget({
                     points: {
                         size: 6,
                         fill: primaryColor,
-                        stroke: textColor
+                        stroke: currentTextColor
                     }
                 }
             };
@@ -189,9 +194,9 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
 
-                titleEl.style.color = isDark ? '#ddd' : '#333';
+                // Update title color from CSS variables
+                titleEl.style.color = colors?.fg ?? '#333';
 
                 initChart();
             },

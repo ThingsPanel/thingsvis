@@ -155,8 +155,6 @@ export type WidgetOverlayContext = {
   props?: Record<string, unknown>;
   /** 当前画布的主题上下文 (Dawn/Midnight) */
   theme?: WidgetTheme;
-  /** 当前背景是否为深色调，用于图表自适应反白 */
-  isDark?: boolean;
 };
 
 /** DOM Overlay 实例 */

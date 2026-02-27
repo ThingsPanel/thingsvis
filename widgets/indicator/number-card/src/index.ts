@@ -15,7 +15,6 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
         element.style.width = '100%';
         element.style.height = '100%';
@@ -43,14 +42,12 @@ export const Main = defineWidget({
         const updateView = () => {
             const { title, value, unit, valueColor, titleColor, backgroundColor, borderRadius } = currentProps;
 
-            const finalBgColor = backgroundColor === '#ffffff' && isDark ? '#141414' : backgroundColor;
-            const finalTitleColor = titleColor === '#6b7280' && isDark ? '#9ca3af' : titleColor;
-
-            element.style.backgroundColor = finalBgColor;
+            // Use user-specified colors directly; no isDark override needed
+            element.style.backgroundColor = backgroundColor;
             element.style.borderRadius = `${borderRadius}px`;
 
             titleEl.textContent = title;
-            titleEl.style.color = finalTitleColor;
+            titleEl.style.color = titleColor;
             titleEl.style.fontSize = '14px';
             titleEl.style.marginBottom = '8px';
 
@@ -60,7 +57,7 @@ export const Main = defineWidget({
             valueEl.style.fontWeight = 'bold';
 
             unitEl.textContent = unit;
-            unitEl.style.color = finalTitleColor;
+            unitEl.style.color = titleColor;
             unitEl.style.fontSize = '14px';
             unitEl.style.marginLeft = '4px';
         };
@@ -71,7 +68,6 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
                 updateView();
             },
             destroy: () => {

@@ -51,7 +51,6 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?
     size: schema.size ?? { width: 200, height: 100 },
     props: resolvedProps,
     theme,
-    isDark: theme === 'midnight'
   };
 }
 

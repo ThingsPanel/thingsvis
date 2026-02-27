@@ -15,7 +15,6 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);
-        let isDark = true;
 
         element.style.width = '100%';
         element.style.height = '100%';
@@ -34,11 +33,12 @@ export const Main = defineWidget({
         const updateView = () => {
             const { columns, data, headerBg, headerColor, rowBg, rowColor, borderColor, fontSize } = currentProps;
 
-            const finalHeaderBg = headerBg === '#f3f4f6' && isDark ? '#141414' : headerBg;
-            const finalHeaderColor = headerColor === '#374151' && isDark ? '#d1d5db' : headerColor;
-            const finalRowBg = rowBg === '#ffffff' && isDark ? '#1f1f1f' : rowBg;
-            const finalRowColor = rowColor === '#1f2937' && isDark ? '#e5e7eb' : rowColor;
-            const finalBorderColor = borderColor === '#e5e7eb' && isDark ? '#374151' : borderColor;
+            // Use user-specified colors directly; no isDark override needed
+            const finalHeaderBg = headerBg;
+            const finalHeaderColor = headerColor;
+            const finalRowBg = rowBg;
+            const finalRowColor = rowColor;
+            const finalBorderColor = borderColor;
 
             thead.innerHTML = '';
             tbody.innerHTML = '';
@@ -83,7 +83,6 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
-                isDark = true;
                 updateView();
             },
             destroy: () => {
