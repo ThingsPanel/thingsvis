@@ -71,7 +71,7 @@ export class VideoRTC extends HTMLElement {
          */
         this.pcConfig = {
             bundlePolicy: 'max-bundle',
-            iceServers: [{urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302']}],
+            iceServers: [{ urls: ['stun:stun.cloudflare.com:3478', 'stun:stun.l.google.com:19302'] }],
             sdpSemantics: 'unified-plan',  // important for Chromecast 1
         };
 
@@ -148,6 +148,24 @@ export class VideoRTC extends HTMLElement {
      */
     set src(value) {
         if (typeof value !== 'string') value = value.toString();
+
+        // ------------------ MODIFICATION ------------------
+        // Support static file playback (for testing/compatibility)
+        if (value.match(/\.(mp4|webm|ogv)(\?.*)?$/i)) {
+            const playStatic = () => {
+                if (this.video) {
+                    this.video.src = value;
+                    this.video.loop = true;
+                    this.play();
+                } else {
+                    setTimeout(playStatic, 100);
+                }
+            };
+            playStatic();
+            return;
+        }
+        // --------------------------------------------------
+
         if (value.startsWith('http')) {
             value = 'ws' + value.substring(4);
         } else if (value.startsWith('/')) {
@@ -297,7 +315,7 @@ export class VideoRTC extends HTMLElement {
                         this.connectedCallback();
                     }
                 });
-            }, {threshold: this.visibilityThreshold});
+            }, { threshold: this.visibilityThreshold });
             observer.observe(this);
         }
     }
@@ -426,8 +444,8 @@ export class VideoRTC extends HTMLElement {
 
             ms = new MediaSource();
             ms.addEventListener('sourceopen', () => {
-                this.send({type: 'mse', value: this.codecs(MediaSource.isTypeSupported)});
-            }, {once: true});
+                this.send({ type: 'mse', value: this.codecs(MediaSource.isTypeSupported) });
+            }, { once: true });
 
             this.video.disableRemotePlayback = true;
             this.video.srcObject = ms;
@@ -435,8 +453,8 @@ export class VideoRTC extends HTMLElement {
             ms = new MediaSource();
             ms.addEventListener('sourceopen', () => {
                 URL.revokeObjectURL(this.video.src);
-                this.send({type: 'mse', value: this.codecs(MediaSource.isTypeSupported)});
-            }, {once: true});
+                this.send({ type: 'mse', value: this.codecs(MediaSource.isTypeSupported) });
+            }, { once: true });
 
             this.video.src = URL.createObjectURL(ms);
             this.video.srcObject = null;
@@ -508,7 +526,7 @@ export class VideoRTC extends HTMLElement {
             if (ev.candidate && this.mode.includes('webrtc/tcp') && ev.candidate.protocol === 'udp') return;
 
             const candidate = ev.candidate ? ev.candidate.toJSON().candidate : '';
-            this.send({type: 'webrtc/candidate', value: candidate});
+            this.send({ type: 'webrtc/candidate', value: candidate });
         });
 
         pc.addEventListener('connectionstatechange', () => {
@@ -518,7 +536,7 @@ export class VideoRTC extends HTMLElement {
                     .map(tr => tr.receiver.track);
                 /** @type {HTMLVideoElement} */
                 const video2 = document.createElement('video');
-                video2.addEventListener('loadeddata', () => this.onpcvideo(video2), {once: true});
+                video2.addEventListener('loadeddata', () => this.onpcvideo(video2), { once: true });
                 video2.srcObject = new MediaStream(tracks);
             } else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
                 pc.close(); // stop next events
@@ -535,12 +553,12 @@ export class VideoRTC extends HTMLElement {
                 case 'webrtc/candidate':
                     if (this.mode.includes('webrtc/tcp') && msg.value.includes(' udp ')) return;
 
-                    pc.addIceCandidate({candidate: msg.value, sdpMid: '0'}).catch(er => {
+                    pc.addIceCandidate({ candidate: msg.value, sdpMid: '0' }).catch(er => {
                         console.warn(er);
                     });
                     break;
                 case 'webrtc/answer':
-                    pc.setRemoteDescription({type: 'answer', sdp: msg.value}).catch(er => {
+                    pc.setRemoteDescription({ type: 'answer', sdp: msg.value }).catch(er => {
                         console.warn(er);
                     });
                     break;
@@ -551,7 +569,7 @@ export class VideoRTC extends HTMLElement {
         };
 
         this.createOffer(pc).then(offer => {
-            this.send({type: 'webrtc/offer', value: offer.sdp});
+            this.send({ type: 'webrtc/offer', value: offer.sdp });
         });
 
         this.pcState = WebSocket.CONNECTING;
@@ -565,9 +583,9 @@ export class VideoRTC extends HTMLElement {
     async createOffer(pc) {
         try {
             if (this.media.includes('microphone')) {
-                const media = await navigator.mediaDevices.getUserMedia({audio: true});
+                const media = await navigator.mediaDevices.getUserMedia({ audio: true });
                 media.getTracks().forEach(track => {
-                    pc.addTransceiver(track, {direction: 'sendonly'});
+                    pc.addTransceiver(track, { direction: 'sendonly' });
                 });
             }
         } catch (e) {
@@ -576,7 +594,7 @@ export class VideoRTC extends HTMLElement {
 
         for (const kind of ['video', 'audio']) {
             if (this.media.includes(kind)) {
-                pc.addTransceiver(kind, {direction: 'recvonly'});
+                pc.addTransceiver(kind, { direction: 'recvonly' });
             }
         }
 
@@ -597,7 +615,7 @@ export class VideoRTC extends HTMLElement {
             const stream = video2.srcObject;
             if (stream.getVideoTracks().length > 0) {
                 // not the best, but a pretty simple way to check a codec
-                const isH265Supported =  this.pc.remoteDescription.sdp.includes('H265/90000');
+                const isH265Supported = this.pc.remoteDescription.sdp.includes('H265/90000');
                 rtcPriority += isH265Supported ? 0x240 : 0x220;
             }
             if (stream.getAudioTracks().length > 0) rtcPriority += 0x102;
@@ -635,7 +653,7 @@ export class VideoRTC extends HTMLElement {
             this.video.poster = 'data:image/jpeg;base64,' + VideoRTC.btoa(data);
         };
 
-        this.send({type: 'mjpeg'});
+        this.send({ type: 'mjpeg' });
     }
 
     onhls() {
@@ -648,7 +666,7 @@ export class VideoRTC extends HTMLElement {
             this.play();
         };
 
-        this.send({type: 'hls', value: this.codecs(type => this.video.canPlayType(type))});
+        this.send({ type: 'hls', value: this.codecs(type => this.video.canPlayType(type)) });
     }
 
     onmp4() {
@@ -680,7 +698,7 @@ export class VideoRTC extends HTMLElement {
             video2.src = 'data:video/mp4;base64,' + VideoRTC.btoa(data);
         };
 
-        this.send({type: 'mp4', value: this.codecs(this.video.canPlayType)});
+        this.send({ type: 'mp4', value: this.codecs(this.video.canPlayType) });
     }
 
     static btoa(buffer) {
@@ -693,3 +711,5 @@ export class VideoRTC extends HTMLElement {
         return window.btoa(binary);
     }
 }
+
+customElements.define('video-rtc', VideoRTC);
