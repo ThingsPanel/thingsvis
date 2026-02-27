@@ -49,6 +49,8 @@ CanvasView (apps/studio)
 - **图层面板 (LayerPanel) 缺陷已修复** — 修复了未绑定关联 i18n 导致的多语言文本漏译，以及通过将底层 `getProjectState` 中 `nodes` 序列与 `layerOrder` 强写对齐的方法，根治了图层重新拖拽排序后保存失败的痛点。
 - **清除连线组件无关 Debug 信息** — 在 `LineConnectionTool.tsx` 中删除了左上角伴随产生的黄色 Debug 提示窗，避免干扰用户视线。
 - **UI 字体和布局优化完成** — 借鉴 Excalidraw 设置系统字体栈（14px 基础字号），组件库改为 3 列紧凑布局。
+- **左侧面板可折叠** — 默认隐藏，点击工具栏按钮可展开，增加关闭按钮
+- **UI 视觉风格优化** — 采用 Excalidraw 风格的柔和色调和阴影效果，圆角加大，边框更柔和
 - **组件命名规范化** — `uPlot时序图` 重命名为 `时序图`（英文 Time Series），去除技术实现细节暴露。
 
 ## Known Issues / Risks

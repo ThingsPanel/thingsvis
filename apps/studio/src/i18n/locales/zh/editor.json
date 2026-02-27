@@ -24,6 +24,7 @@
         "preview": "预览",
         "publish": "发布",
         "showProps": "显示属性面板",
+        "showLibrary": "显示组件库",
         "fullscreen": "全屏",
         "exitFullscreen": "退出全屏",
         "untitledProject": "未命名项目"

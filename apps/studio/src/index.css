@@ -5,32 +5,32 @@
 @tailwind utilities;
 
 :root {
-  /* Light theme with clean, minimal Zen-like aesthetic */
-  --background: 0 0% 93%;
-  --foreground: 0 0% 25%;
+  /* Light theme - Ultra bright and airy */
+  /* Crisp white background */
+  --background: 220 14% 96%;
+  --foreground: 220 20% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 25%;
+  --card-foreground: 220 20% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 25%;
-  /* Updated primary color to #6965db */
+  --popover-foreground: 220 20% 10%;
+  /* Primary color #6965db */
   --primary: 243 58% 63%;
   --primary-foreground: 0 0% 99%;
-  --secondary: 240 1% 92%;
-  --secondary-foreground: 0 0% 25%;
-  --muted: 240 1% 95%;
-  --muted-foreground: 240 2% 55%;
-  --accent: 240 1% 92%;
-  --accent-foreground: 0 0% 25%;
-  --destructive: 25 23% 58%;
+  --secondary: 210 20% 98%;
+  --secondary-foreground: 220 20% 10%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 210 15% 50%;
+  --accent: 210 20% 94%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 99%;
-  --border: 240 1% 88%;
-  --input: 240 1% 88%;
-  /* Updated ring color to #6965db */
+  --border: 210 20% 92%;
+  --input: 210 20% 92%;
   --ring: 243 58% 63%;
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Canvas background */
-  --canvas-dot: 240 1% 80%;
+  /* Canvas background - very subtle dots */
+  --canvas-dot: 210 15% 92%;
   --chart-1: 41.116 22.2% 64.6%;
   --chart-2: 184.704 11.8% 60%;
   --chart-3: 227.392 7% 39.8%;
@@ -39,31 +39,30 @@
 }
 
 .dark {
-  /* Dark theme with slate blue-gray tones, not pitch black */
-  --background: 240 1% 14%;
-  --foreground: 240 1% 92%;
-  --card: 240 1% 24%;
-  --card-foreground: 240 1% 92%;
-  --popover: 240 1% 22%;
-  --popover-foreground: 240 1% 92%;
-  /* Updated primary color to #6965db for dark mode */
+  /* Dark theme - Cozy, comfortable dark with warm undertones */
+  /* Deep but not depressing - like a cozy evening workspace */
+  --background: 225 25% 12%;
+  --foreground: 220 20% 94%;
+  --card: 225 25% 16%;
+  --card-foreground: 220 20% 94%;
+  --popover: 225 25% 18%;
+  --popover-foreground: 220 20% 94%;
   --primary: 243 58% 63%;
   --primary-foreground: 0 0% 99%;
-  --secondary: 240 1% 25%;
-  --secondary-foreground: 240 1% 92%;
-  --muted: 240 1% 25%;
-  --muted-foreground: 240 2% 60%;
-  --accent: 240 1% 28%;
-  --accent-foreground: 240 1% 92%;
-  --destructive: 25 23% 62%;
+  --secondary: 225 20% 24%;
+  --secondary-foreground: 220 20% 94%;
+  --muted: 225 20% 22%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 225 20% 26%;
+  --accent-foreground: 220 20% 94%;
+  --destructive: 0 65% 60%;
   --destructive-foreground: 0 0% 99%;
-  --border: 240 1% 30%;
-  --input: 240 1% 30%;
-  /* Updated ring color to #6965db */
+  --border: 225 20% 28%;
+  --input: 225 20% 28%;
   --ring: 243 58% 63%;
 
-  /* Canvas background */
-  --canvas-dot: 240 1% 35%;
+  /* Canvas background - soft and pleasant in dark mode */
+  --canvas-dot: 225 20% 32%;
   --chart-1: 264.376 24.3% 48.8%;
   --chart-2: 162.48 17% 69.6%;
   --chart-3: 70.08 18.8% 76.9%;
@@ -77,41 +76,36 @@
    ============================================================================ */
 
 .theme-dawn {
-  /* Dawn (晨曦白) - 高明度，极简现代 */
+  /* Dawn (晨曦白) - Ultra bright and airy */
   --w-bg: 0 0% 100%;
-  --w-fg: 240 10% 15%;
-  --w-axis: 0 0% 0% / 0.1;
-  --w-border: 0 0% 90%;
-  --w-canvas-bg: 0 0% 96%;
-  --w-canvas-dot: 0 0% 85%;
+  --w-fg: 220 20% 10%;
+  --w-axis: 210 15% 45% / 0.08;
+  --w-border: 210 20% 94%;
+  --w-canvas-bg: 0 0% 100%;
+  --w-canvas-dot: 210 15% 94%;
   --w-primary: 243 58% 63%;
 
-  /*
-   * FULL Tailwind CSS variable isolation barrier.
-   * Prevents ANY variable leakage from ``.dark`` into the canvas.
-   * Dawn theme = light palette, matching :root values.
-   */
-  --background: 0 0% 96%;
-  --foreground: 240 10% 15%;
+  --background: 220 14% 96%;
+  --foreground: 220 20% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 240 10% 15%;
+  --card-foreground: 220 20% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 15%;
+  --popover-foreground: 220 20% 10%;
   --primary: 243 58% 63%;
   --primary-foreground: 0 0% 99%;
-  --secondary: 240 1% 92%;
-  --secondary-foreground: 0 0% 25%;
-  --muted: 240 1% 95%;
-  --muted-foreground: 240 2% 55%;
-  --accent: 240 1% 92%;
-  --accent-foreground: 0 0% 25%;
-  --destructive: 25 23% 58%;
+  --secondary: 210 20% 98%;
+  --secondary-foreground: 220 20% 10%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 210 15% 50%;
+  --accent: 210 20% 94%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 70% 55%;
   --destructive-foreground: 0 0% 99%;
-  --border: 0 0% 90%;
-  --input: 240 1% 88%;
+  --border: 210 20% 94%;
+  --input: 210 20% 94%;
   --ring: 243 58% 63%;
-  --radius: 0.5rem;
-  --canvas-dot: 0 0% 85%;
+  --radius: 0.75rem;
+  --canvas-dot: 210 15% 94%;
   --chart-1: 41.116 22.2% 64.6%;
   --chart-2: 184.704 11.8% 60%;
   --chart-3: 227.392 7% 39.8%;
@@ -120,41 +114,36 @@
 }
 
 .theme-midnight {
-  /* Midnight (午夜蓝) - 专业大屏深灰蓝色调 */
-  --w-bg: 222 47% 14%;
-  --w-fg: 210 40% 98%;
-  --w-axis: 0 0% 100% / 0.15;
-  --w-border: 217 32% 17%;
-  --w-canvas-bg: 222 47% 11%;
-  --w-canvas-dot: 222 20% 25%;
+  /* Midnight - Cozy and comfortable dark theme */
+  --w-bg: 225 25% 16%;
+  --w-fg: 220 20% 96%;
+  --w-axis: 220 15% 50% / 0.15;
+  --w-border: 225 20% 28%;
+  --w-canvas-bg: 225 25% 12%;
+  --w-canvas-dot: 225 20% 30%;
   --w-primary: 243 58% 63%;
 
-  /*
-   * FULL Tailwind CSS variable isolation barrier.
-   * Prevents ANY variable leakage from ``.dark`` into the canvas.
-   * Midnight theme = deep blue-gray palette.
-   */
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --card: 222 47% 14%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222 47% 14%;
-  --popover-foreground: 210 40% 98%;
+  --background: 225 25% 12%;
+  --foreground: 220 20% 94%;
+  --card: 225 25% 16%;
+  --card-foreground: 220 20% 94%;
+  --popover: 225 25% 18%;
+  --popover-foreground: 220 20% 94%;
   --primary: 243 58% 63%;
   --primary-foreground: 0 0% 99%;
-  --secondary: 217 32% 20%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 32% 17%;
-  --muted-foreground: 210 20% 60%;
-  --accent: 217 32% 22%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 25 23% 62%;
+  --secondary: 225 20% 24%;
+  --secondary-foreground: 220 20% 94%;
+  --muted: 225 20% 22%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 225 20% 26%;
+  --accent-foreground: 220 20% 94%;
+  --destructive: 0 65% 60%;
   --destructive-foreground: 0 0% 99%;
-  --border: 217 32% 17%;
-  --input: 217 32% 20%;
+  --border: 225 20% 28%;
+  --input: 225 20% 28%;
   --ring: 243 58% 63%;
-  --radius: 0.5rem;
-  --canvas-dot: 222 20% 25%;
+  --radius: 0.75rem;
+  --canvas-dot: 225 20% 32%;
   --chart-1: 264.376 24.3% 48.8%;
   --chart-2: 162.48 17% 69.6%;
   --chart-3: 70.08 18.8% 76.9%;
@@ -194,17 +183,30 @@
   }
 }
 
-/* Dot grid pattern for canvas background */
+/* Dot grid pattern for canvas background - softer and more subtle */
 .dot-grid {
-  background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  background-position: center center;
 }
 
-/* Glassmorphism effect for floating islands */
+/* Glassmorphism effect for floating islands - Excalidraw-inspired softer look */
 .glass {
-  background: hsl(var(--card) / 0.9);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: hsl(var(--card) / 1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius);
+  box-shadow: 
+    0 4px 6px -1px hsl(220 15% 10% / 0.05),
+    0 2px 4px -2px hsl(220 15% 10% / 0.05),
+    0 0 0 1px hsl(var(--border) / 0.5);
+}
+
+.dark .glass {
+  box-shadow: 
+    0 4px 6px -1px hsl(220 15% 5% / 0.2),
+    0 2px 4px -2px hsl(220 15% 5% / 0.15),
+    0 0 0 1px hsl(var(--border) / 0.3);
 }
 
 /* Excalidraw-inspired font sizing for UI elements */
@@ -222,6 +224,26 @@
 
 .text-lg {
   font-size: 16px;
+}
+
+/* Softer button styles (scoped to UI primitives) */
+[data-slot="button"], .button {
+  border-radius: 0.625rem;
+  transition: all 0.15s ease;
+}
+
+[data-slot="button"]:active, .button:active {
+  transform: scale(0.97);
+}
+
+/* Input styles with softer focus states (scoped to UI primitives) */
+[data-slot="input"], .input {
+  border-radius: 0.625rem;
+  transition: all 0.15s ease;
+}
+
+[data-slot="input"]:focus, .input:focus {
+  box-shadow: 0 0 0 2px hsl(var(--ring) / 0.15);
 }
 
 /* Custom scrollbar styles */
