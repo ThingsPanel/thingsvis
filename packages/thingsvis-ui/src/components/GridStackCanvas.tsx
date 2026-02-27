@@ -518,7 +518,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
               position: 'absolute',
               top: '50%',
               left: '50%',
-              transform: `translate(calc(-50 % + ${panOffset.x}px), calc(-50 % + ${panOffset.y}px)) scale(${zoom})`,
+              transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom})`,
               transformOrigin: 'center center',
             }}
           >
@@ -532,7 +532,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
                 background: 'hsl(var(--w-bg))',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
                 overflow: 'hidden',
-                padding: `${margin} px`,
+                padding: `${margin}px`,
                 boxSizing: 'border-box',
               }}
             >
