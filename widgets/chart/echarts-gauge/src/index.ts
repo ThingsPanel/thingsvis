@@ -16,7 +16,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
 
     const textColor = colors?.fg ?? '#333';
     const splitLineColor = colors?.axis ?? '#00000010';
-    const axisLineColor = isDark ? '#333' : '#E6EBF8';
+    const axisLineColor = colors?.axis ?? '#E6EBF8';
 
     return {
         backgroundColor: 'transparent',

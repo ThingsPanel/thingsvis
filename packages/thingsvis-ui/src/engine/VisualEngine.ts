@@ -626,7 +626,7 @@ export class VisualEngine {
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
-        overlayBox.style.pointerEvents = 'auto';
+        overlayBox.style.pointerEvents = this.opts?.editable !== false ? 'none' : 'auto';
         overlayBox.style.background = 'transparent';
         // Add data attribute for TransformControls to find and sync transforms during drag
         overlayBox.setAttribute('data-overlay-node-id', node.id);

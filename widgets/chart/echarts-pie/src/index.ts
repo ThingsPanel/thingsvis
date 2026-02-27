@@ -43,7 +43,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 center: ['50%', '45%'],
                 itemStyle: {
                     borderRadius: 5,
-                    borderColor: isDark ? '#141414' : '#fff',
+                    borderColor: colors?.bg ?? '#fff',
                     borderWidth: 2
                 },
                 encode: { value: 'value', itemName: 'name' }, // 明确指定 dataset 的字段映射

@@ -9,7 +9,7 @@ function nodeToLeaferProps(node: NodeState, store: KernelStore): Record<string, 
   const width = schema.size?.width ?? 0;
   const height = schema.size?.height ?? 0;
   const { x, y } = schema.position ?? { x: 0, y: 0 };
-  
+
   // Only return position/size for Leafer placeholder
   // Visual props (fill, stroke, etc.) are handled by DOM overlay
   return {
@@ -29,8 +29,8 @@ function isLeaferDisplayObject(obj: unknown): obj is LeaferDisplayObject {
   if (!obj || typeof obj !== 'object') return false;
   const o = obj as any;
   // Leafer objects typically have these properties
-  return typeof o.set === 'function' || typeof o.remove === 'function' || 
-         (typeof o.tag === 'string') || (typeof o.__tag === 'string');
+  return typeof o.set === 'function' || typeof o.remove === 'function' ||
+    (typeof o.tag === 'string') || (typeof o.__tag === 'string');
 }
 
 function nodeToOverlayContext(node: NodeState, store: KernelStore): WidgetOverlayContext {
@@ -50,7 +50,7 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
   const resizable = (widget as any).resizable as boolean | undefined;
   const draggable = opts?.editable ?? true;
   const cursor = draggable ? 'pointer' : 'default';
-  
+
   return {
     create(node: NodeState): LeaferDisplayObject {
       // 对于纯 Overlay 组件，创建一个透明占位 Rect（实际渲染由 Overlay 处理）
@@ -67,23 +67,23 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
         });
         return placeholder as unknown as LeaferDisplayObject;
       }
-      
+
       const raw = widget.create!();
-      
+
       // If the widget returned a valid Leafer object, use it
       if (isLeaferDisplayObject(raw)) {
         raw.set?.(nodeToLeaferProps(node, store));
         return raw;
       }
-      
+
       // If the widget returned a DOM element, we'll use a placeholder Rect
       // The actual DOM rendering should be done via createOverlay
       if (raw instanceof HTMLElement) {
-        
+
       } else {
-        
+
       }
-      
+
       // Create a placeholder Rect as fallback
       const props = nodeToLeaferProps(node, store);
       const placeholder = new Rect({
@@ -108,35 +108,40 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
     },
     createOverlay: widget.createOverlay
       ? (node: NodeState) => {
-          // 从 node 中提取 linkedNodes（如果存在）
-          const linkedNodes = (node as any).linkedNodes;
-          const context = nodeToOverlayContext(node, store);
-          // 将 linkedNodes 附加到 context
-          if (linkedNodes) {
-            (context as any).linkedNodes = linkedNodes;
-          }
-          const overlay = widget.createOverlay!(context);
-          return {
-            element: overlay.element,
-            update: overlay.update
-              ? (nextNode: NodeState) => {
-                  const nextLinkedNodes = (nextNode as any).linkedNodes;
-                  const nextContext = nodeToOverlayContext(nextNode, store);
-                  if (nextLinkedNodes) {
-                    (nextContext as any).linkedNodes = nextLinkedNodes;
-                  }
-                  overlay.update?.(nextContext);
-                }
-              : undefined,
-            destroy: overlay.destroy
-          };
+        // 从 node 中提取 linkedNodes（如果存在）
+        const linkedNodes = (node as any).linkedNodes;
+        const context = nodeToOverlayContext(node, store);
+        // 将 linkedNodes 附加到 context
+        if (linkedNodes) {
+          (context as any).linkedNodes = linkedNodes;
         }
+        const overlay = widget.createOverlay!(context);
+        if (opts?.editable !== false) {
+          // 在编辑模式下，彻底禁用底层 DOM 元素的事件响应。
+          // 否则在拖拽时 overlay 会因为 z-index 提升而遮挡 Moveable 的 proxy-layer 并吞噬事件。
+          overlay.element.style.pointerEvents = 'none';
+        }
+        return {
+          element: overlay.element,
+          update: overlay.update
+            ? (nextNode: NodeState) => {
+              const nextLinkedNodes = (nextNode as any).linkedNodes;
+              const nextContext = nodeToOverlayContext(nextNode, store);
+              if (nextLinkedNodes) {
+                (nextContext as any).linkedNodes = nextLinkedNodes;
+              }
+              overlay.update?.(nextContext);
+            }
+            : undefined,
+          destroy: overlay.destroy
+        };
+      }
       : undefined,
     updateOverlay: widget.createOverlay
       ? (overlay, node) => {
-          // 直接调用已包装的 update，它会处理 linkedNodes
-          overlay.update?.(node);
-        }
+        // 直接调用已包装的 update，它会处理 linkedNodes
+        overlay.update?.(node);
+      }
       : undefined,
     destroyOverlay: widget.createOverlay ? overlay => overlay.destroy?.() : undefined
     ,

@@ -8,7 +8,7 @@
     "dev:all": "turbo run dev --filter=studio --filter=@thingsvis/server",
     "build": "turbo run build",
     "build:widgets": "turbo run build --filter=\"thingsvis-widget-*\" && pnpm run deploy:widgets",
-    "deploy:widgets": "node -e \"const fs=require('fs'),path=require('path');['basic','chart','media','indicator'].forEach(cat=>{const d='widgets/'+cat;if(!fs.existsSync(d))return;fs.readdirSync(d).forEach(w=>{const s='widgets/'+cat+'/'+w+'/dist',t='apps/studio/public/widgets/'+cat+'/'+w+'/dist';if(!fs.existsSync(s))return;try{fs.mkdirSync(t,{recursive:true})}catch(e){if(e.code!=='EEXIST')throw e;}fs.readdirSync(s).forEach(f=>{const sp=path.join(s,f),tp=path.join(t,f);try{if(fs.statSync(sp).isFile())fs.copyFileSync(sp,tp);}catch(e){}});console.log('deployed:',cat+'/'+w);});});\"",
+    "deploy:widgets": "node -e \"const fs=require('fs'),path=require('path');['basic','chart','media','indicator'].forEach(cat=>{const d='widgets/'+cat;if(!fs.existsSync(d))return;fs.readdirSync(d).forEach(w=>{const s='widgets/'+cat+'/'+w+'/dist',t='apps/studio/public/widgets/'+cat+'/'+w+'/dist';if(!fs.existsSync(s))return;if(fs.existsSync(t)&&!fs.statSync(t).isDirectory()){fs.unlinkSync(t);}fs.mkdirSync(t,{recursive:true});fs.readdirSync(s).forEach(f=>{const sp=path.join(s,f),tp=path.join(t,f);try{if(fs.statSync(sp).isFile())fs.copyFileSync(sp,tp);}catch(e){}});console.log('deployed:',cat+'/'+w);});});\"",
     "dev:widgets": "turbo run dev --filter=\"thingsvis-widget-*\"",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
