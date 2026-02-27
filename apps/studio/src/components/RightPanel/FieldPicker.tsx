@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
@@ -16,11 +17,12 @@ type Props = {
   onChange: (next: FieldPickerValue | null) => void;
   maxDepth?: number;
   maxNodes?: number;
-  
+
 };
 
 
-export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes}: Props) {
+export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }: Props) {
+  const { t } = useTranslation('editor');
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
 
