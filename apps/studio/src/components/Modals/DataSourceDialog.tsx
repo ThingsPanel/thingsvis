@@ -13,6 +13,7 @@ import { WSForm } from '../DataSourceConfig/WSForm';
 import { TransformationEditor } from '../DataSourceConfig/TransformationEditor';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
+import { useTranslation } from 'react-i18next'
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -41,6 +42,7 @@ interface DataSourceDialogProps {
 }
 
 export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialogProps) {
+  const { t } = useTranslation('editor')
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -83,7 +85,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
         setStaticJsonError(null)
         editingSource.config = { value: parsed }
       } catch {
-        setStaticJsonError(label('JSON 格式不正确', 'Invalid JSON'))
+        setStaticJsonError(t('auto.modals.invalidJson'))
         return
       }
     }
@@ -147,8 +149,8 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                 <Database className="h-6 w-6 text-[#6965db]" />
               </div>
               <div>
-                <DialogTitle className="text-base font-semibold">{label('数据源中心', 'Data Source Center')}</DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground">{label('管理全局数据连接与实时状态', 'Manage global data connections and status')}</DialogDescription>
+                <DialogTitle className="text-base font-semibold">{t('auto.modals.dataSourceCenter')}</DialogTitle>
+                <DialogDescription className="text-sm text-muted-foreground">{t('auto.modals.manageGlobalDataConnectionsAndStatu')}</DialogDescription>
               </div>
             </div>
           </div>
@@ -158,13 +160,13 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
           {/* Sidebar */}
           <div className="w-64 border-r border-border bg-muted/10 flex flex-col shrink-0">
             <div className="p-3 flex items-center justify-between gap-2">
-              <div className="text-sm font-medium text-muted-foreground">{label('已配置列表', 'Configured Sources')}</div>
+              <div className="text-sm font-medium text-muted-foreground">{t('auto.modals.configuredSources')}</div>
               <Button
                 onClick={startAdding}
                 size="sm"
                 className="bg-[#6965db] hover:bg-[#5851db] h-8 text-sm font-medium"
               >
-                {label('添加数据源', 'Add')}
+                {t('auto.modals.add')}
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -190,7 +192,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                 </div>
               ))}
               {Object.keys(states).length === 0 && (
-                <div className="py-12 text-center text-muted-foreground/40 text-sm italic">{label('暂无配置', 'Empty')}</div>
+                <div className="py-12 text-center text-muted-foreground/40 text-sm italic">{t('auto.modals.empty')}</div>
               )}
             </div>
           </div>
@@ -204,11 +206,11 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                   <section className="space-y-4">
                     <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                       <div className="w-1 h-4 bg-[#6965db] rounded-full" />
-                      {label('1. 基本信息', '1. Basic Information')}
+                      {t('auto.modals.1BasicInformation')}
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">{label('标识 ID', 'Source ID')}</label>
+                        <label className="text-sm font-medium text-muted-foreground">{t('auto.modals.sourceId')}</label>
                         <Input
                           placeholder="e.g. weather_api"
                           value={editingSource.id}
@@ -222,7 +224,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                         />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-sm font-medium text-muted-foreground">{label('连接协议', 'Protocol')}</label>
+                        <label className="text-sm font-medium text-muted-foreground">{t('auto.modals.protocol')}</label>
                         <div className="flex gap-1 p-1 bg-muted rounded-md h-10">
                           {[
                             { id: 'STATIC', icon: FileJson, label: 'JSON' },
@@ -273,7 +275,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                     <section className="space-y-4">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <div className="w-1 h-4 bg-[#6965db] rounded-full" />
-                        {label('2. 协议配置', '2. Protocol Config')}
+                        {t('auto.modals.2ProtocolConfig')}
                       </div>
                       <div className="p-5 rounded-md border border-border bg-muted/5 min-h-[300px]">
                         {editingSource.type === 'REST' && <RESTForm config={editingSource.config} onChange={(c) => setEditingSource({ ...editingSource, config: c })} language={language} />}
@@ -293,7 +295,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                                     setEditingSource({ ...editingSource, config: { value: parsed } })
                                     setStaticJsonError(null)
                                   } catch {
-                                    setStaticJsonError(label('JSON 格式不正确', 'Invalid JSON'))
+                                    setStaticJsonError(t('auto.modals.invalidJson'))
                                   }
                                 }}
                               />
@@ -309,7 +311,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                     <section className="space-y-4">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <div className="w-1 h-4 bg-[#6965db] rounded-full" />
-                        {label('3. 数据转换', '3. Transformation')}
+                        {t('auto.modals.3Transformation')}
                       </div>
                       <TransformationEditor
                         code={editingSource.transformation}
@@ -326,7 +328,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                         <Activity className="h-4 w-4 text-[#6965db]" />
-                        {label('实时运行预览', 'Live Preview')}
+                        {t('auto.modals.livePreview')}
                       </div>
                       {selectedId && states[selectedId] && (
                         <div className="flex items-center gap-4 text-sm">
@@ -344,7 +346,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                       ) : (
                         <div className="h-full flex flex-col items-center justify-center text-muted-foreground/30 gap-2 py-10">
                           <Info className="h-5 w-5" />
-                          <p>{label('等待数据推送或轮询...', 'Waiting for data...')}</p>
+                          <p>{t('auto.modals.waitingForData')}</p>
                         </div>
                       )}
                     </div>
@@ -353,19 +355,19 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
 
                 {/* Footer Actions */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-md border-t border-border flex justify-end gap-3">
-                  <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9 px-6 rounded-md">{label('取消', 'Cancel')}</Button>
+                  <Button variant="outline" onClick={() => onOpenChange(false)} className="h-9 px-6 rounded-md">{t('auto.modals.cancel')}</Button>
                   <Button
                     onClick={handleSave}
                     className="h-9 px-10 bg-[#6965db] hover:bg-[#5851db] font-bold shadow-lg shadow-[#6965db]/20 rounded-md"
                   >
-                    {label('保存并连接', 'Save & Connect')}
+                    {t('auto.modals.saveConnect')}
                   </Button>
                 </div>
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground/40">
                 <Database className="h-16 w-16 mb-4" />
-                <p className="text-sm font-medium">{label('从左侧选择一个数据源开始配置', 'Select a data source to begin')}</p>
+                <p className="text-sm font-medium">{t('auto.modals.selectADataSourceToBegin')}</p>
               </div>
             )}
           </div>

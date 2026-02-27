@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSyncExternalStore } from "react";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
+import { useTranslation } from 'react-i18next'
 
 type Props = {
   kernelStore: KernelStore;
@@ -8,6 +9,7 @@ type Props = {
 };
 
 export default function ConnectionTool({ kernelStore, activeTool }: Props) {
+  const { t } = useTranslation('editor')
   const [sourceNodeId, setSourceNodeId] = useState<string | null>(null);
 
   const state = useSyncExternalStore(
@@ -54,7 +56,7 @@ export default function ConnectionTool({ kernelStore, activeTool }: Props) {
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-[#6965db] text-white px-4 py-2 rounded-full shadow-lg z-[100] text-sm animate-pulse">
-      {language === "zh" ? "请选择目标节点完成连线" : "Select target node to connect"}
+      {t('auto.tools.selectTargetNodeToConnect')}
     </div>
   );
 }

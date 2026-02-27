@@ -191,10 +191,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           if (selectedType === 'object' || selectedType === 'array') {
             return (
               <p className="text-xs text-amber-600">
-                ⚠️ {t(
-                  '当前选择的是对象/数组类型，可能会显示 [object Object]。请选择具体的子字段以获取正确的值。',
-                  'Selected field is object/array type and may show [object Object]. Please select a specific child field.'
-                )}
+                ⚠️ {t('auto.rightPanel.selectedFieldIsObjectarrayTypeAndMa')}
               </p>
             );
           }
