@@ -1,3 +1,4 @@
+import { resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 /**
  * ECharts 折线图主入口 (极致精简版 + 数据驱动)
  */
@@ -14,11 +15,11 @@ import en from './locales/en.json';
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
+function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
   const { title, data, primaryColor, showLegend, smooth, showArea, showXAxis, showYAxis } = props;
 
-  const textColor = isDark ? '#ddd' : '#333';
-  const splitLineColor = isDark ? '#ffffff20' : '#00000010';
+  const textColor = colors?.fg ?? '#333';
+  const splitLineColor = colors?.axis ?? '#00000010';
 
   // 面积阴影渐变色（如果开启）
   const areaGradient = showArea ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -101,10 +102,11 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 
   const defaults = getDefaultProps();
   let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
-  let isDark = ctx.theme?.isDark ?? false;
+  let colors: WidgetColors = resolveWidgetColors(element);
+  let isDark = true;
 
   const chart = echarts.init(element);
-  chart.setOption(buildOption(currentProps, isDark, 1));
+  chart.setOption(buildOption(currentProps, colors, 1));
 
   const scheduleResize = () => {
     try {
@@ -115,7 +117,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
           const ch = element.clientHeight || 200;
           const minDim = Math.min(cw, ch);
           const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-          chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+          chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
         }
       });
     } catch {
@@ -135,7 +137,8 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     element,
     update: (newCtx: WidgetOverlayContext) => {
       currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
-      isDark = newCtx.theme?.isDark ?? false;
+      colors = resolveWidgetColors(element);
+      isDark = true;
 
       // scheduleResize 处理比例缩放
       if (newCtx.size || !newCtx.size) {

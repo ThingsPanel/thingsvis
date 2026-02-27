@@ -23,17 +23,17 @@
 
 ## 3. 任务执行拆解
 
-- [ ] **Phase 1: SDK Context 扩展**
-  - [ ] 在 `packages/thingsvis-widget-sdk/src/types.ts` 中定义 `WidgetTheme` 类型。
-  - [ ] 在 `WidgetOverlayContext` 接口中添加 `theme` 属性，用于下发主题状态。
+- [x] **Phase 1: SDK Context 扩展**
+  - [x] 在 `packages/thingsvis-widget-sdk/src/types.ts` 中定义 `WidgetTheme` 类型。
+  - [x] 在 `WidgetOverlayContext` 接口中添加 `theme` 属性，用于下发主题状态。
 
-- [ ] **Phase 2: 画布层级与局部变量隔离**
-  - [ ] 设计并写入 CSS 变量色板提取，定义亮色和暗色主题的关键颜色变量。
-  - [ ] 在画布外层包裹特定的 Theme Provider 或独立的样式作用域，隔离工作区的样式注入。
+- [x] **Phase 2: 画布层级与局部变量隔离**
+  - [x] 设计并写入 CSS 变量色板提取，定义亮色和暗色主题的关键颜色变量。
+  - [x] 在画布外层包裹特定的 Theme Provider 或独立的样式作用域，隔离工作区的样式注入。
 
-- [ ] **Phase 3: 集成状态与 KernelStore**
-  - [ ] 在状态管理器中引入专门针对画布的 `canvasTheme` 字段，区别于原本控制面板的纯编辑区主题。
+- [x] **Phase 3: 集成状态与 KernelStore**
+  - [x] 在状态管理器中引入专门针对画布的 `canvasTheme` 字段，区别于原本控制面板的纯编辑区主题。
 
-- [ ] **Phase 4: 内置 Widget 适配与应用**
-  - [ ] 升级现有组件（尤其是 ECharts 系列和 Text 基础组件），从 Context 或局部 CSS 变量中读取背景和默认字色。
-  - [ ] 测试主题切换，并验证用户直接在配置面版强制覆盖颜色时，不会被预设主题破坏。
+- [x] **Phase 4: 内置 Widget 适配与应用**
+  - [x] 升级现有组件（尤其是 ECharts 系列和 Text 基础组件），从 Context 或局部 CSS 变量中读取背景和默认字色。
+  - [x] 测试主题切换，并验证用户直接在配置面版强制覆盖颜色时，不会被预设主题破坏。

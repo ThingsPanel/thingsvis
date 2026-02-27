@@ -67,7 +67,7 @@ export type WidgetOverlayContext = {
   /** 组件属性（已解析） */
   props?: Record<string, unknown>;
   /** 主题信息 */
-  theme?: { isDark: boolean };
+  theme?: string;
 };
 
 /** DOM Overlay 实例 */

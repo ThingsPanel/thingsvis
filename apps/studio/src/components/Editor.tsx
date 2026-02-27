@@ -121,7 +121,7 @@ type CanvasConfigSchema = {
   gridGap?: number
   fullWidthPreview?: boolean  // 预览模式下是否撑满容器宽度
   homeFlag?: boolean  // 是否设为首页
-  theme: "dark" | "light" | "auto"
+  theme: "dawn" | "midnight" | string
   gridSize: number
   bgType: "color" | "image"
   bgValue: string
@@ -609,7 +609,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 mode: canvasConfig.mode,
                 width: canvasConfig.width,
                 height: canvasConfig.height,
-                theme: canvasConfig.theme, // Fix lint: Add theme
+                theme: canvasConfig.theme as any, // Fix lint: Add theme
               }
             })
             try {
@@ -1133,6 +1133,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             height={canvasConfig.height}
             activeTool={activeTool}
             zoom={zoom / 100}
+            theme={canvasConfig.theme}
             onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             settings={{
               cols: canvasConfig.gridCols ?? 24,
@@ -1188,6 +1189,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             activeTool={activeTool}
             resolveWidget={resolveWidget}
             zoom={zoom / 100}
+            theme={canvasConfig.theme}
             onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             onUserEdit={markDirty}
             onResetTool={handleResetTool}
@@ -1369,7 +1371,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                           type: 'page' as const,
                           version: '1.0.0',
                           nodes: [],
-                          config: { mode: newMode, width: canvasConfig.width, height: canvasConfig.height, theme: canvasConfig.theme },
+                          config: { mode: newMode, width: canvasConfig.width, height: canvasConfig.height, theme: canvasConfig.theme as any },
                         });
                         setCanvasConfig(prev => ({ ...prev, mode: newMode }))
                         markDirty();

@@ -3,7 +3,7 @@ import uPlot from 'uplot';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 export const Main = defineWidget({
     id: metadata.id,
@@ -16,9 +16,10 @@ export const Main = defineWidget({
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
-        let isDark = (ctx as any).theme?.isDark ?? false;
+        let colors: WidgetColors = resolveWidgetColors(element);
+        let isDark = true;
 
-        const textColor = isDark ? '#ddd' : '#333';
+        const textColor = colors?.fg ?? '#333';
         const gridColor = isDark ? '#ffffff20' : '#00000010';
 
         let chart: uPlot | null = null;
@@ -187,7 +188,8 @@ export const Main = defineWidget({
         return {
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
-                isDark = (newCtx as any).theme?.isDark ?? false;
+                colors = resolveWidgetColors(element);
+                isDark = true;
 
                 titleEl.style.color = isDark ? '#ddd' : '#333';
 

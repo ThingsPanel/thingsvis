@@ -38,7 +38,7 @@ export function detectCollision(a: GridItem, b: GridItem): boolean {
  * @returns Array of items that collide with the given item
  */
 export function findCollisions(items: GridItem[], item: GridItem): GridItem[] {
-  return items.filter(other => 
+  return items.filter(other =>
     other.id !== item.id && detectCollision(item, other)
   );
 }
@@ -58,30 +58,30 @@ export function resolveCollisions(
 ): GridItem[] {
   const result = items.map(item => ({ ...item }));
   const movingIndex = result.findIndex(item => item.id === movingItem.id);
-  
+
   if (movingIndex >= 0) {
     result[movingIndex] = { ...movingItem };
   }
-  
+
   // Find and resolve collisions iteratively
   let hasChanges = true;
   const maxIterations = items.length * 2; // Prevent infinite loops
   let iterations = 0;
-  
+
   while (hasChanges && iterations < maxIterations) {
     hasChanges = false;
     iterations++;
-    
+
     for (const item of result) {
       // Skip the moving item itself
       if (item.id === movingItem.id) continue;
-      
+
       // Skip static items
       if (item.static) continue;
-      
+
       // Check if this item collides with the moving item
       const currentMoving = result.find(i => i.id === movingItem.id) ?? movingItem;
-      
+
       if (detectCollision(currentMoving, item)) {
         // Push this item down to be below the moving item
         const newY = currentMoving.y + currentMoving.h;
@@ -91,23 +91,23 @@ export function resolveCollisions(
         }
       }
     }
-    
+
     // Also check for cascading collisions between non-moving items
     for (let i = 0; i < result.length; i++) {
       const itemA = result[i];
-      if (itemA.static || itemA.id === movingItem.id) continue;
-      
+      if (!itemA || itemA.static || itemA.id === movingItem.id) continue;
+
       for (let j = 0; j < result.length; j++) {
         if (i === j) continue;
         const itemB = result[j];
-        if (itemB.id === movingItem.id) continue;
-        
+        if (!itemB || itemB.id === movingItem.id) continue;
+
         if (detectCollision(itemA, itemB)) {
           // Push the higher-indexed item down
           const lowerItem = itemA.y <= itemB.y ? itemA : itemB;
           const upperItem = itemA.y <= itemB.y ? itemB : itemA;
-          
-          if (!upperItem.static) {
+
+          if (upperItem && !upperItem.static) {
             const newY = lowerItem.y + lowerItem.h;
             if (upperItem.y < newY) {
               upperItem.y = newY;
@@ -118,6 +118,6 @@ export function resolveCollisions(
       }
     }
   }
-  
+
   return result;
 }

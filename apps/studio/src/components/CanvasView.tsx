@@ -38,8 +38,9 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   pendingImageUrl?: string;
   onImagePickerRequest?: () => void;
   onImagePickerComplete?: () => void;
+  theme?: string;
 }>(function CanvasView(
-  { pageId, store, activeTool, resolveWidget, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete },
+  { pageId, store, activeTool, resolveWidget, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete, theme = 'dawn' },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -206,6 +207,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   return (
     <div
       ref={containerRef as any}
+      className={`theme-${theme}`}
       onClick={handleCanvasClick}
       onMouseDown={() => {
         if (isPanTool) setIsPointerDown(true);

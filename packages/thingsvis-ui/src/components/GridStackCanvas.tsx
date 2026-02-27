@@ -33,6 +33,8 @@ export interface GridStackCanvasProps {
   zoom?: number;
   /** Callback when zoom changes */
   onZoomChange?: (zoom: number) => void;
+  /** Canvas Theme Setup (dawn | midnight) */
+  theme?: string;
 }
 
 // Cache for loaded widgets
@@ -40,14 +42,16 @@ const widgetCache = new Map<string, any>();
 // Track which nodes have been rendered with widgets
 const renderedOverlays = new Map<string, { update?: (ctx: WidgetOverlayContext) => void; destroy?: () => void }>();
 
-function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>): WidgetOverlayContext {
+function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>, theme?: string): WidgetOverlayContext {
   const schema = node.schemaRef as any;
   // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定和Platform字段绑定）
   const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources, platformData);
   return {
     position: schema.position ?? { x: 0, y: 0 },
     size: schema.size ?? { width: 200, height: 100 },
-    props: resolvedProps
+    props: resolvedProps,
+    theme,
+    isDark: theme === 'midnight'
   };
 }
 
@@ -70,6 +74,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   fullWidth = false,
   zoom = 1,
   onZoomChange,
+  theme = 'dawn',
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -338,7 +343,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       // If widget has createOverlay, use it
       if (widget.createOverlay) {
-        const context = nodeToOverlayContext(node, store);
+        const context = nodeToOverlayContext(node, store, platformData, theme);
         const overlay = widget.createOverlay(context);
 
         if (overlay.element) {
@@ -360,7 +365,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       contentEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#e53e3e;font-size:12px;">Error: ${nodeType}</div>`;
     }
-  }, [resolveWidget, store]);
+  }, [resolveWidget, store, platformData, theme]);
 
   // Update existing overlays when node props change (for data source and platform data updates)
   // Note: We watch dataSources and platformData explicitly since props may contain bindings
@@ -368,11 +373,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     nodes.forEach((node: any) => {
       const overlay = renderedOverlays.get(node.id);
       if (overlay?.update) {
-        const context = nodeToOverlayContext(node, store, platformData);
+        const context = nodeToOverlayContext(node, store, platformData, theme);
         overlay.update(context);
       }
     });
-  }, [nodes, store, kernelState.dataSources, platformData]);
+  }, [nodes, store, kernelState.dataSources, platformData, theme]);
 
   // Use fixed dimensions or fill container
   const containerWidth = width ? `${width}px` : '100%';
@@ -459,7 +464,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   // Handle wheel zoom
   const handleWheel = useCallback((e: React.WheelEvent) => {
     if (!onZoomChange || fullWidth) return;
-    
+
     // Use Ctrl+wheel or pinch gesture for zoom
     if (e.ctrlKey || e.metaKey) {
       e.preventDefault();
@@ -472,6 +477,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   return (
     <div
       ref={scrollContainerRef}
+      className={`theme-${theme}`}
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
       style={{
@@ -479,7 +485,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         height: '100%',
         overflow: 'hidden',
         position: 'relative',
-        background: fullWidth ? '#fff' : '#e5e5e5',
+        background: fullWidth ? 'hsl(var(--w-bg))' : 'hsl(var(--w-canvas-bg))',
         cursor: activeTool === 'pan' ? 'grab' : 'default',
         userSelect: activeTool === 'pan' ? 'none' : 'auto',
       }}
@@ -493,7 +499,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           style={{
             width: '100%',
             minHeight: containerHeight,
-            background: '#fff',
+            background: 'hsl(var(--w-bg))',
             overflow: 'hidden',
             padding: `${margin}px`,
             boxSizing: 'border-box',
@@ -519,7 +525,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
             style={{
               width: containerWidth,
               minHeight: containerHeight,
-              background: '#fff',
+              background: 'hsl(var(--w-bg))',
               boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
               overflow: 'hidden',
               padding: `${margin}px`,

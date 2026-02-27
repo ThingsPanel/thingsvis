@@ -431,7 +431,11 @@ export const createKernelStore = () =>
           }
 
           if (changes.grid !== undefined) {
-            (target.schemaRef as NodeSchemaType).grid = changes.grid;
+            const prevGrid = (target.schemaRef as NodeSchemaType).grid ?? {};
+            (target.schemaRef as NodeSchemaType).grid = {
+              ...prevGrid,
+              ...changes.grid
+            } as any;
           }
 
           if (changes.data !== undefined) {
@@ -867,18 +871,18 @@ export const createKernelStore = () =>
             let effectiveCols = cols;
 
             if (responsive && breakpoints && breakpoints.length > 0) {
-              // Sort breakpoints by width descending
-              const sortedBreakpoints = [...breakpoints].sort((a, b) => b.width - a.width);
+              const sortedBreakpoints = [...breakpoints].sort((a, b) => b.minWidth - a.minWidth);
 
               for (const bp of sortedBreakpoints) {
-                if (containerWidth <= bp.width) {
-                  activeBreakpoint = bp.name;
+                if (containerWidth <= bp.minWidth) {
                   effectiveCols = bp.cols;
+                  // bp 只有 minWidth/cols/rowHeight，把 activeBreakpoint 变成它本身
+                  (activeBreakpoint as any) = bp;
                 }
               }
             }
 
-            state.gridState.activeBreakpoint = activeBreakpoint;
+            (state.gridState as any).activeBreakpoint = activeBreakpoint;
             state.gridState.effectiveCols = effectiveCols;
             state.gridState.colWidth = (containerWidth - (effectiveCols - 1) * gap) / effectiveCols;
           }

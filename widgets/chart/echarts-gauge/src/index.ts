@@ -11,11 +11,11 @@ import { controls } from './controls';
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.EChartsOption {
+function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
     const { title, data, primaryColor, max } = props;
 
-    const textColor = isDark ? '#ddd' : '#333';
-    const splitLineColor = isDark ? '#ffffff20' : '#00000010';
+    const textColor = colors?.fg ?? '#333';
+    const splitLineColor = colors?.axis ?? '#00000010';
     const axisLineColor = isDark ? '#333' : '#E6EBF8';
 
     return {
@@ -53,7 +53,7 @@ function buildOption(props: Props, isDark: boolean, scale: number = 1): echarts.
     };
 }
 
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 export const Main = defineWidget({
     id: metadata.id,
@@ -66,10 +66,11 @@ export const Main = defineWidget({
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
-        let isDark = (ctx as any).theme?.isDark ?? false;
+        let colors: WidgetColors = resolveWidgetColors(element);
+        let isDark = true;
 
         const chart = echarts.init(element);
-        chart.setOption(buildOption(currentProps, isDark, 1));
+        chart.setOption(buildOption(currentProps, colors, 1));
 
         const scheduleResize = () => {
             try {
@@ -80,7 +81,7 @@ export const Main = defineWidget({
                         const ch = element.clientHeight || 200;
                         const minDim = Math.min(cw, ch);
                         const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-                        chart.setOption(buildOption(currentProps, isDark, scale), { replaceMerge: ['dataset', 'series'] });
+                        chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series'] });
                     }
                 });
             } catch {
@@ -99,9 +100,10 @@ export const Main = defineWidget({
         return {
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
-                isDark = (newCtx as any).theme?.isDark ?? false;
+                colors = resolveWidgetColors(element);
+                isDark = true;
 
-                chart.setOption(buildOption(currentProps, isDark), { replaceMerge: ['dataset', 'series'] });
+                chart.setOption(buildOption(currentProps, colors), { replaceMerge: ['dataset', 'series'] });
 
                 if (newCtx.size) {
                     scheduleResize();

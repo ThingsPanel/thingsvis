@@ -71,10 +71,50 @@
   --chart-5: 16.439 24.6% 64.5%;
 }
 
+/* ============================================================================
+   画布专用主题变量隔离 (Widget Themes)
+   说明：基于 CSS 局部变量隔离设计的 Dawn 与 Midnight 预设
+   ============================================================================ */
+
+.theme-dawn {
+  /* Dawn (晨曦白) - 高明度，极简现代 */
+  --w-bg: 0 0% 100%;
+  --w-fg: 240 10% 15%;
+  --w-axis: 0 0% 0% 0.1;
+  /* 兼容 RGBA 写法的弱化线 */
+  --w-border: 0 0% 90%;
+  --w-canvas-bg: 0 0% 96%;
+  --w-canvas-dot: 0 0% 85%;
+  --w-primary: 243 58% 63%;
+  /* #6965DB */
+}
+
+.theme-midnight {
+  /* Midnight (午夜蓝) - 专业大屏深灰蓝色调 */
+  --w-bg: 222 47% 14%;
+  --w-fg: 210 40% 98%;
+  --w-axis: 255 255% 255% 0.15;
+  /* 白色的极弱透明度线 */
+  --w-border: 217 32% 17%;
+  --w-canvas-bg: 222 47% 11%;
+  --w-canvas-dot: 222 20% 25%;
+  --w-primary: 243 58% 63%;
+  /* #6965DB */
+}
+
+/* Glassmorphism for Midnight theme (Widget components can opt-in) */
+.theme-midnight .widget-glass {
+  background: hsl(var(--w-bg) / 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--w-border) / 0.5);
+}
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

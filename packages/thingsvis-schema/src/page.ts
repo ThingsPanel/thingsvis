@@ -17,17 +17,17 @@ export const PageMetaSchema = z.object({
    * Unique identifier for the page (UUID v4)
    */
   id: z.string().uuid(),
-  
+
   /**
    * Schema version for compatibility (defaults to "1.0.0")
    */
   version: z.string().default('1.0.0'),
-  
+
   /**
    * Human-readable page name
    */
   name: z.string().min(1),
-  
+
   /**
    * Page scope classification
    */
@@ -47,24 +47,24 @@ export const PageConfigSchema = z.object({
    * - 'grid': Gridstack-style grid layout
    */
   mode: LayoutModeSchema,
-  
+
   /**
    * Page width in pixels (defaults to 1920)
    * For grid mode: defines the design-time reference width
    */
   width: z.number().int().positive().default(1920),
-  
+
   /**
    * Page height in pixels (defaults to 1080)
    * For grid mode: minimum height, expands with content
    */
   height: z.number().int().positive().default(1080),
-  
+
   /**
    * Visual theme preference
    */
-  theme: z.enum(['dark', 'light', 'auto']),
-  
+  theme: z.enum(['dawn', 'midnight', 'dark', 'light', 'auto']),
+
   /**
    * Grid layout settings (only used when mode === 'grid')
    */

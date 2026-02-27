@@ -1,7 +1,7 @@
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 export const Main = defineWidget({
     id: metadata.id,
@@ -14,7 +14,8 @@ export const Main = defineWidget({
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
-        let isDark = (ctx as any).theme?.isDark ?? false;
+        let colors: WidgetColors = resolveWidgetColors(element);
+        let isDark = true;
 
         element.style.width = '100%';
         element.style.height = '100%';
@@ -81,7 +82,8 @@ export const Main = defineWidget({
         return {
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
-                isDark = (newCtx as any).theme?.isDark ?? false;
+                colors = resolveWidgetColors(element);
+                isDark = true;
                 updateView();
             },
             destroy: () => {

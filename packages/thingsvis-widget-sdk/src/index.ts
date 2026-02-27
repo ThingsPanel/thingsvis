@@ -31,3 +31,4 @@ export { withMixins, TransformMixin, ShadowMixin, BorderMixin } from './schemas/
 // 工具函数
 // ============================================================================
 export { zodTypeToKind, getZodDefault, getZodDescription } from './utils/zod-helpers';
+export { resolveWidgetColors, type WidgetColors } from './utils/themeContext';

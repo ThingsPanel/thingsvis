@@ -142,6 +142,9 @@ export type WidgetControls = {
 // Overlay 相关类型
 // ============================================================================
 
+/** 主题预设标识 */
+export type WidgetTheme = 'dawn' | 'midnight' | string;
+
 /** DOM Overlay 上下文 */
 export type WidgetOverlayContext = {
   /** 位置（画布坐标） */
@@ -150,6 +153,10 @@ export type WidgetOverlayContext = {
   size?: { width: number; height: number };
   /** 组件属性（已解析） */
   props?: Record<string, unknown>;
+  /** 当前画布的主题上下文 (Dawn/Midnight) */
+  theme?: WidgetTheme;
+  /** 当前背景是否为深色调，用于图表自适应反白 */
+  isDark?: boolean;
 };
 
 /** DOM Overlay 实例 */
