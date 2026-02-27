@@ -90,6 +90,11 @@ export default defineConfig({
         target: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
         changeOrigin: true,
       },
+      // Proxy uploaded files to the backend server (files stored in apps/server/public/uploads/)
+      '/uploads': {
+        target: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   html: {

@@ -17,3 +17,17 @@
 - **How it was tested**: 代码逻辑盘点及脚本本地成功重编测试。
 - **Key decisions & rationale**: 直接要求底层的 `VisualEngine` + `WidgetOverlayRenderer` 对于编辑状态不保留 `auto` 的接收权。防止类似于 ECharts 的底层类库因为本身包含丰富交互逻辑截断了外部 React 事件的冒泡与调度。这是在编辑器层设计中保持单一职责极其重要的一步。
 - **Time/Iteration count**: 1
+
+---
+
+## Sub-task 8: 修复上传图片不显示问题
+
+### 8.1 分析与解决
+- **已完成工作**:
+  修复了图片上传成功后画布上不显示的问题。根因是 rsbuild dev server (`localhost:3000`) 缺少对 `/uploads` 路径的代理配置，导致上传后返回的 URL（如 `http://localhost:3000/uploads/xxx.jpg`）在前端请求时无法找到文件。文件实际存储在后端 Next.js 服务的 `apps/server/public/uploads/` 目录下，由 `localhost:8000` 提供服务。
+- **尝试与失败记录**: 无失败，一次定位到根因。
+- **最终成功方案**:
+  在 `apps/studio/rsbuild.config.ts` 的 `server.proxy` 中增加 `/uploads` → `http://localhost:8000` 的代理规则，与已有的 `/api` 代理规则保持一致。
+- **测试方法与结果**: 需要重启 dev server 后验证，在浏览器中访问 `http://localhost:3000/uploads/tbJF7d_do9yFIvqDdsedl.jpg` 应能正常加载图片。
+- **关键决策与原因**: 选择在 rsbuild proxy 层面解决，而非修改前端 URL 拼接逻辑。因为 proxy 是开发环境的标准做法，生产环境通常由 Nginx/反向代理统一处理，不需要改前端代码。
+- **耗时/迭代次数**: 1
