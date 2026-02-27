@@ -85,7 +85,7 @@
   1. **新建核心注册表**: 在 `@thingsvis/schema` 增加了 `theme-registry.ts` 并通过 `index.ts` 对外导出。该文件内定义了只读常量 `CANVAS_THEMES` 对象，并且实现了专门的验证兜底函数 `validateCanvasTheme(themeValue)`。
   2. **消除视图判断逻辑**: 分别清除了 `packages/thingsvis-ui/src/components/GridStackCanvas.tsx` 和 `apps/studio/src/components/CanvasView.tsx` 中写死的旧版映射与判断。现在视图层是纯净的应用层，直接使用 `validateCanvasTheme()` 的返回值作为 DOM class。
   3. **下沉默认类型配置**: 在编辑器 `apps/studio/src/components/Editor.tsx`，使用 `DEFAULT_CANVAS_THEME` 常量替代了所有原先手写的字面量默认值（例如 `'dawn'` 和 `'midnight'`），彻底消除了 Typescript 的 Type Literal 硬编码。
-  4. **动态化面板渲染**: 修改了右侧面板 `CanvasSettingsPanel.tsx`。以前的下来选择菜单是硬编码 `<option>` 标签。现在直接遍历 `Object.values(CANVAS_THEMES)` 进行动态映射与呈现，使得以后每当你增加一个主题时，选项面板便实现“自动落位”。
+  4. **动态化面板渲染**: 修改了右侧面板 `CanvasSettingsPanel.tsx`。以前的下来选择菜单是硬编码 `<option>` 标签。现在直接遍历 `Object.values(CANVAS_THEMES)` 进行动态映射与呈现，使得以后每当你增加一个主题时，选项面板便实现"自动落位"。
 - **最终成功方案**: 建立严格的 Theme Registry 并封装 `validateCanvasTheme()`。在所有入口点进行校验。
 - **关键决策与原因**: 架构向着可插拔式、高扩展方向演进。避免 `if-else` 会随着未来比如深绿 (`forest`) 等主题的引入成倍产生债务。
 - **耗时/迭代次数**: 1
@@ -96,7 +96,7 @@
 
 ### 12.1 分析与解决
 - **已完成工作**:
-  修复了在网格（Grid）画布模式下，中心舞台未能居中以及按下顶部“抓手工具”拖拽时由于 CSS 样式解析错误导致的平移失效问题。
+  修复了在网格（Grid）画布模式下，中心舞台未能居中以及按下顶部"抓手工具"拖拽时由于 CSS 样式解析错误导致的平移失效问题。
 - **尝试与失败记录**: 无（代码走查即刻精准定位）。
 - **最终成功方案**: 
   在 `packages/thingsvis-ui/src/components/GridStackCanvas.tsx` 中：
@@ -141,3 +141,47 @@
 - **测试方法与结果**: 连线组件可以正常使用，不再受到与业务无关的调试输出干扰，代码也变得更加整洁。
 - **关键决策与原因**: 处于项目稳定阶段，不再需要此类调试浮窗。
 - **耗时/迭代次数**: 1
+
+---
+
+## Sub-task 16: 借鉴 Excalidraw 优化字体和组件库布局
+
+### 16.1 分析与解决
+- **已完成工作**: 
+  1. **字体优化** (`apps/studio/src/index.css`): 
+     - 借鉴 Excalidraw 设置系统字体栈：`-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif`
+     - 全局字号调整为 14px，文字层级设为：`xs:12px, sm:13px, base:14px, lg:16px`
+     - 开启字体抗锯齿优化 `-webkit-font-smoothing: antialiased`
+  2. **组件库布局调整** (`apps/studio/src/components/LeftPanel/ComponentsList.tsx`):
+     - 网格列数从 `grid-cols-2` 改为 `grid-cols-3`（一行3个）
+     - 卡片高度从 `h-20` 缩小为 `h-16`，内边距从 `p-2` 改为 `p-1.5`
+     - 图标从 `h-6 w-6` 缩小为 `h-5 w-5`
+     - 文字从 `text-sm` 改为 `text-xs` 并添加 `truncate` 截断
+- **尝试与失败记录**: 无
+- **最终成功方案**: 直接修改 CSS 全局字体配置和组件库 Tailwind 类名，使界面更加紧凑清晰，类似 Excalidraw 的简洁风格。
+- **测试方法与结果**: 界面布局验证通过，组件库显示正常，3列布局更加紧凑。
+- **关键决策与原因**: 
+  - 使用系统字体栈确保在各平台都有最佳渲染效果
+  - 14px 基础字号配合 12px 标签文字，平衡信息密度和可读性
+  - 3列布局在有限侧边栏空间内展示更多组件
+- **耗时/迭代次数**: 1
+
+---
+
+## Sub-task 17: uPlot 时序图组件重命名
+
+### 17.1 分析与解决
+- **已完成工作**: 将 `uPlot时序图` 组件名称简化为 `时序图`，去除技术实现细节暴露。
+  1. `widgets/chart/uplot-line/package.json`: 
+     - `displayName`: "uPlot时序图" → "时序图"
+     - `i18n.zh`: "uPlot时序图" → "时序图"
+     - `i18n.en`: "uPlot时序图" → "Time Series"
+  2. `widgets/chart/uplot-line/src/metadata.ts`:
+     - `description`: "高性能时序图" → "时序图"
+     - `locales.zh['widget.uplot-line.name']`: "高性能时序图" → "时序图"
+- **尝试与失败记录**: 无
+- **最终成功方案**: 统一使用中英文简洁名称，中文"时序图"、英文"Time Series"，不再暴露 uPlot 实现细节。
+- **测试方法与结果**: 代码变更简单直接，无需额外测试。
+- **关键决策与原因**: 用户不需要知道底层使用 uPlot 库，"时序图"更直观易懂，符合产品化命名规范。
+- **耗时/迭代次数**: 1
+

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-27T06:38:42.337Z",
+  "generatedAt": "2026-02-27T06:55:23.478Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -149,10 +149,10 @@
       "exposedModule": "./Main",
       "version": "0.1.0",
       "icon": "LineChart",
-      "name": "uPlot时序图",
+      "name": "时序图",
       "i18n": {
-        "zh": "uPlot时序图",
-        "en": "uPlot时序图"
+        "zh": "时序图",
+        "en": "Time Series"
       }
     },
     "indicator/number-card": {

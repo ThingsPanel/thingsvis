@@ -4,11 +4,11 @@ export const metadata = {
     category: 'chart' as const,
     icon: 'LineChart',
     version: '1.0.0',
-    description: '高性能时序图',
+    description: '时序图',
     defaultSize: { width: 400, height: 300 },
     locales: {
         zh: {
-            'widget.uplot-line.name': '高性能时序图',
+            'widget.uplot-line.name': '时序图',
             'widget.uplot-line.title': 'props.chartTitle',
             'widget.uplot-line.primaryColor': 'props.primaryColor',
             'widget.uplot-line.data': 'props.dataset',

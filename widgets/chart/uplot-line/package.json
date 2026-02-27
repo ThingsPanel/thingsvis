@@ -25,11 +25,11 @@
         "@types/react-dom": "^18.2.17"
     },
     "thingsvis": {
-        "displayName": "uPlot时序图",
+        "displayName": "时序图",
         "icon": "LineChart",
         "i18n": {
-            "zh": "uPlot时序图",
-            "en": "uPlot时序图"
+            "zh": "时序图",
+            "en": "Time Series"
         }
     }
 }

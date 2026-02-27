@@ -36,6 +36,8 @@ CanvasView (apps/studio)
 - **Widget 定义**: 新组件使用 `defineWidget()` API，旧组件使用 `create/createOverlay` 模式
 - **拖拽分层**: overlay 负责视觉渲染，proxy-layer 负责交互事件（Moveable/Selecto）
 - **构建部署**: Widget 通过 Rspack 构建，Module Federation 远程加载
+- **字体策略**: 使用系统字体栈（Excalidraw 风格），14px 基础字号，开启抗锯齿
+- **组件库布局**: 3列网格布局，紧凑卡片设计（64px 高度，12px 标签文字）
 
 ## Current State
 - 主题架构重构完成（CSS Variables 方案）
@@ -46,7 +48,8 @@ CanvasView (apps/studio)
 - **网格(Grid)布局模式下拖拽平移及无阴影/无居中的表现错误已修复**（修正了 `GridStackCanvas.tsx` 中静默 CSS 解析问题）
 - **图层面板 (LayerPanel) 缺陷已修复** — 修复了未绑定关联 i18n 导致的多语言文本漏译，以及通过将底层 `getProjectState` 中 `nodes` 序列与 `layerOrder` 强写对齐的方法，根治了图层重新拖拽排序后保存失败的痛点。
 - **清除连线组件无关 Debug 信息** — 在 `LineConnectionTool.tsx` 中删除了左上角伴随产生的黄色 Debug 提示窗，避免干扰用户视线。
-
+- **UI 字体和布局优化完成** — 借鉴 Excalidraw 设置系统字体栈（14px 基础字号），组件库改为 3 列紧凑布局。
+- **组件命名规范化** — `uPlot时序图` 重命名为 `时序图`（英文 Time Series），去除技术实现细节暴露。
 
 ## Known Issues / Risks
 1. **部分组件缺少 SDK 依赖**: circle、line、rectangle 等未在 package.json 引入 SDK
@@ -61,3 +64,5 @@ CanvasView (apps/studio)
 - Widget SDK: `defineWidget` (packages/thingsvis-widget-sdk/src/define-widget.ts)
 - **开发代理架构**: Studio(3000) 通过 rsbuild proxy 转发 `/api` 和 `/uploads` 到 Server(8000)
 - **图片上传流程**: 前端上传 → Server 保存到 `apps/server/public/uploads/` → 返回相对 URL → 前端拼接为绝对 URL → rsbuild proxy 转发到 Server 提供静态文件
+- **字体配置**: 系统字体栈定义在 `apps/studio/src/index.css` 的 `@layer base` 中
+- **组件库布局**: 位于 `apps/studio/src/components/LeftPanel/ComponentsList.tsx`

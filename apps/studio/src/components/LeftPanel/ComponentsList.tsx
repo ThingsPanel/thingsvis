@@ -250,7 +250,7 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                       </div>
                     ) : (
                       <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                           {items.map((entry) => {
                             // 根据 icon 字段获取对应的 Lucide 图标组件，默认使用 Box
                             const iconName = (entry as any).icon as string;
@@ -261,9 +261,9 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                                 type="button"
                                 draggable
                                 onDragStart={(e) => handleDragStart(e, entry)}
-                                className="h-20 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1.5 transition-colors p-2"
+                                className="h-16 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1 transition-colors p-1.5"
                               >
-                                <div className="h-6 w-6 text-foreground mb-1">
+                                <div className="h-5 w-5 text-foreground mb-0.5">
                                   {(entry as any).iconUrl ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -272,11 +272,11 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                                       className="w-6 h-6 object-contain"
                                     />
                                   ) : (
-                                    <IconComponent className="h-6 w-6 text-foreground" />
+                                    <IconComponent className="h-5 w-5 text-foreground" />
                                   )}
                                 </div>
                                 <div className="leading-tight text-center">
-                                  <div className="text-sm text-foreground font-medium">
+                                  <div className="text-xs text-foreground font-medium truncate w-full px-0.5">
                                     {(entry as any).i18n?.[i18n.language] ?? (entry as any).displayName ?? (entry as any).componentId ?? entry.remoteName}
                                   </div>
                                   {/* <div className="text-xs text-muted-foreground">
