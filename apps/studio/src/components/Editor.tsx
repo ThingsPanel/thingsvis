@@ -1115,9 +1115,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     { id: "rectangle" as Tool, icon: Square, label: "矩形" },
     { id: "circle" as Tool, icon: Circle, label: "圆形" },
     { id: "line" as Tool, icon: ArrowRight, label: "连线" },
-    { id: "text" as Tool, icon: Type, label: "文本" },
-    { id: "image" as Tool, icon: ImageIcon, label: "图片" },
     { id: "pan" as Tool, icon: Hand, label: "移动" },
+    { id: "image" as Tool, icon: ImageIcon, label: "图片" },
+    { id: "text" as Tool, icon: Type, label: "文本" },
   ]
 
   const shortcuts = [
