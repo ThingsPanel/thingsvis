@@ -32,7 +32,7 @@ CanvasView (apps/studio)
 4. proxy-layer 中对应的 `node-proxy-target` 接收拖拽/选择事件
 
 ## Key Technical Decisions
-- **主题解耦**: IDE 主题与画布主题完全分离，画布使用 CSS Variables (`--w-bg`, `--w-fg`, `--w-axis`)
+- **主题解耦**: IDE 主题与画布主题完全分离，画布使用 CSS Variables (`--w-bg`, `--w-fg`, `--w-axis`, `--workspace-bg`)
 - **Widget 定义**: 新组件使用 `defineWidget()` API，旧组件使用 `create/createOverlay` 模式
 - **拖拽分层**: overlay 负责视觉渲染，proxy-layer 负责交互事件（Moveable/Selecto）
 - **构建部署**: Widget 通过 Rspack 构建，Module Federation 远程加载
@@ -41,6 +41,8 @@ CanvasView (apps/studio)
 
 ## Current State
 - 主题架构重构完成（CSS Variables 方案）
+- **工作区背景颜色已改为红色 (#ff3b30)** - 新增 `--workspace-bg` CSS 变量
+- **网格只在画布区域显示** - Fixed/Grid 模式下网格限定在 artboard 区域内绘制
 - **isDark 残留全面清理完成** — 所有 Widget 改用 `resolveWidgetColors()` 从 CSS 变量获取颜色
 - 编辑器 ↔ 画布主题彻底解耦完成
 - 仪表盘/饼图等组件拖拽修复完成

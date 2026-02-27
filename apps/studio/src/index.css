@@ -31,6 +31,8 @@
 
   /* Canvas background - very subtle dots */
   --canvas-dot: 210 15% 92%;
+  /* Workspace background color - #F8F8F8 */
+  --workspace-bg: 0 0% 97%;
   --chart-1: 41.116 22.2% 64.6%;
   --chart-2: 184.704 11.8% 60%;
   --chart-3: 227.392 7% 39.8%;
@@ -42,6 +44,8 @@
   /* Dark theme - Cozy, comfortable dark with warm undertones */
   /* Deep but not depressing - like a cozy evening workspace */
   --background: 225 25% 12%;
+  /* Workspace background color - Dark (deeper than panels) */
+  --workspace-bg: 220 20% 8%;
   --foreground: 220 20% 94%;
   --card: 225 25% 16%;
   --card-foreground: 220 20% 94%;

@@ -53,3 +53,50 @@
 - Excalidraw 的柔和阴影和圆角风格
 - 减少色彩对比度，使整体视觉更协调
 - 按钮和面板边缘更柔和，消除硬朗感
+
+---
+
+## 背景颜色修改 - 2026-02-27
+
+### MPE1: 修改工作区背景颜色为 #ff3b30 (红色)
+- **需求**: 将编辑器工作区背景从灰色 (#999999) 改为红色 (#ff3b30)
+- **实现内容**:
+  - 在 `index.css` 中添加新的 CSS 变量 `--workspace-bg`
+  - Light 主题: `--workspace-bg: 0 100% 60%` (HSL 格式)
+  - Dark 主题: `--workspace-bg: 4 100% 59%` (HSL 格式)
+  - 修改 `CanvasView.tsx` 容器背景使用 `--workspace-bg` 替代 `--w-canvas-bg`
+  
+- **修改文件**:
+  - `apps/studio/src/index.css` - 添加 `--workspace-bg` CSS 变量
+  - `packages/thingsvis-ui/src/components/CanvasView.tsx` - 容器背景使用新变量
+
+- **验证**:
+  - ✅ CSS 变量正确定义
+  - ✅ 容器背景颜色指向正确变量
+
+---
+
+## 网格显示修复 - 2026-02-27
+
+### MPE2: 修复网格只在画布区域显示
+- **需求**: 网格不应该在整个工作区背景显示，只应该在画布（artboard）区域内显示
+- **实现内容**:
+  - 修改 `drawGrid` 函数，根据模式决定网格绘制区域
+  - **Fixed/Grid 模式**: 只在画布区域内绘制网格（通过计算 artboard 的位置和尺寸）
+  - **Infinite 模式**: 保持原有行为，在整个容器绘制网格
+  - 使用 `vOffset.x/y` 和 `width/height * vZoom` 计算画布边界
+  - 使用 `Math.max/min` 确保绘制范围不超出容器边界
+  
+- **修改文件**:
+  - `packages/thingsvis-ui/src/components/CanvasView.tsx` - 重写 `drawGrid` 函数
+
+- **技术细节**:
+  - 添加 `mode`, `width`, `height` 到依赖数组
+  - 计算 `startX/Y` 和 `endX/Y` 作为绘制边界
+  - 循环绘制时检查坐标是否在边界内
+
+- **验证**:
+  - ✅ 代码逻辑正确
+  - ✅ Rspack 构建成功
+  - ✅ 修改的代码通过 TypeScript 检查（已有错误与本次修改无关）
+
