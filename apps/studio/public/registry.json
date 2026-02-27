@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-27T13:36:33.138Z",
+  "generatedAt": "2026-02-27T14:10:57.943Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -157,7 +157,7 @@
       }
     },
     "indicator/number-card": {
-      "remoteName": "deleted_thingsvis_widget_indicator_number_card",
+      "remoteName": "thingsvis_widget_indicator_number_card",
       "remoteEntryUrl": "http://localhost:3205/remoteEntry.js",
       "staticEntryUrl": "/widgets/indicator/number-card/dist/remoteEntry.js",
       "debugSource": "static",
@@ -195,7 +195,7 @@
       "name": "图片",
       "i18n": {
         "zh": "图片",
-        "en": "图片"
+        "en": "Image"
       }
     },
     "media/video-player": {
@@ -206,7 +206,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Video",
-      "name": "网络视频流",
+      "name": "视频播放器",
       "i18n": {
         "zh": "视频",
         "en": "Video"
