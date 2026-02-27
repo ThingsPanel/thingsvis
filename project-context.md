@@ -40,9 +40,10 @@ CanvasView (apps/studio)
 ## Current State
 - 主题架构重构完成（CSS Variables 方案）
 - **isDark 残留全面清理完成** — 所有 Widget 改用 `resolveWidgetColors()` 从 CSS 变量获取颜色
-- **编辑器 ↔ 画布主题彻底解耦** — `.theme-dawn` / `.theme-midnight` 完整覆盖所有 Tailwind CSS 变量，画布 theme 值运行时规范化，默认值修正为 `midnight`
+- 编辑器 ↔ 画布主题彻底解耦完成
 - 仪表盘/饼图等组件拖拽修复完成
 - 上传图片不显示问题已修复（rsbuild proxy 增加 /uploads 代理）
+- **网格(Grid)布局模式下拖拽平移及无阴影/无居中的表现错误已修复**（修正了 `GridStackCanvas.tsx` 中静默 CSS 解析问题）
 
 ## Known Issues / Risks
 1. **部分组件缺少 SDK 依赖**: circle、line、rectangle 等未在 package.json 引入 SDK
