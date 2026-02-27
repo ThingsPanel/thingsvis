@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-27T12:11:11.995Z",
+  "generatedAt": "2026-02-27T13:36:33.138Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -94,7 +94,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "BarChart3",
-      "name": "柱状图",
+      "name": "ECharts 柱状图",
       "i18n": {
         "zh": "柱状图",
         "en": "Bar Chart"
@@ -121,8 +121,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "icon": "BarChart3",
-      "name": "折线图",
+      "icon": "LineChart",
+      "name": "ECharts 折线图",
       "i18n": {
         "zh": "折线图",
         "en": "Line Chart"
@@ -136,7 +136,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "PieChart",
-      "name": "饼图",
+      "name": "ECharts 饼图",
       "i18n": {
         "zh": "饼图",
         "en": "Pie Chart"
@@ -206,7 +206,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Video",
-      "name": "video-player",
+      "name": "网络视频流",
       "i18n": {
         "zh": "视频",
         "en": "Video"
