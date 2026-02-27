@@ -44,3 +44,11 @@
 - **How it was tested**: 运行了基于整个 Workspace 的 `pnpm run typecheck` 和 `pnpm run build --filter studio`，皆成功通过。
 - **Key decisions & rationale**: 这符合通用低代码平台对 “Design Tokens” 和 “Theme Extensibility” 的国际大厂最佳实践，彻底摆脱了因为暗黑模式需求带来的代码中随处可见的长逻辑硬编码判断。
 - **Time/Iteration count**: 2
+
+## Sub-task 6: 修复 echarts-line 构建缺失 SDK 依赖问题
+- **What was done**: 在 `widgets/chart/echarts-line/package.json` 的 `dependencies` 中补充了 `"@thingsvis/widget-sdk": "workspace:*"`。
+- **What was tried & failed**: 无。
+- **What succeeded**: 成功解决了 Rspack 构建 `echarts-line` 时 `Module not found: Can't resolve '@thingsvis/widget-sdk'` 的错误。
+- **How it was tested**: 在对应目录执行 `pnpm install && pnpm run build`，成功通过，Rspack 编译耗时约 1 秒。
+- **Key decisions & rationale**: 之前在修改组件主题架构时，部分遗漏了依赖声明但在代码里引入了 `resolveWidgetColors`，补齐依赖即可维持 workspace 包关联正常流转。
+- **Time/Iteration count**: 1

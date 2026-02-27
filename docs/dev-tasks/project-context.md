@@ -9,10 +9,11 @@
 - **CSS 局部变量（待定）**：为画布及其内容生成局部 CSS，利用 CSS variables 实现部件换肤效果，避免 `!important` 污染。
 
 ## Current State
-- `TASK-14-B` 的 Phase 1 (SDK扩展) 已完成，通过了编译。当前正在进入 Phase 2 图形面板局部变量隔离的开发。
-- 将原本稍显老套的名字变更为更接近大厂现代美学标准的 `Dawn` (晨曦白) 和 `Midnight` (午夜蓝)。
+- `TASK-14-B` 以及 `TASK-14-C` 的绝大部分已完成，主题变更为纯 CSS Variables 控制，抹平了二元特化逻辑，彻底移除了 isDark 硬编码。
+- 修复了因为代码更新带来的 `echarts-line` 缺失 `@thingsvis/widget-sdk` package.json 依赖导致的 Rspack 构建失败问题。各小部件皆已顺利编译。
 
 ## Known Issues / Risks
+- 部分小组件（例如：circle、line、rectangle 等）并未在 `package.json` 内引入 SDK，需注意未来是否会产生类似的报错（目前因为无 SDK 强关联 imports 未报错）。
 - 当有第三方引入的图表组件 (Echarts/uPlot) 时，需要特别处理其实例的主题重新渲染。
 
 ## Domain Knowledge

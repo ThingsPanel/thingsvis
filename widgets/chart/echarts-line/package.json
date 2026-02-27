@@ -8,6 +8,7 @@
         "typecheck": "tsc -p tsconfig.json --noEmit"
     },
     "dependencies": {
+        "@thingsvis/widget-sdk": "workspace:*",
         "echarts": "^5.5.0",
         "zod": "^3.22.4"
     },
