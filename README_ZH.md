@@ -99,21 +99,37 @@ pnpm dev --filter ./apps/preview
 后端服务用于支持认证和项目管理等功能。
 
 1. 设置环境变量:
-   复制 `packages/thingsvis-server/` 目录下的 `.env.example` 文件为 `.env`。
+   复制 `apps/server/` 目录下的 `.env.example` 文件为 `.env`。
+   > [!TIP]
+   > 本地开发时，请确保 `AUTH_URL` 与前端端口一致（如 `http://localhost:3001`），且 `ALLOWED_ORIGINS` 包含该地址以避免跨域错误。
 
-2. 初始化数据库:
+2. 初始化并推入种子数据:
    ```bash
-   pnpm --filter @thingsvis/server db:migrate
-   # 或
+   # 推送 Schema
    pnpm --filter @thingsvis/server db:push
+
+   # 推入默认管理员数据 (admin@thingsvis.io / admin123)
+   pnpm --filter @thingsvis/server seed
    ```
 
-3. 启动服务:
+3. 构建组件 (首次运行必做):
+   ```bash
+   pnpm build:widgets
+   ```
+
+4. 启动服务:
    ```bash
    pnpm dev --filter @thingsvis/server
    ```
 
-   服务将在 `http://localhost:3001` 上可用。
+   服务将在 `http://localhost:8000` 上可用。
+
+### 常见问题排查
+
+- **端口 3000 被占用**: 如果 3000 端口被占用（如 OrbStack），Studio 将启动在 3001。请更新 `apps/server/.env`:
+  - `AUTH_URL="http://localhost:3001"`
+  - `ALLOWED_ORIGINS="http://localhost:3001"`
+- **组件无法加载**: 请确保已运行 `pnpm build:widgets` 以将组件资源部署到 Studio 的 public 目录。
 
 ### 构建
 

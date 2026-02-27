@@ -97,20 +97,36 @@ The backend server is required for features like authentication and project mana
 
 1. Setup environment variables:
    Copy `.env.example` to `.env` in `apps/server/`.
+   > [!TIP]
+   > For local development, ensure `AUTH_URL` matches your frontend port (e.g., `http://localhost:3001`) and `ALLOWED_ORIGINS` includes it to avoid CORS errors.
 
-2. Initialize the database:
+2. Initialize and seed the database:
    ```bash
-   pnpm --filter @thingsvis/server db:migrate
-   # or
+   # Push schema
    pnpm --filter @thingsvis/server db:push
+
+   # Seed default admin user (admin@thingsvis.io / admin123)
+   pnpm --filter @thingsvis/server seed
    ```
 
-3. Start the server:
+3. Build widgets (Required for first run):
+   ```bash
+   pnpm build:widgets
+   ```
+
+4. Start the server:
    ```bash
    pnpm dev --filter @thingsvis/server
    ```
 
    The server will be available at `http://localhost:8000`.
+
+### Troubleshooting
+
+- **Port 3000 in use**: If port 3000 is occupied (e.g., by OrbStack), Studio will start on 3001. Update `apps/server/.env`:
+  - `AUTH_URL="http://localhost:3001"`
+  - `ALLOWED_ORIGINS="http://localhost:3001"`
+- **Widgets not loading**: Ensure you have run `pnpm build:widgets` to deploy component assets to the studio public directory.
 
 ### Building
 
