@@ -375,7 +375,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       gridCols: 24,
       gridRowHeight: 50,
       gridGap: 5,
-      theme: "dark" as "dark" | "light" | "auto",
+      theme: "dawn" as "dawn" | "midnight" | string,
       gridSize: 20,
       bgType: "color" as "color" | "image",
       bgValue: "#1a1a1a",
@@ -544,7 +544,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 mode: loaded.canvas.mode,
                 width: loaded.canvas.width,
                 height: loaded.canvas.height,
-                theme: (loaded.canvas as any).theme || 'dark', // Fix lint: Add theme and cast to any
+                theme: (loaded.canvas as any).theme || 'dawn',
               }
             })
             // Update canvas config

@@ -58,3 +58,19 @@
   2. **不修改 widgetRenderer.ts** — 虽然 `nodeToOverlayContext()` 没传 theme 字段，但没有 widget 依赖 `ctx.theme`；所有 widget 通过 `getComputedStyle()` 从 DOM 树读取 CSS 变量，不需要 JS 层面传递 theme。
   3. **widgetRenderer.ts 与 VisualEngine 的 theme 感知问题** — 固定/无限画布的渲染路径中，theme 通过 Studio CanvasView 的 `className={theme-${theme}}` 在 DOM 上生效，overlay element 作为其子元素自动继承 CSS 变量，因此无需额外传递。
 - **耗时/迭代次数**: 1
+
+---
+
+## Sub-task 10: 编辑器暗色模式与画布主题的彻底解耦
+
+### 10.1 分析与解决
+- **已完成工作**:
+  彻底解耦了编辑器 dark/light 模式与画布主题，修复了 3 层耦合：
+  1. **CSS 变量隔离完善** (`index.css`): `.theme-dawn` 和 `.theme-midnight` 补全了所有 Tailwind CSS 变量覆盖（`--accent`, `--secondary`, `--destructive`, `--input`, `--ring`, `--primary`, `--primary-foreground`, `--chart-*`, `--radius`），形成完整隔离屏障。
+  2. **默认 theme 值修正** (`Editor.tsx`): 画布默认 theme 从 `"dark"` 改为 `"midnight"`（`"dark"` 对应的 `theme-dark` CSS class 没有定义）。
+  3. **Theme 值运行时规范化** (`CanvasView.tsx`, `GridStackCanvas.tsx`): 非 `dawn` 的值一律兜底到 `midnight`。
+- **尝试与失败记录**: 最初错误移除了 `document.documentElement.classList.toggle("dark")`，导致 Tailwind `dark:` 工具类和 Portal 弹出层暗色样式失效。回退后改为纯 CSS 变量覆盖方案。
+- **最终成功方案**: 保留 `<html>` 上的 dark class（编辑器 UI 需要），通过 `.theme-*` 完整 CSS 变量覆盖隔离画布。
+- **测试方法与结果**: 浏览器自动化测试验证 4 种组合（编辑器亮/暗 × 画布 Dawn/Midnight），画布颜色均不受编辑器主题影响。
+- **关键决策与原因**: 不移除全局 dark class — Tailwind `dark:` 前缀和 Portal 弹出层依赖它。
+- **耗时/迭代次数**: 2

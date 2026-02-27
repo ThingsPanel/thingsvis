@@ -1,20 +1,21 @@
-# 任务规范：修复上传图片不显示问题
+# 任务规范：编辑器暗色模式与画布主题的彻底解耦
 
 ## 问题描述
-图片上传成功（文件存在于 `apps/server/public/uploads/`），右侧属性面板正确显示了 URL（如 `http://localhost:3000/uploads/xxx.jpg`），但画布上图片组件无法加载此 URL。
+编辑器的 `isDarkMode` 切换仍会影响画布区域，因为：
+1. `.dark` class 在 Editor 根 `<div>` 上设置 Tailwind CSS 变量，这些变量**级联**到子元素 `.theme-*` 画布容器。
+2. `.theme-dawn` / `.theme-midnight` 的 CSS 变量覆盖**不完整**——遗漏了 `--accent`, `--secondary`, `--input`, `--ring`, `--destructive`, `--primary` 等多个变量。
+3. `toggleTheme` 还操作 `document.documentElement.classList`（`<html>` 元素），影响全局 Tailwind `dark:*` 前缀。
 
-## 根本原因
-- Studio（前端）运行在 `localhost:3000`（rsbuild dev server）
-- Server（后端 Next.js）运行在 `localhost:8000`
-- rsbuild 已有 `/api` → `localhost:8000` 的代理，所以上传 API 正常工作
-- 但 `/uploads/` 路径**缺少代理规则**
-- 文件存储在 `apps/server/public/uploads/`，由 Next.js (8000端口) 静态文件服务提供
-- Studio (3000端口) 收到 `/uploads/xxx.jpg` 请求时无法找到文件
+## 解决方案
+**核心思路：让画布容器 `.theme-*` 建立完整的 CSS 变量隔离屏障，切断 `.dark` 的任何泄漏路径。**
+
+### 子任务清单
+- [x] **S1**: 在 `index.css` 中为 `.theme-dawn` 和 `.theme-midnight` **补全所有缺失的 Tailwind CSS 变量**（`--accent`, `--accent-foreground`, `--secondary`, `--secondary-foreground`, `--destructive`, `--destructive-foreground`, `--input`, `--ring`, `--primary`, `--primary-foreground`, `--chart-*`, `--radius`）
+- [x] **S2**: 移除 `document.documentElement.classList.toggle("dark")` 操作，将 `dark` class 控制限制在 Editor 组件的根 `<div>` 内，防止全局污染
+- [x] **S3**: 验证切换编辑器暗色/亮色模式时，画布区域的颜色完全不受影响
 
 ## 验收标准
-- [ ] 上传图片后，图片在画布上正确显示
-- [ ] URL 模式输入外部图片链接仍然正常工作
-- [ ] 修改不影响现有 API 代理功能
-
-## 修改范围
-单文件修改：`apps/studio/rsbuild.config.ts`
+1. 编辑器切换 dark/light 模式时，画布内的 widget 颜色不变
+2. 画布 `.theme-dawn` 在 dark 编辑器下仍为亮色
+3. 画布 `.theme-midnight` 在 light 编辑器下仍为深色
+4. `pnpm build:widgets` 编译成功

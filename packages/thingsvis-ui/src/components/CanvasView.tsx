@@ -350,7 +350,20 @@ export const CanvasView: React.FC<Props> = ({
   } : {};
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden', backgroundColor: 'hsl(var(--w-canvas-bg))' }}>
+      {/* Artboard background (underneath grid and nodes) */}
+      {(mode === 'fixed' || mode === 'grid') && (
+        <div style={{
+          position: 'absolute',
+          left: vOffset.x,
+          top: vOffset.y,
+          width: width * vZoom,
+          height: height * vZoom,
+          backgroundColor: 'hsl(var(--w-bg))',
+          pointerEvents: 'none',
+        }} />
+      )}
+
       {/* background grid canvas */}
       <canvas ref={gridCanvasRef} style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }} />
 

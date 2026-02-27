@@ -38,7 +38,7 @@ DATABASE_URL=file:./prisma/dev.db
 AUTH_SECRET=your-secret-key-here
 AUTH_URL=http://localhost:3000
 AUTH_TRUST_HOST=true
-# ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+# ALLOWED_ORIGINS=http://localhost:3000
 # SEED_ADMIN_EMAIL=admin@thingsvis.io
 # SEED_ADMIN_PASSWORD=admin123
 ```

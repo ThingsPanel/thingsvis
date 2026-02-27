@@ -473,10 +473,14 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     }
   }, [zoom, onZoomChange, fullWidth]);
 
+  // Normalize theme to valid CSS class: only 'dawn' | 'midnight'
+  // Legacy values: 'dark' -> 'midnight', others ('light', 'auto', undefined) -> 'dawn'
+  const normalizedTheme = theme === 'midnight' || theme === 'dark' ? 'midnight' : 'dawn';
+
   return (
     <div
       ref={scrollContainerRef}
-      className={`theme-${theme}`}
+      className={`theme-${normalizedTheme}`}
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
       style={{
@@ -489,43 +493,17 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         userSelect: activeTool === 'pan' ? 'none' : 'auto',
       }}
     >
-      {fullWidth ? (
-        /* Full-width mode: no centering, no shadow, fills container */
-        <div
-          ref={containerRef}
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-          style={{
-            width: '100%',
-            minHeight: containerHeight,
-            background: 'hsl(var(--w-bg))',
-            overflow: 'hidden',
-            padding: `${margin}px`,
-            boxSizing: 'border-box',
-          }}
-        >
-          <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
-        </div>
-      ) : (
-        /* Normal mode: centered with shadow and zoom support */
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom})`,
-            transformOrigin: 'center center',
-          }}
-        >
+      {
+        fullWidth ? (
+          /* Full-width mode: no centering, no shadow, fills container */
           <div
             ref={containerRef}
             onDragOver={handleDragOver}
             onDrop={handleDrop}
             style={{
-              width: containerWidth,
+              width: '100%',
               minHeight: containerHeight,
               background: 'hsl(var(--w-bg))',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
               overflow: 'hidden',
               padding: `${margin}px`,
               boxSizing: 'border-box',
@@ -533,8 +511,35 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           >
             <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
           </div>
-        </div>
-      )}
+        ) : (
+          /* Normal mode: centered with shadow and zoom support */
+          <div
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: `translate(calc(-50 % + ${panOffset.x}px), calc(-50 % + ${panOffset.y}px)) scale(${zoom})`,
+              transformOrigin: 'center center',
+            }}
+          >
+            <div
+              ref={containerRef}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              style={{
+                width: containerWidth,
+                minHeight: containerHeight,
+                background: 'hsl(var(--w-bg))',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                overflow: 'hidden',
+                padding: `${margin} px`,
+                boxSizing: 'border-box',
+              }}
+            >
+              <div className="grid-stack" style={{ minHeight: `calc(${containerHeight} - ${margin * 2}px)` }} />
+            </div>
+          </div>
+        )}
     </div>
   );
 };

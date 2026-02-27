@@ -204,10 +204,14 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   const isPanTool = activeTool === 'pan';
   const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
 
+  // Normalize theme to valid CSS class: only 'dawn' | 'midnight'.
+  // Legacy values: 'dark' -> 'midnight', others ('light', 'auto', undefined) -> 'dawn'.
+  const normalizedTheme = theme === 'midnight' || theme === 'dark' ? 'midnight' : 'dawn';
+
   return (
     <div
       ref={containerRef as any}
-      className={`theme-${theme}`}
+      className={`theme-${normalizedTheme}`}
       onClick={handleCanvasClick}
       onMouseDown={() => {
         if (isPanTool) setIsPointerDown(true);
@@ -330,66 +334,70 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       </div>
 
       {/* Line Connection Tool - shows handles when a line is selected */}
-      {activeTool !== 'pan' && !isCreationTool(activeTool) && (
-        <LineConnectionTool
-          kernelStore={store}
-          containerRef={proxyLayerRef}
-          getViewport={getViewport}
-          onUserEdit={onUserEdit}
-        />
-      )}
+      {
+        activeTool !== 'pan' && !isCreationTool(activeTool) && (
+          <LineConnectionTool
+            kernelStore={store}
+            containerRef={proxyLayerRef}
+            getViewport={getViewport}
+            onUserEdit={onUserEdit}
+          />
+        )
+      }
 
       {/* Creation Tool Layer for rectangle, circle, text, image tools */}
-      {isCreationTool(activeTool) && (
-        <CreateToolLayer
-          activeTool={activeTool}
-          getViewport={getViewport}
-          applyNodeInsertAndSelect={(nodes, selectIds) => {
-            const currentState = store.getState();
+      {
+        isCreationTool(activeTool) && (
+          <CreateToolLayer
+            activeTool={activeTool}
+            getViewport={getViewport}
+            applyNodeInsertAndSelect={(nodes, selectIds) => {
+              const currentState = store.getState();
 
-            // Build the new nodesById with added nodes
-            const newNodesById = { ...currentState.nodesById };
-            const newLayerOrder = [...currentState.layerOrder];
+              // Build the new nodesById with added nodes
+              const newNodesById = { ...currentState.nodesById };
+              const newLayerOrder = [...currentState.layerOrder];
 
-            nodes.forEach((node: { id: string; type: string; position: { x: number; y: number }; size?: { width: number; height: number }; props: Record<string, unknown> }) => {
-              newNodesById[node.id] = {
-                id: node.id,
-                schemaRef: node,
-                visible: true,
-                locked: false,
-              };
-              // Add to layer order if not already present
-              if (!newLayerOrder.includes(node.id)) {
-                newLayerOrder.push(node.id);
-              }
-            });
-
-            // Apply the combined state change
-            store.setState({
-              nodesById: newNodesById,
-              layerOrder: newLayerOrder,
-              selection: { nodeIds: selectIds },
-            });
-          }}
-          pendingImageUrl={pendingImageUrl}
-          onImagePickerRequest={onImagePickerRequest}
-          toolExtraProps={activeTool === 'line' ? (lineToolProps ?? {}) : undefined}
-          onCreationComplete={
-            activeTool === 'image'
-              ? () => {
-                onImagePickerComplete?.();
-              }
-              : activeTool === 'line' && !lineContinuous
-                ? () => {
-                  onResetTool?.();
+              nodes.forEach((node: { id: string; type: string; position: { x: number; y: number }; size?: { width: number; height: number }; props: Record<string, unknown> }) => {
+                newNodesById[node.id] = {
+                  id: node.id,
+                  schemaRef: node,
+                  visible: true,
+                  locked: false,
+                };
+                // Add to layer order if not already present
+                if (!newLayerOrder.includes(node.id)) {
+                  newLayerOrder.push(node.id);
                 }
-                : undefined
-          }
-          onUserEdit={onUserEdit}
-          onExternalDrop={handleDrop}
-        />
-      )}
-    </div>
+              });
+
+              // Apply the combined state change
+              store.setState({
+                nodesById: newNodesById,
+                layerOrder: newLayerOrder,
+                selection: { nodeIds: selectIds },
+              });
+            }}
+            pendingImageUrl={pendingImageUrl}
+            onImagePickerRequest={onImagePickerRequest}
+            toolExtraProps={activeTool === 'line' ? (lineToolProps ?? {}) : undefined}
+            onCreationComplete={
+              activeTool === 'image'
+                ? () => {
+                  onImagePickerComplete?.();
+                }
+                : activeTool === 'line' && !lineContinuous
+                  ? () => {
+                    onResetTool?.();
+                  }
+                  : undefined
+            }
+            onUserEdit={onUserEdit}
+            onExternalDrop={handleDrop}
+          />
+        )
+      }
+    </div >
   );
 });
 

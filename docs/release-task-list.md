@@ -277,7 +277,6 @@
 const defaultOrigins = [
   'http://localhost:3000',   // 开发环境
   'http://localhost:8000',
-  'http://localhost:5173',
 ];
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS
