@@ -36,6 +36,8 @@ export interface GridStackCanvasProps {
   onZoomChange?: (zoom: number) => void;
   /** Canvas Theme Setup (dawn | midnight) */
   theme?: string;
+  /** Padding for centering calculation (to account for side panels) */
+  centerPadding?: { left?: number; right?: number };
 }
 
 // Cache for loaded widgets
@@ -75,6 +77,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   zoom = 1,
   onZoomChange,
   theme = 'dawn',
+  centerPadding,
 }) => {
   const gridRef = useRef<GridStack | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -389,6 +392,42 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   const panStartRef = useRef({ x: 0, y: 0 });
   const [panOffset, setPanOffset] = React.useState({ x: 0, y: 0 });
   const panOffsetRef = useRef({ x: 0, y: 0 });
+  
+  // Container dimensions for centering calculation
+  const [containerDimensions, setContainerDimensions] = React.useState({ width: 0, height: 0 });
+  
+  // Update container dimensions on mount and resize
+  useEffect(() => {
+    if (!scrollContainerRef.current) return;
+    const updateDimensions = () => {
+      if (scrollContainerRef.current) {
+        const r = scrollContainerRef.current.getBoundingClientRect();
+        setContainerDimensions({ width: r.width, height: r.height });
+      }
+    };
+    updateDimensions();
+    const observer = new ResizeObserver(updateDimensions);
+    observer.observe(scrollContainerRef.current);
+    return () => observer.disconnect();
+  }, []);
+  
+  // Calculate centered position based on container dimensions and padding
+  const centeredPosition = React.useMemo(() => {
+    const leftPad = centerPadding?.left ?? 0;
+    const rightPad = centerPadding?.right ?? 0;
+    const visibleWidth = containerDimensions.width - leftPad - rightPad;
+    const canvasWidth = width || 0;
+    const canvasHeight = height || 0;
+    
+    // Calculate offset to center within visible area
+    const offsetX = leftPad + (visibleWidth - canvasWidth * zoom) / 2;
+    const offsetY = (containerDimensions.height - canvasHeight * zoom) / 2;
+    
+    return {
+      x: offsetX + panOffset.x,
+      y: offsetY + panOffset.y
+    };
+  }, [containerDimensions, width, height, zoom, panOffset, centerPadding]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     // Click on empty area clears selection (avoid clearing when clicking a widget)
@@ -516,10 +555,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
           <div
             style={{
               position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: `translate(calc(-50% + ${panOffset.x}px), calc(-50% + ${panOffset.y}px)) scale(${zoom})`,
-              transformOrigin: 'center center',
+              left: centeredPosition.x,
+              top: centeredPosition.y,
+              transform: `scale(${zoom})`,
+              transformOrigin: '0 0',
             }}
           >
             <div

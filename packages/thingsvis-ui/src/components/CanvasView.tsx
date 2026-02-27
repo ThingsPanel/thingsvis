@@ -26,6 +26,8 @@ type Props = {
   zoomEnabled?: boolean;
   /** Enable component interaction (dragging etc) */
   interactive?: boolean;
+  /** Padding for centering calculation (to account for side panels) */
+  centerPadding?: { left?: number; right?: number };
 };
 
 export const CanvasView: React.FC<Props> = ({
@@ -42,7 +44,8 @@ export const CanvasView: React.FC<Props> = ({
   onViewportChange,
   panEnabled = true,
   zoomEnabled = true,
-  interactive = true
+  interactive = true,
+  centerPadding
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
@@ -117,10 +120,15 @@ export const CanvasView: React.FC<Props> = ({
 
     // Calculate scale to fit the container with some padding
     const padding = 20;
+    const leftPad = centerPadding?.left ?? 0;
+    const rightPad = centerPadding?.right ?? 0;
+    // Fit within visible area (excluding side panels)
+    const visibleWidth = containerDimensions.width - leftPad - rightPad;
+    const visibleHeight = containerDimensions.height;
     // In grid mode, allow scaling to fit regardless of original size
     const scaleToFit = calculateScaleToFit(
-      containerDimensions.width,
-      containerDimensions.height,
+      visibleWidth,
+      visibleHeight,
       width,
       height,
       padding,
@@ -130,14 +138,14 @@ export const CanvasView: React.FC<Props> = ({
 
     setInternalZoom(scaleToFit);
 
-    // Center the content
+    // Center the content within visible area
     const scaledWidth = width * scaleToFit;
     const scaledHeight = height * scaleToFit;
     setOffset({
-      x: (containerDimensions.width - scaledWidth) / 2,
+      x: leftPad + (visibleWidth - scaledWidth) / 2,
       y: (containerDimensions.height - scaledHeight) / 2
     });
-  }, [mode, containerDimensions, width, height]);
+  }, [mode, containerDimensions, width, height, centerPadding]);
 
   useEffect(() => {
     if (mode !== 'fixed') {
@@ -146,14 +154,18 @@ export const CanvasView: React.FC<Props> = ({
     }
     if (containerDimensions.width <= 0 || containerDimensions.height <= 0) return;
     if (hasUserPanned) return;
+    const leftPad = centerPadding?.left ?? 0;
+    const rightPad = centerPadding?.right ?? 0;
+    // Calculate center based on visible area (excluding side panels)
+    const visibleWidth = containerDimensions.width - leftPad - rightPad;
     const nextOffset = {
-      x: (containerDimensions.width - width * zoom) / 2,
+      x: leftPad + (visibleWidth - width * zoom) / 2,
       y: (containerDimensions.height - height * zoom) / 2
     };
     setOffset((prev) => (
       prev.x === nextOffset.x && prev.y === nextOffset.y ? prev : nextOffset
     ));
-  }, [mode, containerDimensions, width, height, zoom, hasUserPanned]);
+  }, [mode, containerDimensions, width, height, zoom, hasUserPanned, centerPadding]);
 
   const viewportInfo = useMemo(() => {
     return { zoom, offset };

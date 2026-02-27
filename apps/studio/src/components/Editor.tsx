@@ -1166,6 +1166,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               compactVertical: true,
               responsive: [],
             }}
+            centerPadding={{
+              left: embedVisibility.showLibrary && showLeftPanel ? 320 : 0,
+              right: embedVisibility.showProps && showRightPanel ? 340 : 0
+            }}
             resolveWidget={resolveWidget}
             onNodeChange={(nodeId, position) => {
               // Update node grid position in kernel store
@@ -1218,6 +1222,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             pendingImageUrl={pendingImageUrl}
             onImagePickerRequest={handleImagePickerRequest}
             onImagePickerComplete={handleImagePickerComplete}
+            centerPadding={{
+              left: embedVisibility.showLibrary && showLeftPanel ? 320 : 0,
+              right: embedVisibility.showProps && showRightPanel ? 340 : 0
+            }}
           />
         )}
       </div>

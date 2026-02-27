@@ -40,8 +40,9 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
   onImagePickerRequest?: () => void;
   onImagePickerComplete?: () => void;
   theme?: string;
+  centerPadding?: { left?: number; right?: number };
 }>(function CanvasView(
-  { pageId, store, activeTool, resolveWidget, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete, theme = 'dawn' },
+  { pageId, store, activeTool, resolveWidget, lineToolProps, lineContinuous = true, zoom = 1, onZoomChange, onUserEdit, onResetTool, pendingImageUrl, onImagePickerRequest, onImagePickerComplete, theme = 'dawn', centerPadding },
   ref
 ) {
   const mountedRef = useRef(false);
@@ -239,6 +240,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
         zoomEnabled={activeTool === 'pan'}
         interactive={activeTool !== 'pan'}
         zoom={zoom}
+        centerPadding={centerPadding}
         onViewportChange={(newVp) => {
           // Only update state if values actually changed to avoid infinite loop
           const prev = vpRef.current;
