@@ -79,8 +79,20 @@ export function EditorTopNav({
     const { t, i18n } = useTranslation('editor')
     return (
         <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
-            {/* Left Side: Logo (Menu), Title, Status */}
+            {/* Left Side: Left Panel Toggle, Logo (Menu), Title, Status */}
             <div className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}>
+                {/* Left Panel Toggle Button - 最左边 */}
+                {showLibrary && !showLeftPanel && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
+                        onClick={onToggleLeftPanel}
+                        title={t('topNav.showLibrary')}
+                    >
+                        <PanelLeftOpen className="h-4 w-4" />
+                    </Button>
+                )}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <div className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity">
@@ -213,29 +225,6 @@ export function EditorTopNav({
                     {isDarkMode ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
                 </Button>
 
-                {showLibrary && !showLeftPanel && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
-                        onClick={onToggleLeftPanel}
-                        title={t('topNav.showLibrary')}
-                    >
-                        <PanelLeftOpen className="h-4 w-4" />
-                    </Button>
-                )}
-                {!showRightPanel && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
-                        onClick={onToggleRightPanel}
-                        title={t('topNav.showProps')}
-                    >
-                        <PanelRightOpen className="h-4 w-4" />
-                    </Button>
-                )}
-
                 <Button
                     variant="ghost"
                     size="sm"
@@ -276,6 +265,19 @@ export function EditorTopNav({
                         title={isFullscreen ? t('topNav.exitFullscreen') : t('topNav.fullscreen')}
                     >
                         {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+                    </Button>
+                )}
+
+                {/* Right Panel Toggle Button - 最右边 */}
+                {!showRightPanel && (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
+                        onClick={onToggleRightPanel}
+                        title={t('topNav.showProps')}
+                    >
+                        <PanelRightOpen className="h-4 w-4" />
                     </Button>
                 )}
             </div>
