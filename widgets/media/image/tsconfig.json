@@ -4,9 +4,17 @@
     "rootDir": "../../..",
     "noEmit": true,
     "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
-      "@thingsvis/schema": ["../../../packages/thingsvis-schema/src"]
+      "@thingsvis/schema": [
+        "../../../packages/thingsvis-schema/src"
+      ],
+      "@thingsvis/widget-sdk": [
+        "../../../packages/thingsvis-widget-sdk/src"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

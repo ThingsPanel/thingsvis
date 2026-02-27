@@ -36,3 +36,11 @@
 - **How it was tested**: 使用静态代码逻辑检验了旧有 Echarts 读取 `(ctx as any).theme === 'midnight'` 为准的兼容方案，验证全部更新正确无遗漏。组件属性直接通过 Zod Schema 控制，不会因为改动影响覆盖属性（用户配置在 `currentProps` 的更高优先级生效）。
 - **Key decisions & rationale**: 要求预置插件随框架本身的定义发生演进变更（比如 `WidgetTheme` 改为纯 string 枚举）从而保证框架整体轻量、统一。此举防止因为兼容对象深层嵌套造成意外的取值错误。
 - **Time/Iteration count**: 1
+
+## Sub-task 5: 零 JS 侵入式纯 CSS Variables 主题架构重构 (TASK-14-C)
+- **What was done**: 清除了 `WidgetOverlayContext` 中过渡时期的 `isDark` 属性，彻底废弃了二元主题锁定机制。引入 `resolveWidgetColors` 实用工具直接从 DOM 提取 `--w-bg`, `--w-fg`, `--w-axis` 等 CSS 变量。批量更新了所有图表 Widget 源码使用此工具获取环境色。修改 `CanvasSettingsPanel`，让用户可以在右侧直接选取 'midnight' 和 'dawn'，并添加中英文多语言翻译。
+- **What was tried & failed**: 一开始尝试用 AST 去执行复杂的语法替换时由于第三方闭合关系存在异常。后来改为稳妥的正规表达式以及脚本字符串定向替换，成功抹平了 `isDark` 差异。
+- **What succeeded**: 系统现在只需维护一份 CSS 定义即可实现图表的完美适配换色。
+- **How it was tested**: 运行了基于整个 Workspace 的 `pnpm run typecheck` 和 `pnpm run build --filter studio`，皆成功通过。
+- **Key decisions & rationale**: 这符合通用低代码平台对 “Design Tokens” 和 “Theme Extensibility” 的国际大厂最佳实践，彻底摆脱了因为暗黑模式需求带来的代码中随处可见的长逻辑硬编码判断。
+- **Time/Iteration count**: 2

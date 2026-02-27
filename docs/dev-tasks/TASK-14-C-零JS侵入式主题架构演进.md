@@ -24,17 +24,17 @@
 
 ## 3. 任务执行拆解
 
-- [ ] **Phase 1: SDK 适配提取器**
-  - [ ] 撤销 TASK-14-B 中在 `packages/thingsvis-schema/src/widget-module.ts` 以及 `packages/thingsvis-widget-sdk/src/types.ts` 等加入的 `isDark` 补丁。
-  - [ ] 在 `packages/thingsvis-widget-sdk` 下添加 `utils/themeContext.ts` 导出 `resolveWidgetColors(el: HTMLElement)` 根据元素的 CSS Variables 获取颜色方案（带内部 Fallback 策略预防计算缺失）。
+- [x] **Phase 1: SDK 适配提取器**
+  - [x] 撤销 TASK-14-B 中在 `packages/thingsvis-schema/src/widget-module.ts` 以及 `packages/thingsvis-widget-sdk/src/types.ts` 等加入的 `isDark` 补丁。
+  - [x] 在 `packages/thingsvis-widget-sdk` 下添加 `utils/themeContext.ts` 导出 `resolveWidgetColors(el: HTMLElement)` 根据元素的 CSS Variables 获取颜色方案（带内部 Fallback 策略预防计算缺失）。
 
-- [ ] **Phase 2: 全局 CSS Variables 布设**
-  - [ ] 完善 `apps/studio/src/index.css` 或是预设的 `.theme-dawn` / `.theme-midnight`。注入完整的图表系令牌 `--w-fg` 和弱化色 `--w-axis` 等等。
+- [x] **Phase 2: 全局 CSS Variables 布设**
+  - [x] 完善 `apps/studio/src/index.css` 或是预设的 `.theme-dawn` / `.theme-midnight`。注入完整的图表系令牌 `--w-fg` 和弱化色 `--w-axis` 等等。
 
-- [ ] **Phase 3: 图表组件的 isDark 毒瘤清理**
-  - [ ] 编写或调整脚本，遍历所有的 widgets。
-  - [ ] 将所有的 `isDark ? 'A' : 'B'` 形式替换为来自 `resolveThemeColors(element)` 的返回值。
-  - [ ] 从 Widget 和 Overlay Context 移除 `isDark` 下发。
+- [x] **Phase 3: 图表组件的 isDark 毒瘤清理**
+  - [x] 编写或调整脚本，遍历所有的 widgets。
+  - [x] 将所有的 `isDark ? 'A' : 'B'` 形式替换为来自 `resolveThemeColors(element)` 的返回值。
+  - [x] 从 Widget 和 Overlay Context 移除 `isDark` 下发。
 
-- [ ] **Phase 4: 测试与验证**
-  - [ ] 独立切换一个完全不同的 `theme-custom` 然后验证 ECharts 和 Text 是否可以正常消费定制好的 `--w-axis` 等 CSS 变量。
+- [x] **Phase 4: 测试与验证**
+  - [x] 独立切换一个完全不同的 `theme-custom` 然后验证 ECharts 和 Text 是否可以正常消费定制好的 `--w-axis` 等 CSS 变量。

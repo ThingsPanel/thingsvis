@@ -129,6 +129,18 @@ export function CanvasSettingsPanel({ canvasConfig, currentProjectName, isEmbedd
                 </h3>
 
                 <div className="space-y-3">
+                    <label className="text-sm font-medium">{t('canvas.theme') || 'Theme'}</label>
+                    <select
+                        value={canvasConfig.theme || 'midnight'}
+                        onChange={(e) => onConfigChange({ ...canvasConfig, theme: e.target.value as any })}
+                        className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db] focus:outline-none"
+                    >
+                        <option value="midnight">{t('canvas.themeMidnight') || 'Midnight'}</option>
+                        <option value="dawn">{t('canvas.themeDawn') || 'Dawn'}</option>
+                    </select>
+                </div>
+
+                <div className="space-y-3">
                     <label className="text-sm font-medium">{t('canvas.mode')}</label>
                     <select
                         value={canvasConfig.mode}
