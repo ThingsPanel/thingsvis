@@ -47,16 +47,20 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const { states: dataSources } = useDataSourceRegistry(kernelStore);
 
   const node = state.nodesById[nodeId];
-  if (!node) return null;
+  // 在 hooks 之前做 null-safe 解构（hooks 必须无条件调用）
+  const schema = node?.schemaRef as any;
+  const bindings = schema?.data || [];
+  const componentType = (schema?.type ?? '') as string;
 
-  const schema = node.schemaRef as any;
-  const bindings = schema.data || [];
-
-  const componentType = schema.type as string;
   const [widgetEntry, setWidgetEntry] = useState<WidgetMainModule | null>(null);
   const [widgetError, setWidgetError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!node || !componentType) {
+      setWidgetEntry(null);
+      setWidgetError(null);
+      return;
+    }
     let cancelled = false;
     setWidgetEntry(null);
     setWidgetError(null);
@@ -75,7 +79,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [componentType]);
+  }, [componentType, node]);
 
   const controlsParse = useMemo(() => getWidgetControls(widgetEntry ?? undefined), [widgetEntry]);
   const controls = controlsParse.controls;
@@ -89,6 +93,9 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     // eslint-disable-next-line no-console
 
   }, [widgetEntry, controls, controlsParse.issues]);
+
+  // Early return 必须在所有 Hook 之后（Rules of Hooks）
+  if (!node) return null;
 
   function updateNode(changes: any) {
     kernelStore.getState().updateNode(nodeId, changes);

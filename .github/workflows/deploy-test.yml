@@ -47,7 +47,7 @@ jobs:
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
 
-      - name: Build Plugins
+      - name: Build Widgets
         run: pnpm run build:widgets
         continue-on-error: true
 
@@ -56,7 +56,7 @@ jobs:
       # ========================================
       - name: Package artifacts
         run: |
-          mkdir -p deploy/server deploy/studio deploy/plugins
+          mkdir -p deploy/server deploy/studio deploy/widgets
 
           # --- Server: Next.js standalone ---
           if [ -d "apps/server/.next/standalone" ]; then
@@ -83,17 +83,16 @@ jobs:
 
 
 
-          # --- Plugins (two-level: plugins/category/name/dist) ---
-          for dir in plugins/*/*/; do
+          # --- Widgets (two-level: widgets/category/name/dist) ---
+          for dir in widgets/*/*/; do
             if [ -d "${dir}dist" ]; then
-              # Preserve category/name structure: e.g. basic/indicator
-              rel_path="${dir#plugins/}"
+              rel_path="${dir#widgets/}"
               rel_path="${rel_path%/}"
               mkdir -p "deploy/widgets/${rel_path}"
               cp -r "${dir}dist" "deploy/widgets/${rel_path}/"
             fi
           done
-          echo "✅ Plugins packaged"
+          echo "✅ Widgets packaged"
 
           # --- Config ---
           cp .deploy/thingsvis.conf deploy/thingsvis.conf
@@ -163,9 +162,10 @@ jobs:
 
 
 
-            # --- Deploy Plugins ---
-            echo ">>> Deploying Plugins..."
-            if [ -d "/tmp/thingsvis-deploy/plugins" ] && [ "$(ls -A /tmp/thingsvis-deploy/plugins 2>/dev/null)" ]; then
+            # --- Deploy Widgets ---
+            echo ">>> Deploying Widgets..."
+            if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
+              mkdir -p /var/www/thingsvis-plugins
               cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
             fi
 

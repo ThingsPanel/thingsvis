@@ -146,7 +146,8 @@ export class GridPlaceholder {
     
     if (options) {
       this.options = options;
-      this.updatePosition(options.position, false);
+      const pixelPos = gridToPixel(options.position, options.settings, options.containerWidth);
+      this.updatePosition(pixelPos, false);
       if (options.active) {
         this.show();
       }

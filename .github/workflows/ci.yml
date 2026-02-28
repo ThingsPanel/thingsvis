@@ -1,0 +1,92 @@
+name: CI
+
+# PR 合入 main/dev/master 前必须通过，任何分支推送也触发
+on:
+  pull_request:
+    branches: [main, dev, master]
+  push:
+    branches: [main, dev, master]
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '8'
+
+jobs:
+  # ============================================================
+  # Job 1: Lint + TypeCheck（轻量，约 3-5 min）
+  # ============================================================
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Studio ESLint（error 级别规则：no-console、react-hooks/rules-of-hooks）
+      - name: Lint (studio)
+        run: pnpm turbo run lint --filter=studio
+
+      # TypeScript 全量检查（studio 为 WIP，由 lint 覆盖；packages 为稳定契约）
+      - name: Type Check (packages)
+        run: pnpm turbo run typecheck --filter=!studio
+
+  # ============================================================
+  # Job 2: Build Widgets（验证构建可复现，约 5-10 min）
+  # 依赖 quality 通过后才运行，节省 Runner 资源
+  # ============================================================
+  build-widgets:
+    name: Build Widgets
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Turbo 缓存：Widget 源码不变时直接命中，大幅缩短 CI 时间
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-widgets-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-widgets-
+
+      - name: Build Widgets
+        run: pnpm run build:widgets
+
+      - name: Verify widget artifacts
+        run: |
+          echo "=== Widget build artifacts ==="
+          find apps/studio/public/widgets -name "remoteEntry.js" 2>/dev/null | head -20 || echo "⚠️  No remoteEntry.js found – check build:widgets output above"

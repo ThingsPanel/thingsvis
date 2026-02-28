@@ -159,7 +159,65 @@
 
 ---
 
-## TASK-09 文档完善 (Documentation) - 2025-07-14
+## TASK-08 发版工程 (CI/CD Engineering) - 2025-07-15
+
+### TASK-08-A: PR CI Workflow 创建
+- **新建文件**: `.github/workflows/ci.yml`
+- **内容**:
+  - `quality` job: `pnpm turbo run lint --filter=studio` + `pnpm turbo run typecheck --filter=!studio`（10min timeout）
+  - `build-widgets` job: `pnpm run build:widgets`（needs: quality，20min timeout，Turbo 缓存）
+  - 触发条件: PR 到 main/dev/master，push 到 main/dev/master
+  - pnpm 缓存（actions/cache@v4）
+
+### TASK-08-B: Studio ESLint 配置
+- **新建文件**: `apps/studio/.eslintrc.cjs`
+  - `no-console: error`（阻止调试日志进入主干）
+  - `react-hooks/rules-of-hooks: error`（Hook 顺序违规检测）
+  - `@next/next/no-img-element: off`（rsbuild 项目，非 Next.js）
+  - 非关键规则降级为 warn
+- **修改文件**: `apps/studio/package.json`
+  - lint script: `eslint src --ext .ts,.tsx`
+  - 添加 devDeps: `eslint@^8.57.0`, `@typescript-eslint/*@^8`, `eslint-plugin-react@^7`, `eslint-plugin-react-hooks@^5`
+- **顺带修复真实 Bug**:
+  - `PropsPanel.tsx`: `useState`/`useEffect`/`useMemo` 在 early return 之后调用（违反 Rules of Hooks）→ 将 early return 移到所有 hook 声明之后
+  - `ComponentsList.tsx`: 删除错误的 `// eslint-disable-next-line @next/next/no-img-element`
+- **结果**: lint 0 errors, 429 warnings ✅
+
+### TASK-08-C: deploy-test.yml 修复
+- **修改文件**: `.github/workflows/deploy-test.yml`
+  - 步骤名 "Build Plugins" → "Build Widgets"
+  - 打包循环路径 `plugins/` → `widgets/`
+  - rsync 目标目录 `plugins/` → `widgets/`
+
+### TASK-08-D: 版本号管理脚本
+- **新建文件**: `scripts/release.mjs`
+  - 语义化版本自动升级（patch/minor/major）
+  - 同步更新 root + apps/studio + apps/server 的 package.json
+  - 输出 git add/commit/tag/push 命令
+- **修改文件**: `package.json`（root）
+  - 添加 `release:patch`, `release:minor`, `release:major`, `release:dry` 脚本
+
+### 类型系统修复（typecheck 通过前置工作）
+
+**@thingsvis/ui 修复（4 个 error → 0）**:
+- `GridPlaceholder.ts`: 构造函数将 `GridPosition`（网格单位 w/h）直接传给 `updatePosition()`（期望像素 width/height）→ 改用 `gridToPixel()` 转换
+- `GridStackCanvas.tsx:176`: `disableOneColumnMode` 在新版 gridstack 类型中已移除 → 添加 `@ts-expect-error`
+- `VisualEngine.ts:365-366`: `updateGridContainerWidth` 属于 `KernelActions`，但 `state` 被cast 为 `KernelState` → 改为 `(state as any)` 中间变量访问
+
+**monorepo pnpm overrides**（解决 @types/react 版本冲突）:
+- root `package.json` 中添加 `pnpm.overrides`: `"@types/react": "^18.2.0"`, `"@types/react-dom": "^18.2.0"`
+- 消除了 `@types/react@19.2.9` 与 studio deps 的 JSX 类型冲突
+- studio 的 30 个预存 WIP 类型错误（Language 未声明、缺失 language prop 等）超出 TASK-08 范围，CI typecheck 过滤 `--filter=!studio`
+
+### 本次迭代结果
+- ✅ `.github/workflows/ci.yml` — PR CI 门禁（lint + typecheck packages + build:widgets）
+- ✅ Studio ESLint 0 errors — 真实 React hooks 顺序 Bug 已修复
+- ✅ deploy-test.yml plugins→widgets 路径全部修正
+- ✅ `scripts/release.mjs` — 语义化版本号脚本 + 4 个 npm scripts
+- ✅ `@thingsvis/ui` typecheck 从 4 errors → 0 errors（含 gridToPixel 真实 Bug 修复）
+- ✅ `pnpm turbo run typecheck --filter=!studio` 21/21 通过
+
+---
 
 ### TASK-09-A: README.md 增补路线图 + 修复
 - **新增**: `## 🗺️ Roadmap` 节，分 v0.2.0 / v0.3.0 / 已完成三段，覆盖实时协作、MQTT、Widget 市场等规划。

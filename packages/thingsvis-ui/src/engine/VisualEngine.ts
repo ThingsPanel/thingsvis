@@ -362,8 +362,10 @@ export class VisualEngine {
 
         // Update grid state with new container width
         const state = this.store.getState() as KernelState;
-        if (state.canvas?.mode === 'grid' && state.updateGridContainerWidth) {
-          state.updateGridContainerWidth(newWidth);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const storeState = state as any;
+        if (state.canvas?.mode === 'grid' && storeState.updateGridContainerWidth) {
+          storeState.updateGridContainerWidth(newWidth);
         }
 
         // Force re-sync of grid overlay with new dimensions

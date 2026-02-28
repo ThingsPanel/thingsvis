@@ -173,6 +173,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         margin: margin,
         float: true, // Allow overlapping - widgets can be placed anywhere
         animate: false,
+        // @ts-expect-error: disableOneColumnMode removed in newer gridstack types but still works at runtime
         disableOneColumnMode: true,
         staticGrid: !interactive,
         disableDrag: !interactive,

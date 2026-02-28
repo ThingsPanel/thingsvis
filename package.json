@@ -12,7 +12,11 @@
     "dev:widgets": "turbo run dev --filter=\"thingsvis-widget-*\"",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
-    "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js"
+    "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js",
+    "release:patch": "node scripts/release.mjs patch",
+    "release:minor": "node scripts/release.mjs minor",
+    "release:major": "node scripts/release.mjs major",
+    "release:dry": "node scripts/release.mjs patch --dry-run"
   },
   "devDependencies": {
     "@module-federation/enhanced": "^0.6.0",
@@ -29,5 +33,11 @@
   "dependencies": {
     "lucide-react": "^0.563.0",
     "zustand": "^4.5.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.2.0",
+      "@types/react-dom": "^18.2.0"
+    }
   }
 }

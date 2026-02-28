@@ -286,7 +286,6 @@ export default function ComponentsList({ onInsert: _onInsert }: { onInsert: (typ
                               >
                                 <div className="h-5 w-5 text-foreground mb-0.5">
                                   {(entry as any).iconUrl ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
                                     <img
                                       src={(entry as any).iconUrl}
                                       alt={(entry as any).i18n?.[i18n.language] ?? (entry as any).displayName ?? entry.remoteName}
