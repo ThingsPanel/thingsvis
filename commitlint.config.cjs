@@ -30,5 +30,7 @@ module.exports = {
     'scope-case': [2, 'always', 'lower-case'],
     // header 总长不超过 120
     'header-max-length': [2, 'always', 120],
+    // body 不强制行长（VS Code / AI 生成的描述往往较长）
+    'body-max-line-length': [0],
   },
 };
