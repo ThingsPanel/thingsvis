@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: '通用数值卡片',
     defaultSize: { width: 240, height: 120 },
+    constraints: { minWidth: 120, minHeight: 60 },
     locales: {
         zh: {
             'widget.number-card.name': '数值卡片',

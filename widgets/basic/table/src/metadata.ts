@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: '数据表格',
     defaultSize: { width: 400, height: 300 },
+    constraints: { minWidth: 200, minHeight: 100 },
     locales: {
         zh: {
             'widget.table.name': '表格',

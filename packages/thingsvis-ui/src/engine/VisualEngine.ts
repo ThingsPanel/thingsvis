@@ -638,7 +638,15 @@ export class VisualEngine {
         try {
           // 构建 linkedNodes 用于节点连接功能
           const linkedNodes = this.buildLinkedNodes(node, allNodes);
-          const contextWithLinks = { ...node, linkedNodes };
+          const contextWithLinks = {
+            ...node,
+            linkedNodes,
+            mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
+            locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+            visible: true,
+            emit: (_event: string, _payload?: unknown) => { /* TASK-23: action system */ },
+            on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
+          };
 
           const ov = rendererToUse.createOverlay(contextWithLinks);
           overlayInst = ov;

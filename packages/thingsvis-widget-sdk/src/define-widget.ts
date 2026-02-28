@@ -68,6 +68,15 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
    * 设为 true 则所有字段自动支持数据绑定
    */
   enableAllBindings?: boolean;
+  /**
+   * 属性迁移函数
+   * 
+   * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数
+   * @param props - 保存的旧属性对象
+   * @param fromVersion - 保存时的 widget 版本
+   * @returns 迁移后的新属性对象
+   */
+  migrate?: (props: unknown, fromVersion: string) => unknown;
   /** 
    * 渲染函数
    * 
@@ -195,6 +204,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     locales,
     enableAllBindings = false,
     render,
+    migrate,
   } = config;
 
   // 处理 controls 配置
@@ -251,6 +261,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     schema,
     controls,
     locales,
+    migrate,
     createOverlay,
   };
 }

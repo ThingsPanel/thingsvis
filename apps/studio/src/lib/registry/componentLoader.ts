@@ -8,6 +8,17 @@ type LoadedComponent = {
 };
 
 const componentCache = new Map<string, Promise<LoadedComponent>>();
+/** Synchronous cache populated after each component resolves */
+const resolvedWidgets = new Map<string, WidgetMainModule>();
+
+/**
+ * Synchronously returns a previously-loaded widget (if in cache).
+ * Returns null if the widget has not been loaded yet.
+ */
+export function getResolvedWidget(componentId: string): WidgetMainModule | null {
+  const actualId = componentId.replace(' (Local)', '');
+  return resolvedWidgets.get(actualId) ?? null;
+}
 
 function normalizeMainModule(mod: any): WidgetMainModule {
     // Support both default-exported object and named exports
@@ -65,6 +76,9 @@ export async function loadComponent(componentId: string): Promise<LoadedComponen
         const loaded = await UniversalLoader.loadComponent<any>(entry.remoteName, entry.exposedModule);
 
         const main = normalizeMainModule(loaded);
+
+        // Populate sync cache for constraint queries (e.g. TransformControls)
+        resolvedWidgets.set(actualId, main);
 
         // Register component translations into Editor namespace if available
         if (main.locales) {

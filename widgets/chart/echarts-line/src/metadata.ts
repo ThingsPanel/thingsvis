@@ -19,6 +19,7 @@ export const metadata = {
   version: '1.0.0',
   defaultSize: { width: 300, height: 200 },
   resizable: true, // 图表组件支持调整尺寸
+  constraints: { minWidth: 100, minHeight: 80 },
   locales: {
     zh: {
       'widget.echarts-line.name': 'ECharts 折线图',

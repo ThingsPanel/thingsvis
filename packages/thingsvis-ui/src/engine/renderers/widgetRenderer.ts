@@ -33,14 +33,20 @@ function isLeaferDisplayObject(obj: unknown): obj is LeaferDisplayObject {
     (typeof o.tag === 'string') || (typeof o.__tag === 'string');
 }
 
-function nodeToOverlayContext(node: NodeState, store: KernelStore): WidgetOverlayContext {
+function nodeToOverlayContext(node: NodeState, store: KernelStore, opts?: { editable?: boolean }): WidgetOverlayContext {
   const schema = node.schemaRef as any;
   // 使用 PropertyResolver 解析绑定表达式
   const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
+  const mode: WidgetOverlayContext['mode'] = opts?.editable !== false ? 'edit' : 'view';
   return {
     position: schema.position,
     size: schema.size,
-    props: resolvedProps
+    props: resolvedProps,
+    mode,
+    locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+    visible: true,
+    emit: (_event: string, _payload?: unknown) => { /* TASK-23: action system */ },
+    on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
   };
 }
 
@@ -110,10 +116,16 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
       ? (node: NodeState) => {
         // 从 node 中提取 linkedNodes（如果存在）
         const linkedNodes = (node as any).linkedNodes;
-        const context = nodeToOverlayContext(node, store);
+        const context = nodeToOverlayContext(node, store, opts);
         // 将 linkedNodes 附加到 context
         if (linkedNodes) {
           (context as any).linkedNodes = linkedNodes;
+        }
+        // 属性迁移：如果 widget.version 与保存的 widgetVersion 不匹配，调用 migrate
+        const schema = node.schemaRef as any;
+        const savedVersion = schema.widgetVersion;
+        if (widget.migrate && context.props && savedVersion && widget.version && savedVersion !== widget.version) {
+          context.props = widget.migrate(context.props, savedVersion) as Record<string, unknown>;
         }
         const overlay = widget.createOverlay!(context);
         if (opts?.editable !== false) {
@@ -126,7 +138,7 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
           update: overlay.update
             ? (nextNode: NodeState) => {
               const nextLinkedNodes = (nextNode as any).linkedNodes;
-              const nextContext = nodeToOverlayContext(nextNode, store);
+              const nextContext = nodeToOverlayContext(nextNode, store, opts);
               if (nextLinkedNodes) {
                 (nextContext as any).linkedNodes = nextLinkedNodes;
               }

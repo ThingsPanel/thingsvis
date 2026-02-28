@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: '开关/切换器',
     defaultSize: { width: 60, height: 32 },
+    constraints: { minWidth: 40, minHeight: 20 },
     locales: {
         zh: {
             'widget.switch.name': '开关',

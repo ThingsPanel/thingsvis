@@ -157,6 +157,16 @@ export type WidgetOverlayContext = {
   props?: Record<string, unknown>;
   /** 当前画布的主题上下文 (Dawn/Midnight) */
   theme?: WidgetTheme;
+  /** 当前语言 (e.g. 'zh', 'en') */
+  locale?: string;
+  /** 当前运行模式 */
+  mode?: 'edit' | 'preview' | 'view';
+  /** 组件是否可见（被裁剪/折叠等情况下为 false） */
+  visible?: boolean;
+  /** 向宿主发送事件（用于联动、动作触发） */
+  emit?: (event: string, payload?: unknown) => void;
+  /** 监听宿主事件（如全局变量变化） */
+  on?: (event: string, handler: (payload?: unknown) => void) => (() => void);
   linkedNodes?: Record<
     string,
     {
@@ -184,6 +194,20 @@ export type PluginOverlayInstance = {
 /** 插件分类 */
 export type WidgetCategory = 'basic' | 'chart' | 'media' | 'custom' | 'indicator' | string;
 
+/** 组件尺寸约束 */
+export type WidgetConstraints = {
+  /** 最小宽度（px） */
+  minWidth?: number;
+  /** 最小高度（px） */
+  minHeight?: number;
+  /** 最大宽度（px） */
+  maxWidth?: number;
+  /** 最大高度（px） */
+  maxHeight?: number;
+  /** 锁定宽高比（width/height） */
+  aspectRatio?: number;
+};
+
 /**
  * 插件主模块接口
  */
@@ -203,7 +227,22 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   schema?: z.ZodType<TProps>;
   /** 控件配置 */
   controls?: WidgetControls;
+  /** 组件默认尺寸 */
+  defaultSize?: { width: number; height: number };
+  /** 组件尺寸约束 */
+  constraints?: WidgetConstraints;
+  /** 是否支持调整大小（默认 true） */
+  resizable?: boolean;
   create?: (ctx?: WidgetOverlayContext) => unknown;
+  /** 
+   * 属性迁移函数
+   * 
+   * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数将旧格式 props 迁移为新格式
+   * @param props - 保存的旧属性对象
+   * @param fromVersion - 保存时的 widget 版本
+   * @returns 迁移后的新属性对象
+   */
+  migrate?: (props: unknown, fromVersion: string) => unknown;
   /** 
    * 创建 DOM Overlay
    */

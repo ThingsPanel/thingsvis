@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: '网页容器',
     defaultSize: { width: 400, height: 300 },
+    constraints: { minWidth: 100, minHeight: 80 },
     locales: {
         zh: {
             'widget.iframe.name': '网页容器',

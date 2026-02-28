@@ -21,6 +21,8 @@ export const NodeSchema = z.object({
   data: z.array(DataBindingSchema).optional(),
   // Grid layout position (for grid layout mode)
   grid: GridPositionSchema.optional(),
+  /** 保存时的 widget 版本，用于属性迁移 */
+  widgetVersion: z.string().optional(),
 });
 
 export type NodeSchemaType = z.infer<typeof NodeSchema>;

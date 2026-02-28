@@ -46,6 +46,16 @@ export type WidgetOverlayContext = {
   size?: { width: number; height: number };
   props?: Record<string, unknown>;
   theme?: string;
+  /** 当前语言 (e.g. 'zh', 'en') */
+  locale?: string;
+  /** 当前运行模式 */
+  mode?: 'edit' | 'preview' | 'view';
+  /** 组件是否可见 */
+  visible?: boolean;
+  /** 向宿主发送事件 */
+  emit?: (event: string, payload?: unknown) => void;
+  /** 监听宿主事件 */
+  on?: (event: string, handler: (payload?: unknown) => void) => (() => void);
 };
 
 /**
@@ -76,10 +86,29 @@ export type WidgetMainModule = {
    */
   defaultSize?: { width: number; height: number };
   /**
+   * Size constraints for the widget.
+   * Studio enforces these during drag/resize.
+   */
+  constraints?: {
+    minWidth?: number;
+    minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    /** Lock aspect ratio (width/height) */
+    aspectRatio?: number;
+  };
+  /**
    * i18n resources defined by the widget.
    * e.g. { zh: { editor: { "widget.my-widget": { text: "..." } } } }
    */
   locales?: Record<string, any>;
+  /**
+   * 属性迁移函数
+   * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数
+   * @param props - 保存的旧属性对象
+   * @param fromVersion - 保存时的 widget 版本
+   */
+  migrate?: (props: unknown, fromVersion: string) => unknown;
   /**
    * Create a Leafer-compatible renderer instance (usually a Leafer UI node).
    * The host is responsible for mounting/updating/destroying it.

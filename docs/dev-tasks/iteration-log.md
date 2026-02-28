@@ -52,3 +52,19 @@
 - **How it was tested**: 在对应目录执行 `pnpm install && pnpm run build`，成功通过，Rspack 编译耗时约 1 秒。
 - **Key decisions & rationale**: 之前在修改组件主题架构时，部分遗漏了依赖声明但在代码里引入了 `resolveWidgetColors`，补齐依赖即可维持 workspace 包关联正常流转。
 - **Time/Iteration count**: 1
+
+## Sub-task 7: 解除 FieldPicker 对 Object/Array 的 UI 限制
+- **What was done**: 在 `FieldPicker.tsx` 移除了下拉选项文本后缀追加的 `(需选子字段)` 字符串拼贴，直接剔除原有的针对 `isComplexType` （即对象和数组）抛出橙色警告提醒的代码段。
+- **What was tried & failed**: 一度尝试修改 HTML 组件层级，将原生的 `<select>` 改为带有联想记忆及输入自打字功能的 `<input list="field-paths">` 搭配 `<datalist>`，但被用户回滚（因为影响了原生 UI 体验并被判断为重构范围过大），因此切换为基于原生 `<select>` 的"去警告化"极简改动。
+- **What succeeded**: 成功使得原生的 `<select>` 组件可以直接把合法的长、短路径以及 JSON 对应的 `(root)` 干净地呈现，且用户绑定时不再被 UI 错误暗示，能直接获取树状关联数据。
+- **How it was tested**: 观察修改后渲染逻辑，执行了 pnpm run build，保证了没有任何警告气泡和不必要的文字拼接。
+- **Key decisions & rationale**: 在“不改变原有架构底层交互前提下”的最小阻力路径：后台 JSON 解构器 `fieldPath.ts` 和表达式生成器本身是对全层级合法支持的，问题纯粹是前端恐吓 UI 阻挡了用户的正常操作。直接铲除相关提示即可一次性修复。
+- **Time/Iteration count**: 1
+
+## Sub-task 8: 还原 FieldPicker 选项渲染并保留箭头
+- **What was done**: 移除了 `FieldPicker.tsx` 中试图添加的复杂类型文本标识（如 `[{}]`, `[Aa]`），并彻底放弃了向不完整的 `ui/select.tsx` 迁移，还原回原生的 `<select>` 组件。当前仅保留无侵入性的 `↳` 制表符缩进方案。
+- **What was tried & failed**: 一度尝试将 `<select>` 升级为项目内的自定义 React `Select` 以支持 `lucide-react` 组件图标渲染。但实际上内建的 `ui/select.tsx` 是残缺的（不支持 `placeholder`、`disabled` 及下拉悬浮特性分离等基础功能），且由于 TypeScript `@types/react` 版本冲突导致了 `lucide-react`（如 `Box`, `Type` 等组件）作为 JSX 元素直接抛出类型异常。由于此更改范围波及到通用包依赖且带来额外的样式和生命周期状态断崖，遂被完全还原。
+- **What succeeded**: 直接利用标准 HTML Select 最原始的渲染，辅以 `\u00A0` 多重占位和简单的箭头 `↳` 拼接，实现零组件侵入、零 TS 报错的极简层级展示树。
+- **How it was tested**: 观察 pnpm build 产物，此前因 `@types` 环境导致的各种 JSX 组件错误已全部消解。同时观察选择项仅存 `(root)` 与 `↳ 0` 原生字符串。
+- **Key decisions & rationale**: 在平台代码存在隐式 TS 类型版本碎片和非标组件时，对于业务属性下拉菜单的扩展，应克制"必须使用高级组件重写"的冲动。采用兼容度最高的原生字符串级连是符合"不重构"核心原则的最佳妥协方案。
+- **Time/Iteration count**: 3

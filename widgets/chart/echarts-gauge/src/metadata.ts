@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: 'ECharts 仪表盘',
     defaultSize: { width: 300, height: 200 },
+    constraints: { minWidth: 100, minHeight: 80 },
     locales: {
         zh: {
             'widget.echarts-gauge.name': '仪表盘',

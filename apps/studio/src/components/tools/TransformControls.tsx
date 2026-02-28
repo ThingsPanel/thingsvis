@@ -3,6 +3,7 @@ import { useSyncExternalStore } from "react";
 import Moveable from "moveable";
 import Selecto from "selecto";
 import type { KernelStore, KernelState } from "@thingsvis/kernel";
+import { getResolvedWidget } from "@/lib/registry/componentLoader";
 
 /** Grid layout handlers from useGridLayout hook */
 type GridLayoutHandlers = {
@@ -40,6 +41,8 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
   const dragTranslateByIdRef = useRef<Record<string, { x: number; y: number }>>({});
   const lastKnownZoomRef = useRef<number>(1);
   const viewportPollTimerRef = useRef<number | null>(null);
+  /** Per-node widget size constraints (populated in resizeStart) */
+  const nodeConstraintsRef = useRef<Record<string, { minWidth?: number; minHeight?: number; maxWidth?: number; maxHeight?: number }>>({});
 
   const state = useSyncExternalStore(
     useCallback(subscribe => kernelStore.subscribe(subscribe), [kernelStore]),
@@ -531,6 +534,12 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
           if (schema?.size) {
             baseWorldSizeByIdRef.current[nodeId] = { width: schema.size.width ?? 0, height: schema.size.height ?? 0 };
           }
+          // Read widget constraints from resolved cache
+          const widgetType = schema?.type as string | undefined;
+          if (widgetType) {
+            const widget = getResolvedWidget(widgetType);
+            nodeConstraintsRef.current[nodeId] = (widget as any)?.constraints ?? {};
+          }
         }
 
         target.style.willChange = 'transform,width,height';
@@ -539,8 +548,17 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
       moveableRef.current.on('resize', ({ target, width, height, drag }) => {
         // Moveable is inside scaled wrapper, width/height are already in world coords
-        target.style.width = `${width}px`;
-        target.style.height = `${height}px`;
+        // Apply widget constraints
+        const nodeId = target.getAttribute('data-node-id');
+        const constraints = nodeId ? (nodeConstraintsRef.current[nodeId] ?? {}) : {};
+        let w = width;
+        let h = height;
+        if (constraints.minWidth != null) w = Math.max(w, constraints.minWidth);
+        if (constraints.minHeight != null) h = Math.max(h, constraints.minHeight);
+        if (constraints.maxWidth != null) w = Math.min(w, constraints.maxWidth);
+        if (constraints.maxHeight != null) h = Math.min(h, constraints.maxHeight);
+        target.style.width = `${w}px`;
+        target.style.height = `${h}px`;
         const tx = drag?.beforeTranslate?.[0] ?? 0;
         const ty = drag?.beforeTranslate?.[1] ?? 0;
         target.style.transform = `translate3d(${tx}px, ${ty}px, 0)`;
@@ -569,8 +587,14 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
 
         if (nodeId) {
           // width/height from target.style are already in world (we set them above)
-          const width = parseFloat(target.style.width || '0') || 0;
-          const height = parseFloat(target.style.height || '0') || 0;
+          let width = parseFloat(target.style.width || '0') || 0;
+          let height = parseFloat(target.style.height || '0') || 0;
+          // Clamp to widget constraints one final time
+          const constraints = nodeConstraintsRef.current[nodeId] ?? {};
+          if (constraints.minWidth != null) width = Math.max(width, constraints.minWidth);
+          if (constraints.minHeight != null) height = Math.max(height, constraints.minHeight);
+          if (constraints.maxWidth != null) width = Math.min(width, constraints.maxWidth);
+          if (constraints.maxHeight != null) height = Math.min(height, constraints.maxHeight);
           kernelStore.getState().updateNode(nodeId, { position: { x, y }, size: { width, height } });
           onUserEdit?.();
         }

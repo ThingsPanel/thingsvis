@@ -6,6 +6,7 @@ export const metadata = {
     version: '1.0.0',
     description: '时序图',
     defaultSize: { width: 400, height: 300 },
+    constraints: { minWidth: 100, minHeight: 80 },
     locales: {
         zh: {
             'widget.uplot-line.name': '时序图',

@@ -68,18 +68,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
     return map;
   }, [pathInfos]);
 
-  // 获取类型标记符号
-  const getTypeIcon = (type: FieldPathInfo['type']): string => {
-    switch (type) {
-      case 'object': return '📦';
-      case 'array': return '📋';
-      case 'string': return 'Ⓢ';
-      case 'number': return '#';
-      case 'boolean': return '◐';
-      case 'null': return '∅';
-      default: return '?';
-    }
-  };
+
 
   const safeOnChange = (next: FieldPickerValue | null) => onChange(next);
 
@@ -148,13 +137,11 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           ) : (
             // Regular data source paths with type icons
             paths.map((p) => {
-              const type = pathTypeMap.get(p) || 'unknown';
-              const icon = getTypeIcon(type);
-              // 对象和数组类型添加提示信息
-              const isComplexType = type === 'object' || type === 'array';
+              const depth = p === '(root)' ? 0 : p.split('.').length;
+              const indent = depth > 0 ? '\u00A0\u00A0\u00A0\u00A0'.repeat(depth - 1) + '↳\u00A0' : '';
               return (
                 <option key={p} value={p}>
-                  {icon} {p}{isComplexType ? t('binding.needChildField', ' (select child)') : ''}
+                  {indent}{p}
                 </option>
               );
             })
@@ -185,18 +172,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             💡 {t('binding.externalProvided', 'Platform field provided by host app')}
           </p>
         )}
-        {/* 警告：选择了对象或数组类型的字段 */}
-        {!isPlatformSource && selectedFieldPath && (() => {
-          const selectedType = pathTypeMap.get(selectedFieldPath);
-          if (selectedType === 'object' || selectedType === 'array') {
-            return (
-              <p className="text-xs text-amber-600">
-                ⚠️ {t('auto.rightPanel.selectedFieldIsObjectarrayTypeAndMa')}
-              </p>
-            );
-          }
-          return null;
-        })()}
+
       </div>
     </div>
   );

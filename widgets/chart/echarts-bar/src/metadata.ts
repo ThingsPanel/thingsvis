@@ -10,6 +10,7 @@ export const metadata = {
     version: '1.0.0',
     defaultSize: { width: 300, height: 200 },
     resizable: true,
+    constraints: { minWidth: 100, minHeight: 80 },
     locales: {
         zh: {
             'widget.echarts-bar.name': 'ECharts 柱状图',

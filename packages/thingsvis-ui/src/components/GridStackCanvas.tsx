@@ -45,15 +45,27 @@ const widgetCache = new Map<string, any>();
 // Track which nodes have been rendered with widgets
 const renderedOverlays = new Map<string, { update?: (ctx: WidgetOverlayContext) => void; destroy?: () => void }>();
 
-function nodeToOverlayContext(node: NodeState, store: KernelStore, platformData?: Record<string, any>, theme?: string): WidgetOverlayContext {
+function nodeToOverlayContext(
+  node: NodeState,
+  store: KernelStore,
+  platformData?: Record<string, any>,
+  theme?: string,
+  interactive?: boolean,
+): WidgetOverlayContext {
   const schema = node.schemaRef as any;
   // 使用 PropertyResolver 解析绑定表达式（支持数据源绑定和Platform字段绑定）
   const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources, platformData);
+  const mode: WidgetOverlayContext['mode'] = interactive !== false ? 'view' : 'view';
   return {
     position: schema.position ?? { x: 0, y: 0 },
     size: schema.size ?? { width: 200, height: 100 },
     props: resolvedProps,
     theme,
+    mode,
+    locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+    visible: true,
+    emit: (_event: string, _payload?: unknown) => { /* TASK-23: action system */ },
+    on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
   };
 }
 
@@ -346,7 +358,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       // If widget has createOverlay, use it
       if (widget.createOverlay) {
-        const context = nodeToOverlayContext(node, store, platformData, theme);
+        const context = nodeToOverlayContext(node, store, platformData, theme, interactive);
         const overlay = widget.createOverlay(context);
 
         if (overlay.element) {
@@ -376,7 +388,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     nodes.forEach((node: any) => {
       const overlay = renderedOverlays.get(node.id);
       if (overlay?.update) {
-        const context = nodeToOverlayContext(node, store, platformData, theme);
+        const context = nodeToOverlayContext(node, store, platformData, theme, interactive);
         overlay.update(context);
       }
     });

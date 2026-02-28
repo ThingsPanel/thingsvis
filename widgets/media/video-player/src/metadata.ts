@@ -7,5 +7,7 @@ export const metadata = {
   category: 'media',
   icon: 'Video',
   version: '1.0.0',
+  resizable: true,
   defaultSize: { width: 400, height: 300 },
+  constraints: { minWidth: 120, minHeight: 80 },
 };
