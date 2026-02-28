@@ -82,20 +82,6 @@ apps/server/tsconfig.tsbuildinfo
 packages/*/tsconfig.tsbuildinfo
 
 # ============================================================
-# 内部文档 & AI 开发日志（不进入开源仓库）
-# ============================================================
-docs/
-specs/
-excalidraw-analysis/
-
-# 根目录内部规划文件
-iteration-log.md
-widget-iteration-log.md
-project-context.md
-task-spec.md
-implementation-plan.md
-
-# ============================================================
 # 调试 / 临时脚本
 # ============================================================
 *.debug.html

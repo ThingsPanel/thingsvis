@@ -1,18 +1,36 @@
 #!/bin/sh
-# Prevent force-push to main/master/dev
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
 REMOTE=$1
+REMOTE_URL=$2
 
-if [ "$REMOTE" = "origin" ] || [ "$REMOTE" = "public" ]; then
-  if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ] || [ "$BRANCH" = "dev" ]; then
-    # Check if this is a force push (we can't fully detect it here, but warn)
-    echo "⚠️  Pushing to protected branch: $BRANCH"
-    echo "   Make sure this is intentional. Force push is blocked by GitHub branch protection."
-  fi
+# ============================================================
+# 推送到公开仓库时的防护（remote 名为 public 或 URL 含 public）
+# ============================================================
+IS_PUBLIC=false
+if [ "$REMOTE" = "public" ]; then
+  IS_PUBLIC=true
 fi
+# 也可以通过 URL 判断（按需修改为你的公开仓库 URL）
+# if echo "$REMOTE_URL" | grep -q "thingsvis/thingsvis"; then IS_PUBLIC=true; fi
 
-# Block pushing if .env (non-example) files are somehow staged
-if git diff --cached --name-only | grep -qE '^\.env$|^apps/[^/]+/\.env$'; then
-  echo "❌ ERROR: .env file detected in staged changes. Remove it before pushing."
-  exit 1
+if [ "$IS_PUBLIC" = "true" ]; then
+  echo "🔍 检测到推送目标为公开仓库，执行安全检查..."
+
+  # 1. 拦截内部文档目录
+  INTERNAL_PATTERNS="docs/ specs/ .agents/ iteration-log.md widget-iteration-log.md project-context.md task-spec.md implementation-plan.md *.code-workspace excalidraw-analysis/"
+  for pattern in $INTERNAL_PATTERNS; do
+    if git diff --name-only HEAD @{u} 2>/dev/null | grep -q "$pattern" || \
+       git ls-files --cached | grep -q "$pattern"; then
+      echo "❌ 拦截：内部文件 '$pattern' 不能推送到公开仓库"
+      echo "   请先运行: git rm --cached <file> 将其从追踪中移除"
+      exit 1
+    fi
+  done
+
+  # 2. 拦截 .env 文件
+  if git ls-files --cached | grep -qE '^\.env$|^apps/[^/]+/\.env$'; then
+    echo "❌ 拦截：.env 文件不能推送到公开仓库"
+    exit 1
+  fi
+
+  echo "✅ 安全检查通过，推送到公开仓库"
 fi

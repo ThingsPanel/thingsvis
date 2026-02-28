@@ -38,6 +38,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Commit message 格式校验（仅 PR 时检查最新一条）
+      - name: Lint commit message
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint
+
       # ESLint（error 级别规则阻断 CI，warning 不阻断）
       - name: Lint (studio + server)
         run: pnpm turbo run lint --filter=studio --filter=@thingsvis/server
