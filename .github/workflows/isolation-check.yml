@@ -1,0 +1,134 @@
+name: Isolation Check
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    # 每周一凌晨 2 点全量扫描
+    - cron: '0 2 * * 1'
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: |
+          cd tools/isolation-analyzer
+          npm install
+          
+      - name: Run Security Scan
+        id: security
+        run: |
+          cd tools/isolation-analyzer
+          npm run analyze -- --path ../../ --security --output security-report.json
+        continue-on-error: true
+        
+      - name: Run Isolation Scan
+        id: isolation
+        run: |
+          cd tools/isolation-analyzer
+          npm run analyze -- --path ../../ --isolation --output isolation-report.json
+        continue-on-error: true
+        
+      - name: Run Dependency Scan
+        id: dependency
+        run: |
+          cd tools/isolation-analyzer
+          npm run analyze -- --path ../../ --category dependency --output dependency-report.json
+        continue-on-error: true
+        
+      - name: Upload Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolation-reports
+          path: |
+            tools/isolation-analyzer/*-report.json
+            
+      - name: Check Critical Issues
+        run: |
+          # 检查是否有安全错误
+          if [ -f "tools/isolation-analyzer/security-report.json" ]; then
+            ERROR_COUNT=$(jq '.summary.error' tools/isolation-analyzer/security-report.json)
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              echo "❌ 发现 $ERROR_COUNT 个安全问题，请修复后再提交"
+              jq '.issues[] | select(.severity == "error")' tools/isolation-analyzer/security-report.json
+              exit 1
+            fi
+          fi
+          
+          # 检查是否有隔离错误
+          if [ -f "tools/isolation-analyzer/isolation-report.json" ]; then
+            ERROR_COUNT=$(jq '.summary.error' tools/isolation-analyzer/isolation-report.json)
+            if [ "$ERROR_COUNT" -gt 0 ]; then
+              echo "❌ 发现 $ERROR_COUNT 个隔离问题"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ 安全检查通过"
+          
+  auto-fix:
+    needs: analyze
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && failure()
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Download Reports
+        uses: actions/download-artifact@v4
+        with:
+          name: isolation-reports
+          path: reports/
+          
+      - name: Attempt Auto Fix
+        run: |
+          cd tools/isolation-analyzer
+          npm install
+          npm run fix -- --path ../../ --dry-run --max 5
+          
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // 读取报告
+            let report = { summary: { total: 0 } };
+            try {
+              report = JSON.parse(fs.readFileSync('reports/security-report.json', 'utf8'));
+            } catch (e) {}
+            
+            const body = `## 🔒 隔离检查报告
+            
+发现问题: ${report.summary.total}
+- 错误: ${report.summary.error || 0}
+- 警告: ${report.summary.warning || 0}
+- 可自动修复: ${report.summary.autoFixable || 0}
+
+${report.summary.error > 0 ? '⚠️ 存在严重问题，请修复后再合并' : '✅ 检查通过'}
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });

@@ -1,0 +1,65 @@
+{
+  "$schema": "./tools/isolation-analyzer/schema.json",
+  "rules": {
+    "security": {
+      "level": "error",
+      "rules": {
+        "xss-innerHTML": true,
+        "eval-usage": true,
+        "prototype-pollution": true
+      }
+    },
+    "performance": {
+      "level": "warning",
+      "rules": {
+        "memory-leak": true,
+        "inefficient-rendering": true,
+        "large-bundle": true
+      }
+    },
+    "isolation": {
+      "level": "error",
+      "rules": {
+        "shadow-dom-missing": true,
+        "error-boundary-missing": true,
+        "direct-store-access": true,
+        "memory-leak": true
+      }
+    },
+    "dependency": {
+      "level": "error",
+      "rules": {
+        "version-mismatch": true,
+        "circular-dependency": true,
+        "missing-peer": true
+      }
+    }
+  },
+  "autoFix": {
+    "enabled": true,
+    "maxPerRun": 10,
+    "categories": ["security", "isolation"],
+    "excludeFiles": [
+      "node_modules/**",
+      "dist/**",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ]
+  },
+  "report": {
+    "formats": ["json", "html"],
+    "outputDir": "./reports"
+  },
+  "ignorePatterns": [
+    // 已知的安全使用
+    {
+      "pattern": "DOMPurify.sanitize",
+      "rule": "xss-innerHTML"
+    },
+    // 测试文件
+    {
+      "pattern": "**/__tests__/**",
+      "rule": "*"
+    }
+  ]
+}
