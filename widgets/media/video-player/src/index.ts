@@ -21,7 +21,6 @@ export const Main = defineWidget({
 
     element.style.width = '100%';
     element.style.height = '100%';
-    element.style.pointerEvents = 'auto';
 
     const container = document.createElement('div');
     container.style.width = '100%';

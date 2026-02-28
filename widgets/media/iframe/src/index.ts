@@ -17,7 +17,6 @@ export const Main = defineWidget({
 
         element.style.width = '100%';
         element.style.height = '100%';
-        element.style.pointerEvents = 'auto'; // allow interaction with iframe
 
         const iframe = document.createElement('iframe');
         iframe.style.width = '100%';

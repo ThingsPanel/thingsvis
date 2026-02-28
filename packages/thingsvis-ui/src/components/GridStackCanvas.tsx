@@ -392,10 +392,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   const panStartRef = useRef({ x: 0, y: 0 });
   const [panOffset, setPanOffset] = React.useState({ x: 0, y: 0 });
   const panOffsetRef = useRef({ x: 0, y: 0 });
-  
+
   // Container dimensions for centering calculation
   const [containerDimensions, setContainerDimensions] = React.useState({ width: 0, height: 0 });
-  
+
   // Update container dimensions on mount and resize
   useEffect(() => {
     if (!scrollContainerRef.current) return;
@@ -410,7 +410,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     observer.observe(scrollContainerRef.current);
     return () => observer.disconnect();
   }, []);
-  
+
   // Calculate centered position based on container dimensions and padding
   const centeredPosition = React.useMemo(() => {
     const leftPad = centerPadding?.left ?? 0;
@@ -418,11 +418,11 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
     const visibleWidth = containerDimensions.width - leftPad - rightPad;
     const canvasWidth = width || 0;
     const canvasHeight = height || 0;
-    
+
     // Calculate offset to center within visible area
     const offsetX = leftPad + (visibleWidth - canvasWidth * zoom) / 2;
     const offsetY = (containerDimensions.height - canvasHeight * zoom) / 2;
-    
+
     return {
       x: offsetX + panOffset.x,
       y: offsetY + panOffset.y
@@ -519,7 +519,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   return (
     <div
       ref={scrollContainerRef}
-      className={`theme-${normalizedTheme}`}
+      className={`theme-${normalizedTheme} ${interactive ? 'gs-interactive-container' : ''}`}
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
       style={{
@@ -579,6 +579,13 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
             </div>
           </div>
         )}
+      {interactive && (
+        <style>{`
+          .gs-interactive-container .grid-stack-item-content > * {
+            pointer-events: none !important;
+          }
+        `}</style>
+      )}
     </div>
   );
 };
