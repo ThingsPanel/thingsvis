@@ -38,9 +38,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Studio ESLint（error 级别规则：no-console、react-hooks/rules-of-hooks）
-      - name: Lint (studio)
-        run: pnpm turbo run lint --filter=studio
+      # ESLint（error 级别规则阻断 CI，warning 不阻断）
+      - name: Lint (studio + server)
+        run: pnpm turbo run lint --filter=studio --filter=@thingsvis/server
 
       # TypeScript 全量检查（studio 为 WIP，由 lint 覆盖；packages 为稳定契约）
       - name: Type Check (packages)
