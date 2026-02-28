@@ -851,38 +851,42 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         return;
       }
 
-      // 🔑 关键修复：使用宿主传来的项目 ID 更新 canvasConfig
-      setCanvasConfig(prev => ({
-        ...prev,
-        id: processed.projectId, // 使用宿主传来的 ID
-        name: processed.projectName,
-        mode: processed.canvas.mode as any,
-        width: processed.canvas.width,
-        height: processed.canvas.height,
-        bgValue: processed.canvas.background,
-        gridCols: processed.canvas.gridCols,
-        gridRowHeight: processed.canvas.gridRowHeight,
-        gridGap: processed.canvas.gridGap,
-        fullWidthPreview: processed.canvas.fullWidthPreview,
-        thumbnail: processed.thumbnail || "", // Load thumbnail from embed payload
-      }));
-
-      // updateData listener: 已由 WidgetModeStrategy.setupListeners() 处理 (含 thingModelBindings)
-
       // 🔑 saveTarget='self' 时，从 ThingsVis 云端获取节点（包含 data 绑定字段）
       let nodesToLoad = processed.nodes;
+      let loadedMeta: any = null;
+      let loadedCanvas: any = null;
       if (processed.saveTarget === 'self' && processed.projectId) {
         try {
           const cloudAdapter = createCloudStorageAdapter();
           const cloudProject = await cloudAdapter.get(processed.projectId);
-          if (cloudProject && cloudProject.schema.nodes.length > 0) {
-            nodesToLoad = cloudProject.schema.nodes;
-          } else {
+          if (cloudProject) {
+            if (cloudProject.schema.nodes.length > 0) {
+              nodesToLoad = cloudProject.schema.nodes;
+            }
+            loadedMeta = cloudProject.meta;
+            // schema 里的 canvas 或者根级的 canvas (适配不同的 schema version)
+            loadedCanvas = cloudProject.canvas || cloudProject.schema?.canvas;
           }
         } catch (err) {
-          console.warn('[Editor] ⚠️ 获取云端节点失败，使用宿主传来的节点:', err);
+          console.warn('[Editor] ⚠️ 获取云端数据失败，使用宿主传来的数据:', err);
         }
       }
+
+      // 🔑 关键修复：使用宿主传来的项目 ID 更新 canvasConfig。云端模式下优先使用云端获取的数据
+      setCanvasConfig(prev => ({
+        ...prev,
+        id: processed.projectId, // 使用宿主传来的 ID
+        name: loadedMeta?.name || processed.projectName,
+        mode: (loadedCanvas?.mode || processed.canvas.mode) as any,
+        width: loadedCanvas?.width || processed.canvas.width,
+        height: loadedCanvas?.height || processed.canvas.height,
+        bgValue: loadedCanvas?.background || processed.canvas.background,
+        gridCols: loadedCanvas?.gridCols || processed.canvas.gridCols,
+        gridRowHeight: loadedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
+        gridGap: loadedCanvas?.gridGap || processed.canvas.gridGap,
+        fullWidthPreview: loadedCanvas?.fullWidthPreview || processed.canvas.fullWidthPreview,
+        thumbnail: loadedMeta?.thumbnail || processed.thumbnail || "", // Load thumbnail
+      }));
 
       // 加载节点到 store，使用正确的项目 ID
       if (nodesToLoad.length > 0) {

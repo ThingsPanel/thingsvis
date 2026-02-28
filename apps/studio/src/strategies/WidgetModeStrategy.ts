@@ -111,7 +111,7 @@ export class WidgetModeStrategy implements EditorStrategy {
             dataSources: projectState.dataSources,
             thumbnail: projectState.meta.thumbnail,
             meta: {
-                thumbnail: projectState.meta.thumbnail,
+                ...projectState.meta, // 确保保存完整的 meta 结构 (id, name, thumbnail 等)
             },
         }
 

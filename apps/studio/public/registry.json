@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-28T03:41:12.545Z",
+  "generatedAt": "2026-02-28T03:58:42.238Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -81,7 +81,7 @@
       "icon": "Type",
       "name": "基础文本",
       "i18n": {
-        "zh": "基础文本",
+        "zh": "文本",
         "en": "Text"
       }
     },
