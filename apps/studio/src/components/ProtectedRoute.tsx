@@ -19,7 +19,7 @@ interface ProtectedRouteProps {
 const MIN_LOADING_TIME = 2000;
 
 export default function ProtectedRoute({ children, requireAuth = true }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, storageMode, isGuestMode } = useAuth();
   const location = useLocation();
   const [showLoading, setShowLoading] = useState(true);
   const [startTime] = useState(() => Date.now());
@@ -29,7 +29,7 @@ export default function ProtectedRoute({ children, requireAuth = true }: Protect
     if (!isLoading) {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, MIN_LOADING_TIME - elapsed);
-      
+
       // 如果还没达到最小时间，继续显示加载
       if (remaining > 0) {
         const timer = setTimeout(() => {
@@ -47,8 +47,12 @@ export default function ProtectedRoute({ children, requireAuth = true }: Protect
     return <LoadingScreen />;
   }
 
+  // 1. 对于嵌入模式 (Embed / Widget)，无需拦截
+  // 2. 对于体验模式 (Guest Mode)，无需拦截
+  const shouldSkipAuth = storageMode === 'embed' || isGuestMode;
+
   // If authentication is required and user is not authenticated
-  if (requireAuth && !isAuthenticated) {
+  if (requireAuth && !isAuthenticated && !shouldSkipAuth) {
     // Save the location they were trying to go to
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

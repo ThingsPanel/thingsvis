@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   const { t } = useTranslation('pages');
-  const { login } = useAuth();
+  const { login, loginAsGuest } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -193,7 +193,7 @@ export default function LoginPage() {
           </div>
 
           <div className="grid gap-2">
-            <Link to="/editor">
+            <Link to="/editor" onClick={loginAsGuest}>
               <Button variant="outline" className="w-full h-11 border-dashed border-border hover:bg-muted/50">
                 {t('login.guestMode')}
               </Button>

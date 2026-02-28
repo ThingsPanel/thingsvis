@@ -1,5 +1,18 @@
 # 迭代日志
 
+## 认证冲突修复 (Auth Conflicts Fix) - 2026-02-28
+
+### 任务 1: 解决 Embed 模式和体验模式（Guest Mode）与登录拦截的冲突
+- **已完成工作**: 
+  - 在 `AuthContext.tsx` 引入 `isGuestMode` 状态和 `loginAsGuest` 方法，允许无密码写入本地特殊标记实现沙箱登录。
+  - 在 `ProtectedRoute.tsx` 改写重定向逻辑，如果遇到 `storageMode === 'embed'` 或者是 `isGuestMode === true`，不再强制重定向到 `/login`。
+  - 在 `LoginPage.tsx` 的“免登录体验”按钮增加了 `onClick={loginAsGuest}` 事件。
+- **尝试与失败记录**: 最初未将“访客试用”和“iframe 嵌入”切分开来，会导致一律重定向到 Login。当前已明确划分角色。
+- **最终成功方案**: 区分存储运行上下文（Context），对于作为组件 Widget 的环境（Embed）以及明确点选沙箱的体验模式（Guest Mode）下发凭证或直接 bypass 拦截器。
+- **测试方法与结果**: TypeScript 类型静态构建不报错。代码流通过双重模式（Embed和Sandbox）理论分析测试顺利放行。
+- **关键决策与原因**: 考虑到 `isAuthenticated` 的原逻辑强绑定后台 Token 与 User，为了避免影响原云端逻辑，引入平行维度的 `isGuestMode` 判断，并且保持 `storageMode === 'embed'` 免认证。
+- **耗时/迭代次数**: 1 次。
+
 ## UI 优化迭代 - 2026-02-27
 
 ### 任务 1: 左侧面板可折叠功能
@@ -99,4 +112,3 @@
   - ✅ 代码逻辑正确
   - ✅ Rspack 构建成功
   - ✅ 修改的代码通过 TypeScript 检查（已有错误与本次修改无关）
-

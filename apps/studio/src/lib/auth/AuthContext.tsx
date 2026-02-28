@@ -14,6 +14,7 @@ import { initDataSourceSync } from '../datasource-sync';
 const TOKEN_KEY = 'thingsvis_token';
 const TOKEN_EXPIRY_KEY = 'thingsvis_token_expiry';
 const USER_KEY = 'thingsvis_user';
+const GUEST_MODE_KEY = 'thingsvis_guest_mode';
 
 // Storage mode types
 export type StorageMode = 'local' | 'cloud' | 'embed';
@@ -25,12 +26,14 @@ export interface AuthContextValue {
   user: User | null;
   token: string | null;
   storageMode: StorageMode;
+  isGuestMode: boolean;
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   loginWithToken: (token: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  loginAsGuest: () => void;
 
   // For embed mode
   setEmbedToken: (token: string) => void;
@@ -97,6 +100,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
+    return localStorage.getItem(GUEST_MODE_KEY) === 'true';
+  });
 
   // Determine storage mode
   const storageMode: StorageMode = useMemo(() => {
@@ -112,6 +118,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(TOKEN_EXPIRY_KEY);
     localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(GUEST_MODE_KEY);
+    setIsGuestMode(false);
   }, []);
 
   // Configure API client when token changes
@@ -365,18 +373,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setToken(embedToken);
   }, []);
 
+  // Login as guest
+  const loginAsGuest = useCallback(() => {
+    localStorage.setItem(GUEST_MODE_KEY, 'true');
+    setIsGuestMode(true);
+  }, []);
+
   const value: AuthContextValue = useMemo(() => ({
     isAuthenticated: !!token && !!user,
     isLoading,
     user,
     token,
     storageMode,
+    isGuestMode,
     login,
     loginWithToken,
     register,
     logout,
+    loginAsGuest,
     setEmbedToken,
-  }), [token, user, isLoading, storageMode, login, loginWithToken, register, logout, setEmbedToken]);
+  }), [token, user, isLoading, storageMode, isGuestMode, login, loginWithToken, register, logout, loginAsGuest, setEmbedToken]);
 
   // Initialize data source sync when authentication state changes
   useEffect(() => {
