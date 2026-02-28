@@ -59,27 +59,6 @@ export default function EmbedPage() {
   // Observe kernel state
   const kernelState = useSyncExternalStore(store.subscribe, store.getState) as any;
 
-  // Debug: Log platform data source state changes
-  // Debug: Log platform data source state changes and schema bindings
-  useEffect(() => {
-    // Access safely
-    const dsState = kernelState.dataSources?.['__platform__'];
-    // Log platform data updates (throttled/debounced ideally, but sufficient for now)
-    if (dsState?.lastUpdated !== (window as any)._lastDsUpdate) {
-      (window as any)._lastDsUpdate = dsState?.lastUpdated;
-      // console.log('[EmbedPage] 🔍 Store State (__platform__):', dsState);
-    }
-
-    // Log bindings in nodes
-    // const nodes = kernelState.nodesById || {};
-    // const firstNodeId = Object.keys(nodes)[0];
-    // if (firstNodeId && !(window as any)._loggedNodes) {
-    //   (window as any)._loggedNodes = true;
-    //   console.log('[EmbedPage] 🔍 Node Schema (First Node):', nodes[firstNodeId]);
-    //   console.log('[EmbedPage] 🔍 All Nodes:', nodes);
-    // }
-  }, [kernelState.dataSources]);
-
   const canvasMode = kernelState?.canvas?.mode ?? 'infinite';
   const canvasWidth = kernelState?.canvas?.width ?? 1920;
   const canvasHeight = kernelState?.canvas?.height ?? 1080;

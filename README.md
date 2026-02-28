@@ -2,7 +2,7 @@
 
 **English | [中文](README_ZH.md)**
 
-**ThingsVis** is an industrial-grade, low-code visualization platform built as a canvas-based editor for creating interactive visualizations. Designed for desktop consoles, it provides a powerful plugin ecosystem and micro-kernel architecture for building scalable visualization applications.
+**ThingsVis** is an industrial-grade, low-code visualization platform built as a canvas-based editor for creating interactive visualizations. Designed for desktop consoles, it provides a powerful widget ecosystem and micro-kernel architecture for building scalable visualization applications.
 
 ## 🌟 Features
 
@@ -43,7 +43,7 @@ thingsvis/
 ### Core Technologies
 
 - **TypeScript 5.x** - Strict mode enabled for type safety
-- **Rspack + Module Federation 2.0** - Fast builds and dynamic plugin loading
+- **Rspack + Module Federation 2.0** - Fast builds and dynamic widget loading
 - **React 18** - UI rendering layer
 - **LeaferJS** - High-performance 2D canvas rendering
 - **Zustand + Immer** - State management with immutable updates
@@ -142,7 +142,7 @@ pnpm build --filter @thingsvis/kernel
 pnpm build --filter @thingsvis/schema
 pnpm build --filter @thingsvis/ui
 
-# Build all plugins
+# Build all widgets
 pnpm build:widgets
 
 # Build studio app
@@ -261,7 +261,7 @@ The UI-free core engine providing:
 
 - State management (Zustand + Immer)
 - Command pattern with undo/redo
-- Event bus for plugin communication
+- Event bus for widget communication
 - History management
 - Node lifecycle management
 
@@ -282,14 +282,14 @@ Zod-based runtime type validation and TypeScript types:
 
 - `PageSchema` - Page structure validation
 - `NodeSchema` - Node/component validation
-- `WidgetMainModule` - Plugin interface definition
+- `WidgetMainModule` - Widget interface definition
 - Runtime schema validation for all data structures
 
 ### @thingsvis/ui
 
 Headless visual components and rendering utilities:
 
-- Plugin loader with Module Federation
+- Widget loader with Module Federation
 - Registry management
 - Offline caching (IndexedDB)
 - Component isolation and error boundaries
@@ -311,22 +311,22 @@ Shared utilities across packages:
    pnpm dev --filter ./apps/studio
    ```
 
-2. **Create a New Plugin**
+2. **Create a New Widget**
 
    ```bash
    pnpm vis-cli create custom my-widget
    ```
 
-3. **Develop the Plugin**
+3. **Develop the Widget**
 
    ```bash
-   cd plugins/custom/my-widget
+   cd widgets/custom/my-widget
    pnpm dev
    ```
 
 4. **Test in Preview**
    - Open preview app
-   - Load your plugin via registry
+   - Load your widget via registry
    - Test visual rendering and interactions
 
 5. **Build for Production**
@@ -368,14 +368,14 @@ pnpm typecheck && pnpm lint
 - **Kernel** (`@thingsvis/kernel`): Pure logic, no UI dependencies
 - **UI Layer** (`@thingsvis/ui`): Visual components, no business logic
 - **Schema** (`@thingsvis/schema`): Shared contracts and validation
-- **Plugins**: Self-contained, isolated components
+- **Widgets**: Self-contained, isolated components
 
 ### Constitution-Driven Development
 
 ThingsVis follows strict architectural constraints:
 
 1. **Separation of Concerns**: Kernel remains UI-free
-2. **Plugin Isolation**: Plugins cannot create reverse dependencies into kernel
+2. **Widget Isolation**: Widgets cannot create reverse dependencies into kernel
 3. **Type Safety**: TypeScript strict mode + Zod runtime validation
 4. **Performance Targets**:
    - Core bundle < 800KB
@@ -403,6 +403,29 @@ ThingsVis follows strict architectural constraints:
 ## 📚 Documentation
 
 Documentation is available in the `docs/` directory. See `docs/dev-tasks/` for the release task list and development roadmap.
+
+## 🗺️ Roadmap
+
+### v0.2.0 (Upcoming)
+- [ ] **Widget SDK v2** — `defineWidget()` unified lifecycle API for all widget types
+- [ ] **Real-time Collaboration** — Multi-user canvas editing via CRDT
+- [ ] **Data Dashboard Mode** — Auto-layout responsive grid for IoT monitoring screens
+- [ ] **MQTT Data Source** — Native MQTT protocol support alongside REST / WebSocket
+- [ ] **Conditional Visibility** — Bind widget visibility to data source values
+
+### v0.3.0 (Planned)
+- [ ] **Mobile Preview Mode** — Responsive canvas adaptation for mobile viewports
+- [ ] **Widget Marketplace** — Community registry for sharing and installing widgets
+- [ ] **Version History** — Snapshot-based project versioning with diff view
+- [ ] **Access Control** — Role-based permissions for collaborative projects
+
+### Completed ✅
+- [x] Canvas-based editor with drag-and-drop
+- [x] Module Federation 2.0 widget loading with offline cache
+- [x] WebSocket + REST data sources with auth/reconnect
+- [x] Undo/redo command history
+- [x] Embed mode (ThingsPanel integration)
+- [x] Widget SDK with `defineWidget()` API
 
 ## 🤝 Contributing
 

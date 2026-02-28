@@ -509,7 +509,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             const isHostProject = embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-'));
 
             if (isHostProject) {
-              console.log('[Editor] Bootstrap: Host-managed project (Widget Mode), skipping cloud load.');
               // Data is already loaded via onEmbedInit.
               // We must stop bootstrapping here to prevent 'loaded=null' from triggering the empty project fallback.
               bootstrappingRef.current = false;
@@ -942,7 +941,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     // 主动请求初始数据
     setTimeout(() => {
       messageRouter.send(MSG_TYPES.REQUEST_INIT)
-      console.log('📨 [Editor] 已发送 tv:request-init (延迟100ms)')
     }, 100) // 轻微延迟确保 ready 消息先到达
   }, [isBootstrapping])
 

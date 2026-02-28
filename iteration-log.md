@@ -112,3 +112,80 @@
   - ✅ 代码逻辑正确
   - ✅ Rspack 构建成功
   - ✅ 修改的代码通过 TypeScript 检查（已有错误与本次修改无关）
+
+---
+
+## TASK-12 健壮性加固 (Robustness) - 2025-07-14
+
+### TASK-12-A: .env.example 修复 (SQLite 默认值)
+- **问题**: `.env.example` 默认使用 PostgreSQL 连接串，新用户 clone 后无法直接启动。
+- **修复**: 将 `DATABASE_URL` 默认值改为 `file:./prisma/dev.db`，PostgreSQL 连接串移至注释块。
+- **修改文件**: `apps/server/.env.example`
+
+### TASK-12-B: Widget 级错误展示 (VisualEngine catch block)
+- **问题**: Widget 渲染异常时 `createOverlay` 静默移除 overlayBox，用户看到白屏。
+- **修复**: catch 块改为渲染红色虚线占位 div，显示 Widget 类型和错误消息。
+- **修改文件**: `packages/thingsvis-ui/src/engine/VisualEngine.ts`
+
+### TASK-12-C: 全局 ErrorBoundary
+- **状态**: 已完成（前置会话验证）。`apps/studio/src/components/ErrorBoundary.tsx` 已存在，`App.tsx` 已包裹。
+
+### 本次迭代结果
+- ✅ 新用户开箱体验改善：零依赖 SQLite 默认配置
+- ✅ Widget 崩溃可视化：从白屏变为带错误信息的红色占位框
+
+---
+
+## TASK-07 代码质量 (Code Quality) - 2025-07-14
+
+### TASK-07-A: console.log 清理
+- **处理策略**: 纯调试 log → 删除；受控 logLevel 系统内的 console → eslint-disable 注释；废弃注释代码块 → 整体删除。
+- **修改文件**:
+  - `apps/studio/src/strategies/WidgetModeStrategy.ts`
+  - `apps/studio/src/hooks/useEditorStrategy.ts`
+  - `apps/studio/src/components/EditorShell.tsx`
+  - `apps/studio/src/embed/message-router.ts`
+  - `apps/studio/src/components/Editor.tsx`
+  - `apps/studio/src/pages/EmbedPage.tsx`（删除废弃调试 useEffect 块）
+
+### TASK-07-B: README Plugin→Widget 命名修复
+- **问题**: README.md 有 9 处将组件称为 "Plugin"，与 TASK-05 命名重构不一致。
+- **修复**: 全部替换为 Widget；路径 `plugins/custom/` → `widgets/custom/`。
+- **修改文件**: `README.md`
+
+### 本次迭代结果
+- ✅ Studio 源码无残留调试 console.log
+- ✅ README.md Plugin/Widget 命名完全一致，路径错误已修正
+
+---
+
+## TASK-09 文档完善 (Documentation) - 2025-07-14
+
+### TASK-09-A: README.md 增补路线图 + 修复
+- **新增**: `## 🗺️ Roadmap` 节，分 v0.2.0 / v0.3.0 / 已完成三段，覆盖实时协作、MQTT、Widget 市场等规划。
+- **修改文件**: `README.md`
+
+### TASK-09-B: README_ZH.md 全面同步
+- **Plugin→Widget 命名**: 全文替换"插件生态系统"→"Widget 生态系统"等 18 处。
+- **目录结构修正**: `plugins/` → `widgets/`，`apps/preview/` 移除（该应用已不存在）。
+- **Docker 快速启动**: 删除 preview app 相关内容，补充 docker-compose 启动命令。
+- **路线图**: 添加中文 Roadmap 节（与英文版对应）。
+- **许可证**: "在此处添加许可证信息" → "Apache License 2.0"。
+- **贡献链接**: CONTRIBUTING_ZH.md → CONTRIBUTING.md（统一为英文指南）。
+- **修改文件**: `README_ZH.md`
+
+### TASK-09-C: CHANGELOG.md 创建
+- **内容**: Keep a Changelog 格式，v0.1.0 条目涵盖：核心平台、Widget 系统、数据源、编辑器功能、嵌入集成、基础设施，以及本次会话修复的项目。
+- **新建文件**: `CHANGELOG.md`
+
+### TASK-09-D: CONTRIBUTING.md 创建
+- **内容**: 完整贡献指南，含前置要求、分支策略、架构约束（Kernel 无 UI、Widget 隔离、无循环依赖、Schema 契约）、Widget 开发指南、TypeScript 规范、Conventional Commits 格式、PR 流程和 Bug 报告模板。
+- **新建文件**: `CONTRIBUTING.md`
+
+### 本次迭代结果
+- ✅ README.md 补充路线图，信息完整度达到开源项目标准
+- ✅ README_ZH.md 与英文版命名/路径/内容完全同步
+- ✅ CHANGELOG.md 建立版本历史记录
+- ✅ CONTRIBUTING.md 建立贡献门槛和规范
+
+

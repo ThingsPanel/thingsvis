@@ -208,12 +208,15 @@ class MessageRouter {
 
         this.pushLog(entry)
 
+        // eslint-disable-next-line no-console
         console.groupCollapsed(
             `%c📥 MSG IN %c${type}`,
             'color: #4CAF50; font-weight: bold',
             'color: #81C784; font-weight: normal',
         )
+        // eslint-disable-next-line no-console
         console.log('Time:', new Date(entry.timestamp).toLocaleTimeString())
+        // eslint-disable-next-line no-console
         console.groupEnd()
     }
 
@@ -230,12 +233,15 @@ class MessageRouter {
 
         this.pushLog(entry)
 
+        // eslint-disable-next-line no-console
         console.groupCollapsed(
             `%c📤 MSG OUT %c${type}`,
             'color: #2196F3; font-weight: bold',
             'color: #64B5F6; font-weight: normal',
         )
+        // eslint-disable-next-line no-console
         console.log('Time:', new Date(entry.timestamp).toLocaleTimeString())
+        // eslint-disable-next-line no-console
         console.groupEnd()
     }
 

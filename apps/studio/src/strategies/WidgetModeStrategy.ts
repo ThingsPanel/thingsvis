@@ -174,9 +174,9 @@ export class WidgetModeStrategy implements EditorStrategy {
         })
         cleanups.push(dataUnsub)
 
-        // 监听 Host 主动请求保存 (由 EditorShell 处理实际保存, 这里只做日志)
+        // 监听 Host 主动请求保存 (由 EditorShell 处理实际保存)
         const requestSaveUnsub = messageRouter.on(MSG_TYPES.REQUEST_SAVE, () => {
-            console.log('[WidgetModeStrategy] Host requested save (handled by EditorShell)')
+            // no-op: EditorShell handles the actual save
         })
         cleanups.push(requestSaveUnsub)
 

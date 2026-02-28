@@ -675,10 +675,31 @@ export class VisualEngine {
             });
           }
         } catch (e) {
-          // overlay 失败不影响主渲染
-
-          if (overlayBox.parentElement) overlayBox.parentElement.removeChild(overlayBox);
-          overlayBox = undefined;
+          // overlay 创建失败 — 显示红色错误占位框，不传播到 App 级别（防白屏）
+          // eslint-disable-next-line no-console
+          console.error('[VisualEngine] Widget overlay failed to mount:', (node.schemaRef as any)?.type, e);
+          if (overlayBox) {
+            const widgetType = (node.schemaRef as any)?.type ?? 'unknown';
+            const errMsg = e instanceof Error ? e.message : String(e);
+            overlayBox.innerHTML = `
+              <div style="
+                width:100%;height:100%;
+                display:flex;flex-direction:column;align-items:center;justify-content:center;
+                background:rgba(239,68,68,0.08);
+                border:1.5px dashed rgba(239,68,68,0.6);
+                border-radius:6px;
+                color:rgba(239,68,68,0.9);
+                font-size:11px;
+                font-family:monospace;
+                padding:8px;
+                gap:4px;
+                box-sizing:border-box;
+                overflow:hidden;
+              ">
+                <span style="font-weight:600;">⚠ ${widgetType}</span>
+                <span style="opacity:0.7;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${errMsg}</span>
+              </div>`;
+          }
         }
       }
 

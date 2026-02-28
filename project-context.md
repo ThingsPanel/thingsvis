@@ -41,10 +41,11 @@ CanvasView (apps/studio)
 - **组件库布局**: 3列网格布局，紧凑卡片设计（64px 高度，12px 标签文字）
 
 ## Current State
+- **TASK-09 文档完善完成** — README.md 添加 Roadmap；README_ZH.md 全面同步（Plugin→Widget、路径、许可证）；新建 CHANGELOG.md（v0.1.0）和 CONTRIBUTING.md。
+- **TASK-12 健壮性加固完成** — `.env.example` 改为 SQLite 默认；Widget 渲染崩溃从白屏改为红色错误占位框；全局 React ErrorBoundary 已就位。
+- **TASK-07 代码质量完成** — Studio 源码 console.log 全清理；message-router 有意日志加 eslint-disable；README.md Plugin→Widget 命名全部修正，路径 plugins/→widgets/ 已修正。
 - **统一认证网关重构完成** — 修复了 ThingsPanel 嵌入模式以及独立沙盒体验模式与全局登录拦截器互相冲突的认证问题，实现了 `storageMode`（_local, cloud, embed_） 的动态认证分流。
 - 主题架构重构完成（CSS Variables 方案）
-- **工作区背景颜色已改为红色 (#ff3b30)** - 新增 `--workspace-bg` CSS 变量
-- **网格只在画布区域显示** - Fixed/Grid 模式下网格限定在 artboard 区域内绘制
 - **isDark 残留全面清理完成** — 所有 Widget 改用 `resolveWidgetColors()` 从 CSS 变量获取颜色
 - 编辑器 ↔ 画布主题彻底解耦完成
 - 仪表盘/饼图等组件拖拽修复完成

@@ -46,7 +46,6 @@ export function useEditorStrategy(projectId?: string): UseEditorStrategyResult {
         const shouldUseCloud = isAuthenticated && (storageMode === 'cloud' || storageMode === 'embed')
         const cloudAdapter = shouldUseCloud ? createCloudStorageAdapter(projectId) : undefined
 
-        console.log('[useEditorStrategy] → AppModeStrategy (cloud:', !!cloudAdapter, ', embedded:', embedded, ')')
         return new AppModeStrategy({
             cloudAdapter,
             isEmbedded: embedded,

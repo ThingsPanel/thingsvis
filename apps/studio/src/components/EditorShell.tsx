@@ -74,7 +74,6 @@ export default function EditorShell() {
                 }
             }
             messageRouter.send(MSG_TYPES.HOST_SAVE, payload)
-            console.log('[EditorShell] 已发送 host-save (request-save 路径)')
         })
 
         return unsubscribe
