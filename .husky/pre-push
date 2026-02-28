@@ -9,7 +9,6 @@ IS_PUBLIC=false
 if [ "$REMOTE" = "public" ]; then
   IS_PUBLIC=true
 fi
-# 也可以通过 URL 判断（按需修改为你的公开仓库 URL）
 # if echo "$REMOTE_URL" | grep -q "thingsvis/thingsvis"; then IS_PUBLIC=true; fi
 
 if [ "$IS_PUBLIC" = "true" ]; then

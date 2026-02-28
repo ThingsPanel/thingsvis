@@ -41,6 +41,18 @@ ARG AUTH_URL="http://localhost:${PORT:-8000}"
 RUN npx prisma generate
 RUN pnpm build
 
+# Ensure required directories/files exist for runner stage
+# Copy public folder to standalone output if it exists
+RUN if [ -d "public" ]; then \
+      mkdir -p .next/standalone/public && \
+      cp -r public/* .next/standalone/public/ 2>/dev/null || true; \
+    fi
+
+# Create placeholder directories for prisma if they don't exist
+RUN mkdir -p node_modules/.prisma node_modules/@prisma
+
+RUN ls -la .next/standalone/ || true
+
 # ===================================
 # Stage 3: Production runner
 # ===================================
