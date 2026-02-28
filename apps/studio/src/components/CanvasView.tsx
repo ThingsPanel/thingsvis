@@ -284,7 +284,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
           position: "absolute",
           inset: 0,
           zIndex: 20,
-          pointerEvents: isPanTool ? "none" : "auto",
+          pointerEvents: "none", // Allow events to pass through to overlays by default
           overflow: "hidden"
         }}
       >
@@ -297,7 +297,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             top: vp.offsetY,
             transform: `scale(${vp.zoom})`,
             transformOrigin: "0 0",
-            pointerEvents: "auto" // Enable pointer events for Moveable handles
+            pointerEvents: "none" // Allow events to pass through, individual targets control their own pointerEvents
           }}
         >
           {nodes.map(node => {
@@ -315,6 +315,10 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
             const isSelected = state.selection.nodeIds.includes(node.id);
             // Line components use LineConnectionTool for selection UI, don't show border
             const showBorder = isSelected && !isLine;
+            // Auto-size components (like text) need pointer-events: none to allow interaction with overlay
+            // This enables features like double-click editing on text components
+            const isAutoSizeComponent = schema.type === 'basic/text';
+            const proxyPointerEvents = isPanTool ? "none" : (isAutoSizeComponent ? "none" : "auto");
             return (
               <div
                 key={node.id}
@@ -328,7 +332,7 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
                   height,
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
-                  pointerEvents: isPanTool ? "none" : "auto",
+                  pointerEvents: proxyPointerEvents,
                   cursor: isPanTool ? canvasCursor : "pointer",
                   border: showBorder ? "1px solid #0066ff" : "none"
                 }}

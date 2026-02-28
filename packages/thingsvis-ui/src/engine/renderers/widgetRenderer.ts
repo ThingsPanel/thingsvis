@@ -38,6 +38,8 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore, opts?: { edit
   // 使用 PropertyResolver 解析绑定表达式
   const resolvedProps = PropertyResolver.resolve(node, store.getState().dataSources);
   const mode: WidgetOverlayContext['mode'] = opts?.editable !== false ? 'edit' : 'view';
+  // eslint-disable-next-line no-console
+  console.log('[widgetRenderer] nodeToOverlayContext', { nodeId: node.id, editable: opts?.editable, mode });
   return {
     position: schema.position,
     size: schema.size,
@@ -45,7 +47,22 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore, opts?: { edit
     mode,
     locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
     visible: true,
-    emit: (_event: string, _payload?: unknown) => { /* TASK-23: action system */ },
+    emit: (event: string, payload?: unknown) => {
+      // Handle inline editing events from widgets
+      if (event === 'edit:start') {
+        store.getState().setEditingNode(node.id);
+      } else if (event === 'edit:end') {
+        const editPayload = payload as { text?: string; changed?: boolean; cancelled?: boolean } | undefined;
+        // Update node props if text changed
+        if (editPayload?.changed && editPayload.text !== undefined) {
+          store.getState().updateNode(node.id, {
+            props: { ...schema.props, text: editPayload.text }
+          });
+        }
+        // Clear editing state
+        store.getState().setEditingNode(null);
+      }
+    },
     on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
   };
 }
@@ -53,7 +70,8 @@ function nodeToOverlayContext(node: NodeState, store: KernelStore, opts?: { edit
 export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStore, opts?: { editable?: boolean }): RendererFactory {
   // 判断是否为纯 Overlay 组件（只有 createOverlay，没有 create）
   const isOverlayOnly = !widget.create && typeof widget.createOverlay === 'function';
-  const resizable = (widget as any).resizable as boolean | undefined;
+  // 从 widget metadata 中读取 resizable 属性（默认为 true）
+  const resizable = widget.resizable !== false;
   const draggable = opts?.editable ?? true;
   const cursor = draggable ? 'pointer' : 'default';
 
@@ -129,20 +147,27 @@ export function createWidgetRenderer(widget: WidgetMainModule, store: KernelStor
         }
         const overlay = widget.createOverlay!(context);
         if (opts?.editable !== false) {
-          // 在编辑模式下，彻底禁用底层 DOM 元素的事件响应。
+          // 在编辑模式下，对于可调整尺寸的组件，禁用底层 DOM 元素的事件响应。
           // 否则在拖拽时 overlay 会因为 z-index 提升而遮挡 Moveable 的 proxy-layer 并吞噬事件。
-          overlay.element.style.pointerEvents = 'none';
+          // 但对于自适应尺寸组件（如文本），保留事件响应以支持双击编辑等功能。
+          if (resizable) {
+            overlay.element.style.pointerEvents = 'none';
+          } else {
+            // 确保自适应尺寸组件可以接收事件（如双击编辑）
+            overlay.element.style.pointerEvents = 'auto';
+          }
         }
         return {
           element: overlay.element,
           update: overlay.update
-            ? (nextNode: NodeState) => {
+            ? (nextNode: NodeState, nextContext?: WidgetOverlayContext) => {
+              // If context is provided (from VisualEngine), use it; otherwise create new context
+              const context = nextContext ?? nodeToOverlayContext(nextNode, store, opts);
               const nextLinkedNodes = (nextNode as any).linkedNodes;
-              const nextContext = nodeToOverlayContext(nextNode, store, opts);
               if (nextLinkedNodes) {
-                (nextContext as any).linkedNodes = nextLinkedNodes;
+                (context as any).linkedNodes = nextLinkedNodes;
               }
-              overlay.update?.(nextContext);
+              overlay.update?.(context);
             }
             : undefined,
           destroy: overlay.destroy

@@ -184,6 +184,8 @@ export type KernelState = {
   layerGroups: Record<string, LayerGroup>;
   // Grid layout state
   gridState: GridState;
+  // Editing state for inline editing (e.g., text component)
+  editingNodeId: string | null;
 };
 
 export type KernelActions = {
@@ -243,6 +245,9 @@ export type KernelActions = {
     affectedItems: string[];
   }) => void;
   updateGridContainerWidth: (containerWidth: number) => void;
+  
+  // Editing Actions
+  setEditingNode: (nodeId: string | null) => void;
 };
 
 export type KernelStoreState = KernelState & KernelActions;
@@ -290,6 +295,7 @@ export const createKernelStore = () =>
       layerOrder: [],
       layerGroups: {},
       gridState: defaultGridState,
+      editingNodeId: null,
 
       loadPage: page => {
         const nodesById: Record<string, NodeState> = {};
@@ -893,6 +899,12 @@ export const createKernelStore = () =>
         if (newState.gridState.effectiveCols !== previousCols) {
           get().compactGrid();
         }
+      },
+
+      setEditingNode: nodeId => {
+        set(state => {
+          state.editingNodeId = nodeId;
+        });
       }
     })),
     {

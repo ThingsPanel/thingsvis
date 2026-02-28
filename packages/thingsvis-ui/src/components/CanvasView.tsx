@@ -256,6 +256,8 @@ export const CanvasView: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const mountEl = containerRef.current.querySelector('#visual-engine-mount') as HTMLDivElement | null;
+    // eslint-disable-next-line no-console
+    console.log('[CanvasView] Creating VisualEngine', { interactive, resolveWidget: !!resolveWidget });
     const engine = new VisualEngine(store, { resolveWidget, editable: interactive });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);

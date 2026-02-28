@@ -8,6 +8,7 @@ import { errorRenderer } from './renderers/errorRenderer';
 import { GridOverlay } from './grid/GridOverlay';
 import { GridPlaceholder } from './grid/GridPlaceholder';
 import { gridToPixel } from '../utils/grid-mapper';
+import { PropertyResolver } from './PropertyResolver';
 
 type Point = { x: number; y: number };
 type ConnectionDirection = 'forward' | 'reverse' | 'bidirectional';
@@ -76,6 +77,14 @@ export class VisualEngine {
       default:
         return { x: cx, y: cy };
     }
+  }
+
+  /**
+   * Resolve node props including data bindings
+   */
+  private resolveNodeProps(node: NodeState, state?: KernelState): Record<string, any> {
+    const storeState = state ?? this.store.getState() as KernelState;
+    return PropertyResolver.resolve(node, storeState.dataSources);
   }
 
   private scheduleAutoLayoutConnectedLine(node: NodeState, linkedNodes: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }>) {
@@ -176,7 +185,10 @@ export class VisualEngine {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
     }
-  ) { }
+  ) {
+    // eslint-disable-next-line no-console
+    console.log('[VisualEngine] constructor', { editable: opts?.editable, opts });
+  }
 
   /**
    * 构建连接节点信息，用于 line 插件的节点连接功能
@@ -628,7 +640,10 @@ export class VisualEngine {
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
-        overlayBox.style.pointerEvents = this.opts?.editable !== false ? 'none' : 'auto';
+        // For resizable components: use 'none' to allow Moveable interaction
+        // For auto-size components (like text): use 'auto' to allow widget interactions (dblclick)
+        const isResizableComponent = rendererToUse.resizable !== false;
+        overlayBox.style.pointerEvents = (this.opts?.editable !== false && isResizableComponent) ? 'none' : 'auto';
         overlayBox.style.background = 'transparent';
         // Add data attribute for TransformControls to find and sync transforms during drag
         overlayBox.setAttribute('data-overlay-node-id', node.id);
@@ -640,13 +655,42 @@ export class VisualEngine {
         try {
           // 构建 linkedNodes 用于节点连接功能
           const linkedNodes = this.buildLinkedNodes(node, allNodes);
+          // Debug: log editable state
+          // eslint-disable-next-line no-console
+          console.log('[VisualEngine] Creating overlay context', { 
+            nodeId: node.id, 
+            editable: this.opts?.editable, 
+            opts: this.opts 
+          });
           const contextWithLinks = {
             ...node,
             linkedNodes,
             mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
             locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
             visible: true,
-            emit: (_event: string, _payload?: unknown) => { /* TASK-23: action system */ },
+            emit: (event: string, payload?: unknown) => {
+              // Handle inline editing events from widgets
+              if (event === 'edit:start') {
+                const storeState = this.store.getState() as any;
+                if (storeState.setEditingNode) {
+                  storeState.setEditingNode(node.id);
+                }
+              } else if (event === 'edit:end') {
+                const editPayload = payload as { text?: string; changed?: boolean; cancelled?: boolean } | undefined;
+                const storeState = this.store.getState() as any;
+                // Update node props if text changed
+                if (editPayload?.changed && editPayload.text !== undefined) {
+                  const schema = node.schemaRef as any;
+                  storeState.updateNode?.(node.id, {
+                    props: { ...schema.props, text: editPayload.text }
+                  });
+                }
+                // Clear editing state
+                if (storeState.setEditingNode) {
+                  storeState.setEditingNode(null);
+                }
+              }
+            },
             on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
           };
 
@@ -792,7 +836,45 @@ export class VisualEngine {
 
       if (propsKey !== lastPropsKey) {
         this.lastNodePropsCache.set(node.id, propsKey);
-        const contextWithLinks = { ...node, linkedNodes };
+        
+        // Build complete context with emit function for editing events
+        const schema = node.schemaRef as any;
+        const resolvedProps = this.resolveNodeProps(node, state);
+        const mode = (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view';
+        // eslint-disable-next-line no-console
+        console.log('[VisualEngine] updateOverlay', { nodeId: node.id, mode, editable: this.opts?.editable });
+        const contextWithLinks: any = {
+          position: schema.position,
+          size: schema.size,
+          props: resolvedProps,
+          mode,
+          locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+          visible: true,
+          linkedNodes,
+          emit: (event: string, payload?: unknown) => {
+            // Handle inline editing events from widgets
+            if (event === 'edit:start') {
+              const storeState = this.store.getState() as any;
+              if (storeState.setEditingNode) {
+                storeState.setEditingNode(node.id);
+              }
+            } else if (event === 'edit:end') {
+              const editPayload = payload as { text?: string; changed?: boolean; cancelled?: boolean } | undefined;
+              const storeState = this.store.getState() as any;
+              // Update node props if text changed
+              if (editPayload?.changed && editPayload.text !== undefined) {
+                storeState.updateNode?.(node.id, {
+                  props: { ...schema.props, text: editPayload.text }
+                });
+              }
+              // Clear editing state
+              if (storeState.setEditingNode) {
+                storeState.setEditingNode(null);
+              }
+            }
+          },
+          on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
+        };
         existing.renderer.updateOverlay(existing.overlayInst as any, contextWithLinks);
       }
 

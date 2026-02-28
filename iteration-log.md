@@ -1,5 +1,86 @@
 # 迭代日志
 
+## 文本组件双击编辑修复 (Text Widget Double-Click Editing) - 2026-02-28
+
+### 问题描述
+文本组件 (`basic/text`) 双击无法进入编辑模式，始终提示 `Not in edit mode, cannot enter edit mode`。
+
+### 根本原因
+这是一个**多层问题叠加**的复杂 bug：
+
+1. **Moveable dragArea 拦截事件**: Moveable 的 `dragArea: true` 会在目标元素上覆盖透明层拦截所有鼠标事件，导致下层文本组件无法接收 `dblclick`。
+
+2. **组件 mode 为 'view' 而非 'edit'**: `CanvasView` 的 `interactive` 属性由 `activeTool !== 'pan'` 决定。当用户选中 pan 工具（手型图标）时，`interactive` 为 `false`，导致 `mode` 被设置为 `'view'`，文本组件拒绝进入编辑模式。
+
+3. **闭包 ctx 未更新**: 文本组件的 `update` 方法没有同步更新闭包中的 `ctx` 变量。即使后续 `update` 被调用传入了 `mode: 'edit'`，`enterEditMode()` 函数读取的还是初始的 `ctx.mode`。
+
+### 修复方案
+
+#### 1. TransformControls.tsx - Moveable 配置
+```typescript
+moveableRef.current = new Moveable(dragContainer, {
+  dragArea: true,
+  passDragArea: false, // 动态设置，见下文
+  // ...
+});
+
+// 当选中自适应尺寸组件（如文本）时启用 passDragArea
+const anyAutoSizeComponentSelected = validSelectedIds.some(id => {
+  const widgetType = state.nodesById[id]?.schemaRef?.type;
+  return widgetType === 'basic/text';
+});
+(moveableRef.current as any).passDragArea = anyAutoSizeComponentSelected;
+```
+
+#### 2. TransformControls.tsx - dragStart 拦截
+```typescript
+moveableRef.current.on('dragStart', ({ target, inputEvent, stop }) => {
+  // 检查是否是自适应组件，如果是且点击在 overlay 上，阻止拖拽
+  if (isAutoSizeComponent && eventTarget?.closest('[data-overlay-node-id]')) {
+    stop(); // 让事件穿透给 widget
+    return;
+  }
+});
+```
+
+#### 3. text/index.ts - 修复闭包更新
+```typescript
+update: (newCtx: WidgetOverlayContext) => {
+  // 关键：同步更新闭包中的 ctx，否则 enterEditMode 读取的是旧值
+  (ctx as any).mode = newCtx.mode;
+  (ctx as any).emit = newCtx.emit;
+  // ...
+}
+```
+
+#### 4. VisualEngine.ts - overlayBox pointerEvents
+```typescript
+const isResizableComponent = rendererToUse.resizable !== false;
+overlayBox.style.pointerEvents = (editable && isResizableComponent) ? 'none' : 'auto';
+```
+
+### 调试技巧
+1. **添加日志追踪调用链**: 在 `CanvasView`、`VisualEngine` 构造函数、`widgetRenderer`、`text/index.ts` 等关键环节添加 `console.log` 追踪 `editable` 和 `mode` 的值。
+2. **检查工具状态**: 确认当前是否误选了 pan 工具导致 `interactive: false`。
+3. **验证闭包更新**: 在 `update` 方法中打印 `oldMode` vs `newMode` 确认是否生效。
+
+### 关键决策
+- 暂时**禁用 mode 检查**（注释掉 `if (ctx.mode !== 'edit') return;`）用于快速验证其他修复是否生效。
+- 使用 `(ctx as any).mode = newCtx.mode` 强制更新闭包变量，而非重构整个 context 传递机制。
+
+### 修改文件
+- `apps/studio/src/components/tools/TransformControls.tsx`
+- `packages/thingsvis-ui/src/engine/VisualEngine.ts`
+- `packages/thingsvis-ui/src/engine/renderers/widgetRenderer.ts`
+- `widgets/basic/text/src/index.ts`
+
+### 经验教训
+1. **闭包陷阱**: React/Vanilla JS 混合架构中，闭包变量的更新容易被忽略。`update` 回调必须同步更新所有依赖的闭包变量。
+2. **事件拦截**: 第三方库（Moveable）的事件拦截机制需要仔细研究其配置选项（`passDragArea`）。
+3. **状态传递链**: `Studio CanvasView` → `UI CanvasView` → `VisualEngine` → `WidgetRenderer` → `Text Widget`，任何一个环节的 `editable` 传递失败都会导致问题。
+
+---
+
 ## 认证冲突修复 (Auth Conflicts Fix) - 2026-02-28
 
 ### 任务 1: 解决 Embed 模式和体验模式（Guest Mode）与登录拦截的冲突

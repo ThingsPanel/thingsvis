@@ -106,6 +106,9 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         // Allow dragging directly on the target elements and within the moveable bounds.
         // This improves usability and makes multi-drag more predictable.
         dragArea: true,
+        // When passDragArea is true, events pass through dragArea to child elements.
+        // This is dynamically set based on selection (see updateTargets).
+        passDragArea: false,
         resizable: true,
         rotatable: true,
         pinchable: true,
@@ -227,11 +230,33 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       });
 
       // Drag handling (use transform during drag for perf; commit left/top at end)
-      moveableRef.current.on('dragStart', ({ target, inputEvent }) => {
+      moveableRef.current.on('dragStart', ({ target, inputEvent, stop }) => {
         moveableRef.current?.updateRect();
 
         const nodeId = target.getAttribute('data-node-id');
         const selectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
+
+        // Check if this is an auto-size component (like text) that needs dblclick support
+        // If so, allow the event to pass through for double-click editing
+        if (nodeId) {
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const widgetType = node?.schemaRef?.type as string | undefined;
+          const isAutoSizeComponent = widgetType === 'basic/text';
+          
+          if (isAutoSizeComponent) {
+            // For auto-size components, check if the click is directly on the overlay element
+            // (which handles dblclick for editing) rather than the proxy target
+            const eventTarget = inputEvent?.target as HTMLElement | null;
+            if (eventTarget && (
+              eventTarget.closest('[data-thingsvis-overlay="basic-text"]') ||
+              eventTarget.closest('[data-overlay-node-id]')
+            )) {
+              // Stop Moveable drag to allow the widget to receive the event
+              stop();
+              return;
+            }
+          }
+        }
 
         // If clicking on an unselected node without Ctrl/Meta, select it first
         // This enables single-node drag even when selectByClick is disabled
@@ -700,17 +725,32 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
         return !!(props.sourceNodeId || props.targetNodeId);
       });
 
+      // Check if any auto-size component (like text) is selected
+      // These components need passDragArea=true to allow dblclick events to reach the widget
+      const anyAutoSizeComponentSelected = validSelectedIds.some(id => {
+        const node = state.nodesById[id];
+        const widgetType = node?.schemaRef?.type as string | undefined;
+        // Check for known auto-size widget types or resizable: false in metadata
+        if (widgetType === 'basic/text') return true;
+        // Can be extended to check widget registry for resizable property
+        return false;
+      });
+
       const targets = validSelectedIds
         .map(id => queryContainer.querySelector(`[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
-      // Disable transforms for locked nodes
+      // Disable transforms for locked nodes or when any node is being edited
       const hasLockedSelection = selectedIds.some(id => state.nodesById[id]?.locked);
-      moveableRef.current.draggable = !hasLockedSelection && !anyConnectedLinesSelected;
-      // If any line is selected, disable resize/rotate to avoid weird UX
-      moveableRef.current.resizable = !hasLockedSelection && !anyLinesSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected;
+      const isEditing = state.editingNodeId !== null;
+      moveableRef.current.draggable = !hasLockedSelection && !anyConnectedLinesSelected && !isEditing;
+      // If any line is selected or editing, disable resize/rotate to avoid weird UX
+      moveableRef.current.resizable = !hasLockedSelection && !anyLinesSelected && !isEditing;
+      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected && !isEditing;
+      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected && !isEditing;
+      
+      // Enable passDragArea for auto-size components to allow events (dblclick) to reach the widget
+      (moveableRef.current as any).passDragArea = anyAutoSizeComponentSelected;
 
       moveableRef.current.target = targets;
 
@@ -766,7 +806,7 @@ export default function TransformControls({ containerRef, dragContainerRef, kern
       window.clearInterval(viewportPollTimerRef.current);
       viewportPollTimerRef.current = null;
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled, getViewport]);
+  }, [state.selection.nodeIds, state.nodesById, state.editingNodeId, containerRef, enabled, getViewport]);
 
   return null;
 }
