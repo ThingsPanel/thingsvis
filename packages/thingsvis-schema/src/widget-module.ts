@@ -66,6 +66,16 @@ export type WidgetMainModule = {
   icon?: string;
   version?: string;
   /**
+   * Whether the widget supports resizing.
+   * - true: widget can be resized by user (default)
+   * - false: widget size is determined by content (e.g., text)
+   */
+  resizable?: boolean;
+  /**
+   * Default size for the widget when created
+   */
+  defaultSize?: { width: number; height: number };
+  /**
    * i18n resources defined by the widget.
    * e.g. { zh: { editor: { "widget.my-widget": { text: "..." } } } }
    */

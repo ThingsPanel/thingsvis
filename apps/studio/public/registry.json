@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-02-27T11:36:15.136Z",
+  "generatedAt": "2026-02-27T21:22:20.666Z",
   "components": {
     "basic/circle": {
       "remoteName": "thingsvis_widget_basic_circle",
@@ -23,6 +23,7 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
+      "icon": "Minus",
       "name": "连线",
       "i18n": {
         "zh": "连线",
@@ -93,7 +94,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "BarChart3",
-      "name": "柱状图",
+      "name": "ECharts 柱状图",
       "i18n": {
         "zh": "柱状图",
         "en": "Bar Chart"
@@ -120,8 +121,8 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "icon": "BarChart3",
-      "name": "折线图",
+      "icon": "LineChart",
+      "name": "ECharts 折线图",
       "i18n": {
         "zh": "折线图",
         "en": "Line Chart"
@@ -135,7 +136,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "PieChart",
-      "name": "饼图",
+      "name": "ECharts 饼图",
       "i18n": {
         "zh": "饼图",
         "en": "Pie Chart"
@@ -148,7 +149,7 @@
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.1.0",
-      "icon": "LineChart",
+      "icon": "Activity",
       "name": "时序图",
       "i18n": {
         "zh": "时序图",
@@ -156,13 +157,13 @@
       }
     },
     "indicator/number-card": {
-      "remoteName": "deleted_thingsvis_widget_indicator_number_card",
+      "remoteName": "thingsvis_widget_indicator_number_card",
       "remoteEntryUrl": "http://localhost:3205/remoteEntry.js",
       "staticEntryUrl": "/widgets/indicator/number-card/dist/remoteEntry.js",
       "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.1.0",
-      "icon": "Hash",
+      "icon": "CreditCard",
       "name": "数值卡片",
       "i18n": {
         "zh": "数值卡片",
@@ -194,7 +195,7 @@
       "name": "图片",
       "i18n": {
         "zh": "图片",
-        "en": "图片"
+        "en": "Image"
       }
     },
     "media/video-player": {
@@ -205,7 +206,7 @@
       "exposedModule": "./Main",
       "version": "0.0.1",
       "icon": "Video",
-      "name": "video-player",
+      "name": "视频播放器",
       "i18n": {
         "zh": "视频",
         "en": "Video"

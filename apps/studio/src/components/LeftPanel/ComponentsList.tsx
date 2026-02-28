@@ -25,6 +25,16 @@ import {
   Wind,
   LucideIcon,
   Search,
+  Minus,
+  CreditCard,
+  ToggleRight,
+  AppWindow,
+  PieChart,
+  Gauge,
+  TrendingUp,
+  LineChart,
+  Hash,
+  Square,
 } from "lucide-react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
@@ -44,14 +54,25 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Clock,
   Table2,
   ToggleLeft,
+  ToggleRight,
   SlidersHorizontal,
   ImageIcon,
+  Image: ImageIcon,
   Video,
   Play,
   Sparkles,
   Frame,
   Circle,
   Wind,
+  Minus,
+  CreditCard,
+  AppWindow,
+  PieChart,
+  Gauge,
+  TrendingUp,
+  LineChart,
+  Hash,
+  Square,
 };
 
 // Match v0code top-level accordion keys/labels exactly

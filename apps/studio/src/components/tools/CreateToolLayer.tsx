@@ -16,6 +16,7 @@ import {
   type Rect,
 } from './coordUtils';
 import { isCreationTool, isAutoPlaceTool, getToolSpec, type NodeCreationSpec } from './types';
+import { getImageDimensions } from './imagePicker';
 
 // Generate unique IDs
 function generateId(prefix = 'node'): string {
@@ -148,34 +149,74 @@ export default function CreateToolLayer({
     };
     const centerWorld = screenToWorld(centerScreen, viewport);
     
-    // Use default size centered at viewport center
-    const { width, height } = toolSpec.defaultSize;
-    const bounds: Rect = {
-      x: centerWorld.x - width / 2,
-      y: centerWorld.y - height / 2,
-      width,
-      height,
-    };
+    // Get actual image dimensions and calculate size preserving aspect ratio
+    const maxWidth = toolSpec.defaultSize.width;
+    const maxHeight = toolSpec.defaultSize.height;
     
-    // Create the node with image data
-    const nodeId = generateId('node');
-    const node = {
-      id: nodeId,
-      type: toolSpec.componentId,
-      position: { x: bounds.x, y: bounds.y },
-      ...(toolSpec.resizable ? { size: { width: bounds.width, height: bounds.height } } : {}),
-      props: { ...toolSpec.defaultProps, dataUrl: pendingImageUrl },
-    };
-    
-    applyNodeInsertAndSelect([node], [nodeId]);
-    onUserEdit?.();
-    
-    // Mark creation as completed IMMEDIATELY to disable pointer events
-    // This allows the user to interact with the newly created node right away
-    setCreationCompleted(true);
-    
-    // Complete creation - this will clear pendingImageUrl and switch tool
-    onCreationComplete?.();
+    getImageDimensions(pendingImageUrl).then(({ width: imgWidth, height: imgHeight }) => {
+      // Calculate size preserving aspect ratio, fitting within max bounds
+      let width = imgWidth;
+      let height = imgHeight;
+      
+      // Scale down if image exceeds max dimensions while preserving aspect ratio
+      if (width > maxWidth || height > maxHeight) {
+        const widthRatio = maxWidth / width;
+        const heightRatio = maxHeight / height;
+        const ratio = Math.min(widthRatio, heightRatio);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      
+      const bounds: Rect = {
+        x: centerWorld.x - width / 2,
+        y: centerWorld.y - height / 2,
+        width,
+        height,
+      };
+      
+      // Create the node with image data
+      const nodeId = generateId('node');
+      const node = {
+        id: nodeId,
+        type: toolSpec.componentId,
+        position: { x: bounds.x, y: bounds.y },
+        ...(toolSpec.resizable ? { size: { width: bounds.width, height: bounds.height } } : {}),
+        props: { ...toolSpec.defaultProps, dataUrl: pendingImageUrl },
+      };
+      
+      applyNodeInsertAndSelect([node], [nodeId]);
+      onUserEdit?.();
+      
+      // Mark creation as completed IMMEDIATELY to disable pointer events
+      // This allows the user to interact with the newly created node right away
+      setCreationCompleted(true);
+      
+      // Complete creation - this will clear pendingImageUrl and switch tool
+      onCreationComplete?.();
+    }).catch(() => {
+      // Fallback to default size if image dimensions cannot be loaded
+      const { width, height } = toolSpec.defaultSize;
+      const bounds: Rect = {
+        x: centerWorld.x - width / 2,
+        y: centerWorld.y - height / 2,
+        width,
+        height,
+      };
+      
+      const nodeId = generateId('node');
+      const node = {
+        id: nodeId,
+        type: toolSpec.componentId,
+        position: { x: bounds.x, y: bounds.y },
+        ...(toolSpec.resizable ? { size: { width: bounds.width, height: bounds.height } } : {}),
+        props: { ...toolSpec.defaultProps, dataUrl: pendingImageUrl },
+      };
+      
+      applyNodeInsertAndSelect([node], [nodeId]);
+      onUserEdit?.();
+      setCreationCompleted(true);
+      onCreationComplete?.();
+    });
   }, [activeTool, toolSpec, pendingImageUrl, getViewport, applyNodeInsertAndSelect, onUserEdit, onCreationComplete]);
   
   // Reset processed image ref when pendingImageUrl is cleared

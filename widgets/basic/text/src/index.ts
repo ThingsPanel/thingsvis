@@ -24,11 +24,14 @@ import en from './locales/en.json';
  * 创建透明占位 Rect（用于 Leafer 层选择交互）
  */
 function create(): Rect {
-  const defaults = getDefaultProps();
   return new Rect({
-    width: 200,
+    width: 160,
     height: 40,
-    fill: 'transparent',
+    fill: 'rgba(200,200,200,0.05)', // 轻微透明背景便于选择
+    stroke: {
+      width: 1,
+      color: 'rgba(150,150,150,0.2)', // 轻微边框便于识别
+    },
     draggable: true,
     cursor: 'pointer',
   });

@@ -2,8 +2,8 @@
  * 组件元数据
  */
 export const metadata = {
-  id: 'media/video-player',
-  name: '网络视频流',
+  id: 'media-video-player',
+  name: '视频播放器',
   category: 'media',
   icon: 'Video',
   version: '1.0.0',

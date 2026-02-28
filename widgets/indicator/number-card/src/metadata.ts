@@ -2,7 +2,7 @@ export const metadata = {
     id: 'indicator-number-card',
     name: 'widget.number-card.name',
     category: 'indicator' as const,
-    icon: 'Hash',
+    icon: 'CreditCard',
     version: '1.0.0',
     description: '通用数值卡片',
     defaultSize: { width: 240, height: 120 },
