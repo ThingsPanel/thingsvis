@@ -95,7 +95,7 @@ export const DEFAULT_BREAKPOINTS: BreakpointConfig[] = [
  */
 export const DEFAULT_GRID_SETTINGS: GridSettings = {
   cols: 24,
-  rowHeight: 30,
+  rowHeight: 50,
   gap: 10,
   compactVertical: true,
   minW: 1,

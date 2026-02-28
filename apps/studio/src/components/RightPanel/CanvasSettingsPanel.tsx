@@ -207,7 +207,7 @@ export function CanvasSettingsPanel({ canvasConfig, currentProjectName, isEmbedd
                                 <label className="text-sm font-medium">{t('canvas.gridRowHeight')}</label>
                                 <Input
                                     type="number"
-                                    value={canvasConfig.gridRowHeight ?? 10}
+                                    value={canvasConfig.gridRowHeight ?? 50}
                                     min={5}
                                     max={200}
                                     onChange={(e) => onConfigChange({ ...canvasConfig, gridRowHeight: Number(e.target.value) })}
@@ -218,7 +218,7 @@ export function CanvasSettingsPanel({ canvasConfig, currentProjectName, isEmbedd
                                 <label className="text-sm font-medium">{t('canvas.gridGap')}</label>
                                 <Input
                                     type="number"
-                                    value={canvasConfig.gridGap ?? 5}
+                                    value={canvasConfig.gridGap ?? 10}
                                     min={0}
                                     max={50}
                                     onChange={(e) => onConfigChange({ ...canvasConfig, gridGap: Number(e.target.value) })}
