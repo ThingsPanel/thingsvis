@@ -58,7 +58,7 @@ export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
     componentId: 'basic/text',
     defaultSize: { width: 200, height: 40 },
     minSize: { width: 50, height: 20 },
-    defaultProps: { text: '双击编辑文字' },
+    defaultProps: { text: '请输入文本' },
     resizable: false,
     interactionMode: 'click',
   },
