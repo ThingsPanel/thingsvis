@@ -9,7 +9,7 @@ RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm@8
 
 # Copy workspace files
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
 COPY apps/studio/package.json ./apps/studio/
 COPY packages/ ./packages/
 COPY widgets/ ./widgets/

@@ -76,6 +76,9 @@ export default defineConfig({
     alias: {
       '@': './src',
       '@thingsvis/utils': path.resolve(__dirname, '../../packages/thingsvis-utils/src'),
+      '@thingsvis/schema': path.resolve(__dirname, '../../packages/thingsvis-schema/src'),
+      '@thingsvis/kernel': path.resolve(__dirname, '../../packages/thingsvis-kernel/src'),
+      '@thingsvis/ui': path.resolve(__dirname, '../../packages/thingsvis-ui/src'),
     }
   },
   server: {
