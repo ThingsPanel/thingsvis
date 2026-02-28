@@ -1,34 +1,53 @@
-node_modules/
-.git/
-.turbo/
-.pnpm-store/
-.vscode/
-.idea/
-.cursor/
-.cursorrules
-.claude/
-.specify/
-.tmp/
+# Dependencies - 忽略所有 node_modules
+**/node_modules
+**/node_modules/@*
+.pnpm-store
 
-# Large analysis/internal dirs
-excalidraw-analysis/
-specs/
-docs/
+# Build outputs
+**/.next
+**/dist
+**/build
+*.tsbuildinfo
 
-# Build outputs (rebuilt in Docker)
-dist/
-build/
-.next/
+# Git
+.git
+.gitignore
 
-# Environment files
-.env*
-!.env.example
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
 
-# Database & temp files
-*.db
-*.sqlite
-*.sqlite3
+# Logs
 *.log
-*.tar
-*.tar.gz
-*.zip
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Turborepo
+.turbo
+
+# Test
+coverage
+.nyc_output
+
+# Temporary
+tmp
+temp
+*.tmp
+
+# Exclude apps we don't need
+# apps/studio (removed because it is needed for the studio image)
+apps/admin
+tools
+docs

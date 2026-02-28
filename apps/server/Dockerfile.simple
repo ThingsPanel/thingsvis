@@ -1,0 +1,61 @@
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8
+
+# Copy workspace files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/server/package.json ./apps/server/
+
+# Install deps
+RUN pnpm install --frozen-lockfile
+
+# Copy server source + prisma
+COPY apps/server ./apps/server
+
+# Generate Prisma and build
+WORKDIR /app/apps/server
+
+# Install openssl for prisma
+RUN apk add --no-cache openssl
+
+RUN npx prisma generate
+RUN pnpm build
+
+# Ensure public folder exists in standalone output
+RUN if [ -d "public" ]; then \
+      mkdir -p .next/standalone/public && \
+      cp -r public/* .next/standalone/public/; \
+    fi
+
+# Stage 2: Production
+FROM node:20-alpine
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=8000
+
+# Copy built files
+COPY --from=builder /app/apps/server/.next/standalone ./
+COPY --from=builder /app/apps/server/.next/static ./apps/server/.next/static
+
+# Copy public folder if exists
+RUN if [ -d "/app/apps/server/.next/standalone/public" ]; then \
+      cp -r /app/apps/server/.next/standalone/public ./apps/server/public; \
+    fi
+
+COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
+
+# Copy package.json and reinstall production deps (simpler than handling symlinks)
+COPY --from=builder /app/apps/server/package.json ./apps/server/package.json
+WORKDIR /app/apps/server
+RUN npm install --omit=dev --omit=optional --ignore-scripts
+
+EXPOSE 8000
+
+CMD ["node", "apps/server/server.js"]

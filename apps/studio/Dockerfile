@@ -5,6 +5,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+RUN apk add --no-cache libc6-compat
 RUN npm install -g pnpm@8
 
 # Copy workspace files
