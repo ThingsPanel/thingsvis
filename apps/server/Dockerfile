@@ -48,6 +48,9 @@ RUN if [ -d "public" ]; then \
       cp -r public/* .next/standalone/public/ 2>/dev/null || true; \
     fi
 
+# Ensure public dir exists so docker COPY doesn't fail
+RUN mkdir -p /app/apps/server/public
+
 # Create placeholder directories for prisma if they don't exist
 RUN mkdir -p node_modules/.prisma node_modules/@prisma
 
