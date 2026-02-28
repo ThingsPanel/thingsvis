@@ -107,10 +107,10 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
   // Always derive nodes from the latest state to reflect binding updates.
   const nodes = Object.values(kernelState.nodesById);
 
-  // Default grid settings
-  const cols = settings?.cols ?? 12;
+  // Default grid settings - consistent with other modes
+  const cols = settings?.cols ?? 24;
   const rowHeight = settings?.rowHeight ?? 50;
-  const gap = settings?.gap ?? 5;
+  const gap = settings?.gap ?? 10;
   // GridStack applies margin to all sides, so use half to get the desired gap between widgets
   const margin = gap / 2;
 
@@ -171,7 +171,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         column: cols,
         cellHeight: rowHeight,
         margin: margin,
-        float: true, // Allow overlapping - widgets can be placed anywhere
+        float: false, // Disable floating - widgets compact vertically like other grid systems
         animate: false,
         // @ts-expect-error: disableOneColumnMode removed in newer gridstack types but still works at runtime
         disableOneColumnMode: true,
@@ -181,8 +181,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
         // Prevent collision resolution issues
         acceptWidgets: true,
         removable: false,
-        // Default max row count
-        maxRow: 100,
+        // Auto-grow rows as needed
+        maxRow: undefined,
         // Minimum widget size
         minW: 1,
         minH: 1,
@@ -285,7 +285,7 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
 
       const contentEl = document.createElement('div');
       contentEl.className = 'grid-stack-item-content';
-      contentEl.style.cssText = 'background:#fff;border:1px solid #e0e0e0;overflow:hidden;cursor:pointer;';
+      contentEl.style.cssText = 'background:hsl(var(--w-bg));border:1px solid hsl(var(--w-border));overflow:hidden;cursor:pointer;border-radius:4px;';
 
       // Track if this is a click (mousedown + mouseup without much movement)
       let mouseDownPos: { x: number; y: number } | null = null;
@@ -522,7 +522,8 @@ export const GridStackCanvas: React.FC<GridStackCanvasProps> = ({
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.05 : 0.05;
       const newZoom = Math.min(2, Math.max(0.25, zoom + delta));
-      onZoomChange(newZoom);
+      // Convert to percentage (0.8 -> 80) to match parent component expectations
+      onZoomChange(Math.round(newZoom * 100));
     }
   }, [zoom, onZoomChange, fullWidth]);
 

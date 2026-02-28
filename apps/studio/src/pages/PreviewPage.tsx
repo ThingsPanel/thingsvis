@@ -49,7 +49,7 @@ export default function PreviewPage() {
     if (!nodesById) return false
     return Object.values(nodesById).some((node: any) => Boolean(node?.schemaRef?.grid))
   }, [kernelState])
-  const isGridLayout = canvasMode === 'grid' || hasGridNodes
+  const isGridLayout = canvasMode === 'grid'
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
     rowHeight: 50,

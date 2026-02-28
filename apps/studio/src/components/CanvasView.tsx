@@ -176,7 +176,10 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
     const isResizable = moduleDefs?.resizable !== false && (entry as any)?.resizable !== false;
     const pluginDefaultSize = moduleDefs?.defaultSize || (entry as any)?.defaultSize;
 
-    const node = {
+    // Check if in grid mode to add grid position
+    const isGridMode = state.canvas?.mode === 'grid';
+    
+    const node: any = {
       id: nodeId,
       type: entry.type,
       position: { x: worldX, y: worldY },
@@ -184,6 +187,19 @@ const CanvasView = forwardRef<StudioCanvasHandle, {
       ...(isResizable ? { size: pluginDefaultSize || { width: 200, height: 100 } } : {}),
       props: entry?.defaultProps ?? {}
     };
+    
+    // Add grid position for grid mode - use consistent defaults
+    if (isGridMode) {
+      node.grid = {
+        x: 0,
+        y: 0, // Will be calculated by grid compaction
+        w: 4,
+        h: 3,
+        static: false,
+        isDraggable: true,
+        isResizable: true,
+      };
+    }
 
     // Prefer kernel actionStack if available (records undo/redo globally)
     try {

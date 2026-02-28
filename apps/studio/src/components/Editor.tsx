@@ -394,7 +394,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       height: 1080,
       gridCols: 24,
       gridRowHeight: 50,
-      gridGap: 5,
+      gridGap: 10,
       theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
       gridSize: 20,
       bgType: "color" as "color" | "image",
@@ -605,7 +605,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               store.getState().setGridSettings({
                 cols: loaded.canvas.gridCols ?? 24,
                 rowHeight: loaded.canvas.gridRowHeight ?? 50,
-                gap: loaded.canvas.gridGap ?? 5,
+                gap: loaded.canvas.gridGap ?? 10,
                 compactVertical: true,
                 minW: 1,
                 minH: 1,
@@ -902,7 +902,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             gridSettings: {
               cols: processed.canvas.gridCols ?? 24,
               rowHeight: processed.canvas.gridRowHeight ?? 50,
-              gap: processed.canvas.gridGap ?? 5,
+              gap: processed.canvas.gridGap ?? 10,
               compactVertical: false,
               responsive: false,
               minW: 1,
@@ -991,7 +991,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     setGridSettings({
       cols: canvasConfig.gridCols ?? 24,
       rowHeight: canvasConfig.gridRowHeight ?? 50,
-      gap: canvasConfig.gridGap ?? 5,
+      gap: canvasConfig.gridGap ?? 10,
     })
   }, [canvasConfig.gridCols, canvasConfig.gridRowHeight, canvasConfig.gridGap])
 
@@ -1161,12 +1161,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             settings={{
               cols: canvasConfig.gridCols ?? 24,
-              rowHeight: canvasConfig.gridRowHeight ?? 10,
-              gap: canvasConfig.gridGap ?? 5,
-              margin: canvasConfig.gridGap ?? 5,
-              showGridLines: true,
+              rowHeight: canvasConfig.gridRowHeight ?? 50,
+              gap: canvasConfig.gridGap ?? 10,
+              showGridLines: canvasConfig.gridEnabled ?? true,
               compactVertical: true,
-              responsive: [],
+              responsive: true,
+              breakpoints: [],
+              minW: 1,
+              minH: 1,
             }}
             centerPadding={{
               left: embedVisibility.showLibrary && showLeftPanel ? 320 : 0,
@@ -1197,7 +1199,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   size: { width: 200, height: 80 },
                   props: defaultProps,
                   grid: {
-                    ...gridPosition,
+                    x: gridPosition.x,
+                    y: gridPosition.y,
+                    w: gridPosition.w ?? 4,
+                    h: gridPosition.h ?? 3,
                     static: false,
                     isDraggable: true,
                     isResizable: true,
