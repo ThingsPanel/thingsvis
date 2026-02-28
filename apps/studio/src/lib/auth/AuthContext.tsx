@@ -115,11 +115,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const clearAuth = useCallback(() => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(TOKEN_EXPIRY_KEY);
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(GUEST_MODE_KEY);
     setIsGuestMode(false);
+
+    // In embed mode, NEVER wipe out localStorage, as it might destroy the user's standalone session
+    if (!isEmbedded()) {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_EXPIRY_KEY);
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(GUEST_MODE_KEY);
+    }
   }, []);
 
   // Configure API client when token changes
@@ -171,22 +175,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Calculate expiry (assume 2 hours for SSO tokens)
             const expiresAt = Date.now() + (2 * 60 * 60 * 1000);
 
-            // Store in localStorage for persistent session
-            localStorage.setItem(TOKEN_KEY, urlToken);
-            localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-            localStorage.setItem(USER_KEY, JSON.stringify(result.data));
+            // Store in localStorage ONLY for standalone persistent session
+            if (!isEmbedded()) {
+              localStorage.setItem(TOKEN_KEY, urlToken);
+              localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
+              localStorage.setItem(USER_KEY, JSON.stringify(result.data));
+            }
 
             setToken(urlToken);
             setUser(result.data);
 
-            // Redirect to editor after SSO login (both embedded and standalone)
-            if (!window.location.hash.includes('/editor')) {
-
+            // Redirect to editor after SSO login IF it's not already on editor/embed
+            const currentHash = window.location.hash;
+            if (!currentHash.includes('/editor') && !currentHash.includes('/embed') && !currentHash.includes('/preview')) {
               setTimeout(() => {
                 window.location.hash = '#/editor';
               }, 100);
-            } else {
-
             }
           } else {
             console.error('❌ [Auth] SSO token invalid');
@@ -278,10 +282,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setToken(jwtToken);
       setUser(newUser);
 
-      // Persist to localStorage
-      localStorage.setItem(TOKEN_KEY, jwtToken);
-      localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      // Persist to localStorage ONLY for standalone session
+      if (!isEmbedded()) {
+        localStorage.setItem(TOKEN_KEY, jwtToken);
+        localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
+        localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      }
 
       return { success: true };
     } catch (error) {
@@ -321,10 +327,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setToken(newToken);
       setUser(newUser);
 
-      // Persist to localStorage
-      localStorage.setItem(TOKEN_KEY, newToken);
-      localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      // Persist to localStorage ONLY for standalone session
+      if (!isEmbedded()) {
+        localStorage.setItem(TOKEN_KEY, newToken);
+        localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
+        localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      }
 
 
 
@@ -375,8 +383,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Login as guest
   const loginAsGuest = useCallback(() => {
-    localStorage.setItem(GUEST_MODE_KEY, 'true');
     setIsGuestMode(true);
+    if (!isEmbedded()) {
+      localStorage.setItem(GUEST_MODE_KEY, 'true');
+    }
   }, []);
 
   const value: AuthContextValue = useMemo(() => ({

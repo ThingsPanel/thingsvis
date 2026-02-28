@@ -178,7 +178,7 @@ class MessageRouter {
             this.logInbound(event)
 
             // 分发给注册的处理器
-            this.emit(type, data.payload)
+            this.emit(type, data.payload !== undefined ? data.payload : data)
         })
     }
 
@@ -381,6 +381,7 @@ export interface EmbedInitPayload {
         }
         nodes?: any[]
         dataSources?: any[]
+        platformFields?: any[]
     }
     config?: {
         saveTarget?: SaveTarget
@@ -412,6 +413,7 @@ export interface ProcessedEmbedData {
     dataSources: any[]
     saveTarget: SaveTarget
     thumbnail?: string
+    platformFields?: any[]
 }
 
 /** 处理宿主传来的初始化数据 */
@@ -469,6 +471,7 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
         dataSources: data.dataSources || [],
         saveTarget,
         thumbnail,
+        platformFields: data.platformFields || [],
     }
 }
 

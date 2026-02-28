@@ -126,7 +126,7 @@ export class WidgetModeStrategy implements EditorStrategy {
 
         // 监听 updateSchema (平台字段更新)
         const schemaUnsub = onEmbedEvent('updateSchema', (payload: any) => {
-            const fields = payload
+            const fields = payload?.payload || payload
             if (Array.isArray(fields)) {
                 platformFieldStore.setFields(fields)
             }
@@ -135,7 +135,7 @@ export class WidgetModeStrategy implements EditorStrategy {
 
         // 监听 updateData (实时数据推送)
         const dataUnsub = onEmbedEvent('updateData', (payload: any) => {
-            const data = payload || {}
+            const data = payload?.payload || payload?.data || payload || {}
             if (data && typeof data === 'object') {
                 // 桥接到 PlatformFieldAdapter
                 Object.entries(data).forEach(([fieldId, value]) => {
