@@ -385,10 +385,14 @@ export interface EmbedInitPayload {
     config?: {
         saveTarget?: SaveTarget
         mode?: string
+        token?: string
+        apiBaseUrl?: string
         apiConfig?: {
             baseURL?: string
         }
     }
+    token?: string
+    apiBaseUrl?: string
 }
 
 export interface ProcessedEmbedData {
@@ -419,6 +423,14 @@ export function processEmbedInitPayload(payload: EmbedInitPayload): ProcessedEmb
 
     const data = payload.data
     const config = payload.config || {}
+
+    // Extract auth token and api base url from postMessage payload
+    const embedConfigToken = config.token || (payload as any).token
+    const embedApiBaseUrl = config.apiBaseUrl || config.apiConfig?.baseURL || (payload as any).apiBaseUrl
+
+    if (embedConfigToken) {
+        configureEmbedApiClient(embedConfigToken, embedApiBaseUrl)
+    }
 
     const projectId = data.meta?.id || `embed-${Date.now()}`
     const projectName = data.meta?.name || 'Embedded Project'
