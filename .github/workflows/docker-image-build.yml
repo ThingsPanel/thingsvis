@@ -16,10 +16,8 @@ env:
   NODE_VERSION: '20'
   PNPM_VERSION: '8'
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/thingsvis
   # 阿里云镜像仓库
   ALIYUN_REGISTRY: registry.cn-hangzhou.aliyuncs.com
-  ALIYUN_IMAGE_PREFIX: registry.cn-hangzhou.aliyuncs.com/${{ github.repository_owner }}/thingsvis
 
 jobs:
   # ============================================================
@@ -43,8 +41,10 @@ jobs:
         id: version
         run: |
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          OWNER_LOWER="${{ github.repository_owner }}"
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Version: ${TAG}"
+          echo "owner_lower=${OWNER_LOWER,,}" >> $GITHUB_OUTPUT
+          echo "Version: ${TAG}, Owner: ${OWNER_LOWER,,}"
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -70,10 +70,10 @@ jobs:
           file: apps/server/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-server:${{ steps.version.outputs.tag }}
-            ${{ env.IMAGE_PREFIX }}-server:latest
-            ${{ env.ALIYUN_IMAGE_PREFIX }}-server:${{ steps.version.outputs.tag }}
-            ${{ env.ALIYUN_IMAGE_PREFIX }}-server:latest
+            ghcr.io/${{ steps.version.outputs.owner_lower }}/thingsvis-server:${{ steps.version.outputs.tag }}
+            ghcr.io/${{ steps.version.outputs.owner_lower }}/thingsvis-server:latest
+            registry.cn-hangzhou.aliyuncs.com/${{ steps.version.outputs.owner_lower }}/thingsvis-server:${{ steps.version.outputs.tag }}
+            registry.cn-hangzhou.aliyuncs.com/${{ steps.version.outputs.owner_lower }}/thingsvis-server:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
@@ -88,9 +88,9 @@ jobs:
           file: apps/studio/Dockerfile
           push: true
           tags: |
-            ${{ env.IMAGE_PREFIX }}-studio:${{ steps.version.outputs.tag }}
-            ${{ env.IMAGE_PREFIX }}-studio:latest
-            ${{ env.ALIYUN_IMAGE_PREFIX }}-studio:${{ steps.version.outputs.tag }}
-            ${{ env.ALIYUN_IMAGE_PREFIX }}-studio:latest
+            ghcr.io/${{ steps.version.outputs.owner_lower }}/thingsvis-studio:${{ steps.version.outputs.tag }}
+            ghcr.io/${{ steps.version.outputs.owner_lower }}/thingsvis-studio:latest
+            registry.cn-hangzhou.aliyuncs.com/${{ steps.version.outputs.owner_lower }}/thingsvis-studio:${{ steps.version.outputs.tag }}
+            registry.cn-hangzhou.aliyuncs.com/${{ steps.version.outputs.owner_lower }}/thingsvis-studio:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
