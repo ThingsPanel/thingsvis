@@ -16,15 +16,20 @@
     "release:patch": "node scripts/release.mjs patch",
     "release:minor": "node scripts/release.mjs minor",
     "release:major": "node scripts/release.mjs major",
-    "release:dry": "node scripts/release.mjs patch --dry-run"
+    "release:dry": "node scripts/release.mjs patch --dry-run",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
     "@module-federation/enhanced": "^0.6.0",
     "@module-federation/rspack": "^0.6.0",
     "@playwright/test": "^1.58.0",
     "@rspack/cli": "^1.0.0",
     "@rspack/core": "^1.0.0",
     "@types/node": "^20.10.6",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "playwright": "^1.58.0",
     "turbo": "^1.12.3",
     "typescript": "^5.3.3",
@@ -39,5 +44,13 @@
       "@types/react": "^18.2.0",
       "@types/react-dom": "^18.2.0"
     }
+  },
+  "lint-staged": {
+    "apps/studio/src/**/*.{ts,tsx}": [
+      "eslint --ext .ts,.tsx --max-warnings=0 --rule 'no-console: error' --rule 'react-hooks/rules-of-hooks: error'"
+    ],
+    "apps/server/src/**/*.{ts,tsx}": [
+      "eslint --ext .ts,.tsx --max-warnings=0"
+    ]
   }
 }

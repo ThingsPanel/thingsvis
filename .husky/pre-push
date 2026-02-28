@@ -1,0 +1,18 @@
+#!/bin/sh
+# Prevent force-push to main/master/dev
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REMOTE=$1
+
+if [ "$REMOTE" = "origin" ] || [ "$REMOTE" = "public" ]; then
+  if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ] || [ "$BRANCH" = "dev" ]; then
+    # Check if this is a force push (we can't fully detect it here, but warn)
+    echo "⚠️  Pushing to protected branch: $BRANCH"
+    echo "   Make sure this is intentional. Force push is blocked by GitHub branch protection."
+  fi
+fi
+
+# Block pushing if .env (non-example) files are somehow staged
+if git diff --cached --name-only | grep -qE '^\.env$|^apps/[^/]+/\.env$'; then
+  echo "❌ ERROR: .env file detected in staged changes. Remove it before pushing."
+  exit 1
+fi
