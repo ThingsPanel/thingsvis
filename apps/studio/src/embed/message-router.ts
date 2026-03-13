@@ -308,7 +308,7 @@ export function processEmbedInitPayload(
   updateEmbeddedConfig({ projectId, projectName, saveTarget });
 
   const canvas = {
-    mode: data.canvas?.mode || 'grid',
+    mode: data.canvas?.mode || 'fixed',
     width: data.canvas?.width || 1920,
     height: data.canvas?.height || 1080,
     // Use ?? so a falsy-but-defined value (e.g. empty string) is preserved;

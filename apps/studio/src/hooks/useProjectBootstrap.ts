@@ -141,7 +141,7 @@ export function useProjectBootstrap({
 
   const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId();
-    const defaultMode = embedVisibility.isEmbedded ? 'grid' : 'fixed';
+    const defaultMode = 'fixed';
     return {
       id: initialId,
       projectId: '',
@@ -469,6 +469,9 @@ export function useProjectBootstrap({
         }
       }
 
+      const resolvedCanvas = loadedCanvas ?? processed.canvas;
+      const resolvedCanvasMode = (resolvedCanvas?.mode || 'fixed') as CanvasConfigSchema['mode'];
+
       // Restore background — may be a PageBackground object or a CSS string.
       const rawBg = loadedCanvas?.background ?? processed.canvas.background;
       const bgObj =
@@ -481,15 +484,15 @@ export function useProjectBootstrap({
         ...prev,
         id: processed.projectId,
         name: loadedMeta?.name || processed.projectName,
-        mode: (loadedCanvas?.mode || processed.canvas.mode) as any,
-        width: loadedCanvas?.width || processed.canvas.width,
-        height: loadedCanvas?.height || processed.canvas.height,
-        theme: validateCanvasTheme(loadedCanvas?.theme ?? (processed.canvas as any).theme),
+        mode: resolvedCanvasMode,
+        width: resolvedCanvas?.width || 1920,
+        height: resolvedCanvas?.height || 1080,
+        theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
         bgValue: bgStr ?? prev.bgValue,
         background: (bgObj as CanvasBackground | undefined) ?? prev.background,
-        gridCols: loadedCanvas?.gridCols || processed.canvas.gridCols,
-        gridRowHeight: loadedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
-        gridGap: loadedCanvas?.gridGap || processed.canvas.gridGap,
+        gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
+        gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
+        gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
         thumbnail: loadedMeta?.thumbnail || processed.thumbnail || '',
         dataSources: mergedDataSources as any,
       }));
@@ -509,14 +512,14 @@ export function useProjectBootstrap({
           version: '1.0.0',
           nodes: nodesToLoad,
           config: {
-            mode: processed.canvas.mode as any,
-            width: processed.canvas.width,
-            height: processed.canvas.height,
-            theme: (processed.canvas as any).theme || DEFAULT_CANVAS_THEME,
+            mode: resolvedCanvasMode,
+            width: resolvedCanvas?.width || 1920,
+            height: resolvedCanvas?.height || 1080,
+            theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
             gridSettings: {
-              cols: processed.canvas.gridCols ?? 24,
-              rowHeight: processed.canvas.gridRowHeight ?? 50,
-              gap: processed.canvas.gridGap ?? 10,
+              cols: resolvedCanvas?.gridCols ?? 24,
+              rowHeight: resolvedCanvas?.gridRowHeight ?? 50,
+              gap: resolvedCanvas?.gridGap ?? 10,
               compactVertical: false,
               responsive: false,
               minW: 1,
