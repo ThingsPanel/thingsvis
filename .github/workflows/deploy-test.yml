@@ -106,6 +106,8 @@ jobs:
           echo "✅ Widgets packaged"
 
           # --- Config ---
+          cp .github/deploy/thingsvis.conf deploy/thingsvis.conf
+
           # Create tarball
           cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
