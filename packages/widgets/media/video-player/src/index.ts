@@ -22,8 +22,31 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
     let status: 'empty' | 'loading' | 'error' | 'ready' = 'empty';
+    let currentSrc = '';
     let internalVideo: HTMLVideoElement | null = null;
     let attachVideoListenersRaf = 0;
+    let readyPollInterval: ReturnType<typeof setInterval> | null = null;
+
+    const stopReadyPoll = () => {
+      if (readyPollInterval) {
+        clearInterval(readyPollInterval);
+        readyPollInterval = null;
+      }
+    };
+
+    const startReadyPoll = () => {
+      stopReadyPoll();
+      readyPollInterval = setInterval(() => {
+        if (status === 'ready') { stopReadyPoll(); return; }
+        if (internalVideo && (internalVideo.readyState >= 2 || internalVideo.currentTime > 0)) {
+          updatePlaceholder('ready'); stopReadyPoll(); return;
+        }
+        // video-rtc exposes videoWidth/videoHeight on itself when stream is active
+        if ((videoEl as HTMLVideoElement).videoWidth > 0) {
+          updatePlaceholder('ready'); stopReadyPoll();
+        }
+      }, 300);
+    };
 
     element.style.width = '100%';
     element.style.height = '100%';
@@ -43,6 +66,7 @@ export const Main = defineWidget({
     videoEl.style.position = 'absolute';
     videoEl.style.top = '0';
     videoEl.style.left = '0';
+    videoEl.style.zIndex = '1'; // stay above placeholder
     container.appendChild(videoEl);
 
     const styleEl = document.createElement('style');
@@ -61,6 +85,7 @@ export const Main = defineWidget({
     placeholder.style.position = 'absolute';
     placeholder.style.top = '0';
     placeholder.style.left = '0';
+    placeholder.style.zIndex = '0'; // always behind videoEl
     placeholder.style.boxSizing = 'border-box';
     placeholder.style.padding = '16px';
     placeholder.style.textAlign = 'center';
@@ -86,6 +111,23 @@ export const Main = defineWidget({
         : '<div>请配置视频地址</div>';
     };
 
+    const normalizeSource = (input: unknown): string => {
+      const trimmed = typeof input === 'string' ? input.trim() : '';
+      if (!trimmed) return '';
+      try {
+        return new URL(trimmed, window.location.href).href;
+      } catch {
+        return trimmed;
+      }
+    };
+
+    const markReadyIfPlayable = () => {
+      if (!currentSrc || !internalVideo) return;
+      if (internalVideo.readyState >= 2 || !internalVideo.paused || internalVideo.currentTime > 0) {
+        updatePlaceholder('ready');
+      }
+    };
+
     const bindInternalVideo = () => {
       const maybeVideo = (videoEl as any).video as HTMLVideoElement | undefined;
       if (!maybeVideo) {
@@ -98,7 +140,12 @@ export const Main = defineWidget({
       }
 
       internalVideo = maybeVideo;
+      markReadyIfPlayable();
+      videoEl.addEventListener('loadeddata', markReadyIfPlayable);
+      videoEl.addEventListener('canplay', markReadyIfPlayable);
+      videoEl.addEventListener('playing', markReadyIfPlayable);
       internalVideo.addEventListener('loadeddata', () => updatePlaceholder('ready'));
+      internalVideo.addEventListener('canplay', () => updatePlaceholder('ready'));
       internalVideo.addEventListener('playing', () => updatePlaceholder('ready'));
       internalVideo.addEventListener('error', () => updatePlaceholder('error'));
       internalVideo.addEventListener('stalled', () => {
@@ -113,18 +160,26 @@ export const Main = defineWidget({
 
     const updateView = () => {
       const { src, mode, background, visibilityThreshold, objectFit, borderWidth, borderColor, borderRadius } = currentProps;
+      const normalizedSrc = normalizeSource(src);
 
       // Update placeholder vs video visibility
-      if (!src || src.trim() === '') {
+      if (!normalizedSrc) {
+        currentSrc = '';
         updatePlaceholder('empty');
         videoEl.style.display = 'none';
         videoEl.removeAttribute('src'); // clear if empty
       } else {
-        updatePlaceholder('loading');
         videoEl.style.display = 'block';
-        const rawSrc = src.trim();
-        if (videoEl.src !== rawSrc) {
-          videoEl.src = rawSrc;
+        const sourceChanged = currentSrc !== normalizedSrc;
+        if (sourceChanged) {
+          currentSrc = normalizedSrc;
+          updatePlaceholder('loading');
+          if (videoEl.src !== normalizedSrc) {
+            videoEl.src = normalizedSrc;
+          }
+          startReadyPoll(); // fallback for streams that don't fire standard events
+        } else {
+          markReadyIfPlayable();
         }
       }
       videoEl.mode = mode;
@@ -150,6 +205,7 @@ export const Main = defineWidget({
         if (attachVideoListenersRaf) {
           cancelAnimationFrame(attachVideoListenersRaf);
         }
+        stopReadyPoll();
         element.innerHTML = '';
       },
     };

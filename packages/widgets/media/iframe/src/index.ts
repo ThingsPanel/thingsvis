@@ -1,5 +1,5 @@
 import { metadata } from './metadata';
-import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
 import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
@@ -20,6 +20,8 @@ export const Main = defineWidget({
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
+        let currentMode: WidgetOverlayContext['mode'] = ctx.mode;
+        let currentSrc = '';
 
         element.style.width = '100%';
         element.style.height = '100%';
@@ -68,21 +70,40 @@ export const Main = defineWidget({
                 : '<div>请配置网页地址</div>';
         };
 
+        const normalizeSource = (input: unknown): string => {
+            const trimmed = typeof input === 'string' ? input.trim() : '';
+            if (!trimmed) return '';
+            try {
+                return new URL(trimmed, window.location.href).href;
+            } catch {
+                return trimmed;
+            }
+        };
+
+        const applyInteractionMode = () => {
+            const allowIframeInteraction = currentMode === 'view';
+            iframe.style.pointerEvents = allowIframeInteraction ? 'auto' : 'none';
+        };
+
         iframe.addEventListener('load', () => updatePlaceholder('ready'));
         iframe.addEventListener('error', () => updatePlaceholder('error'));
 
         const updateView = () => {
             const { src, borderWidth, borderColor, borderRadius } = currentProps;
-            const rawSrc = src.trim();
+            const normalizedSrc = normalizeSource(src);
+            applyInteractionMode();
 
             // Only update src if it changed to avoid reloading
-            if (!rawSrc) {
+            if (!normalizedSrc) {
+                currentSrc = '';
                 iframe.removeAttribute('src');
                 updatePlaceholder('empty');
             } else {
-                if (iframe.src !== rawSrc) {
+                const sourceChanged = currentSrc !== normalizedSrc;
+                if (sourceChanged) {
+                    currentSrc = normalizedSrc;
                     updatePlaceholder('loading');
-                    iframe.src = rawSrc;
+                    iframe.src = normalizedSrc;
                 }
             }
 
@@ -95,8 +116,9 @@ export const Main = defineWidget({
         updateView();
 
         return {
-            update: (newProps: Props) => {
+            update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
+                currentMode = newCtx.mode;
                 updateView();
             },
             destroy: () => {

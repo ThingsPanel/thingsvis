@@ -53,13 +53,20 @@ function resolveFinalUrl(
 ): string {
   const isLocalRequested = componentId.endsWith(' (Local)');
   const isDev = process.env.NODE_ENV === 'development';
+  const withDevCacheBust = (url: string): string => {
+    if (!isDev) return url;
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}tvcb=${Date.now()}`;
+  };
 
   if (isLocalRequested) {
-    return entry.localEntryUrl || entry.staticEntryUrl || entry.remoteEntryUrl;
+    if (entry.localEntryUrl) return entry.localEntryUrl;
+    if (entry.staticEntryUrl) return withDevCacheBust(entry.staticEntryUrl);
+    return entry.remoteEntryUrl;
   }
 
   if (entry.debugSource === 'static' && entry.staticEntryUrl) {
-    return entry.staticEntryUrl;
+    return withDevCacheBust(entry.staticEntryUrl);
   }
 
   if (entry.debugSource === 'local' && entry.localEntryUrl) {
@@ -67,7 +74,7 @@ function resolveFinalUrl(
   }
 
   if (isDev && entry.staticEntryUrl) {
-    return entry.staticEntryUrl;
+    return withDevCacheBust(entry.staticEntryUrl);
   }
 
   return entry.remoteEntryUrl;

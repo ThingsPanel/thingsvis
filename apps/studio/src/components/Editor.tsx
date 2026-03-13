@@ -328,18 +328,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         window.location.hash = '#/';
       },
       applyNodeInsertAndSelect: (nodes, selectIds) => {
-        const currentState = store.getState();
-        const newNodesById = { ...currentState.nodesById };
-        const newLayerOrder = [...currentState.layerOrder];
-        nodes.forEach((node) => {
-          newNodesById[node.id] = { id: node.id, schemaRef: node, visible: true, locked: false };
-          if (!newLayerOrder.includes(node.id)) newLayerOrder.push(node.id);
-        });
-        store.setState({
-          nodesById: newNodesById,
-          layerOrder: newLayerOrder,
-          selection: { nodeIds: selectIds },
-        });
+        const kernel = store.getState();
+        kernel.addNodes(nodes);
+        kernel.selectNodes(selectIds);
       },
     });
   }, [saveNow, projectId, openPreview]);

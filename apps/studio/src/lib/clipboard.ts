@@ -5,45 +5,34 @@
  * The clipboard is scoped to the current editor session.
  */
 
-import type { NodeSchemaType } from '@thingsvis/schema'
+import type { NodeSchemaType } from '@thingsvis/schema';
+import { deepClone } from '@thingsvis/utils';
 
 // =============================================================================
 // Types
 // =============================================================================
 
 /**
- * Data binding type (matches NodeSchemaType.data element)
- */
-type DataBindingEntry = { targetProp: string; expression: string }
-
-/**
  * A serializable snapshot of a node's schema at copy time.
+ * Keep this aligned with NodeSchemaType so copy/paste does not silently
+ * drop newly added schema fields such as baseStyle or grid.
  */
-export interface NodeSnapshot {
-  id: string // source id; not reused on paste
-  type: string
-  position: { x: number; y: number }
-  size?: { width: number; height: number }
-  props?: Record<string, unknown>
-  style?: Record<string, unknown>
-  parentId?: string
-  data?: DataBindingEntry[]
-}
+export type NodeSnapshot = NodeSchemaType;
 
 /**
  * Clipboard payload containing the copied node snapshots.
  */
 export interface ClipboardPayload {
-  version: number
-  nodes: NodeSnapshot[]
+  version: number;
+  nodes: NodeSnapshot[];
 }
 
 // =============================================================================
 // Module State
 // =============================================================================
 
-let clipboardPayload: ClipboardPayload | null = null
-let pasteCountSinceCopy = 0
+let clipboardPayload: ClipboardPayload | null = null;
+let pasteCountSinceCopy = 0;
 
 // =============================================================================
 // UUID Generation
@@ -55,10 +44,10 @@ let pasteCountSinceCopy = 0
  */
 function generateNodeId(): string {
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return crypto.randomUUID()
+    return crypto.randomUUID();
   }
   // Fallback for environments without crypto.randomUUID
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
 
 // =============================================================================
@@ -69,29 +58,7 @@ function generateNodeId(): string {
  * Convert NodeSchemaType to NodeSnapshot for storage.
  */
 function nodeToSnapshot(node: NodeSchemaType): NodeSnapshot {
-  const snapshot: NodeSnapshot = {
-    id: node.id,
-    type: node.type,
-    position: { ...node.position },
-  }
-
-  if (node.size) {
-    snapshot.size = { ...node.size }
-  }
-  if (node.props) {
-    snapshot.props = { ...node.props }
-  }
-  if (node.style) {
-    snapshot.style = { ...node.style }
-  }
-  if (node.parentId) {
-    snapshot.parentId = node.parentId
-  }
-  if (node.data) {
-    snapshot.data = [...node.data]
-  }
-
-  return snapshot
+  return deepClone(node);
 }
 
 /**
@@ -103,14 +70,14 @@ function nodeToSnapshot(node: NodeSchemaType): NodeSnapshot {
 export function copyNodes(nodes: NodeSchemaType[]): void {
   if (nodes.length === 0) {
     // No-op: preserve existing clipboard
-    return
+    return;
   }
 
   clipboardPayload = {
     version: 1,
     nodes: nodes.map(nodeToSnapshot),
-  }
-  pasteCountSinceCopy = 0
+  };
+  pasteCountSinceCopy = 0;
 }
 
 /**
@@ -119,14 +86,14 @@ export function copyNodes(nodes: NodeSchemaType[]): void {
  * @returns The clipboard payload, or null if empty
  */
 export function readClipboard(): ClipboardPayload | null {
-  return clipboardPayload
+  return clipboardPayload;
 }
 
 /**
  * Check if the clipboard has content.
  */
 export function hasClipboardContent(): boolean {
-  return clipboardPayload !== null && clipboardPayload.nodes.length > 0
+  return clipboardPayload !== null && clipboardPayload.nodes.length > 0;
 }
 
 // =============================================================================
@@ -136,7 +103,7 @@ export function hasClipboardContent(): boolean {
 /**
  * Offset constants for paste operations.
  */
-const PASTE_OFFSET_PX = 20
+const PASTE_OFFSET_PX = 20;
 
 /**
  * Get the next paste offset and increment the counter.
@@ -145,13 +112,13 @@ const PASTE_OFFSET_PX = 20
  * @returns Object with dx, dy offsets and the current paste count n
  */
 export function nextPasteOffset(): { dx: number; dy: number; n: number } {
-  pasteCountSinceCopy += 1
-  const n = pasteCountSinceCopy
+  pasteCountSinceCopy += 1;
+  const n = pasteCountSinceCopy;
   return {
     dx: PASTE_OFFSET_PX * n,
     dy: PASTE_OFFSET_PX * n,
     n,
-  }
+  };
 }
 
 /**
@@ -164,36 +131,28 @@ export function nextPasteOffset(): { dx: number; dy: number; n: number } {
  */
 export function makePastedNodes(
   payload: ClipboardPayload,
-  offset: { dx: number; dy: number }
+  offset: { dx: number; dy: number; n?: number },
 ): NodeSchemaType[] {
   return payload.nodes.map((snapshot) => {
-    const newNode: NodeSchemaType = {
-      id: generateNodeId(),
-      type: snapshot.type,
-      position: {
-        x: snapshot.position.x + offset.dx,
-        y: snapshot.position.y + offset.dy,
-      },
+    const newNode = deepClone(snapshot);
+    const gridOffset = offset.n ?? 1;
+
+    newNode.id = generateNodeId();
+    newNode.position = {
+      x: snapshot.position.x + offset.dx,
+      y: snapshot.position.y + offset.dy,
+    };
+
+    if (snapshot.grid) {
+      newNode.grid = {
+        ...snapshot.grid,
+        x: (snapshot.grid.x ?? 0) + gridOffset,
+        y: (snapshot.grid.y ?? 0) + gridOffset,
+      };
     }
 
-    if (snapshot.size) {
-      newNode.size = { ...snapshot.size }
-    }
-    if (snapshot.props) {
-      newNode.props = { ...snapshot.props }
-    }
-    if (snapshot.style) {
-      newNode.style = { ...snapshot.style }
-    }
-    if (snapshot.parentId) {
-      newNode.parentId = snapshot.parentId
-    }
-    if (snapshot.data) {
-      newNode.data = [...snapshot.data]
-    }
-
-    return newNode
-  })
+    return newNode;
+  });
 }
 
 // =============================================================================
@@ -210,13 +169,13 @@ export function makePastedNodes(
  */
 export function createDuplicatePayload(nodes: NodeSchemaType[]): ClipboardPayload | null {
   if (nodes.length === 0) {
-    return null
+    return null;
   }
 
   return {
     version: 1,
     nodes: nodes.map(nodeToSnapshot),
-  }
+  };
 }
 
 // =============================================================================
@@ -227,6 +186,6 @@ export function createDuplicatePayload(nodes: NodeSchemaType[]): ClipboardPayloa
  * Reset the clipboard state (primarily for testing).
  */
 export function resetClipboard(): void {
-  clipboardPayload = null
-  pasteCountSinceCopy = 0
+  clipboardPayload = null;
+  pasteCountSinceCopy = 0;
 }
