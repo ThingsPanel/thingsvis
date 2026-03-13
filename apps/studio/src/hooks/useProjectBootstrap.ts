@@ -317,22 +317,7 @@ export function useProjectBootstrap({
             store.getState().updatePageConfig({ background: loadedBackground } as any);
           }
 
-          if (storage.isCloud) {
-            try {
-              await dataSourceManager.reloadFromCloud();
-            } catch (e) {
-              console.warn('[Editor] reloadFromCloud failed, falling back to project snapshot:', e);
-              if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
-                for (const ds of loaded.dataSources) {
-                  try {
-                    await dataSourceManager.registerDataSource(ds as any, false);
-                  } catch (dsErr) {
-                    console.warn(`[Editor] Failed to restore data source ${ds.id}:`, dsErr);
-                  }
-                }
-              }
-            }
-          } else if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
+          if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
             for (const ds of loaded.dataSources) {
               try {
                 await dataSourceManager.registerDataSource(ds as any, false);

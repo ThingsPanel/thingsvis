@@ -92,6 +92,12 @@ function inferCanvasMode(canvas: any, nodes: any[] = []): 'fixed' | 'infinite' |
   return 'infinite';
 }
 
+function normalizeCanvasBackground(background: unknown): Record<string, string> {
+  return background !== null && typeof background === 'object'
+    ? (background as Record<string, string>)
+    : { color: typeof background === 'string' && background ? background : 'transparent' };
+}
+
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<EmbedState>({
@@ -185,6 +191,7 @@ export default function EmbedPage() {
           nodes: (dashboard.nodes as any[]) || [],
         };
         (page as any).config = {
+          background: normalizeCanvasBackground((dashboard.canvasConfig as any)?.background),
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
         };
 
@@ -304,16 +311,8 @@ export default function EmbedPage() {
           version: '1.0.0',
           nodes: pageNodes,
         };
-        // Normalize background: persisted format is object {color,image,...}, legacy format is string.
-        // Wrapping an already-object value inside { color: obj } would produce a double-nested
-        // object whose String() coercion yields '[object Object]' — an invalid CSS value.
-        const rawBg = schema.canvas?.background;
-        const normalizedBg =
-          rawBg !== null && typeof rawBg === 'object'
-            ? (rawBg as Record<string, string>) // new format — use as-is
-            : { color: typeof rawBg === 'string' && rawBg ? rawBg : 'transparent' }; // legacy or missing
         (page as any).config = {
-          background: normalizedBg,
+          background: normalizeCanvasBackground(schema.canvas?.background),
           theme: (schema.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
         };
 

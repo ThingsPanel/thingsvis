@@ -415,7 +415,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 width: canvasW,
                 minHeight: canvasMinH,
                 position: 'relative',
-                background: background.color ? String(background.color) : 'hsl(var(--w-canvas-bg, 220 13% 12%))',
+                backgroundColor: background.color ? String(background.color) : 'hsl(var(--w-canvas-bg, 220 13% 12%))',
                 backgroundImage: background.image ? `url(${background.image})` : 'none',
                 backgroundSize: background.size ? String(background.size) : 'cover',
                 backgroundRepeat: background.repeat ? String(background.repeat) : 'no-repeat',
@@ -507,7 +507,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 position: 'relative',
                 // Outer container is always transparent — background comes from
                 // the page config (innerCanvas) or the host wrapper, never hardcoded here.
-                background: 'transparent',
+                backgroundColor: 'transparent',
             }}
         >
             {fullWidth ? (
