@@ -102,6 +102,12 @@ function createBootstrapSummary(nodes: NodeSchemaType[]): BootstrapSummary {
   };
 }
 
+function normalizeCanvasMode(mode: unknown): CanvasConfigSchema['mode'] {
+  if (mode === 'fixed' || mode === 'infinite' || mode === 'grid') return mode;
+  if (mode === 'reflow') return 'infinite';
+  return 'fixed';
+}
+
 export function useProjectBootstrap({
   embedVisibility,
   isAuthenticated: _isAuthenticated,
@@ -280,7 +286,7 @@ export function useProjectBootstrap({
             version: loaded.meta.version,
             nodes: loaded.nodes,
             config: {
-              mode: loaded.canvas.mode,
+              mode: normalizeCanvasMode(loaded.canvas.mode),
               width: loaded.canvas.width,
               height: loaded.canvas.height,
               theme: validateCanvasTheme((loaded.canvas as any).theme),
@@ -296,7 +302,7 @@ export function useProjectBootstrap({
             projectId: loaded.meta.projectId || prev.projectId,
             projectName: loaded.meta.projectName,
             createdAt: loaded.meta.createdAt,
-            mode: loaded.canvas.mode,
+            mode: normalizeCanvasMode(loaded.canvas.mode),
             width: loaded.canvas.width,
             height: loaded.canvas.height,
             theme: validateCanvasTheme((loaded.canvas as any).theme),
@@ -469,8 +475,10 @@ export function useProjectBootstrap({
         }
       }
 
-      const resolvedCanvas = loadedCanvas ?? processed.canvas;
-      const resolvedCanvasMode = (resolvedCanvas?.mode || 'fixed') as CanvasConfigSchema['mode'];
+      const resolvedCanvas = processed.hasExplicitCanvas
+        ? { ...(loadedCanvas || {}), ...processed.canvas }
+        : (loadedCanvas ?? processed.canvas);
+      const resolvedCanvasMode = normalizeCanvasMode(resolvedCanvas?.mode);
 
       // Restore background — may be a PageBackground object or a CSS string.
       const rawBg = loadedCanvas?.background ?? processed.canvas.background;

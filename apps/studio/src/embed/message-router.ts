@@ -255,6 +255,7 @@ export interface EmbedInitPayload {
 export interface ProcessedEmbedData {
   projectId: string;
   projectName: string;
+  hasExplicitCanvas: boolean;
   canvas: {
     mode: string;
     width: number;
@@ -275,6 +276,12 @@ export interface ProcessedEmbedData {
   platformFieldScope?: string;
 }
 
+function normalizeEmbedCanvasMode(mode: unknown): 'fixed' | 'infinite' | 'grid' {
+  if (mode === 'fixed' || mode === 'infinite' || mode === 'grid') return mode;
+  if (mode === 'reflow') return 'infinite';
+  return 'fixed';
+}
+
 export function processEmbedInitPayload(
   payload: EmbedInitPayload | unknown,
 ): ProcessedEmbedData | null {
@@ -286,6 +293,7 @@ export function processEmbedInitPayload(
 
   const data = p.data;
   const config = p.config || {};
+  const hasExplicitCanvas = Boolean(data.canvas && typeof data.canvas === 'object');
 
   const embedConfigToken =
     config.token || ((p as Record<string, unknown>).token as string | undefined);
@@ -308,7 +316,7 @@ export function processEmbedInitPayload(
   updateEmbeddedConfig({ projectId, projectName, saveTarget });
 
   const canvas = {
-    mode: data.canvas?.mode || 'fixed',
+    mode: normalizeEmbedCanvasMode(data.canvas?.mode),
     width: data.canvas?.width || 1920,
     height: data.canvas?.height || 1080,
     // Use ?? so a falsy-but-defined value (e.g. empty string) is preserved;
@@ -355,6 +363,7 @@ export function processEmbedInitPayload(
   return {
     projectId,
     projectName,
+    hasExplicitCanvas,
     canvas,
     nodes,
     dataSources: (data.dataSources || []) as unknown[],
