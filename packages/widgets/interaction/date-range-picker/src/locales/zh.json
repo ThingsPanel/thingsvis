@@ -1,0 +1,16 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-date-range-picker": {
+                "name": "日期范围选择器",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "label": "标签",
+                "showPresets": "显示快捷按钮",
+                "fontSize": "字体大小",
+                "startTime": "开始时间",
+                "endTime": "结束时间"
+            }
+        }
+    }
+}

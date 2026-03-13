@@ -1,0 +1,135 @@
+# ============================================================
+# Dependencies
+# ============================================================
+node_modules/
+.pnpm-store/
+
+# ============================================================
+# Build Outputs
+# ============================================================
+dist/
+build/
+.next/
+out/
+.turbo/
+temp/
+
+# ============================================================
+# Environment & Secrets
+# ============================================================
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.*.local
+# Preserve example config
+!.env.example
+
+# ============================================================
+# Database
+# ============================================================
+*.db
+*.sqlite
+*.sqlite3
+apps/server/prisma/dev.db
+apps/server/prisma/dev.db-journal
+apps/server/prisma/prisma/dev.db
+apps/server/prisma/prisma/dev.db-journal
+
+# ============================================================
+# OS & Editor Settings
+# ============================================================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+# VS Code workspace files are local IDE config, not project config
+*.code-workspace
+*.local
+
+# ============================================================
+# AI & IDE Assistants
+# ============================================================
+# Ignore .ai/ contents except conventions
+.ai/*
+!.ai/conventions.md
+!.ai/conventions-zh.md
+.ai/specs/
+.ai/tmp/
+.claude/
+.cursor/
+.cursorrules
+.specify/
+.copilot/
+skills_bundle/
+.agents/
+.gemini/
+.assistant/
+
+# ============================================================
+# Internal Deployment Configs
+# ============================================================
+.deploy/
+
+# ============================================================
+# Logs & Temporary Files
+# ============================================================
+*.log
+npm-debug.log*
+pnpm-debug.log*
+.tmp/
+tmp/
+
+# ============================================================
+# Release & Deploy Artifacts
+# ============================================================
+deploy/
+*.tar
+*.tar.gz
+*.zip
+
+# ============================================================
+# Uploads
+# ============================================================
+apps/server/public/uploads/
+
+# ============================================================
+# Auto-generated Files
+# ============================================================
+apps/studio/public/registry.json
+# tsbuildinfo at any package level (matches turborepo/vite convention)
+**/*.tsbuildinfo
+**/.next/
+**/.turbo/
+packages/widgets/**/dist/
+apps/studio/public/widgets/**/dist/
+
+# ============================================================
+# VitePress Cache
+# ============================================================
+apps/docs/.vitepress/cache/
+
+# ============================================================
+# Internal Iteration Logs (widget-level dev notes)
+# ============================================================
+**/widget-iteration-log.md
+
+# ============================================================
+# Debug & Local Test Scripts
+# ============================================================
+*.debug.html
+apps/studio/check-auth-debug.html
+test_*.js
+
+# ============================================================
+# Testing & Coverage Reports
+# ============================================================
+# **/coverage/ catches coverage dirs at any package level, not just root
+# (matches turborepo/vite convention)
+**/coverage/
+.nyc_output/
+package-lock.json
+yarn.lock

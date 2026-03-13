@@ -1,0 +1,88 @@
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RESTConfig, DEFAULT_AUTH_CONFIG } from '@thingsvis/schema';
+import { HeadersSection, AuthSection, TimeoutSection, BodySection } from './sections';
+
+interface RESTFormProps {
+  config: RESTConfig;
+  onChange: (config: RESTConfig) => void;
+}
+
+export const RESTForm: React.FC<RESTFormProps> = ({ config, onChange }) => {
+  const { t } = useTranslation('editor');
+
+  const handleChange = <K extends keyof RESTConfig>(field: K, value: RESTConfig[K]) => {
+    onChange({ ...config, [field]: value });
+  };
+
+  const showBodySection = config.method !== 'GET';
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-sm uppercase font-bold text-muted-foreground">
+            {t('datasource.restApiUrl')} <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            value={config.url || ''}
+            onChange={(e) => handleChange('url', e.target.value)}
+            placeholder="https://api.example.com/data"
+            className="h-8 text-sm"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm uppercase font-bold text-muted-foreground">
+              {t('datasource.restMethod')}
+            </Label>
+            <select
+              value={config.method || 'GET'}
+              onChange={(e) => handleChange('method', e.target.value as RESTConfig['method'])}
+              className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+              <option value="PUT">PUT</option>
+              <option value="DELETE">DELETE</option>
+            </select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm uppercase font-bold text-muted-foreground">
+              {t('datasource.restPolling')}
+            </Label>
+            <Input
+              type="number"
+              value={config.pollingInterval || 0}
+              onChange={(e) => handleChange('pollingInterval', Number(e.target.value))}
+              className="h-8 text-sm"
+            />
+          </div>
+        </div>
+
+        <p className="text-sm text-muted-foreground italic">{t('datasource.restPollingHint')}</p>
+      </div>
+
+      <AuthSection
+        auth={config.auth ?? DEFAULT_AUTH_CONFIG}
+        onChange={(auth) => handleChange('auth', auth)}
+      />
+      <HeadersSection
+        headers={config.headers ?? {}}
+        onChange={(headers) => handleChange('headers', headers)}
+        auth={config.auth}
+      />
+      {showBodySection && (
+        <BodySection body={config.body ?? ''} onChange={(body) => handleChange('body', body)} />
+      )}
+      <TimeoutSection
+        timeout={config.timeout ?? 30}
+        onChange={(timeout) => handleChange('timeout', timeout)}
+      />
+    </div>
+  );
+};

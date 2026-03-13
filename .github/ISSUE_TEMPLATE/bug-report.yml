@@ -1,0 +1,89 @@
+name: Bug report
+description: Report a defect in Studio, embed mode, widgets, data sources, or docs
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report.
+        Please provide a minimal reproduction and enough environment detail to let us verify the issue.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - studio
+        - embed
+        - datasource
+        - widget-sdk
+        - cli
+        - built-in widget
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Runtime mode
+      options:
+        - standalone
+        - embed
+        - both
+        - not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug description
+      description: Describe the problem clearly and directly.
+      placeholder: The editor crashes when...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Provide a reproduction repository, sample config, or minimal code snippet.
+      placeholder: |
+        1. Start the workspace with...
+        2. Open...
+        3. Trigger...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: The dashboard should...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: Instead, it...
+    validations:
+      required: true
+
+  - type: textarea
+    id: env
+    attributes:
+      label: Environment
+      description: Include OS, browser, Node.js, pnpm, and anything relevant to the runtime.
+      placeholder: Windows 11, Chrome 134, Node 20.10.0, pnpm 9.7.1
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste errors, attach screenshots, or share a short recording if available.

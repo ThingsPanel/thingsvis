@@ -1,0 +1,33 @@
+{
+  "appName": "ThingsVis",
+  "loading": "加载中...",
+  "loadingScreen": {
+    "starting": "正在启动...",
+    "initEngine": "初始化可视化引擎...",
+    "loadingComponents": "加载组件库...",
+    "ready": "准备就绪...",
+    "completed": "加载完成"
+  },
+  "save": "保存",
+  "cancel": "取消",
+  "confirm": "确认",
+  "delete": "删除",
+  "edit": "编辑",
+  "create": "创建",
+  "close": "关闭",
+  "search": "搜索",
+  "retry": "重试",
+  "back": "返回",
+  "next": "下一步",
+  "submit": "提交",
+  "reset": "重置",
+  "yes": "是",
+  "no": "否",
+  "or": "或",
+  "noData": "暂无数据",
+  "errorBoundary": {
+    "title": "渲染出错了",
+    "description": "发生了一个意外的错误。您可以尝试刷新或重载页面。",
+    "reload": "重新加载"
+  }
+}

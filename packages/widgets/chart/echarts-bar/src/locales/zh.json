@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-chart-echarts-bar": {
+                "name": "ECharts 柱状图"
+            }
+        }
+    }
+}

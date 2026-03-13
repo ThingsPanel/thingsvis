@@ -1,0 +1,20 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-select": {
+                "name": "下拉框",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "label": "标签文字",
+                "placeholder": "占位文字",
+                "options": "选项配置",
+                "fontSize": "字体大小",
+                "backgroundColor": "背景颜色",
+                "textColor": "文字颜色",
+                "borderColor": "边框颜色",
+                "borderRadius": "圆角",
+                "disabled": "禁用"
+            }
+        }
+    }
+}

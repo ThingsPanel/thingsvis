@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-basic-circle": {
+                "name": "圆形"
+            }
+        }
+    }
+}

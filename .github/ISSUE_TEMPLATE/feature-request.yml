@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose an improvement for Studio, embed mode, widgets, data sources, or docs
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion.
+        Good feature requests explain the use case, the user impact, and the expected workflow.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - studio
+        - embed
+        - datasource
+        - widget-sdk
+        - cli
+        - built-in widget
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What is hard, missing, or currently blocked?
+      placeholder: It is difficult to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the behavior or workflow you want.
+      placeholder: Add a way to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Describe any workaround or alternative you have considered.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include screenshots, diagrams, links, or API examples if helpful.

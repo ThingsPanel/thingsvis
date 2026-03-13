@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-value-card": {
+                "name": "Value",
+                "groupData": "Core Data",
+                "groupTypography": "Typography",
+                "groupLayout": "Layout & Styling",
+                "title": "Title Content",
+                "value": "Data Value",
+                "suffix": "Suffix (e.g. /day)",
+                "subtitle": "Subtitle Description",
+                "precision": "Decimal Precision",
+                "titleFontSize": "Title Font Size",
+                "valueFontSize": "Value Font Size",
+                "suffixFontSize": "Suffix Font Size",
+                "subtitleFontSize": "Subtitle Font Size",
+                "align": "Alignment",
+                "alignLeft": "Left",
+                "alignCenter": "Center",
+                "alignRight": "Right"
+            }
+        }
+    }
+}

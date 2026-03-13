@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.widget.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "noEmit": false,
+    "jsx": "react-jsx",
+    "typeRoots": [
+      "../../../../node_modules/@types",
+      "../../node_modules/@types",
+      "./node_modules/@types"
+    ]
+  },
+  "include": ["src"]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@thingsvis/widget-sdk",
+  "version": "0.1.0",
+  "description": "SDK for developing ThingsVis widgets",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "zod": "^3.0.0"
+  },
+  "dependencies": {
+    "@thingsvis/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "zod": "^3.22.4"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

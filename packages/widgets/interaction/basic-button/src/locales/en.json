@@ -1,0 +1,18 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-button": {
+                "name": "Button",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "label": "Button Label",
+                "fontSize": "Font Size",
+                "variant": "Variant",
+                "backgroundColor": "Background Color",
+                "textColor": "Text Color",
+                "borderRadius": "Border Radius",
+                "disabled": "Disabled"
+            }
+        }
+    }
+}

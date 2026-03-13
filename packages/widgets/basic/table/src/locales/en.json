@@ -1,0 +1,32 @@
+{
+    "editor": {
+        "widgets": {
+            "basic-table": {
+                "name": "Basic Table",
+                "groupData": "Data",
+                "groupHeader": "Header Styles",
+                "groupBody": "Body Styles",
+                "groupDensity": "Density",
+                "columns": "Column Config",
+                "data": "Table Data",
+                "showHeader": "Show Header",
+                "headerColor": "Header Text Color",
+                "headerBgColor": "Header Background Color",
+                "headerFontSize": "Header Font Size",
+                "headerWeight": "Header Font Weight",
+                "bodyColor": "Body Text Color",
+                "bodyFontSize": "Body Font Size",
+                "bodyWeight": "Body Font Weight",
+                "showStripe": "Show Stripes",
+                "stripeColor": "Stripe Color",
+                "showBorder": "Show Border",
+                "cellPadding": "Cell Padding",
+                "weightNormal": "Normal (400)",
+                "weightMedium": "Medium (500)",
+                "weightSemibold": "Semibold (600)",
+                "weightBold": "Bold (700)",
+                "colorAuto": "Auto Theme"
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-slider": {
+                "name": "滑动条",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "label": "标签文字",
+                "min": "最小值",
+                "max": "最大值",
+                "step": "步长",
+                "unit": "单位",
+                "showValue": "显示当前值",
+                "trackColor": "滑轨颜色",
+                "backgroundColor": "背景颜色",
+                "textColor": "文字颜色",
+                "disabled": "禁用"
+            }
+        }
+    }
+}

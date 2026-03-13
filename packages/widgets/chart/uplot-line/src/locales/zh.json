@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-chart-uplot-line": {
+                "name": "时序图"
+            }
+        }
+    }
+}

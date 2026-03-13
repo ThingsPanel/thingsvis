@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-basic-rectangle": {
+                "name": "Rectangle"
+            }
+        }
+    }
+}

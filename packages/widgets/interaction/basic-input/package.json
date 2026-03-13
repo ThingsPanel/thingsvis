@@ -1,0 +1,31 @@
+{
+    "name": "thingsvis-widget-interaction-basic-input",
+    "version": "0.1.0",
+    "private": true,
+    "scripts": {
+        "dev": "rspack serve --port 3219",
+        "build": "rspack build",
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    },
+    "peerDependencies": {
+        "@thingsvis/schema": "workspace:*"
+    },
+    "dependencies": {
+        "@thingsvis/widget-sdk": "workspace:*",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "@thingsvis/widget-config": "workspace:*",
+        "@rspack/cli": "^1.0.0",
+        "@rspack/core": "^1.0.0",
+        "typescript": "^5.3.3"
+    },
+    "thingsvis": {
+        "displayName": "Input",
+        "icon": "TextCursor",
+        "i18n": {
+            "zh": "输入框",
+            "en": "Input"
+        }
+    }
+}

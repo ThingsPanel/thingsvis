@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-chart-echarts-gauge": {
+                "name": "Gauge Chart"
+            }
+        }
+    }
+}

@@ -1,0 +1,72 @@
+{
+  "name": "thingsvis",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.7.1",
+  "engines": {
+    "node": ">=20.10.0",
+    "pnpm": ">=9.0.0"
+  },
+  "scripts": {
+    "clean": "rimraf --glob apps/*/.next apps/*/.turbo packages/*/.turbo && echo Cleaned .next and turbo cache",
+    "dev": "turbo run dev --filter=studio --filter=@thingsvis/kernel",
+    "dev:kernel": "pnpm --filter @thingsvis/kernel dev",
+    "dev:app": "turbo run dev --filter=@thingsvis/kernel --filter=studio --filter=@thingsvis/server",
+    "docs:dev": "pnpm --filter @thingsvis/docs run dev",
+    "docs:build": "pnpm --filter @thingsvis/docs run build",
+    "docs:preview": "pnpm --filter @thingsvis/docs run preview",
+    "dev:full": "pnpm clean && pnpm build:widgets && pnpm dev:app",
+    "dev:widgets": "turbo run dev --filter=\"thingsvis-widget-*\"",
+    "build": "turbo run build",
+    "build:release-check": "pnpm build && pnpm deploy:widgets",
+    "build:widgets": "turbo run build --filter=\"thingsvis-widget-*\" && pnpm run deploy:widgets",
+    "deploy:widgets": "node scripts/deploy-widgets.mjs",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js",
+    "create:widget": "pnpm run vis-cli create",
+    "test": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^20.4.2",
+    "@commitlint/config-conventional": "^20.4.2",
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^20.10.6",
+    "@vitest/coverage-v8": "^4.0.18",
+    "husky": "^9.1.7",
+    "jsdom": "^28.1.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
+    "rimraf": "^6.1.3",
+    "turbo": "^1.12.3",
+    "typescript": "^5.3.3",
+    "vis-cli": "workspace:*",
+    "vitest": "^4.0.18"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^18.2.0",
+      "@types/react-dom": "^18.2.0"
+    }
+  },
+  "lint-staged": {
+    "apps/studio/src/**/*.{ts,tsx}": [
+      "eslint --rule 'no-console: error' --rule 'react-hooks/rules-of-hooks: error'",
+      "prettier --write"
+    ],
+    "apps/server/src/**/*.{ts,tsx}": [
+      "eslint",
+      "prettier --write"
+    ],
+    "packages/thingsvis-kernel/src/**/*.{ts,tsx}": [
+      "vitest related --run",
+      "prettier --write"
+    ],
+    "packages/thingsvis-schema/src/**/*.{ts,tsx}": [
+      "vitest related --run",
+      "prettier --write"
+    ]
+  }
+}

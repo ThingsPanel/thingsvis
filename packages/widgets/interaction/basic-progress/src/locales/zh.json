@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-progress": {
+                "name": "进度条",
+                "groupData": "数据",
+                "groupStyle": "样式",
+                "value": "当前值",
+                "max": "最大值",
+                "label": "标签",
+                "unit": "单位",
+                "showValue": "显示数值",
+                "animated": "动画",
+                "orientation": "方向",
+                "color": "进度颜色",
+                "trackColor": "轨道颜色",
+                "backgroundColor": "背景颜色",
+                "textColor": "文字颜色",
+                "fontSize": "字体大小",
+                "borderRadius": "圆角",
+                "thresholds": "阈值颜色配置"
+            }
+        }
+    }
+}

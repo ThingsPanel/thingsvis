@@ -1,0 +1,196 @@
+name: Deploy to Test Server
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ========================================
+      # Build all packages via turbo
+      # ========================================
+      - name: Generate Prisma Client
+        working-directory: apps/server
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma generate
+
+      - name: Build Server + Studio
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+        run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
+
+
+      - name: Build Widgets
+        run: pnpm run build:widgets
+
+      - name: Ensure registry.json in Studio dist
+        run: node scripts/generate-registry.js && cp apps/studio/public/registry.json apps/studio/dist/registry.json
+
+      - name: Validate widget release artifacts
+        run: node scripts/validate-widget-release.js apps/studio/dist/registry.json
+
+      # ========================================
+      # Package artifacts
+      # ========================================
+      - name: Package artifacts
+        run: |
+          mkdir -p deploy/server deploy/studio deploy/widgets
+
+          # --- Server: Next.js standalone ---
+          if [ -d "apps/server/.next/standalone" ]; then
+            cp -r apps/server/.next/standalone/. deploy/server/
+            mkdir -p deploy/server/apps/server/.next/static
+            cp -r apps/server/.next/static/. deploy/server/apps/server/.next/static/
+            if [ -d "apps/server/public" ]; then
+              cp -r apps/server/public deploy/server/apps/server/public
+            fi
+
+            # Copy prisma directory for migrations
+            if [ -d "apps/server/prisma" ]; then
+              cp -r apps/server/prisma deploy/server/apps/server/prisma
+            fi
+
+            echo "✅ Server packaged"
+          else
+            echo "❌ No standalone build found!"
+            exit 1
+          fi
+
+          # --- Studio: static SPA ---
+          if [ -d "apps/studio/dist" ]; then
+            cp -r apps/studio/dist/. deploy/studio/
+            echo "✅ Studio packaged"
+          else
+            echo "❌ Studio dist not found!"
+            exit 1
+          fi
+
+
+
+          # --- Widgets (two-level: packages/widgets/category/name/dist) ---
+          for dir in packages/widgets/*/*/; do
+            if [ -d "${dir}dist" ]; then
+              rel_path="${dir#packages/widgets/}"
+              rel_path="${rel_path%/}"
+              mkdir -p "deploy/widgets/${rel_path}"
+              cp -r "${dir}dist" "deploy/widgets/${rel_path}/"
+            fi
+          done
+          echo "✅ Widgets packaged"
+
+          # --- Config ---
+          # Create tarball
+          cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
+          echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
+
+      # ========================================
+      # Deploy to server via SSH key
+      # ========================================
+      - name: Upload to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          source: "thingsvis-deploy.tar.gz"
+          target: "/tmp"
+
+      - name: Deploy and restart services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: 22
+          script: |
+            set -e
+            echo "=== Deploying ThingsVis ==="
+
+            # Ensure directories exist
+            mkdir -p /opt/thingsvis/server
+            mkdir -p /var/www/thingsvis-studio
+
+            mkdir -p /var/www/thingsvis-plugins
+
+            # Extract
+            mkdir -p /tmp/thingsvis-deploy
+            tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+
+            # --- Deploy Nginx Config ---
+            cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
+            
+            # --- Deploy Server ---
+            echo ">>> Deploying Server..."
+            pm2 stop thingsvis-server 2>/dev/null || true
+            sleep 1
+            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+            cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+            cd /opt/thingsvis/server
+
+            # Source .env if exists
+            if [ -f /opt/thingsvis/server/.env ]; then
+              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            fi
+
+            # Apply database migrations
+            cd apps/server
+            npx prisma db push --accept-data-loss || true
+            cd ../..
+
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
+            pm2 save
+
+            # --- Deploy Studio ---
+            echo ">>> Deploying Studio..."
+            rm -rf /var/www/thingsvis-studio/*
+            cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+
+
+
+            # --- Deploy Widgets ---
+            echo ">>> Deploying Widgets..."
+            if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
+              mkdir -p /var/www/thingsvis-plugins
+              cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
+            fi
+
+            # Reload nginx
+            nginx -t && systemctl reload nginx
+
+            # Cleanup
+            rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
+
+            echo ""
+            echo "=== Deployment complete ==="
+            pm2 list
+            echo ""
+            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST }}:7050/"

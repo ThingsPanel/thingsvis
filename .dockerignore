@@ -1,0 +1,53 @@
+# Dependencies - 忽略所有 node_modules
+**/node_modules
+**/node_modules/@*
+.pnpm-store
+
+# Build outputs
+**/.next
+**/dist
+**/build
+*.tsbuildinfo
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+
+# Misc
+.DS_Store
+Thumbs.db
+
+# Turborepo
+.turbo
+
+# Test
+coverage
+.nyc_output
+
+# Temporary
+tmp
+temp
+*.tmp
+
+# Exclude apps we don't need
+# apps/studio (removed because it is needed for the studio image)
+apps/admin
+tools
+docs

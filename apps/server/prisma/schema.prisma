@@ -1,0 +1,208 @@
+// Prisma Schema for ThingsVis Server
+// Database: PostgreSQL
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x", "linux-musl", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Tenant Model - Multi-tenant isolation
+// =============================================================================
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("FREE") // FREE, PRO, ENTERPRISE
+  settings  String   @default("{}") // JSON string for custom settings
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users           User[]
+  projects        Project[]
+  thirdPartyApps  ThirdPartyApp[]
+
+  @@map("tenants")
+}
+
+// =============================================================================
+// User Model - Users belonging to a tenant
+// =============================================================================
+model User {
+  id           String  @id @default(cuid())
+  email        String  @unique
+  name         String?
+  passwordHash String?
+  avatar       String?
+  role         String  @default("VIEWER") // OWNER, ADMIN, EDITOR, VIEWER
+
+  ssoProvider String?
+  ssoSubject  String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  projects    Project[]
+  dashboards  Dashboard[]
+  dataSources DataSource[]
+
+  @@unique([ssoProvider, ssoSubject])
+  @@map("users")
+}
+
+// =============================================================================
+// Project Model - Container for dashboards
+// =============================================================================
+model Project {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  thumbnail   String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dashboards Dashboard[]
+
+  @@index([tenantId])
+  @@map("projects")
+}
+
+// =============================================================================
+// Dashboard Model - Visualization screen with canvas, nodes, and data sources
+// =============================================================================
+model Dashboard {
+  id        String  @id @default(cuid())
+  name      String
+  thumbnail String? // 缩略图 URL
+  version   Int     @default(1)
+
+  canvasConfig String @default("{}") // JSON: { mode, width, height, background }
+  nodes        String @default("[]") // JSON: NodeSchema[]
+  dataSources  String @default("[]") // JSON: DataSourceConfig[]
+  variables    String @default("[]") // JSON: DashboardVariable[]
+
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  shareToken  String?   @unique
+  shareConfig String? // JSON: { password?, expiresAt? }
+  
+  homeFlag    Boolean   @default(false) // 是否设为首页
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions DashboardVersion[]
+
+  @@index([projectId])
+  @@index([shareToken])
+  @@map("dashboards")
+}
+
+// =============================================================================
+// DashboardVersion Model - Version history for dashboards
+// =============================================================================
+model DashboardVersion {
+  id           String @id @default(cuid())
+  version      Int
+  canvasConfig String
+  nodes        String
+  dataSources  String
+  variables    String @default("[]")
+
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([dashboardId, version])
+  @@map("dashboard_versions")
+}
+
+// =============================================================================
+// DataSource Model - User's data source configurations
+// =============================================================================
+model DataSource {
+  id             String  @id
+  name           String
+  type           String  // STATIC, REST, WS, PLATFORM_FIELD
+  config         String  // JSON: adapter configuration
+  transformation String? // JSON: data transformation rules
+  isDeleted      Boolean @default(false)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, isDeleted])
+  @@map("data_sources")
+}
+
+// =============================================================================
+// ThirdPartyApp Model - External system registrations (Open API clients)
+// =============================================================================
+model ThirdPartyApp {
+  id             String  @id @default(cuid())
+  name           String
+  appId          String  @unique // public client identifier, e.g. "tvapp_xxx"
+  appSecretHash  String           // bcrypt hash of the app secret (for initial OAuth-style flows)
+  permissions    String  @default("[]")  // JSON: ['dashboard:read','dashboard:write','dashboard:delete']
+  allowedOrigins String  @default("[]")  // JSON: ['https://example.com']
+  isActive       Boolean @default(true)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeys ApiKey[]
+
+  @@index([tenantId])
+  @@map("third_party_apps")
+}
+
+// =============================================================================
+// ApiKey Model - Long-lived API keys issued to ThirdPartyApps
+// =============================================================================
+model ApiKey {
+  id         String    @id @default(cuid())
+  prefix     String                     // first 8 chars of raw key for display, e.g. "tvk_xxxx"
+  keyHash    String    @unique          // SHA-256(rawKey) — timing-safe comparison at runtime
+  label      String?
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  isRevoked  Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  appId String
+  app   ThirdPartyApp @relation(fields: [appId], references: [id], onDelete: Cascade)
+
+  @@index([appId])
+  @@map("api_keys")
+}
+

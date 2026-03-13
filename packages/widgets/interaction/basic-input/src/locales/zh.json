@@ -1,0 +1,22 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-input": {
+                "name": "输入框",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "label": "标签",
+                "placeholder": "占位符",
+                "inputType": "输入类型",
+                "submitOn": "提交方式",
+                "disabled": "禁用",
+                "backgroundColor": "背景颜色",
+                "textColor": "文字颜色",
+                "borderColor": "边框颜色",
+                "accentColor": "聚焦颜色",
+                "fontSize": "字体大小",
+                "borderRadius": "圆角"
+            }
+        }
+    }
+}

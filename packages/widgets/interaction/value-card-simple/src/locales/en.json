@@ -1,0 +1,27 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-value-card-simple": {
+                "name": "Value Card Simple",
+                "groupContent": "Content",
+                "groupTrend": "Trend",
+                "groupStyle": "Style",
+                "title": "Title",
+                "value": "Value",
+                "unit": "Unit",
+                "showUnit": "Show Unit",
+                "precision": "Precision",
+                "trend": "Trend %",
+                "trendLabel": "Trend Label",
+                "showTrend": "Show Trend",
+                "valueColor": "Value Color",
+                "thresholds": "Thresholds",
+                "color.auto": "Auto",
+                "color.theme": "Theme",
+                "color.success": "Success",
+                "color.warning": "Warning",
+                "color.danger": "Danger"
+            }
+        }
+    }
+}

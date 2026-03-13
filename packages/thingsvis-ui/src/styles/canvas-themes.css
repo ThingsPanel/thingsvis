@@ -1,0 +1,88 @@
+/**
+ * Canvas theme color tokens for widget CSS custom properties.
+ *
+ * The VisualEngine sets `data-canvas-theme` on the overlay root element.
+ * All CSS selectors here cascade down so every widget container inherits
+ * the correct --w-* values, which are then read by resolveWidgetColors().
+ *
+ * To add a new theme:
+ *   1. Register it in packages/thingsvis-schema/src/theme-registry.ts
+ *   2. Add a matching [data-canvas-theme="<id>"] block below
+ *   3. Add a matching .theme-<id> block in apps/studio/src/index.css
+ *   4. Zero TypeScript changes required.
+ */
+
+/* ─── Theme: dawn (light default) ─────────────────────────────────────────── */
+[data-canvas-theme="dawn"] {
+  --w-bg:       #ffffff;
+  --w-fg:       #1a1a2e;
+  --w-axis:     rgba(0, 0, 0, 0.08);
+  --w-primary:  #6965db;
+  --w-border:   rgba(0, 0, 0, 0.06);
+  --w-series-1: #6965db;
+  --w-series-2: #4ea8a6;
+  --w-series-3: #e8945a;
+  --w-series-4: #e05d6f;
+  --w-series-5: #8b5cf6;
+  --w-series-6: #0ea5e9;
+}
+
+/* ─── Theme: midnight (dark sci-fi) ──────────────────────────────────────── */
+[data-canvas-theme="midnight"] {
+  --w-bg:       #0f1729;
+  --w-fg:       #c8d6f0;
+  --w-axis:     rgba(120, 160, 255, 0.15);
+  --w-primary:  #4e80ee;
+  --w-border:   rgba(200, 214, 240, 0.12);
+  --w-series-1: #4e80ee;
+  --w-series-2: #5b8def;
+  --w-series-3: #3d6ad6;
+  --w-series-4: #7c5cfc;
+  --w-series-5: #38bdf8;
+  --w-series-6: #f472b6;
+}
+
+/* ─── Theme: ocean (dark teal) ────────────────────────────────────────────── */
+[data-canvas-theme="ocean"] {
+  --w-bg:       #0a192f;
+  --w-fg:       #ccd6f6;
+  --w-axis:     rgba(100, 255, 218, 0.12);
+  --w-primary:  #64ffda;
+  --w-border:   rgba(204, 214, 246, 0.1);
+  --w-series-1: #64ffda;
+  --w-series-2: #57cbff;
+  --w-series-3: #ff6b9d;
+  --w-series-4: #ffd93d;
+  --w-series-5: #6c5ce7;
+  --w-series-6: #a8e6cf;
+}
+
+/* ─── Theme: ember (dark warm) ────────────────────────────────────────────── */
+[data-canvas-theme="ember"] {
+  --w-bg:       #1a1020;
+  --w-fg:       #f0e6ff;
+  --w-axis:     rgba(255, 107, 53, 0.15);
+  --w-primary:  #ff6b35;
+  --w-border:   rgba(240, 230, 255, 0.1);
+  --w-series-1: #ff6b35;
+  --w-series-2: #ffb366;
+  --w-series-3: #ff4757;
+  --w-series-4: #ffc048;
+  --w-series-5: #a855f7;
+  --w-series-6: #fb923c;
+}
+
+/* ─── Theme: aurora (light GitHub) ────────────────────────────────────────── */
+[data-canvas-theme="aurora"] {
+  --w-bg:       #fafbfc;
+  --w-fg:       #24292e;
+  --w-axis:     rgba(0, 0, 0, 0.06);
+  --w-primary:  #2188ff;
+  --w-border:   rgba(0, 0, 0, 0.08);
+  --w-series-1: #2188ff;
+  --w-series-2: #28a745;
+  --w-series-3: #6f42c1;
+  --w-series-4: #e36209;
+  --w-series-5: #d73a49;
+  --w-series-6: #0366d6;
+}

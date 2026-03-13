@@ -1,0 +1,9 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-media-iframe": {
+                "name": "Iframe"
+            }
+        }
+    }
+}

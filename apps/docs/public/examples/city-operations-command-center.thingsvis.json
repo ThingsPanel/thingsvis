@@ -1,0 +1,581 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "id": "8d5dc770-6c27-4d89-b43f-b5c38e365a01",
+    "name": "城市运行监测中心",
+    "createdAt": 1773273600000,
+    "updatedAt": 1773273600000
+  },
+  "canvas": {
+    "mode": "fixed",
+    "width": 1920,
+    "height": 1080,
+    "theme": "midnight",
+    "background": {
+      "color": "#06101d",
+      "image": "",
+      "size": "cover",
+      "repeat": "no-repeat",
+      "attachment": "scroll"
+    }
+  },
+  "nodes": [
+    {
+      "id": "panel-left-top",
+      "name": "Left Top Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 60, "y": 290 },
+      "size": { "width": 420, "height": 300 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.88)",
+        "stroke": "rgba(80, 181, 255, 0.30)",
+        "strokeWidth": 1,
+        "cornerRadius": 24,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "panel-left-bottom",
+      "name": "Left Bottom Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 60, "y": 620 },
+      "size": { "width": 420, "height": 390 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.88)",
+        "stroke": "rgba(80, 181, 255, 0.30)",
+        "strokeWidth": 1,
+        "cornerRadius": 24,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "panel-center-main",
+      "name": "Center Main Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 505, "y": 290 },
+      "size": { "width": 900, "height": 730 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.90)",
+        "stroke": "rgba(98, 170, 255, 0.36)",
+        "strokeWidth": 1,
+        "cornerRadius": 28,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "panel-right-top",
+      "name": "Right Top Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 1435, "y": 290 },
+      "size": { "width": 425, "height": 220 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.88)",
+        "stroke": "rgba(80, 181, 255, 0.30)",
+        "strokeWidth": 1,
+        "cornerRadius": 24,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "panel-right-middle",
+      "name": "Right Middle Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 1435, "y": 540 },
+      "size": { "width": 425, "height": 235 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.88)",
+        "stroke": "rgba(80, 181, 255, 0.30)",
+        "strokeWidth": 1,
+        "cornerRadius": 24,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "panel-right-bottom",
+      "name": "Right Bottom Panel",
+      "type": "basic/rectangle",
+      "position": { "x": 1435, "y": 805 },
+      "size": { "width": 425, "height": 205 },
+      "props": {
+        "fill": "rgba(9, 27, 48, 0.88)",
+        "stroke": "rgba(80, 181, 255, 0.30)",
+        "strokeWidth": 1,
+        "cornerRadius": 24,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "decor-line-left",
+      "name": "Decor Left Line",
+      "type": "basic/rectangle",
+      "position": { "x": 60, "y": 94 },
+      "size": { "width": 360, "height": 2 },
+      "props": {
+        "fill": "rgba(68, 188, 255, 0.65)",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "cornerRadius": 4,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "decor-line-right",
+      "name": "Decor Right Line",
+      "type": "basic/rectangle",
+      "position": { "x": 1500, "y": 94 },
+      "size": { "width": 360, "height": 2 },
+      "props": {
+        "fill": "rgba(68, 188, 255, 0.65)",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "cornerRadius": 4,
+        "opacity": 1
+      }
+    },
+    {
+      "id": "title-main",
+      "name": "Main Title",
+      "type": "basic/text",
+      "position": { "x": 530, "y": 26 },
+      "size": { "width": 860, "height": 64 },
+      "props": {
+        "text": "城市运行监测中心",
+        "fontSize": 34,
+        "fontFamily": "Microsoft YaHei",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 2,
+        "textDecoration": "none",
+        "fill": "#ecf7ff",
+        "opacity": 1,
+        "textShadowEnabled": true,
+        "textShadowColor": "rgba(70, 182, 255, 0.45)",
+        "textShadowBlur": 12,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "title-left-caption",
+      "name": "Left Caption",
+      "type": "basic/text",
+      "position": { "x": 70, "y": 38 },
+      "size": { "width": 360, "height": 32 },
+      "props": {
+        "text": "CITY OPERATIONS / MOCK DATA",
+        "fontSize": 16,
+        "fontFamily": "Arial",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 1.2,
+        "textDecoration": "none",
+        "fill": "#7ec8ff",
+        "opacity": 0.9,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.3)",
+        "textShadowBlur": 4,
+        "textShadowOffsetX": 1,
+        "textShadowOffsetY": 1
+      }
+    },
+    {
+      "id": "title-right-caption",
+      "name": "Right Caption",
+      "type": "basic/text",
+      "position": { "x": 1450, "y": 38 },
+      "size": { "width": 400, "height": 32 },
+      "props": {
+        "text": "12 MAR 2026 / REFRESH 5 MIN",
+        "fontSize": 16,
+        "fontFamily": "Arial",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "right",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 1.2,
+        "textDecoration": "none",
+        "fill": "#7ec8ff",
+        "opacity": 0.9,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.3)",
+        "textShadowBlur": 4,
+        "textShadowOffsetX": 1,
+        "textShadowOffsetY": 1
+      }
+    },
+    {
+      "id": "kpi-online-rate",
+      "name": "KPI Online Rate",
+      "type": "interaction/value-card",
+      "position": { "x": 70, "y": 118 },
+      "size": { "width": 400, "height": 128 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 39, 67, 0.88)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(56, 197, 255, 0.28)", "style": "solid", "radius": 24 },
+        "shadow": { "color": "rgba(18, 124, 255, 0.22)", "blur": 24, "offsetX": 0, "offsetY": 8 },
+        "opacity": 1
+      },
+      "props": {
+        "padding": 22,
+        "contentGap": 12,
+        "bottomGap": 10,
+        "bottomLayout": "row",
+        "showIcon": true,
+        "iconName": "activity",
+        "iconSize": 24,
+        "iconColor": "#26d0ff",
+        "iconBgColor": "rgba(38, 208, 255, 0.10)",
+        "iconBoxSize": 52,
+        "iconRadius": 16,
+        "showTrend": true,
+        "trendValue": 1.7,
+        "trendPositiveColor": "#35d49a",
+        "trendNegativeColor": "#ff6b6b",
+        "trendFontSize": 12,
+        "trendRadius": 12,
+        "title": "在线设备率",
+        "titleFontSize": 14,
+        "titleColor": "#7ec8ff",
+        "titleWeight": "600",
+        "value": 98.6,
+        "prefix": "",
+        "suffix": "%",
+        "precision": 1,
+        "useGrouping": true,
+        "valueFontSize": 34,
+        "valueColor": "#f5fbff",
+        "valueWeight": "700",
+        "showComparison": true,
+        "comparisonText": "在线 1,284 / 总数 1,302",
+        "comparisonFontSize": 12,
+        "comparisonColor": "#9cb5cb",
+        "comparisonWeight": "400"
+      }
+    },
+    {
+      "id": "kpi-alarm-count",
+      "name": "KPI Alarm Count",
+      "type": "interaction/value-card",
+      "position": { "x": 495, "y": 118 },
+      "size": { "width": 400, "height": 128 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 39, 67, 0.88)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(255, 164, 76, 0.28)", "style": "solid", "radius": 24 },
+        "shadow": { "color": "rgba(255, 164, 76, 0.15)", "blur": 24, "offsetX": 0, "offsetY": 8 },
+        "opacity": 1
+      },
+      "props": {
+        "padding": 22,
+        "contentGap": 12,
+        "bottomGap": 10,
+        "bottomLayout": "row",
+        "showIcon": true,
+        "iconName": "truck",
+        "iconSize": 24,
+        "iconColor": "#ffb365",
+        "iconBgColor": "rgba(255, 179, 101, 0.10)",
+        "iconBoxSize": 52,
+        "iconRadius": 16,
+        "showTrend": true,
+        "trendValue": -18.0,
+        "trendPositiveColor": "#35d49a",
+        "trendNegativeColor": "#ff6b6b",
+        "trendFontSize": 12,
+        "trendRadius": 12,
+        "title": "实时告警",
+        "titleFontSize": 14,
+        "titleColor": "#ffcf9e",
+        "titleWeight": "600",
+        "value": 12,
+        "prefix": "",
+        "suffix": "",
+        "precision": 0,
+        "useGrouping": true,
+        "valueFontSize": 34,
+        "valueColor": "#f5fbff",
+        "valueWeight": "700",
+        "showComparison": true,
+        "comparisonText": "中危 7 条 / 高危 2 条",
+        "comparisonFontSize": 12,
+        "comparisonColor": "#c8b39c",
+        "comparisonWeight": "400"
+      }
+    },
+    {
+      "id": "kpi-energy-load",
+      "name": "KPI Energy Load",
+      "type": "interaction/value-card",
+      "position": { "x": 920, "y": 118 },
+      "size": { "width": 400, "height": 128 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 39, 67, 0.88)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(132, 145, 255, 0.30)", "style": "solid", "radius": 24 },
+        "shadow": { "color": "rgba(90, 110, 255, 0.18)", "blur": 24, "offsetX": 0, "offsetY": 8 },
+        "opacity": 1
+      },
+      "props": {
+        "padding": 22,
+        "contentGap": 12,
+        "bottomGap": 10,
+        "bottomLayout": "row",
+        "showIcon": true,
+        "iconName": "wallet",
+        "iconSize": 24,
+        "iconColor": "#8f9dff",
+        "iconBgColor": "rgba(143, 157, 255, 0.12)",
+        "iconBoxSize": 52,
+        "iconRadius": 16,
+        "showTrend": true,
+        "trendValue": 3.4,
+        "trendPositiveColor": "#35d49a",
+        "trendNegativeColor": "#ff6b6b",
+        "trendFontSize": 12,
+        "trendRadius": 12,
+        "title": "综合负载",
+        "titleFontSize": 14,
+        "titleColor": "#aeb6ff",
+        "titleWeight": "600",
+        "value": 78.4,
+        "prefix": "",
+        "suffix": "%",
+        "precision": 1,
+        "useGrouping": true,
+        "valueFontSize": 34,
+        "valueColor": "#f5fbff",
+        "valueWeight": "700",
+        "showComparison": true,
+        "comparisonText": "峰值时段 14:00 - 16:00",
+        "comparisonFontSize": 12,
+        "comparisonColor": "#a2afd1",
+        "comparisonWeight": "400"
+      }
+    },
+    {
+      "id": "kpi-work-orders",
+      "name": "KPI Work Orders",
+      "type": "interaction/value-card",
+      "position": { "x": 1345, "y": 118 },
+      "size": { "width": 400, "height": 128 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 39, 67, 0.88)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(74, 227, 186, 0.28)", "style": "solid", "radius": 24 },
+        "shadow": { "color": "rgba(53, 212, 154, 0.16)", "blur": 24, "offsetX": 0, "offsetY": 8 },
+        "opacity": 1
+      },
+      "props": {
+        "padding": 22,
+        "contentGap": 12,
+        "bottomGap": 10,
+        "bottomLayout": "row",
+        "showIcon": true,
+        "iconName": "users",
+        "iconSize": 24,
+        "iconColor": "#4ae3ba",
+        "iconBgColor": "rgba(74, 227, 186, 0.10)",
+        "iconBoxSize": 52,
+        "iconRadius": 16,
+        "showTrend": true,
+        "trendValue": 8.9,
+        "trendPositiveColor": "#35d49a",
+        "trendNegativeColor": "#ff6b6b",
+        "trendFontSize": 12,
+        "trendRadius": 12,
+        "title": "今日工单",
+        "titleFontSize": 14,
+        "titleColor": "#8cf0cf",
+        "titleWeight": "600",
+        "value": 284,
+        "prefix": "",
+        "suffix": "",
+        "precision": 0,
+        "useGrouping": true,
+        "valueFontSize": 34,
+        "valueColor": "#f5fbff",
+        "valueWeight": "700",
+        "showComparison": true,
+        "comparisonText": "已闭环 241 / 处理中 43",
+        "comparisonFontSize": 12,
+        "comparisonColor": "#9ac7bb",
+        "comparisonWeight": "400"
+      }
+    },
+    {
+      "id": "chart-device-mix",
+      "name": "Device Mix",
+      "type": "chart/echarts-bar",
+      "position": { "x": 85, "y": 325 },
+      "size": { "width": 370, "height": 235 },
+      "props": {
+        "title": "设备类型分布",
+        "primaryColor": "#36b6ff",
+        "showLegend": false,
+        "showXAxis": true,
+        "showYAxis": true,
+        "data": [
+          { "name": "冷站", "value": 132 },
+          { "name": "泵组", "value": 108 },
+          { "name": "空压", "value": 96 },
+          { "name": "新风", "value": 84 },
+          { "name": "照明", "value": 178 },
+          { "name": "计量", "value": 63 }
+        ]
+      }
+    },
+    {
+      "id": "chart-alarm-trend",
+      "name": "Alarm Trend",
+      "type": "chart/echarts-line",
+      "position": { "x": 85, "y": 655 },
+      "size": { "width": 370, "height": 300 },
+      "props": {
+        "title": "近 7 日告警趋势",
+        "primaryColor": "#ff9f6d",
+        "showLegend": false,
+        "showXAxis": true,
+        "showYAxis": true,
+        "smooth": true,
+        "showArea": true,
+        "data": [
+          { "name": "03-06", "value": 19 },
+          { "name": "03-07", "value": 24 },
+          { "name": "03-08", "value": 18 },
+          { "name": "03-09", "value": 16 },
+          { "name": "03-10", "value": 14 },
+          { "name": "03-11", "value": 15 },
+          { "name": "03-12", "value": 12 }
+        ]
+      }
+    },
+    {
+      "id": "chart-runtime-main",
+      "name": "Runtime Trend",
+      "type": "chart/uplot-line",
+      "position": { "x": 530, "y": 325 },
+      "size": { "width": 850, "height": 580 },
+      "props": {
+        "title": "24h 运行趋势",
+        "primaryColor": "#67d9ff",
+        "showLegend": false,
+        "data": [
+          { "time": 1773259200000, "value": 41.5 },
+          { "time": 1773262800000, "value": 44.2 },
+          { "time": 1773266400000, "value": 46.8 },
+          { "time": 1773270000000, "value": 52.1 },
+          { "time": 1773273600000, "value": 58.3 },
+          { "time": 1773277200000, "value": 61.4 },
+          { "time": 1773280800000, "value": 67.2 },
+          { "time": 1773284400000, "value": 72.6 },
+          { "time": 1773288000000, "value": 78.1 },
+          { "time": 1773291600000, "value": 81.4 },
+          { "time": 1773295200000, "value": 79.8 },
+          { "time": 1773298800000, "value": 76.9 },
+          { "time": 1773302400000, "value": 74.1 },
+          { "time": 1773306000000, "value": 69.2 },
+          { "time": 1773309600000, "value": 63.5 },
+          { "time": 1773313200000, "value": 58.2 }
+        ]
+      }
+    },
+    {
+      "id": "runtime-summary",
+      "name": "Runtime Summary",
+      "type": "basic/text",
+      "position": { "x": 540, "y": 925 },
+      "size": { "width": 830, "height": 58 },
+      "props": {
+        "text": "模拟场景：整合设备在线率、告警、能耗和工单指标，用于展示 ThingsVis 在工业运行大屏中的典型编排能力。",
+        "fontSize": 16,
+        "fontFamily": "Microsoft YaHei",
+        "fontWeight": "500",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.6,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#8db5d8",
+        "opacity": 0.95,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.3)",
+        "textShadowBlur": 4,
+        "textShadowOffsetX": 1,
+        "textShadowOffsetY": 1
+      }
+    },
+    {
+      "id": "chart-health-gauge",
+      "name": "Health Gauge",
+      "type": "chart/echarts-gauge",
+      "position": { "x": 1495, "y": 312 },
+      "size": { "width": 300, "height": 170 },
+      "props": {
+        "title": "综合健康度",
+        "primaryColor": "#66d7ff",
+        "max": 100,
+        "data": [
+          { "name": "评分", "value": 92 }
+        ]
+      }
+    },
+    {
+      "id": "chart-energy-pie",
+      "name": "Energy Pie",
+      "type": "chart/echarts-pie",
+      "position": { "x": 1490, "y": 555 },
+      "size": { "width": 310, "height": 190 },
+      "props": {
+        "title": "能耗结构占比",
+        "primaryColor": "#7f89ff",
+        "showLegend": true,
+        "isDoughnut": true,
+        "data": [
+          { "name": "冷站", "value": 38 },
+          { "name": "送风", "value": 24 },
+          { "name": "照明", "value": 19 },
+          { "name": "其他", "value": 19 }
+        ]
+      }
+    },
+    {
+      "id": "table-alarm-rank",
+      "name": "Alarm Rank",
+      "type": "basic/table",
+      "position": { "x": 1460, "y": 840 },
+      "size": { "width": 375, "height": 140 },
+      "props": {
+        "columns": [
+          { "key": "name", "title": "设备", "align": "left" },
+          { "key": "level", "title": "等级", "align": "center" },
+          { "key": "status", "title": "状态", "align": "right" }
+        ],
+        "data": [
+          { "name": "1# 冷冻泵", "level": "高", "status": "温升异常" },
+          { "name": "西区风柜", "level": "中", "status": "电流波动" },
+          { "name": "冷却塔 B", "level": "中", "status": "通讯中断" },
+          { "name": "照明总控", "level": "低", "status": "待巡检" }
+        ],
+        "showHeader": true,
+        "headerFontSize": 13,
+        "headerWeight": "600",
+        "headerColor": "#bde6ff",
+        "headerBgColor": "rgba(34, 79, 124, 0.55)",
+        "bodyFontSize": 12,
+        "bodyWeight": "400",
+        "bodyColor": "#e5f4ff",
+        "showBorder": true,
+        "showStripe": true,
+        "stripeColor": "rgba(19, 47, 78, 0.42)",
+        "cellPadding": 8
+      }
+    }
+  ],
+  "dataSources": [],
+  "variables": []
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "pipeline": {
+    "build": {
+      "outputs": [
+        "dist/**",
+        "build/**"
+      ],
+      "dependsOn": ["^build", "db:generate"]
+    },
+    "db:generate": {
+      "outputs": [
+        "node_modules/.prisma/**"
+      ]
+    },
+    "dev": {
+      "cache": false
+    },
+    "lint": {
+      "outputs": [],
+      "dependsOn": ["^lint"]
+    },
+    "typecheck": {
+      "outputs": [],
+      "dependsOn": ["^build"]
+    }
+  }
+}
+

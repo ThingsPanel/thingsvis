@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-progress": {
+                "name": "Progress",
+                "groupData": "Data",
+                "groupStyle": "Style",
+                "value": "Value",
+                "max": "Maximum",
+                "label": "Label",
+                "unit": "Unit",
+                "showValue": "Show Value",
+                "animated": "Animated",
+                "orientation": "Orientation",
+                "color": "Bar Color",
+                "trackColor": "Track Color",
+                "backgroundColor": "Background Color",
+                "textColor": "Text Color",
+                "fontSize": "Font Size",
+                "borderRadius": "Border Radius",
+                "thresholds": "Threshold Colors"
+            }
+        }
+    }
+}

@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-value-card": {
+                "name": "数值",
+                "groupData": "核心数据",
+                "groupTypography": "排版设置",
+                "groupLayout": "外观布局",
+                "title": "标题内容",
+                "value": "核心数据值",
+                "suffix": "后缀（如 /天）",
+                "subtitle": "副文案描述",
+                "precision": "保留小数位数",
+                "titleFontSize": "标题字号",
+                "valueFontSize": "数值主字号",
+                "suffixFontSize": "后缀单位字号",
+                "subtitleFontSize": "副文案字号",
+                "align": "全局对齐方式",
+                "alignLeft": "居左",
+                "alignCenter": "居中",
+                "alignRight": "居右"
+            }
+        }
+    }
+}

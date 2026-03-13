@@ -1,0 +1,24 @@
+# Prisma generated
+prisma/migrations/
+
+# Next.js
+.next/
+out/
+
+# Build outputs
+dist/
+build/
+
+# Dependencies (already in root .gitignore but for safety)
+node_modules/
+
+# Environment files (already in root .gitignore but for safety)
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+
+# Cache
+.cache/

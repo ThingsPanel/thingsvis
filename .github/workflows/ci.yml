@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev, master]
+  push:
+    branches: [main, dev, master]
+
+env:
+  NODE_VERSION: "20"
+  PNPM_VERSION: "9"
+
+jobs:
+  quality:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint commit message
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "${{ github.event.pull_request.title }}" | pnpm exec commitlint
+
+      - name: Lint (studio + server)
+        run: pnpm turbo run lint --filter=studio --filter=@thingsvis/server
+
+      - name: Type Check (packages)
+        run: pnpm turbo run typecheck --filter=!studio
+
+      - name: Unit Tests
+        run: pnpm test:coverage
+
+  release-build:
+    name: Release Build
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Turbo and docs cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .turbo
+            apps/docs/.vitepress/cache
+          key: ${{ runner.os }}-release-build-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-release-build-
+
+      - name: Run release build check
+        run: pnpm run build:release-check
+
+      - name: Validate widget release artifacts
+        run: node scripts/validate-widget-release.js apps/studio/dist/registry.json
+
+      - name: Verify docs output
+        run: test -f apps/docs/.vitepress/dist/index.html
+
+      - name: Verify deployed widget artifacts
+        run: |
+          echo "=== Deployed widget build artifacts ==="
+          find apps/studio/public/widgets -name "remoteEntry.js" 2>/dev/null | head -20 || echo "No remoteEntry.js found"

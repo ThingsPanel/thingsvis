@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-switch": {
+                "name": "开关",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "groupBehavior": "行为",
+                "value": "开关状态",
+                "label": "标签文字",
+                "showLabel": "显示标签",
+                "labelPosition": "标签位置",
+                "onLabel": "开启文字",
+                "offLabel": "关闭文字",
+                "onColor": "开启颜色",
+                "offColor": "关闭颜色",
+                "size": "尺寸",
+                "disabled": "禁用",
+                "loading": "加载中",
+                "confirmToggle": "确认后切换",
+                "confirmMessage": "确认提示语"
+            }
+        }
+    }
+}

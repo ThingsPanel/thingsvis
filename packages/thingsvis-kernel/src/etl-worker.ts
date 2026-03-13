@@ -1,0 +1,37 @@
+import { PageSchema } from '@thingsvis/schema';
+
+// Minimal ETL worker stub. This file is intended to be usable both as:
+// - a Node.js worker (worker_threads), and
+// - a browser Web Worker (self.postMessage).
+// Some bundlers can't resolve 'worker_threads' at build time, so we load it dynamically.
+
+// Adapter: prefer environment-specific implementation to avoid bundler resolving `worker_threads`.
+// Node: use `etl-worker.node.ts` (requires worker_threads)
+// Web: use `etl-worker.web.ts` (web worker)
+
+const isNode = typeof process !== 'undefined' && !!process.versions?.node;
+
+if (isNode) {
+  // Dynamically require the node worker implementation at runtime in Node.
+  // Use eval-wrapped require to avoid static analysis by bundlers.
+  try {
+    // eslint-disable-next-line no-eval
+    const req = eval('require') as NodeRequire;
+    req('./etl-worker.node');
+  } catch (e) {
+    // eslint-disable-next-line no-console
+  }
+} else if (typeof self !== 'undefined' && 'postMessage' in self) {
+  try {
+    // eslint-disable-next-line no-eval
+    const req = eval('require') as NodeRequire;
+    req('./etl-worker.web');
+  } catch (e) {
+    // eslint-disable-next-line no-console
+  }
+} else {
+  // Not running inside a worker; expose a no-op adapter
+  // eslint-disable-next-line no-console
+}
+
+export {};

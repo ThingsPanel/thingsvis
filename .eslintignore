@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+coverage/
+.next/
+.turbo/
+.pnpm-store/
+*.min.js
+*.log
+.env*
+
+

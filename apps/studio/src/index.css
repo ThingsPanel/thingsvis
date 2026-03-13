@@ -1,0 +1,463 @@
+@import 'gridstack/dist/gridstack.min.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Light theme - Ultra bright and airy */
+  /* Crisp white background */
+  --background: 220 14% 96%;
+  --foreground: 220 20% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 10%;
+  /* Primary color #6965db */
+  --primary: 243 58% 63%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 210 20% 98%;
+  --secondary-foreground: 220 20% 10%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 210 15% 50%;
+  --accent: 210 20% 94%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 210 20% 92%;
+  --input: 210 20% 92%;
+  --ring: 243 58% 63%;
+  --radius: 0.75rem;
+
+  /* Canvas background - very subtle dots */
+  --canvas-dot: 210 15% 92%;
+  /* Workspace background color - #F8F8F8 */
+  --workspace-bg: 0 0% 97%;
+  --chart-1: 41.116 22.2% 64.6%;
+  --chart-2: 184.704 11.8% 60%;
+  --chart-3: 227.392 7% 39.8%;
+  --chart-4: 84.429 18.9% 82.8%;
+  --chart-5: 70.08 18.8% 76.9%;
+}
+
+.dark {
+  /* Dark theme - Cozy, comfortable dark with warm undertones */
+  /* Deep but not depressing - like a cozy evening workspace */
+  --background: 225 25% 12%;
+  /* Workspace background color - Dark (deeper than panels) */
+  --workspace-bg: 220 20% 8%;
+  --foreground: 220 20% 94%;
+  --card: 225 25% 16%;
+  --card-foreground: 220 20% 94%;
+  --popover: 225 25% 18%;
+  --popover-foreground: 220 20% 94%;
+  --primary: 243 58% 63%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 225 20% 24%;
+  --secondary-foreground: 220 20% 94%;
+  --muted: 225 20% 22%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 225 20% 26%;
+  --accent-foreground: 220 20% 94%;
+  --destructive: 0 65% 60%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 225 20% 28%;
+  --input: 225 20% 28%;
+  --ring: 243 58% 63%;
+
+  /* Canvas background - soft and pleasant in dark mode */
+  --canvas-dot: 225 20% 32%;
+  --chart-1: 264.376 24.3% 48.8%;
+  --chart-2: 162.48 17% 69.6%;
+  --chart-3: 70.08 18.8% 76.9%;
+  --chart-4: 303.9 26.5% 62.7%;
+  --chart-5: 16.439 24.6% 64.5%;
+}
+
+/* ============================================================================
+   画布专用主题变量隔离 (Widget Themes)
+   说明：基于 CSS 局部变量隔离设计的 Dawn 与 Midnight 预设
+   ============================================================================ */
+
+.theme-dawn {
+  /* Dawn — Ultra bright and airy (hex for resolveWidgetColors, HSL for Tailwind) */
+  --w-bg: #ffffff;
+  --w-fg: #1a1a2e;
+  --w-axis: rgba(0, 0, 0, 0.08);
+  --w-border: rgba(0, 0, 0, 0.06);
+  --w-canvas-bg: 0 0% 100%;
+  --w-canvas-dot: 210 15% 94%;
+  --w-primary: #6965db;
+  --w-series-1: #6965db;
+  --w-series-2: #4ea8a6;
+  --w-series-3: #e8945a;
+  --w-series-4: #e05d6f;
+  --w-series-5: #8b5cf6;
+  --w-series-6: #0ea5e9;
+
+  --background: 220 14% 96%;
+  --foreground: 220 20% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 220 20% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 220 20% 10%;
+  --primary: 243 58% 63%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 210 20% 98%;
+  --secondary-foreground: 220 20% 10%;
+  --muted: 210 20% 96%;
+  --muted-foreground: 210 15% 50%;
+  --accent: 210 20% 94%;
+  --accent-foreground: 220 20% 10%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 210 20% 94%;
+  --input: 210 20% 94%;
+  --ring: 243 58% 63%;
+  --radius: 0.75rem;
+  --canvas-dot: 210 15% 94%;
+  --chart-1: 41.116 22.2% 64.6%;
+  --chart-2: 184.704 11.8% 60%;
+  --chart-3: 227.392 7% 39.8%;
+  --chart-4: 84.429 18.9% 82.8%;
+  --chart-5: 70.08 18.8% 76.9%;
+}
+
+.theme-midnight {
+  /* Midnight — Cozy dark sci-fi theme */
+  --w-bg: #0f1729;
+  --w-fg: #c8d6f0;
+  --w-axis: rgba(120, 160, 255, 0.15);
+  --w-border: rgba(200, 214, 240, 0.12);
+  --w-canvas-bg: 225 25% 12%;
+  --w-canvas-dot: 225 20% 30%;
+  --w-primary: #4e80ee;
+  --w-series-1: #4e80ee;
+  --w-series-2: #5b8def;
+  --w-series-3: #3d6ad6;
+  --w-series-4: #7c5cfc;
+  --w-series-5: #38bdf8;
+  --w-series-6: #f472b6;
+
+  --background: 225 25% 12%;
+  --foreground: 220 20% 94%;
+  --card: 225 25% 16%;
+  --card-foreground: 220 20% 94%;
+  --popover: 225 25% 18%;
+  --popover-foreground: 220 20% 94%;
+  --primary: 243 58% 63%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 225 20% 24%;
+  --secondary-foreground: 220 20% 94%;
+  --muted: 225 20% 22%;
+  --muted-foreground: 220 15% 65%;
+  --accent: 225 20% 26%;
+  --accent-foreground: 220 20% 94%;
+  --destructive: 0 65% 60%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 225 20% 28%;
+  --input: 225 20% 28%;
+  --ring: 243 58% 63%;
+  --radius: 0.75rem;
+  --canvas-dot: 225 20% 32%;
+  --chart-1: 264.376 24.3% 48.8%;
+  --chart-2: 162.48 17% 69.6%;
+  --chart-3: 70.08 18.8% 76.9%;
+  --chart-4: 303.9 26.5% 62.7%;
+  --chart-5: 16.439 24.6% 64.5%;
+}
+
+.theme-ocean {
+  /* Ocean — Deep navy-teal dark theme */
+  --w-bg: #0a192f;
+  --w-fg: #ccd6f6;
+  --w-axis: rgba(100, 255, 218, 0.12);
+  --w-border: rgba(204, 214, 246, 0.1);
+  --w-canvas-bg: 216 65% 11%;
+  --w-canvas-dot: 216 50% 25%;
+  --w-primary: #64ffda;
+  --w-series-1: #64ffda;
+  --w-series-2: #57cbff;
+  --w-series-3: #ff6b9d;
+  --w-series-4: #ffd93d;
+  --w-series-5: #6c5ce7;
+  --w-series-6: #a8e6cf;
+
+  --background: 216 65% 11%;
+  --foreground: 220 60% 91%;
+  --card: 216 60% 14%;
+  --card-foreground: 220 60% 91%;
+  --popover: 216 55% 16%;
+  --popover-foreground: 220 60% 91%;
+  --primary: 166 100% 69%;
+  --primary-foreground: 216 65% 11%;
+  --secondary: 216 50% 20%;
+  --secondary-foreground: 220 60% 91%;
+  --muted: 216 45% 18%;
+  --muted-foreground: 216 30% 55%;
+  --accent: 216 50% 22%;
+  --accent-foreground: 220 60% 91%;
+  --destructive: 0 65% 60%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 216 40% 25%;
+  --input: 216 40% 25%;
+  --ring: 166 100% 69%;
+  --radius: 0.75rem;
+  --canvas-dot: 216 50% 25%;
+  --chart-1: 166 100% 69%;
+  --chart-2: 197 100% 67%;
+  --chart-3: 340 100% 71%;
+  --chart-4: 48 100% 62%;
+  --chart-5: 261 78% 63%;
+  --chart-6: 151 51% 75%;
+}
+
+.theme-ember {
+  /* Ember — Dark warm fire-toned theme */
+  --w-bg: #1a1020;
+  --w-fg: #f0e6ff;
+  --w-axis: rgba(255, 107, 53, 0.15);
+  --w-border: rgba(240, 230, 255, 0.1);
+  --w-canvas-bg: 278 33% 9%;
+  --w-canvas-dot: 278 25% 22%;
+  --w-primary: #ff6b35;
+  --w-series-1: #ff6b35;
+  --w-series-2: #ffb366;
+  --w-series-3: #ff4757;
+  --w-series-4: #ffc048;
+  --w-series-5: #a855f7;
+  --w-series-6: #fb923c;
+
+  --background: 278 33% 9%;
+  --foreground: 270 100% 95%;
+  --card: 278 30% 13%;
+  --card-foreground: 270 100% 95%;
+  --popover: 278 28% 15%;
+  --popover-foreground: 270 100% 95%;
+  --primary: 19 100% 60%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 278 25% 18%;
+  --secondary-foreground: 270 100% 95%;
+  --muted: 278 22% 15%;
+  --muted-foreground: 278 20% 55%;
+  --accent: 278 25% 20%;
+  --accent-foreground: 270 100% 95%;
+  --destructive: 0 70% 55%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 278 20% 22%;
+  --input: 278 20% 22%;
+  --ring: 19 100% 60%;
+  --radius: 0.75rem;
+  --canvas-dot: 278 25% 22%;
+  --chart-1: 19 100% 60%;
+  --chart-2: 35 100% 70%;
+  --chart-3: 0 100% 64%;
+  --chart-4: 40 100% 65%;
+  --chart-5: 271 91% 65%;
+  --chart-6: 24 96% 60%;
+}
+
+.theme-aurora {
+  /* Aurora — Clean light GitHub-inspired theme */
+  --w-bg: #fafbfc;
+  --w-fg: #24292e;
+  --w-axis: rgba(0, 0, 0, 0.06);
+  --w-border: rgba(0, 0, 0, 0.08);
+  --w-canvas-bg: 210 17% 98%;
+  --w-canvas-dot: 210 12% 90%;
+  --w-primary: #2188ff;
+  --w-series-1: #2188ff;
+  --w-series-2: #28a745;
+  --w-series-3: #6f42c1;
+  --w-series-4: #e36209;
+  --w-series-5: #d73a49;
+  --w-series-6: #0366d6;
+
+  --background: 210 17% 98%;
+  --foreground: 210 12% 16%;
+  --card: 0 0% 100%;
+  --card-foreground: 210 12% 16%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 210 12% 16%;
+  --primary: 212 100% 56%;
+  --primary-foreground: 0 0% 99%;
+  --secondary: 210 18% 96%;
+  --secondary-foreground: 210 12% 16%;
+  --muted: 210 15% 95%;
+  --muted-foreground: 210 10% 45%;
+  --accent: 210 18% 93%;
+  --accent-foreground: 210 12% 16%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 99%;
+  --border: 210 18% 90%;
+  --input: 210 18% 90%;
+  --ring: 212 100% 56%;
+  --radius: 0.75rem;
+  --canvas-dot: 210 12% 90%;
+  --chart-1: 212 100% 56%;
+  --chart-2: 134 61% 41%;
+  --chart-3: 271 56% 51%;
+  --chart-4: 27 88% 46%;
+  --chart-5: 354 70% 53%;
+  --chart-6: 212 98% 42%;
+}
+
+/* Glassmorphism for dark canvas themes (Widget components can opt-in) */
+.theme-midnight .widget-glass,
+.theme-ocean .widget-glass,
+.theme-ember .widget-glass {
+  background: hsl(var(--w-canvas-bg) / 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.5);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-size: 14px;
+  }
+
+  /* Remove all default focus-visible outlines/rings in the studio app */
+  *:focus-visible {
+    @apply outline-none ring-0;
+  }
+
+  /* Fix for sidebar property panels: Ensure all custom tailwind focus-rings on inputs/selects are inset so they don't get clipped by overflow-hidden or edge paddings */
+  input, select, textarea, button, [role="combobox"] {
+    --tw-ring-inset: inset !important;
+  }
+  background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+  background-position: center center;
+}
+
+/* Glassmorphism effect for floating islands - Excalidraw-inspired softer look */
+.glass {
+  background: hsl(var(--card) / 1);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius);
+  box-shadow:
+    0 4px 6px -1px hsl(220 15% 10% / 0.05),
+    0 2px 4px -2px hsl(220 15% 10% / 0.05),
+    0 0 0 1px hsl(var(--border) / 0.5);
+}
+
+.dark .glass {
+  box-shadow:
+    0 4px 6px -1px hsl(220 15% 5% / 0.2),
+    0 2px 4px -2px hsl(220 15% 5% / 0.15),
+    0 0 0 1px hsl(var(--border) / 0.3);
+}
+
+/* Excalidraw-inspired font sizing for UI elements */
+.text-xs {
+  font-size: 12px;
+}
+
+.text-sm {
+  font-size: 13px;
+}
+
+.text-base {
+  font-size: 14px;
+}
+
+.text-lg {
+  font-size: 16px;
+}
+
+/* Softer button styles (scoped to UI primitives) */
+[data-slot="button"],
+.button {
+  border-radius: 0.625rem;
+  transition: all 0.15s ease;
+}
+
+[data-slot="button"]:active,
+.button:active {
+  transform: scale(0.97);
+}
+
+/* Input styles with softer focus states (scoped to UI primitives) */
+[data-slot="input"],
+.input {
+  border-radius: 0.625rem;
+  transition: all 0.15s ease;
+}
+
+[data-slot="input"]:focus,
+.input:focus {
+  box-shadow: inset 0 0 0 1px hsl(var(--ring) / 0.5);
+}
+
+/* Custom scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+/* ============================================================================
+   Moveable Transform Controls - CSS Patches & GPU Acceleration
+   - Prevents smearing/ghosting artifacts when generating dynamic guidelines
+   - Adds custom styling for guidelines
+   ============================================================================ */
+
+.moveable-guideline {
+  /* Force hardware acceleration to prevent bounding box smearing during fast drag */
+  transform: translateZ(0);
+  will-change: transform, opacity;
+  background-color: hsl(var(--destructive)) !important;
+  /* Make guidelines clear (red) */
+  opacity: 0.8 !important;
+}
+
+/* Force the entire moveable control box to its own GPU layer to stop container-level smearing */
+.moveable-control-box {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Add a very subtle glow to make the 1px line more visible on dark backgrounds */
+.moveable-guideline.moveable-horizontal,
+.moveable-guideline.moveable-vertical {
+  box-shadow: 0 0 2px hsl(var(--destructive) / 0.5) !important;
+}
+
+/* Fix text artifact ghosting by modifying the inner digits (if they ever get shown) */
+.moveable-guideline .moveable-guideline-inner {
+  transform: translateZ(0);
+  will-change: transform;
+}

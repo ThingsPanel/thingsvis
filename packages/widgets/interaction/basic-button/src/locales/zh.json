@@ -1,0 +1,18 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-button": {
+                "name": "按钮",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "label": "按钮文字",
+                "fontSize": "字体大小",
+                "variant": "样式类型",
+                "backgroundColor": "背景颜色",
+                "textColor": "文字颜色",
+                "borderRadius": "圆角",
+                "disabled": "禁用"
+            }
+        }
+    }
+}

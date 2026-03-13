@@ -1,0 +1,19 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-media-video-player": {
+                "name": "视频播放器",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "src": "视频流地址",
+                "mode": "播放模式",
+                "background": "后台运行",
+                "visibilityThreshold": "可见度阈值",
+                "objectFit": "视频适配",
+                "borderWidth": "边框宽度",
+                "borderColor": "边框颜色",
+                "borderRadius": "圆角"
+            }
+        }
+    }
+}

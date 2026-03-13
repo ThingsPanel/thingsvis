@@ -1,0 +1,68 @@
+# ThingsVis Docker Compose
+# 用法: docker-compose up -d
+#
+# 需要先复制环境变量文件:
+#   cp apps/server/.env.example .env
+# 并编辑 .env 填写 AUTH_SECRET 等必要配置
+
+services:
+  # ─── Database (PostgreSQL) ─────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: thingsvis-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-thingsvis}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-thingsvis_password}
+      POSTGRES_DB: ${POSTGRES_DB:-thingsvis_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-thingsvis} -d ${POSTGRES_DB:-thingsvis_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── API Server (Next.js) ─────────────────────────
+  server:
+    image: ghcr.io/thingspanel/thingsvis-server:latest
+    container_name: thingsvis-server
+    restart: unless-stopped
+    ports:
+      - "${SERVER_PORT:-8000}:${SERVER_PORT:-8000}"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+      - AUTH_TRUST_HOST=true
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-thingsvis}:${POSTGRES_PASSWORD:-thingsvis_password}@postgres:5432/${POSTGRES_DB:-thingsvis_db}?schema=public
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:${SERVER_PORT:-8000}/api/health" ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ─── Studio (编辑器 SPA + Nginx) ───────────────────
+  studio:
+    image: ghcr.io/thingspanel/thingsvis-studio:latest
+    container_name: thingsvis-studio
+    restart: unless-stopped
+    ports:
+      - "${STUDIO_PORT:-3000}:${STUDIO_PORT:-3000}"
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+
+    # ─── 访问地址 ─────────────────────────────────────────
+    # Studio  (编辑器): http://localhost:${STUDIO_PORT:-3000}
+    # Server  (API):    http://localhost:${SERVER_PORT:-8000}

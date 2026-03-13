@@ -1,0 +1,22 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-input": {
+                "name": "Input",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "label": "Label",
+                "placeholder": "Placeholder",
+                "inputType": "Input Type",
+                "submitOn": "Submit Trigger",
+                "disabled": "Disabled",
+                "backgroundColor": "Background Color",
+                "textColor": "Text Color",
+                "borderColor": "Border Color",
+                "accentColor": "Focus Color",
+                "fontSize": "Font Size",
+                "borderRadius": "Border Radius"
+            }
+        }
+    }
+}

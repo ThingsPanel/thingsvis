@@ -1,0 +1,265 @@
+/**
+ * 核心类型定义
+ * 
+ * 与 @thingsvis/schema 保持兼容，同时提供更丰富的类型
+ */
+
+import type { WidgetCategory } from '@thingsvis/schema';
+export type { WidgetCategory };
+
+import type { z } from 'zod';
+
+/**
+ * i18n label 类型：可以是字符串或多语言 map
+ * 与 @thingsvis/schema 中的 I18nLabel 保持结构兼容
+ */
+export type I18nLabel = string | Record<string, string>;
+
+// ============================================================================
+// 绑定模式
+// ============================================================================
+
+/** 绑定模式：静态值 | 字段选择 | 表达式 | 规则 */
+export type BindingMode = 'static' | 'field' | 'expr' | 'rule';
+
+/** 绑定配置 */
+export type ControlBinding = {
+  enabled: boolean;
+  modes: BindingMode[];
+};
+
+// ============================================================================
+// 控件类型 - 扩展版
+// ============================================================================
+
+/** 
+ * 控件类型枚举
+ * 
+ * 分类：
+ * - 基础：string, number, boolean
+ * - 颜色：color, gradient, colorScheme
+ * - 选择：select, multiSelect, radio, segmented
+ * - 复杂：json, code, expression
+ * - 特殊：image, icon, font
+ * - 数据：dataField, dataSource, nodeSelect
+ * - 布局：slider, rangeSlider, margin, padding
+ */
+export type ControlKind =
+  // 基础
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'textarea'
+  // 颜色
+  | 'color'
+  | 'gradient'
+  | 'colorScheme'
+  // 选择
+  | 'select'
+  | 'multiSelect'
+  | 'radio'
+  | 'segmented'
+  // 复杂
+  | 'json'
+  | 'code'
+  | 'expression'
+  // 特殊
+  | 'image'
+  | 'icon'
+  | 'font'
+  // 数据
+  | 'dataField'
+  | 'dataSource'
+  | 'nodeSelect'
+  // 布局
+  | 'slider'
+  | 'rangeSlider'
+  | 'margin'
+  | 'padding';
+
+/** 下拉选项 */
+export type ControlOption = {
+  label: I18nLabel;
+  value: string | number;
+  /** Lucide 图标名称（用于 segmented 等控件） */
+  icon?: string;
+};
+
+// ============================================================================
+// 控件字段定义
+// ============================================================================
+
+/** 控件字段完整定义 */
+export type ControlField = {
+  /** 属性路径（映射到 props 的 key） */
+  path: string;
+  /** 显示标签（支持字符串 i18n key 或 { en, zh, ... } 多语言 map） */
+  label: I18nLabel;
+  /** 控件类型 */
+  kind: ControlKind;
+  /** 下拉选项（select/multiSelect/radio/segmented 使用） */
+  options?: ControlOption[];
+  /** 默认值 */
+  default?: unknown;
+  /** 数据绑定配置 */
+  binding?: ControlBinding;
+  /** 占位提示文字 */
+  placeholder?: string;
+  /** 描述/帮助文字 */
+  description?: string;
+  /** 是否禁用 */
+  disabled?: boolean;
+  /** 条件显示（依赖其他字段） */
+  showWhen?: {
+    field: string;
+    value: unknown;
+  };
+  /** 数值范围（slider/number 使用） */
+  min?: number;
+  max?: number;
+  step?: number;
+};
+
+// ============================================================================
+// 控件分组
+// ============================================================================
+
+/** 标准分组 ID */
+export type ControlGroupId = 'Content' | 'Style' | 'Data' | 'Advanced';
+
+/** 控件分组 */
+export type ControlGroup = {
+  id: ControlGroupId | string;
+  label?: I18nLabel;
+  /** 是否默认展开 */
+  expanded?: boolean;
+  fields: ControlField[];
+};
+
+/** 插件控件配置（序列化格式） */
+export type WidgetControls = {
+  groups: ControlGroup[];
+};
+
+// ============================================================================
+// Overlay 相关类型
+// ============================================================================
+
+/** 主题预设标识 */
+export type WidgetTheme = 'dawn' | 'midnight' | string;
+
+/** DOM Overlay 上下文 */
+export type WidgetOverlayContext = {
+  id?: string;
+  type?: string;
+  /** 位置（画布坐标） */
+  position?: { x: number; y: number };
+  /** 尺寸 */
+  size?: { width: number; height: number };
+  /** 组件属性（已解析） */
+  props?: Record<string, unknown>;
+  /** 当前画布的主题上下文 (Dawn/Midnight) */
+  theme?: WidgetTheme;
+  /** 当前语言 (e.g. 'zh', 'en') */
+  locale?: string;
+  /** 当前运行模式 */
+  mode?: 'edit' | 'preview' | 'view';
+  /** 组件是否可见（被裁剪/折叠等情况下为 false） */
+  visible?: boolean;
+  /** 向宿主发送事件（用于联动、动作触发） */
+  emit?: (event: string, payload?: unknown) => void;
+  /** 监听宿主事件（如全局变量变化） */
+  on?: (event: string, handler: (payload?: unknown) => void) => (() => void);
+  /**
+   * transformData 钩子的输出结果。
+   * 若 Widget 声明了 transformData，宿主在每次 update 前填充此字段。
+   * Widget 可从 ctx.data 读取已处理好的数据，无需再手动访问原始数据源。
+   */
+  data?: unknown;
+  linkedNodes?: Record<
+    string,
+    {
+      id: string;
+      position: { x: number; y: number };
+      size: { width: number; height: number };
+    }
+  >;
+};
+
+/** DOM Overlay 实例 */
+export type PluginOverlayInstance = {
+  /** DOM 根元素 */
+  element: HTMLElement;
+  /** 属性更新回调 */
+  update?: (ctx: WidgetOverlayContext) => void;
+  /** 销毁回调 */
+  destroy?: () => void;
+};
+
+// ============================================================================
+// 插件主模块类型
+// ============================================================================
+
+/** 组件尺寸约束 */
+export type WidgetConstraints = {
+  /** 最小宽度（px） */
+  minWidth?: number;
+  /** 最小高度（px） */
+  minHeight?: number;
+  /** 最大宽度（px） */
+  maxWidth?: number;
+  /** 最大高度（px） */
+  maxHeight?: number;
+  /** 锁定宽高比（width/height） */
+  aspectRatio?: number;
+};
+
+/**
+ * 插件主模块接口
+ */
+export type WidgetMainModule<TProps = Record<string, unknown>> = {
+  /** 组件唯一标识 */
+  id: string;
+  /** 组件显示名称 */
+  name?: string;
+  /** 组件分类 */
+  category?: WidgetCategory;
+  /** 图标名称（Lucide 图标） */
+  icon?: string;
+  /** 版本号 */
+  version?: string;
+  locales?: Record<string, unknown>;
+  /** Zod Schema */
+  schema?: z.ZodType<TProps>;
+  /** 控件配置 */
+  controls?: WidgetControls;
+  /** 组件默认尺寸 */
+  defaultSize?: { width: number; height: number };
+  /** 组件尺寸约束 */
+  constraints?: WidgetConstraints;
+  /** 是否支持调整大小（默认 true） */
+  resizable?: boolean;
+  create?: (ctx?: WidgetOverlayContext) => unknown;
+  /** 
+   * 属性迁移函数
+   * 
+   * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数将旧格式 props 迁移为新格式
+   * @param props - 保存的旧属性对象
+   * @param fromVersion - 保存时的 widget 版本
+   * @returns 迁移后的新属性对象
+   */
+  migrate?: (props: unknown, fromVersion: string) => unknown;
+  /** 
+   * 创建 DOM Overlay
+   */
+  createOverlay?: (ctx: WidgetOverlayContext) => PluginOverlayInstance;
+  /**
+   * 数据预处理钩子。宿主在调用 update() 前将主数据源原始数据传入，
+   * 返回值将放入 WidgetOverlayContext.data 供组件使用。
+   *
+   * @param rawData  主数据源的原始输出
+   * @param props    当前组件属性
+   * @returns        处理后的数据
+   */
+  transformData?: (rawData: unknown, props: Record<string, unknown>) => unknown;
+};

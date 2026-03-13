@@ -1,0 +1,20 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-select": {
+                "name": "Select",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "label": "Label",
+                "placeholder": "Placeholder",
+                "options": "Options Config",
+                "fontSize": "Font Size",
+                "backgroundColor": "Background Color",
+                "textColor": "Text Color",
+                "borderColor": "Border Color",
+                "borderRadius": "Border Radius",
+                "disabled": "Disabled"
+            }
+        }
+    }
+}

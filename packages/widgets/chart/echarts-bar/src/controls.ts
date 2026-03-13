@@ -1,0 +1,21 @@
+import { PropsSchema } from './schema';
+import { generateControls } from '@thingsvis/widget-sdk';
+
+export const controls = generateControls(PropsSchema, {
+    groups: {
+        Content: ['title', 'showLegend', 'showXAxis', 'showYAxis'],
+        Style: ['primaryColor'],
+        Data: ['data'],
+    },
+    overrides: {
+        primaryColor: { kind: 'color' },
+        data: { kind: 'json' },
+    },
+    bindings: {
+        title: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
+        primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
+        data: { enabled: true, modes: ['static', 'field', 'expr'] },
+    },
+});

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.next/
+out/
+.turbo/
+coverage/
+apps/studio/public/widgets/
+*.code-workspace
+pnpm-lock.yaml

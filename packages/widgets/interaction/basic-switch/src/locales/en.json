@@ -1,0 +1,25 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-switch": {
+                "name": "Switch",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "groupBehavior": "Behavior",
+                "value": "Switch Status",
+                "label": "Label",
+                "showLabel": "Show Label",
+                "labelPosition": "Label Position",
+                "onLabel": "On Text",
+                "offLabel": "Off Text",
+                "onColor": "On Color",
+                "offColor": "Off Color",
+                "size": "Size",
+                "disabled": "Disabled",
+                "loading": "Loading",
+                "confirmToggle": "Confirm Before Toggle",
+                "confirmMessage": "Confirmation Message"
+            }
+        }
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-basic-slider": {
+                "name": "Slider",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "label": "Label",
+                "min": "Min",
+                "max": "Max",
+                "step": "Step",
+                "unit": "Unit",
+                "showValue": "Show Value",
+                "trackColor": "Track Color",
+                "backgroundColor": "Background Color",
+                "textColor": "Text Color",
+                "disabled": "Disabled"
+            }
+        }
+    }
+}

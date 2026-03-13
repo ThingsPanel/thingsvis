@@ -1,0 +1,32 @@
+{
+    "editor": {
+        "widgets": {
+            "basic-table": {
+                "name": "基础表格",
+                "groupData": "数据",
+                "groupHeader": "表头样式",
+                "groupBody": "表体样式",
+                "groupDensity": "边距",
+                "columns": "列配置",
+                "data": "表格数据",
+                "showHeader": "显示表头",
+                "headerColor": "表头文字颜色",
+                "headerBgColor": "表头背景色",
+                "headerFontSize": "表头字号",
+                "headerWeight": "表头字重",
+                "bodyColor": "表体文字颜色",
+                "bodyFontSize": "表体字号",
+                "bodyWeight": "表体字重",
+                "showStripe": "显示斑马纹",
+                "stripeColor": "斑马纹颜色",
+                "showBorder": "显示行边框",
+                "cellPadding": "单元格内边距",
+                "weightNormal": "常规 (400)",
+                "weightMedium": "中等 (500)",
+                "weightSemibold": "半粗 (600)",
+                "weightBold": "粗体 (700)",
+                "colorAuto": "自动适配主题"
+            }
+        }
+    }
+}

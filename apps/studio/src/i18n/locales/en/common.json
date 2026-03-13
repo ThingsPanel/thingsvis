@@ -1,0 +1,33 @@
+{
+  "appName": "ThingsVis",
+  "loading": "Loading...",
+  "loadingScreen": {
+    "starting": "Starting...",
+    "initEngine": "Initializing visualization engine...",
+    "loadingComponents": "Loading component library...",
+    "ready": "Getting ready...",
+    "completed": "Loading completed"
+  },
+  "save": "Save",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "edit": "Edit",
+  "create": "Create",
+  "close": "Close",
+  "search": "Search",
+  "retry": "Retry",
+  "back": "Back",
+  "next": "Next",
+  "submit": "Submit",
+  "reset": "Reset",
+  "yes": "Yes",
+  "no": "No",
+  "or": "Or",
+  "noData": "No data",
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. You can try retrying or reloading the page.",
+    "reload": "Reload Page"
+  }
+}

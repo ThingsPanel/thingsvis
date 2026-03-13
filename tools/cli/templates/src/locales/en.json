@@ -1,0 +1,12 @@
+{
+    "editor": {
+        "widgets": {
+            "{{COMPONENT_ID}}": {
+                "name": "{{DISPLAY_NAME}}",
+                "style": "Style",
+                "fillColor": "Fill Color",
+                "opacity": "Opacity"
+            }
+        }
+    }
+}

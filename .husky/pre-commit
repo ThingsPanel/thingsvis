@@ -1,0 +1,7 @@
+# Skip lint-staged on merge commits (they don't introduce new code)
+if [ -f ".git/MERGE_HEAD" ]; then
+  echo "Merge commit detected, skipping lint-staged."
+  exit 0
+fi
+
+pnpm exec lint-staged
