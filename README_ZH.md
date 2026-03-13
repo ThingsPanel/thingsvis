@@ -2,7 +2,7 @@
 
 **专为现代 Web 与物联网（IoT）打造的数据可视化引擎与大屏工作台。**
 
-[English](./README.md) · [文档文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
+[English](./README.md) · [官方文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
 
 ![ThingsVis Showcase Dashboard](./apps/docs/public/images/showcase/city-ops-editor.png)
 
@@ -47,6 +47,41 @@ pnpm dev
 ```bash
 pnpm dev:app
 ```
+
+### 首次启动完整服务时，先初始化数据库与管理员账号
+
+`pnpm dev:app` 会同时启动 Studio、Kernel 和 Server，但不会替你创建本地 PostgreSQL 数据库里的首个管理员用户。首次使用前，请先完成以下初始化：
+
+1. 复制 `apps/server/.env.example` 为 `apps/server/.env`，并填好 `DATABASE_URL`、`AUTH_SECRET` 等必要环境变量。
+2. 确保本地 PostgreSQL 已启动，并且 `DATABASE_URL` 指向可写库。
+3. 在 `apps/server` 目录执行数据库建表与种子脚本：
+
+```bash
+cd apps/server
+pnpm db:push
+pnpm seed
+```
+
+默认会创建以下管理员账号：
+
+- 邮箱：`admin@thingsvis.io`
+- 密码：`admin123`
+
+如需自定义初始化账号，可在 `apps/server/.env` 中覆盖以下环境变量后重新执行 `pnpm seed`：
+
+```bash
+SEED_ADMIN_EMAIL=admin@thingsvis.io
+SEED_ADMIN_PASSWORD=admin123
+SEED_ADMIN_NAME=Admin
+```
+
+完成后回到仓库根目录，再启动完整开发环境：
+
+```bash
+pnpm dev:app
+```
+
+> 如果登录页出现“服务器出错，请稍后重试”，通常是因为 `apps/server` 未成功启动、数据库未执行 `pnpm db:push`，或尚未运行 `pnpm seed` 创建初始管理员。
 
 > **常用工程命令一览**：
 > - `pnpm docs:dev`：在本地挂载官方文档站。

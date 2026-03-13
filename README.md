@@ -48,6 +48,41 @@ If you need to experience the full-stack flow, including real authentication and
 pnpm dev:app
 ```
 
+### Initialize the database and admin user before first full-stack startup
+
+`pnpm dev:app` starts Studio, Kernel, and Server together, but it does not create the first administrator in your local PostgreSQL database. Before your first login, complete the following initialization steps:
+
+1. Copy `apps/server/.env.example` to `apps/server/.env`, then fill in required values such as `DATABASE_URL` and `AUTH_SECRET`.
+2. Make sure PostgreSQL is running locally and that `DATABASE_URL` points to a writable database.
+3. Run schema push and seed from `apps/server`:
+
+```bash
+cd apps/server
+pnpm db:push
+pnpm seed
+```
+
+The default admin account is:
+
+- Email: `admin@thingsvis.io`
+- Password: `admin123`
+
+If you want to customize the seeded account, override these variables in `apps/server/.env` and run `pnpm seed` again:
+
+```bash
+SEED_ADMIN_EMAIL=admin@thingsvis.io
+SEED_ADMIN_PASSWORD=admin123
+SEED_ADMIN_NAME=Admin
+```
+
+Then go back to the repo root and start the full development stack:
+
+```bash
+pnpm dev:app
+```
+
+> If the login page shows "Server error, please try again later", the usual causes are that `apps/server` failed to start, `pnpm db:push` was not run, or `pnpm seed` has not created the initial admin user yet.
+
 > **Useful Commands**:
 > - `pnpm docs:dev`: Run the docs site locally.
 > - `pnpm typecheck` & `pnpm lint`: Run workspace TypeScript checks and linting rules.
