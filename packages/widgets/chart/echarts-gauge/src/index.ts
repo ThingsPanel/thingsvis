@@ -10,15 +10,29 @@ import { controls } from './controls';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-function parseGaugeData(raw: Props['data']): { value: number; name: string } | null {
-    const entry = Array.isArray(raw) ? raw[0] : raw;
+const CHART_PADDING = 16;
+
+function parseGaugeData(raw: Props['data'], fallbackName: string): { value: number; name: string } | null {
+    const entry = Array.isArray(raw) ? raw[raw.length - 1] : raw;
+
+    if (typeof entry === 'number' || typeof entry === 'string') {
+        const value = typeof entry === 'number' ? entry : Number(entry);
+        if (!Number.isFinite(value)) return null;
+        return { value, name: fallbackName };
+    }
+
     if (!entry || typeof entry !== 'object') return null;
     const record = entry as Record<string, unknown>;
-    const value = typeof record.value === 'number' ? record.value : Number(record.value);
+    const valueRaw = record.value ?? record.y ?? record.current ?? record.score;
+    const value = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
     if (!Number.isFinite(value)) return null;
     return {
         value,
-        name: typeof record.name === 'string' ? record.name : '',
+        name: typeof record.name === 'string'
+            ? record.name
+            : typeof record.label === 'string'
+                ? record.label
+                : fallbackName,
     };
 }
 
@@ -32,9 +46,10 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     const textColor = colors.fg;
     const splitLineColor = colors.axis;
     const axisLineColor = colors.axis;
+    const padding = Math.round(CHART_PADDING * scale);
 
     // Extract current value and name
-    const dataEntry = parseGaugeData(data);
+    const dataEntry = parseGaugeData(data, title || '');
     const val = dataEntry?.value ?? 0;
     const itemName = dataEntry?.name ?? (title || '');
     const hasData = dataEntry !== null;
@@ -62,13 +77,13 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 color: textColor,
                 fontWeight: 'normal'
             },
-            top: 5,
+            top: padding,
         } : undefined,
         series: hasData ? [
             {
                 type: 'gauge',
-                center: ['50%', '60%'],
-                radius: '80%', // Leave 20% headroom for outer tick-labels and split-lines
+                center: ['50%', title ? '58%' : '54%'],
+                radius: '76%',
                 startAngle: 210,
                 endAngle: -30,
                 min: 0,

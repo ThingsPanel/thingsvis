@@ -12,7 +12,7 @@ import en from './locales/en.json';
 const DEFAULT_CARD_WIDTH = 160;
 const DEFAULT_CARD_HEIGHT = 80;
 const DEFAULT_CARD_PADDING_X = 16;
-const DEFAULT_CARD_PADDING_Y = 12;
+const DEFAULT_CARD_PADDING_Y = 16;
 
 // ============================================================================
 // Utils
@@ -51,8 +51,8 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
   const width = Math.max(element.clientWidth || DEFAULT_CARD_WIDTH, DEFAULT_CARD_WIDTH);
   const height = Math.max(element.clientHeight || DEFAULT_CARD_HEIGHT, DEFAULT_CARD_HEIGHT);
   const scale = Math.max(1, Math.min(1.8, Math.min(width / DEFAULT_CARD_WIDTH, height / DEFAULT_CARD_HEIGHT)));
-  const paddingX = Math.round(DEFAULT_CARD_PADDING_X * scale);
-  const paddingY = Math.round(DEFAULT_CARD_PADDING_Y * scale);
+  const paddingX = DEFAULT_CARD_PADDING_X;
+  const paddingY = DEFAULT_CARD_PADDING_Y;
   const titleSize = Math.round(titleFontSize * scale);
   const mainValueSize = Math.round(valueFontSize * scale);
   const unitSize = Math.round(suffixFontSize * scale);

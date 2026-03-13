@@ -12,6 +12,11 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
+const CHART_PADDING = 16;
+const TITLE_FONT_SIZE = 14;
+const LEGEND_FONT_SIZE = 12;
+const TITLE_LINE_HEIGHT = 18;
+const LEGEND_BLOCK_HEIGHT = 20;
 
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
     return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
@@ -51,33 +56,113 @@ function withAlpha(color: string, alpha: number): string {
     return normalized;
 }
 
-function normalizeCategoryData(data: Props['data']) {
-    if (!Array.isArray(data)) return [];
-    return data.flatMap((entry, index) => {
-        if (entry && typeof entry === 'object') {
-            const record = entry as Record<string, unknown>;
-            const name = record.name ?? record.label ?? record.x;
-            const value = record.value ?? record.y;
-            const numericValue = typeof value === 'number' ? value : Number(value);
-            if (name != null && Number.isFinite(numericValue)) {
-                return [{ name: String(name), value: numericValue }];
+function formatCategoryLabel(raw: unknown): string {
+    if (raw instanceof Date) {
+        return raw.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    if (typeof raw === 'number') {
+        if (raw > 1e9) {
+            const ms = raw > 1e11 ? raw : raw * 1000;
+            const date = new Date(ms);
+            if (Number.isFinite(date.getTime())) {
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
         }
-        return [];
-    });
+        return String(raw);
+    }
+
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (!trimmed) return '';
+
+        const asNum = Number(trimmed);
+        if (Number.isFinite(asNum) && asNum > 1e9) {
+            return formatCategoryLabel(asNum);
+        }
+
+        const parsed = Date.parse(trimmed);
+        if (Number.isFinite(parsed)) {
+            return formatCategoryLabel(parsed);
+        }
+
+        return trimmed;
+    }
+
+    return '';
+}
+
+function normalizeCategoryData(data: Props['data']) {
+    if (Array.isArray(data)) {
+        return data.flatMap((entry, index) => {
+            if (Array.isArray(entry)) {
+                const [nameRaw, valueRaw] = entry;
+                const numericValue = typeof valueRaw === 'number' ? valueRaw : Number(valueRaw);
+                if (Number.isFinite(numericValue)) {
+                    return [{ name: formatCategoryLabel(nameRaw) || `项 ${index + 1}`, value: numericValue }];
+                }
+                return [];
+            }
+
+            if (entry && typeof entry === 'object') {
+                const record = entry as Record<string, unknown>;
+                const name = record.name ?? record.label ?? record.x ?? record.category ?? record.time ?? record.timestamp ?? record.ts;
+                const value = record.value ?? record.y;
+                const numericValue = typeof value === 'number' ? value : Number(value);
+                if (name != null && Number.isFinite(numericValue)) {
+                    return [{ name: formatCategoryLabel(name) || `项 ${index + 1}`, value: numericValue }];
+                }
+            }
+
+            const numericValue = typeof entry === 'number' ? entry : Number(entry);
+            if (Number.isFinite(numericValue)) {
+                return [{ name: `项 ${index + 1}`, value: numericValue }];
+            }
+
+            return [];
+        });
+    }
+
+    if (data && typeof data === 'object') {
+        return Object.entries(data as Record<string, unknown>).flatMap(([key, value]) => {
+            const numericValue = typeof value === 'number' ? value : Number(value);
+            if (!Number.isFinite(numericValue)) {
+                return [];
+            }
+            return [{ name: key, value: numericValue }];
+        });
+    }
+
+    return [];
+}
+
+function resolveChartLeft(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+    if (align === 'center') return 'center';
+    if (align === 'right') return 'right';
+    return 'left';
+}
+
+function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+    if (align === 'center') return 'center';
+    if (align === 'right') return 'right';
+    return 'left';
 }
 
 /**
  * Build ECharts option from props and theme colors
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { title, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
+    const { title, titleAlign, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
     const normalizedData = normalizeCategoryData(data);
     const hasData = normalizedData.length > 0;
 
     const textColor = colors.fg;
     const splitLineColor = colors.axis;
     const seriesColor = pickSeriesColor(primaryColor, colors);
+    const padding = Math.round(CHART_PADDING * scale);
+    const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
+    const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
+    const seriesName = title || '数值';
 
     const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
         { offset: 0, color: seriesColor },
@@ -101,9 +186,10 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         },
         title: title ? {
             text: title,
-            left: 'center',
-            textStyle: { fontSize: Math.round(14 * scale), color: textColor },
-            top: Math.round(10 * scale),
+            left: resolveChartLeft(titleAlign),
+            textAlign: resolveTitleTextAlign(titleAlign),
+            textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: textColor },
+            top: padding,
         } : undefined,
         tooltip: {
             trigger: 'axis',
@@ -111,18 +197,22 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         },
         legend: {
             show: showLegend,
-            bottom: 0,
-            textStyle: { color: textColor, fontSize: Math.round(12 * scale) },
+            data: [seriesName],
+            bottom: padding,
+            left: 'center',
+            selectedMode: true,
+            icon: 'roundRect',
+            textStyle: { color: textColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
         },
         grid: {
-            left: '3%',
-            right: '4%',
-            bottom: showLegend ? Math.round(35 * scale) : Math.round(10 * scale),
-            top: title ? Math.round(35 * scale) : Math.round(15 * scale),
+            left: padding,
+            right: padding,
+            bottom: padding + legendSpace,
+            top: padding + titleSpace,
             containLabel: true,
         },
         dataset: hasData ? {
-            dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || 'props.value' }],
+            dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: seriesName }],
             source: normalizedData
         } : undefined,
         xAxis: {
@@ -143,6 +233,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         series: hasData ? [
             {
                 type: 'bar',
+                name: seriesName,
                 encode: { x: 'name', y: 'value', tooltip: ['value'] },
                 itemStyle: {
                     color: gradientColor,

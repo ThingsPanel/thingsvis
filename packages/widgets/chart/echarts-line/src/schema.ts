@@ -8,6 +8,9 @@ export const PropsSchema = z.object({
   /** 图表标题 */
   title: z.string().default('').describe('props.chartTitle'),
 
+  /** 标题对齐 */
+  titleAlign: z.enum(['left', 'center', 'right']).default('left').describe('props.titleAlign'),
+
   /** 主色调 */
   primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
@@ -30,15 +33,7 @@ export const PropsSchema = z.object({
   timeRangePreset: z.enum(['all', '1h', '6h', '24h', '7d', '30d']).default('all').describe('props.timeRangePreset'),
 
   /** 数据集 */
-  data: z.array(z.any()).default([
-    { name: '周一', value: 150 },
-    { name: '周二', value: 230 },
-    { name: '周三', value: 224 },
-    { name: '周四', value: 218 },
-    { name: '周五', value: 135 },
-    { name: '周六', value: 147 },
-    { name: '周日', value: 260 },
-  ]).describe('props.dataset'),
+  data: z.array(z.any()).default([]).describe('props.dataset'),
 });
 
 /** 属性类型 */

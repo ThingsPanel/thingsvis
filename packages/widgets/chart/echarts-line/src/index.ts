@@ -12,6 +12,11 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
+const CHART_PADDING = 16;
+const TITLE_FONT_SIZE = 14;
+const LEGEND_FONT_SIZE = 12;
+const TITLE_LINE_HEIGHT = 18;
+const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
   '6h': 6 * 60 * 60 * 1000,
@@ -206,16 +211,32 @@ function normalizeLineData(data: Props['data'], timeRangePreset: Props['timeRang
   };
 }
 
+function resolveChartLeft(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+  if (align === 'center') return 'center';
+  if (align === 'right') return 'right';
+  return 'left';
+}
+
+function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+  if (align === 'center') return 'center';
+  if (align === 'right') return 'right';
+  return 'left';
+}
+
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-  const { title, data, primaryColor, showLegend, smooth, showArea, showXAxis, showYAxis, timeRangePreset } = props;
+  const { title, titleAlign, data, primaryColor, showLegend, smooth, showArea, showXAxis, showYAxis, timeRangePreset } = props;
 
   const textColor = colors.fg;
   const splitLineColor = colors.axis;
   const seriesColor = pickSeriesColor(primaryColor, colors);
   const normalizedData = normalizeLineData(data, timeRangePreset);
+  const padding = Math.round(CHART_PADDING * scale);
+  const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
+  const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
+  const seriesName = title || '数值';
   const isTimeSeries = normalizedData.mode === 'time';
   const hasData = isTimeSeries
     ? normalizedData.timeData.length > 0
@@ -262,27 +283,32 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     },
     title: title ? {
       text: title,
-      left: 'center',
-      textStyle: { fontSize: Math.round(14 * scale), color: textColor },
-      top: Math.round(10 * scale),
+      left: resolveChartLeft(titleAlign),
+      textAlign: resolveTitleTextAlign(titleAlign),
+      textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: textColor },
+      top: padding,
     } : undefined,
     tooltip: {
       trigger: 'axis',
     },
     legend: {
       show: showLegend,
-      bottom: 0,
-      textStyle: { color: textColor, fontSize: Math.round(12 * scale) },
+      data: [seriesName],
+      bottom: padding,
+      left: 'center',
+      selectedMode: true,
+      icon: 'roundRect',
+      textStyle: { color: textColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: showLegend ? Math.round(35 * scale) : Math.round(10 * scale),
-      top: title ? Math.round(35 * scale) : Math.round(15 * scale),
+      left: padding,
+      right: padding,
+      bottom: padding + legendSpace,
+      top: padding + titleSpace,
       containLabel: true,
     },
     dataset: !isTimeSeries && normalizedData.categoryData.length > 0 ? {
-      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: title || 'props.value' }],
+      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: seriesName }],
       source: normalizedData.categoryData
     } : undefined,
     xAxis,
@@ -298,7 +324,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     series: hasData ? [
       {
         type: 'line',
-        name: title || '数值',
+        name: seriesName,
         encode: isTimeSeries ? undefined : { x: 'name', y: 'value', tooltip: ['value'] },
         data: isTimeSeries
           ? normalizedData.timeData.map((point) => [point.timeMs, point.value])

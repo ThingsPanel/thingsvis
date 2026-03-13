@@ -8,6 +8,9 @@ export const PropsSchema = z.object({
     /** 图表标题 */
     title: z.string().default('').describe('props.chartTitle'),
 
+    /** 标题对齐 */
+    titleAlign: z.enum(['left', 'center', 'right']).default('left').describe('props.titleAlign'),
+
     /** 主色调 */
     primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
@@ -24,15 +27,7 @@ export const PropsSchema = z.object({
      * 数据集 
      * 抛弃显式定义维度，交由 ECharts Dataset 自动推导
      */
-    data: z.array(z.any()).default([
-        { name: '周一', value: 120 },
-        { name: '周二', value: 200 },
-        { name: '周三', value: 150 },
-        { name: '周四', value: 80 },
-        { name: '周五', value: 70 },
-        { name: '周六', value: 110 },
-        { name: '周日', value: 130 },
-    ]).describe('props.dataset'),
+    data: z.array(z.any()).default([]).describe('props.dataset'),
 });
 
 /** 属性类型 */

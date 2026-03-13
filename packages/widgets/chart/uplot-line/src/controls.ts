@@ -3,13 +3,22 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['title', 'showLegend', 'timeRangePreset'],
+        Content: ['title', 'titleAlign', 'showLegend', 'timeRangePreset'],
         Style: ['primaryColor'],
         Data: ['data'],
     },
     overrides: {
         primaryColor: { kind: 'color' },
         data: { kind: 'json' },
+        titleAlign: {
+            kind: 'select',
+            label: '标题对齐',
+            options: [
+                { label: '靠左', value: 'left' },
+                { label: '居中', value: 'center' },
+                { label: '靠右', value: 'right' },
+            ],
+        },
         timeRangePreset: {
             kind: 'select',
             label: '时间范围',
@@ -25,6 +34,7 @@ export const controls = generateControls(PropsSchema, {
     },
     bindings: {
         title: { enabled: true, modes: ['static', 'field', 'expr'] },
+        titleAlign: { enabled: true, modes: ['static', 'field', 'expr'] },
         primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         showLegend: { enabled: true, modes: ['static', 'field', 'expr'] },
         data: { enabled: true, modes: ['static', 'field', 'expr'] },

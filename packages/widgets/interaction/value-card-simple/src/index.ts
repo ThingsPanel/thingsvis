@@ -6,6 +6,8 @@ import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type Widg
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const CARD_PADDING = 16;
+
 function withAlpha(color: string, alpha: number): string {
   const clamped = Math.max(0, Math.min(1, alpha));
   const normalized = color.trim();
@@ -133,7 +135,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
       justify-content: center;
       align-items: flex-start;
       text-align: left;
-      padding: 12px 16px;
+      padding: ${CARD_PADDING}px;
       background: transparent;
     ">
       <div style="

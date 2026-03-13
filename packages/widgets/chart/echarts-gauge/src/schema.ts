@@ -15,7 +15,7 @@ export const PropsSchema = z.object({
     max: z.number().default(100).describe('props.max'),
 
     /** 数据集 */
-    data: z.any().default({ name: '评分', value: 85 }).describe('props.dataset'),
+    data: z.any().default(null).describe('props.dataset'),
 });
 
 /** 属性类型 */

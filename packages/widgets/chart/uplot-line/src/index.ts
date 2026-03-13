@@ -9,6 +9,7 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
+const WIDGET_PADDING = 16;
 const TIME_RANGE_SEC: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
     '1h': 60 * 60,
     '6h': 6 * 60 * 60,
@@ -161,6 +162,12 @@ function formatTick(tsSec: number, spanSec: number): string {
     return `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${hhmm}`;
 }
 
+function getTitleAlignment(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+    if (align === 'center') return 'center';
+    if (align === 'right') return 'right';
+    return 'left';
+}
+
 export const Main = defineWidget({
     id: metadata.id,
     name: metadata.name,
@@ -191,10 +198,10 @@ export const Main = defineWidget({
         const headerEl = document.createElement('div');
         headerEl.style.display = 'flex';
         headerEl.style.alignItems = 'center';
-        headerEl.style.justifyContent = 'space-between';
+        headerEl.style.justifyContent = 'flex-start';
         headerEl.style.gap = '8px';
         headerEl.style.flex = '0 0 auto';
-        headerEl.style.padding = '2px 2px 8px 2px';
+        headerEl.style.padding = `${WIDGET_PADDING}px ${WIDGET_PADDING}px 8px ${WIDGET_PADDING}px`;
         element.appendChild(headerEl);
 
         const titleEl = document.createElement('div');
@@ -233,6 +240,8 @@ export const Main = defineWidget({
             titleEl.style.display = showTitle ? 'block' : 'none';
             titleEl.style.color = colors.fg;
             titleEl.style.fontSize = `${Math.round(14 * scale)}px`;
+            titleEl.style.fontWeight = '600';
+            titleEl.style.textAlign = getTitleAlignment(currentProps.titleAlign);
         };
 
         const initChart = () => {
@@ -280,7 +289,7 @@ export const Main = defineWidget({
             const opts: uPlot.Options = {
                 width: cw,
                 height: ch,
-                padding: [8, 20, 20, 20],
+                padding: [8, WIDGET_PADDING, WIDGET_PADDING, WIDGET_PADDING],
                 legend: {
                     show: !!currentProps.showLegend,
                 },
@@ -303,7 +312,7 @@ export const Main = defineWidget({
                 series: [
                     {},
                     {
-                        label: currentProps.title || 'value',
+                        label: currentProps.title || '数值',
                         stroke: lineColor,
                         fill: withAlpha(lineColor, 0.18),
                         width: 2,

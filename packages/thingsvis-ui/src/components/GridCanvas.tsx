@@ -30,11 +30,6 @@ export interface GridCanvasProps {
         componentType: string,
         gridPos: { x: number; y: number; w: number; h: number }
     ) => void;
-    /** Called when user drops a pre-configured widget snippet */
-    onDropSnippet?: (
-        widgetSnippetJson: string,
-        gridPos: { x: number; y: number; w: number; h: number }
-    ) => void;
     /** Fixed pixel width (undefined = 100%) */
     width?: number;
     /** Fixed pixel height (undefined = auto; grows with grid content) */
@@ -94,7 +89,6 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     settings: settingsProp,
     resolveWidget,
     onDropComponent,
-    onDropSnippet,
     width,
     height,
     interactive = true,
@@ -276,10 +270,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const handleDragOver = useCallback(
         (e: React.DragEvent) => {
             if (!interactive) return;
-            if (
-                e.dataTransfer.types.includes('application/thingsvis-widget') ||
-                e.dataTransfer.types.includes('application/thingsvis-widget-snippet')
-            ) {
+            if (e.dataTransfer.types.includes('application/thingsvis-widget')) {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'copy';
             }
@@ -289,15 +280,15 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     const handleDrop = useCallback(
         (e: React.DragEvent) => {
-            if (!interactive) return;
+            if (!interactive || !onDropComponent) return;
             e.preventDefault();
-
-            const isComponent = e.dataTransfer.types.includes('application/thingsvis-widget');
-            const isSnippet = e.dataTransfer.types.includes('application/thingsvis-widget-snippet');
-
-            if (!isComponent && !isSnippet) return;
-
+            const data = e.dataTransfer.getData('application/thingsvis-widget');
+            if (!data) return;
             try {
+                const payload = JSON.parse(data);
+                const componentType: string = payload.type ?? payload.remoteName;
+                if (!componentType) return;
+
                 const gridEl = canvasRef.current;
                 if (!gridEl) return;
                 const rect = gridEl.getBoundingClientRect();
@@ -308,24 +299,12 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 const cellWidth = colWidth + gap;
                 const x = Math.max(0, Math.min(effectiveCols - 4, Math.floor(relX / cellWidth)));
                 const y = Math.max(0, Math.floor(relY / (rowHeight * zoom)));
-                const gridPosition = { x, y, w: 4, h: 3 };
-
-                if (isSnippet && onDropSnippet) {
-                    const data = e.dataTransfer.getData('application/thingsvis-widget-snippet');
-                    if (data) onDropSnippet(data, gridPosition);
-                } else if (isComponent && onDropComponent) {
-                    const data = e.dataTransfer.getData('application/thingsvis-widget');
-                    if (data) {
-                        const payload = JSON.parse(data);
-                        const componentType: string = payload.type ?? payload.remoteName;
-                        if (componentType) onDropComponent(componentType, gridPosition);
-                    }
-                }
+                onDropComponent(componentType, { x, y, w: 4, h: 3 });
             } catch {
                 // ignore malformed dataTransfer
             }
         },
-        [interactive, onDropComponent, onDropSnippet, colWidth, effectiveCols, effectiveSettings, zoom]
+        [interactive, onDropComponent, colWidth, effectiveCols, effectiveSettings, zoom]
     );
 
     // ── Selection state ───────────────────────────────────────────────────────
@@ -436,7 +415,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 width: canvasW,
                 minHeight: canvasMinH,
                 position: 'relative',
-                backgroundColor: background.color ? String(background.color) : 'hsl(var(--w-canvas-bg, 220 13% 12%))',
+                background: background.color ? String(background.color) : 'hsl(var(--w-canvas-bg, 220 13% 12%))',
                 backgroundImage: background.image ? `url(${background.image})` : 'none',
                 backgroundSize: background.size ? String(background.size) : 'cover',
                 backgroundRepeat: background.repeat ? String(background.repeat) : 'no-repeat',
@@ -500,32 +479,12 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 );
             })}
 
-            {/* Drop placeholder during drag.
-               Scale targetPosition to display-space (effectiveCols) so GridDropTarget
-               renders in the same coordinate system as GridNodeItem. Without this,
-               GridDropTarget uses maxCols (schema-space) while GridNodeItem uses
-               effectiveCols (display-space), producing a misaligned bounding box
-               when a responsive breakpoint is active. */}
+            {/* Drop placeholder during drag */}
             {(localPreview?.active || kernelState.gridState?.preview?.active) && (
                 <GridDropTarget
-                    preview={
-                        localPreview
-                            ? {
-                                  ...localPreview,
-                                  targetPosition: localPreview.targetPosition
-                                      ? scaleGridPos(localPreview.targetPosition)
-                                      : null,
-                              }
-                            : {
-                                  ...(kernelState.gridState?.preview! as any),
-                                  // Scale kernelState preview to display-space (effectiveCols) for
-                                  // cross-pane drops, matching the GridNodeItem rendering coordinate system.
-                                  targetPosition: (kernelState.gridState?.preview as any)?.targetPosition
-                                      ? scaleGridPos((kernelState.gridState!.preview as any).targetPosition)
-                                      : null,
-                              }
-                    }
-                    settings={responsiveSettings}
+                    // Use localPreview first for smooth inline interactions, fallback to kernelState for cross-pane drops.
+                    preview={localPreview ? (localPreview as any) : kernelState.gridState?.preview!}
+                    settings={effectiveSettings}
                     containerWidth={containerWidth}
                 />
             )}
