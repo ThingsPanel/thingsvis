@@ -1,6 +1,6 @@
 {
   "name": "@thingsvis/widget-sdk",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "SDK for developing ThingsVis widgets",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

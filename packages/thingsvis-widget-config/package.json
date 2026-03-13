@@ -1,6 +1,6 @@
 {
     "name": "@thingsvis/widget-config",
-    "version": "0.1.0",
+    "version": "1.0.1",
     "private": true,
     "description": "Shared Rspack + Module Federation build config for ThingsVis widgets",
     "main": "index.js",
