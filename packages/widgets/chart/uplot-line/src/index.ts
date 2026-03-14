@@ -142,6 +142,10 @@ function normalizeSeries(data: unknown, timeRangePreset: Props['timeRangePreset'
     return filtered.length > 0 ? filtered : [normalized[normalized.length - 1]!];
 }
 
+function getFallbackRangeSec(timeRangePreset: Props['timeRangePreset']): number {
+    return timeRangePreset === 'all' ? TIME_RANGE_SEC['1h'] : TIME_RANGE_SEC[timeRangePreset];
+}
+
 function pickLineColor(props: Props, colors: WidgetColors): string {
     return colors.series[0] ?? colors.primary ?? (props.primaryColor?.trim() || LEGACY_DEFAULT_PRIMARY);
 }
@@ -251,13 +255,20 @@ export const Main = defineWidget({
             }
 
             const points = normalizeSeries(currentProps.data, currentProps.timeRangePreset);
-            const finalTimes = points.map((p) => p.tsSec);
-            const finalValues = points.map((p) => p.value);
+            const hasData = points.length > 0;
+            const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
+            const fallbackEndSec = Math.floor(Date.now() / 1000);
+            const finalTimes = hasData
+                ? points.map((p) => p.tsSec)
+                : [fallbackEndSec - fallbackRangeSec, fallbackEndSec];
+            const finalValues = hasData
+                ? points.map((p) => p.value)
+                : [null, null];
 
-            const chartData: uPlot.AlignedData = [
+            const chartData = [
                 finalTimes,
                 finalValues,
-            ];
+            ] as uPlot.AlignedData;
 
             const cw = chartContainer.clientWidth || 300;
             const ch = chartContainer.clientHeight || 200;
@@ -268,14 +279,8 @@ export const Main = defineWidget({
             applyHeader(scale);
             emptyStateEl.style.color = withAlpha(resolveWidgetColors(element).fg, 0.65);
             emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
-
-            if (points.length === 0) {
-                emptyStateEl.textContent = '暂无时序数据';
-                emptyStateEl.style.display = 'flex';
-                return;
-            }
-
-            emptyStateEl.style.display = 'none';
+            emptyStateEl.textContent = hasData ? '' : '等待时序数据';
+            emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
             const axisFontSize = Math.round(12 * scale);
             const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
@@ -284,12 +289,23 @@ export const Main = defineWidget({
             const currentTextColor = currentColors?.fg ?? '#333';
             const currentGridColor = currentColors?.axis ?? '#00000010';
             const lineColor = pickLineColor(currentProps, currentColors);
-            const spanSec = finalTimes.length > 1 ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!) : 0;
+            const spanSec = finalTimes.length > 1 ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!) : fallbackRangeSec;
 
             const opts: uPlot.Options = {
                 width: cw,
                 height: ch,
                 padding: [8, WIDGET_PADDING, WIDGET_PADDING, WIDGET_PADDING],
+                scales: hasData ? undefined : {
+                    x: {
+                        time: true,
+                        auto: false,
+                        range: [finalTimes[0] ?? fallbackEndSec - fallbackRangeSec, finalTimes[finalTimes.length - 1] ?? fallbackEndSec],
+                    },
+                    y: {
+                        auto: false,
+                        range: [0, 1],
+                    },
+                },
                 legend: {
                     show: !!currentProps.showLegend,
                 },

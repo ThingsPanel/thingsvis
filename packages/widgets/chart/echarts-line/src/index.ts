@@ -211,6 +211,12 @@ function normalizeLineData(data: Props['data'], timeRangePreset: Props['timeRang
   };
 }
 
+function getEmptyTimeWindow(timeRangePreset: Props['timeRangePreset']): { startMs: number; endMs: number } {
+  const fallbackRangeMs = timeRangePreset === 'all' ? TIME_RANGE_MS['1h'] : TIME_RANGE_MS[timeRangePreset];
+  const endMs = Date.now();
+  return { startMs: endMs - fallbackRangeMs, endMs };
+}
+
 function resolveChartLeft(align: Props['titleAlign']): 'left' | 'center' | 'right' {
   if (align === 'center') return 'center';
   if (align === 'right') return 'right';
@@ -237,18 +243,23 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const seriesName = title || '数值';
-  const isTimeSeries = normalizedData.mode === 'time';
-  const hasData = isTimeSeries
+  const hasData = normalizedData.mode === 'time'
     ? normalizedData.timeData.length > 0
     : normalizedData.categoryData.length > 0;
+  const emptyTimeWindow = getEmptyTimeWindow(timeRangePreset);
+  const useEmptyTimeSkeleton = !hasData;
+  const isTimeSeries = normalizedData.mode === 'time' || useEmptyTimeSkeleton;
   const xAxis: echarts.XAXisComponentOption = isTimeSeries ? {
     show: showXAxis !== false,
     type: 'time',
+    min: hasData ? undefined : emptyTimeWindow.startMs,
+    max: hasData ? undefined : emptyTimeWindow.endMs,
     axisLabel: {
       color: textColor,
       fontSize: Math.round(12 * scale),
       hideOverlap: true,
-      formatter: (value: string | number) => formatTimeLabel(Number(value), normalizedData.timeSpanMs),
+      formatter: (value: string | number) =>
+        formatTimeLabel(Number(value), hasData ? normalizedData.timeSpanMs : emptyTimeWindow.endMs - emptyTimeWindow.startMs),
     },
     axisLine: { lineStyle: { color: splitLineColor } },
     axisTick: { show: true, lineStyle: { color: splitLineColor } },
@@ -272,13 +283,13 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     graphic: hasData ? undefined : {
       type: 'text',
       left: 'center',
-      top: 'middle',
+      top: '38%',
       silent: true,
       style: {
-        text: '暂无数据',
+        text: '等待数据',
         fill: textColor,
-        opacity: 0.65,
-        fontSize: Math.round(14 * scale),
+        opacity: 0.58,
+        fontSize: Math.round(12 * scale),
       },
     },
     title: title ? {
@@ -315,19 +326,26 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     yAxis: {
       show: showYAxis !== false,
       type: 'value',
+      min: hasData ? undefined : 0,
+      max: hasData ? undefined : 1,
       splitLine: { lineStyle: { color: splitLineColor } },
       axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
       // 补充刻度展示属性
       axisLine: { show: true, lineStyle: { color: splitLineColor } },
       axisTick: { show: true, lineStyle: { color: splitLineColor } },
     },
-    series: hasData ? [
+    series: [
       {
         type: 'line',
         name: seriesName,
-        encode: isTimeSeries ? undefined : { x: 'name', y: 'value', tooltip: ['value'] },
+        encode: isTimeSeries || !hasData ? undefined : { x: 'name', y: 'value', tooltip: ['value'] },
         data: isTimeSeries
-          ? normalizedData.timeData.map((point) => [point.timeMs, point.value])
+          ? (hasData
+              ? normalizedData.timeData.map((point) => [point.timeMs, point.value])
+              : [
+                  [emptyTimeWindow.startMs, null],
+                  [emptyTimeWindow.endMs, null],
+                ])
           : undefined,
         smooth: smooth,
         showSymbol: false,
@@ -337,12 +355,14 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         lineStyle: {
           width: 3,
           color: seriesColor,
+          opacity: hasData ? 1 : 0.35,
+          type: hasData ? 'solid' : 'dashed',
         },
-        areaStyle: showArea ? {
+        areaStyle: showArea && hasData ? {
           color: areaGradient,
         } : undefined,
       },
-    ] : [],
+    ],
   };
 }
 
