@@ -142,13 +142,16 @@ export async function POST(request: NextRequest) {
       });
 
       if (existingUser) {
-        // Update existing user with SSO info
+        // Rebind the existing SSO user to the current tenant/space on every exchange.
+        // ThingsPanel may log into different dashboard spaces (e.g. tenant vs. sys admin)
+        // with the same host identity, so the ThingsVis user must follow the current space.
         user = await prisma.user.update({
           where: { id: existingUser.id },
           data: {
             ssoProvider: platform,
             ssoSubject: userInfo.id,
             name: userInfo.name || existingUser.name,
+            tenantId: tenant.id,
             lastLoginAt: new Date(),
           },
           include: {
@@ -173,10 +176,17 @@ export async function POST(request: NextRequest) {
         });
       }
     } else {
-      // Update last login time
-      await prisma.user.update({
+      // Keep the SSO user aligned with the current tenant/space every time they log in.
+      user = await prisma.user.update({
         where: { id: user.id },
-        data: { lastLoginAt: new Date() },
+        data: {
+          tenantId: tenant.id,
+          name: userInfo.name || user.name,
+          lastLoginAt: new Date(),
+        },
+        include: {
+          tenant: true,
+        },
       });
     }
 
