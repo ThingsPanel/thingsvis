@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { PenLine } from 'lucide-react';
 import type { KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
+import { dataSourceManager } from '@thingsvis/kernel';
+import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { usePlatformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
@@ -74,6 +76,36 @@ function getRequestedFieldId(fieldPath: string): string | null {
   return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
 }
 
+function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?: string }): void {
+  const dataSourceId = getDeviceDataSourceId(device.deviceId);
+  const existing = dataSourceManager.getAllConfigs().some((config) => config.id === dataSourceId);
+  if (existing) return;
+
+  const inheritedBufferSize = Math.max(
+    0,
+    ...dataSourceManager
+      .getAllConfigs()
+      .filter((config) => config.id === '__platform__')
+      .map((config) => {
+        const bufferSize = (config.config as { bufferSize?: unknown } | undefined)?.bufferSize;
+        return typeof bufferSize === 'number' && Number.isFinite(bufferSize) ? bufferSize : 0;
+      }),
+  );
+
+  dataSourceManager.registerDataSource({
+    id: dataSourceId,
+    name: device.deviceName || `Device ${device.deviceId}`,
+    type: 'PLATFORM_FIELD',
+    config: {
+      ...DEFAULT_PLATFORM_FIELD_CONFIG,
+      source: 'platform',
+      deviceId: device.deviceId,
+      bufferSize: inheritedBufferSize,
+      requestedFields: [],
+    },
+  });
+}
+
 export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }: Props) {
   const { t } = useTranslation('editor');
   const { states } = useDataSourceRegistry(kernelStore);
@@ -82,6 +114,8 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
   // 🆕 平台字段（嵌入模式）
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const platformFields = usePlatformFieldStore((s: any) => s.fields ?? []);
+  const platformDeviceGroups = usePlatformDeviceStore((s) => s.groups ?? []);
+  const loadedGroupIds = usePlatformDeviceStore((s) => s.loadedGroupIds ?? []);
   const platformDevices = usePlatformDeviceStore((s) => s.devices ?? []);
   const hasPlatformFields = platformFields.length > 0;
 
@@ -92,11 +126,18 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
+  const isEmbeddedMode = useMemo(() => resolveEditorServiceConfig().mode === 'embedded', []);
+  const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>(() => {
+    if (!isEmbeddedMode) return 'custom';
+    return hasPlatformFields ? 'platform' : 'device';
+  });
+  const [selectedDeviceGroupIdState, setSelectedDeviceGroupIdState] = useState('');
 
   const deviceSources = useMemo(() => {
     const fromStore = platformDevices.map((device) => ({
       deviceId: device.deviceId,
       label: device.deviceName || `Device ${device.deviceId}`,
+      groupId: device.groupId || device.groupName || '__ungrouped__',
       groupName: device.groupName || t('binding.deviceFields', 'Device Fields'),
       templateId: device.templateId,
       dataSourceId: getDeviceDataSourceId(device.deviceId),
@@ -112,6 +153,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
         return {
           deviceId,
           label: `Device ${deviceId}`,
+          groupId: '__ungrouped__',
           groupName: t('binding.deviceFields', 'Device Fields'),
           templateId: undefined,
           dataSourceId: id,
@@ -127,53 +169,110 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       dataSourceIds.filter((id) => id !== '__platform__' && parseDeviceDataSourceId(id) === null),
     [dataSourceIds],
   );
-  const isEmbeddedMode = useMemo(() => resolveEditorServiceConfig().mode === 'embedded', []);
+  const hasDeviceCatalog = platformDeviceGroups.length > 0 || deviceSources.length > 0;
+  const deviceGroupOptions = useMemo(() => {
+    if (platformDeviceGroups.length > 0) return platformDeviceGroups;
 
-  const selectedGroup = useMemo<SourceGroup>(() => {
-    if (!isEmbeddedMode) return 'custom';
-    if (selectedDataSourceId === '__platform__') return 'platform';
-    if (selectedDataSourceId && parseDeviceDataSourceId(selectedDataSourceId)) return 'device';
-    if (selectedDataSourceId) return 'custom';
-    if (hasPlatformFields) return 'platform';
-    if (deviceSources.length > 0) return 'device';
-    return 'custom';
-  }, [selectedDataSourceId, hasPlatformFields, deviceSources.length, isEmbeddedMode]);
+    const deduped = new Map<string, { groupId: string; groupName: string }>();
+    deviceSources.forEach((device) => {
+      if (!deduped.has(device.groupId)) {
+        deduped.set(device.groupId, {
+          groupId: device.groupId,
+          groupName: device.groupName,
+        });
+      }
+    });
+    return Array.from(deduped.values());
+  }, [deviceSources, platformDeviceGroups]);
 
-  const deviceGroupNames = useMemo(
-    () => Array.from(new Set(deviceSources.map((device) => device.groupName))).sort(),
-    [deviceSources],
-  );
+  useEffect(() => {
+    if (!isEmbeddedMode) return;
 
-  const selectedDeviceSource =
+    if (selectedDataSourceId === '__platform__') {
+      setEmbeddedSourceGroup('platform');
+      return;
+    }
+
+    if (selectedDataSourceId && parseDeviceDataSourceId(selectedDataSourceId)) {
+      setEmbeddedSourceGroup('device');
+      const selectedDevice = deviceSources.find(
+        (device) => device.dataSourceId === selectedDataSourceId,
+      );
+      if (selectedDevice?.groupId) {
+        setSelectedDeviceGroupIdState(selectedDevice.groupId);
+      }
+      return;
+    }
+
+    if (selectedDataSourceId) {
+      setEmbeddedSourceGroup('custom');
+      return;
+    }
+
+    setEmbeddedSourceGroup(hasPlatformFields ? 'platform' : hasDeviceCatalog ? 'device' : 'custom');
+  }, [deviceSources, hasDeviceCatalog, hasPlatformFields, isEmbeddedMode, selectedDataSourceId]);
+
+  useEffect(() => {
+    if (!isEmbeddedMode || embeddedSourceGroup !== 'device') return;
+
+    if (platformDeviceGroups.length > 0) {
+      if (
+        !selectedDeviceGroupIdState ||
+        !deviceGroupOptions.some((group) => group.groupId === selectedDeviceGroupIdState)
+      ) {
+        setSelectedDeviceGroupIdState(String(deviceGroupOptions[0]?.groupId || ''));
+      }
+      return;
+    }
+
+    if (!selectedDeviceGroupIdState && deviceSources[0]?.groupId) {
+      setSelectedDeviceGroupIdState(deviceSources[0].groupId);
+    }
+  }, [
+    deviceGroupOptions,
+    deviceSources,
+    embeddedSourceGroup,
+    isEmbeddedMode,
+    platformDeviceGroups.length,
+    selectedDeviceGroupIdState,
+  ]);
+
+  const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
+  const selectedDeviceFromValue =
     selectedGroup === 'device'
-      ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
-        deviceSources[0]
+      ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId)
       : undefined;
-
-  const selectedDeviceGroup =
-    selectedGroup === 'device' ? selectedDeviceSource?.groupName || deviceGroupNames[0] || '' : '';
+  const selectedDeviceGroupId =
+    selectedGroup === 'device'
+      ? selectedDeviceFromValue?.groupId ||
+        selectedDeviceGroupIdState ||
+        String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '')
+      : '';
+  const selectedDeviceGroupName =
+    selectedGroup === 'device'
+      ? deviceGroupOptions.find((group) => group.groupId === selectedDeviceGroupId)?.groupName ||
+        selectedDeviceFromValue?.groupName ||
+        ''
+      : '';
 
   const visibleDeviceSources = useMemo(
     () =>
       selectedGroup === 'device'
-        ? deviceSources.filter((device) => device.groupName === selectedDeviceGroup)
+        ? deviceSources.filter((device) => device.groupId === selectedDeviceGroupId)
         : [],
-    [deviceSources, selectedGroup, selectedDeviceGroup],
+    [deviceSources, selectedDeviceGroupId, selectedGroup],
   );
+
+  const selectedDeviceSource =
+    selectedGroup === 'device'
+      ? visibleDeviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
+        visibleDeviceSources[0]
+      : undefined;
 
   const selectedDeviceFields = useMemo(() => {
     if (selectedGroup !== 'device') return [];
-
-    const directFields = selectedDeviceSource?.fields ?? [];
-    if (directFields.length > 0) return directFields;
-
-    const siblingFields = visibleDeviceSources.find(
-      (device) => (device.fields?.length ?? 0) > 0,
-    )?.fields;
-    if ((siblingFields?.length ?? 0) > 0) return siblingFields ?? [];
-
-    return platformFields;
-  }, [platformFields, selectedDeviceSource, selectedGroup, visibleDeviceSources]);
+    return selectedDeviceSource?.fields ?? [];
+  }, [selectedDeviceSource, selectedGroup]);
 
   const effectiveDataSourceId = !isEmbeddedMode
     ? customDataSourceIds.includes(selectedDataSourceId)
@@ -322,6 +421,46 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
   useEffect(() => {
     if (selectedGroup !== 'device') return;
+    if (!selectedDeviceGroupId || loadedGroupIds.includes(selectedDeviceGroupId)) return;
+    if (window.parent === window) return;
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
+        | undefined;
+      if (data?.type !== 'tv:devices-by-group') return;
+      const payload = data.payload;
+      if (payload?.groupId !== selectedDeviceGroupId || !Array.isArray(payload.devices)) return;
+
+      const devices = payload.devices as Array<{ deviceId?: string; deviceName?: string }>;
+      usePlatformDeviceStore.getState().setDevicesForGroup(selectedDeviceGroupId, devices as any);
+      devices.forEach((device) => {
+        if (!device?.deviceId) return;
+        ensurePlatformDeviceDataSource({
+          deviceId: device.deviceId,
+          deviceName: device.deviceName,
+        });
+      });
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.parent.postMessage(
+      {
+        type: 'thingsvis:requestDevicesByGroup',
+        payload: {
+          groupId: selectedDeviceGroupId,
+        },
+      },
+      '*',
+    );
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [loadedGroupIds, selectedDeviceGroupId, selectedGroup]);
+
+  useEffect(() => {
+    if (selectedGroup !== 'device') return;
     if (!selectedDeviceSource?.deviceId || !selectedDeviceSource?.templateId) return;
     if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
@@ -378,12 +517,28 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               value={selectedGroup}
               onChange={(e) => {
                 const nextGroup = e.target.value as SourceGroup;
-                const nextId =
-                  nextGroup === 'platform'
-                    ? '__platform__'
-                    : nextGroup === 'device'
-                      ? (deviceSources[0]?.dataSourceId ?? '')
-                      : (customDataSourceIds[0] ?? '');
+                setEmbeddedSourceGroup(nextGroup);
+
+                if (nextGroup === 'platform') {
+                  safeOnChange(
+                    hasPlatformFields ? { dataSourceId: '__platform__', fieldPath: '' } : null,
+                  );
+                  return;
+                }
+
+                if (nextGroup === 'device') {
+                  const nextGroupId =
+                    selectedDeviceGroupIdState ||
+                    String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '');
+                  setSelectedDeviceGroupIdState(nextGroupId);
+                  const nextDevice = deviceSources.find((device) => device.groupId === nextGroupId);
+                  safeOnChange(
+                    nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
+                  );
+                  return;
+                }
+
+                const nextId = customDataSourceIds[0] ?? '';
                 safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
               }}
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
@@ -391,9 +546,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               {hasPlatformFields && (
                 <option value="platform">{t('binding.platformFieldsLabel')}</option>
               )}
-              {deviceSources.length > 0 && (
-                <option value="device">{t('binding.deviceFields')}</option>
-              )}
+              {hasDeviceCatalog && <option value="device">{t('binding.deviceFields')}</option>}
               {customDataSourceIds.length > 0 && (
                 <option value="custom">{t('binding.customDataSources')}</option>
               )}
@@ -405,11 +558,12 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               {selectedGroup === 'device' ? t('binding.deviceGroup') : t('binding.dataSource')}
             </label>
             <select
-              value={selectedGroup === 'device' ? selectedDeviceGroup : effectiveDataSourceId}
+              value={selectedGroup === 'device' ? selectedDeviceGroupId : effectiveDataSourceId}
               onChange={(e) => {
                 const nextId = e.target.value;
                 if (selectedGroup === 'device') {
-                  const nextDevice = deviceSources.find((device) => device.groupName === nextId);
+                  setSelectedDeviceGroupIdState(nextId);
+                  const nextDevice = deviceSources.find((device) => device.groupId === nextId);
                   safeOnChange(
                     nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
                   );
@@ -420,7 +574,9 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
               disabled={
                 (selectedGroup === 'platform' && !hasPlatformFields) ||
-                (selectedGroup === 'device' && deviceSources.length === 0) ||
+                (selectedGroup === 'device' &&
+                  deviceGroupOptions.length === 0 &&
+                  deviceSources.length === 0) ||
                 (selectedGroup === 'custom' && customDataSourceIds.length === 0)
               }
             >
@@ -428,9 +584,9 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 <option value="__platform__">{t('binding.platformFieldsLabel')}</option>
               )}
               {selectedGroup === 'device' &&
-                deviceGroupNames.map((groupName) => (
-                  <option key={groupName} value={groupName}>
-                    {groupName}
+                deviceGroupOptions.map((group) => (
+                  <option key={group.groupId} value={group.groupId}>
+                    {group.groupName}
                   </option>
                 ))}
               {selectedGroup === 'custom' &&
@@ -478,11 +634,15 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             disabled={visibleDeviceSources.length === 0}
           >
-            {visibleDeviceSources.map((device) => (
-              <option key={device.dataSourceId} value={device.dataSourceId}>
-                {device.label}
-              </option>
-            ))}
+            {visibleDeviceSources.length === 0 ? (
+              <option value="">{t('binding.loadingData', 'Loading data...')}</option>
+            ) : (
+              visibleDeviceSources.map((device) => (
+                <option key={device.dataSourceId} value={device.dataSourceId}>
+                  {device.label}
+                </option>
+              ))
+            )}
           </select>
         </div>
       )}

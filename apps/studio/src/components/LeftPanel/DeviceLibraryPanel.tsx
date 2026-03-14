@@ -11,6 +11,7 @@ import {
 
 import {
   usePlatformDeviceStore,
+  type PlatformDeviceGroup,
   type PlatformDevice,
   type PlatformDevicePreset,
 } from '@/lib/stores/platformDeviceStore';
@@ -18,16 +19,96 @@ import {
 export default function DeviceLibraryPanel() {
   const { t } = useTranslation('editor');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
   // Read the devices from the store
+  const groups = usePlatformDeviceStore((state) => state.groups);
+  const loadedGroupIds = usePlatformDeviceStore((state) => state.loadedGroupIds);
   const devices = usePlatformDeviceStore((state) => state.devices);
+
+  const visibleGroups = useMemo<PlatformDeviceGroup[]>(() => {
+    if (groups.length > 0) return groups;
+
+    const derived = new Map<string, PlatformDeviceGroup>();
+    devices.forEach((device) => {
+      const groupId = String(device.groupId || device.groupName || '__ungrouped__');
+      if (!derived.has(groupId)) {
+        derived.set(groupId, {
+          groupId,
+          groupName: device.groupName || groupId,
+        });
+      }
+    });
+    return Array.from(derived.values());
+  }, [devices, groups]);
+
+  React.useEffect(() => {
+    if (visibleGroups.length === 0) {
+      setSelectedGroupId('');
+      return;
+    }
+    if (!selectedGroupId || !visibleGroups.some((group) => group.groupId === selectedGroupId)) {
+      setSelectedGroupId(visibleGroups[0]?.groupId || '');
+    }
+  }, [selectedGroupId, visibleGroups]);
+
+  React.useEffect(() => {
+    if (!selectedGroupId || loadedGroupIds.includes(selectedGroupId) || window.parent === window) {
+      return;
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
+        | undefined;
+      if (data?.type !== 'tv:devices-by-group') return;
+      const payload = data.payload;
+      if (payload?.groupId !== selectedGroupId || !Array.isArray(payload.devices)) return;
+      usePlatformDeviceStore.getState().setDevicesForGroup(selectedGroupId, payload.devices as any);
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.parent.postMessage(
+      {
+        type: 'thingsvis:requestDevicesByGroup',
+        payload: {
+          groupId: selectedGroupId,
+        },
+      },
+      '*',
+    );
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [loadedGroupIds, selectedGroupId]);
+
+  const groupDevices = useMemo(
+    () => devices.filter((device) => device.groupId === selectedGroupId),
+    [devices, selectedGroupId],
+  );
+
+  React.useEffect(() => {
+    if (groupDevices.length === 0) {
+      setSelectedDeviceId('');
+      return;
+    }
+    if (!selectedDeviceId || !groupDevices.some((device) => device.deviceId === selectedDeviceId)) {
+      setSelectedDeviceId(groupDevices[0]?.deviceId || '');
+    }
+  }, [groupDevices, selectedDeviceId]);
 
   // Filter devices/presets based on search query
   const filteredDevices = useMemo(() => {
-    if (!searchQuery.trim()) return devices;
+    const scopedDevices = selectedDeviceId
+      ? groupDevices.filter((device) => device.deviceId === selectedDeviceId)
+      : groupDevices;
+
+    if (!searchQuery.trim()) return scopedDevices;
     const query = searchQuery.toLowerCase();
 
-    return devices
+    return scopedDevices
       .map((device) => {
         // If device name matches, keep all its presets
         if (device.deviceName.toLowerCase().includes(query)) {
@@ -43,7 +124,7 @@ export default function DeviceLibraryPanel() {
         return null;
       })
       .filter(Boolean) as PlatformDevice[];
-  }, [searchQuery, devices]);
+  }, [groupDevices, searchQuery, selectedDeviceId]);
 
   // Handle dragging a preset out of the library
   const handleDragStart = (
@@ -72,7 +153,7 @@ export default function DeviceLibraryPanel() {
     }
   };
 
-  if (!devices || devices.length === 0) {
+  if (visibleGroups.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground gap-3">
         <Server className="w-12 h-12 opacity-20" />
@@ -84,7 +165,44 @@ export default function DeviceLibraryPanel() {
   return (
     <div className="flex flex-col h-full">
       {/* Search Input */}
-      <div className="p-2 pb-3 border-b border-border">
+      <div className="p-2 pb-3 border-b border-border space-y-3">
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">
+            {t('binding.deviceGroup')}
+          </label>
+          <select
+            value={selectedGroupId}
+            onChange={(e) => setSelectedGroupId(e.target.value)}
+            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
+          >
+            {visibleGroups.map((group) => (
+              <option key={group.groupId} value={group.groupId}>
+                {group.groupName}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">{t('binding.device')}</label>
+          <select
+            value={selectedDeviceId}
+            onChange={(e) => setSelectedDeviceId(e.target.value)}
+            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
+            disabled={groupDevices.length === 0}
+          >
+            {groupDevices.length === 0 ? (
+              <option value="">{t('binding.loadingData', 'Loading data...')}</option>
+            ) : (
+              groupDevices.map((device) => (
+                <option key={device.deviceId} value={device.deviceId}>
+                  {device.deviceName}
+                </option>
+              ))
+            )}
+          </select>
+        </div>
+
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
@@ -106,7 +224,7 @@ export default function DeviceLibraryPanel() {
         ) : (
           <Accordion
             type="multiple"
-            defaultValue={devices.map((d) => d.deviceId)}
+            defaultValue={filteredDevices.map((d) => d.deviceId)}
             className="space-y-2"
           >
             {filteredDevices.map((device) => (

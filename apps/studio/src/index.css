@@ -330,6 +330,10 @@
     font-size: 14px;
   }
 
+  .thingsvis-embed-surface [data-canvas-theme] {
+    background-color: transparent !important;
+  }
+
   /* Remove all default focus-visible outlines/rings in the studio app */
   *:focus-visible {
     @apply outline-none ring-0;

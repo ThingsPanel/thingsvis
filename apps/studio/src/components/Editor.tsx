@@ -139,7 +139,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   );
   const selectedElement = kernelState.selection.nodeIds[0] || null;
 
-  const hasDevices = usePlatformDeviceStore((state) => state.devices.length > 0);
+  const hasDevices = usePlatformDeviceStore(
+    (state) => state.devices.length > 0 || state.groups.length > 0,
+  );
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');

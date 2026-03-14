@@ -15,7 +15,7 @@ import { useSearchParams } from 'react-router-dom';
 import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
 import { dataSourceManager } from '@thingsvis/kernel';
 import type { KernelState } from '@thingsvis/kernel';
-import type { PageSchemaType, IPage, DataSource } from '@thingsvis/schema';
+import type { PageSchemaType, DataSource } from '@thingsvis/schema';
 import { DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
 import { getDashboard } from '@/lib/api/dashboards';
 import { apiClient } from '@/lib/api/client';
@@ -42,8 +42,8 @@ import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { PreviewScaleMode } from './PreviewPage';
 
-/** Padding applied around the grid canvas in embed mode (px). Mirrors PreviewPage layout. */
-const GRID_CANVAS_PADDING = 16;
+/** Padding applied around the grid canvas in embed mode (px). */
+const GRID_CANVAS_PADDING = 0;
 
 interface EmbedState {
   isLoading: boolean;
@@ -137,10 +137,6 @@ export default function EmbedPage() {
 
   const isGridLayout = canvasMode === 'grid';
 
-  const pageBackground = useMemo(() => {
-    const page = kernelState?.page as IPage | undefined;
-    return page?.config?.background?.color ?? 'transparent';
-  }, [kernelState]);
   const scaleMode: PreviewScaleMode =
     ((state.schema as { canvas?: { scaleMode?: string } } | null)?.canvas
       ?.scaleMode as PreviewScaleMode) || 'fit-min';
@@ -450,6 +446,7 @@ export default function EmbedPage() {
         if (!payload || typeof payload !== 'object') return;
         const msg = payload as {
           data?: Record<string, unknown>;
+          platformDeviceGroups?: Array<Record<string, unknown>>;
           config?: Record<string, unknown>;
           platformDevices?: Array<Record<string, unknown>>;
           platformFields?: Array<Record<string, unknown>>;
@@ -473,6 +470,9 @@ export default function EmbedPage() {
             dataSources: (initData.dataSources as unknown[] | undefined) ?? [],
           };
 
+          const platformDeviceGroups = Array.isArray(msg.platformDeviceGroups)
+            ? msg.platformDeviceGroups
+            : [];
           const platformDevices = Array.isArray(msg.platformDevices) ? msg.platformDevices : [];
           const topLevelPlatformFields = Array.isArray(msg.platformFields)
             ? msg.platformFields
@@ -487,6 +487,9 @@ export default function EmbedPage() {
                 typeof platformFieldStore.setScope
               >[0],
             );
+          }
+          if (platformDeviceGroups.length > 0) {
+            platformDeviceStore.setGroups(platformDeviceGroups as never);
           }
 
           const inheritedPlatformBufferSize = getResolvedPlatformBufferSize(
@@ -538,7 +541,7 @@ export default function EmbedPage() {
                 });
               }
             });
-          } else {
+          } else if (platformDeviceGroups.length === 0) {
             platformDeviceStore.clearDevices();
           }
 
@@ -820,8 +823,8 @@ export default function EmbedPage() {
   // Auto-calculation of zoom for non-grid layouts (Fixed/Infinite)
   return (
     <div
-      className="relative overflow-auto"
-      style={{ width: '100vw', height: '100vh', backgroundColor: pageBackground }}
+      className="relative overflow-auto thingsvis-embed-surface"
+      style={{ width: '100vw', height: '100vh', backgroundColor: 'transparent' }}
     >
       <ErrorBoundary>
         {isGridLayout ? (

@@ -223,6 +223,7 @@ export const onEmbedEvent = <T = unknown>(type: string, handler: MessageHandler<
 // =============================================================================
 
 export interface EmbedInitPayload {
+  platformDeviceGroups?: unknown[];
   platformDevices?: unknown[];
   platformFields?: unknown[];
   platformBufferSize?: number;
@@ -273,6 +274,7 @@ export interface ProcessedEmbedData {
   saveTarget: SaveTarget;
   thumbnail?: string;
   platformFields: unknown[];
+  platformDeviceGroups: unknown[];
   platformDevices: unknown[];
   platformBufferSize: number;
   platformFieldScope?: string;
@@ -372,6 +374,7 @@ export function processEmbedInitPayload(
     saveTarget,
     thumbnail,
     platformFields: (data.platformFields || p.platformFields || []) as unknown[],
+    platformDeviceGroups: (p.platformDeviceGroups || []) as unknown[],
     platformDevices: (p.platformDevices || []) as unknown[],
     platformBufferSize:
       typeof p.platformBufferSize === 'number' && Number.isFinite(p.platformBufferSize)

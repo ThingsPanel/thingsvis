@@ -429,11 +429,19 @@ export function useProjectBootstrap({
       if (Array.isArray(processed.platformFields) && processed.platformFields.length > 0) {
         platformFieldStore.setFields(processed.platformFields as any);
       }
-      const _deviceArr = Array.isArray(processed.platformDevices) ? processed.platformDevices : [];
-      if (_deviceArr.length > 0) {
+      const groupArr = Array.isArray(processed.platformDeviceGroups)
+        ? processed.platformDeviceGroups
+        : [];
+      const deviceArr = Array.isArray(processed.platformDevices) ? processed.platformDevices : [];
+      if (groupArr.length > 0) {
+        platformDeviceStore.setGroups(groupArr as any);
+      }
+      if (deviceArr.length > 0) {
         platformDeviceStore.setDevices(processed.platformDevices as any);
       } else {
-        platformDeviceStore.clearDevices();
+        if (groupArr.length === 0) {
+          platformDeviceStore.clearDevices();
+        }
       }
 
       if (!mergedDataSources.some((ds) => ds.id === '__platform__')) {
@@ -452,7 +460,7 @@ export function useProjectBootstrap({
         });
       }
 
-      (processed.platformDevices || []).forEach((device: any) => {
+      deviceArr.forEach((device: any) => {
         if (!device?.deviceId) return;
         const dsId = `__platform_${device.deviceId}__`;
         if (mergedDataSources.some((ds) => ds.id === dsId)) return;
