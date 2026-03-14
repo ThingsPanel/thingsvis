@@ -28,12 +28,14 @@ export function useEditorSync({
   canvasInitializedRef,
   bootstrappingRef,
 }: UseEditorSyncProps) {
+  const autoSaveEnabled = !isBootstrapping && (!isWidgetMode || projectId !== 'widget');
+
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
     cloudProjectId,
     getProjectState,
-    enabled: !isBootstrapping && !isWidgetMode, // Disable auto-save in Widget Mode
+    enabled: autoSaveEnabled, // Keep host-managed dashboard editor savable; only disable legacy widget mode.
     onIdChange: (newId) => {
       setCanvasConfig((prev) => ({ ...prev, id: newId }));
       try {

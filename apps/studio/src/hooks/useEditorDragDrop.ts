@@ -1,10 +1,29 @@
 import { useCallback } from 'react';
+import { dataSourceManager } from '@thingsvis/kernel';
 import { loadWidget } from '../lib/registry/componentLoader';
 import { extractDefaults } from '../lib/registry/schemaUtils';
 import { store } from '../lib/store';
 import type { NodeSchemaType } from '@thingsvis/schema';
+import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 
 export function useEditorDragDrop(markDirty: () => void) {
+  const hydratePlatformDataSourcesForNodes = useCallback(async (nodes: NodeSchemaType[]) => {
+    const currentConfigs = dataSourceManager.getAllConfigs();
+    const nextConfigs = augmentPlatformDataSourcesForNodes(
+      currentConfigs,
+      nodes as Array<Record<string, unknown>>,
+    );
+
+    for (const nextConfig of nextConfigs) {
+      const prevConfig = currentConfigs.find((config) => config.id === nextConfig.id);
+      if (prevConfig && JSON.stringify(prevConfig) === JSON.stringify(nextConfig)) {
+        continue;
+      }
+
+      await dataSourceManager.registerDataSource(nextConfig, false);
+    }
+  }, []);
+
   const handleAddNode = useCallback(
     async (componentType: string) => {
       try {
@@ -91,12 +110,18 @@ export function useEditorDragDrop(markDirty: () => void) {
         };
 
         store.getState().addNodes([node]);
+        hydratePlatformDataSourcesForNodes([node]).catch((error) => {
+          console.error(
+            '[EditorDragDrop] Failed to hydrate platform data sources for snippet:',
+            error,
+          );
+        });
         markDirty();
       } catch (e) {
         console.error('[EditorDragDrop] onDropSnippet failed:', e);
       }
     },
-    [markDirty],
+    [hydratePlatformDataSourcesForNodes, markDirty],
   );
 
   return { handleAddNode, onDropComponent, onDropSnippet };

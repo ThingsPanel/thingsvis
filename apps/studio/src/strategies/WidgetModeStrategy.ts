@@ -17,6 +17,7 @@ import { usePlatformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { normalizePlatformFieldScope } from '../lib/embedded/default-platform-fields';
 import { dataSourceManager } from '@thingsvis/kernel';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
+import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 // =============================================================================
 // Interfaces & Types
 // =============================================================================
@@ -131,6 +132,16 @@ export class WidgetModeStrategy implements EditorStrategy {
     if (Array.isArray(payload.platformFields)) {
       usePlatformFieldStore.getState().setFields(payload.platformFields);
     }
+
+    const hydratedDataSources = augmentPlatformDataSourcesForNodes(
+      dataSourceManager.getAllConfigs(),
+      (payload.nodes as Record<string, unknown>[] | undefined) ?? [],
+    );
+    hydratedDataSources.forEach((dataSource) => {
+      dataSourceManager.registerDataSource(dataSource, false).catch((error) => {
+        console.error('[WidgetModeStrategy] Failed to hydrate platform data source:', error);
+      });
+    });
 
     // 3. Construct the internal ProjectFile state
     const projectFile: ProjectFile = {

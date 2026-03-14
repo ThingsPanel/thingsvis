@@ -23,8 +23,13 @@ import {
   processEmbedInitPayload,
   type EmbedInitPayload,
 } from '../embed/message-router';
+import {
+  applyPlatformBufferSize,
+  getResolvedPlatformBufferSize,
+} from '../embed/platformDeviceCompat';
 import { platformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
+import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -280,6 +285,12 @@ export function useProjectBootstrap({
 
         if (loaded) {
           setBootstrapSummary(createBootstrapSummary(loaded.nodes));
+          const loadedBackground =
+            typeof loaded.canvas.background === 'object' && loaded.canvas.background !== null
+              ? loaded.canvas.background
+              : typeof loaded.canvas.background === 'string' && loaded.canvas.background.length > 0
+                ? { color: loaded.canvas.background }
+                : undefined;
           store.getState().loadPage({
             id: loaded.meta.id,
             type: 'page' as const,
@@ -290,10 +301,11 @@ export function useProjectBootstrap({
               width: loaded.canvas.width,
               height: loaded.canvas.height,
               theme: validateCanvasTheme((loaded.canvas as any).theme),
+              background: loadedBackground as unknown as
+                | NonNullable<IPageConfig['background']>
+                | undefined,
             },
           });
-          const loadedBackground =
-            typeof loaded.canvas.background === 'object' ? loaded.canvas.background : undefined;
           setCanvasConfig((prev) => ({
             ...prev,
             id: loaded.meta.id,
@@ -310,7 +322,7 @@ export function useProjectBootstrap({
               typeof loaded.canvas.background === 'string'
                 ? loaded.canvas.background
                 : prev.bgValue,
-            background: loadedBackground ?? prev.background,
+            background: (loadedBackground as CanvasBackground | undefined) ?? prev.background,
             gridCols: loaded.canvas.gridCols ?? prev.gridCols,
             gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
             gridGap: loaded.canvas.gridGap ?? prev.gridGap,
@@ -405,7 +417,11 @@ export function useProjectBootstrap({
       let nodesToLoad = processed.nodes;
       let loadedMeta: any = null;
       let loadedCanvas: any = null;
-      const mergedDataSources = [...processed.dataSources] as Array<Record<string, any>>;
+      let mergedDataSources = [...processed.dataSources] as Array<Record<string, any>>;
+      const inheritedPlatformBufferSize = getResolvedPlatformBufferSize(
+        mergedDataSources as any,
+        processed.platformBufferSize,
+      );
 
       if (processed.platformFieldScope) {
         platformFieldStore.setScope(processed.platformFieldScope as any);
@@ -428,6 +444,7 @@ export function useProjectBootstrap({
           config: {
             ...DEFAULT_PLATFORM_FIELD_CONFIG,
             source: 'platform',
+            bufferSize: inheritedPlatformBufferSize,
             requestedFields: (processed.platformFields || [])
               .map((field: any) => field?.id)
               .filter((id: unknown) => typeof id === 'string'),
@@ -447,6 +464,7 @@ export function useProjectBootstrap({
             ...DEFAULT_PLATFORM_FIELD_CONFIG,
             source: 'platform',
             deviceId: device.deviceId,
+            bufferSize: inheritedPlatformBufferSize,
             requestedFields: [],
           },
         });
@@ -480,12 +498,24 @@ export function useProjectBootstrap({
         : (loadedCanvas ?? processed.canvas);
       const resolvedCanvasMode = normalizeCanvasMode(resolvedCanvas?.mode);
 
+      mergedDataSources = applyPlatformBufferSize(
+        mergedDataSources as any,
+        processed.platformBufferSize,
+      ) as Array<Record<string, any>>;
+
+      mergedDataSources = augmentPlatformDataSourcesForNodes(
+        mergedDataSources as any,
+        (nodesToLoad ?? []) as Array<Record<string, unknown>>,
+      ) as Array<Record<string, any>>;
+
       // Restore background — may be a PageBackground object or a CSS string.
       const rawBg = loadedCanvas?.background ?? processed.canvas.background;
       const bgObj =
         typeof rawBg === 'object' && rawBg !== null
           ? (rawBg as Record<string, unknown>)
-          : undefined;
+          : typeof rawBg === 'string' && rawBg.length > 0
+            ? ({ color: rawBg } as Record<string, unknown>)
+            : undefined;
       const bgStr = typeof rawBg === 'string' ? rawBg : undefined;
 
       setCanvasConfig((prev) => ({
@@ -524,6 +554,7 @@ export function useProjectBootstrap({
             width: resolvedCanvas?.width || 1920,
             height: resolvedCanvas?.height || 1080,
             theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+            background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
             gridSettings: {
               cols: resolvedCanvas?.gridCols ?? 24,
               rowHeight: resolvedCanvas?.gridRowHeight ?? 50,

@@ -25,9 +25,11 @@ import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 import { platformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 import {
+  applyPlatformBufferSize,
   adoptLegacyPlatformDataSources,
   findLegacyPlatformDataSourceIdsForAdoption,
   hasPlatformDataSourceBoundToDevice,
+  getResolvedPlatformBufferSize,
   inferSinglePlatformDeviceId,
 } from '@/embed/platformDeviceCompat';
 import {
@@ -35,6 +37,7 @@ import {
   cachePlatformData,
   type PlatformDataSnapshot,
 } from '@/embed/platformDataSnapshot';
+import { augmentPlatformDataSourcesForNodes } from '@/lib/platformDatasourceBindings';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import type { PreviewScaleMode } from './PreviewPage';
@@ -450,6 +453,7 @@ export default function EmbedPage() {
           config?: Record<string, unknown>;
           platformDevices?: Array<Record<string, unknown>>;
           platformFields?: Array<Record<string, unknown>>;
+          platformBufferSize?: number;
           platformFieldScope?: string;
           roleScope?: string;
         };
@@ -485,20 +489,9 @@ export default function EmbedPage() {
             );
           }
 
-          const inheritedPlatformBufferSize = Math.max(
-            0,
-            ...((schema.dataSources ?? []) as DataSource[])
-              .filter((dataSource) => {
-                const normalizedType =
-                  typeof dataSource?.type === 'string' ? dataSource.type.toUpperCase() : '';
-                return normalizedType === 'PLATFORM_FIELD' || normalizedType === 'PLATFORM';
-              })
-              .map((dataSource) => {
-                const config = (dataSource.config ?? {}) as { bufferSize?: unknown };
-                return typeof config.bufferSize === 'number' && Number.isFinite(config.bufferSize)
-                  ? config.bufferSize
-                  : 0;
-              }),
+          const inheritedPlatformBufferSize = getResolvedPlatformBufferSize(
+            (schema.dataSources ?? []) as DataSource[],
+            msg.platformBufferSize,
           );
 
           // Auto-inject __platform__ data source only when the host has not already provided one.
@@ -548,6 +541,16 @@ export default function EmbedPage() {
           } else {
             platformDeviceStore.clearDevices();
           }
+
+          schema.dataSources = applyPlatformBufferSize(
+            (schema.dataSources ?? []) as DataSource[],
+            msg.platformBufferSize,
+          );
+
+          schema.dataSources = augmentPlatformDataSourcesForNodes(
+            (schema.dataSources ?? []) as DataSource[],
+            ((schema.nodes as unknown[]) ?? []) as Array<Record<string, unknown>>,
+          );
 
           const singleRuntimeDeviceId =
             platformDevices.length === 1 && typeof platformDevices[0]?.deviceId === 'string'
