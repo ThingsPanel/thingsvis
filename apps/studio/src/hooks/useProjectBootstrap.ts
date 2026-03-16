@@ -409,6 +409,9 @@ export function useProjectBootstrap({
   }, [projectId, storage.isCloud]);
 
   // Embed mode host init payload handler
+  // FIX-G1: Idempotent guard — skip duplicate tv:init payloads from host retry mechanism
+  const lastInitFingerprintRef = useRef<string>('');
+
   useEffect(() => {
     if (!embedVisibility.isEmbedded) return;
 
@@ -418,6 +421,16 @@ export function useProjectBootstrap({
         console.warn('[Editor] ⚠️ embed init 数据无效');
         return;
       }
+
+      // FIX-G1: Compute a lightweight fingerprint; skip if identical to the last processed init
+      const fingerprint = `${processed.projectId}:${processed.nodes.length}:${(processed.dataSources as unknown[]).length}:${processed.canvas.mode}:${processed.canvas.width}:${processed.canvas.height}`;
+      if (fingerprint === lastInitFingerprintRef.current) {
+        return;
+      }
+      lastInitFingerprintRef.current = fingerprint;
+
+      // FIX-G2: Suppress markDirty during init processing (mirrors bootstrap flow)
+      bootstrappingRef.current = true;
 
       let nodesToLoad = processed.nodes;
       let loadedMeta: any = null;
@@ -601,6 +614,11 @@ export function useProjectBootstrap({
           }
         }
       }
+
+      // FIX-G2: Restore markDirty responsiveness after React reconciliation
+      requestAnimationFrame(() => {
+        bootstrappingRef.current = false;
+      });
     });
 
     return () => {
