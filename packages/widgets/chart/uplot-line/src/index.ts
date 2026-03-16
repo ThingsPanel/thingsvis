@@ -17,6 +17,12 @@ const TIME_RANGE_SEC: Record<Exclude<Props['timeRangePreset'], 'all'>, number> =
     '7d': 7 * 24 * 60 * 60,
     '30d': 30 * 24 * 60 * 60,
 };
+const STANDALONE_UPLOT_SERIES = [
+    { timestamp: '2026-01-01T00:00:00Z', value: 18 },
+    { timestamp: '2026-01-01T01:00:00Z', value: 22 },
+    { timestamp: '2026-01-01T02:00:00Z', value: 26 },
+    { timestamp: '2026-01-01T03:00:00Z', value: 24 },
+];
 
 type ParsedPoint = { tsSec: number; value: number };
 
@@ -182,6 +188,7 @@ export const Main = defineWidget({
     constraints: metadata.constraints,
     locales: { zh, en },
     schema: PropsSchema,
+    standaloneDefaults: { data: STANDALONE_UPLOT_SERIES },
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;

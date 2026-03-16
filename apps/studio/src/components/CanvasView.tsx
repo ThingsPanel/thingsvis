@@ -19,6 +19,7 @@ import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
 import { isCreationTool } from './tools/types';
+import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
 
 function generateId(prefix = 'node') {
   try {
@@ -255,7 +256,11 @@ const CanvasView = forwardRef<
       position: { x: worldX, y: worldY },
       // 只有可调整尺寸的组件才设置 size
       ...(initialSize ? { size: initialSize } : {}),
-      props: entry?.defaultProps ?? {},
+      props: resolveInitialWidgetProps({
+        schema: moduleDefs?.schema,
+        standaloneDefaults: moduleDefs?.standaloneDefaults,
+        fallbackDefaults: entry?.defaultProps,
+      }),
     };
 
     // Add grid position for grid mode - calculate from widget defaultSize
@@ -377,7 +382,11 @@ const CanvasView = forwardRef<
         type: componentType,
         position: { x: 0, y: 0 },
         ...(initialSize ? { size: initialSize } : {}),
-        props: moduleDefs?.defaultProps ?? {},
+        props: resolveInitialWidgetProps({
+          schema: moduleDefs?.schema,
+          standaloneDefaults: moduleDefs?.standaloneDefaults,
+          fallbackDefaults: moduleDefs?.defaultProps,
+        }),
         grid: {
           x: gridPos.x,
           y: gridPos.y,

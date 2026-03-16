@@ -81,6 +81,11 @@ export type WidgetMainModule = {
   icon?: string;
   version?: string;
   /**
+   * Standalone-only demo props applied when a widget is first created in the editor.
+   * Embedded hosts remain source-of-truth and should ignore this field.
+   */
+  standaloneDefaults?: Record<string, unknown>;
+  /**
    * Whether the widget supports resizing.
    * - true: widget can be resized by user (default)
    * - false: widget size is determined by content (e.g., text)

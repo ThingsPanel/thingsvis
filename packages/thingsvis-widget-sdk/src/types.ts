@@ -229,6 +229,8 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   /** 版本号 */
   version?: string;
   locales?: Record<string, unknown>;
+  /** Standalone-only demo props merged over schema defaults on initial creation. */
+  standaloneDefaults?: Record<string, unknown>;
   /** Zod Schema */
   schema?: z.ZodType<TProps>;
   /** 控件配置 */

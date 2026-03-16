@@ -17,6 +17,12 @@ const TITLE_FONT_SIZE = 14;
 const LEGEND_FONT_SIZE = 12;
 const TITLE_LINE_HEIGHT = 18;
 const LEGEND_BLOCK_HEIGHT = 20;
+const STANDALONE_BAR_SERIES = [
+    { name: 'Mon', value: 18 },
+    { name: 'Tue', value: 24 },
+    { name: 'Wed', value: 31 },
+    { name: 'Thu', value: 27 },
+];
 
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
     return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
@@ -257,6 +263,7 @@ export const Main = defineWidget({
     resizable: metadata.resizable,
     locales: { zh, en },
     schema: PropsSchema,
+    standaloneDefaults: { data: STANDALONE_BAR_SERIES },
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;

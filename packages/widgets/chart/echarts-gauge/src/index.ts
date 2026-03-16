@@ -11,6 +11,7 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const CHART_PADDING = 16;
+const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
 function parseGaugeData(raw: Props['data'], fallbackName: string): { value: number; name: string } | null {
     const entry = Array.isArray(raw) ? raw[raw.length - 1] : raw;
@@ -184,6 +185,7 @@ export const Main = defineWidget({
     resizable: metadata.resizable,
     locales: { zh, en },
     schema: PropsSchema,
+    standaloneDefaults: { data: STANDALONE_GAUGE_SERIES },
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;

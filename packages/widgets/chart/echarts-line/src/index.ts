@@ -24,6 +24,12 @@ const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = 
   '7d': 7 * 24 * 60 * 60 * 1000,
   '30d': 30 * 24 * 60 * 60 * 1000,
 };
+const STANDALONE_LINE_SERIES = [
+  { name: '00:00', value: 12 },
+  { name: '06:00', value: 18 },
+  { name: '12:00', value: 26 },
+  { name: '18:00', value: 22 },
+];
 
 type CategoryPoint = { name: string; value: number | string };
 type TimePoint = { timeMs: number; value: number; label: string };
@@ -443,6 +449,7 @@ export const Main: WidgetMainModule = {
   ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
+  standaloneDefaults: { data: STANDALONE_LINE_SERIES },
   controls,
   createOverlay,
 };

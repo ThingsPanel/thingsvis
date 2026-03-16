@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { dataSourceManager } from '@thingsvis/kernel';
 import { loadWidget } from '../lib/registry/componentLoader';
-import { extractDefaults } from '../lib/registry/schemaUtils';
+import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
 import { store } from '../lib/store';
 import type { NodeSchemaType } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
@@ -28,7 +28,11 @@ export function useEditorDragDrop(markDirty: () => void) {
     async (componentType: string) => {
       try {
         const { entry } = await loadWidget(componentType);
-        const defaultProps = extractDefaults(entry.schema);
+        const defaultProps = resolveInitialWidgetProps({
+          schema: entry.schema,
+          standaloneDefaults: entry.standaloneDefaults,
+          fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
+        });
         const now = Date.now();
 
         // Calculate grid position for new widget
@@ -62,7 +66,11 @@ export function useEditorDragDrop(markDirty: () => void) {
     async (componentType: string, gridPosition: any) => {
       try {
         const { entry } = await loadWidget(componentType);
-        const defaultProps = extractDefaults(entry.schema);
+        const defaultProps = resolveInitialWidgetProps({
+          schema: entry.schema,
+          standaloneDefaults: entry.standaloneDefaults,
+          fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
+        });
         const now = Date.now();
         const node: NodeSchemaType = {
           id: `node-${componentType}-${now}`,

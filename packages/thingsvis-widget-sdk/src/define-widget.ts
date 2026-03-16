@@ -65,6 +65,8 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
   };
   /** Zod Schema 定义属性 */
   schema: z.ZodObject<TProps>;
+  /** Standalone-only demo props merged over schema defaults on initial creation. */
+  standaloneDefaults?: Record<string, unknown>;
   /** 多语言翻译配置 (可选) */
   locales?: Record<string, Record<string, unknown>>;
   /** 
@@ -217,6 +219,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     icon,
     version = '1.0.0',
     schema,
+    standaloneDefaults,
     controls: controlsConfig,
     locales,
     enableAllBindings = false,
@@ -247,6 +250,8 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     controls = generateControls(schema, { groups, overrides, bindings });
   }
 
+  const defaultProps = schema.parse({});
+
   // 创建 createOverlay 函数
   const createOverlay = (ctx: WidgetOverlayContext): PluginOverlayInstance => {
     const element = document.createElement('div');
@@ -254,8 +259,6 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     element.style.height = '100%';
     element.style.pointerEvents = 'auto';
 
-    // 解析默认值
-    const defaultProps = schema.parse({});
     let currentProps = { ...defaultProps, ...(ctx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
 
     // 调用渲染函数
@@ -279,6 +282,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     category,
     icon,
     version,
+    standaloneDefaults,
     schema,
     controls,
     locales,
@@ -287,7 +291,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     defaultSize,
     constraints,
     resizable,
-    defaultProps: schema.parse({}),
+    defaultProps,
     createOverlay,
   };
 }
