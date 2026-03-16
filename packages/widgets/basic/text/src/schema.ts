@@ -19,7 +19,7 @@ export const PropsSchema = z.object({
   // ========================================
 
   /** Text content */
-  text: z.string().default('Text').describe('props.textContent'),
+  text: z.string().default('').describe('props.textContent'),
 
   // ========================================
   // Font

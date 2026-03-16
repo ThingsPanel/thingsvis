@@ -1,9 +1,40 @@
 {
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-chart-echarts-line": {
-                "name": "ECharts 折线图"
-            }
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-chart-echarts-line": {
+        "name": "折线图",
+        "controls": {
+          "title": "图表标题",
+          "titleAlign": "标题对齐",
+          "showLegend": "显示图例",
+          "showXAxis": "显示 X 轴",
+          "showYAxis": "显示 Y 轴",
+          "timeRangePreset": "时间范围",
+          "primaryColor": "主色",
+          "smooth": "平滑曲线",
+          "showArea": "显示面积填充",
+          "data": "预览数据"
+        },
+        "options": {
+          "titleAlign": {
+            "left": "靠左",
+            "center": "居中",
+            "right": "靠右"
+          },
+          "timeRangePreset": {
+            "all": "全部",
+            "1h": "最近 1 小时",
+            "6h": "最近 6 小时",
+            "24h": "最近 24 小时",
+            "7d": "最近 7 天",
+            "30d": "最近 30 天"
+          }
         }
+      }
     }
+  },
+  "runtime": {
+    "defaultSeriesName": "数值",
+    "emptyState": "添加数据点或绑定数据序列"
+  }
 }

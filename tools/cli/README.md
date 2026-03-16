@@ -45,10 +45,21 @@ pnpm vis-cli validate <widget-path-or-id>
 
 检查项：
 - `package.json` 存在且含 `name`/`version`
-- `src/index.ts` 存在且导出 `Main` 或调用 `defineWidget`
+- `src/index.ts` 存在且使用 `defineWidget(...)` 作为唯一入口
+- `src/metadata.ts` 存在
 - `src/schema.ts` 使用 `z.object()` 且含 `parse({})` 默认值工厂
 - `src/controls.ts` 使用 `generateControls()` 或 `createControlPanel()`
-- `src/locales/zh.json` 与 `en.json` 键名一致
+- `src/locales/zh.json` 与 `en.json` 必须同时存在且键名一致
+
+### verify — 验证组件可交付性
+
+```bash
+pnpm vis-cli verify <widget-path-or-id>
+```
+
+- 先执行 `validate`
+- 再执行组件包内 `pnpm typecheck`
+- 如果组件目录下存在 `*.test.ts` / `*.spec.ts`，再执行对应的 `vitest` 用例
 
 ### build — 构建单个组件
 

@@ -1,159 +1,147 @@
-/**
- * 文本组件主入口 (Overlay 模板)
- * 
- * 📝 使用 @thingsvis/widget-sdk 重构
- * 
- * 支持属性：
- * - 字体：fontSize, fontFamily, fontWeight, fontStyle
- * - 排版：textAlign, verticalAlign, lineHeight, letterSpacing, textDecoration
- * - 颜色：fill
- * - 阴影：textShadow*
- */
-
-import { Rect } from 'leafer-ui';
+import {
+  defineWidget,
+  resolveWidgetColors,
+  type WidgetColors,
+  type WidgetOverlayContext,
+} from '@thingsvis/widget-sdk';
 import { metadata } from './metadata';
-import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const DEFAULT_TEXT_FILL = '#333333';
 
-/**
- * 创建透明占位 Rect（用于 Leafer 层选择交互）
- */
-function create(): Rect {
-  return new Rect({
-    width: 160,
-    height: 40,
-    fill: 'rgba(200,200,200,0.05)', // 轻微透明背景便于选择
-    stroke: {
-      width: 1,
-      color: 'rgba(150,150,150,0.2)', // 轻微边框便于识别
-    },
-    draggable: true,
-    cursor: 'pointer',
-  });
+type RuntimeMessages = {
+  runtime?: {
+    previewText?: string;
+  };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+  return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
 }
 
-/**
- * 应用样式到 DOM 元素
- */
-function applyStyles(element: HTMLDivElement, props: Props) {
-  // 内容 — coerce to string defensively; bindings may transiently resolve to non-string values
-  element.textContent = typeof props.text === 'string' ? props.text : String(props.text ?? '');
+function resolveDisplayText(props: Props, ctx: WidgetOverlayContext) {
+  const rawText = typeof props.text === 'string' ? props.text : String(props.text ?? '');
+  if (rawText.trim()) {
+    return { text: rawText, isPlaceholder: false };
+  }
 
-  // 字体属性
+  return {
+    text: getRuntimeMessages(ctx.locale).runtime?.previewText ?? 'Enter text',
+    isPlaceholder: true,
+  };
+}
+
+function resolveTextColor(props: Props, colors: WidgetColors, isPlaceholder: boolean) {
+  if (isPlaceholder || props.fill === DEFAULT_TEXT_FILL) {
+    return colors.fg;
+  }
+  return props.fill;
+}
+
+function applyStyles(
+  element: HTMLDivElement,
+  props: Props,
+  ctx: WidgetOverlayContext,
+  colors: WidgetColors,
+) {
+  const content = resolveDisplayText(props, ctx);
+  element.textContent = content.text;
+  element.dataset.thingsvisPlaceholder = content.isPlaceholder ? 'true' : 'false';
+
   element.style.fontSize = `${props.fontSize}px`;
   element.style.fontFamily = props.fontFamily;
   element.style.fontWeight = props.fontWeight;
   element.style.fontStyle = props.fontStyle;
-
-  // 排版属性
   element.style.textAlign = props.textAlign;
   element.style.lineHeight = String(props.lineHeight);
   element.style.letterSpacing = props.letterSpacing ? `${props.letterSpacing}px` : 'normal';
   element.style.textDecoration = props.textDecoration;
+  element.style.color = resolveTextColor(props, colors, content.isPlaceholder);
+  element.style.opacity = content.isPlaceholder ? '0.68' : String(props.opacity);
 
-  // 颜色属性
-  element.style.color = props.fill;
-
-  // 阴影属性
   if (props.textShadowEnabled) {
     element.style.textShadow = `${props.textShadowOffsetX}px ${props.textShadowOffsetY}px ${props.textShadowBlur}px ${props.textShadowColor}`;
   } else {
     element.style.textShadow = 'none';
   }
 
-  // 文本换行模式（默认支持换行）
   element.style.wordBreak = 'break-word';
   element.style.whiteSpace = 'pre-wrap';
 }
 
-/**
- * 获取 flex 对齐方式
- */
 function getFlexAlign(align: Props['textAlign']): string {
   switch (align) {
-    case 'center': return 'center';
-    case 'right': return 'flex-end';
-    case 'justify': return 'space-between';
-    default: return 'flex-start';
+    case 'center':
+      return 'center';
+    case 'right':
+      return 'flex-end';
+    case 'justify':
+      return 'space-between';
+    default:
+      return 'flex-start';
   }
 }
 
 function getVerticalAlign(align: Props['verticalAlign']): string {
   switch (align) {
-    case 'middle': return 'center';
-    case 'bottom': return 'flex-end';
-    default: return 'flex-start';
+    case 'middle':
+      return 'center';
+    case 'bottom':
+      return 'flex-end';
+    default:
+      return 'flex-start';
   }
 }
 
-/**
- * 创建文本 Overlay 实例
- */
-function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
-  // 创建容器元素
-  const element = document.createElement('div');
-  element.style.display = 'inline-flex';
-  element.style.width = 'fit-content';
-  element.style.height = 'fit-content';
-  element.style.overflow = 'visible';
-  element.style.pointerEvents = 'none';
-  element.style.userSelect = 'none';
-  element.style.boxSizing = 'border-box';
-  element.dataset.thingsvisOverlay = 'basic-text';
-
-  // 合并默认值和传入的 props
-  const defaults = getDefaultProps();
-  let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
-
-  // 创建内部文本元素
-  const textEl = document.createElement('div');
-  textEl.style.width = 'fit-content';
-  textEl.style.height = 'fit-content';
-  textEl.style.boxSizing = 'border-box';
-  textEl.dataset.thingsvisMeasure = '1';
-  element.appendChild(textEl);
-
-  // 应用初始样式
-  applyStyles(textEl, currentProps);
-  element.style.justifyContent = getFlexAlign(currentProps.textAlign);
-  element.style.alignItems = getVerticalAlign(currentProps.verticalAlign);
-
-  return {
-    element,
-
-    /**
-     * 属性更新时调用
-     */
-    update: (newCtx: WidgetOverlayContext) => {
-      currentProps = { ...currentProps, ...(newCtx.props as Partial<Props>) };
-      applyStyles(textEl, currentProps);
-      element.style.justifyContent = getFlexAlign(currentProps.textAlign);
-      element.style.alignItems = getVerticalAlign(currentProps.verticalAlign);
-    },
-
-    /**
-     * 组件销毁时调用
-     */
-    destroy: () => {
-      // DOM 元素由宿主自动清理
-    },
-  };
-}
-
-/**
- * 插件主模块
- */
-export const Main: WidgetMainModule = {
-  locales: { zh, en },
+export const Main = defineWidget({
   ...metadata,
   schema: PropsSchema,
+  locales: { zh, en },
   controls,
-  create,
-  createOverlay,
-};
+  render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
+    element.style.display = 'inline-flex';
+    element.style.width = 'fit-content';
+    element.style.height = 'fit-content';
+    element.style.overflow = 'visible';
+    element.style.pointerEvents = 'none';
+    element.style.userSelect = 'none';
+    element.style.boxSizing = 'border-box';
+    element.dataset.thingsvisOverlay = 'basic-text';
+
+    let currentCtx = ctx;
+    let currentProps = props;
+    let colors = resolveWidgetColors(element);
+
+    const textEl = document.createElement('div');
+    textEl.style.width = 'fit-content';
+    textEl.style.height = 'fit-content';
+    textEl.style.boxSizing = 'border-box';
+    textEl.dataset.thingsvisMeasure = '1';
+    element.appendChild(textEl);
+
+    const renderText = () => {
+      colors = resolveWidgetColors(element);
+      applyStyles(textEl, currentProps, currentCtx, colors);
+      element.style.justifyContent = getFlexAlign(currentProps.textAlign);
+      element.style.alignItems = getVerticalAlign(currentProps.verticalAlign);
+    };
+
+    renderText();
+
+    return {
+      update: (nextProps: Props, nextCtx: WidgetOverlayContext) => {
+        currentProps = nextProps;
+        currentCtx = nextCtx;
+        renderText();
+      },
+      destroy: () => {
+        element.innerHTML = '';
+      },
+    };
+  },
+});
 
 export default Main;

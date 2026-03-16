@@ -99,10 +99,41 @@ async function runScript(command: string, args: string[], cwd: string): Promise<
   });
 }
 
+async function collectFiles(
+  dir: string,
+  predicate: (filePath: string) => boolean,
+): Promise<string[]> {
+  if (!(await fs.pathExists(dir))) {
+    return [];
+  }
+
+  const entries = await fs.readdir(dir, { withFileTypes: true });
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const filePath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        return collectFiles(filePath, predicate);
+      }
+      return predicate(filePath) ? [filePath] : [];
+    }),
+  );
+
+  return files.flat();
+}
+
+async function findWidgetTestFiles(repoRoot: string, widgetDir: string): Promise<string[]> {
+  const allFiles = await collectFiles(widgetDir, (filePath) =>
+    /\.(test|spec)\.[cm]?[tj]sx?$/.test(filePath),
+  );
+
+  return allFiles.map((filePath) => path.relative(repoRoot, filePath));
+}
+
 async function validateWidget(widgetDir: string): Promise<ValidationCheck[]> {
   const checks: ValidationCheck[] = [];
   const pkgPath = path.join(widgetDir, 'package.json');
   const indexPath = path.join(widgetDir, 'src', 'index.ts');
+  const metadataPath = path.join(widgetDir, 'src', 'metadata.ts');
   const schemaPath = path.join(widgetDir, 'src', 'schema.ts');
   const controlsPath = path.join(widgetDir, 'src', 'controls.ts');
   const localesDir = path.join(widgetDir, 'src', 'locales');
@@ -127,9 +158,19 @@ async function validateWidget(widgetDir: string): Promise<ValidationCheck[]> {
     checks.push({ name: 'src/index.ts exists', ok: false, details: 'missing src/index.ts' });
   } else {
     const content = await fs.readFile(indexPath, 'utf8');
-    const hasMainExport = /export\s+const\s+Main\s*=/.test(content) || /export\s+default\s+Main/.test(content) || /defineWidget\(/.test(content);
-    checks.push({ name: 'Main export detected', ok: hasMainExport, details: hasMainExport ? undefined : 'unable to find Main export pattern' });
+    const hasCanonicalEntry = /defineWidget\(/.test(content);
+    checks.push({
+      name: 'canonical defineWidget entry detected',
+      ok: hasCanonicalEntry,
+      details: hasCanonicalEntry ? undefined : 'expected src/index.ts to export a defineWidget(...) entry',
+    });
   }
+
+  checks.push({
+    name: 'src/metadata.ts exists',
+    ok: await fs.pathExists(metadataPath),
+    details: (await fs.pathExists(metadataPath)) ? undefined : 'missing src/metadata.ts',
+  });
 
   if (!(await fs.pathExists(schemaPath))) {
     checks.push({ name: 'src/schema.ts exists', ok: false, details: 'missing src/schema.ts' });
@@ -152,20 +193,20 @@ async function validateWidget(widgetDir: string): Promise<ValidationCheck[]> {
     checks.push({ name: 'controls config detected', ok: hasControlsBuilder, details: hasControlsBuilder ? undefined : 'expected generateControls(...) or createControlPanel(...)' });
   }
 
-  if (await fs.pathExists(localesDir)) {
-    const zhPath = path.join(localesDir, 'zh.json');
-    const enPath = path.join(localesDir, 'en.json');
-    if (!(await fs.pathExists(zhPath)) || !(await fs.pathExists(enPath))) {
-      checks.push({ name: 'locales presence', ok: false, details: 'expected both src/locales/zh.json and src/locales/en.json' });
-    } else {
-      try {
-        const zh = await fs.readJson(zhPath);
-        const en = await fs.readJson(enPath);
-        const keyCheck = checkLocaleKeysEqual(zh, en);
-        checks.push({ name: 'locale key parity (zh/en)', ok: keyCheck.ok, details: keyCheck.details });
-      } catch (error) {
-        checks.push({ name: 'locale json parse', ok: false, details: error instanceof Error ? error.message : String(error) });
-      }
+  const zhPath = path.join(localesDir, 'zh.json');
+  const enPath = path.join(localesDir, 'en.json');
+  if (!(await fs.pathExists(localesDir))) {
+    checks.push({ name: 'src/locales exists', ok: false, details: 'missing src/locales directory' });
+  } else if (!(await fs.pathExists(zhPath)) || !(await fs.pathExists(enPath))) {
+    checks.push({ name: 'locales presence', ok: false, details: 'expected both src/locales/zh.json and src/locales/en.json' });
+  } else {
+    try {
+      const zh = await fs.readJson(zhPath);
+      const en = await fs.readJson(enPath);
+      const keyCheck = checkLocaleKeysEqual(zh, en);
+      checks.push({ name: 'locale key parity (zh/en)', ok: keyCheck.ok, details: keyCheck.details });
+    } catch (error) {
+      checks.push({ name: 'locale json parse', ok: false, details: error instanceof Error ? error.message : String(error) });
     }
   }
 
@@ -263,6 +304,33 @@ program
     }
 
     console.log('\nAll checks passed.');
+  });
+
+program
+  .command('verify')
+  .argument('<widget-path-or-component-id>', 'widget path (e.g. widgets/basic/text) or component id (e.g. basic/text)')
+  .description('Verify a widget package via validate + typecheck + widget-local tests when present')
+  .action(async (widgetPathOrId: string) => {
+    const repoRoot = process.cwd();
+    const widgetDir = resolveWidgetDir(repoRoot, widgetPathOrId);
+    const checks = await validateWidget(widgetDir);
+    printValidationReport(widgetDir, checks);
+
+    const hasFail = checks.some((c) => !c.ok);
+    if (hasFail) {
+      throw new Error('Validation failed');
+    }
+
+    await runScript('pnpm', ['typecheck'], widgetDir);
+
+    const testFiles = await findWidgetTestFiles(repoRoot, widgetDir);
+    if (testFiles.length > 0) {
+      await runScript('pnpm', ['test', '--', '--run', ...testFiles], repoRoot);
+    } else {
+      console.log('\nNo widget-local test files found; skipped vitest.');
+    }
+
+    console.log('\nVerification passed.');
   });
 
 program

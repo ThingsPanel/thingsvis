@@ -4,6 +4,15 @@
 
 import { z } from 'zod';
 
+const DEFAULT_SAMPLE_DATA = [
+  { time: '2026-03-16T08:00:00.000Z', value: 18 },
+  { time: '2026-03-16T09:00:00.000Z', value: 24 },
+  { time: '2026-03-16T10:00:00.000Z', value: 21 },
+  { time: '2026-03-16T11:00:00.000Z', value: 29 },
+  { time: '2026-03-16T12:00:00.000Z', value: 34 },
+  { time: '2026-03-16T13:00:00.000Z', value: 31 },
+] as const;
+
 export const PropsSchema = z.object({
   /** 图表标题 */
   title: z.string().default('').describe('props.chartTitle'),
@@ -33,7 +42,7 @@ export const PropsSchema = z.object({
   timeRangePreset: z.enum(['all', '1h', '6h', '24h', '7d', '30d']).default('all').describe('props.timeRangePreset'),
 
   /** 数据集 */
-  data: z.array(z.any()).default([]).describe('props.dataset'),
+  data: z.array(z.any()).default(() => DEFAULT_SAMPLE_DATA.map((point) => ({ ...point }))).describe('props.dataset'),
 });
 
 /** 属性类型 */

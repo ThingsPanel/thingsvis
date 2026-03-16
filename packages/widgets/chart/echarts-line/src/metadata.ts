@@ -13,7 +13,7 @@
 
 export const metadata = {
   id: 'chart-echarts-line',
-  name: 'ECharts 折线图',
+  name: '折线图',
   category: 'chart',
   icon: 'LineChart',
   version: '1.0.0',

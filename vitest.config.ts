@@ -17,6 +17,7 @@ export default defineConfig({
       '@thingsvis/schema': path.resolve(__dirname, './packages/thingsvis-schema/src'),
       '@thingsvis/ui': path.resolve(__dirname, './packages/thingsvis-ui/src'),
       '@thingsvis/utils': path.resolve(__dirname, './packages/thingsvis-utils/src'),
+      '@thingsvis/widget-sdk': path.resolve(__dirname, './packages/thingsvis-widget-sdk/src'),
     },
   },
 });

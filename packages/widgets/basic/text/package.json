@@ -26,7 +26,7 @@
         "@thingsvis/widget-config": "workspace:*"
     },
     "thingsvis": {
-        "displayName": "基础文本",
+        "displayName": "文本",
         "icon": "Type",
         "i18n": {
             "zh": "文本",

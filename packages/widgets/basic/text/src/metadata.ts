@@ -12,7 +12,7 @@
 
 export const metadata = {
   id: 'basic-text',
-  name: '基础文本',
+  name: '文本',
   category: 'basic',
   icon: 'Type',
   version: '1.0.0',
