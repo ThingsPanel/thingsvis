@@ -74,17 +74,17 @@ export function useEditorSync({
 
   // Sync background changes to kernel store
   useEffect(() => {
-    if (bootstrappingRef.current) return;
+    if (isBootstrapping || bootstrappingRef.current) return;
     if (!canvasConfig.background || typeof canvasConfig.background !== 'object') return;
     store.getState().updatePageConfig({ background: canvasConfig.background } as any);
-  }, [canvasConfig.background, bootstrappingRef]);
+  }, [canvasConfig.background, isBootstrapping, bootstrappingRef]);
 
   // Sync theme changes to kernel store
   useEffect(() => {
-    if (bootstrappingRef.current) return;
+    if (isBootstrapping || bootstrappingRef.current) return;
     if (!canvasConfig.theme) return;
     store.getState().updatePageConfig({ theme: canvasConfig.theme } as any);
-  }, [canvasConfig.theme, bootstrappingRef]);
+  }, [canvasConfig.theme, isBootstrapping, bootstrappingRef]);
 
   // Subscribe to store node changes, automatically trigger markDirty
   useEffect(() => {

@@ -392,8 +392,13 @@ export function useProjectBootstrap({
         console.error('[Editor] Bootstrap error:', e);
       } finally {
         if (!cancelled) {
-          bootstrappingRef.current = false;
           setIsBootstrapping(false);
+          // Delay ref reset until after React reconciliation so that
+          // useEditorSync effects still see bootstrappingRef === true
+          // during the first post-load render and don't trigger markDirty.
+          requestAnimationFrame(() => {
+            bootstrappingRef.current = false;
+          });
         }
       }
     })();
