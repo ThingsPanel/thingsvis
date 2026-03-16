@@ -6,6 +6,7 @@ import { Plus, Trash2, Database, Link2 } from 'lucide-react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import type { WidgetMainModule } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/NumericInput';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -220,19 +221,23 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">X</label>
-            <Input
-              type="number"
+            <NumericInput
               value={displayX}
-              onChange={(e) => handlePositionChange('x', Number(e.target.value))}
+              onValueChange={(nextValue) => {
+                if (nextValue === undefined) return;
+                handlePositionChange('x', nextValue);
+              }}
               className="h-8 text-sm"
             />
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">Y</label>
-            <Input
-              type="number"
+            <NumericInput
               value={displayY}
-              onChange={(e) => handlePositionChange('y', Number(e.target.value))}
+              onValueChange={(nextValue) => {
+                if (nextValue === undefined) return;
+                handlePositionChange('y', nextValue);
+              }}
               className="h-8 text-sm"
             />
           </div>
@@ -244,10 +249,12 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.width')}
               </label>
-              <Input
-                type="number"
+              <NumericInput
                 value={displayW}
-                onChange={(e) => handleSizeChange('width', Number(e.target.value))}
+                onValueChange={(nextValue) => {
+                  if (nextValue === undefined) return;
+                  handleSizeChange('width', nextValue);
+                }}
                 className="h-8 text-sm"
               />
             </div>
@@ -255,10 +262,12 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.height')}
               </label>
-              <Input
-                type="number"
+              <NumericInput
                 value={displayH}
-                onChange={(e) => handleSizeChange('height', Number(e.target.value))}
+                onValueChange={(nextValue) => {
+                  if (nextValue === undefined) return;
+                  handleSizeChange('height', nextValue);
+                }}
                 className="h-8 text-sm"
               />
             </div>
@@ -270,11 +279,10 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
             <label className="text-sm font-medium text-muted-foreground">
               {t('propsPanel.rotation')}
             </label>
-            <Input
-              type="number"
+            <NumericInput
               value={schema.props?._rotation ?? 0}
-              onChange={(e) =>
-                updateNode({ props: { ...schema.props, _rotation: Number(e.target.value) } })
+              onValueChange={(nextValue) =>
+                updateNode({ props: { ...schema.props, _rotation: nextValue ?? 0 } })
               }
               className="h-8 text-sm"
             />
@@ -445,11 +453,12 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.fontSize')}
               </label>
-              <Input
-                type="number"
+              <NumericInput
                 value={schema.props?.fontSize || 16}
-                onChange={(e) => updateNode({ props: { fontSize: Number(e.target.value) } })}
+                onValueChange={(nextValue) => updateNode({ props: { fontSize: nextValue ?? 16 } })}
                 className="h-8 text-sm"
+                min={1}
+                mode="int"
               />
             </div>
           </div>

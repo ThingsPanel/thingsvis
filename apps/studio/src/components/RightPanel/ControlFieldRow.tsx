@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import type { ControlField, DataBinding } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/NumericInput';
 import * as LucideIcons from 'lucide-react';
 
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
@@ -144,6 +145,11 @@ export function ControlFieldRow({
   };
 
   const showOverriddenHint = mode !== 'static' && propsValue !== undefined;
+  const numberFieldUsesFloat =
+    [propsValue, field.default, field.min, field.max, field.step].some(
+      (candidate) => typeof candidate === 'number' && !Number.isInteger(candidate),
+    ) ||
+    (typeof field.step === 'number' && field.step > 0 && field.step < 1);
 
   const modeLabel = (m: BindingMode) => {
     switch (m) {
@@ -228,8 +234,7 @@ export function ControlFieldRow({
             )}
 
             {field.kind === 'number' && (
-              <Input
-                type="number"
+              <NumericInput
                 value={(() => {
                   if (typeof propsValue === 'number' && Number.isFinite(propsValue))
                     return propsValue;
@@ -243,8 +248,11 @@ export function ControlFieldRow({
                   }
                   return typeof field.default === 'number' ? field.default : 0;
                 })()}
-                onChange={(e) => setStatic(Number(e.target.value))}
+                onValueChange={(nextValue) => setStatic(nextValue ?? field.default ?? 0)}
                 className="h-8 text-sm"
+                min={field.min}
+                max={field.max}
+                mode={numberFieldUsesFloat ? 'float' : 'int'}
               />
             )}
 

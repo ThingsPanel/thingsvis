@@ -5,6 +5,7 @@
  */
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/NumericInput';
 import {
   Accordion,
   AccordionContent,
@@ -226,24 +227,28 @@ export function CanvasSettingsPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.width')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.width}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, width: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({ ...canvasConfig, width: nextValue ?? canvasConfig.width })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    min={800}
+                    max={4000}
+                    mode="int"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.height')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.height}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, height: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({ ...canvasConfig, height: nextValue ?? canvasConfig.height })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    min={600}
+                    max={3000}
+                    mode="int"
                   />
                 </div>
               </div>
@@ -251,41 +256,50 @@ export function CanvasSettingsPanel({
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.gridCols')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.gridCols ?? 24}
                     min={1}
                     max={48}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, gridCols: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({
+                        ...canvasConfig,
+                        gridCols: nextValue ?? canvasConfig.gridCols ?? 24,
+                      })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    mode="int"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.gridRowHeight')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.gridRowHeight ?? 50}
                     min={5}
                     max={200}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, gridRowHeight: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({
+                        ...canvasConfig,
+                        gridRowHeight: nextValue ?? canvasConfig.gridRowHeight ?? 50,
+                      })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    mode="int"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.gridGap')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.gridGap ?? 10}
                     min={0}
                     max={50}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, gridGap: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({
+                        ...canvasConfig,
+                        gridGap: nextValue ?? canvasConfig.gridGap ?? 10,
+                      })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    mode="int"
                   />
                 </div>
               </div>
@@ -296,24 +310,28 @@ export function CanvasSettingsPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.width')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.width}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, width: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({ ...canvasConfig, width: nextValue ?? canvasConfig.width })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    min={800}
+                    max={4000}
+                    mode="int"
                   />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.height')}</label>
-                  <Input
-                    type="number"
+                  <NumericInput
                     value={canvasConfig.height}
-                    onChange={(e) =>
-                      onConfigChange({ ...canvasConfig, height: Number(e.target.value) })
+                    onValueChange={(nextValue) =>
+                      onConfigChange({ ...canvasConfig, height: nextValue ?? canvasConfig.height })
                     }
                     className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                    min={600}
+                    max={3000}
+                    mode="int"
                   />
                 </div>
               </div>

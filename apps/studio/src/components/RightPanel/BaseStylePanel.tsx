@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/input';
+import { NumericInput } from '@/components/ui/NumericInput';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
 import {
@@ -80,36 +80,28 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.baseStyle.borderWidth', '线宽')}
               </label>
-              <Input
-                type="number"
-                value={baseStyle.border?.width ?? ''}
-                onChange={(e) =>
-                  updateStyle(
-                    'border',
-                    'width',
-                    e.target.value === '' ? undefined : Number(e.target.value),
-                  )
-                }
+              <NumericInput
+                value={baseStyle.border?.width}
+                onValueChange={(nextValue) => updateStyle('border', 'width', nextValue)}
                 className="h-8 text-sm"
                 placeholder="0"
+                allowEmpty
+                min={0}
+                mode="int"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.baseStyle.borderRadius', '圆角')}
               </label>
-              <Input
-                type="number"
-                value={baseStyle.border?.radius ?? ''}
-                onChange={(e) =>
-                  updateStyle(
-                    'border',
-                    'radius',
-                    e.target.value === '' ? undefined : Number(e.target.value),
-                  )
-                }
+              <NumericInput
+                value={baseStyle.border?.radius}
+                onValueChange={(nextValue) => updateStyle('border', 'radius', nextValue)}
                 className="h-8 text-sm"
                 placeholder="0"
+                allowEmpty
+                min={0}
+                mode="int"
               />
             </div>
           </div>
@@ -136,36 +128,24 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               <label className="text-sm font-medium text-muted-foreground">
                 X {t('propsPanel.baseStyle.offset', '偏移')}
               </label>
-              <Input
-                type="number"
-                value={baseStyle.shadow?.offsetX ?? ''}
-                onChange={(e) =>
-                  updateStyle(
-                    'shadow',
-                    'offsetX',
-                    e.target.value === '' ? undefined : Number(e.target.value),
-                  )
-                }
+              <NumericInput
+                value={baseStyle.shadow?.offsetX}
+                onValueChange={(nextValue) => updateStyle('shadow', 'offsetX', nextValue)}
                 className="h-8 text-sm"
                 placeholder="0"
+                allowEmpty
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
                 Y {t('propsPanel.baseStyle.offset', '偏移')}
               </label>
-              <Input
-                type="number"
-                value={baseStyle.shadow?.offsetY ?? ''}
-                onChange={(e) =>
-                  updateStyle(
-                    'shadow',
-                    'offsetY',
-                    e.target.value === '' ? undefined : Number(e.target.value),
-                  )
-                }
+              <NumericInput
+                value={baseStyle.shadow?.offsetY}
+                onValueChange={(nextValue) => updateStyle('shadow', 'offsetY', nextValue)}
                 className="h-8 text-sm"
                 placeholder="0"
+                allowEmpty
               />
             </div>
           </div>
@@ -173,18 +153,13 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
             <label className="text-sm font-medium text-muted-foreground">
               {t('propsPanel.baseStyle.blur', '模糊半径')}
             </label>
-            <Input
-              type="number"
-              value={baseStyle.shadow?.blur ?? ''}
-              onChange={(e) =>
-                updateStyle(
-                  'shadow',
-                  'blur',
-                  e.target.value === '' ? undefined : Number(e.target.value),
-                )
-              }
+            <NumericInput
+              value={baseStyle.shadow?.blur}
+              onValueChange={(nextValue) => updateStyle('shadow', 'blur', nextValue)}
               className="h-8 text-sm"
               placeholder="0"
+              allowEmpty
+              min={0}
             />
           </div>
           <div className="space-y-1.5">
@@ -210,34 +185,27 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.baseStyle.padding', '内边距')}
               </label>
-              <Input
-                type="number"
-                value={baseStyle.padding ?? ''}
-                onChange={(e) =>
-                  updateRootStyle(
-                    'padding',
-                    e.target.value === '' ? undefined : Number(e.target.value),
-                  )
-                }
+              <NumericInput
+                value={baseStyle.padding}
+                onValueChange={(nextValue) => updateRootStyle('padding', nextValue)}
                 className="h-8 text-sm"
                 placeholder="0"
+                allowEmpty
+                min={0}
+                mode="int"
               />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.baseStyle.opacity', '不透明度')}
               </label>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                max="1"
+              <NumericInput
                 value={baseStyle.opacity ?? 1}
-                onChange={(e) =>
-                  updateRootStyle('opacity', e.target.value === '' ? 1 : Number(e.target.value))
-                }
+                onValueChange={(nextValue) => updateRootStyle('opacity', nextValue ?? 1)}
                 className="h-8 text-sm"
                 placeholder="1"
+                min={0}
+                max={1}
               />
             </div>
           </div>
