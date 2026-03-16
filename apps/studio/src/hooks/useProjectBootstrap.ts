@@ -238,9 +238,15 @@ export function useProjectBootstrap({
         let loaded: ProjectFile | null = null;
         setBootstrapSummary(EMPTY_BOOTSTRAP_SUMMARY);
         if (storage.isCloud) {
+          // Detect host-managed embed mode from the stable URL saveTarget param,
+          // NOT from projectId — because tv:init overwrites projectId with the real
+          // dashboard ID, which would cause a second bootstrap if we only checked
+          // the string pattern ('widget' / 'embed-*').
+          const hashQuery = window.location.hash.split('?')[1] || '';
+          const urlSaveTarget = new URLSearchParams(hashQuery).get('saveTarget') || '';
           const isHostProject =
             embedVisibility.isEmbedded &&
-            (projectId === 'widget' || projectId.startsWith('embed-'));
+            (urlSaveTarget === 'host' || projectId === 'widget' || projectId.startsWith('embed-'));
 
           if (isHostProject) {
             setBootstrapSummary({ ...EMPTY_BOOTSTRAP_SUMMARY, projectLoaded: true });

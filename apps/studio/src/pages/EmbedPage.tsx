@@ -224,7 +224,7 @@ export default function EmbedPage() {
         const dataSources = (dashboard.dataSources as any[]) || [];
         if (dataSources.length > 0) {
           dataSources.forEach((ds: any) => {
-            dataSourceManager.registerDataSource(ds).catch((err: any) => {
+            dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
               console.error('[EmbedPage] Failed to register data source:', ds.id, err);
             });
           });
@@ -599,7 +599,7 @@ export default function EmbedPage() {
             if (schema.dataSources && Array.isArray(schema.dataSources)) {
               for (const ds of schema.dataSources as any[]) {
                 try {
-                  await dataSourceManager.registerDataSource(ds);
+                  await dataSourceManager.registerDataSource(ds, false);
                 } catch (err: any) {
                   console.error('[EmbedPage] Failed to register data source:', ds.id, err);
                 }
