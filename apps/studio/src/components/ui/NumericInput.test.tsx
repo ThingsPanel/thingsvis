@@ -5,6 +5,10 @@ import { Simulate } from 'react-dom/test-utils';
 import { afterEach, describe, expect, it } from 'vitest';
 import { NumericInput } from './NumericInput';
 
+const reactActEnvironment = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
+
 function Harness({
   initialValue,
   mode = 'float',
@@ -27,7 +31,7 @@ function Harness({
 }
 
 describe('NumericInput', () => {
-  globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  reactActEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
 
   let container: HTMLDivElement | null = null;
   let root: Root | null = null;
@@ -57,13 +61,13 @@ describe('NumericInput', () => {
 
     act(() => {
       Simulate.focus(input);
-      Simulate.change(input, { target: { value: '0' } });
+      Simulate.change(input, { target: { value: '0' } } as any);
     });
     expect(input.value).toBe('0');
     expect(committedValue?.textContent).toBe('0');
 
     act(() => {
-      Simulate.change(input, { target: { value: '0111' } });
+      Simulate.change(input, { target: { value: '0111' } } as any);
     });
     expect(input.value).toBe('0111');
     expect(committedValue?.textContent).toBe('111');
@@ -87,7 +91,7 @@ describe('NumericInput', () => {
 
     act(() => {
       Simulate.focus(input);
-      Simulate.change(input, { target: { value: '1.' } });
+      Simulate.change(input, { target: { value: '1.' } } as any);
     });
     expect(input.value).toBe('1.');
 
