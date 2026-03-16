@@ -108,6 +108,40 @@ export default function PreviewPage() {
   }, [kernelState]);
 
   useEffect(() => {
+    const targets = [document.documentElement, document.body, document.getElementById('root')].filter(
+      (target): target is HTMLElement => Boolean(target),
+    );
+    const previous = targets.map((target) => ({
+      target,
+      backgroundColor: target.style.backgroundColor,
+      backgroundImage: target.style.backgroundImage,
+      backgroundSize: target.style.backgroundSize,
+      backgroundRepeat: target.style.backgroundRepeat,
+      backgroundAttachment: target.style.backgroundAttachment,
+    }));
+
+    targets.forEach((target) => {
+      target.style.backgroundColor = (pageBackground as any)?.color || 'transparent';
+      target.style.backgroundImage = (pageBackground as any)?.image
+        ? `url(${(pageBackground as any).image})`
+        : 'none';
+      target.style.backgroundSize = (pageBackground as any)?.size || 'cover';
+      target.style.backgroundRepeat = (pageBackground as any)?.repeat || 'no-repeat';
+      target.style.backgroundAttachment = (pageBackground as any)?.attachment || 'scroll';
+    });
+
+    return () => {
+      previous.forEach(({ target, ...styles }) => {
+        target.style.backgroundColor = styles.backgroundColor;
+        target.style.backgroundImage = styles.backgroundImage;
+        target.style.backgroundSize = styles.backgroundSize;
+        target.style.backgroundRepeat = styles.backgroundRepeat;
+        target.style.backgroundAttachment = styles.backgroundAttachment;
+      });
+    };
+  }, [pageBackground]);
+
+  useEffect(() => {
     const onHashChange = () => setParams(getPreviewParamsFromHash());
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);

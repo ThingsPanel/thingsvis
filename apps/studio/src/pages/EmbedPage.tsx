@@ -146,6 +146,38 @@ export default function EmbedPage() {
     return (page?.config?.background as Record<string, string> | undefined) || { color: 'transparent' };
   }, [kernelState]);
 
+  useEffect(() => {
+    const targets = [document.documentElement, document.body, document.getElementById('root')].filter(
+      (target): target is HTMLElement => Boolean(target),
+    );
+    const previous = targets.map((target) => ({
+      target,
+      backgroundColor: target.style.backgroundColor,
+      backgroundImage: target.style.backgroundImage,
+      backgroundSize: target.style.backgroundSize,
+      backgroundRepeat: target.style.backgroundRepeat,
+      backgroundAttachment: target.style.backgroundAttachment,
+    }));
+
+    targets.forEach((target) => {
+      target.style.backgroundColor = pageBackground.color || 'transparent';
+      target.style.backgroundImage = pageBackground.image ? `url(${pageBackground.image})` : 'none';
+      target.style.backgroundSize = pageBackground.size || 'cover';
+      target.style.backgroundRepeat = pageBackground.repeat || 'no-repeat';
+      target.style.backgroundAttachment = pageBackground.attachment || 'scroll';
+    });
+
+    return () => {
+      previous.forEach(({ target, ...styles }) => {
+        target.style.backgroundColor = styles.backgroundColor;
+        target.style.backgroundImage = styles.backgroundImage;
+        target.style.backgroundSize = styles.backgroundSize;
+        target.style.backgroundRepeat = styles.backgroundRepeat;
+        target.style.backgroundAttachment = styles.backgroundAttachment;
+      });
+    };
+  }, [pageBackground]);
+
   const scaleMode: PreviewScaleMode =
     ((state.schema as { canvas?: { scaleMode?: string } } | null)?.canvas
       ?.scaleMode as PreviewScaleMode) || 'fit-min';
