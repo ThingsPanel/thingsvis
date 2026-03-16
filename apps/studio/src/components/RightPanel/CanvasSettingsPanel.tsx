@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/accordion';
 import { processThumbnailFile } from '../../lib/storage/thumbnail';
 import { ColorInput } from '@/components/ui/color-input';
+import { ImageSourceInput } from './ImageSourceInput';
 import { CANVAS_THEMES, validateCanvasTheme } from '@thingsvis/schema';
 import { cn } from '@/lib/utils';
 
@@ -355,22 +356,14 @@ export function CanvasSettingsPanel({
 
           <div className="space-y-3">
             <label className="text-sm font-medium">{t('canvas.backgroundImage')}</label>
-            <Input
-              type="text"
+            <ImageSourceInput
               value={bg.image || ''}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val.trim().startsWith('data:image/')) {
-                  alert(t('canvas.noBase64Allowed'));
-                  return;
-                }
+              onChange={(val) =>
                 onConfigChange({
                   ...canvasConfig,
                   background: { ...bg, image: val },
-                });
-              }}
-              placeholder="https://..."
-              className="h-8 text-sm"
+                })
+              }
             />
           </div>
 

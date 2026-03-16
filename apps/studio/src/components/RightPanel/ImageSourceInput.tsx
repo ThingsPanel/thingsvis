@@ -9,7 +9,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, Link2, Code, X, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, Link2, Code, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { uploadFile, dataUrlToFile } from '@/lib/api/uploads';
@@ -162,36 +162,73 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
       {/* 上传模式 */}
       {mode === 'upload' && (
         <div className="space-y-2">
-          <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-input rounded-lg cursor-pointer hover:bg-accent/50 hover:border-accent-foreground/50 transition-all bg-muted/5 group">
-            <div className="flex flex-col items-center justify-center py-2 text-center">
-              {isUploading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mb-1.5 text-muted-foreground animate-spin" />
-                  <p className="text-xs text-muted-foreground">
-                    {t('upload.uploading', 'Uploading...')}
-                  </p>
-                </>
-              ) : (
-                <>
-                  <Upload className="w-5 h-5 mb-1.5 text-muted-foreground group-hover:text-accent-foreground transition-colors" />
-                  <p className="text-xs font-medium text-muted-foreground group-hover:text-accent-foreground transition-colors">
-                    {t('upload.clickToUpload', 'Click to upload')}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                    {t('upload.uploadToServer', 'Upload to server (Max 10MB)')}
-                  </p>
-                </>
-              )}
+          {value && !isUploading ? (
+            <div className="relative w-full rounded-lg border border-border overflow-hidden bg-muted/10">
+              <img
+                src={value}
+                alt=""
+                className="w-full h-20 object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+              <div className="absolute top-1 right-1 flex gap-1">
+                <label
+                  className="flex items-center justify-center h-6 w-6 rounded-md bg-background/80 backdrop-blur-sm border border-border cursor-pointer hover:bg-accent transition-colors"
+                  title={t('upload.clickToUpload', 'Click to re-upload')}
+                >
+                  <Upload className="w-3 h-3" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                  />
+                </label>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive/20"
+                  onClick={handleClear}
+                  title={t('common.clear', 'Clear')}
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept="image/*"
-              onChange={handleFileSelect}
-              disabled={isUploading}
-            />
-          </label>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-20 border border-dashed border-input rounded-lg cursor-pointer hover:bg-accent/50 hover:border-accent-foreground/50 transition-all bg-muted/5 group">
+              <div className="flex flex-col items-center justify-center py-2 text-center">
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mb-1.5 text-muted-foreground animate-spin" />
+                    <p className="text-xs text-muted-foreground">
+                      {t('upload.uploading', 'Uploading...')}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5 mb-1.5 text-muted-foreground group-hover:text-accent-foreground transition-colors" />
+                    <p className="text-xs font-medium text-muted-foreground group-hover:text-accent-foreground transition-colors">
+                      {t('upload.clickToUpload', 'Click to upload')}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                      {t('upload.uploadToServer', 'Upload to server (Max 10MB)')}
+                    </p>
+                  </>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept="image/*"
+                onChange={handleFileSelect}
+                disabled={isUploading}
+              />
+            </label>
+          )}
         </div>
       )}
 
@@ -215,28 +252,9 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
         />
       )}
 
-      {/* 错误提示 */}
+      {/* Error */}
       {error && (
         <p className="text-xs text-destructive animate-in fade-in-0 slide-in-from-top-1">{error}</p>
-      )}
-
-      {/* 当前值显示（替换预览） */}
-      {value && mode === 'upload' && (
-        <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/40 p-2 rounded-md border border-border/50">
-          <ImageIcon className="w-3.5 h-3.5 flex-shrink-0" />
-          <span className="flex-1 truncate font-mono opacity-80" title={value}>
-            {value.startsWith('data:') ? 'Base64 Image Data' : value.split('/').pop() || value}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-5 w-5 hover:bg-muted hover:text-foreground -mr-1"
-            onClick={handleClear}
-            title={t('common.clear', 'Clear')}
-          >
-            <X className="w-3.5 h-3.5" />
-          </Button>
-        </div>
       )}
     </div>
   );

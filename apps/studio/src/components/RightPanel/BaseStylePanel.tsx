@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { ColorInput } from '@/components/ui/color-input';
+import { ImageSourceInput } from './ImageSourceInput';
 import {
   Accordion,
   AccordionItem,
@@ -58,14 +59,11 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">
-              {t('propsPanel.baseStyle.image', '背景图 (URL)')}
+              {t('propsPanel.baseStyle.image', '背景图')}
             </label>
-            <Input
-              type="text"
+            <ImageSourceInput
               value={baseStyle.background?.image || ''}
-              onChange={(e) => updateStyle('background', 'image', e.target.value)}
-              placeholder="https://..."
-              className="h-8 text-sm"
+              onChange={(val) => updateStyle('background', 'image', val)}
             />
           </div>
         </AccordionContent>

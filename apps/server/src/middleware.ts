@@ -82,6 +82,7 @@ export default auth(async (req) => {
   const isAuthRoute = req.nextUrl.pathname.startsWith('/api/v1/auth');
   const isPublicRoute = req.nextUrl.pathname.startsWith('/api/v1/public');
   const isHealthRoute = req.nextUrl.pathname === '/api/v1/health';
+  const isUploadRoute = req.nextUrl.pathname.startsWith('/api/v1/uploads');
 
   const corsHeaders = {
     'Access-Control-Allow-Origin': responseOrigin,
@@ -102,8 +103,8 @@ export default auth(async (req) => {
     return response;
   }
 
-  // Allow auth routes, public routes, and health check. Uploads now require auth.
-  if (isAuthRoute || isPublicRoute || isHealthRoute) {
+  // Allow auth routes, public routes, health check, and uploads (handler has its own optional auth).
+  if (isAuthRoute || isPublicRoute || isHealthRoute || isUploadRoute) {
     return NextResponse.next({
       headers: corsHeaders,
     });

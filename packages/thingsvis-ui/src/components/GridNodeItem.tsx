@@ -62,6 +62,8 @@ export interface GridNodeItemProps {
     interactive: boolean;
     isSelected: boolean;
     theme?: string;
+    /** Widget runtime mode forwarded to DOM overlays */
+    widgetMode?: WidgetOverlayContext['mode'];
     /** Drag callbacks fed from useGridLayout */
     onDragStart: (nodeId: string, pixelPos: { x: number; y: number }) => void;
     onDragMove: (pixelPos: { x: number; y: number }) => void;
@@ -88,7 +90,8 @@ function buildOverlayContext(
     node: NodeState,
     store: KernelStore,
     pixelRect: PixelRect,
-    theme?: string
+    theme: string | undefined,
+    mode: WidgetOverlayContext['mode'] = 'view'
 ): WidgetOverlayContext {
     const state = store.getState() as KernelState & Record<string, unknown>;
     const resolvedProps = PropertyResolver.resolve(
@@ -102,7 +105,7 @@ function buildOverlayContext(
         size: { width: pixelRect.width, height: pixelRect.height },
         props: resolvedProps,
         theme,
-        mode: 'view',
+        mode,
         locale: typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en',
         visible: true,
         emit: buildEmit(
@@ -130,6 +133,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     interactive,
     isSelected,
     theme,
+    widgetMode = 'view',
     onDragStart,
     onDragMove,
     onDragEnd,
@@ -191,7 +195,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             if (module.createOverlay) {
                 const freshNode = (store.getState() as KernelState).nodesById[nodeId];
                 if (!freshNode) return;
-                const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme);
+                const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme, widgetMode);
                 const instance = module.createOverlay(ctx);
                 if (cancelled || !contentRef.current) {
                     instance.destroy?.();
@@ -208,7 +212,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                 if (instance.update) {
                     const postMountNode = (store.getState() as KernelState).nodesById[nodeId];
                     if (postMountNode) {
-                        const postMountCtx = buildOverlayContext(postMountNode, store, pixelRectRef.current, theme);
+                        const postMountCtx = buildOverlayContext(postMountNode, store, pixelRectRef.current, theme, widgetMode);
                         instance.update(postMountCtx);
                     }
                 }
@@ -232,7 +236,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         };
         // Re-mount only when widget type or node changes identity; prop changes go through update effect
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodeId, resolveWidget, store]);
+    }, [nodeId, resolveWidget, store, theme, widgetMode]);
 
     // ── Widget update (props / data / pixelRect / dataSources change) ─────────
 
@@ -273,10 +277,10 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         if (!overlayRef.current.update) return;
         const freshNode = (store.getState() as KernelState).nodesById[nodeId];
         if (!freshNode) return;
-        const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme);
+        const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme, widgetMode);
         overlayRef.current.update(ctx);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [updateKey, theme, store]);
+    }, [updateKey, theme, store, widgetMode]);
 
     // ── Drag handling ─────────────────────────────────────────────────────────
 

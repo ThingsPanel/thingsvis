@@ -11,6 +11,18 @@ export interface PixelRect {
   height: number;
 }
 
+export interface GridClientDropInput {
+  clientX: number;
+  clientY: number;
+  canvasRect: { left: number; top: number };
+  colWidth: number;
+  cols: number;
+  rowHeight: number;
+  gap: number;
+  zoom?: number;
+  itemWidth?: number;
+}
+
 /**
  * Calculate column width in pixels
  * 
@@ -26,6 +38,35 @@ export function calculateColWidth(
 ): number {
   const { cols, gap } = settings;
   return (containerWidth - (cols - 1) * gap) / cols;
+}
+
+/**
+ * Convert a client point inside the rendered grid canvas to a grid cell.
+ */
+export function clientPointToGrid(input: GridClientDropInput): { x: number; y: number } {
+  const {
+    clientX,
+    clientY,
+    canvasRect,
+    colWidth,
+    cols,
+    rowHeight,
+    gap,
+    zoom = 1,
+    itemWidth = 4,
+  } = input;
+
+  const safeZoom = zoom > 0 ? zoom : 1;
+  const relX = clientX - canvasRect.left;
+  const relY = clientY - canvasRect.top;
+  const cellWidth = (colWidth + gap) * safeZoom;
+  const cellHeight = (rowHeight + gap) * safeZoom;
+  const maxX = Math.max(0, cols - itemWidth);
+
+  return {
+    x: Math.max(0, Math.min(maxX, Math.floor(relX / cellWidth))),
+    y: Math.max(0, Math.floor(relY / cellHeight)),
+  };
 }
 
 /**

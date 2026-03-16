@@ -431,6 +431,7 @@ const CanvasView = forwardRef<
           onZoomChange={onZoomChange}
           theme={theme}
           centerPadding={centerPadding}
+          widgetMode="edit"
           onDropComponent={handleGridDropComponent}
         />
       </div>

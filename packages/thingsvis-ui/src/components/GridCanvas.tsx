@@ -8,10 +8,10 @@ import React, {
 import { useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
 import { GridSystem } from '@thingsvis/kernel';
-import type { GridSettings, WidgetMainModule } from '@thingsvis/schema';
+import type { GridSettings, WidgetMainModule, WidgetOverlayContext } from '@thingsvis/schema';
 import { validateCanvasTheme } from '@thingsvis/schema';
 import { useGridLayout } from '../hooks/useGridLayout';
-import { gridToPixel } from '../utils/grid-mapper';
+import { clientPointToGrid, gridToPixel } from '../utils/grid-mapper';
 import { GridCanvasBackground } from './GridCanvasBackground';
 import { GridDropTarget } from './GridDropTarget';
 import { GridNodeItem, type ResizeHandle } from './GridNodeItem';
@@ -55,6 +55,8 @@ export interface GridCanvasProps {
     theme?: string;
     /** Panel-aware centering offsets */
     centerPadding?: { left?: number; right?: number };
+    /** Widget runtime mode forwarded to DOM overlays */
+    widgetMode?: WidgetOverlayContext['mode'];
 }
 
 /** Inset applied to the editor scroll-container so element borders/shadows are never clipped by overflow:hidden. */
@@ -98,6 +100,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     onZoomChange,
     theme,
     centerPadding,
+    widgetMode = 'view',
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -292,19 +295,23 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 const gridEl = canvasRef.current;
                 if (!gridEl) return;
                 const rect = gridEl.getBoundingClientRect();
-                const relX = e.clientX - rect.left;
-                const relY = e.clientY - rect.top;
-
-                const { cols, rowHeight, gap } = effectiveSettings;
-                const cellWidth = colWidth + gap;
-                const x = Math.max(0, Math.min(effectiveCols - 4, Math.floor(relX / cellWidth)));
-                const y = Math.max(0, Math.floor(relY / (rowHeight * zoom)));
+                const { x, y } = clientPointToGrid({
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    canvasRect: rect,
+                    colWidth,
+                    cols: effectiveCols,
+                    rowHeight: effectiveSettings.rowHeight,
+                    gap: effectiveSettings.gap,
+                    zoom,
+                    itemWidth: 4,
+                });
                 onDropComponent(componentType, { x, y, w: 4, h: 3 });
             } catch {
                 // ignore malformed dataTransfer
             }
         },
-        [interactive, onDropComponent, colWidth, effectiveCols, effectiveSettings, zoom]
+        [interactive, onDropComponent, colWidth, effectiveCols, effectiveSettings.rowHeight, effectiveSettings.gap, zoom]
     );
 
     // ── Selection state ───────────────────────────────────────────────────────
@@ -467,6 +474,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                         interactive={interactive}
                         isSelected={selectedIds.includes(node.id)}
                         theme={normalizedTheme}
+                        widgetMode={widgetMode}
                         zoom={zoom}
                         onDragStart={onDragStart}
                         onDragMove={onDragMove}
