@@ -1,9 +1,40 @@
 {
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-chart-echarts-line": {
-                "name": "ECharts Line Chart"
-            }
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-chart-echarts-line": {
+        "name": "Line Chart",
+        "controls": {
+          "title": "Chart Title",
+          "titleAlign": "Title Alignment",
+          "showLegend": "Show Legend",
+          "showXAxis": "Show X Axis",
+          "showYAxis": "Show Y Axis",
+          "timeRangePreset": "Time Range",
+          "primaryColor": "Primary Color",
+          "smooth": "Smooth Curve",
+          "showArea": "Show Area Fill",
+          "data": "Preview Data"
+        },
+        "options": {
+          "titleAlign": {
+            "left": "Left",
+            "center": "Center",
+            "right": "Right"
+          },
+          "timeRangePreset": {
+            "all": "All",
+            "1h": "Last 1 Hour",
+            "6h": "Last 6 Hours",
+            "24h": "Last 24 Hours",
+            "7d": "Last 7 Days",
+            "30d": "Last 30 Days"
+          }
         }
+      }
     }
+  },
+  "runtime": {
+    "defaultSeriesName": "Value",
+    "emptyState": "Add data points or bind a data series"
+  }
 }

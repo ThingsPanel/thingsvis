@@ -1,4 +1,4 @@
-# 基础文本组件 (basic-text)
+# 文本组件 (basic-text)
 
 基础文本组件，用于在画布上显示文本内容。
 
@@ -6,7 +6,7 @@
 
 ```
 src/
-├── index.ts      # 主入口：创建节点 + 导出 Main
+├── index.ts      # 主入口：defineWidget(...)
 ├── schema.ts     # ⭐ 属性定义：开发者重点关注
 ├── metadata.ts   # 组件元数据：id/name/category/icon
 ├── controls.ts   # 面板配置：分组/覆盖/绑定
@@ -49,17 +49,18 @@ export const controls = generateControls(PropsSchema, {
 
 ### 3. 更新渲染
 
-编辑 `src/index.ts`，修改 `create()` 函数：
+编辑 `src/index.ts`，修改 `defineWidget({ render })`：
 
 ```typescript
-function create(): Text {
-  const defaults = getDefaultProps();
-  return new Text({
-    text: defaults.text,
-    fontSize: defaults.fontSize,
+export const Main = defineWidget({
+  ...metadata,
+  schema: PropsSchema,
+  controls,
+  locales: { zh, en },
+  render: (element, props, ctx) => {
     // ...
-  });
-}
+  },
+});
 ```
 
 ## 开发命令
@@ -79,7 +80,7 @@ pnpm build
 
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| text | string | '请输入文本' | 文本内容 |
+| text | string | '' | 文本内容；为空时显示本地化预览占位文案 |
 | fill | string | '#000000' | 文字颜色 |
 | fontSize | number | 16 | 字号（像素） |
 | fontWeight | 'normal' \| 'bold' | 'normal' | 字重 |

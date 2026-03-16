@@ -1,4 +1,4 @@
-# ECharts 折线图组件 (chart-echarts-line)
+# 折线图组件 (chart-echarts-line)
 
 基于 ECharts 的折线图组件，支持数据绑定和样式配置。
 
@@ -6,24 +6,13 @@
 
 ```
 src/
-├── index.ts      # 主入口：createOverlay + 导出 Main
+├── index.ts      # 主入口：defineWidget(...)
 ├── schema.ts     # ⭐ 属性定义：开发者重点关注
 ├── metadata.ts   # 组件元数据
 ├── controls.ts   # 面板配置
 └── lib/          # 📦 内部库（无需修改）
     └── types.ts  # 类型定义和工具函数
 ```
-
-## Overlay 模板说明
-
-与 Leafer 模板的区别：
-
-| 特性 | Leafer 模板 | Overlay 模板 |
-|------|-------------|--------------|
-| 入口函数 | `create()` | `createOverlay()` |
-| 返回值 | Leafer UI 节点 | `{ element, update, destroy }` |
-| 渲染方式 | Canvas | DOM 容器 |
-| 适用场景 | 基础图形 | ECharts/视频/3D |
 
 ## 开发指南
 
@@ -37,30 +26,27 @@ export const PropsSchema = z.object({
 });
 ```
 
-### 2. 实现 createOverlay (`index.ts`)
+### 2. 实现 `defineWidget({ render })` (`index.ts`)
 
 ```typescript
-function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
-  // 1. 创建 DOM 容器
-  const element = document.createElement('div');
-  
-  // 2. 初始化第三方库（ECharts/Three.js 等）
-  const chart = echarts.init(element);
-  
+export const Main = defineWidget({
+  ...metadata,
+  schema: PropsSchema,
+  controls,
+  locales: { zh, en },
+  render: (element, props, ctx) => {
+    const chart = echarts.init(element);
+
   return {
-    element,
-    
-    // 3. 属性更新
-    update: (newCtx) => {
-      chart.setOption(buildOption(newCtx.props));
+      update: (nextProps, nextCtx) => {
+        chart.setOption(buildOption(nextProps));
+      },
+      destroy: () => {
+        chart.dispose();
+      },
     },
-    
-    // 4. 销毁清理
-    destroy: () => {
-      chart.dispose();
-    },
-  };
-}
+  },
+});
 ```
 
 ## 属性说明
@@ -68,7 +54,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | title | string | '折线图' | 图表标题 |
-| data | DataPoint[] | [...] | 数据系列 |
+| data | DataPoint[] | sample series | 默认预览数据；清空后才进入空态引导 |
 | lineColor | string | '#5470c6' | 线条颜色 |
 | showArea | boolean | false | 是否显示区域填充 |
 | smooth | boolean | true | 是否平滑曲线 |

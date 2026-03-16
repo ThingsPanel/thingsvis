@@ -1,8 +1,7 @@
-import { Rect } from 'leafer-ui';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, getStrokeWidthPx, getStrokeDasharray, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
@@ -230,18 +229,7 @@ function polylineLength(points: Pt[]): number {
   return sum;
 }
 
-function create(): Rect {
-  return new Rect({
-    width: 200,
-    height: 40,
-    fill: 'transparent',
-    draggable: true,
-    cursor: 'pointer',
-  });
-}
-
-function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
-  const element = document.createElement('div');
+function renderLine(element: HTMLElement, props: Props, ctx: WidgetOverlayContext) {
   element.style.width = '100%';
   element.style.height = '100%';
   element.style.boxSizing = 'border-box';
@@ -344,6 +332,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   let flowSpeedPx = 0;
   let flowDashSpacing = 0;
   let flowTargets: Array<SVGGeometryElement & { style: CSSStyleDeclaration }> = [];
+  const defaults = getDefaultProps();
 
   function stopFlow() {
     if (rafId != null) {
@@ -517,13 +506,11 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     }
   }
 
-  function update(next: WidgetOverlayContext) {
-    const defaults = getDefaultProps();
-    const props: Props = { ...defaults, ...(next.props as Partial<Props>) };
-
+  function update(nextProps: Props, nextCtx: WidgetOverlayContext) {
+    const props = nextProps;
     // Decide whether the host is using the new arrow API based on provided keys.
     // This avoids mixing legacy `direction` defaults with explicit arrowStart/arrowEnd.
-    const rawProps = (next.props ?? {}) as Record<string, unknown>;
+    const rawProps = (nextCtx.props ?? {}) as Record<string, unknown>;
     const useNewArrowAPI =
       Object.prototype.hasOwnProperty.call(rawProps, 'arrowStart') ||
       Object.prototype.hasOwnProperty.call(rawProps, 'arrowEnd');
@@ -533,13 +520,13 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     // In pipe mode, default should be NO arrows unless user explicitly sets arrowStart/arrowEnd or direction.
     const defaultNoArrows = isPipe && !useNewArrowAPI && !rawHasDirection;
 
-    const size = clampMinSize((next as any).size);
-    const linePosition = next.position ?? { x: 0, y: 0 };
+    const size = clampMinSize((nextCtx as any).size);
+    const linePosition = nextCtx.position ?? { x: 0, y: 0 };
     const strokeWidthPx = getStrokeWidthPx(props.strokeWidth);
     const arrowSizePx = Math.max(4, props.arrowSize);
 
     // 获取连接节点信息
-    const linkedNodes = (next as any).linkedNodes as Record<string, LinkedNodeInfo> | undefined;
+    const linkedNodes = (nextCtx as any).linkedNodes as Record<string, LinkedNodeInfo> | undefined;
     
     const sourceNode = props.sourceNodeId && linkedNodes?.[props.sourceNodeId];
     const targetNode = props.targetNodeId && linkedNodes?.[props.targetNodeId];
@@ -592,7 +579,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
     
     // 应用手绘风格抖动（elbow 保持直角，不做抖动）
     if (pathType !== 'elbow') {
-      const seed = next.id ? next.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 42;
+      const seed = nextCtx.id ? nextCtx.id.split('').reduce((a, c) => a + c.charCodeAt(0), 0) : 42;
       points = applySloppiness(points, props.sloppiness, seed);
     }
 
@@ -834,24 +821,23 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   }
 
   // Initial render
-  update(ctx);
+  update(props, ctx);
 
   return {
-    element,
     update,
     destroy: () => {
       stopFlow();
+      element.innerHTML = '';
     },
   };
 }
 
-export const Main: WidgetMainModule = {
-  locales: { zh, en },
+export const Main = defineWidget({
   ...metadata,
+  locales: { zh, en },
   schema: PropsSchema,
   controls,
-  create,
-  createOverlay,
-};
+  render: renderLine,
+});
 
 export default Main;

@@ -1,13 +1,17 @@
-import { resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import {
+  defineWidget,
+  resolveWidgetColors,
+  type WidgetColors,
+  type WidgetOverlayContext,
+} from '@thingsvis/widget-sdk';
 /**
  * ECharts 折线图主入口 (极致精简版 + 数据驱动)
  */
 
 import * as echarts from 'echarts';
 import { metadata } from './metadata';
-import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
@@ -33,6 +37,16 @@ const STANDALONE_LINE_SERIES = [
 
 type CategoryPoint = { name: string; value: number | string };
 type TimePoint = { timeMs: number; value: number; label: string };
+type RuntimeMessages = {
+  runtime?: {
+    defaultSeriesName?: string;
+    emptyState?: string;
+  };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+  return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
 
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
   return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
@@ -238,7 +252,12 @@ function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+function buildOption(
+  props: Props,
+  colors: WidgetColors,
+  messages: RuntimeMessages,
+  scale: number = 1,
+): echarts.EChartsOption {
   const { title, titleAlign, data, primaryColor, showLegend, smooth, showArea, showXAxis, showYAxis, timeRangePreset } = props;
 
   const textColor = colors.fg;
@@ -248,7 +267,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   const padding = Math.round(CHART_PADDING * scale);
   const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
-  const seriesName = title || '数值';
+  const seriesName = title || messages.runtime?.defaultSeriesName || 'Value';
   const hasData = normalizedData.mode === 'time'
     ? normalizedData.timeData.length > 0
     : normalizedData.categoryData.length > 0;
@@ -292,7 +311,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       top: '38%',
       silent: true,
       style: {
-        text: '等待数据',
+        text: messages.runtime?.emptyState || 'Add data points or bind a data series',
         fill: textColor,
         opacity: 0.58,
         fontSize: Math.round(12 * scale),
@@ -325,7 +344,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       containLabel: true,
     },
     dataset: !isTimeSeries && normalizedData.categoryData.length > 0 ? {
-      dimensions: [{ name: 'name', displayName: '维度' }, { name: 'value', displayName: seriesName }],
+      dimensions: [{ name: 'name', displayName: 'Category' }, { name: 'value', displayName: seriesName }],
       source: normalizedData.categoryData
     } : undefined,
     xAxis,
@@ -372,21 +391,18 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   };
 }
 
-/**
- * 创建 ECharts Overlay 实例
- */
-function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
-  const element = document.createElement('div');
+function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayContext) {
   element.style.width = '100%';
   element.style.height = '100%';
   element.style.pointerEvents = 'auto';
 
-  const defaults = getDefaultProps();
-  let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
+  let currentCtx = ctx;
+  let currentProps = props;
   let colors: WidgetColors = resolveWidgetColors(element);
+  let messages = getRuntimeMessages(ctx.locale);
 
   const chart = echarts.init(element);
-  chart.setOption(buildOption(currentProps, colors, 1));
+  chart.setOption(buildOption(currentProps, colors, messages, 1));
 
   const scheduleResize = () => {
     try {
@@ -397,7 +413,9 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
           const ch = element.clientHeight || 200;
           const minDim = Math.min(cw, ch);
           const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-          chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+          chart.setOption(buildOption(currentProps, colors, messages, scale), {
+            replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis', 'graphic', 'legend', 'title'],
+          });
         }
       });
     } catch {
@@ -424,15 +442,13 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   }
 
   return {
-    element,
-    update: (newCtx: WidgetOverlayContext) => {
-      currentProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
+    update: (nextProps: Props, nextCtx: WidgetOverlayContext) => {
+      currentProps = nextProps;
+      currentCtx = nextCtx;
       colors = resolveWidgetColors(element);
+      messages = getRuntimeMessages(currentCtx.locale);
 
-      // scheduleResize 处理比例缩放
-      if (newCtx.size || !newCtx.size) {
-        scheduleResize();
-      }
+      scheduleResize();
     },
     destroy: () => {
       ro?.disconnect();
@@ -442,16 +458,13 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   };
 }
 
-/**
- * 插件主模块
- */
-export const Main: WidgetMainModule = {
+export const Main = defineWidget({
   ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
   standaloneDefaults: { data: STANDALONE_LINE_SERIES },
   controls,
-  createOverlay,
-};
+  render: renderChart,
+});
 
 export default Main;

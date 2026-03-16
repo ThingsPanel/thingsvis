@@ -26,10 +26,10 @@
         "@thingsvis/widget-config": "workspace:*"
     },
     "thingsvis": {
-        "displayName": "连线",
+        "displayName": "连接线",
         "i18n": {
-            "zh": "连线",
-            "en": "Line"
+            "zh": "连接线",
+            "en": "Connector"
         }
     }
 }

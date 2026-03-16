@@ -27,7 +27,7 @@
     },
     "thingsvis": {
         "displayName": "折线图",
-        "icon": "BarChart3",
+        "icon": "LineChart",
         "i18n": {
             "zh": "折线图",
             "en": "Line Chart"

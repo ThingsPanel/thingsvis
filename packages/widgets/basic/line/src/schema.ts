@@ -30,7 +30,7 @@ export const PropsSchema = z.object({
   // =========================
 
   renderStyle: z.enum(['line', 'pipe']).default('line').describe('props.lineRenderStyle'),
-  stroke: z.string().default('#000000').describe('props.color'),
+  stroke: z.string().default('#2563eb').describe('props.color'),
   // Manual width in px. (Backward compatible: old saved values may still be 'thin'|'medium'|'thick'.)
   strokeWidth: z.number().min(1).max(50).default(4).describe('props.thickness'),
   strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid').describe('props.lineStyle'),
@@ -56,7 +56,7 @@ export const PropsSchema = z.object({
   arrowStart: z.enum(['none', 'arrow']).default('none').describe('props.startArrow'),
 
   /** 终点箭头样式 */
-  arrowEnd: z.enum(['none', 'arrow']).default('arrow').describe('props.endArrow'),
+  arrowEnd: z.enum(['none', 'arrow']).default('none').describe('props.endArrow'),
 
   arrowSize: z.number().min(4).max(40).default(12).describe('props.size'),
 
@@ -65,7 +65,7 @@ export const PropsSchema = z.object({
   // =========================
 
   /** 管道背景色（仅管道模式生效） */
-  pipeBackground: z.string().default('#000000').describe('props.pipeBg'),
+  pipeBackground: z.string().default('#dbeafe').describe('props.pipeBg'),
 
   // =========================
   // Flow (Animation)
@@ -76,7 +76,7 @@ export const PropsSchema = z.object({
   flowSpacing: z.number().min(2).max(200).default(16).describe('props.spacingPx'),
   flowLength: z.number().min(1).max(100).default(8).describe('props.flowLengthPx'),
   /** 流动颜色，默认黑色 */
-  flowColor: z.string().default('#000000').describe('props.flowColor'),
+  flowColor: z.string().default('#2563eb').describe('props.flowColor'),
 
   // =========================
   // Node Binding (节点连接)
@@ -96,7 +96,7 @@ export const PropsSchema = z.object({
   // =========================
 
   /** @deprecated 使用 arrowStart 和 arrowEnd 替代 */
-  direction: z.enum(['none', 'forward', 'reverse', 'bidirectional']).default('forward').describe('props.arrowDirLegacy'),
+  direction: z.enum(['none', 'forward', 'reverse', 'bidirectional']).default('none').describe('props.arrowDirLegacy'),
   /** @deprecated 使用 strokeStyle 替代 */
   dashPattern: z.string().default('').describe('props.dashPatternLegacy'),
 });

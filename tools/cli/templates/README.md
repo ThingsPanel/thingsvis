@@ -10,8 +10,13 @@ pnpm dev
 
 This serves `remoteEntry.js` for Module Federation.
 
-## Visual test
+## Verify
 
-Open the host app's widget spec runner and select `{{COMPONENT_ID}}`.
+```bash
+pnpm vis-cli validate {{COMPONENT_ID}}
+pnpm vis-cli verify {{COMPONENT_ID}}
+```
 
+The canonical widget contract is `defineWidget(...)` with `metadata`, `schema`,
+`controls`, and `locales` kept as separate source files.
 

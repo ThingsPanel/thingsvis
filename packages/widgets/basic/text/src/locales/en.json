@@ -61,8 +61,11 @@
                 "label_56": "Offset Y",
                 "label_57": "Shadow",
                 "label_58": "Padding",
-                "label_59": "Enter text (supports line breaks)"
+                "label_59": "Enter text content (supports line breaks)"
             }
         }
+    },
+    "runtime": {
+        "previewText": "Enter text"
     }
 }
