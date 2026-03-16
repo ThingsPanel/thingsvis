@@ -9,7 +9,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Upload, Link2, Code, X, Loader2 } from 'lucide-react';
+import { Upload, Link2, Code, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { uploadFile, dataUrlToFile } from '@/lib/api/uploads';
@@ -37,7 +37,7 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
   const [base64Input, setBase64Input] = useState(value.startsWith('data:') ? value : '');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 当 value 外部变化时同步
+  // Sync internal state when value changes externally
   useEffect(() => {
     if (value.startsWith('data:')) {
       setBase64Input(value);
@@ -159,19 +159,24 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
         </button>
       </div>
 
-      {/* 上传模式 */}
+      {/* Upload mode */}
       {mode === 'upload' && (
         <div className="space-y-2">
           {value && !isUploading ? (
-            <div className="relative w-full rounded-lg border border-border overflow-hidden bg-muted/10">
-              <img
-                src={value}
-                alt=""
-                className="w-full h-20 object-contain"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
+            <div className="relative w-full h-20 rounded-lg border border-border overflow-hidden bg-muted/10">
+              <div
+                className="absolute inset-0 bg-center bg-contain bg-no-repeat"
+                style={{ backgroundImage: `url(${value})` }}
               />
+              <div className="absolute bottom-0 inset-x-0 flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm">
+                <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
+                <span
+                  className="text-[10px] text-muted-foreground truncate font-mono flex-1"
+                  title={value}
+                >
+                  {value.startsWith('data:') ? 'Base64 Image' : value.split('/').pop() || value}
+                </span>
+              </div>
               <div className="absolute top-1 right-1 flex gap-1">
                 <label
                   className="flex items-center justify-center h-6 w-6 rounded-md bg-background/80 backdrop-blur-sm border border-border cursor-pointer hover:bg-accent transition-colors"
@@ -255,6 +260,34 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
       {/* Error */}
       {error && (
         <p className="text-xs text-destructive animate-in fade-in-0 slide-in-from-top-1">{error}</p>
+      )}
+
+      {/* Unified preview for URL / base64 modes */}
+      {value && mode !== 'upload' && (
+        <div className="relative w-full h-14 rounded-lg border border-border overflow-hidden bg-muted/10">
+          <div
+            className="absolute inset-0 bg-center bg-contain bg-no-repeat"
+            style={{ backgroundImage: `url(${value})` }}
+          />
+          <div className="absolute bottom-0 inset-x-0 flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm">
+            <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
+            <span
+              className="text-[10px] text-muted-foreground truncate font-mono flex-1"
+              title={value}
+            >
+              {value.startsWith('data:') ? 'Base64 Image' : value.split('/').pop() || value}
+            </span>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-1 right-1 h-5 w-5 bg-background/80 backdrop-blur-sm border border-border hover:bg-destructive/20"
+            onClick={handleClear}
+            title={t('common.clear', 'Clear')}
+          >
+            <X className="w-3 h-3" />
+          </Button>
+        </div>
       )}
     </div>
   );

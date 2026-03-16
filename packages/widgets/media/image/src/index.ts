@@ -12,6 +12,31 @@ import type { WidgetMainModule, WidgetOverlayContext, PluginOverlayInstance } fr
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const localeCatalog = { zh, en } as const;
+type WidgetLocale = keyof typeof localeCatalog;
+type PlaceholderState = 'empty' | 'loading' | 'error' | 'ready';
+type PlaceholderMessageKey = Exclude<PlaceholderState, 'ready'>;
+
+function resolveLocalePack(locale: string | undefined) {
+  const candidates = [
+    locale,
+    locale?.toLowerCase(),
+    locale?.split(/[-_]/)[0]?.toLowerCase(),
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (candidate in localeCatalog) {
+      return localeCatalog[candidate as WidgetLocale];
+    }
+  }
+
+  return localeCatalog.zh;
+}
+
+function getPlaceholderMessage(locale: string | undefined, key: PlaceholderMessageKey): string {
+  return resolveLocalePack(locale).editor.widgets['thingsvis-widget-media-image'][key];
+}
+
 
 /**
  * 创建透明占位 Rect（用于 Leafer 层选择交互）
@@ -28,12 +53,8 @@ function create(): Rect {
 
 /**
  * 应用样式到 DOM 元素
- * @param skipSrc - 如果为 true，跳过更新 img.src（用于性能优化）
  */
-function applyStyles(img: HTMLImageElement, container: HTMLDivElement, props: Props, skipSrc = false) {
-  if (!skipSrc) {
-    img.src = props.dataUrl || '';
-  }
+function applyStyles(img: HTMLImageElement, container: HTMLDivElement, props: Props) {
   img.style.opacity = String(props.opacity);
   img.style.objectFit = props.objectFit;
   img.style.objectPosition = 'center';
@@ -72,6 +93,7 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   img.style.height = '100%';
   img.style.display = 'block';
   img.style.boxSizing = 'border-box';
+  img.style.visibility = 'hidden';
   img.draggable = false;
   
   element.appendChild(img);
@@ -92,59 +114,99 @@ function createOverlay(ctx: WidgetOverlayContext): PluginOverlayInstance {
   placeholder.style.fontSize = '13px';
   placeholder.style.textAlign = 'center';
   placeholder.style.pointerEvents = 'none';
-  placeholder.innerHTML = `<div>请配置图片</div>`;
+  const placeholderText = document.createElement('div');
+  placeholderText.textContent = getPlaceholderMessage(ctx.locale, 'empty');
+  placeholder.appendChild(placeholderText);
   element.appendChild(placeholder);
   
   // 合并默认值和传入的 props
   const defaults = getDefaultProps();
   let currentProps: Props = { ...defaults, ...(ctx.props as Partial<Props>) };
+  let currentLocale = ctx.locale;
   
   // 记录上一次的 dataUrl，用于检测变化
   let lastDataUrl = currentProps.dataUrl;
+  let currentSrc = '';
+  let loadRequestId = 0;
+  let placeholderState: PlaceholderState = 'empty';
 
-  const updatePlaceholder = (state: 'empty' | 'loading' | 'error' | 'ready') => {
+  const updatePlaceholder = (state: PlaceholderState) => {
+    placeholderState = state;
     if (state === 'ready') {
       placeholder.style.display = 'none';
       return;
     }
 
     placeholder.style.display = 'flex';
-    if (state === 'loading') {
-      placeholder.innerHTML = '<div>图片加载中</div>';
+    placeholderText.textContent = getPlaceholderMessage(currentLocale, state);
+  };
+
+  const clearDisplayedImage = () => {
+    currentSrc = '';
+    img.removeAttribute('src');
+    img.style.visibility = 'hidden';
+  };
+
+  const beginImageLoad = (source: string) => {
+    const normalizedSource = source.trim();
+    currentSrc = normalizedSource;
+
+    if (!normalizedSource) {
+      loadRequestId += 1;
+      clearDisplayedImage();
+      updatePlaceholder('empty');
       return;
     }
 
-    placeholder.innerHTML = state === 'error'
-      ? '<div>图片加载失败</div>'
-      : '<div>请配置图片</div>';
-  };
+    const requestId = ++loadRequestId;
+    updatePlaceholder('loading');
 
-  img.addEventListener('load', () => updatePlaceholder('ready'));
-  img.addEventListener('error', () => updatePlaceholder('error'));
+    const probe = new Image();
+    probe.onload = () => {
+      if (requestId !== loadRequestId || currentSrc !== normalizedSource) {
+        return;
+      }
+
+      img.src = normalizedSource;
+      img.style.visibility = 'visible';
+      updatePlaceholder('ready');
+    };
+    probe.onerror = () => {
+      if (requestId !== loadRequestId || currentSrc !== normalizedSource) {
+        return;
+      }
+
+      clearDisplayedImage();
+      updatePlaceholder('error');
+    };
+    probe.src = normalizedSource;
+  };
   
   // 应用初始样式
   applyStyles(img, element, currentProps);
-  updatePlaceholder(currentProps.dataUrl ? 'loading' : 'empty');
+  beginImageLoad(currentProps.dataUrl);
   
   return {
     element,
     update: (newCtx: WidgetOverlayContext) => {
       const newProps = { ...defaults, ...(newCtx.props as Partial<Props>) };
+      currentLocale = newCtx.locale;
       // 只在 dataUrl 变化时才更新 src（性能优化）
       const dataUrlChanged = newProps.dataUrl !== lastDataUrl;
       if (dataUrlChanged) {
         lastDataUrl = newProps.dataUrl;
       }
       currentProps = newProps;
-      applyStyles(img, element, currentProps, !dataUrlChanged);
-      if (dataUrlChanged && currentProps.dataUrl) {
-        updatePlaceholder('loading');
-      } else if (!currentProps.dataUrl) {
-        updatePlaceholder('empty');
+      applyStyles(img, element, currentProps);
+      if (dataUrlChanged) {
+        beginImageLoad(currentProps.dataUrl);
+      } else if (placeholderState !== 'ready') {
+        updatePlaceholder(placeholderState);
       }
     },
     destroy: () => {
-      img.src = '';
+      loadRequestId += 1;
+      clearDisplayedImage();
     },
   };
 }
@@ -161,6 +223,7 @@ const Main: WidgetMainModule = {
   defaultSize: metadata.defaultSize,
   constraints: metadata.constraints,
   resizable: metadata.resizable,
+  locales: { zh, en },
   create,
   createOverlay,
   schema: PropsSchema,

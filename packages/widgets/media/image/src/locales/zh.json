@@ -2,7 +2,10 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-media-image": {
-                "name": "图片"
+                "name": "图片",
+                "empty": "请配置图片",
+                "loading": "图片加载中",
+                "error": "图片加载失败"
             }
         }
     }
