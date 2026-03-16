@@ -17,6 +17,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ScaleScreen } from '../components/ScaleScreen';
 
 export type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+export type PreviewAlignY = 'top' | 'center';
 
 import { store } from '../lib/store';
 import { loadWidget } from '../lib/registry/componentLoader';
@@ -66,12 +67,17 @@ function inferCanvasMode(canvas: any, nodes: any[] = []): 'fixed' | 'infinite' |
   return 'infinite';
 }
 
+function normalizePreviewAlignY(value: unknown): PreviewAlignY {
+  return value === 'top' ? 'top' : 'center';
+}
+
 export default function PreviewPage() {
   const [{ projectId }, setParams] = useState(() => getPreviewParamsFromHash());
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
   const [scaleMode, setScaleMode] = useState<PreviewScaleMode>('fit-min');
+  const [previewAlignY, setPreviewAlignY] = useState<PreviewAlignY>('center');
   const { t } = useTranslation();
 
   // Observe kernel state so we can decide whether to auto-load from storage.
@@ -202,6 +208,8 @@ export default function PreviewPage() {
       (page as any).config = {
         background: normalizedBg,
         theme: (project.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
+        scaleMode: (project.canvas as any)?.scaleMode,
+        previewAlignY: normalizePreviewAlignY((project.canvas as any)?.previewAlignY),
       };
 
       store.getState().loadPage(page);
@@ -210,6 +218,7 @@ export default function PreviewPage() {
         if ((project.canvas as any).scaleMode) {
           setScaleMode((project.canvas as any).scaleMode as PreviewScaleMode);
         }
+        setPreviewAlignY(normalizePreviewAlignY((project.canvas as any).previewAlignY));
         store.getState().updateCanvas({
           mode: canvasMode,
           width: project.canvas.width || 1920,
@@ -397,7 +406,12 @@ export default function PreviewPage() {
             />
           </div>
         ) : (
-          <ScaleScreen width={canvasWidth} height={canvasHeight} mode={scaleMode}>
+          <ScaleScreen
+            width={canvasWidth}
+            height={canvasHeight}
+            mode={scaleMode}
+            alignY={previewAlignY}
+          >
             {(engineZoom) => (
               <PreviewCanvas
                 store={store as any}

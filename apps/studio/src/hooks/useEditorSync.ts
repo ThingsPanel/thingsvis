@@ -70,6 +70,8 @@ export function useEditorSync({
     canvasConfig.bgColor,
     canvasConfig.bgImage,
     canvasConfig.theme,
+    canvasConfig.scaleMode,
+    canvasConfig.previewAlignY,
   ]);
 
   // Sync background changes to kernel store
@@ -85,6 +87,18 @@ export function useEditorSync({
     if (!canvasConfig.theme) return;
     store.getState().updatePageConfig({ theme: canvasConfig.theme } as any);
   }, [canvasConfig.theme, isBootstrapping, bootstrappingRef]);
+
+  useEffect(() => {
+    if (isBootstrapping || bootstrappingRef.current) return;
+    if (!canvasConfig.scaleMode) return;
+    store.getState().updatePageConfig({ scaleMode: canvasConfig.scaleMode } as any);
+  }, [canvasConfig.scaleMode, isBootstrapping, bootstrappingRef]);
+
+  useEffect(() => {
+    if (isBootstrapping || bootstrappingRef.current) return;
+    if (!canvasConfig.previewAlignY) return;
+    store.getState().updatePageConfig({ previewAlignY: canvasConfig.previewAlignY } as any);
+  }, [canvasConfig.previewAlignY, isBootstrapping, bootstrappingRef]);
 
   // Subscribe to store node changes, automatically trigger markDirty
   useEffect(() => {

@@ -34,6 +34,8 @@ import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBin
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 type CanvasBackground = string | NonNullable<IPageConfig['background']>;
+type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+type PreviewAlignY = 'top' | 'center';
 
 export type CanvasConfigSchema = {
   // Meta - 基础身份
@@ -58,6 +60,8 @@ export type CanvasConfigSchema = {
   gridGap?: number;
   homeFlag?: boolean; // 是否设为首页
   theme: 'dawn' | 'midnight' | string;
+  scaleMode: PreviewScaleMode;
+  previewAlignY: PreviewAlignY;
   gridSize: number;
   bgType: 'color' | 'image';
   bgValue: string;
@@ -111,6 +115,24 @@ function normalizeCanvasMode(mode: unknown): CanvasConfigSchema['mode'] {
   if (mode === 'fixed' || mode === 'infinite' || mode === 'grid') return mode;
   if (mode === 'reflow') return 'infinite';
   return 'fixed';
+}
+
+function normalizeCanvasScaleMode(mode: unknown): PreviewScaleMode {
+  if (
+    mode === 'fit-min' ||
+    mode === 'fit-width' ||
+    mode === 'fit-height' ||
+    mode === 'stretch' ||
+    mode === 'original'
+  ) {
+    return mode;
+  }
+
+  return 'fit-min';
+}
+
+function normalizePreviewAlignY(value: unknown): PreviewAlignY {
+  return value === 'top' ? 'top' : 'center';
 }
 
 export function useProjectBootstrap({
@@ -171,6 +193,8 @@ export function useProjectBootstrap({
       gridRowHeight: 50,
       gridGap: 10,
       theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
+      scaleMode: 'fit-min' as PreviewScaleMode,
+      previewAlignY: 'center' as PreviewAlignY,
       gridSize: 20,
       bgType: 'color' as 'color' | 'image',
       bgValue: '#1a1a1a',
@@ -213,6 +237,8 @@ export function useProjectBootstrap({
         height: canvasConfig.height,
         background: canvasConfig.background ?? canvasConfig.bgValue,
         theme: canvasConfig.theme,
+        scaleMode: canvasConfig.scaleMode,
+        previewAlignY: canvasConfig.previewAlignY,
         gridCols: canvasConfig.gridCols,
         gridRowHeight: canvasConfig.gridRowHeight,
         gridGap: canvasConfig.gridGap,
@@ -307,6 +333,8 @@ export function useProjectBootstrap({
               width: loaded.canvas.width,
               height: loaded.canvas.height,
               theme: validateCanvasTheme((loaded.canvas as any).theme),
+              scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
+              previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
               background: loadedBackground as unknown as
                 | NonNullable<IPageConfig['background']>
                 | undefined,
@@ -324,6 +352,8 @@ export function useProjectBootstrap({
             width: loaded.canvas.width,
             height: loaded.canvas.height,
             theme: validateCanvasTheme((loaded.canvas as any).theme),
+            scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
+            previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
             bgValue:
               typeof loaded.canvas.background === 'string'
                 ? loaded.canvas.background
@@ -388,6 +418,8 @@ export function useProjectBootstrap({
               width: canvasConfig.width,
               height: canvasConfig.height,
               theme: canvasConfig.theme as any,
+              scaleMode: canvasConfig.scaleMode,
+              previewAlignY: canvasConfig.previewAlignY,
             },
           });
           try {
@@ -429,7 +461,7 @@ export function useProjectBootstrap({
       }
 
       // FIX-G1: Compute a lightweight fingerprint; skip if identical to the last processed init
-      const fingerprint = `${processed.projectId}:${processed.nodes.length}:${(processed.dataSources as unknown[]).length}:${processed.canvas.mode}:${processed.canvas.width}:${processed.canvas.height}`;
+      const fingerprint = `${processed.projectId}:${processed.nodes.length}:${(processed.dataSources as unknown[]).length}:${processed.canvas.mode}:${processed.canvas.width}:${processed.canvas.height}:${processed.canvas.scaleMode}:${processed.canvas.previewAlignY}`;
       if (fingerprint === lastInitFingerprintRef.current) {
         return;
       }
@@ -558,6 +590,8 @@ export function useProjectBootstrap({
         width: resolvedCanvas?.width || 1920,
         height: resolvedCanvas?.height || 1080,
         theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+        scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
+        previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
         bgValue: bgStr ?? prev.bgValue,
         background: (bgObj as CanvasBackground | undefined) ?? prev.background,
         gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
@@ -586,6 +620,8 @@ export function useProjectBootstrap({
             width: resolvedCanvas?.width || 1920,
             height: resolvedCanvas?.height || 1080,
             theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+            scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
+            previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
             background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
             gridSettings: {
               cols: resolvedCanvas?.gridCols ?? 24,

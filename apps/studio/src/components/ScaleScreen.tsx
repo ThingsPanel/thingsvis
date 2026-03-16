@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import type { PreviewScaleMode } from '../pages/PreviewPage';
+import type { PreviewAlignY, PreviewScaleMode } from '../pages/PreviewPage';
 
 interface ScaleScreenProps {
   /** Natural width of the design canvas (e.g. 1920) */
@@ -8,6 +8,8 @@ interface ScaleScreenProps {
   height: number;
   /** Scaling strategy */
   mode: PreviewScaleMode;
+  /** Vertical alignment applied after preview scaling */
+  alignY?: PreviewAlignY;
   /**
    * Render prop. Receives `engineZoom`:
    * - For centering modes (fit-min, stretch): always 1. CSS transform handles visual scale.
@@ -33,7 +35,13 @@ interface ScaleScreenProps {
  * │  • engineZoom = scale (VisualEngine renders at density, scrollbar exact) │
  * └─────────────────────────────────────────────────────────────────────────┘
  */
-export const ScaleScreen: React.FC<ScaleScreenProps> = ({ width, height, mode, children }) => {
+export const ScaleScreen: React.FC<ScaleScreenProps> = ({
+  width,
+  height,
+  mode,
+  alignY = 'center',
+  children,
+}) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [viewportSize, setViewportSize] = useState({
     width: typeof document !== 'undefined' ? document.documentElement.clientWidth : 1920,
@@ -79,14 +87,14 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({ width, height, mode, c
           inset: 0,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: alignY === 'top' ? 'flex-start' : 'center',
           overflow: 'hidden',
         } as React.CSSProperties,
         innerStyle: {
           width,
           height,
           transform: `scale(${sx}, ${sy})`,
-          transformOrigin: 'center center',
+          transformOrigin: alignY === 'top' ? 'top center' : 'center center',
           // Prevent flex from squashing the inner div before transform applies
           flexShrink: 0,
           transition: 'transform 0.2s ease-out',
@@ -124,7 +132,7 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({ width, height, mode, c
         display: 'flex',
         flexDirection: 'column',
         alignItems: scaledW <= vw ? 'center' : 'flex-start',
-        justifyContent: scaledH <= vh ? 'center' : 'flex-start',
+        justifyContent: alignY === 'top' ? 'flex-start' : scaledH <= vh ? 'center' : 'flex-start',
         overflowX,
         overflowY,
       } as React.CSSProperties,
@@ -137,7 +145,7 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({ width, height, mode, c
       engineZoom: scale,
       useCssTransform: false,
     };
-  }, [width, height, mode, viewportSize]);
+  }, [alignY, width, height, mode, viewportSize]);
 
   return (
     <div ref={wrapperRef} style={layout.wrapperStyle}>

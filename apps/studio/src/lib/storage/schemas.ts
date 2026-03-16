@@ -34,6 +34,10 @@ export const ProjectMetaSchema = z.object({
 // =============================================================================
 
 export const CanvasConfigSchema = z.object({
+  /** Preview scale mode for fixed canvas previews */
+  scaleMode: z.enum(['fit-min', 'fit-width', 'fit-height', 'stretch', 'original']).optional(),
+  /** Vertical alignment for preview layout */
+  previewAlignY: z.enum(['top', 'center']).optional(),
   /** Canvas layout mode */
   mode: z.enum(['fixed', 'infinite', 'grid']),
   /** Canvas width in pixels */

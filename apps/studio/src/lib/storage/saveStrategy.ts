@@ -49,6 +49,8 @@ export interface SavePayload {
     mode: string;
     width: number;
     height: number;
+    scaleMode?: 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+    previewAlignY?: 'top' | 'center';
     /** Stored as PageBackground object or legacy CSS string. */
     background?: string | Record<string, unknown>;
     gridCols?: number;

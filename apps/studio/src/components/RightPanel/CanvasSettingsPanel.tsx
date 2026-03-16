@@ -38,6 +38,7 @@ export interface CanvasConfig {
     attachment?: string;
   };
   scaleMode?: 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+  previewAlignY?: 'top' | 'center';
   [key: string]: any;
 }
 
@@ -341,18 +342,40 @@ export function CanvasSettingsPanel({
           {/* Scale mode setting — only relevant for fixed canvas modes, not grid (which is auto-responsive) */}
           {canvasConfig.mode !== 'infinite' && canvasConfig.mode !== 'grid' && (
             <div className="space-y-3 mt-3">
-              <label className="text-sm font-medium">{t('canvas.scaleMode')}</label>
-              <select
-                value={canvasConfig.scaleMode || 'fit-min'}
-                onChange={(e) => onConfigChange({ ...canvasConfig, scaleMode: e.target.value })}
-                className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
-              >
-                <option value="fit-min">{t('canvas.scaleModeFitMin')}</option>
-                <option value="fit-width">{t('canvas.scaleModeFitWidth')}</option>
-                <option value="fit-height">{t('canvas.scaleModeFitHeight')}</option>
-                <option value="stretch">{t('canvas.scaleModeStretch')}</option>
-                <option value="original">{t('canvas.scaleModeOriginal')}</option>
-              </select>
+              <div className="space-y-3">
+                <label className="text-sm font-medium">{t('canvas.scaleMode')}</label>
+                <select
+                  value={canvasConfig.scaleMode || 'fit-min'}
+                  onChange={(e) => onConfigChange({ ...canvasConfig, scaleMode: e.target.value })}
+                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
+                >
+                  <option value="fit-min">{t('canvas.scaleModeFitMin')}</option>
+                  <option value="fit-width">{t('canvas.scaleModeFitWidth')}</option>
+                  <option value="fit-height">{t('canvas.scaleModeFitHeight')}</option>
+                  <option value="stretch">{t('canvas.scaleModeStretch')}</option>
+                  <option value="original">{t('canvas.scaleModeOriginal')}</option>
+                </select>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-sm font-medium">
+                  {t('canvas.previewAlignY', { defaultValue: '预览垂直对齐' })}
+                </label>
+                <select
+                  value={canvasConfig.previewAlignY || 'center'}
+                  onChange={(e) =>
+                    onConfigChange({ ...canvasConfig, previewAlignY: e.target.value })
+                  }
+                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
+                >
+                  <option value="center">
+                    {t('canvas.previewAlignYCenter', { defaultValue: '居中' })}
+                  </option>
+                  <option value="top">
+                    {t('canvas.previewAlignYTop', { defaultValue: '顶部' })}
+                  </option>
+                </select>
+              </div>
             </div>
           )}
         </AccordionContent>

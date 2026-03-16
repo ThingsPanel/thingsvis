@@ -11,6 +11,8 @@ export interface DashboardCanvasConfig {
   mode: string;
   width: number;
   height: number;
+  scaleMode?: 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+  previewAlignY?: 'top' | 'center';
   background?: DashboardCanvasBackground;
   theme?: CanvasThemeId;
   gridCols?: number;

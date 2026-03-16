@@ -70,6 +70,8 @@ export interface OutboundMessage extends BaseMessage {
 
 const DEFAULT_EMBED_NODE_POSITION = { x: 100, y: 100 } as const;
 const DEFAULT_EMBED_NODE_SIZE = { width: 200, height: 80 } as const;
+type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+type PreviewAlignY = 'top' | 'center';
 
 type MessageHandler<T = unknown> = (data: T) => void;
 
@@ -235,6 +237,8 @@ export interface EmbedInitPayload {
       mode?: string;
       width?: number;
       height?: number;
+      scaleMode?: string;
+      previewAlignY?: string;
       /** May be a CSS string or a PageBackground object { color, image, ... }. */
       background?: string | Record<string, unknown>;
       gridCols?: number;
@@ -262,6 +266,8 @@ export interface ProcessedEmbedData {
     mode: string;
     width: number;
     height: number;
+    scaleMode: PreviewScaleMode;
+    previewAlignY: PreviewAlignY;
     /** Preserved as-is from the host payload — may be string or PageBackground object. */
     background: string | Record<string, unknown>;
     gridCols: number;
@@ -284,6 +290,24 @@ function normalizeEmbedCanvasMode(mode: unknown): 'fixed' | 'infinite' | 'grid' 
   if (mode === 'fixed' || mode === 'infinite' || mode === 'grid') return mode;
   if (mode === 'reflow') return 'infinite';
   return 'fixed';
+}
+
+function normalizeEmbedCanvasScaleMode(mode: unknown): PreviewScaleMode {
+  if (
+    mode === 'fit-min' ||
+    mode === 'fit-width' ||
+    mode === 'fit-height' ||
+    mode === 'stretch' ||
+    mode === 'original'
+  ) {
+    return mode;
+  }
+
+  return 'fit-min';
+}
+
+function normalizeEmbedPreviewAlignY(value: unknown): PreviewAlignY {
+  return value === 'top' ? 'top' : 'center';
 }
 
 export function processEmbedInitPayload(
@@ -323,6 +347,8 @@ export function processEmbedInitPayload(
     mode: normalizeEmbedCanvasMode(data.canvas?.mode),
     width: data.canvas?.width || 1920,
     height: data.canvas?.height || 1080,
+    scaleMode: normalizeEmbedCanvasScaleMode(data.canvas?.scaleMode),
+    previewAlignY: normalizeEmbedPreviewAlignY(data.canvas?.previewAlignY),
     // Use ?? so a falsy-but-defined value (e.g. empty string) is preserved;
     // object values (PageBackground) are always truthy and pass through unchanged.
     background: data.canvas?.background ?? 'transparent',

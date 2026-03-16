@@ -8,6 +8,14 @@ const DEFAULT_CANVAS_THEME = 'dawn' as const;
 const MAX_GRID_COLS = 48;
 const LAYOUT_MODE_VALUES = ['fixed', 'infinite', 'reflow', 'grid'] as const;
 const CANVAS_THEME_VALUES = ['dawn', 'midnight', 'ocean', 'ember', 'aurora'] as const;
+const PREVIEW_SCALE_MODE_VALUES = [
+  'fit-min',
+  'fit-width',
+  'fit-height',
+  'stretch',
+  'original',
+] as const;
+const PREVIEW_ALIGN_Y_VALUES = ['top', 'center'] as const;
 
 export const LayoutModeSchema = z.enum(LAYOUT_MODE_VALUES);
 
@@ -31,6 +39,8 @@ export const CanvasConfigSchema = z
     height: z.number().int().positive().default(DEFAULT_CANVAS_HEIGHT),
     background: CanvasBackgroundSchema.default(DEFAULT_CANVAS_BACKGROUND),
     theme: z.enum(CANVAS_THEME_VALUES).default(DEFAULT_CANVAS_THEME),
+    scaleMode: z.enum(PREVIEW_SCALE_MODE_VALUES).optional(),
+    previewAlignY: z.enum(PREVIEW_ALIGN_Y_VALUES).optional(),
     gridCols: z.number().int().min(1).max(MAX_GRID_COLS).optional(),
     gridRowHeight: z.number().int().positive().optional(),
     gridGap: z.number().int().nonnegative().optional(),

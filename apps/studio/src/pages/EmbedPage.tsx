@@ -40,7 +40,7 @@ import {
 import { augmentPlatformDataSourcesForNodes } from '@/lib/platformDatasourceBindings';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import type { PreviewScaleMode } from './PreviewPage';
+import type { PreviewAlignY, PreviewScaleMode } from './PreviewPage';
 
 /** Padding applied around the grid canvas in embed mode (px). */
 const GRID_CANVAS_PADDING = 0;
@@ -101,6 +101,10 @@ function normalizeCanvasBackground(background: unknown): Record<string, string> 
     : { color: typeof background === 'string' && background ? background : 'transparent' };
 }
 
+function normalizePreviewAlignY(value: unknown): PreviewAlignY {
+  return value === 'top' ? 'top' : 'center';
+}
+
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<EmbedState>({
@@ -137,9 +141,17 @@ export default function EmbedPage() {
 
   const isGridLayout = canvasMode === 'grid';
 
+  const pageBackground = useMemo(() => {
+    const page = (kernelState?.page as any);
+    return (page?.config?.background as Record<string, string> | undefined) || { color: 'transparent' };
+  }, [kernelState]);
+
   const scaleMode: PreviewScaleMode =
     ((state.schema as { canvas?: { scaleMode?: string } } | null)?.canvas
       ?.scaleMode as PreviewScaleMode) || 'fit-min';
+  const previewAlignY: PreviewAlignY = normalizePreviewAlignY(
+    (state.schema as { canvas?: { previewAlignY?: string } } | null)?.canvas?.previewAlignY,
+  );
 
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
@@ -192,6 +204,8 @@ export default function EmbedPage() {
         (page as any).config = {
           background: normalizeCanvasBackground((dashboard.canvasConfig as any)?.background),
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
+          previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
         };
 
         store.getState().loadPage(page);
@@ -313,6 +327,8 @@ export default function EmbedPage() {
         (page as any).config = {
           background: normalizeCanvasBackground(schema.canvas?.background),
           theme: (schema.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          scaleMode: (schema.canvas as any)?.scaleMode,
+          previewAlignY: normalizePreviewAlignY((schema.canvas as any)?.previewAlignY),
         };
 
         store.getState().loadPage(page);
@@ -824,7 +840,14 @@ export default function EmbedPage() {
   return (
     <div
       className="relative overflow-auto thingsvis-embed-surface"
-      style={{ width: '100vw', height: '100vh', backgroundColor: 'transparent' }}
+      style={{
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: pageBackground.color || 'transparent',
+        backgroundImage: pageBackground.image ? `url(${pageBackground.image})` : undefined,
+        backgroundSize: pageBackground.size || 'cover',
+        backgroundRepeat: pageBackground.repeat || 'no-repeat',
+      }}
     >
       <ErrorBoundary>
         {isGridLayout ? (
@@ -845,7 +868,12 @@ export default function EmbedPage() {
             />
           </div>
         ) : (
-          <ScaleScreen width={canvasWidth} height={canvasHeight} mode={scaleMode}>
+          <ScaleScreen
+            width={canvasWidth}
+            height={canvasHeight}
+            mode={scaleMode}
+            alignY={previewAlignY}
+          >
             {(engineZoom) => (
               <PreviewCanvas
                 store={store as any}

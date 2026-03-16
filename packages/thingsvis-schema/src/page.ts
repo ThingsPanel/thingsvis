@@ -30,6 +30,8 @@ export const PageScaleModeSchema = z.enum([
   'original',
 ]);
 
+export const PagePreviewAlignYSchema = z.enum(['top', 'center']);
+
 /**
  * Page metadata schema
  * Contains identification and versioning information for a page
@@ -101,6 +103,11 @@ export const PageConfigSchema = z.object({
    * Scale mode for preview
    */
   scaleMode: PageScaleModeSchema.optional(),
+
+  /**
+   * Vertical alignment for preview layout
+   */
+  previewAlignY: PagePreviewAlignYSchema.optional(),
 });
 
 /**
