@@ -1,0 +1,6 @@
+import { createHotContext as __vite__createHotContext } from "/@vite/client";import.meta.hot = __vite__createHotContext("/src/views/home/index.vue?vue&type=style&index=0&scoped=0ef3d734&lang.css");/* unplugin-vue-components disabled */import { updateStyle as __vite__updateStyle, removeStyle as __vite__removeStyle } from "/@vite/client"
+const __vite__id = "F:/coding/thingspanel-frontend-community/src/views/home/index.vue?vue&type=style&index=0&scoped=0ef3d734&lang.css"
+const __vite__css = "\n.home-panel[data-v-0ef3d734] {\r\n  overflow-y: auto;\r\n  overflow-x: hidden;\r\n  scrollbar-width: thin;\r\n  scrollbar-color: rgba(0, 0, 0, 0.5) transparent;\n}\r\n"
+__vite__updateStyle(__vite__id, __vite__css)
+import.meta.hot.accept()
+import.meta.hot.prune(() => __vite__removeStyle(__vite__id))

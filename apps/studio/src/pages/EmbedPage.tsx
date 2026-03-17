@@ -105,6 +105,16 @@ function normalizePreviewAlignY(value: unknown): PreviewAlignY {
   return value === 'top' ? 'top' : 'center';
 }
 
+function normalizePreviewScaleMode(value: unknown): PreviewScaleMode {
+  return value === 'fit-min' ||
+    value === 'fit-width' ||
+    value === 'fit-height' ||
+    value === 'stretch' ||
+    value === 'original'
+    ? value
+    : 'fit-min';
+}
+
 export default function EmbedPage() {
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<EmbedState>({
@@ -183,11 +193,19 @@ export default function EmbedPage() {
     };
   }, [pageBackground]);
 
-  const scaleMode: PreviewScaleMode =
-    ((state.schema as { canvas?: { scaleMode?: string } } | null)?.canvas
-      ?.scaleMode as PreviewScaleMode) || 'fit-min';
+  const schemaCanvas = useMemo(() => {
+    const schema = state.schema as {
+      canvas?: { scaleMode?: string; previewAlignY?: string };
+      canvasConfig?: { scaleMode?: string; previewAlignY?: string };
+    } | null;
+    return schema?.canvas ?? schema?.canvasConfig ?? null;
+  }, [state.schema]);
+
+  const scaleMode: PreviewScaleMode = normalizePreviewScaleMode(
+    (kernelState?.page as any)?.config?.scaleMode ?? schemaCanvas?.scaleMode,
+  );
   const previewAlignY: PreviewAlignY = normalizePreviewAlignY(
-    (state.schema as { canvas?: { previewAlignY?: string } } | null)?.canvas?.previewAlignY,
+    (kernelState?.page as any)?.config?.previewAlignY ?? schemaCanvas?.previewAlignY,
   );
 
   const gridSettings = kernelState?.gridState?.settings ?? {
