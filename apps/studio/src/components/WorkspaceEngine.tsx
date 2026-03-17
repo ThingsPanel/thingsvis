@@ -7,6 +7,7 @@ import { store } from '../lib/store';
 import { openImagePicker } from './tools/imagePicker';
 import { uploadFile } from '@/lib/api/uploads';
 import { uploadImage as uploadToLocal } from '@/lib/imageUpload';
+import { useAuth } from '@/lib/auth';
 import type { CanvasConfigSchema } from '../hooks/useProjectBootstrap';
 import { loadWidget } from '../lib/registry/componentLoader';
 
@@ -36,6 +37,7 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
   markDirty,
 }) => {
   const { t } = useTranslation('editor');
+  const { isAuthenticated } = useAuth();
   const [pendingImageUrl, setPendingImageUrl] = useState<string | undefined>(undefined);
 
   const handleImagePickerRequest = useCallback(async () => {
@@ -53,10 +55,9 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
         return;
       }
 
-      const isLoggedIn = !!localStorage.getItem('thingsvis_token');
       let url = '';
 
-      if (isLoggedIn) {
+      if (isAuthenticated) {
         const result = await uploadFile(file);
         if (result.error) throw new Error(result.error);
         if (result.data) url = result.data.url;
@@ -75,7 +76,7 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
       setActiveTool('select');
       setPendingImageUrl(undefined);
     }
-  }, [t, setActiveTool]);
+  }, [isAuthenticated, t, setActiveTool]);
 
   const handleImagePickerComplete = useCallback(() => {
     setPendingImageUrl(undefined);

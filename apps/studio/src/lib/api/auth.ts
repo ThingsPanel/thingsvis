@@ -9,6 +9,8 @@ export interface User {
   email: string;
   name: string | null;
   role: string;
+  authType?: string;
+  loginSource?: string;
   tenantId: string;
 }
 
@@ -28,6 +30,8 @@ export interface AuthResponse {
   user: User;
   token: string;
   expiresAt: number;
+  authType?: string;
+  loginSource?: string;
 }
 
 /**

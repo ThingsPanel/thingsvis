@@ -90,7 +90,14 @@ export interface EditorHandle {
 }
 
 const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
-  const { isAuthenticated, user, logout, isLoading: authLoading, storageMode } = useAuth();
+  const {
+    isAuthenticated,
+    user,
+    logout,
+    isLoading: authLoading,
+    storageMode,
+    authChannel,
+  } = useAuth();
   const { currentProject, switchProject } = useProject();
 
   const [activeTool, setActiveTool] = useState<Tool>('select');
@@ -158,10 +165,17 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   useEffect(() => {
     if (authLoading || !isAuthenticated || embedVisibility.isEmbedded) return;
-    if (storageMode === 'cloud' && !hasSelectedDashboard) {
+    if (authChannel === 'browser' && storageMode === 'cloud' && !hasSelectedDashboard) {
       setShowProjectDialog(true);
     }
-  }, [authLoading, isAuthenticated, storageMode, hasSelectedDashboard, embedVisibility.isEmbedded]);
+  }, [
+    authChannel,
+    authLoading,
+    isAuthenticated,
+    storageMode,
+    hasSelectedDashboard,
+    embedVisibility.isEmbedded,
+  ]);
 
   const [zoom, setZoom] = useState(80);
   const [zoomInput, setZoomInput] = useState('80');
@@ -626,7 +640,13 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           setShowProjectDialog(false);
         }}
         onClose={() => {
-          if (isAuthenticated && storageMode === 'cloud' && !hasSelectedDashboard) return;
+          if (
+            authChannel === 'browser' &&
+            isAuthenticated &&
+            storageMode === 'cloud' &&
+            !hasSelectedDashboard
+          )
+            return;
           setShowProjectDialog(false);
         }}
         onProjectLoad={(project) => {

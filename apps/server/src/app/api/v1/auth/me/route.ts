@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/db';
+import { EMBED_SSO_LOGIN_SOURCE, STANDALONE_LOGIN_SOURCE } from '@/lib/validators/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +18,7 @@ export async function GET(request: NextRequest) {
 
     try {
       const { payload } = await jwtVerify(token, secret);
+      const loginSource = (payload as { loginSource?: unknown }).loginSource;
 
       // Get fresh user data
       const user = await prisma.user.findUnique({
@@ -30,9 +32,16 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({
         id: user.id,
-        email: user.email,
+        email: user.displayEmail || user.email,
         name: user.name,
         role: user.role,
+        authType: user.authType,
+        loginSource:
+          typeof loginSource === 'string'
+            ? loginSource
+            : user.authType === 'SSO'
+              ? EMBED_SSO_LOGIN_SOURCE
+              : STANDALONE_LOGIN_SOURCE,
         tenantId: user.tenantId,
         tenant: user.tenant
           ? {

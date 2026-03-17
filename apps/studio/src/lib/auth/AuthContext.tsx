@@ -1,11 +1,20 @@
 /**
  * Authentication Context
  *
- * Provides authentication state and methods throughout the application.
- * Handles token storage, login/logout, and automatic token refresh.
+ * Splits standalone browser sessions from embed sessions so host tokens
+ * cannot leak into the standalone editor.
  */
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from 'react';
+import { useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import {
   login as apiLogin,
@@ -16,34 +25,30 @@ import {
   type RegisterData,
 } from '../api/auth';
 import { initDataSourceSync } from '../datasource-sync';
+import { getConfiguredEmbedToken } from '@/embed/message-router';
 
-// Storage keys
-const TOKEN_KEY = 'thingsvis_token';
-const TOKEN_EXPIRY_KEY = 'thingsvis_token_expiry';
-const USER_KEY = 'thingsvis_user';
+export const BROWSER_TOKEN_KEY = 'thingsvis_browser_token';
+export const BROWSER_TOKEN_EXPIRY_KEY = 'thingsvis_browser_token_expiry';
+export const BROWSER_USER_KEY = 'thingsvis_browser_user';
 const GUEST_MODE_KEY = 'thingsvis_guest_mode';
 
-// Storage mode types
 export type StorageMode = 'local' | 'cloud' | 'embed';
+export type AuthChannel = 'none' | 'browser' | 'embed' | 'guest';
 
 export interface AuthContextValue {
-  // State
   isAuthenticated: boolean;
   isLoading: boolean;
   user: User | null;
   token: string | null;
   storageMode: StorageMode;
+  authChannel: AuthChannel;
   isGuestMode: boolean;
-
-  // Actions
   login: (credentials: LoginCredentials) => Promise<{ success: boolean; error?: string }>;
   loginWithToken: (token: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   loginAsGuest: () => void;
-
-  // For embed mode
-  setEmbedToken: (token: string) => void;
+  setEmbedToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -56,45 +61,55 @@ export function useAuth(): AuthContextValue {
   return context;
 }
 
-// Check if running in iframe (embed mode)
-function isEmbedded(): boolean {
+function isIframeEmbedded(): boolean {
   try {
     return window.self !== window.top;
   } catch {
-    return true; // Cross-origin iframe
+    return true;
   }
 }
 
-// Get URL parameters for embed mode (check both search and hash)
-function getEmbedToken(): string | null {
-  // 1. 首先检查 search params (?token=xxx)
+function isEmbedRoute(pathname: string): boolean {
+  if (pathname === '/embed') return true;
+
+  try {
+    const hash = window.location.hash || '';
+    const queryIndex = hash.indexOf('?');
+    if (queryIndex < 0) return false;
+
+    const params = new URLSearchParams(hash.slice(queryIndex + 1));
+    return params.get('mode') === 'embedded';
+  } catch {
+    return false;
+  }
+}
+
+function getEmbedTokenFromLocation(): string | null {
   const searchParams = new URLSearchParams(window.location.search);
   const searchToken = searchParams.get('token');
   if (searchToken) return searchToken;
 
-  // 2. 然后检查 hash params (#/editor?token=xxx)
   const hash = window.location.hash || '';
   const queryIndex = hash.indexOf('?');
   if (queryIndex >= 0) {
     const hashParams = new URLSearchParams(hash.slice(queryIndex + 1));
     const hashToken = hashParams.get('token');
-    if (hashToken) {
-      return hashToken;
-    }
+    if (hashToken) return hashToken;
   }
 
-  // 3. 最后检查 message-router 中设置的 token
-  try {
-    const { getEmbedToken: getInitToken } = require('../../embed/message-router');
-    const initToken = getInitToken();
-    if (initToken) {
-      return initToken;
-    }
-  } catch (e) {
-    // ignore
-  }
+  return getConfiguredEmbedToken();
+}
 
-  return null;
+function clearBrowserSessionStorage() {
+  localStorage.removeItem(BROWSER_TOKEN_KEY);
+  localStorage.removeItem(BROWSER_TOKEN_EXPIRY_KEY);
+  localStorage.removeItem(BROWSER_USER_KEY);
+}
+
+function persistBrowserSession(token: string, user: User, expiresAt: number) {
+  localStorage.setItem(BROWSER_TOKEN_KEY, token);
+  localStorage.setItem(BROWSER_TOKEN_EXPIRY_KEY, expiresAt.toString());
+  localStorage.setItem(BROWSER_USER_KEY, JSON.stringify(user));
 }
 
 interface AuthProviderProps {
@@ -102,189 +117,182 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const location = useLocation();
+  const embedContext = isIframeEmbedded() || isEmbedRoute(location.pathname);
+
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [authChannel, setAuthChannel] = useState<AuthChannel>('none');
   const [isGuestMode, setIsGuestMode] = useState<boolean>(() => {
     return localStorage.getItem(GUEST_MODE_KEY) === 'true';
   });
 
-  // Determine storage mode
-  const storageMode: StorageMode = useMemo(() => {
-    if (isEmbedded()) return 'embed';
-    if (token && user) return 'cloud';
-    return 'local';
-  }, [token, user]);
+  const tokenRef = useRef<string | null>(null);
+  const authChannelRef = useRef<AuthChannel>('none');
 
-  // Clear authentication state
-  const clearAuth = useCallback(() => {
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
+  useEffect(() => {
+    authChannelRef.current = authChannel;
+  }, [authChannel]);
+
+  const clearBrowserAuth = useCallback(() => {
+    clearBrowserSessionStorage();
+    localStorage.removeItem(GUEST_MODE_KEY);
     setToken(null);
     setUser(null);
     setIsGuestMode(false);
-
-    // In embed mode, NEVER wipe out localStorage, as it might destroy the user's standalone session
-    if (!isEmbedded()) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(TOKEN_EXPIRY_KEY);
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(GUEST_MODE_KEY);
-    }
+    setAuthChannel('none');
   }, []);
 
-  // Configure API client when token changes
+  const clearEmbedAuth = useCallback(() => {
+    setToken(null);
+    setUser(null);
+    setAuthChannel('none');
+  }, []);
+
   useEffect(() => {
-    // 在嵌入模式下，优先使用 embed token
-    const embedToken = getEmbedToken();
-    const localToken = localStorage.getItem(TOKEN_KEY);
-
     apiClient.configure({
-      getToken: () => {
-        // 优先使用 embed token（嵌入模式）
-        const embed = getEmbedToken();
-        if (embed) return embed;
-
-        // 否则使用 localStorage 中的 token
-        return localStorage.getItem(TOKEN_KEY);
-      },
+      getToken: () => tokenRef.current,
       onUnauthorized: () => {
-        // Token expired or invalid
-        // 在嵌入模式下不清除认证，因为 token 是外部传入的
-        if (!isEmbedded()) {
-          clearAuth();
+        if (authChannelRef.current === 'embed') {
+          clearEmbedAuth();
+          return;
+        }
+
+        if (authChannelRef.current === 'browser') {
+          clearBrowserAuth();
         }
       },
     });
-  }, [clearAuth]);
+  }, [clearBrowserAuth, clearEmbedAuth]);
 
-  // Initialize from localStorage or URL token (SSO)
   useEffect(() => {
+    let cancelled = false;
+
     const initAuth = async () => {
       setIsLoading(true);
 
       try {
-        // ── Embed path: skip auth when no token, gracefully degrade on failure ──
-        const isEmbedPath = window.location.hash.includes('/embed');
-
-        if (isEmbedPath || isEmbedded()) {
-          const embedToken = getEmbedToken();
+        if (embedContext) {
+          const embedToken = getEmbedTokenFromLocation();
 
           if (!embedToken) {
-            // No token in embed mode → zero network requests, just render
-            setIsLoading(false);
+            if (!cancelled) {
+              setToken(null);
+              setUser(null);
+              setAuthChannel('none');
+              setIsLoading(false);
+            }
             return;
           }
 
-          // Token provided → validate but don't block on failure
           try {
             apiClient.configure({ getToken: () => embedToken });
             const result = await getCurrentUser();
 
-            if (result.data) {
+            if (!cancelled && result.data) {
               setToken(embedToken);
               setUser(result.data);
-            } else {
-              console.warn('[Auth] Embed token validation failed — continuing without auth');
+              setAuthChannel('embed');
+            } else if (!cancelled) {
+              setToken(null);
+              setUser(null);
+              setAuthChannel('none');
             }
-          } catch (e) {
-            console.warn('[Auth] Embed auth error — continuing without auth:', e);
+          } catch (error) {
+            if (!cancelled) {
+              console.warn('[Auth] Embed auth error, continuing without auth:', error);
+              setToken(null);
+              setUser(null);
+              setAuthChannel('none');
+            }
+          } finally {
+            if (!cancelled) {
+              setIsLoading(false);
+            }
           }
 
-          setIsLoading(false);
           return;
         }
 
-        // ── Standalone path: SSO token in URL ───────────────────────────────
-        const urlToken = getEmbedToken();
+        const storedToken = localStorage.getItem(BROWSER_TOKEN_KEY);
+        const storedExpiry = localStorage.getItem(BROWSER_TOKEN_EXPIRY_KEY);
+        const storedUser = localStorage.getItem(BROWSER_USER_KEY);
 
-        if (urlToken) {
-          // Store token and validate
-          apiClient.configure({ getToken: () => urlToken });
-          const result = await getCurrentUser();
-
-          if (result.data) {
-            // Calculate expiry (assume 2 hours for SSO tokens)
-            const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
-
-            localStorage.setItem(TOKEN_KEY, urlToken);
-            localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-            localStorage.setItem(USER_KEY, JSON.stringify(result.data));
-
-            setToken(urlToken);
-            setUser(result.data);
-
-            // Redirect to editor after SSO login IF it's not already on editor/embed
-            const currentHash = window.location.hash;
-            if (
-              !currentHash.includes('/editor') &&
-              !currentHash.includes('/embed') &&
-              !currentHash.includes('/preview')
-            ) {
-              setTimeout(() => {
-                window.location.hash = '#/editor';
-              }, 100);
-            }
-          } else {
-            console.error('❌ [Auth] SSO token invalid');
+        if (!storedToken || !storedExpiry) {
+          if (!cancelled) {
+            setToken(null);
+            setUser(null);
+            setAuthChannel(isGuestMode ? 'guest' : 'none');
+            setIsLoading(false);
           }
-
-          setIsLoading(false);
           return;
         }
 
-        // Check localStorage for existing session
-        const storedToken = localStorage.getItem(TOKEN_KEY);
-        const storedExpiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-        const storedUser = localStorage.getItem(USER_KEY);
-
-        if (storedToken && storedExpiry) {
-          const expiry = parseInt(storedExpiry, 10);
-
-          // Check if token is expired
-          if (Date.now() < expiry) {
-            setToken(storedToken);
-
-            if (storedUser) {
-              try {
-                setUser(JSON.parse(storedUser));
-              } catch {
-                // Invalid stored user, will be refreshed
-              }
-            }
-
-            // Validate token by fetching current user
-            // Note: apiClient already configured to use localStorage
-            const result = await getCurrentUser();
-
-            if (result.data) {
-              setUser(result.data);
-              localStorage.setItem(USER_KEY, JSON.stringify(result.data));
-            } else {
-              // Token is invalid
-
-              clearAuth();
-            }
-          } else {
-            // Token expired
-
-            clearAuth();
+        const expiry = Number.parseInt(storedExpiry, 10);
+        if (!Number.isFinite(expiry) || Date.now() >= expiry) {
+          clearBrowserSessionStorage();
+          if (!cancelled) {
+            setToken(null);
+            setUser(null);
+            setAuthChannel(isGuestMode ? 'guest' : 'none');
+            setIsLoading(false);
           }
-        } else {
+          return;
+        }
+
+        if (!cancelled) {
+          setToken(storedToken);
+          setAuthChannel('browser');
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser) as User);
+            } catch {
+              setUser(null);
+            }
+          }
+        }
+
+        apiClient.configure({ getToken: () => storedToken });
+        const result = await getCurrentUser();
+
+        if (!result.data) {
+          clearBrowserSessionStorage();
+          if (!cancelled) {
+            setToken(null);
+            setUser(null);
+            setAuthChannel(isGuestMode ? 'guest' : 'none');
+          }
+        } else if (!cancelled) {
+          setUser(result.data);
+          setAuthChannel('browser');
+          localStorage.setItem(BROWSER_USER_KEY, JSON.stringify(result.data));
         }
       } catch (error) {
-        clearAuth();
+        if (!cancelled) {
+          clearBrowserAuth();
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     initAuth();
-  }, [clearAuth]);
 
-  // Login with JWT token (for SSO)
+    return () => {
+      cancelled = true;
+    };
+  }, [clearBrowserAuth, embedContext, isGuestMode]);
+
   const loginWithToken = useCallback(
     async (jwtToken: string): Promise<{ success: boolean; error?: string }> => {
       try {
-        // Validate token by fetching user
         apiClient.configure({ getToken: () => jwtToken });
         const result = await getCurrentUser();
 
@@ -292,41 +300,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
           return { success: false, error: 'Invalid token' };
         }
 
-        const newUser: User = result.data;
-        const expiresAt = Date.now() + 2 * 60 * 60 * 1000; // 2 hours
-
         setToken(jwtToken);
-        setUser(newUser);
+        setUser(result.data);
 
-        // Persist to localStorage ONLY for standalone session
-        if (!isEmbedded()) {
-          localStorage.setItem(TOKEN_KEY, jwtToken);
-          localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-          localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+        if (embedContext) {
+          setAuthChannel('embed');
+        } else {
+          const expiresAt = Date.now() + 2 * 60 * 60 * 1000;
+          persistBrowserSession(jwtToken, result.data, expiresAt);
+          setAuthChannel('browser');
         }
 
         return { success: true };
       } catch (error) {
-        console.error('❌ [Auth] Token login failed:', error);
+        console.error('[Auth] Token login failed:', error);
         return { success: false, error: 'Token validation failed' };
       }
     },
-    [],
+    [embedContext],
   );
 
-  // Login handler
   const login = useCallback(
     async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
       try {
         const result = await apiLogin(credentials);
-
         if (result.error) {
           return { success: false, error: result.error };
         }
 
-        // Handle both response formats:
-        // 1. Backend returns: { token, user, expiresAt }
-        // 2. API wrapper returns: { data: { token, user, expiresAt } }
         const authData: any = result.data || result;
         const newToken: string = authData.token;
         const newUser: User = authData.user;
@@ -338,26 +339,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         setToken(newToken);
         setUser(newUser);
-
-        // Persist to localStorage ONLY for standalone session
-        if (!isEmbedded()) {
-          localStorage.setItem(TOKEN_KEY, newToken);
-          localStorage.setItem(TOKEN_EXPIRY_KEY, expiresAt.toString());
-          localStorage.setItem(USER_KEY, JSON.stringify(newUser));
-        }
-
-        // Important: Don't trigger re-initialization after login
-        // The state update will handle authentication status
+        setAuthChannel('browser');
+        setIsGuestMode(false);
+        localStorage.removeItem(GUEST_MODE_KEY);
+        persistBrowserSession(newToken, newUser, expiresAt);
 
         return { success: true };
-      } catch (error) {
+      } catch {
         return { success: false, error: 'Network error' };
       }
     },
     [],
   );
 
-  // Register handler
   const register = useCallback(
     async (data: RegisterData): Promise<{ success: boolean; error?: string }> => {
       try {
@@ -368,36 +362,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         if (result.data) {
-          // Registration successful, but user needs to login
           return { success: true };
         }
 
         return { success: false, error: 'Invalid response' };
-      } catch (error) {
+      } catch {
         return { success: false, error: 'Network error' };
       }
     },
     [],
   );
 
-  // Logout handler
   const logout = useCallback(() => {
-    clearAuth();
-    initDataSourceSync(false);
-  }, [clearAuth]);
-
-  // Set token for embed mode
-  const setEmbedToken = useCallback((embedToken: string) => {
-    setToken(embedToken);
-  }, []);
-
-  // Login as guest
-  const loginAsGuest = useCallback(() => {
-    setIsGuestMode(true);
-    if (!isEmbedded()) {
-      localStorage.setItem(GUEST_MODE_KEY, 'true');
+    if (authChannelRef.current === 'embed') {
+      clearEmbedAuth();
+    } else {
+      clearBrowserAuth();
     }
-  }, []);
+    initDataSourceSync(false);
+  }, [clearBrowserAuth, clearEmbedAuth]);
+
+  const setEmbedToken = useCallback(
+    (embedToken: string | null) => {
+      if (!embedContext) return;
+      setToken(embedToken);
+      setAuthChannel(embedToken ? 'embed' : 'none');
+      if (!embedToken) {
+        setUser(null);
+      }
+    },
+    [embedContext],
+  );
+
+  const loginAsGuest = useCallback(() => {
+    if (embedContext) return;
+    setIsGuestMode(true);
+    setToken(null);
+    setUser(null);
+    setAuthChannel('guest');
+    localStorage.setItem(GUEST_MODE_KEY, 'true');
+  }, [embedContext]);
+
+  const storageMode: StorageMode = useMemo(() => {
+    if (embedContext || authChannel === 'embed') return 'embed';
+    if (authChannel === 'browser' && token && user) return 'cloud';
+    return 'local';
+  }, [authChannel, embedContext, token, user]);
 
   const value: AuthContextValue = useMemo(
     () => ({
@@ -406,6 +416,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       token,
       storageMode,
+      authChannel,
       isGuestMode,
       login,
       loginWithToken,
@@ -419,6 +430,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user,
       isLoading,
       storageMode,
+      authChannel,
       isGuestMode,
       login,
       loginWithToken,
@@ -429,7 +441,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     ],
   );
 
-  // Initialize data source sync when authentication state changes
   useEffect(() => {
     if (!isLoading) {
       initDataSourceSync(!!token && !!user);

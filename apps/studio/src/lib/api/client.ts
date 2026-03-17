@@ -43,7 +43,7 @@ function resolveDefaultApiBaseUrl(): string {
 }
 
 const DEFAULT_API_BASE_URL = resolveDefaultApiBaseUrl();
-const TOKEN_KEY = 'thingsvis_token'; // Must match AuthContext
+const BROWSER_TOKEN_KEY = 'thingsvis_browser_token';
 
 export interface ApiClientConfig {
   baseUrl?: string;
@@ -70,7 +70,7 @@ class ApiClient {
 
   constructor(config: ApiClientConfig = {}) {
     this.baseUrl = config.baseUrl || DEFAULT_API_BASE_URL;
-    this.getToken = config.getToken || (() => localStorage.getItem(TOKEN_KEY));
+    this.getToken = config.getToken || (() => localStorage.getItem(BROWSER_TOKEN_KEY));
     this.onUnauthorized = config.onUnauthorized || (() => {});
   }
 
@@ -78,6 +78,10 @@ class ApiClient {
     if (config.baseUrl) this.baseUrl = config.baseUrl;
     if (config.getToken) this.getToken = config.getToken;
     if (config.onUnauthorized) this.onUnauthorized = config.onUnauthorized;
+  }
+
+  getAccessToken() {
+    return this.getToken();
   }
 
   private async request<T>(

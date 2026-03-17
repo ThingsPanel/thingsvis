@@ -1,6 +1,6 @@
 /**
  * ProjectContext
- * 
+ *
  * Manages the currently selected project for the application.
  * Loads the last selected project when user logs in.
  */
@@ -10,9 +10,6 @@ import { useAuth } from '@/lib/auth';
 import * as projectsApi from '@/lib/api/projects';
 import type { Project } from '@/lib/api/projects';
 import { STORAGE_CONSTANTS } from '@/lib/storage/constants';
-
-// Match the token key used in AuthContext
-const TOKEN_KEY = 'thingsvis_token';
 
 interface ProjectContextValue {
   /** Currently selected project */
@@ -34,8 +31,8 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 const CURRENT_PROJECT_KEY = STORAGE_CONSTANTS.CURRENT_BACKEND_PROJECT_ID_KEY;
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
-  
+  const { isAuthenticated, isLoading: authLoading, authChannel, storageMode } = useAuth();
+
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,27 +41,14 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Wait for auth to finish loading
     if (authLoading) {
-      
       return;
     }
 
-    // Check token in localStorage first (more reliable than state during login)
-    const storedToken = localStorage.getItem('thingsvis_token');
-    const hasToken = !!storedToken;
-    
-    
+    const canUseBrowserProjects =
+      isAuthenticated && authChannel === 'browser' && storageMode === 'cloud';
 
-    // If no token in localStorage, clear project
-    if (!hasToken) {
-      
+    if (!canUseBrowserProjects) {
       setCurrentProject(null);
-      localStorage.removeItem(CURRENT_PROJECT_KEY);
-      return;
-    }
-    
-    // If we have token but not authenticated yet, wait for auth to complete
-    if (!isAuthenticated && hasToken) {
-      
       return;
     }
 
@@ -73,58 +57,47 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       setError(null);
 
       try {
-        
-        
         // Try to load saved project ID
         const savedProjectId = localStorage.getItem(CURRENT_PROJECT_KEY);
-        
-        
-        // Load projects list using API
-        
-        const projectsResponse = await projectsApi.listProjects({ page: 1, limit: 20 });
 
-        
+        // Load projects list using API
+
+        const projectsResponse = await projectsApi.listProjects({ page: 1, limit: 20 });
 
         if (projectsResponse.error || !projectsResponse.data) {
           throw new Error(projectsResponse.error || 'Failed to load projects');
         }
 
         const fetchedProjects = projectsResponse.data.data || [];
-        
-        
+
         // If we have projects
         if (fetchedProjects && fetchedProjects.length > 0) {
           // Try to find saved project
-          const savedProject = savedProjectId 
+          const savedProject = savedProjectId
             ? fetchedProjects.find((p: any) => p.id === savedProjectId)
             : null;
-          
+
           // Use saved project or first project
           const projectToLoad = savedProject || fetchedProjects[0];
           if (!projectToLoad) {
             throw new Error('No project to load');
           }
-          
-          
+
           // Load full project details
           const projectResponse = await projectsApi.getProject(projectToLoad.id);
-          
-          
-          
+
           if (projectResponse.data) {
             const projectData = projectResponse.data;
             setCurrentProject(projectData);
             localStorage.setItem(CURRENT_PROJECT_KEY, projectData.id);
-            
           }
         } else {
           // No projects exist - require user to create one
-          
+
           setCurrentProject(null);
           localStorage.removeItem(CURRENT_PROJECT_KEY);
         }
       } catch (err) {
-        
         setError(err instanceof Error ? err.message : '初始化项目失败');
       } finally {
         setIsLoading(false);
@@ -132,7 +105,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeProject();
-  }, [isAuthenticated, authLoading]); // Removed loadProjects and createProject
+  }, [authChannel, authLoading, isAuthenticated, storageMode]);
 
   const switchProject = useCallback(async (projectId: string) => {
     setIsLoading(true);
@@ -155,10 +128,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const createAndSwitchProject = useCallback(async (
-    name: string,
-    description?: string
-  ) => {
+  const createAndSwitchProject = useCallback(async (name: string, description?: string) => {
     setError(null);
 
     try {
@@ -190,11 +160,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     refreshProject,
   };
 
-  return (
-    <ProjectContext.Provider value={value}>
-      {children}
-    </ProjectContext.Provider>
-  );
+  return <ProjectContext.Provider value={value}>{children}</ProjectContext.Provider>;
 }
 
 export function useProject() {

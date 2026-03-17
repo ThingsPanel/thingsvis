@@ -1,3 +1,5 @@
+import { apiClient } from './client';
+
 /**
  * Upload API endpoints
  *
@@ -38,7 +40,7 @@ export async function uploadFile(
   formData.append('file', file);
 
   // Prioritize primary auth provider's token, fallback to local standalone token
-  const token = localStorage.getItem('token') || localStorage.getItem('thingsvis_token');
+  const token = apiClient.getAccessToken();
 
   try {
     const xhr = new XMLHttpRequest();

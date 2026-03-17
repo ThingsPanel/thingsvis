@@ -36,10 +36,12 @@ model Tenant {
 model User {
   id           String  @id @default(cuid())
   email        String  @unique
+  displayEmail String?
   name         String?
   passwordHash String?
   avatar       String?
   role         String  @default("VIEWER") // OWNER, ADMIN, EDITOR, VIEWER
+  authType     String  @default("LOCAL") // LOCAL, SSO
 
   ssoProvider String?
   ssoSubject  String?

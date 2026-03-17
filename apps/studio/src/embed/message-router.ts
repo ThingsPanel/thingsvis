@@ -190,6 +190,10 @@ export function requestSave(payload: unknown) {
 
 let _embedToken: string | null = null;
 
+export function getConfiguredEmbedToken(): string | null {
+  return _embedToken;
+}
+
 /**
  * Configure the API client with a token/baseUrl from the embed URL params.
  * Called from main.tsx before React renders to avoid race conditions.

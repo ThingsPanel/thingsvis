@@ -114,6 +114,7 @@ export default function EmbedPage() {
     variables: {},
   });
   const cleanupRef = useRef<Array<() => void>>([]);
+  const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
   const initDoneRef = useRef<boolean>(false);
   /** Buffer for tv:platform-data messages that arrive before adapters are ready. */
@@ -142,14 +143,18 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
 
   const pageBackground = useMemo(() => {
-    const page = (kernelState?.page as any);
-    return (page?.config?.background as Record<string, string> | undefined) || { color: 'transparent' };
+    const page = kernelState?.page as any;
+    return (
+      (page?.config?.background as Record<string, string> | undefined) || { color: 'transparent' }
+    );
   }, [kernelState]);
 
   useEffect(() => {
-    const targets = [document.documentElement, document.body, document.getElementById('root')].filter(
-      (target): target is HTMLElement => Boolean(target),
-    );
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.getElementById('root'),
+    ].filter((target): target is HTMLElement => Boolean(target));
     const previous = targets.map((target) => ({
       target,
       backgroundColor: target.style.backgroundColor,
@@ -202,6 +207,13 @@ export default function EmbedPage() {
     }
   }, []);
 
+  const setEmbedApiToken = useCallback((nextToken: string | null) => {
+    embedTokenRef.current = nextToken;
+    apiClient.configure({
+      getToken: () => embedTokenRef.current,
+    });
+  }, []);
+
   // Resolve plugin for canvas
   const resolveWidget = useCallback(async (type: string) => {
     const { entry } = await loadWidget(type);
@@ -215,7 +227,7 @@ export default function EmbedPage() {
 
       try {
         if (token) {
-          localStorage.setItem('thingsvis_token', token);
+          setEmbedApiToken(token);
         }
 
         const response = await getDashboard(id);
@@ -283,7 +295,7 @@ export default function EmbedPage() {
         postToParent({ type: 'ERROR', payload: errorMessage });
       }
     },
-    [postToParent],
+    [postToParent, setEmbedApiToken],
   );
 
   // Load dashboard from schema data
@@ -484,7 +496,7 @@ export default function EmbedPage() {
     // SET_TOKEN
     cleanups.push(
       messageRouter.on(MSG_TYPES.SET_TOKEN, (payload: any) => {
-        localStorage.setItem('thingsvis_token', payload);
+        setEmbedApiToken(typeof payload === 'string' ? payload : null);
       }),
     );
 
@@ -777,12 +789,14 @@ export default function EmbedPage() {
 
     cleanupRef.current = cleanups;
     return () => cleanups.forEach((fn) => fn());
-  }, [adoptLegacyPlatformBindings, loadFromSchema, updateVariables]);
+  }, [adoptLegacyPlatformBindings, loadFromSchema, setEmbedApiToken, updateVariables]);
 
   // Initial load from URL params
   useEffect(() => {
     const dashboardId = searchParams.get('id');
     const token = searchParams.get('token');
+
+    setEmbedApiToken(token);
 
     if (dashboardId) {
       loadFromApi(dashboardId, token || undefined);
@@ -791,7 +805,7 @@ export default function EmbedPage() {
       setState((s) => ({ ...s, isLoading: false }));
       postToParent({ type: 'READY' });
     }
-  }, [searchParams, loadFromApi, postToParent]);
+  }, [searchParams, loadFromApi, postToParent, setEmbedApiToken]);
 
   // Render
   if (state.isLoading) {

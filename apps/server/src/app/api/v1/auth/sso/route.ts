@@ -1,115 +1,60 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/db';
-import { SSOExchangeSchema } from '@/lib/validators/auth';
+import { EMBED_SSO_LOGIN_SOURCE, SSO_AUTH_TYPE, SSOExchangeSchema } from '@/lib/validators/auth';
 
-// Token expiry in seconds
-const ACCESS_TOKEN_EXPIRY = 2 * 60 * 60; // 2 hours
-const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60; // 7 days
+const ACCESS_TOKEN_EXPIRY = 2 * 60 * 60;
+const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
 
-/**
- * CORS configuration for SSO API
- * Allows cross-origin requests from Host Platform and other platforms
- */
 function addCorsHeaders(response: NextResponse): NextResponse {
-  response.headers.set('Access-Control-Allow-Origin', '*'); // Allow all origins in development
+  response.headers.set('Access-Control-Allow-Origin', '*');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  response.headers.set('Access-Control-Max-Age', '86400'); // 24 hours
+  response.headers.set('Access-Control-Max-Age', '86400');
   return response;
 }
 
-/**
- * Handle OPTIONS preflight request
- */
 export async function OPTIONS(_request: NextRequest) {
   const response = new NextResponse(null, { status: 204 });
   return addCorsHeaders(response);
 }
 
-/**
- * SSO Token Exchange API
- *
- * POST /api/v1/auth/sso
- *
- * Exchanges a Host Platform token for a ThingsVis JWT token.
- * This enables Single Sign-On (SSO) integration.
- *
- * @example Request
- * {
- *   "platform": "host-platform",
- *   "platformToken": "tp_jwt_token_here",
- *   "userInfo": {
- *     "id": "tp_user_123",
- *     "email": "user@example.com",
- *     "name": "张三",
- *     "tenantId": "tenant_abc"
- *   }
- * }
- *
- * @example Response
- * {
- *   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
- *   "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
- *   "expiresIn": 7200,
- *   "user": {
- *     "id": "user_xyz",
- *     "email": "user@example.com",
- *     "name": "张三",
- *     "role": "EDITOR"
- *   }
- * }
- */
 export async function POST(request: NextRequest) {
   try {
-    // Read and parse request body
-    let body;
+    let body: unknown;
+
     try {
       const text = await request.text();
       if (!text || text.trim().length === 0) {
-        console.error('[SSO] Empty request body');
-        const response = NextResponse.json({ error: 'Request body is required' }, { status: 400 });
-        return addCorsHeaders(response);
+        return addCorsHeaders(
+          NextResponse.json({ error: 'Request body is required' }, { status: 400 }),
+        );
       }
 
       body = JSON.parse(text);
     } catch (parseError) {
       console.error('[SSO] JSON parse error:', parseError);
-      const response = NextResponse.json(
-        { error: 'Invalid JSON in request body' },
-        { status: 400 },
+      return addCorsHeaders(
+        NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 }),
       );
-      return addCorsHeaders(response);
     }
 
     const result = SSOExchangeSchema.safeParse(body);
-
     if (!result.success) {
       console.error('[SSO] Validation failed:', result.error.flatten());
-      const response = NextResponse.json(
-        {
-          error: 'Validation failed',
-          details: result.error.flatten(),
-        },
-        { status: 400 },
+      return addCorsHeaders(
+        NextResponse.json(
+          {
+            error: 'Validation failed',
+            details: result.error.flatten(),
+          },
+          { status: 400 },
+        ),
       );
-      return addCorsHeaders(response);
     }
 
     const { platform, platformToken: _platformToken, userInfo } = result.data;
 
-    // TODO: Verify platformToken with host platform API
-    // For now, we trust the token for development purposes
-    // In production, you should implement this verification:
-    //
-    // const isValid = await verifyHostPlatformToken(platformToken)
-    // if (!isValid) {
-    //   return NextResponse.json(
-    //     { error: 'Invalid platform token' },
-    //     { status: 401 }
-    //   )
-    // }
-    // 1. Find or create tenant
     let tenant = await prisma.tenant.findUnique({
       where: { slug: `${platform}-${userInfo.tenantId}` },
     });
@@ -124,7 +69,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 2. Find or create user
     let user = await prisma.user.findFirst({
       where: {
         ssoProvider: platform,
@@ -136,52 +80,30 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      // Check if email already exists (for migration scenarios)
-      const existingUser = await prisma.user.findUnique({
-        where: { email: userInfo.email },
+      user = await prisma.user.create({
+        data: {
+          email: buildSsoShadowEmail(platform, userInfo.id),
+          displayEmail: userInfo.email,
+          name: userInfo.name || userInfo.email.split('@')[0],
+          ssoProvider: platform,
+          ssoSubject: userInfo.id,
+          tenantId: tenant.id,
+          role: 'EDITOR',
+          authType: SSO_AUTH_TYPE,
+          lastLoginAt: new Date(),
+        },
+        include: {
+          tenant: true,
+        },
       });
-
-      if (existingUser) {
-        // Rebind the existing SSO user to the current tenant/space on every exchange.
-        // ThingsPanel may log into different dashboard spaces (e.g. tenant vs. sys admin)
-        // with the same host identity, so the ThingsVis user must follow the current space.
-        user = await prisma.user.update({
-          where: { id: existingUser.id },
-          data: {
-            ssoProvider: platform,
-            ssoSubject: userInfo.id,
-            name: userInfo.name || existingUser.name,
-            tenantId: tenant.id,
-            lastLoginAt: new Date(),
-          },
-          include: {
-            tenant: true,
-          },
-        });
-      } else {
-        // Create new user
-        user = await prisma.user.create({
-          data: {
-            email: userInfo.email,
-            name: userInfo.name || userInfo.email.split('@')[0],
-            ssoProvider: platform,
-            ssoSubject: userInfo.id,
-            tenantId: tenant.id,
-            role: 'EDITOR', // Default role for SSO users
-            lastLoginAt: new Date(),
-          },
-          include: {
-            tenant: true,
-          },
-        });
-      }
     } else {
-      // Keep the SSO user aligned with the current tenant/space every time they log in.
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
+          displayEmail: userInfo.email,
           tenantId: tenant.id,
           name: userInfo.name || user.name,
+          authType: SSO_AUTH_TYPE,
           lastLoginAt: new Date(),
         },
         include: {
@@ -190,15 +112,17 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 3. Generate JWT tokens
     const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
 
     const accessToken = await new SignJWT({
       sub: user.id,
       email: user.email,
+      displayEmail: user.displayEmail,
       name: user.name,
       role: user.role,
       tenantId: user.tenantId,
+      authType: user.authType,
+      loginSource: EMBED_SSO_LOGIN_SOURCE,
     })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -213,29 +137,38 @@ export async function POST(request: NextRequest) {
       .setIssuedAt()
       .setExpirationTime(`${REFRESH_TOKEN_EXPIRY}s`)
       .sign(secret);
-    const response = NextResponse.json({
-      accessToken,
-      refreshToken,
-      expiresIn: ACCESS_TOKEN_EXPIRY,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        tenantId: user.tenantId,
-        tenant: user.tenant
-          ? {
-              id: user.tenant.id,
-              name: user.tenant.name,
-            }
-          : null,
-      },
-    });
 
-    return addCorsHeaders(response);
+    return addCorsHeaders(
+      NextResponse.json({
+        accessToken,
+        refreshToken,
+        expiresIn: ACCESS_TOKEN_EXPIRY,
+        authType: user.authType,
+        loginSource: EMBED_SSO_LOGIN_SOURCE,
+        user: {
+          id: user.id,
+          email: user.displayEmail || user.email,
+          name: user.name,
+          role: user.role,
+          authType: user.authType,
+          loginSource: EMBED_SSO_LOGIN_SOURCE,
+          tenantId: user.tenantId,
+          tenant: user.tenant
+            ? {
+                id: user.tenant.id,
+                name: user.tenant.name,
+              }
+            : null,
+        },
+      }),
+    );
   } catch (error) {
     console.error('[SSO] Token exchange error:', error);
-    const response = NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-    return addCorsHeaders(response);
+    return addCorsHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }));
   }
+}
+
+function buildSsoShadowEmail(platform: string, subject: string): string {
+  const encodedIdentity = Buffer.from(`${platform}:${subject}`).toString('base64url');
+  return `sso+${encodedIdentity}@sso.thingsvis.local`;
 }

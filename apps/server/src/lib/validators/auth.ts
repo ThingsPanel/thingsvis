@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+export const LOCAL_AUTH_TYPE = 'LOCAL' as const;
+export const SSO_AUTH_TYPE = 'SSO' as const;
+export const AUTH_TYPES = [LOCAL_AUTH_TYPE, SSO_AUTH_TYPE] as const;
+export type AuthType = (typeof AUTH_TYPES)[number];
+
+export const STANDALONE_LOGIN_SOURCE = 'standalone' as const;
+export const EMBED_SSO_LOGIN_SOURCE = 'embed-sso' as const;
+export const LOGIN_SOURCES = [STANDALONE_LOGIN_SOURCE, EMBED_SSO_LOGIN_SOURCE] as const;
+export type LoginSource = (typeof LOGIN_SOURCES)[number];
+
 export const RegisterSchema = z.object({
   email: z.string().email('Invalid email').max(254),
   password: z.string().min(8, 'Password must be at least 8 characters'),

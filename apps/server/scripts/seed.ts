@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcryptjs'
+import { LOCAL_AUTH_TYPE } from '../src/lib/validators/auth'
 
 const prisma = new PrismaClient()
 
@@ -28,12 +29,20 @@ async function main() {
     // Upsert admin user
     const user = await prisma.user.upsert({
         where: { email },
-        update: { passwordHash, name, role: 'OWNER' },
+        update: {
+            passwordHash,
+            name,
+            role: 'OWNER',
+            authType: LOCAL_AUTH_TYPE,
+            displayEmail: email,
+        },
         create: {
             email,
+            displayEmail: email,
             name,
             passwordHash,
             role: 'OWNER',
+            authType: LOCAL_AUTH_TYPE,
             tenantId: tenant.id,
         },
     })
