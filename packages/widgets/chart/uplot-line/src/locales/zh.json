@@ -5,5 +5,9 @@
                 "name": "时序图"
             }
         }
+    },
+    "runtime": {
+        "defaultSeriesName": "数值",
+        "emptyState": "等待时序数据"
     }
 }

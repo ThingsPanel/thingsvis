@@ -15,6 +15,19 @@ describe('media/iframe widget', () => {
         expect(Main.standaloneDefaults).toEqual({ src: STANDALONE_DEFAULT_SRC });
     });
 
+    it('shows localized empty guidance before a url is configured', () => {
+        const instance = Main.createOverlay(createContext({
+            locale: 'en',
+            mode: 'edit',
+            props: {},
+        }));
+
+        expect(instance.element.textContent).toContain('Configure a webpage URL');
+        expect(instance.element.textContent).toContain('Supports static values, field bindings, or expressions');
+
+        instance.destroy?.();
+    });
+
     it('loads iframe in edit mode but keeps interaction disabled', () => {
         const instance = Main.createOverlay(createContext({
             mode: 'edit',

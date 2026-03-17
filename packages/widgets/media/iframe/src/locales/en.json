@@ -5,5 +5,16 @@
                 "name": "Iframe"
             }
         }
+    },
+    "runtime": {
+        "emptyTitle": "Configure a webpage URL",
+        "emptyDescription": "Supports static values, field bindings, or expressions",
+        "idleTitle": "Webpage configured",
+        "idleDescriptionEdit": "Edit mode keeps live pages paused by default",
+        "idleDescriptionView": "Waiting for preview or runtime mode",
+        "loadingTitle": "Loading webpage",
+        "loadingDescription": "Requesting remote page content",
+        "errorTitle": "Failed to load webpage",
+        "errorDescription": "The site may block embedding or be temporarily unavailable"
     }
 }

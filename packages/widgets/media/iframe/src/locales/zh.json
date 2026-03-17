@@ -5,5 +5,16 @@
                 "name": "网页容器"
             }
         }
+    },
+    "runtime": {
+        "emptyTitle": "请配置网页地址",
+        "emptyDescription": "支持静态值、字段绑定或表达式",
+        "idleTitle": "网页已配置",
+        "idleDescriptionEdit": "编辑态默认不加载实时页面",
+        "idleDescriptionView": "等待进入预览或运行态",
+        "loadingTitle": "页面加载中",
+        "loadingDescription": "正在请求网页内容",
+        "errorTitle": "页面加载失败",
+        "errorDescription": "目标站点可能禁止嵌入或暂时不可用"
     }
 }

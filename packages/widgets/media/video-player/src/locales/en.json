@@ -15,5 +15,10 @@
                 "borderRadius": "Border Radius"
             }
         }
+    },
+    "runtime": {
+        "empty": "Configure a video source",
+        "loading": "Loading video",
+        "error": "Failed to load video"
     }
 }

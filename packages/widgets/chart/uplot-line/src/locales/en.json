@@ -5,5 +5,9 @@
                 "name": "uPlot Chart"
             }
         }
+    },
+    "runtime": {
+        "defaultSeriesName": "Value",
+        "emptyState": "Waiting for time series data"
     }
 }

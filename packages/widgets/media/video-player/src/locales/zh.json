@@ -15,5 +15,10 @@
                 "borderRadius": "圆角"
             }
         }
+    },
+    "runtime": {
+        "empty": "请配置视频地址",
+        "loading": "视频加载中",
+        "error": "视频加载失败"
     }
 }

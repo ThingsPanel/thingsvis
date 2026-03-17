@@ -12,5 +12,15 @@
                 "endTime": "End Time"
             }
         }
+    },
+    "runtime": {
+        "presets": {
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "thisWeek": "This Week",
+            "thisMonth": "This Month",
+            "last7Days": "Last 7 Days",
+            "last30Days": "Last 30 Days"
+        }
     }
 }
