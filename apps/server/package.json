@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "postinstall": "prisma generate",
-    "predev": "prisma generate",
+    "predev": "node scripts/dev-prisma-generate.mjs",
     "dev": "next dev -p 8000",
     "prebuild": "prisma generate",
     "build": "next build",
