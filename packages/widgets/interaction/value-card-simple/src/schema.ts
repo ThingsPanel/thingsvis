@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
   title: z.string().default('总览数值').describe('Card title label'),
-  value: z.union([z.number(), z.string()]).default(128450).describe('Primary value (number or string)'),
+  value: z.union([z.number(), z.string()]).default(0).describe('Primary value (number or string)'),
   unit: z.string().default('元').describe('Unit suffix (e.g., %, °C, kW)'),
   showUnit: z.boolean().default(true).describe('Display unit suffix'),
   precision: z.number().int().min(0).max(6).default(0).describe('Decimal precision'),
