@@ -34,6 +34,17 @@ function getFieldRoot(fieldPath?: string): string | null {
   return root?.trim() ? root.trim() : null;
 }
 
+function normalizePlatformFieldRequirement(fieldRoot: string): {
+  fieldId: string;
+  needsHistory: boolean;
+} {
+  const needsHistory = fieldRoot.endsWith('__history');
+  return {
+    fieldId: needsHistory ? fieldRoot.slice(0, -'__history'.length) : fieldRoot,
+    needsHistory,
+  };
+}
+
 export function collectPlatformBindingRequirements(
   nodes: Array<Record<string, unknown>>,
 ): Map<string, PlatformBindingRequirement> {
@@ -63,9 +74,12 @@ export function collectPlatformBindingRequirements(
         const fieldRoot = getFieldRoot(match[2]);
         if (!fieldRoot) continue;
 
+        const { fieldId, needsHistory } = normalizePlatformFieldRequirement(fieldRoot);
+        if (!fieldId) continue;
+
         const requirement = ensureRequirement(dataSourceId);
-        requirement.requestedFields.add(fieldRoot);
-        if (fieldRoot.endsWith('__history')) {
+        requirement.requestedFields.add(fieldId);
+        if (needsHistory) {
           requirement.needsHistory = true;
         }
       }
