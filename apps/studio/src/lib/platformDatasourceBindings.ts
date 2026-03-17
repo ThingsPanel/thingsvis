@@ -34,10 +34,6 @@ function getFieldRoot(fieldPath?: string): string | null {
   return root?.trim() ? root.trim() : null;
 }
 
-function stripHistorySuffix(fieldId: string): string {
-  return fieldId.endsWith('__history') ? fieldId.slice(0, -'__history'.length) : fieldId;
-}
-
 export function collectPlatformBindingRequirements(
   nodes: Array<Record<string, unknown>>,
 ): Map<string, PlatformBindingRequirement> {
@@ -68,10 +64,7 @@ export function collectPlatformBindingRequirements(
         if (!fieldRoot) continue;
 
         const requirement = ensureRequirement(dataSourceId);
-        const requestedFieldId = stripHistorySuffix(fieldRoot);
-        if (requestedFieldId) {
-          requirement.requestedFields.add(requestedFieldId);
-        }
+        requirement.requestedFields.add(fieldRoot);
         if (fieldRoot.endsWith('__history')) {
           requirement.needsHistory = true;
         }
@@ -118,6 +111,9 @@ export function augmentPlatformDataSourcesForNodes(
       type: 'PLATFORM_FIELD',
       config: {
         ...baseConfig,
+        requestedFields: Array.from(
+          new Set([...(baseConfig.requestedFields ?? []), ...requirement.requestedFields]),
+        ),
         bufferSize: requirement.needsHistory
           ? Math.max(existingBufferSize, inferredBufferSize)
           : existingBufferSize,
