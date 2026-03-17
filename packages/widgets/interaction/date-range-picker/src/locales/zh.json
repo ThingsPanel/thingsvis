@@ -12,5 +12,15 @@
                 "endTime": "结束时间"
             }
         }
+    },
+    "runtime": {
+        "presets": {
+            "today": "今天",
+            "yesterday": "昨天",
+            "thisWeek": "本周",
+            "thisMonth": "本月",
+            "last7Days": "最近7天",
+            "last30Days": "最近30天"
+        }
     }
 }

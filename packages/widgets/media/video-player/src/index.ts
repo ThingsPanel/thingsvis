@@ -7,6 +7,20 @@ import './lib/video-rtc.js'; // Registers <video-rtc> element
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const localeCatalog = { en, zh } as const;
+type RuntimeMessages = {
+  runtime: {
+    empty: string;
+    loading: string;
+    error: string;
+  };
+};
+
+function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
+  const normalized = locale?.toLowerCase();
+  return normalized?.startsWith('zh') ? (localeCatalog.zh as RuntimeMessages) : (localeCatalog.en as RuntimeMessages);
+}
+
 export const Main = defineWidget({
   id: metadata.id,
   name: metadata.name,
@@ -21,6 +35,7 @@ export const Main = defineWidget({
   controls,
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
+    let currentLocale = ctx.locale;
     let status: 'empty' | 'loading' | 'error' | 'ready' = 'empty';
     let currentSrc = '';
     let internalVideo: HTMLVideoElement | null = null;
@@ -90,10 +105,12 @@ export const Main = defineWidget({
     placeholder.style.padding = '16px';
     placeholder.style.textAlign = 'center';
     placeholder.style.fontSize = '13px';
-    placeholder.innerHTML = '<div>请配置视频地址</div>';
+    const placeholderText = document.createElement('div');
+    placeholder.appendChild(placeholderText);
     container.appendChild(placeholder);
 
     const updatePlaceholder = (nextStatus: 'empty' | 'loading' | 'error' | 'ready') => {
+      const runtimeMessages = getRuntimeMessages(currentLocale).runtime;
       status = nextStatus;
       if (nextStatus === 'ready') {
         placeholder.style.display = 'none';
@@ -102,13 +119,13 @@ export const Main = defineWidget({
 
       placeholder.style.display = 'flex';
       if (nextStatus === 'loading') {
-        placeholder.innerHTML = '<div>视频加载中</div>';
+        placeholderText.textContent = runtimeMessages.loading;
         return;
       }
 
-      placeholder.innerHTML = nextStatus === 'error'
-        ? '<div>视频加载失败</div>'
-        : '<div>请配置视频地址</div>';
+      placeholderText.textContent = nextStatus === 'error'
+        ? runtimeMessages.error
+        : runtimeMessages.empty;
     };
 
     const normalizeSource = (input: unknown): string => {
@@ -197,8 +214,9 @@ export const Main = defineWidget({
     updateView();
 
     return {
-      update: (newProps: Props) => {
+      update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
+        currentLocale = newCtx.locale;
         updateView();
       },
       destroy: () => {
