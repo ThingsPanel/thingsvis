@@ -1,6 +1,6 @@
 export const metadata = {
   id: 'interaction/value-card-simple',
-  name: 'Value Card Simple',
+  name: 'Value Lite',
   category: 'interaction' as const,
   icon: 'Activity',
   version: '1.0.0',

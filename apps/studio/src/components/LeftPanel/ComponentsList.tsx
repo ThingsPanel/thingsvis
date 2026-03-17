@@ -38,6 +38,7 @@ import {
   TextCursorInput,
   GaugeCircle,
   SquareMenu,
+  Bell,
 } from 'lucide-react';
 import {
   Accordion,
@@ -92,6 +93,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   TextCursorInput,
   GaugeCircle,
   SquareMenu,
+  Bell,
 };
 
 const CATEGORY_DEFS = [
@@ -105,6 +107,15 @@ const CATEGORY_DEFS = [
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
+
+function resolveEntryDisplayName(entry: RegistryListEntry, language: string): string {
+  const normalized = (language || '').toLowerCase();
+  const baseLanguage = normalized.split('-')[0] ?? normalized;
+  const i18nName =
+    entry.i18n?.[normalized] ?? entry.i18n?.[baseLanguage] ?? entry.i18n?.zh ?? entry.i18n?.en;
+
+  return i18nName ?? entry.displayName ?? entry.componentId ?? entry.remoteName;
+}
 
 export default function ComponentsList({
   onInsert: _onInsert,
@@ -182,10 +193,9 @@ export default function ComponentsList({
 
     Object.entries(entriesByCategory).forEach(([category, items]) => {
       const matchedItems = items.filter((entry) => {
-        const displayName = (
-          entry.i18n?.[i18n.language] ??
-          entry.displayName ??
-          entry.remoteName
+        const displayName = resolveEntryDisplayName(
+          entry,
+          i18n.resolvedLanguage ?? i18n.language,
         ).toLowerCase();
         return displayName.includes(query) || entry.componentId.toLowerCase().includes(query);
       });
@@ -260,11 +270,10 @@ export default function ComponentsList({
                           {items.map((entry) => {
                             const iconName = entry.icon ?? '';
                             const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
-                            const displayName =
-                              entry.i18n?.[i18n.language] ??
-                              entry.displayName ??
-                              entry.componentId ??
-                              entry.remoteName;
+                            const displayName = resolveEntryDisplayName(
+                              entry,
+                              i18n.resolvedLanguage ?? i18n.language,
+                            );
 
                             return (
                               <button
@@ -275,6 +284,7 @@ export default function ComponentsList({
                                 className="h-16 rounded border border-border hover:border-[#6965db] hover:bg-accent flex flex-col items-center justify-center gap-1 transition-colors p-1.5"
                                 data-testid="component-card"
                                 data-component-id={entry.componentId}
+                                title={displayName}
                               >
                                 <div className="h-5 w-5 text-foreground mb-0.5">
                                   {entry.iconUrl ? (
@@ -288,7 +298,7 @@ export default function ComponentsList({
                                   )}
                                 </div>
                                 <div className="leading-tight text-center">
-                                  <div className="text-xs text-foreground font-medium truncate w-full px-0.5">
+                                  <div className="text-[11px] text-foreground font-medium truncate w-full px-0.5">
                                     {displayName}
                                   </div>
                                 </div>

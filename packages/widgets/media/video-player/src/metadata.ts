@@ -1,9 +1,9 @@
 /**
- * 组件元数据
+ * Widget metadata
  */
 export const metadata = {
   id: 'media-video-player',
-  name: '视频播放器',
+  name: 'Video',
   category: 'media',
   icon: 'Video',
   version: '1.0.0',

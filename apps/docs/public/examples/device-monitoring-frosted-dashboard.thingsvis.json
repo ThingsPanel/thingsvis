@@ -1,0 +1,658 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "id": "6b91e3f1-3a96-4386-8eef-322bd20ea1a3",
+    "name": "设备监控磨砂看板",
+    "createdAt": 1773742200000,
+    "updatedAt": 1773742200000
+  },
+  "canvas": {
+    "mode": "fixed",
+    "width": 1920,
+    "height": 1080,
+    "theme": "aurora",
+    "background": {
+      "color": "#eef3f8",
+      "image": "",
+      "size": "cover",
+      "repeat": "no-repeat",
+      "attachment": "scroll"
+    }
+  },
+  "nodes": [
+    {
+      "id": "nav-pill-bg",
+      "name": "Nav Pill Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 34, "y": 24 },
+      "size": { "width": 164, "height": 48 },
+      "props": {
+        "variant": "blue",
+        "blurStrength": 20,
+        "surfaceOpacity": 0.46,
+        "highlightOpacity": 0.34,
+        "tintStrength": 0.14,
+        "cornerRadius": 16
+      }
+    },
+    {
+      "id": "nav-pill-text",
+      "name": "Nav Pill Text",
+      "type": "basic/text",
+      "position": { "x": 66, "y": 36 },
+      "size": { "width": 100, "height": 24 },
+      "props": {
+        "text": "设备总览",
+        "fontSize": 18,
+        "fontFamily": "Microsoft YaHei",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#3451b2",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.1)",
+        "textShadowBlur": 0,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "nav-pill-icon",
+      "name": "Nav Pill Icon",
+      "type": "basic/text",
+      "position": { "x": 48, "y": 36 },
+      "size": { "width": 24, "height": 24 },
+      "props": {
+        "text": "◫",
+        "fontSize": 16,
+        "fontFamily": "Arial",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#5b8cff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.1)",
+        "textShadowBlur": 0,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "header-main",
+      "name": "Main Header",
+      "type": "custom/section-header",
+      "position": { "x": 60, "y": 92 },
+      "size": { "width": 840, "height": 88 },
+      "props": {
+        "eyebrow": "THINGSVIS DEVICE OPS",
+        "title": "设备运维监控看板",
+        "subtitle": "实时设备状态、活跃趋势与告警概览",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 12,
+        "titleFontSize": 34,
+        "subtitleFontSize": 13,
+        "metricFontSize": 13
+      }
+    },
+    {
+      "id": "header-meta",
+      "name": "Header Meta",
+      "type": "basic/text",
+      "position": { "x": 1420, "y": 106 },
+      "size": { "width": 440, "height": 40 },
+      "props": {
+        "text": "2026-03-17 16:30 / 自动刷新 5 分钟",
+        "fontSize": 15,
+        "fontFamily": "Microsoft YaHei",
+        "fontWeight": "500",
+        "fontStyle": "normal",
+        "textAlign": "right",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "letterSpacing": 0.4,
+        "textDecoration": "none",
+        "fill": "#667085",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,0,0,0.1)",
+        "textShadowBlur": 0,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "kpi-bg-1",
+      "name": "KPI Background 1",
+      "type": "custom/glass-panel",
+      "position": { "x": 60, "y": 196 },
+      "size": { "width": 420, "height": 116 },
+      "props": {
+        "variant": "neutral",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.3,
+        "tintStrength": 0.08,
+        "cornerRadius": 22
+      }
+    },
+    {
+      "id": "kpi-bg-2",
+      "name": "KPI Background 2",
+      "type": "custom/glass-panel",
+      "position": { "x": 500, "y": 196 },
+      "size": { "width": 420, "height": 116 },
+      "props": {
+        "variant": "blue",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.3,
+        "tintStrength": 0.1,
+        "cornerRadius": 22
+      }
+    },
+    {
+      "id": "kpi-bg-3",
+      "name": "KPI Background 3",
+      "type": "custom/glass-panel",
+      "position": { "x": 940, "y": 196 },
+      "size": { "width": 420, "height": 116 },
+      "props": {
+        "variant": "warm",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.3,
+        "tintStrength": 0.1,
+        "cornerRadius": 22
+      }
+    },
+    {
+      "id": "kpi-bg-4",
+      "name": "KPI Background 4",
+      "type": "custom/glass-panel",
+      "position": { "x": 1380, "y": 196 },
+      "size": { "width": 480, "height": 116 },
+      "props": {
+        "variant": "neutral",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.3,
+        "tintStrength": 0.08,
+        "cornerRadius": 22
+      }
+    },
+    {
+      "id": "kpi-card-1",
+      "name": "Total Devices",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 82, "y": 218 },
+      "size": { "width": 376, "height": 72 },
+      "props": {
+        "title": "设备总数",
+        "value": 207,
+        "unit": "台",
+        "showUnit": true,
+        "precision": 0,
+        "trend": 3.2,
+        "trendLabel": "较昨日",
+        "showTrend": true,
+        "valueColor": "theme",
+        "thresholds": "[]"
+      }
+    },
+    {
+      "id": "kpi-card-2",
+      "name": "Online Devices",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 522, "y": 218 },
+      "size": { "width": 376, "height": 72 },
+      "props": {
+        "title": "在线设备",
+        "value": 182,
+        "unit": "台",
+        "showUnit": true,
+        "precision": 0,
+        "trend": 1.4,
+        "trendLabel": "稳定上升",
+        "showTrend": true,
+        "valueColor": "success",
+        "thresholds": "[]"
+      }
+    },
+    {
+      "id": "kpi-card-3",
+      "name": "Alarm Devices",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 962, "y": 218 },
+      "size": { "width": 376, "height": 72 },
+      "props": {
+        "title": "告警设备",
+        "value": 13,
+        "unit": "台",
+        "showUnit": true,
+        "precision": 0,
+        "trend": -2.1,
+        "trendLabel": "告警下降",
+        "showTrend": true,
+        "valueColor": "warning",
+        "thresholds": "[]"
+      }
+    },
+    {
+      "id": "kpi-card-4",
+      "name": "Active Rate",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 1402, "y": 218 },
+      "size": { "width": 436, "height": 72 },
+      "props": {
+        "title": "今日活跃率",
+        "value": 91.8,
+        "unit": "%",
+        "showUnit": true,
+        "precision": 1,
+        "trend": 4.8,
+        "trendLabel": "高于本周均值",
+        "showTrend": true,
+        "valueColor": "theme",
+        "thresholds": "[]"
+      }
+    },
+    {
+      "id": "panel-trend-bg",
+      "name": "Trend Panel Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 60, "y": 340 },
+      "size": { "width": 1160, "height": 332 },
+      "props": {
+        "variant": "neutral",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.4,
+        "highlightOpacity": 0.28,
+        "tintStrength": 0.08,
+        "cornerRadius": 28
+      }
+    },
+    {
+      "id": "panel-trend-header",
+      "name": "Trend Panel Header",
+      "type": "custom/section-header",
+      "position": { "x": 92, "y": 366 },
+      "size": { "width": 1096, "height": 64 },
+      "props": {
+        "eyebrow": "24H TREND",
+        "title": "设备总量趋势",
+        "subtitle": "设备总数与在线规模的日内波动",
+        "metric": "运行稳定",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 24,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "panel-trend-chart",
+      "name": "Trend Chart",
+      "type": "chart/echarts-line",
+      "position": { "x": 92, "y": 438 },
+      "size": { "width": 1096, "height": 206 },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#5b8cff",
+        "showLegend": true,
+        "showXAxis": true,
+        "showYAxis": true,
+        "smooth": true,
+        "showArea": true,
+        "timeRangePreset": "all",
+        "data": [
+          { "time": "2026-03-17T00:00:00.000Z", "value": 201 },
+          { "time": "2026-03-17T03:00:00.000Z", "value": 202 },
+          { "time": "2026-03-17T06:00:00.000Z", "value": 203 },
+          { "time": "2026-03-17T09:00:00.000Z", "value": 205 },
+          { "time": "2026-03-17T12:00:00.000Z", "value": 207 },
+          { "time": "2026-03-17T15:00:00.000Z", "value": 207 },
+          { "time": "2026-03-17T18:00:00.000Z", "value": 206 }
+        ]
+      }
+    },
+    {
+      "id": "panel-alerts-bg",
+      "name": "Alerts Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 1240, "y": 340 },
+      "size": { "width": 620, "height": 332 },
+      "props": {
+        "variant": "warm",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.28,
+        "tintStrength": 0.08,
+        "cornerRadius": 28
+      }
+    },
+    {
+      "id": "panel-alerts-header",
+      "name": "Alerts Header",
+      "type": "custom/section-header",
+      "position": { "x": 1272, "y": 366 },
+      "size": { "width": 556, "height": 64 },
+      "props": {
+        "eyebrow": "LIVE ALERTS",
+        "title": "实时告警流",
+        "subtitle": "优先处理高等级设备异常",
+        "metric": "13 条",
+        "align": "left",
+        "accentColor": "#f59e0b",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 24,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "panel-alerts-list",
+      "name": "Alerts List",
+      "type": "custom/alert-list",
+      "position": { "x": 1272, "y": 440 },
+      "size": { "width": 556, "height": 204 },
+      "props": {
+        "items": [
+          {
+            "level": "critical",
+            "title": "冷水机组 #02 温度异常",
+            "detail": "出水温度 18.6°C，超过阈值 3.1°C",
+            "source": "A2 产线",
+            "time": "09:42"
+          },
+          {
+            "level": "warning",
+            "title": "空压机 #03 震动偏高",
+            "detail": "最近 15 分钟均值超出基线 11%",
+            "source": "动力站",
+            "time": "09:18"
+          },
+          {
+            "level": "warning",
+            "title": "传送带 #06 负载偏高",
+            "detail": "当前负载 92%，建议排查堆积",
+            "source": "包装段",
+            "time": "08:57"
+          },
+          {
+            "level": "info",
+            "title": "配电柜 #07 维护完成",
+            "detail": "已恢复在线并重新接入监测",
+            "source": "B1 配电间",
+            "time": "08:56"
+          }
+        ],
+        "maxItems": 6,
+        "showTime": true,
+        "showSource": true,
+        "showDetail": true,
+        "compact": false,
+        "titleFontSize": 14,
+        "detailFontSize": 12,
+        "timeFontSize": 11,
+        "itemRadius": 16
+      }
+    },
+    {
+      "id": "panel-active-bg",
+      "name": "Active Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 60, "y": 700 },
+      "size": { "width": 780, "height": 320 },
+      "props": {
+        "variant": "neutral",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.4,
+        "highlightOpacity": 0.28,
+        "tintStrength": 0.08,
+        "cornerRadius": 28
+      }
+    },
+    {
+      "id": "panel-active-header",
+      "name": "Active Header",
+      "type": "custom/section-header",
+      "position": { "x": 92, "y": 726 },
+      "size": { "width": 716, "height": 62 },
+      "props": {
+        "eyebrow": "KEY DEVICES",
+        "title": "重点设备卡片",
+        "subtitle": "核心设备状态、负载与温度摘要",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 22,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "device-card-1",
+      "name": "Device Card 1",
+      "type": "custom/device-status-card",
+      "position": { "x": 92, "y": 806 },
+      "size": { "width": 220, "height": 184 },
+      "props": {
+        "title": "冷水机组 #02",
+        "zone": "A2 产线",
+        "status": "warning",
+        "statusLabel": "告警",
+        "primaryValue": 92,
+        "primaryUnit": "%",
+        "primaryLabel": "当前负载",
+        "secondaryValue": 18.6,
+        "secondaryUnit": "°C",
+        "secondaryLabel": "出口温度",
+        "progress": 92,
+        "progressColor": "#f59e0b",
+        "titleFontSize": 16,
+        "metaFontSize": 12,
+        "valueFontSize": 30,
+        "compact": false
+      }
+    },
+    {
+      "id": "device-card-2",
+      "name": "Device Card 2",
+      "type": "custom/device-status-card",
+      "position": { "x": 336, "y": 806 },
+      "size": { "width": 220, "height": 184 },
+      "props": {
+        "title": "空压机 #03",
+        "zone": "动力站",
+        "status": "warning",
+        "statusLabel": "告警",
+        "primaryValue": 88,
+        "primaryUnit": "%",
+        "primaryLabel": "当前负载",
+        "secondaryValue": 11.2,
+        "secondaryUnit": "mm/s",
+        "secondaryLabel": "振动值",
+        "progress": 88,
+        "progressColor": "#f59e0b",
+        "titleFontSize": 16,
+        "metaFontSize": 12,
+        "valueFontSize": 30,
+        "compact": false
+      }
+    },
+    {
+      "id": "device-card-3",
+      "name": "Device Card 3",
+      "type": "custom/device-status-card",
+      "position": { "x": 580, "y": 806 },
+      "size": { "width": 220, "height": 184 },
+      "props": {
+        "title": "配电柜 #07",
+        "zone": "B1 配电间",
+        "status": "online",
+        "statusLabel": "在线",
+        "primaryValue": 47,
+        "primaryUnit": "%",
+        "primaryLabel": "当前负载",
+        "secondaryValue": 39.8,
+        "secondaryUnit": "kW",
+        "secondaryLabel": "瞬时功率",
+        "progress": 47,
+        "progressColor": "#10b981",
+        "titleFontSize": 16,
+        "metaFontSize": 12,
+        "valueFontSize": 30,
+        "compact": false
+      }
+    },
+    {
+      "id": "panel-status-bg",
+      "name": "Status Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 860, "y": 700 },
+      "size": { "width": 360, "height": 320 },
+      "props": {
+        "variant": "blue",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.42,
+        "highlightOpacity": 0.28,
+        "tintStrength": 0.1,
+        "cornerRadius": 28
+      }
+    },
+    {
+      "id": "panel-status-header",
+      "name": "Status Header",
+      "type": "custom/section-header",
+      "position": { "x": 892, "y": 726 },
+      "size": { "width": 296, "height": 62 },
+      "props": {
+        "eyebrow": "STATUS MIX",
+        "title": "状态占比",
+        "subtitle": "在线、告警、维护、离线",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 22,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "panel-status-chart",
+      "name": "Status Pie",
+      "type": "chart/echarts-pie",
+      "position": { "x": 886, "y": 808 },
+      "size": { "width": 308, "height": 186 },
+      "props": {
+        "title": "",
+        "primaryColor": "#5b8cff",
+        "showLegend": true,
+        "isDoughnut": true,
+        "data": [
+          { "name": "在线", "value": 182 },
+          { "name": "告警", "value": 13 },
+          { "name": "维护", "value": 5 },
+          { "name": "离线", "value": 7 }
+        ]
+      }
+    },
+    {
+      "id": "panel-table-bg",
+      "name": "Table Background",
+      "type": "custom/glass-panel",
+      "position": { "x": 1240, "y": 700 },
+      "size": { "width": 620, "height": 320 },
+      "props": {
+        "variant": "neutral",
+        "blurStrength": 22,
+        "surfaceOpacity": 0.4,
+        "highlightOpacity": 0.28,
+        "tintStrength": 0.08,
+        "cornerRadius": 28
+      }
+    },
+    {
+      "id": "panel-table-header",
+      "name": "Table Header",
+      "type": "custom/section-header",
+      "position": { "x": 1272, "y": 726 },
+      "size": { "width": 556, "height": 62 },
+      "props": {
+        "eyebrow": "DEVICE TABLE",
+        "title": "重点设备列表",
+        "subtitle": "当前运行状态与负载摘要",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": false,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 22,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "panel-table-widget",
+      "name": "Device Table",
+      "type": "basic/table",
+      "position": { "x": 1272, "y": 806 },
+      "size": { "width": 556, "height": 186 },
+      "props": {
+        "columns": [
+          { "key": "id", "title": "ID", "align": "left" },
+          { "key": "name", "title": "设备名称", "align": "left" },
+          { "key": "zone", "title": "区域", "align": "center" },
+          { "key": "status", "title": "状态", "align": "center" },
+          { "key": "load", "title": "负载", "align": "right" }
+        ],
+        "data": [
+          { "id": "OM1246924", "name": "冷水机组 #02", "zone": "A2 产线", "status": "告警", "load": "92%" },
+          { "id": "OM1243473", "name": "空压机 #03", "zone": "动力站", "status": "告警", "load": "88%" },
+          { "id": "OM4637343", "name": "冷却塔 #01", "zone": "屋顶", "status": "在线", "load": "63%" },
+          { "id": "OM1535524", "name": "配电柜 #07", "zone": "B1 配电间", "status": "在线", "load": "47%" },
+          { "id": "OM2711902", "name": "传送带 #06", "zone": "包装段", "status": "告警", "load": "92%" }
+        ],
+        "showHeader": true,
+        "headerFontSize": 13,
+        "headerWeight": "600",
+        "headerColor": "auto",
+        "headerBgColor": "auto",
+        "bodyFontSize": 12,
+        "bodyWeight": "400",
+        "bodyColor": "auto",
+        "showBorder": false,
+        "showStripe": false,
+        "stripeColor": "auto",
+        "cellPadding": 10
+      }
+    }
+  ]
+}

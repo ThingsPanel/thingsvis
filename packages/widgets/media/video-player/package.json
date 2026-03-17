@@ -27,7 +27,7 @@
         "@thingsvis/widget-config": "workspace:*"
     },
     "thingsvis": {
-        "displayName": "video-player",
+        "displayName": "Video",
         "icon": "Video",
         "i18n": {
             "zh": "视频",

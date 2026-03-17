@@ -1,0 +1,21 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-alert-list": {
+        "name": "Alerts",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "items": "Items",
+        "maxItems": "Max Items",
+        "showTime": "Show Time",
+        "showSource": "Show Source",
+        "showDetail": "Show Detail",
+        "compact": "Compact",
+        "titleFontSize": "Title Size",
+        "detailFontSize": "Detail Size",
+        "timeFontSize": "Time Size",
+        "itemRadius": "Item Radius"
+      }
+    }
+  }
+}

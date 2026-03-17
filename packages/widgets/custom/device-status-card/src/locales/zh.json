@@ -1,0 +1,27 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-device-status-card": {
+        "name": "设备状态卡",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "title": "设备名称",
+        "zone": "区域",
+        "status": "状态",
+        "statusLabel": "状态文案",
+        "primaryLabel": "主指标标签",
+        "primaryValue": "主指标数值",
+        "primaryUnit": "主指标单位",
+        "secondaryLabel": "次指标标签",
+        "secondaryValue": "次指标数值",
+        "secondaryUnit": "次指标单位",
+        "progress": "运行强度",
+        "progressColor": "进度颜色",
+        "titleFontSize": "标题字号",
+        "metaFontSize": "说明字号",
+        "valueFontSize": "数值字号",
+        "compact": "紧凑模式"
+      }
+    }
+  }
+}

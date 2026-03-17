@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-glass-panel": {
+        "name": "Glass",
+        "groupStyle": "Style",
+        "variant": "Tint",
+        "cornerRadius": "Corner Radius",
+        "blurStrength": "Blur",
+        "surfaceOpacity": "Opacity",
+        "highlightOpacity": "Highlight",
+        "tintStrength": "Tint Strength"
+      }
+    }
+  }
+}

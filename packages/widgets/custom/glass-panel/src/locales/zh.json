@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-glass-panel": {
+        "name": "磨砂面板",
+        "groupStyle": "样式",
+        "variant": "色调",
+        "cornerRadius": "圆角",
+        "blurStrength": "模糊强度",
+        "surfaceOpacity": "透明度",
+        "highlightOpacity": "高光强度",
+        "tintStrength": "色调强度"
+      }
+    }
+  }
+}

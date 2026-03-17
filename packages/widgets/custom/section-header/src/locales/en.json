@@ -1,0 +1,20 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-section-header": {
+        "name": "Header",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "eyebrow": "Eyebrow",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "accentColor": "Accent Color",
+        "titleColor": "Title Color",
+        "subtitleColor": "Subtitle Color",
+        "eyebrowFontSize": "Eyebrow Size",
+        "titleFontSize": "Title Size",
+        "subtitleFontSize": "Subtitle Size"
+      }
+    }
+  }
+}

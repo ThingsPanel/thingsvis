@@ -1,0 +1,463 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "id": "9d237b3c-2f02-47ca-b42f-9ea0d5b9cb91",
+    "name": "Device Operations Glass Center",
+    "createdAt": 1773734400000,
+    "updatedAt": 1773734400000
+  },
+  "canvas": {
+    "mode": "fixed",
+    "width": 1920,
+    "height": 1080,
+    "theme": "midnight",
+    "background": {
+      "color": "#050c18",
+      "image": "",
+      "size": "cover",
+      "repeat": "no-repeat",
+      "attachment": "scroll"
+    }
+  },
+  "nodes": [
+    {
+      "id": "hero-header",
+      "name": "Hero Header",
+      "type": "custom/section-header",
+      "position": { "x": 60, "y": 32 },
+      "size": { "width": 1800, "height": 86 },
+      "props": {
+        "eyebrow": "THINGSVIS DEVICE OPS",
+        "title": "Device Operations Glass Center",
+        "subtitle": "Frosted surface layout for runtime metrics, alarms and operating health",
+        "metric": "UPDATED 2026-03-17 16:30",
+        "align": "left",
+        "accentColor": "#38d9ff",
+        "showDivider": true,
+        "dividerGlow": true,
+        "eyebrowFontSize": 12,
+        "titleFontSize": 34,
+        "subtitleFontSize": 13,
+        "metricFontSize": 13
+      }
+    },
+    {
+      "id": "kpi-card-1",
+      "name": "Online KPI",
+      "type": "interaction/value-card",
+      "position": { "x": 60, "y": 146 },
+      "size": { "width": 420, "height": 118 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 25, 42, 0.78)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(56, 217, 255, 0.28)", "style": "solid", "radius": 28 },
+        "shadow": { "color": "rgba(56, 217, 255, 0.12)", "blur": 28, "offsetX": 0, "offsetY": 12 },
+        "opacity": 1
+      },
+      "props": {
+        "title": "Online Devices",
+        "value": 1284,
+        "suffix": "",
+        "subtitle": "92.6% availability",
+        "precision": 0,
+        "titleFontSize": 15,
+        "valueFontSize": 38,
+        "suffixFontSize": 14,
+        "subtitleFontSize": 12,
+        "align": "left"
+      }
+    },
+    {
+      "id": "kpi-card-2",
+      "name": "Alarm KPI",
+      "type": "interaction/value-card",
+      "position": { "x": 500, "y": 146 },
+      "size": { "width": 420, "height": 118 },
+      "baseStyle": {
+        "background": { "color": "rgba(16, 24, 40, 0.78)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(255, 191, 95, 0.26)", "style": "solid", "radius": 28 },
+        "shadow": { "color": "rgba(255, 191, 95, 0.14)", "blur": 28, "offsetX": 0, "offsetY": 12 },
+        "opacity": 1
+      },
+      "props": {
+        "title": "Active Alarms",
+        "value": 17,
+        "suffix": "",
+        "subtitle": "5 critical / 12 warning",
+        "precision": 0,
+        "titleFontSize": 15,
+        "valueFontSize": 38,
+        "suffixFontSize": 14,
+        "subtitleFontSize": 12,
+        "align": "left"
+      }
+    },
+    {
+      "id": "kpi-card-3",
+      "name": "Energy KPI",
+      "type": "interaction/value-card",
+      "position": { "x": 940, "y": 146 },
+      "size": { "width": 420, "height": 118 },
+      "baseStyle": {
+        "background": { "color": "rgba(10, 29, 34, 0.78)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(65, 214, 159, 0.24)", "style": "solid", "radius": 28 },
+        "shadow": { "color": "rgba(65, 214, 159, 0.12)", "blur": 28, "offsetX": 0, "offsetY": 12 },
+        "opacity": 1
+      },
+      "props": {
+        "title": "Energy Today",
+        "value": 486.2,
+        "suffix": "kWh",
+        "subtitle": "Peak load 84.5 kW",
+        "precision": 1,
+        "titleFontSize": 15,
+        "valueFontSize": 38,
+        "suffixFontSize": 15,
+        "subtitleFontSize": 12,
+        "align": "left"
+      }
+    },
+    {
+      "id": "kpi-card-4",
+      "name": "Output KPI",
+      "type": "interaction/value-card",
+      "position": { "x": 1380, "y": 146 },
+      "size": { "width": 480, "height": 118 },
+      "baseStyle": {
+        "background": { "color": "rgba(17, 22, 39, 0.78)", "opacity": 1 },
+        "border": { "width": 1, "color": "rgba(91, 140, 255, 0.26)", "style": "solid", "radius": 28 },
+        "shadow": { "color": "rgba(91, 140, 255, 0.14)", "blur": 28, "offsetX": 0, "offsetY": 12 },
+        "opacity": 1
+      },
+      "props": {
+        "title": "Production Output",
+        "value": 932,
+        "suffix": "pcs",
+        "subtitle": "Shift target completion 88%",
+        "precision": 0,
+        "titleFontSize": 15,
+        "valueFontSize": 38,
+        "suffixFontSize": 15,
+        "subtitleFontSize": 12,
+        "align": "left"
+      }
+    },
+    {
+      "id": "panel-left",
+      "name": "Status Panel",
+      "type": "custom/glass-panel",
+      "position": { "x": 60, "y": 300 },
+      "size": { "width": 340, "height": 420 },
+      "props": {
+        "label": "Status",
+        "variant": "cyan",
+        "blurStrength": 18,
+        "surfaceOpacity": 0.76,
+        "borderOpacity": 0.32,
+        "glowOpacity": 0.18,
+        "highlightOpacity": 0.2,
+        "cornerRadius": 28,
+        "showCornerBrackets": true,
+        "showGrid": true
+      }
+    },
+    {
+      "id": "header-left",
+      "name": "Status Header",
+      "type": "custom/section-header",
+      "position": { "x": 86, "y": 324 },
+      "size": { "width": 288, "height": 66 },
+      "props": {
+        "eyebrow": "DISTRIBUTION",
+        "title": "Device Status",
+        "subtitle": "Online / warning / maintenance split",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#38d9ff",
+        "showDivider": true,
+        "dividerGlow": true,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 24,
+        "subtitleFontSize": 11,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "chart-left",
+      "name": "Status Pie",
+      "type": "chart/echarts-pie",
+      "position": { "x": 84, "y": 408 },
+      "size": { "width": 292, "height": 274 },
+      "props": {
+        "title": "",
+        "primaryColor": "#38d9ff",
+        "showLegend": true,
+        "isDoughnut": true,
+        "data": [
+          { "name": "Online", "value": 1284 },
+          { "name": "Warning", "value": 17 },
+          { "name": "Maintenance", "value": 36 },
+          { "name": "Offline", "value": 66 }
+        ]
+      }
+    },
+    {
+      "id": "panel-center",
+      "name": "Trend Panel",
+      "type": "custom/glass-panel",
+      "position": { "x": 430, "y": 300 },
+      "size": { "width": 920, "height": 420 },
+      "props": {
+        "label": "Core Trend",
+        "variant": "blue",
+        "blurStrength": 20,
+        "surfaceOpacity": 0.78,
+        "borderOpacity": 0.3,
+        "glowOpacity": 0.2,
+        "highlightOpacity": 0.22,
+        "cornerRadius": 32,
+        "showCornerBrackets": true,
+        "showGrid": true
+      }
+    },
+    {
+      "id": "header-center",
+      "name": "Trend Header",
+      "type": "custom/section-header",
+      "position": { "x": 462, "y": 324 },
+      "size": { "width": 856, "height": 70 },
+      "props": {
+        "eyebrow": "LIVE TREND",
+        "title": "Power Consumption Curve",
+        "subtitle": "Realtime trend of major production equipment power draw",
+        "metric": "5 MIN REFRESH",
+        "align": "left",
+        "accentColor": "#5b8cff",
+        "showDivider": true,
+        "dividerGlow": true,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 25,
+        "subtitleFontSize": 12,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "chart-center",
+      "name": "Power Trend",
+      "type": "chart/echarts-line",
+      "position": { "x": 460, "y": 410 },
+      "size": { "width": 860, "height": 274 },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#5b8cff",
+        "showLegend": true,
+        "showXAxis": true,
+        "showYAxis": true,
+        "smooth": true,
+        "showArea": true,
+        "timeRangePreset": "all",
+        "data": [
+          { "time": "2026-03-17T08:00:00.000Z", "value": 46 },
+          { "time": "2026-03-17T09:00:00.000Z", "value": 54 },
+          { "time": "2026-03-17T10:00:00.000Z", "value": 58 },
+          { "time": "2026-03-17T11:00:00.000Z", "value": 61 },
+          { "time": "2026-03-17T12:00:00.000Z", "value": 56 },
+          { "time": "2026-03-17T13:00:00.000Z", "value": 64 },
+          { "time": "2026-03-17T14:00:00.000Z", "value": 71 },
+          { "time": "2026-03-17T15:00:00.000Z", "value": 68 }
+        ]
+      }
+    },
+    {
+      "id": "panel-right-top",
+      "name": "Health Panel",
+      "type": "custom/glass-panel",
+      "position": { "x": 1380, "y": 300 },
+      "size": { "width": 480, "height": 200 },
+      "props": {
+        "label": "Health",
+        "variant": "emerald",
+        "blurStrength": 18,
+        "surfaceOpacity": 0.76,
+        "borderOpacity": 0.28,
+        "glowOpacity": 0.18,
+        "highlightOpacity": 0.2,
+        "cornerRadius": 28,
+        "showCornerBrackets": true,
+        "showGrid": false
+      }
+    },
+    {
+      "id": "header-right-top",
+      "name": "Health Header",
+      "type": "custom/section-header",
+      "position": { "x": 1406, "y": 324 },
+      "size": { "width": 428, "height": 60 },
+      "props": {
+        "eyebrow": "SUMMARY",
+        "title": "Operational Health",
+        "subtitle": "Weighted equipment score",
+        "metric": "A",
+        "align": "left",
+        "accentColor": "#41d69f",
+        "showDivider": true,
+        "dividerGlow": true,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 22,
+        "subtitleFontSize": 11,
+        "metricFontSize": 13
+      }
+    },
+    {
+      "id": "chart-right-top",
+      "name": "Health Gauge",
+      "type": "chart/echarts-gauge",
+      "position": { "x": 1498, "y": 374 },
+      "size": { "width": 220, "height": 104 },
+      "props": {
+        "title": "",
+        "primaryColor": "#41d69f",
+        "max": 100,
+        "data": { "name": "Health", "value": 92 }
+      }
+    },
+    {
+      "id": "panel-right-bottom",
+      "name": "Ranking Panel",
+      "type": "custom/glass-panel",
+      "position": { "x": 1380, "y": 520 },
+      "size": { "width": 480, "height": 200 },
+      "props": {
+        "label": "Ranking",
+        "variant": "amber",
+        "blurStrength": 18,
+        "surfaceOpacity": 0.76,
+        "borderOpacity": 0.28,
+        "glowOpacity": 0.18,
+        "highlightOpacity": 0.18,
+        "cornerRadius": 28,
+        "showCornerBrackets": true,
+        "showGrid": false
+      }
+    },
+    {
+      "id": "header-right-bottom",
+      "name": "Ranking Header",
+      "type": "custom/section-header",
+      "position": { "x": 1406, "y": 544 },
+      "size": { "width": 428, "height": 60 },
+      "props": {
+        "eyebrow": "TOP DEVICES",
+        "title": "Load Ranking",
+        "subtitle": "Current load percentage by device",
+        "metric": "",
+        "align": "left",
+        "accentColor": "#ffbf5f",
+        "showDivider": true,
+        "dividerGlow": false,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 22,
+        "subtitleFontSize": 11,
+        "metricFontSize": 13
+      }
+    },
+    {
+      "id": "chart-right-bottom",
+      "name": "Ranking Bar",
+      "type": "chart/echarts-bar",
+      "position": { "x": 1408, "y": 612 },
+      "size": { "width": 424, "height": 84 },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#ffbf5f",
+        "showLegend": false,
+        "showXAxis": true,
+        "showYAxis": true,
+        "data": [
+          { "name": "Compressor A", "value": 84 },
+          { "name": "Cooling Tower 2", "value": 79 },
+          { "name": "Pump Group 3", "value": 74 },
+          { "name": "Dryer B", "value": 69 }
+        ]
+      }
+    },
+    {
+      "id": "panel-bottom",
+      "name": "Bottom Panel",
+      "type": "custom/glass-panel",
+      "position": { "x": 60, "y": 750 },
+      "size": { "width": 1800, "height": 270 },
+      "props": {
+        "label": "Devices",
+        "variant": "cyan",
+        "blurStrength": 16,
+        "surfaceOpacity": 0.74,
+        "borderOpacity": 0.28,
+        "glowOpacity": 0.14,
+        "highlightOpacity": 0.18,
+        "cornerRadius": 32,
+        "showCornerBrackets": true,
+        "showGrid": true
+      }
+    },
+    {
+      "id": "header-bottom",
+      "name": "Bottom Header",
+      "type": "custom/section-header",
+      "position": { "x": 88, "y": 776 },
+      "size": { "width": 1744, "height": 62 },
+      "props": {
+        "eyebrow": "ASSET LIST",
+        "title": "Critical Device Snapshot",
+        "subtitle": "Static example data for the glass dashboard template",
+        "metric": "8 DEVICES",
+        "align": "left",
+        "accentColor": "#38d9ff",
+        "showDivider": true,
+        "dividerGlow": true,
+        "eyebrowFontSize": 10,
+        "titleFontSize": 24,
+        "subtitleFontSize": 11,
+        "metricFontSize": 12
+      }
+    },
+    {
+      "id": "table-bottom",
+      "name": "Device Table",
+      "type": "basic/table",
+      "position": { "x": 90, "y": 850 },
+      "size": { "width": 1740, "height": 138 },
+      "props": {
+        "columns": [
+          { "key": "device", "title": "Device", "align": "left" },
+          { "key": "status", "title": "Status", "align": "center" },
+          { "key": "line", "title": "Production Line", "align": "center" },
+          { "key": "temp", "title": "Temperature", "align": "right" },
+          { "key": "power", "title": "Power", "align": "right" }
+        ],
+        "data": [
+          { "device": "Compressor A", "status": "Online", "line": "Line 1", "temp": "46.2 C", "power": "84.1 kW" },
+          { "device": "Cooling Tower 2", "status": "Warning", "line": "Line 2", "temp": "63.8 C", "power": "79.3 kW" },
+          { "device": "Dryer B", "status": "Online", "line": "Line 2", "temp": "41.5 C", "power": "54.7 kW" },
+          { "device": "Pump Group 3", "status": "Maintenance", "line": "Line 3", "temp": "37.1 C", "power": "43.9 kW" },
+          { "device": "Vacuum Unit 1", "status": "Online", "line": "Line 4", "temp": "34.8 C", "power": "38.6 kW" }
+        ],
+        "showHeader": true,
+        "headerFontSize": 13,
+        "headerWeight": "600",
+        "headerColor": "#dceeff",
+        "headerBgColor": "rgba(255,255,255,0.04)",
+        "bodyFontSize": 12,
+        "bodyWeight": "400",
+        "bodyColor": "#d7dfeb",
+        "showBorder": true,
+        "showStripe": true,
+        "stripeColor": "rgba(255,255,255,0.02)",
+        "cellPadding": 10
+      }
+    }
+  ],
+  "dataSources": [],
+  "variables": []
+}
