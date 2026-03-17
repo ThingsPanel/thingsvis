@@ -25,6 +25,16 @@ const STANDALONE_UPLOT_SERIES = [
 ];
 
 type ParsedPoint = { tsSec: number; value: number };
+type RuntimeMessages = {
+    runtime?: {
+        defaultSeriesName?: string;
+        emptyState?: string;
+    };
+};
+
+function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
+    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
 
 function withAlpha(color: string, alpha: number): string {
     const clamped = Math.max(0, Math.min(1, alpha));
@@ -192,6 +202,7 @@ export const Main = defineWidget({
     controls,
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
+        let currentLocale = ctx.locale;
         let colors: WidgetColors = resolveWidgetColors(element);
 
         let chart: uPlot | null = null;
@@ -283,20 +294,20 @@ export const Main = defineWidget({
             const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
             lastScale = scale;
 
-            applyHeader(scale);
-            emptyStateEl.style.color = withAlpha(resolveWidgetColors(element).fg, 0.65);
-            emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
-            emptyStateEl.textContent = hasData ? '' : '等待时序数据';
-            emptyStateEl.style.display = hasData ? 'none' : 'flex';
-
-            const axisFontSize = Math.round(12 * scale);
-            const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
-
             const currentColors = resolveWidgetColors(element);
             const currentTextColor = currentColors?.fg ?? '#333';
             const currentGridColor = currentColors?.axis ?? '#00000010';
             const lineColor = pickLineColor(currentProps, currentColors);
             const spanSec = finalTimes.length > 1 ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!) : fallbackRangeSec;
+            const runtimeMessages = getRuntimeMessages(currentLocale);
+            applyHeader(scale);
+            emptyStateEl.style.color = withAlpha(resolveWidgetColors(element).fg, 0.65);
+            emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
+            emptyStateEl.textContent = hasData ? '' : (runtimeMessages.runtime?.emptyState || 'Waiting for time series data');
+            emptyStateEl.style.display = hasData ? 'none' : 'flex';
+
+            const axisFontSize = Math.round(12 * scale);
+            const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
 
             const opts: uPlot.Options = {
                 width: cw,
@@ -335,7 +346,7 @@ export const Main = defineWidget({
                 series: [
                     {},
                     {
-                        label: currentProps.title || '数值',
+                        label: currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value',
                         stroke: lineColor,
                         fill: withAlpha(lineColor, 0.18),
                         width: 2,
@@ -397,6 +408,7 @@ export const Main = defineWidget({
         return {
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
+                currentLocale = newCtx.locale;
                 colors = resolveWidgetColors(element);
                 initChart();
             },

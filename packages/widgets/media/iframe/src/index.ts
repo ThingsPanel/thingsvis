@@ -9,6 +9,23 @@ import en from './locales/en.json';
 export const STANDALONE_DEFAULT_SRC = 'https://www.thingspanel.cn/';
 
 type PlaceholderState = 'empty' | 'idle' | 'loading' | 'error' | 'ready';
+type RuntimeMessages = {
+    runtime: {
+        emptyTitle: string;
+        emptyDescription: string;
+        idleTitle: string;
+        idleDescriptionEdit: string;
+        idleDescriptionView: string;
+        loadingTitle: string;
+        loadingDescription: string;
+        errorTitle: string;
+        errorDescription: string;
+    };
+};
+
+function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
+    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
 
 export const Main = defineWidget({
     id: metadata.id,
@@ -28,6 +45,7 @@ export const Main = defineWidget({
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let currentMode: WidgetOverlayContext['mode'] = ctx.mode;
+        let currentLocale = ctx.locale;
         let currentSrc = '';
 
         element.style.width = '100%';
@@ -98,6 +116,8 @@ export const Main = defineWidget({
         };
 
         const updatePlaceholder = (state: PlaceholderState, normalizedSrc: string) => {
+            const runtimeMessages = getRuntimeMessages(currentLocale).runtime;
+
             if (state === 'ready') {
                 placeholder.style.display = 'none';
                 return;
@@ -108,27 +128,27 @@ export const Main = defineWidget({
             placeholderUrl.style.display = normalizedSrc ? 'block' : 'none';
 
             if (state === 'loading') {
-                placeholderTitle.textContent = '页面加载中';
-                placeholderDesc.textContent = '正在请求网页内容';
+                placeholderTitle.textContent = runtimeMessages.loadingTitle;
+                placeholderDesc.textContent = runtimeMessages.loadingDescription;
                 return;
             }
 
             if (state === 'error') {
-                placeholderTitle.textContent = '页面加载失败';
-                placeholderDesc.textContent = '目标站点可能禁止嵌入或暂时不可用';
+                placeholderTitle.textContent = runtimeMessages.errorTitle;
+                placeholderDesc.textContent = runtimeMessages.errorDescription;
                 return;
             }
 
             if (state === 'idle') {
-                placeholderTitle.textContent = '网页已配置';
+                placeholderTitle.textContent = runtimeMessages.idleTitle;
                 placeholderDesc.textContent = currentMode === 'edit'
-                    ? '编辑态默认不加载实时页面'
-                    : '等待进入预览或运行态';
+                    ? runtimeMessages.idleDescriptionEdit
+                    : runtimeMessages.idleDescriptionView;
                 return;
             }
 
-            placeholderTitle.textContent = '请配置网页地址';
-            placeholderDesc.textContent = '支持静态值、字段绑定或表达式';
+            placeholderTitle.textContent = runtimeMessages.emptyTitle;
+            placeholderDesc.textContent = runtimeMessages.emptyDescription;
         };
 
         const handleLoad = () => updatePlaceholder('ready', currentSrc);
@@ -173,6 +193,7 @@ export const Main = defineWidget({
             update: (newProps: Props, newCtx: WidgetOverlayContext) => {
                 currentProps = newProps;
                 currentMode = newCtx.mode;
+                currentLocale = newCtx.locale;
                 updateView();
             },
             destroy: () => {

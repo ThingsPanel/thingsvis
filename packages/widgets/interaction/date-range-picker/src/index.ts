@@ -6,14 +6,34 @@ import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type Widg
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const localeCatalog = { en, zh } as const;
+
 interface PresetRange {
-  label: string;
+  id: keyof RuntimeMessages['runtime']['presets'];
   get: () => { start: Date; end: Date };
+}
+
+type RuntimeMessages = {
+  runtime: {
+    presets: {
+      today: string;
+      yesterday: string;
+      thisWeek: string;
+      thisMonth: string;
+      last7Days: string;
+      last30Days: string;
+    };
+  };
+};
+
+function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
+  const normalized = locale?.toLowerCase();
+  return normalized?.startsWith('zh') ? (localeCatalog.zh as RuntimeMessages) : (localeCatalog.en as RuntimeMessages);
 }
 
 const PRESETS: PresetRange[] = [
   {
-    label: '今天',
+    id: 'today',
     get() {
       const s = new Date(); s.setHours(0, 0, 0, 0);
       const e = new Date(); e.setHours(23, 59, 59, 999);
@@ -21,7 +41,7 @@ const PRESETS: PresetRange[] = [
     },
   },
   {
-    label: '昨天',
+    id: 'yesterday',
     get() {
       const s = new Date(); s.setDate(s.getDate() - 1); s.setHours(0, 0, 0, 0);
       const e = new Date(); e.setDate(e.getDate() - 1); e.setHours(23, 59, 59, 999);
@@ -29,7 +49,7 @@ const PRESETS: PresetRange[] = [
     },
   },
   {
-    label: '本周',
+    id: 'thisWeek',
     get() {
       const s = new Date(); const day = s.getDay();
       s.setDate(s.getDate() - (day === 0 ? 6 : day - 1)); s.setHours(0, 0, 0, 0);
@@ -37,21 +57,21 @@ const PRESETS: PresetRange[] = [
     },
   },
   {
-    label: '本月',
+    id: 'thisMonth',
     get() {
       const s = new Date(); s.setDate(1); s.setHours(0, 0, 0, 0);
       const e = new Date(); return { start: s, end: e };
     },
   },
   {
-    label: '最近7天',
+    id: 'last7Days',
     get() {
       const s = new Date(); s.setDate(s.getDate() - 6); s.setHours(0, 0, 0, 0);
       const e = new Date(); return { start: s, end: e };
     },
   },
   {
-    label: '最近30天',
+    id: 'last30Days',
     get() {
       const s = new Date(); s.setDate(s.getDate() - 29); s.setHours(0, 0, 0, 0);
       const e = new Date(); return { start: s, end: e };
@@ -98,8 +118,10 @@ function renderDatePicker(
   element: HTMLElement, 
   props: Props, 
   colors: WidgetColors,
+  locale: string | undefined,
   emit?: (event: string, data: unknown) => void
 ): void {
+  const messages = getRuntimeMessages(locale);
   const textPrimary = colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.7);
   const borderColor = withAlpha(textPrimary, 0.15);
@@ -132,10 +154,10 @@ function renderDatePicker(
     ">${props.label}</div>
   ` : '';
   
-  const presetsHtml = props.showPresets ? PRESETS.map(preset => `
+  const presetsHtml = props.showPresets ? PRESETS.map((preset) => `
     <button 
       class="preset-btn"
-      data-label="${preset.label}"
+      data-preset-id="${preset.id}"
       style="
         font-size: ${props.fontSize}px;
         color: ${accentColor};
@@ -149,7 +171,7 @@ function renderDatePicker(
         text-align: center;
         white-space: nowrap;
       "
-    >${preset.label}</button>
+    >${messages.runtime.presets[preset.id]}</button>
   `).join('') : '';
   
   element.innerHTML = `
@@ -264,8 +286,8 @@ function renderDatePicker(
   
   // Preset buttons
   element.querySelectorAll('.preset-btn').forEach(btn => {
-    const label = btn.getAttribute('data-label');
-    const preset = PRESETS.find(p => p.label === label);
+    const presetId = btn.getAttribute('data-preset-id');
+    const preset = PRESETS.find((entry) => entry.id === presetId);
     
     btn.addEventListener('mouseenter', () => {
       (btn as HTMLElement).style.background = accentColor;
@@ -305,13 +327,13 @@ export const Main = defineWidget({
     let currentProps = props;
     let colors = resolveWidgetColors(element);
     
-    renderDatePicker(element, currentProps, colors, ctx.emit);
+    renderDatePicker(element, currentProps, colors, ctx.locale, ctx.emit);
     
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         colors = resolveWidgetColors(element);
-        renderDatePicker(element, currentProps, colors, ctx.emit);
+        renderDatePicker(element, currentProps, colors, ctx.locale, ctx.emit);
       });
       ro.observe(element);
     }
@@ -320,7 +342,7 @@ export const Main = defineWidget({
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
         colors = resolveWidgetColors(element);
-        renderDatePicker(element, currentProps, colors, newCtx.emit);
+        renderDatePicker(element, currentProps, colors, newCtx.locale, newCtx.emit);
       },
       destroy: () => {
         ro?.disconnect();
