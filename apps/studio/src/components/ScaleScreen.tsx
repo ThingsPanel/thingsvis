@@ -113,17 +113,23 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({
 
     if (mode === 'fit-width') {
       scale = ratioW;
-      overflowX = 'hidden'; // Horizontally, nothing should overflow
-      overflowY = scale < 1 ? 'hidden' : 'auto'; // Scroll vertically only if canvas is taller than viewport
     } else if (mode === 'fit-height') {
       scale = ratioH;
-      overflowX = scale < 1 ? 'hidden' : 'auto'; // Scroll horizontally only if canvas is wider than viewport
-      overflowY = 'hidden'; // Vertically, nothing should overflow
     }
     // 'original': scale = 1, both axes auto
 
     const scaledW = Math.round(width * scale);
     const scaledH = Math.round(height * scale);
+
+    if (mode === 'fit-width') {
+      overflowX = 'hidden';
+      // Whether the page should scroll vertically depends on the scaled visual height,
+      // not on whether the canvas was scaled down or up.
+      overflowY = scaledH > vh ? 'auto' : 'hidden';
+    } else if (mode === 'fit-height') {
+      overflowY = 'hidden';
+      overflowX = scaledW > vw ? 'auto' : 'hidden';
+    }
 
     return {
       wrapperStyle: {

@@ -7,18 +7,14 @@
         "groupStyle": "样式",
         "items": "告警数据",
         "maxItems": "最多条数",
-        "autoScroll": "自动滚动",
+        "autoScroll": "自动循环滚动",
         "scrollSpeed": "滚动速度",
-        "pauseOnHover": "悬停暂停",
-        "emptyText": "空状态文案",
         "showTime": "显示时间",
         "showSource": "显示来源",
         "showDetail": "显示详情",
-        "compact": "紧凑模式",
         "titleFontSize": "标题字号",
         "detailFontSize": "详情字号",
-        "timeFontSize": "时间字号",
-        "itemRadius": "条目圆角"
+        "timeFontSize": "时间字号"
       }
     }
   }

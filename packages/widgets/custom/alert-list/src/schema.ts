@@ -29,16 +29,12 @@ export const PropsSchema = z.object({
   maxItems: z.number().int().min(1).max(100).default(6).describe("props.maxItems"),
   autoScroll: z.boolean().default(true).describe("props.autoScroll"),
   scrollSpeed: z.enum(["slow", "normal", "fast"]).default("normal").describe("props.scrollSpeed"),
-  pauseOnHover: z.boolean().default(true).describe("props.pauseOnHover"),
-  emptyText: z.string().default("暂无告警").describe("props.emptyText"),
   showTime: z.boolean().default(true).describe("props.showTime"),
   showSource: z.boolean().default(true).describe("props.showSource"),
   showDetail: z.boolean().default(true).describe("props.showDetail"),
-  compact: z.boolean().default(false).describe("props.compact"),
   titleFontSize: z.number().int().min(10).max(28).default(14).describe("props.titleFontSize"),
   detailFontSize: z.number().int().min(10).max(24).default(12).describe("props.detailFontSize"),
-  timeFontSize: z.number().int().min(10).max(24).default(11).describe("props.timeFontSize"),
-  itemRadius: z.number().int().min(0).max(32).default(16).describe("props.itemRadius")
+  timeFontSize: z.number().int().min(10).max(24).default(11).describe("props.timeFontSize")
 });
 
 export type Props = z.infer<typeof PropsSchema>;

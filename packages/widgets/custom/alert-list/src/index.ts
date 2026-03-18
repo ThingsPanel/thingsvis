@@ -42,39 +42,22 @@ function escapeHtml(input: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-function isLightColor(color: string): boolean {
-  const normalized = color.trim();
-  const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const raw = hexMatch[1] ?? "";
-    const full = raw.length === 3 ? raw.split("").map((item) => item + item).join("") : raw;
-    const int = Number.parseInt(full, 16);
-    const r = (int >> 16) & 255;
-    const g = (int >> 8) & 255;
-    const b = int & 255;
-    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.72;
-  }
-
-  const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
-  if (rgbMatch) {
-    const channelString = rgbMatch[1] ?? "";
-    const parts = channelString.split(",").map((item) => Number(item.trim()));
-    if (parts.length >= 3) {
-      const luminance = (0.2126 * (parts[0] ?? 0) + 0.7152 * (parts[1] ?? 0) + 0.0722 * (parts[2] ?? 0)) / 255;
-      return luminance > 0.72;
-    }
-  }
-
-  return false;
-}
-
 function getLevelColor(level: unknown, colors: WidgetColors): string {
   const normalized = String(level ?? "info").toLowerCase() as AlertLevel;
   if (normalized === "critical") return "#ef4444";
   if (normalized === "warning") return "#f59e0b";
   if (normalized === "success") return "#10b981";
   return colors.primary;
+}
+
+function formatTimeStr(val: unknown): string {
+  const s = String(val ?? "").trim();
+  if (!s) return "";
+  const isoMatch = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})/);
+  if (isoMatch) {
+    return `${isoMatch[1]} ${isoMatch[2]}`;
+  }
+  return s;
 }
 
 const SCROLL_SPEED_MAP: Record<string, number> = {
@@ -85,14 +68,14 @@ const SCROLL_SPEED_MAP: Record<string, number> = {
 
 function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (() => void) | null {
   const items = Array.isArray(props.items) ? props.items.slice(0, props.maxItems) : [];
-  const lightTheme = isLightColor(colors.bg);
   const titleColor = colors.fg;
-  const detailColor = withAlpha(colors.fg, 0.68);
-  const metaColor = withAlpha(colors.fg, 0.52);
-  const rowBg = lightTheme ? withAlpha("#ffffff", 0.4) : withAlpha("#ffffff", 0.08);
-  const rowShadow = lightTheme ? withAlpha("#0f172a", 0.045) : withAlpha("#0f172a", 0.14);
-  const compactPadding = props.compact ? "10px 12px" : "14px 16px";
-  const compactGap = props.compact ? 8 : 12;
+  const detailColor = withAlpha(colors.fg, 0.72);
+  const metaColor = withAlpha(colors.fg, 0.45);
+  const rowBg = withAlpha(colors.fg, 0.025);
+  const rowBorder = withAlpha(colors.fg, 0.06);
+  const compactPadding = "12px 14px";
+  const compactGap = 8;
+  const radius = 6;
 
   element.style.cssText = `
     width: 100%;
@@ -104,7 +87,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
   `;
 
   if (items.length === 0) {
-    const emptyText = escapeHtml(props.emptyText || "暂无告警");
+    const emptyText = "暂无告警";
     element.innerHTML = `
       <div style="
         width:100%;
@@ -140,6 +123,28 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
       0%, 100% { opacity: 1; box-shadow: 0 0 0 6px var(--pulse-ring); }
       50% { opacity: 0.6; box-shadow: 0 0 0 10px transparent; }
     }
+    .tv-alert-list-scroller {
+      scrollbar-width: thin;
+      scrollbar-color: ${withAlpha(colors.fg, 0.15)} transparent;
+    }
+    .tv-alert-list-scroller::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    .tv-alert-list-scroller::-webkit-scrollbar-thumb {
+      background: ${withAlpha(colors.fg, 0.15)};
+      border-radius: 4px;
+    }
+    .tv-alert-list-scroller::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .tv-alert-list-item {
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .tv-alert-list-item:hover {
+      background: ${withAlpha(colors.fg, 0.045)} !important;
+      border-color: ${withAlpha(colors.fg, 0.1)} !important;
+    }
   `;
 
   const rows = items.map((rawItem) => {
@@ -151,10 +156,11 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
       : `box-shadow:0 0 0 6px ${withAlpha(accent, 0.14)};`;
 
     const source = props.showSource && item.source ? `
-      <span style="color:${metaColor};font-size:${props.timeFontSize}px;">${escapeHtml(item.source)}</span>
+      <span style="color:${metaColor};font-size:${props.timeFontSize}px;flex-shrink:0;">${escapeHtml(item.source)}</span>
     ` : "";
-    const time = props.showTime && item.time ? `
-      <span style="color:${metaColor};font-size:${props.timeFontSize}px;">${escapeHtml(item.time)}</span>
+    const timeText = formatTimeStr(item.time);
+    const time = props.showTime && timeText ? `
+      <span style="color:${metaColor};font-size:${props.timeFontSize}px;flex-shrink:0;white-space:nowrap;">${escapeHtml(timeText)}</span>
     ` : "";
     const detail = props.showDetail && item.detail ? `
       <div style="
@@ -162,21 +168,18 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
         color:${detailColor};
         font-size:${props.detailFontSize}px;
         line-height:1.45;
+        word-break:break-all;
       ">${escapeHtml(item.detail)}</div>
     ` : "";
 
     return `
-      <div style="
+      <div class="tv-alert-list-item" style="
         display:flex;
         gap:12px;
         padding:${compactPadding};
-        border-radius:${props.itemRadius}px;
+        border-radius:${radius}px;
         background:${rowBg};
-        backdrop-filter:blur(14px) saturate(145%);
-        -webkit-backdrop-filter:blur(14px) saturate(145%);
-        box-shadow:
-          0 12px 28px ${rowShadow},
-          inset 0 1px 0 ${withAlpha("#ffffff", lightTheme ? 0.58 : 0.16)};
+        border:1px solid ${rowBorder};
         flex:0 0 auto;
       ">
         <div style="
@@ -206,6 +209,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
               font-size:${props.titleFontSize}px;
               font-weight:600;
               line-height:1.4;
+              word-break:break-all;
             ">${escapeHtml(item.title)}</div>
             ${time}
           </div>
@@ -225,6 +229,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
   });
 
   const scrollContainer = document.createElement("div");
+  scrollContainer.className = "tv-alert-list-scroller";
   scrollContainer.style.cssText = `
     width:100%;
     height:100%;
@@ -232,7 +237,8 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
     display:flex;
     flex-direction:column;
     gap:${compactGap}px;
-    overflow:hidden;
+    overflow-y:auto;
+    overflow-x:hidden;
     padding:2px;
   `;
   scrollContainer.innerHTML = rows.join("");
@@ -241,7 +247,6 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
   element.appendChild(scrollContainer);
 
   if (!props.autoScroll) {
-    scrollContainer.style.overflow = "auto";
     return null;
   }
 
@@ -249,17 +254,28 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
   let rafId = 0;
   let paused = false;
 
-  if (props.pauseOnHover) {
-    scrollContainer.addEventListener("mouseenter", () => { paused = true; });
-    scrollContainer.addEventListener("mouseleave", () => { paused = false; });
-  }
+  // 克隆节点实现循环滚动
+  const clonedHtml = rows.join("");
+  scrollContainer.innerHTML = clonedHtml + clonedHtml;
 
+  scrollContainer.addEventListener("mouseenter", () => { paused = true; });
+  scrollContainer.addEventListener("mouseleave", () => { paused = false; });
+
+  let top = 0;
   const tick = () => {
-    if (!paused && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
-      scrollContainer.scrollTop += speed;
-      if (scrollContainer.scrollTop >= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
-        scrollContainer.scrollTop = 0;
+    if (!paused) {
+      if (scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+        top += speed;
+        // 因为填入了2份一样的内容，一旦滚动过整个第一份(总高度一半)，就瞬间跳回0
+        const halfHeight = scrollContainer.scrollHeight / 2;
+        if (top >= halfHeight) {
+          top = top - halfHeight;
+        }
+        scrollContainer.scrollTop = top;
       }
+    } else {
+      // 触碰悬停导致暂停时，允许用户自己滑动滚轮。我们需要同步真实scrollTop和内部top的状态，防止移开鼠标后跳跃回传
+      top = scrollContainer.scrollTop;
     }
     rafId = requestAnimationFrame(tick);
   };

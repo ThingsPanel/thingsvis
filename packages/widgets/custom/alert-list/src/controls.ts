@@ -26,10 +26,6 @@ export const controls = createControlPanel()
       label: `${W}.showDetail`,
       default: true
     });
-    builder.addSwitch("compact", {
-      label: `${W}.compact`,
-      default: false
-    });
     builder.addSwitch("autoScroll", {
       label: `${W}.autoScroll`,
       default: true
@@ -41,14 +37,6 @@ export const controls = createControlPanel()
         { label: { zh: "正常", en: "Normal" }, value: "normal" },
         { label: { zh: "快", en: "Fast" }, value: "fast" }
       ]
-    });
-    builder.addSwitch("pauseOnHover", {
-      label: `${W}.pauseOnHover`,
-      default: true
-    });
-    builder.addTextInput("emptyText", {
-      label: `${W}.emptyText`,
-      binding: true
     });
   })
   .addStyleGroup((builder) => {

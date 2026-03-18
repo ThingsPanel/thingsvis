@@ -7,18 +7,14 @@
         "groupStyle": "Style",
         "items": "Items",
         "maxItems": "Max Items",
-        "autoScroll": "Auto Scroll",
+        "autoScroll": "Loop Scroll",
         "scrollSpeed": "Scroll Speed",
-        "pauseOnHover": "Pause on Hover",
-        "emptyText": "Empty Text",
         "showTime": "Show Time",
         "showSource": "Show Source",
         "showDetail": "Show Detail",
-        "compact": "Compact",
         "titleFontSize": "Title Size",
         "detailFontSize": "Detail Size",
-        "timeFontSize": "Time Size",
-        "itemRadius": "Item Radius"
+        "timeFontSize": "Time Size"
       }
     }
   }
