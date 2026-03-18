@@ -32,6 +32,13 @@ export class SafeExecutor {
         Array,
         Object,
         Date,
+        String,
+        Number,
+        Boolean,
+        parseInt,
+        parseFloat,
+        isNaN,
+        isFinite,
       };
 
       return SafeExecutor._runInSandbox(code, sandbox);
@@ -67,6 +74,13 @@ export class SafeExecutor {
         Array,
         Object,
         Date,
+        String,
+        Number,
+        Boolean,
+        parseInt,
+        parseFloat,
+        isNaN,
+        isFinite,
         setTimeout: undefined, // blocked — scripts must remain synchronous
         setInterval: undefined,
         fetch: undefined,

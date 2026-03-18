@@ -55,13 +55,11 @@ export function useEditorStartup({
   widgetTypes,
 }: UseEditorStartupOptions): UseEditorStartupResult {
   const [isRegistryReady, setIsRegistryReady] = useState(false);
-  const [isWidgetsReady, setIsWidgetsReady] = useState(false);
   const [hasPainted, setHasPainted] = useState(false);
 
   useEffect(() => {
     if (!authResolved || isBootstrapping || !projectLoaded) {
       setIsRegistryReady(false);
-      setIsWidgetsReady(false);
       setHasPainted(false);
       return;
     }
@@ -79,15 +77,9 @@ export function useEditorStartup({
         }
       }
 
-      try {
-        await preloadComponentTypes(widgetTypes);
-      } catch (error) {
+      void preloadComponentTypes(widgetTypes).catch((error) => {
         console.error('[useEditorStartup] Failed to preload widgets:', error);
-      } finally {
-        if (!cancelled) {
-          setIsWidgetsReady(true);
-        }
-      }
+      });
     })();
 
     return () => {
@@ -96,7 +88,7 @@ export function useEditorStartup({
   }, [authResolved, isBootstrapping, projectLoaded, widgetTypes]);
 
   useEffect(() => {
-    if (!authResolved || isBootstrapping || !projectLoaded || !isRegistryReady || !isWidgetsReady) {
+    if (!authResolved || isBootstrapping || !projectLoaded || !isRegistryReady) {
       setHasPainted(false);
       return;
     }
@@ -109,7 +101,7 @@ export function useEditorStartup({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [authResolved, isBootstrapping, isRegistryReady, isWidgetsReady, projectLoaded]);
+  }, [authResolved, isBootstrapping, isRegistryReady, projectLoaded]);
 
   const startup = useMemo<EditorStartupState>(() => {
     if (!authResolved) {
@@ -124,10 +116,6 @@ export function useEditorStartup({
       return { phase: 'registry', ...PHASE_CONFIG.registry };
     }
 
-    if (!isWidgetsReady) {
-      return { phase: 'widgets', ...PHASE_CONFIG.widgets };
-    }
-
     if (!hasPainted) {
       return { phase: 'paint', ...PHASE_CONFIG.paint };
     }
@@ -137,7 +125,7 @@ export function useEditorStartup({
       progress: 100,
       statusKey: 'loadingScreen.completed',
     };
-  }, [authResolved, hasPainted, isBootstrapping, isRegistryReady, isWidgetsReady, projectLoaded]);
+  }, [authResolved, hasPainted, isBootstrapping, isRegistryReady, projectLoaded]);
 
   return {
     startup,
