@@ -17,9 +17,58 @@ export interface ActionConfigItem {
   payload?: unknown;
   // navigate
   url?: string;
-  target?: '_blank' | '_self';
+  target?: '_blank' | '_self' | '_top';
   // runScript
   script?: string;
+}
+
+function isAbsoluteUrl(url: string): boolean {
+  return /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(url) || url.startsWith('//');
+}
+
+type ResolveNavigateEnv = {
+  currentOrigin?: string;
+  referrer?: string;
+  isEmbedded?: boolean;
+  target?: '_blank' | '_self' | '_top';
+};
+
+function resolveNavigateDestination(
+  rawUrl: string,
+  env: ResolveNavigateEnv = {},
+): { url: string; target: '_blank' | '_self' | '_top' } {
+  const url = rawUrl.trim();
+  const currentOrigin = env.currentOrigin ?? '';
+  const referrer = env.referrer ?? '';
+  const isEmbedded = env.isEmbedded ?? false;
+
+  if (!url) {
+    return { url, target: env.target ?? '_blank' };
+  }
+
+  if (isAbsoluteUrl(url)) {
+    return { url, target: env.target ?? '_blank' };
+  }
+
+  if (url.startsWith('/')) {
+    let baseOrigin = currentOrigin;
+
+    if (referrer) {
+      try {
+        baseOrigin = new URL(referrer).origin;
+      } catch {
+        // ignore invalid referrer and fall back to current origin
+      }
+    }
+
+    const resolvedUrl = baseOrigin ? new URL(url, baseOrigin).toString() : url;
+    return {
+      url: resolvedUrl,
+      target: env.target ?? (isEmbedded ? '_top' : '_self'),
+    };
+  }
+
+  return { url, target: env.target ?? '_blank' };
 }
 
 // ── Template expression helpers ──────────────────────────────────────
@@ -104,6 +153,7 @@ function resolvePayload(
 // Exported for testing
 export { resolvePayload as _resolvePayload, resolveTemplateExpressions as _resolveTemplateExpressions };
 export { buildExpressionContext as _buildExpressionContext };
+export { resolveNavigateDestination as _resolveNavigateDestination };
 
 export interface EventHandlerConfig {
   event: string;
@@ -174,9 +224,14 @@ export function executeAction(
     }
 
     case 'navigate': {
-      const url = action.url;
-      if (!url) break;
-      const target = action.target ?? '_blank';
+      const rawUrl = action.url;
+      if (!rawUrl) break;
+      const { url, target } = resolveNavigateDestination(rawUrl, {
+        currentOrigin: typeof window !== 'undefined' ? window.location.origin : '',
+        referrer: typeof document !== 'undefined' ? document.referrer : '',
+        isEmbedded: typeof window !== 'undefined' ? window.top !== window : false,
+        target: action.target,
+      });
       try {
         window.open(url, target);
       } catch (e) {

@@ -7,7 +7,7 @@ const DEFAULT_CANVAS_BACKGROUND = '#1a1a2e';
 const DEFAULT_CANVAS_THEME = 'dawn' as const;
 const MAX_GRID_COLS = 48;
 const LAYOUT_MODE_VALUES = ['fixed', 'infinite', 'reflow', 'grid'] as const;
-const CANVAS_THEME_VALUES = ['dawn', 'midnight', 'ocean', 'ember', 'aurora'] as const;
+const CANVAS_THEME_VALUES = ['dawn', 'midnight', 'ocean', 'ember', 'aurora', 'frost'] as const;
 const PREVIEW_SCALE_MODE_VALUES = [
   'fit-min',
   'fit-width',

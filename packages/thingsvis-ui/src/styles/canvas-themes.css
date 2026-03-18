@@ -86,3 +86,24 @@
   --w-series-5: #d73a49;
   --w-series-6: #0366d6;
 }
+
+/* ─── Theme: frost (glassmorphism dark) ──────────────────────────────────── */
+[data-canvas-theme="frost"] {
+  --w-bg:       #0b0d20;
+  --w-fg:       #e0e6f0;
+  --w-axis:     rgba(124, 140, 248, 0.12);
+  --w-primary:  #7c8cf8;
+  --w-border:   rgba(224, 230, 240, 0.1);
+  --w-series-1: #7c8cf8;
+  --w-series-2: #64d8cb;
+  --w-series-3: #a78bfa;
+  --w-series-4: #f472b6;
+  --w-series-5: #38bdf8;
+  --w-series-6: #fbbf24;
+  /* Artboard background gradient for glassmorphism depth effect */
+  --w-artboard-gradient:
+    radial-gradient(ellipse at 22% 30%, rgba(99, 102, 241, 0.22) 0%, transparent 52%),
+    radial-gradient(ellipse at 78% 68%, rgba(100, 216, 203, 0.16) 0%, transparent 48%),
+    radial-gradient(ellipse at 50% 95%, rgba(124, 140, 248, 0.12) 0%, transparent 40%),
+    linear-gradient(145deg, #0b0d20 0%, #111730 45%, #090e1e 100%);
+}

@@ -368,7 +368,14 @@ export const CanvasView: React.FC<Props> = ({
       position: 'relative',
       overflow: 'hidden',
       backgroundColor: mode === 'infinite' ? background.color : 'hsl(var(--workspace-bg))',
-      backgroundImage: mode === 'infinite' && background.image ? `url(${background.image})` : 'none',
+      // Infinite mode: fall back to --w-artboard-gradient when no custom image is set
+      backgroundImage: mode === 'infinite'
+        ? (background.image
+            ? `url(${background.image})`
+            : (containerRef.current
+                ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
+                : 'none'))
+        : 'none',
       backgroundSize: background.size,
       backgroundRepeat: background.repeat,
     }}>
@@ -381,7 +388,12 @@ export const CanvasView: React.FC<Props> = ({
           width: width * vZoom,
           height: height * vZoom,
           backgroundColor: background.color || 'hsl(var(--w-bg))',
-          backgroundImage: background.image ? `url(${background.image})` : 'none',
+          // Fall back to --w-artboard-gradient when no custom image is set
+          backgroundImage: background.image
+            ? `url(${background.image})`
+            : (containerRef.current
+                ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
+                : 'none'),
           backgroundSize: background.size,
           backgroundRepeat: background.repeat,
           pointerEvents: 'none',

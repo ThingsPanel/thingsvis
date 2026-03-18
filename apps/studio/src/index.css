@@ -302,9 +302,67 @@
   --chart-6: 212 98% 42%;
 }
 
+.theme-frost {
+  /* Frost — glassmorphism dark theme (indigo-teal palette) */
+  --w-bg: #0b0d20;
+  --w-fg: #e0e6f0;
+  --w-axis: rgba(124, 140, 248, 0.12);
+  --w-border: rgba(224, 230, 240, 0.1);
+  --w-canvas-bg: 234 42% 8%;
+  --w-canvas-dot: 234 25% 20%;
+  --w-primary: #7c8cf8;
+  --w-series-1: #7c8cf8;
+  --w-series-2: #64d8cb;
+  --w-series-3: #a78bfa;
+  --w-series-4: #f472b6;
+  --w-series-5: #38bdf8;
+  --w-series-6: #fbbf24;
+
+  --background: 234 42% 8%;
+  --foreground: 225 25% 92%;
+  --card: 234 38% 11%;
+  --card-foreground: 225 25% 92%;
+  --popover: 234 35% 13%;
+  --popover-foreground: 225 25% 92%;
+  --primary: 233 91% 73%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 234 32% 15%;
+  --secondary-foreground: 225 20% 85%;
+  --muted: 234 28% 13%;
+  --muted-foreground: 225 15% 55%;
+  --accent: 233 70% 65%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 63% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 234 26% 19%;
+  --input: 234 26% 19%;
+  --ring: 233 91% 73%;
+  --radius: 0.75rem;
+  --canvas-dot: 234 25% 20%;
+  --chart-1: 233 91% 73%;
+  --chart-2: 168 58% 62%;
+  --chart-3: 263 85% 76%;
+  --chart-4: 330 81% 70%;
+  --chart-5: 199 92% 60%;
+  --chart-6: 45 93% 56%;
+}
+
+/* Frost theme: translucent panel style for widget overlay containers.
+   No backdrop-filter — blurring sibling overlays destroys chart readability.
+   Visual depth comes from the artboard gradient background instead. */
+.theme-frost [data-overlay-node-id] {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 12px rgba(0, 0, 0, 0.25),
+    0 0 1px rgba(124, 140, 248, 0.15);
+}
+
 /* Glassmorphism for dark canvas themes (Widget components can opt-in) */
 .theme-midnight .widget-glass,
 .theme-ocean .widget-glass,
+.theme-frost .widget-glass,
 .theme-ember .widget-glass {
   background: hsl(var(--w-canvas-bg) / 0.7);
   backdrop-filter: blur(16px);

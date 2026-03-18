@@ -7,7 +7,7 @@ import { createWidgetRenderer } from './renderers/widgetRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
 import { GridManager } from './managers/GridManager';
 import { ConnectionManager } from './managers/ConnectionManager';
-import { buildEmit } from './executeActions';
+import { buildEmit, type EventHandlerConfig } from './executeActions';
 import { EventBus } from './EventBus';
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -17,7 +17,15 @@ export class VisualEngine {
   private app?: App;
   private instanceMap = new Map<
     string,
-    { instance: any; renderer: RendererFactory; overlayBox?: HTMLDivElement; overlayInst?: { destroy?: () => void }; reactRoot?: Root }
+    {
+      instance: any;
+      renderer: RendererFactory;
+      overlayBox?: HTMLDivElement;
+      overlayInst?: { destroy?: () => void };
+      reactRoot?: Root;
+      overlayClickCleanup?: () => void;
+      overlayClickSignature?: string;
+    }
   >();
   private root?: Group;
   private unsubscribe?: () => void;
@@ -245,9 +253,17 @@ export class VisualEngine {
     // because proxy-layer pointerEvents="none" means events PASS THROUGH
     // to the VisualEngine layer below, triggering component dragging.
     const cursor = editable ? 'pointer' : 'default';
-    for (const entry of this.instanceMap.values()) {
+    const nodesById = (this.store.getState() as KernelState).nodesById;
+    for (const [nodeId, entry] of this.instanceMap.entries()) {
       if (entry.instance && typeof entry.instance.set === 'function') {
         entry.instance.set({ draggable: editable, cursor });
+      }
+      if (entry.overlayBox) {
+        entry.overlayBox.style.pointerEvents = editable ? 'none' : 'auto';
+      }
+      const node = nodesById[nodeId];
+      if (node) {
+        this.syncOverlayClickFallback(node, entry);
       }
     }
   }
@@ -272,6 +288,7 @@ export class VisualEngine {
     this.root = undefined;
     // Unmount all React roots before clearing instanceMap
     for (const entry of this.instanceMap.values()) {
+      entry.overlayClickCleanup?.();
       if (entry.reactRoot) {
         try { entry.reactRoot.unmount(); } catch { /* already unmounted */ }
       }
@@ -326,6 +343,7 @@ export class VisualEngine {
       for (const [id, entry] of Array.from(this.instanceMap.entries())) {
         const nextNode = nodes[id];
         if (!nextNode || !nextNode.visible) {
+          entry.overlayClickCleanup?.();
           entry.renderer.destroy(entry.instance);
           if (entry.renderer.destroyOverlay && entry.overlayInst) {
             // Pass the node state (may be undefined if node was removed from store — use cached id)
@@ -610,6 +628,10 @@ export class VisualEngine {
         overlayInst,
         reactRoot: (overlayInst as any)?.__reactRoot,
       });
+      const createdEntry = this.instanceMap.get(node.id);
+      if (createdEntry) {
+        this.syncOverlayClickFallback(node, createdEntry);
+      }
       // Only attach interaction handlers when editable
       if (this.opts?.editable !== false) {
         this.attachInteractionHandlers(instance as Rect, node);
@@ -632,7 +654,9 @@ export class VisualEngine {
     // 更新 overlay
     const isResizable = existing.renderer.resizable !== false;
     if (existing.overlayBox) {
+      existing.overlayBox.style.pointerEvents = this.opts?.editable !== false ? 'none' : 'auto';
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
+      this.syncOverlayClickFallback(node, existing);
 
       // 对于自适应尺寸组件，同步占位符尺寸
       if (!isResizable && existing.overlayInst) {
@@ -788,6 +812,58 @@ export class VisualEngine {
   }
 
 
+  private getNodeEventHandlers(node: NodeState, eventName: string): EventHandlerConfig[] {
+    const handlers = (node.schemaRef as any)?.events;
+    if (!Array.isArray(handlers)) return [];
+    return handlers.filter((handler): handler is EventHandlerConfig => {
+      return handler?.event === eventName && Array.isArray(handler.actions) && handler.actions.length > 0;
+    });
+  }
+
+  private syncOverlayClickFallback(
+    node: NodeState,
+    entry: {
+      overlayBox?: HTMLDivElement;
+      overlayClickCleanup?: () => void;
+      overlayClickSignature?: string;
+    }
+  ) {
+    const box = entry.overlayBox;
+    if (!box) return;
+
+    const clickHandlers = this.getNodeEventHandlers(node, 'click');
+    const type = String((node.schemaRef as any)?.type ?? '');
+    const shouldBind = this.opts?.editable === false && type.startsWith('basic/') && clickHandlers.length > 0;
+    const nextSignature = shouldBind ? JSON.stringify(clickHandlers) : '';
+
+    if (entry.overlayClickSignature === nextSignature) {
+      box.style.cursor = shouldBind ? 'pointer' : 'default';
+      return;
+    }
+
+    entry.overlayClickCleanup?.();
+    entry.overlayClickCleanup = undefined;
+    entry.overlayClickSignature = nextSignature;
+    box.style.cursor = shouldBind ? 'pointer' : 'default';
+
+    if (!shouldBind) return;
+
+    const emit = buildEmit(
+      () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
+      () => this.store.getState()
+    );
+
+    const handleClick = (event: MouseEvent) => {
+      if (this.opts?.editable !== false) return;
+      emit('click', { nativeEvent: event });
+    };
+
+    box.addEventListener('click', handleClick);
+    entry.overlayClickCleanup = () => {
+      box.removeEventListener('click', handleClick);
+    };
+  }
+
   private getRendererOrScheduleLoad(type: string): RendererFactory | undefined {
     const existing = this.rendererByType.get(type);
     if (existing) return existing;
@@ -883,9 +959,12 @@ export class VisualEngine {
       box.style.transform = rotation !== 0 ? `rotate(${rotation}deg)` : '';
       box.style.transformOrigin = 'center center';
     } else {
-      // 自适应尺寸组件：让内容撑开
-      box.style.width = 'auto';
-      box.style.height = 'auto';
+      // 自适应尺寸组件：绝对定位时不能用 auto，
+      // 否则在容器变窄时会触发 shrink-to-fit，把文本挤成竖排。
+      box.style.width = 'max-content';
+      box.style.height = 'max-content';
+      box.style.maxWidth = 'none';
+      box.style.maxHeight = 'none';
       box.style.overflow = 'visible';
       // 应用旋转
       box.style.transform = rotation !== 0 ? `rotate(${rotation}deg)` : '';

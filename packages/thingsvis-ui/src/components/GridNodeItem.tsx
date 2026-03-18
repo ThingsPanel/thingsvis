@@ -116,6 +116,21 @@ function buildOverlayContext(
     };
 }
 
+function hasClickActions(node: NodeState | undefined): boolean {
+    const handlers = (node?.schemaRef as Record<string, unknown> | undefined)?.events;
+    if (!Array.isArray(handlers)) return false;
+    return handlers.some((handler) => {
+        const event = (handler as { event?: unknown }).event;
+        const actions = (handler as { actions?: unknown[] }).actions;
+        return event === 'click' && Array.isArray(actions) && actions.length > 0;
+    });
+}
+
+function isBasicNode(node: NodeState | undefined): boolean {
+    const type = String((node?.schemaRef as Record<string, unknown> | undefined)?.type ?? '');
+    return type.startsWith('basic/');
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 /**
@@ -248,6 +263,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         () => store.getState() as KernelState
     );
     const nodeState = kernelState.nodesById[nodeId];
+    const isPreviewClickable = !interactive && isBasicNode(nodeState) && hasClickActions(nodeState);
 
     // Build a cache key fragment from the live values of referenced data sources.
     const dataSourceKey = React.useMemo(() => {
@@ -317,6 +333,14 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         window.addEventListener('mouseup', handleMouseUp);
     }, [interactive, nodeId, onDragStart, onDragMove, onDragEnd, onSelect]);
 
+    const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isPreviewClickable) return;
+        buildEmit(
+            () => (store.getState() as KernelState).nodesById[nodeId]?.schemaRef,
+            () => store.getState()
+        )('click', { nativeEvent: e.nativeEvent });
+    }, [isPreviewClickable, nodeId, store]);
+
     // ── Resize handle handling ────────────────────────────────────────────────
 
     const buildResizeHandler = useCallback(
@@ -385,6 +409,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             <div
                 data-node-id={nodeId}
                 onMouseDown={handleMouseDown}
+                onClick={handlePreviewClick}
                 style={{
                     position: 'absolute',
                     left: renderX,
@@ -394,7 +419,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     boxSizing: 'border-box',
                     outline: isSelected && interactive ? '2px solid #0078d4' : undefined,
                     outlineOffset: -1,
-                    cursor: interactive ? (dragDelta ? 'grabbing' : 'move') : 'default',
+                    cursor: interactive ? (dragDelta ? 'grabbing' : 'move') : (isPreviewClickable ? 'pointer' : 'default'),
                     zIndex: isSelected ? 10 : 1,
                     // Remove transition during active dragging/resizing for immediate response
                     transition: isInteracting ? 'none' : 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease',

@@ -43,6 +43,13 @@ export const CANVAS_THEMES = {
     group: 'light' as const,
     swatch: ['#fafbfc', '#24292e', '#2188ff', '#28a745', '#6f42c1'],
   },
+  frost: {
+    id: 'frost',
+    i18nKey: 'canvas.themeFrost',
+    fallbackLabel: 'Frost',
+    group: 'dark' as const,
+    swatch: ['#0b0d20', '#e0e6f0', '#7c8cf8', '#64d8cb', '#a78bfa'],
+  },
 } as const;
 
 /** All registered theme IDs */
