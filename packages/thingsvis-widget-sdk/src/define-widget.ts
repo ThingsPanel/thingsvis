@@ -260,6 +260,16 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     element.style.pointerEvents = 'auto';
 
     let currentProps = { ...defaultProps, ...(ctx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
+    let currentCtx = ctx;
+
+    const handleWidgetEmit = (event: Event) => {
+      const customEvent = event as CustomEvent<{ event?: string; data?: unknown }>;
+      const eventName = customEvent.detail?.event;
+      if (!eventName) return;
+      currentCtx.emit?.(eventName, customEvent.detail?.data);
+    };
+
+    element.addEventListener('widget:emit', handleWidgetEmit as EventListener);
 
     // 调用渲染函数
     const lifecycle = render(element, currentProps, ctx);
@@ -267,10 +277,12 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     return {
       element,
       update: (newCtx: WidgetOverlayContext) => {
+        currentCtx = newCtx;
         currentProps = { ...defaultProps, ...(newCtx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
         lifecycle.update?.(currentProps, newCtx);
       },
       destroy: () => {
+        element.removeEventListener('widget:emit', handleWidgetEmit as EventListener);
         lifecycle.destroy?.();
       },
     };
