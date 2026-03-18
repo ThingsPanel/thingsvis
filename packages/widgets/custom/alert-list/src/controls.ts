@@ -30,6 +30,26 @@ export const controls = createControlPanel()
       label: `${W}.compact`,
       default: false
     });
+    builder.addSwitch("autoScroll", {
+      label: `${W}.autoScroll`,
+      default: true
+    });
+    builder.addSelect("scrollSpeed", {
+      label: `${W}.scrollSpeed`,
+      options: [
+        { label: { zh: "慢", en: "Slow" }, value: "slow" },
+        { label: { zh: "正常", en: "Normal" }, value: "normal" },
+        { label: { zh: "快", en: "Fast" }, value: "fast" }
+      ]
+    });
+    builder.addSwitch("pauseOnHover", {
+      label: `${W}.pauseOnHover`,
+      default: true
+    });
+    builder.addTextInput("emptyText", {
+      label: `${W}.emptyText`,
+      binding: true
+    });
   })
   .addStyleGroup((builder) => {
     builder.addSlider("titleFontSize", {

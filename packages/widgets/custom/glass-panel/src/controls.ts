@@ -9,15 +9,11 @@ export const controls = createControlPanel()
       options: [
         { label: { zh: "中性白", en: "Neutral" }, value: "neutral" },
         { label: { zh: "冷蓝", en: "Blue" }, value: "blue" },
-        { label: { zh: "暖光", en: "Warm" }, value: "warm" }
+        { label: { zh: "暖光", en: "Warm" }, value: "warm" },
+        { label: { zh: "青蓝", en: "Cyan" }, value: "cyan" },
+        { label: { zh: "翡翠", en: "Emerald" }, value: "emerald" },
+        { label: { zh: "琥珀", en: "Amber" }, value: "amber" }
       ]
-    });
-    builder.addSlider("cornerRadius", {
-      label: `${W}.cornerRadius`,
-      min: 0,
-      max: 64,
-      step: 1,
-      default: 20
     });
     builder.addSlider("blurStrength", {
       label: `${W}.blurStrength`,

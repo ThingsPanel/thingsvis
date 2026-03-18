@@ -77,14 +77,20 @@ function getLevelColor(level: unknown, colors: WidgetColors): string {
   return colors.primary;
 }
 
-function renderList(element: HTMLElement, props: Props, colors: WidgetColors): void {
+const SCROLL_SPEED_MAP: Record<string, number> = {
+  slow: 0.3,
+  normal: 0.6,
+  fast: 1.2
+};
+
+function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (() => void) | null {
   const items = Array.isArray(props.items) ? props.items.slice(0, props.maxItems) : [];
   const lightTheme = isLightColor(colors.bg);
   const titleColor = colors.fg;
   const detailColor = withAlpha(colors.fg, 0.68);
   const metaColor = withAlpha(colors.fg, 0.52);
-  const rowBg = lightTheme ? withAlpha("#ffffff", 0.72) : withAlpha("#ffffff", 0.05);
-  const rowShadow = lightTheme ? withAlpha("#0f172a", 0.05) : withAlpha("#0f172a", 0.12);
+  const rowBg = lightTheme ? withAlpha("#ffffff", 0.4) : withAlpha("#ffffff", 0.08);
+  const rowShadow = lightTheme ? withAlpha("#0f172a", 0.045) : withAlpha("#0f172a", 0.14);
   const compactPadding = props.compact ? "10px 12px" : "14px 16px";
   const compactGap = props.compact ? 8 : 12;
 
@@ -92,29 +98,58 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): v
     width: 100%;
     height: 100%;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: visible;
     border-radius: inherit;
     font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   `;
 
   if (items.length === 0) {
+    const emptyText = escapeHtml(props.emptyText || "暂无告警");
     element.innerHTML = `
       <div style="
         width:100%;
         height:100%;
         display:flex;
+        flex-direction:column;
         align-items:center;
         justify-content:center;
+        gap:10px;
         color:${metaColor};
         font-size:${props.detailFontSize}px;
-      ">No alerts</div>
+      ">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="${metaColor}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>${emptyText}</span>
+      </div>
     `;
-    return;
+    return null;
   }
+
+  const styleId = "tv-alert-list-keyframes";
+  let styleTag = element.querySelector(`#${styleId}`) as HTMLStyleElement | null;
+  if (!styleTag) {
+    styleTag = document.createElement("style");
+    styleTag.id = styleId;
+    element.appendChild(styleTag);
+  }
+  styleTag.textContent = `
+    @keyframes tv-alert-pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 6px var(--pulse-ring); }
+      50% { opacity: 0.6; box-shadow: 0 0 0 10px transparent; }
+    }
+  `;
 
   const rows = items.map((rawItem) => {
     const item = rawItem as Record<string, unknown>;
     const accent = getLevelColor(item.level, colors);
+    const isCritical = String(item.level ?? "").toLowerCase() === "critical";
+    const pulseStyle = isCritical
+      ? `--pulse-ring:${withAlpha(accent, 0.14)};animation:tv-alert-pulse 2s ease-in-out infinite;`
+      : `box-shadow:0 0 0 6px ${withAlpha(accent, 0.14)};`;
+
     const source = props.showSource && item.source ? `
       <span style="color:${metaColor};font-size:${props.timeFontSize}px;">${escapeHtml(item.source)}</span>
     ` : "";
@@ -137,7 +172,12 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): v
         padding:${compactPadding};
         border-radius:${props.itemRadius}px;
         background:${rowBg};
-        box-shadow:0 10px 24px ${rowShadow};
+        backdrop-filter:blur(14px) saturate(145%);
+        -webkit-backdrop-filter:blur(14px) saturate(145%);
+        box-shadow:
+          0 12px 28px ${rowShadow},
+          inset 0 1px 0 ${withAlpha("#ffffff", lightTheme ? 0.58 : 0.16)};
+        flex:0 0 auto;
       ">
         <div style="
           flex:0 0 auto;
@@ -150,7 +190,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): v
             height:10px;
             border-radius:999px;
             background:${accent};
-            box-shadow:0 0 0 6px ${withAlpha(accent, 0.14)};
+            ${pulseStyle}
           "></span>
         </div>
         <div style="min-width:0;flex:1 1 auto;">
@@ -170,7 +210,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): v
             ${time}
           </div>
           ${detail}
-          ${(source || time) ? `
+          ${source ? `
             <div style="
               display:flex;
               align-items:center;
@@ -184,20 +224,48 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): v
     `;
   });
 
-  element.innerHTML = `
-    <div style="
-      width:100%;
-      height:100%;
-      box-sizing:border-box;
-      display:flex;
-      flex-direction:column;
-      gap:${compactGap}px;
-      overflow:auto;
-      padding:2px;
-    ">
-      ${rows.join("")}
-    </div>
+  const scrollContainer = document.createElement("div");
+  scrollContainer.style.cssText = `
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    gap:${compactGap}px;
+    overflow:hidden;
+    padding:2px;
   `;
+  scrollContainer.innerHTML = rows.join("");
+  element.innerHTML = "";
+  element.appendChild(styleTag);
+  element.appendChild(scrollContainer);
+
+  if (!props.autoScroll) {
+    scrollContainer.style.overflow = "auto";
+    return null;
+  }
+
+  const speed = SCROLL_SPEED_MAP[props.scrollSpeed] ?? 0.6;
+  let rafId = 0;
+  let paused = false;
+
+  if (props.pauseOnHover) {
+    scrollContainer.addEventListener("mouseenter", () => { paused = true; });
+    scrollContainer.addEventListener("mouseleave", () => { paused = false; });
+  }
+
+  const tick = () => {
+    if (!paused && scrollContainer.scrollHeight > scrollContainer.clientHeight) {
+      scrollContainer.scrollTop += speed;
+      if (scrollContainer.scrollTop >= scrollContainer.scrollHeight - scrollContainer.clientHeight) {
+        scrollContainer.scrollTop = 0;
+      }
+    }
+    rafId = requestAnimationFrame(tick);
+  };
+  rafId = requestAnimationFrame(tick);
+
+  return () => { cancelAnimationFrame(rafId); };
 }
 
 export const Main = defineWidget({
@@ -215,14 +283,16 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props) => {
     let currentProps = props;
     let colors = resolveWidgetColors(element);
+    let cleanupScroll: (() => void) | null = null;
 
-    renderList(element, currentProps, colors);
+    cleanupScroll = renderList(element, currentProps, colors);
 
     let observer: ResizeObserver | null = null;
     if (typeof ResizeObserver !== "undefined") {
       observer = new ResizeObserver(() => {
         colors = resolveWidgetColors(element);
-        renderList(element, currentProps, colors);
+        if (cleanupScroll) { cleanupScroll(); cleanupScroll = null; }
+        cleanupScroll = renderList(element, currentProps, colors);
       });
       observer.observe(element);
     }
@@ -231,9 +301,11 @@ export const Main = defineWidget({
       update: (nextProps: Props) => {
         currentProps = nextProps;
         colors = resolveWidgetColors(element);
-        renderList(element, currentProps, colors);
+        if (cleanupScroll) { cleanupScroll(); cleanupScroll = null; }
+        cleanupScroll = renderList(element, currentProps, colors);
       },
       destroy: () => {
+        if (cleanupScroll) { cleanupScroll(); cleanupScroll = null; }
         observer?.disconnect();
         element.innerHTML = "";
       }

@@ -5,10 +5,9 @@
         "name": "Glass",
         "groupStyle": "Style",
         "variant": "Tint",
-        "cornerRadius": "Corner Radius",
-        "blurStrength": "Blur",
-        "surfaceOpacity": "Opacity",
-        "highlightOpacity": "Highlight",
+        "blurStrength": "Blur Strength",
+        "surfaceOpacity": "Surface Opacity",
+        "highlightOpacity": "Highlight Opacity",
         "tintStrength": "Tint Strength"
       }
     }
