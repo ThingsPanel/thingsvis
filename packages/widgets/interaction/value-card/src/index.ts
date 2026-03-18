@@ -2,6 +2,7 @@ import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import { icons, createElement } from 'lucide';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -44,7 +45,7 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
   const {
     title, value, suffix, subtitle, precision,
-    icon, iconSize, iconOpacity,
+    icon, iconSize,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
     align
   } = props;
@@ -71,6 +72,26 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
   } else if (align === 'right') {
     alignItems = 'flex-end';
     textAlign = 'right';
+  }
+
+  let iconHtml = '';
+  if (icon) {
+    const iconData = icons[icon as keyof typeof icons];
+    if (iconData) {
+      try {
+        const svgEl = createElement(iconData);
+        svgEl.setAttribute('width', String(iconSize));
+        svgEl.setAttribute('height', String(iconSize));
+        svgEl.setAttribute('stroke', 'currentColor');
+        svgEl.setAttribute('stroke-width', '2');
+        svgEl.style.display = 'inline-block';
+        // Make sure flex-shrink is 0 so it doesn't get squeezed
+        svgEl.style.flexShrink = '0';
+        iconHtml = svgEl.outerHTML;
+      } catch (e) {
+        // Ignore in non-browser context if any
+      }
+    }
   }
 
   element.style.cssText = `
@@ -115,15 +136,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
         ">
           ${escapeHtml(title)}
         </div>
-        ${icon ? `
-          <div class="${escapeHtml(icon)}" style="
-            width: ${iconSize}px;
-            height: ${iconSize}px;
-            font-size: ${iconSize}px;
-            opacity: ${iconOpacity};
-            display: inline-block;
-          "></div>
-        ` : ''}
+        ${iconHtml}
       </div>
 
       <div style="

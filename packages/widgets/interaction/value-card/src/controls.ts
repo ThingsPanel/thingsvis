@@ -12,7 +12,6 @@ export const controls = createControlPanel()
     b.addSlider('precision', { label: `${W}.precision`, min: 0, max: 6, step: 1, default: 0 });
     b.addIconPicker('icon', { label: `${W}.icon` });
     b.addSlider('iconSize', { label: `${W}.iconSize`, min: 12, max: 100, step: 1, default: 24 });
-    b.addSlider('iconOpacity', { label: `${W}.iconOpacity`, min: 0, max: 1, step: 0.1, default: 0.8 });
   }, { label: `${W}.groupData` })
 
   // Typography Group

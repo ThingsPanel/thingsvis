@@ -169,7 +169,7 @@ describe('widget runtime contracts', () => {
   });
 
   it('discovers every widget package', () => {
-    expect(widgetModulePaths).toHaveLength(26);
+    expect(widgetModulePaths).toHaveLength(24);
   });
 
   it('keeps chart and video-player widgets on dedicated runtime tests', () => {

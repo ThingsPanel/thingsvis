@@ -8,23 +8,24 @@
         "typecheck": "tsc -p tsconfig.json --noEmit"
     },
     "peerDependencies": {
-        "react": "^18.2.0",
-        "react-dom": "^18.2.0",
+        "@thingsvis/schema": "workspace:*",
         "leafer-ui": "^1.0.0",
-        "@thingsvis/schema": "workspace:*"
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0"
     },
     "dependencies": {
         "@thingsvis/widget-sdk": "workspace:*",
+        "lucide": "^0.577.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {
-        "@thingsvis/widget-config": "workspace:*",
         "@rspack/cli": "^1.0.0",
         "@rspack/core": "^1.0.0",
-        "typescript": "^5.3.3",
-        "ts-loader": "^9.5.1",
+        "@thingsvis/widget-config": "workspace:*",
         "@types/react": "^18.2.41",
-        "@types/react-dom": "^18.2.17"
+        "@types/react-dom": "^18.2.17",
+        "ts-loader": "^9.5.1",
+        "typescript": "^5.3.3"
     },
     "thingsvis": {
         "displayName": "Value",

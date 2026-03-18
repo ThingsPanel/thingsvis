@@ -16,7 +16,6 @@ export const PropsSchema = z.object({
   // Icon Settings
   icon: z.string().default('').describe('props.icon'),
   iconSize: z.number().int().min(12).max(100).default(24).describe('props.iconSize'),
-  iconOpacity: z.number().min(0).max(1).default(0.8).describe('props.iconOpacity'),
 
   // Typography Settings
   titleFontSize: z.number().int().min(10).max(100).default(DEFAULT_TITLE_FONT_SIZE).describe('props.titleFontSize'),

@@ -13,7 +13,6 @@
                 "precision": "保留小数位数",
                 "icon": "图标 (选填)",
                 "iconSize": "图标大小",
-                "iconOpacity": "图标透明度",
                 "titleFontSize": "标题字号",
                 "valueFontSize": "数值主字号",
                 "suffixFontSize": "后缀单位字号",
