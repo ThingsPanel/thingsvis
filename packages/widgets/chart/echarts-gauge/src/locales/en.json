@@ -2,8 +2,17 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-gauge": {
-                "name": "Gauge Chart"
+                "name": "Gauge Chart",
+                "controls": {
+                    "title": "Chart Title",
+                    "max": "Max Value",
+                    "primaryColor": "Primary Color",
+                    "data": "Preview Data"
+                }
             }
         }
+    },
+    "runtime": {
+        "emptyState": "Add a numeric value or bind a metric"
     }
 }

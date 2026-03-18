@@ -13,6 +13,16 @@ import en from './locales/en.json';
 const CHART_PADDING = 16;
 const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
+type RuntimeMessages = {
+    runtime?: {
+        emptyState?: string;
+    };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
+
 function parseGaugeData(raw: Props['data'], fallbackName: string): { value: number; name: string } | null {
     const entry = Array.isArray(raw) ? raw[raw.length - 1] : raw;
 
@@ -41,8 +51,14 @@ function parseGaugeData(raw: Props['data'], fallbackName: string): { value: numb
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+function buildOption(
+    props: Props,
+    colors: WidgetColors,
+    locale: string | undefined,
+    scale: number = 1,
+): echarts.EChartsOption {
     const { title, data, primaryColor, max } = props;
+    const runtimeMessages = getRuntimeMessages(locale);
 
     const textColor = colors.fg;
     const splitLineColor = colors.axis;
@@ -64,7 +80,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             top: 'middle',
             silent: true,
             style: {
-                text: '暂无数据',
+                text: runtimeMessages.runtime?.emptyState || 'Add a numeric value or bind a metric',
                 fill: colors.fg,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
@@ -192,7 +208,7 @@ export const Main = defineWidget({
         let colors: WidgetColors = resolveWidgetColors(element);
 
         const chart = echarts.init(element);
-        chart.setOption(buildOption(currentProps, colors, 1));
+        chart.setOption(buildOption(currentProps, colors, ctx.locale, 1));
 
         const scheduleResize = () => {
             try {
@@ -203,7 +219,7 @@ export const Main = defineWidget({
                         const ch = element.clientHeight || 200;
                         const minDim = Math.min(cw, ch);
                         const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-                        chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series'] });
+                        chart.setOption(buildOption(currentProps, colors, ctx.locale, scale), { replaceMerge: ['dataset', 'series'] });
                     }
                 });
             } catch {
@@ -224,7 +240,7 @@ export const Main = defineWidget({
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
 
-                chart.setOption(buildOption(currentProps, colors), { replaceMerge: ['dataset', 'series'] });
+                chart.setOption(buildOption(currentProps, colors, newCtx.locale), { replaceMerge: ['dataset', 'series'] });
 
                 if (newCtx.size) {
                     scheduleResize();

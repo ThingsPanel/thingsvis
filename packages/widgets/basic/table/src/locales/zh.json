@@ -28,5 +28,8 @@
                 "colorAuto": "自动适配主题"
             }
         }
+    },
+    "runtime": {
+        "emptyState": "添加行数据或绑定表格数据集"
     }
 }

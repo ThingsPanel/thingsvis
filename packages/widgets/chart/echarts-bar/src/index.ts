@@ -24,6 +24,17 @@ const STANDALONE_BAR_SERIES = [
     { name: 'Thu', value: 27 },
 ];
 
+type RuntimeMessages = {
+    runtime?: {
+        defaultSeriesName?: string;
+        emptyState?: string;
+    };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
+
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
     return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
 }
@@ -157,10 +168,16 @@ function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 
 /**
  * Build ECharts option from props and theme colors
  */
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+function buildOption(
+    props: Props,
+    colors: WidgetColors,
+    locale: string | undefined,
+    scale: number = 1,
+): echarts.EChartsOption {
     const { title, titleAlign, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
     const normalizedData = normalizeCategoryData(data);
     const hasData = normalizedData.length > 0;
+    const runtimeMessages = getRuntimeMessages(locale);
 
     const textColor = colors.fg;
     const splitLineColor = colors.axis;
@@ -168,7 +185,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     const padding = Math.round(CHART_PADDING * scale);
     const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
     const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
-    const seriesName = title || '数值';
+    const seriesName = title || runtimeMessages.runtime?.defaultSeriesName || 'Value';
 
     const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
         { offset: 0, color: seriesColor },
@@ -184,7 +201,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             top: 'middle',
             silent: true,
             style: {
-                text: '暂无数据',
+                text: runtimeMessages.runtime?.emptyState || 'Add data points or bind a data series',
                 fill: textColor,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
@@ -271,7 +288,7 @@ export const Main = defineWidget({
 
         // Initialize ECharts
         const chart = echarts.init(element);
-        chart.setOption(buildOption(currentProps, colors, 1));
+        chart.setOption(buildOption(currentProps, colors, ctx.locale, 1));
 
         const scheduleResize = () => {
             try {
@@ -282,7 +299,7 @@ export const Main = defineWidget({
                         const ch = element.clientHeight || 200;
                         const minDim = Math.min(cw, ch);
                         const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-                        chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
+                        chart.setOption(buildOption(currentProps, colors, ctx.locale, scale), { replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis'] });
                     }
                 });
             } catch {

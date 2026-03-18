@@ -2,8 +2,28 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-bar": {
-                "name": "ECharts 柱状图"
+                "name": "ECharts 柱状图",
+                "controls": {
+                    "title": "图表标题",
+                    "titleAlign": "标题对齐",
+                    "showLegend": "显示图例",
+                    "showXAxis": "显示 X 轴",
+                    "showYAxis": "显示 Y 轴",
+                    "primaryColor": "主色",
+                    "data": "预览数据"
+                },
+                "options": {
+                    "titleAlign": {
+                        "left": "靠左",
+                        "center": "居中",
+                        "right": "靠右"
+                    }
+                }
             }
         }
+    },
+    "runtime": {
+        "defaultSeriesName": "数值",
+        "emptyState": "添加数据点或绑定数据序列"
     }
 }

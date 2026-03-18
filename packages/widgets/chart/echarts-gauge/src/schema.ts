@@ -4,6 +4,8 @@
 
 import { z } from 'zod';
 
+const DEFAULT_SAMPLE_DATA = [{ name: 'CPU', value: 67 }] as const;
+
 export const PropsSchema = z.object({
     /** 图表标题 */
     title: z.string().default('').describe('props.chartTitle'),
@@ -15,7 +17,7 @@ export const PropsSchema = z.object({
     max: z.number().default(100).describe('props.max'),
 
     /** 数据集 */
-    data: z.any().default(null).describe('props.dataset'),
+    data: z.any().default(() => DEFAULT_SAMPLE_DATA.map((item) => ({ ...item }))).describe('props.dataset'),
 });
 
 /** 属性类型 */

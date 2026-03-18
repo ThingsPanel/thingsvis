@@ -2,8 +2,28 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-bar": {
-                "name": "ECharts Bar Chart"
+                "name": "ECharts Bar Chart",
+                "controls": {
+                    "title": "Chart Title",
+                    "titleAlign": "Title Alignment",
+                    "showLegend": "Show Legend",
+                    "showXAxis": "Show X Axis",
+                    "showYAxis": "Show Y Axis",
+                    "primaryColor": "Primary Color",
+                    "data": "Preview Data"
+                },
+                "options": {
+                    "titleAlign": {
+                        "left": "Left",
+                        "center": "Center",
+                        "right": "Right"
+                    }
+                }
             }
         }
+    },
+    "runtime": {
+        "defaultSeriesName": "Value",
+        "emptyState": "Add data points or bind a data series"
     }
 }

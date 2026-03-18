@@ -8,15 +8,25 @@ export const controls = generateControls(PropsSchema, {
         Data: ['data'],
     },
     overrides: {
-        primaryColor: { kind: 'color' },
-        data: { kind: 'json' },
+        title: { label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.title' },
+        showLegend: { label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.showLegend' },
+        showXAxis: { label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.showXAxis' },
+        showYAxis: { label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.showYAxis' },
+        primaryColor: {
+            kind: 'color',
+            label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.primaryColor',
+        },
+        data: {
+            kind: 'json',
+            label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.data',
+        },
         titleAlign: {
             kind: 'select',
-            label: '标题对齐',
+            label: 'widgets.thingsvis-widget-chart-echarts-bar.controls.titleAlign',
             options: [
-                { label: '靠左', value: 'left' },
-                { label: '居中', value: 'center' },
-                { label: '靠右', value: 'right' },
+                { label: 'widgets.thingsvis-widget-chart-echarts-bar.options.titleAlign.left', value: 'left' },
+                { label: 'widgets.thingsvis-widget-chart-echarts-bar.options.titleAlign.center', value: 'center' },
+                { label: 'widgets.thingsvis-widget-chart-echarts-bar.options.titleAlign.right', value: 'right' },
             ],
         },
     },

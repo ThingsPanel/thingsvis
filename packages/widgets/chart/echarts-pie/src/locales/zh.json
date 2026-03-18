@@ -2,8 +2,18 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-pie": {
-                "name": "ECharts 饼图"
+                "name": "ECharts 饼图",
+                "controls": {
+                    "title": "图表标题",
+                    "showLegend": "显示图例",
+                    "isDoughnut": "环形模式",
+                    "primaryColor": "主色",
+                    "data": "预览数据"
+                }
             }
         }
+    },
+    "runtime": {
+        "emptyState": "添加切片数据或绑定分布数据集"
     }
 }

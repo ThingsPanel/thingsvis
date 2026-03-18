@@ -28,5 +28,8 @@
                 "colorAuto": "Auto Theme"
             }
         }
+    },
+    "runtime": {
+        "emptyState": "Add rows or bind a table data set"
     }
 }

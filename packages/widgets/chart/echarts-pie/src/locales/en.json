@@ -2,8 +2,18 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-pie": {
-                "name": "ECharts Pie Chart"
+                "name": "ECharts Pie Chart",
+                "controls": {
+                    "title": "Chart Title",
+                    "showLegend": "Show Legend",
+                    "isDoughnut": "Doughnut Mode",
+                    "primaryColor": "Primary Color",
+                    "data": "Preview Data"
+                }
             }
         }
+    },
+    "runtime": {
+        "emptyState": "Add slices or bind a distribution data set"
     }
 }

@@ -6,6 +6,16 @@ import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type Widg
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+type RuntimeMessages = {
+  runtime?: {
+    emptyState?: string;
+  };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+  return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
+
 // ============================================================================
 // Apple Flat Design Table - Clean & Minimal
 // ============================================================================
@@ -50,13 +60,19 @@ function withAlpha(color: string, alpha: number): string {
 // Render
 // ============================================================================
 
-function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): void {
-  const { 
+function renderTable(
+  element: HTMLElement,
+  props: Props,
+  colors: WidgetColors,
+  locale?: string,
+): void {
+  const {
     columns, data, 
     showHeader, headerFontSize, headerWeight, headerColor, headerBgColor,
     bodyFontSize, bodyWeight, bodyColor, showBorder, showStripe, stripeColor,
     cellPadding
   } = props;
+  const runtimeMessages = getRuntimeMessages(locale);
   
   // Resolve Auto Colors
   const textPrimary = colors.fg;
@@ -155,7 +171,7 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
       text-align: center;
       color: ${textSecondary};
       font-style: italic;
-    ">暂无数据</td></tr>`;
+    ">${runtimeMessages.runtime?.emptyState || 'Add rows or bind a table data set'}</td></tr>`;
   }
   tableHtml += '</tbody>';
   
@@ -185,14 +201,14 @@ export const Main = defineWidget({
     let currentProps = props;
     let colors = resolveWidgetColors(element);
     
-    renderTable(element, currentProps, colors);
+    renderTable(element, currentProps, colors, ctx.locale);
     
     // Resize observer for theme updates
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         colors = resolveWidgetColors(element);
-        renderTable(element, currentProps, colors);
+        renderTable(element, currentProps, colors, ctx.locale);
       });
       ro.observe(element);
     }
@@ -201,7 +217,7 @@ export const Main = defineWidget({
       update: (newProps: Props) => {
         currentProps = newProps;
         colors = resolveWidgetColors(element);
-        renderTable(element, currentProps, colors);
+        renderTable(element, currentProps, colors, ctx.locale);
       },
       destroy: () => {
         ro?.disconnect();

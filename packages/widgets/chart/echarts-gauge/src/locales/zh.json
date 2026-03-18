@@ -2,8 +2,17 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-chart-echarts-gauge": {
-                "name": "仪表盘"
+                "name": "仪表盘",
+                "controls": {
+                    "title": "图表标题",
+                    "max": "最大值",
+                    "primaryColor": "主色",
+                    "data": "预览数据"
+                }
             }
         }
+    },
+    "runtime": {
+        "emptyState": "添加数值或绑定指标"
     }
 }

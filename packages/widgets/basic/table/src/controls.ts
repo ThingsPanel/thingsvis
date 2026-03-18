@@ -12,6 +12,7 @@ export const controls = createControlPanel()
     b.addJsonEditor('data', { 
       label: `${W}.data`,
       placeholder: '[{"name":"Item 1"}]',
+      binding: true,
     });
   }, { label: `${W}.groupData` })
   

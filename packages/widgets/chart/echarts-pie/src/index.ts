@@ -11,6 +11,16 @@ import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type Widg
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+type RuntimeMessages = {
+    runtime?: {
+        emptyState?: string;
+    };
+};
+
+function getRuntimeMessages(locale?: string): RuntimeMessages {
+    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+}
+
 function normalizePieData(data: Props['data']) {
     if (!Array.isArray(data)) return [];
     return data.flatMap((entry) => {
@@ -29,11 +39,17 @@ function normalizePieData(data: Props['data']) {
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+function buildOption(
+    props: Props,
+    colors: WidgetColors,
+    locale: string | undefined,
+    scale: number = 1,
+): echarts.EChartsOption {
     const { title, data, showLegend, isDoughnut } = props;
     const normalizedData = normalizePieData(data);
     const hasData = normalizedData.length > 0;
     const compactMode = scale < 0.85 || normalizedData.length > 6;
+    const runtimeMessages = getRuntimeMessages(locale);
 
     const textColor = colors.fg;
 
@@ -46,7 +62,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             top: 'middle',
             silent: true,
             style: {
-                text: '暂无数据',
+                text: runtimeMessages.runtime?.emptyState || 'Add slices or bind a distribution data set',
                 fill: textColor,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
@@ -118,7 +134,7 @@ export const Main = defineWidget({
         let colors: WidgetColors = resolveWidgetColors(element);
         // Initialize ECharts
         const chart = echarts.init(element);
-        chart.setOption(buildOption(currentProps, colors, 1));
+        chart.setOption(buildOption(currentProps, colors, ctx.locale, 1));
 
         const scheduleResize = () => {
             try {
@@ -129,7 +145,7 @@ export const Main = defineWidget({
                         const ch = element.clientHeight || 200;
                         const minDim = Math.min(cw, ch);
                         const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
-                        chart.setOption(buildOption(currentProps, colors, scale), { replaceMerge: ['dataset', 'series'] });
+                        chart.setOption(buildOption(currentProps, colors, ctx.locale, scale), { replaceMerge: ['dataset', 'series'] });
                     }
                 });
             } catch {
@@ -150,7 +166,7 @@ export const Main = defineWidget({
                 currentProps = newProps;
                 colors = resolveWidgetColors(element);
 
-                chart.setOption(buildOption(currentProps, colors), { replaceMerge: ['dataset', 'series'] });
+                chart.setOption(buildOption(currentProps, colors, newCtx.locale), { replaceMerge: ['dataset', 'series'] });
 
                 if (newCtx.size || !newCtx.size) {
                     scheduleResize();
