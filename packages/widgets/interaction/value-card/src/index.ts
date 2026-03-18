@@ -44,20 +44,20 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
   const {
     title, value, suffix, subtitle, precision,
+    iconUrl, iconSize, iconOpacity,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
     align
   } = props;
 
   const width = Math.max(element.clientWidth || DEFAULT_CARD_WIDTH, DEFAULT_CARD_WIDTH);
   const height = Math.max(element.clientHeight || DEFAULT_CARD_HEIGHT, DEFAULT_CARD_HEIGHT);
-  const scale = Math.max(1, Math.min(1.8, Math.min(width / DEFAULT_CARD_WIDTH, height / DEFAULT_CARD_HEIGHT)));
   const paddingX = DEFAULT_CARD_PADDING_X;
   const paddingY = DEFAULT_CARD_PADDING_Y;
-  const titleSize = Math.round(titleFontSize * scale);
-  const mainValueSize = Math.round(valueFontSize * scale);
-  const unitSize = Math.round(suffixFontSize * scale);
-  const subTitleSize = Math.round(subtitleFontSize * scale);
-  const contentGap = Math.max(6, Math.round(8 * scale));
+  const titleSize = titleFontSize;
+  const mainValueSize = valueFontSize;
+  const unitSize = suffixFontSize;
+  const subTitleSize = subtitleFontSize;
+  const contentGap = 8;
 
   // Formatting value (always useGrouping internally as per spec)
   const displayValue = formatValue(value, precision, true);
@@ -101,14 +101,28 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
       background: transparent;
     ">
       <div style="
-        font-size: ${titleSize}px;
-        opacity: 0.7;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         width: 100%;
       ">
-        ${escapeHtml(title)}
+        <div style="
+          font-size: ${titleSize}px;
+          opacity: 0.7;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        ">
+          ${escapeHtml(title)}
+        </div>
+        ${iconUrl ? `
+          <img src="${escapeHtml(iconUrl)}" style="
+            width: ${iconSize}px;
+            height: ${iconSize}px;
+            opacity: ${iconOpacity};
+            object-fit: contain;
+          " />
+        ` : ''}
       </div>
 
       <div style="
