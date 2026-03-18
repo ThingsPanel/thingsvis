@@ -11,7 +11,7 @@
                 "suffix": "Suffix (e.g. /day)",
                 "subtitle": "Subtitle Description",
                 "precision": "Decimal Precision",
-                "iconUrl": "Icon (Optional)",
+                "icon": "Icon (Optional)",
                 "iconSize": "Icon Size",
                 "iconOpacity": "Icon Opacity",
                 "titleFontSize": "Title Font Size",

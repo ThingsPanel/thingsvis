@@ -44,7 +44,7 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
   const {
     title, value, suffix, subtitle, precision,
-    iconUrl, iconSize, iconOpacity,
+    icon, iconSize, iconOpacity,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
     align
   } = props;
@@ -115,13 +115,14 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
         ">
           ${escapeHtml(title)}
         </div>
-        ${iconUrl ? `
-          <img src="${escapeHtml(iconUrl)}" style="
+        ${icon ? `
+          <div class="${escapeHtml(icon)}" style="
             width: ${iconSize}px;
             height: ${iconSize}px;
+            font-size: ${iconSize}px;
             opacity: ${iconOpacity};
-            object-fit: contain;
-          " />
+            display: inline-block;
+          "></div>
         ` : ''}
       </div>
 

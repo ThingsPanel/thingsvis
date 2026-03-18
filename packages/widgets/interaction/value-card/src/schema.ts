@@ -14,7 +14,7 @@ export const PropsSchema = z.object({
   precision: z.number().int().min(0).max(6).default(0).describe('props.precision'),
 
   // Icon Settings
-  iconUrl: z.string().default('').describe('props.iconUrl'),
+  icon: z.string().default('').describe('props.icon'),
   iconSize: z.number().int().min(12).max(100).default(24).describe('props.iconSize'),
   iconOpacity: z.number().min(0).max(1).default(0.8).describe('props.iconOpacity'),
 

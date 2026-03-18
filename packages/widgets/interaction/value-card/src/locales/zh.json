@@ -11,7 +11,7 @@
                 "suffix": "后缀（如 /天）",
                 "subtitle": "副文案描述",
                 "precision": "保留小数位数",
-                "iconUrl": "图标 (选填)",
+                "icon": "图标 (选填)",
                 "iconSize": "图标大小",
                 "iconOpacity": "图标透明度",
                 "titleFontSize": "标题字号",
