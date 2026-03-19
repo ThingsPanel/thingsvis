@@ -6,9 +6,11 @@ export const controls = createControlPanel()
   // Data Group
   .addGroup('Data', (b) => {
     b.addTextInput('title', { label: `${W}.title`, binding: true });
+    b.addTextInput('prefix', { label: `${W}.prefix` });
     b.addTextInput('value', { label: `${W}.value`, binding: true });
     b.addTextInput('suffix', { label: `${W}.suffix`, binding: true });
     b.addTextInput('subtitle', { label: `${W}.subtitle`, binding: true });
+    b.addNumberInput('trend', { label: `${W}.trend`, min: -999, max: 999, step: 0.01, binding: true });
     b.addSlider('precision', { label: `${W}.precision`, min: 0, max: 6, step: 1, default: 0 });
     b.addIconPicker('icon', { label: `${W}.icon` });
     b.addSlider('iconSize', { label: `${W}.iconSize`, min: 12, max: 100, step: 1, default: 24 });

@@ -10,6 +10,8 @@
                 "value": "Data Value",
                 "suffix": "Suffix (e.g. /day)",
                 "subtitle": "Subtitle Description",
+                "prefix": "Value Prefix (e.g. $ ¥)",
+                "trend": "Trend Percentage",
                 "precision": "Decimal Precision",
                 "icon": "Icon (Optional)",
                 "iconSize": "Icon Size",

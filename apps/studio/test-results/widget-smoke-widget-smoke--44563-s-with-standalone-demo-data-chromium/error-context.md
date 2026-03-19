@@ -1,0 +1,181 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - generic:
+    - generic [ref=e12]:
+      - img [ref=e15] [cursor=pointer]
+      - textbox "Untitled Project" [ref=e16]: My Visualization
+    - generic [ref=e17]:
+      - button "选择" [ref=e18] [cursor=pointer]:
+        - img
+      - button "矩形" [ref=e19] [cursor=pointer]:
+        - img
+      - button "圆形" [ref=e20] [cursor=pointer]:
+        - img
+      - button "连线" [ref=e21] [cursor=pointer]:
+        - img
+      - button "移动" [ref=e22] [cursor=pointer]:
+        - img
+      - button "图片" [ref=e23] [cursor=pointer]:
+        - img
+      - button "文本" [ref=e24] [cursor=pointer]:
+        - img
+    - generic [ref=e25]:
+      - button [ref=e26] [cursor=pointer]:
+        - img
+      - button [ref=e27] [cursor=pointer]:
+        - img
+      - button "Save" [ref=e28] [cursor=pointer]:
+        - img
+        - generic [ref=e29]: Save
+      - button "Preview" [ref=e30] [cursor=pointer]:
+        - img
+        - generic [ref=e31]: Preview
+  - complementary [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - button "Library" [ref=e36] [cursor=pointer]:
+            - img [ref=e37]
+          - button "Layers" [ref=e39] [cursor=pointer]:
+            - img [ref=e40]
+        - button "common.close" [ref=e44] [cursor=pointer]:
+          - img [ref=e45]
+      - generic [ref=e50]:
+        - generic [ref=e52]:
+          - img [ref=e53]
+          - textbox "Search components..." [ref=e56]: chart/echarts-bar
+        - generic [ref=e59]:
+          - heading "Charts" [level=3] [ref=e60]:
+            - button "Charts" [expanded] [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Charts
+              - img
+          - region "Charts" [ref=e63]:
+            - button "Bar Chart" [active] [ref=e67] [cursor=pointer]:
+              - img [ref=e69]
+              - generic [ref=e72]: Bar Chart
+  - generic [ref=e73]:
+    - generic [ref=e74]:
+      - button [ref=e75] [cursor=pointer]:
+        - img
+      - textbox [ref=e77]: 80%
+      - button [ref=e78] [cursor=pointer]:
+        - img
+      - button "Best Fit" [ref=e80] [cursor=pointer]:
+        - img
+      - button "100% View" [ref=e81] [cursor=pointer]:
+        - img
+    - generic [ref=e82]:
+      - button "Undo" [ref=e83] [cursor=pointer]:
+        - img
+      - button "Redo" [disabled]:
+        - img
+  - button "Shortcuts (?)" [ref=e85] [cursor=pointer]:
+    - img
+  - complementary [ref=e86]:
+    - generic [ref=e87]:
+      - generic [ref=e88]:
+        - heading "Properties" [level=2] [ref=e89]
+        - button [ref=e90] [cursor=pointer]:
+          - img [ref=e91]
+      - generic [ref=e95]:
+        - heading "Basic Info" [level=3] [ref=e97]:
+          - button "Basic Info" [ref=e98] [cursor=pointer]:
+            - text: Basic Info
+            - img
+        - generic [ref=e99]:
+          - heading "Canvas Settings" [level=3] [ref=e100]:
+            - button "Canvas Settings" [expanded] [ref=e101] [cursor=pointer]:
+              - text: Canvas Settings
+              - img
+          - region "Canvas Settings" [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - text: Canvas Theme
+                - generic [ref=e105]:
+                  - button "Dawn" [ref=e106] [cursor=pointer]:
+                    - generic [ref=e113]: Dawn
+                  - button "Midnight" [ref=e115] [cursor=pointer]:
+                    - generic [ref=e122]: Midnight
+                  - button "Ocean" [ref=e123] [cursor=pointer]:
+                    - generic [ref=e130]: Ocean
+                  - button "Ember" [ref=e131] [cursor=pointer]:
+                    - generic [ref=e138]: Ember
+                  - button "Aurora" [ref=e139] [cursor=pointer]:
+                    - generic [ref=e146]: Aurora
+                  - button "Frost" [ref=e147] [cursor=pointer]:
+                    - generic [ref=e154]: Frost
+              - generic [ref=e155]:
+                - text: Layout Mode
+                - combobox [ref=e156]:
+                  - option "Grid"
+                  - option "Fixed" [selected]
+                  - option "Infinite"
+              - generic [ref=e158]:
+                - generic [ref=e159]:
+                  - text: Width
+                  - textbox [ref=e160]: "1920"
+                - generic [ref=e161]:
+                  - text: Height
+                  - textbox [ref=e162]: "1080"
+              - generic [ref=e163]:
+                - generic [ref=e164]:
+                  - text: Preview Scale Mode
+                  - combobox [ref=e165]:
+                    - option "Fit Min" [selected]
+                    - option "Fit Width"
+                    - option "Fit Height"
+                    - option "Stretch"
+                    - option "Original"
+                - generic [ref=e166]:
+                  - text: Preview Vertical Align
+                  - combobox [ref=e167]:
+                    - option "Center" [selected]
+                    - option "Top"
+        - generic [ref=e168]:
+          - heading "Global Background" [level=3] [ref=e169]:
+            - button "Global Background" [expanded] [ref=e170] [cursor=pointer]:
+              - text: Global Background
+              - img
+          - region "Global Background" [ref=e171]:
+            - generic [ref=e172]:
+              - generic [ref=e173]:
+                - text: Background Color
+                - generic [ref=e174]:
+                  - button "Transparent" [ref=e175] [cursor=pointer]
+                  - textbox [ref=e176] [cursor=pointer]: "#000000"
+                  - textbox "TRANSPARENT/HEX/RGBA" [ref=e177]
+              - generic [ref=e178]:
+                - text: Background Image URL
+                - generic [ref=e179]:
+                  - generic [ref=e180]:
+                    - button "Upload" [ref=e181] [cursor=pointer]:
+                      - img [ref=e182]
+                      - text: Upload
+                    - button "URL" [ref=e185] [cursor=pointer]:
+                      - img [ref=e186]
+                      - text: URL
+                    - button "Base64" [ref=e189] [cursor=pointer]:
+                      - img [ref=e190]
+                      - text: Base64
+                  - generic [ref=e195] [cursor=pointer]:
+                    - img [ref=e196]
+                    - paragraph [ref=e199]: Click to upload
+                    - paragraph [ref=e200]: Upload to server (Max 10MB)
+              - generic [ref=e201]:
+                - generic [ref=e202]:
+                  - text: Background Size
+                  - combobox [ref=e203]:
+                    - option "Cover" [selected]
+                    - option "Contain"
+                    - option "Stretch 100%"
+                    - option "Auto"
+                - generic [ref=e204]:
+                  - text: Background Repeat
+                  - combobox [ref=e205]:
+                    - option "No Repeat" [selected]
+                    - option "Repeat"
+                    - option "Repeat X"
+                    - option "Repeat Y"
+```
