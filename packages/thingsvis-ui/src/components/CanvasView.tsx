@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
+import type { ActionRuntime } from '../engine/executeActions';
 import { VisualEngine } from '../engine/VisualEngine';
 import { snapPointToGrid } from '../utils/snapping';
 import type { Point } from '../utils/coords';
@@ -66,6 +67,7 @@ type Props = {
   interactive?: boolean;
   /** Padding for centering calculation (to account for side panels) */
   centerPadding?: { left?: number; right?: number };
+  actionRuntime?: ActionRuntime;
 };
 
 export const CanvasView: React.FC<Props> = ({
@@ -83,7 +85,8 @@ export const CanvasView: React.FC<Props> = ({
   panEnabled = true,
   zoomEnabled = true,
   interactive = true,
-  centerPadding
+  centerPadding,
+  actionRuntime,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const engineRef = useRef<VisualEngine>();
@@ -269,14 +272,18 @@ export const CanvasView: React.FC<Props> = ({
   useEffect(() => {
     if (!containerRef.current) return;
     const mountEl = containerRef.current.querySelector('#visual-engine-mount') as HTMLDivElement | null;
-    const engine = new VisualEngine(store, { resolveWidget, editable: interactive });
+    const engine = new VisualEngine(store, {
+      resolveWidget,
+      editable: interactive,
+      actionRuntime,
+    });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);
     return () => {
       engine.unmount();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [store, resolveWidget]);
+  }, [actionRuntime, store, resolveWidget]);
 
   // Update interactivity dynamically without fully remixing the engine
   useEffect(() => {

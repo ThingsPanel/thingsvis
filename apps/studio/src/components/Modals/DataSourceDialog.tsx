@@ -10,7 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { type KernelStore, dataSourceManager } from '@thingsvis/kernel';
+import type { KernelStore } from '@thingsvis/kernel';
 import type { DataSourceType, RESTConfig, WSConfig } from '@thingsvis/schema';
 import {
   DEFAULT_AUTH_CONFIG,
@@ -18,6 +18,7 @@ import {
   DEFAULT_HEARTBEAT_CONFIG,
 } from '@thingsvis/schema';
 import { useDataSourceRegistry } from '@thingsvis/ui';
+import { dataSourceManager } from '@/lib/store';
 import { RESTForm } from '../DataSourceConfig/RESTForm';
 import { WSForm } from '../DataSourceConfig/WSForm';
 import { TransformationEditor } from '../DataSourceConfig/TransformationEditor';

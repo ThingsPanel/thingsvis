@@ -10,7 +10,7 @@ interface PluginOverlayInstance {
     destroy?: () => void;
 }
 import { PropertyResolver } from '../engine/PropertyResolver';
-import { buildEmit } from '../engine/executeActions';
+import { buildEmit, type ActionRuntime } from '../engine/executeActions';
 import { WidgetErrorBoundary } from './WidgetErrorBoundary';
 
 /** Known shape of node baseStyle coming from schema */
@@ -78,6 +78,7 @@ export interface GridNodeItemProps {
     previewPixelRect?: PixelRect | null;
     /** Current canvas zoom level to scale mouse deltas */
     zoom?: number;
+    actionRuntime?: ActionRuntime;
 }
 
 // ─── Module cache (stable across re-renders) ─────────────────────────────────
@@ -91,7 +92,8 @@ function buildOverlayContext(
     store: KernelStore,
     pixelRect: PixelRect,
     theme: string | undefined,
-    mode: WidgetOverlayContext['mode'] = 'view'
+    mode: WidgetOverlayContext['mode'] = 'view',
+    actionRuntime?: ActionRuntime,
 ): WidgetOverlayContext {
     const state = store.getState() as KernelState & Record<string, unknown>;
     const resolvedProps = PropertyResolver.resolve(
@@ -110,7 +112,9 @@ function buildOverlayContext(
         visible: true,
         emit: buildEmit(
             () => (store.getState() as KernelState).nodesById[node.id]?.schemaRef,
-            () => store.getState()
+            () => store.getState(),
+            undefined,
+            actionRuntime,
         ),
         on: (_event: string, _handler: (payload?: unknown) => void) => () => undefined,
     };
@@ -158,6 +162,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     onSelect,
     previewPixelRect,
     zoom = 1,
+    actionRuntime,
 }) => {
     const contentRef = useRef<HTMLDivElement>(null);
     const overlayRef = useRef<Partial<PluginOverlayInstance>>({});
@@ -210,7 +215,14 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             if (module.createOverlay) {
                 const freshNode = (store.getState() as KernelState).nodesById[nodeId];
                 if (!freshNode) return;
-                const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme, widgetMode);
+                const ctx = buildOverlayContext(
+                    freshNode,
+                    store,
+                    pixelRectRef.current,
+                    theme,
+                    widgetMode,
+                    actionRuntime,
+                );
                 const instance = module.createOverlay(ctx);
                 if (cancelled || !contentRef.current) {
                     instance.destroy?.();
@@ -227,7 +239,14 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                 if (instance.update) {
                     const postMountNode = (store.getState() as KernelState).nodesById[nodeId];
                     if (postMountNode) {
-                        const postMountCtx = buildOverlayContext(postMountNode, store, pixelRectRef.current, theme, widgetMode);
+                        const postMountCtx = buildOverlayContext(
+                            postMountNode,
+                            store,
+                            pixelRectRef.current,
+                            theme,
+                            widgetMode,
+                            actionRuntime,
+                        );
                         instance.update(postMountCtx);
                     }
                 }
@@ -251,7 +270,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         };
         // Re-mount only when widget type or node changes identity; prop changes go through update effect
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [nodeId, resolveWidget, store, theme, widgetMode]);
+    }, [actionRuntime, nodeId, resolveWidget, store, theme, widgetMode]);
 
     // ── Widget update (props / data / pixelRect / dataSources change) ─────────
 
@@ -293,10 +312,17 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         if (!overlayRef.current.update) return;
         const freshNode = (store.getState() as KernelState).nodesById[nodeId];
         if (!freshNode) return;
-        const ctx = buildOverlayContext(freshNode, store, pixelRectRef.current, theme, widgetMode);
+        const ctx = buildOverlayContext(
+            freshNode,
+            store,
+            pixelRectRef.current,
+            theme,
+            widgetMode,
+            actionRuntime,
+        );
         overlayRef.current.update(ctx);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [updateKey, theme, store, widgetMode]);
+    }, [actionRuntime, updateKey, theme, store, widgetMode]);
 
     // ── Drag handling ─────────────────────────────────────────────────────────
 
@@ -337,9 +363,11 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         if (!isPreviewClickable) return;
         buildEmit(
             () => (store.getState() as KernelState).nodesById[nodeId]?.schemaRef,
-            () => store.getState()
+            () => store.getState(),
+            undefined,
+            actionRuntime,
         )('click', { nativeEvent: e.nativeEvent });
-    }, [isPreviewClickable, nodeId, store]);
+    }, [actionRuntime, isPreviewClickable, nodeId, store]);
 
     // ── Resize handle handling ────────────────────────────────────────────────
 

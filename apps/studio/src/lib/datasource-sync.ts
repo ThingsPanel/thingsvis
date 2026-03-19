@@ -3,7 +3,8 @@
  * This module handles switching between local-only and cloud-sync modes
  */
 
-import { dataSourceManager, ApiSyncAdapter, NoopSyncAdapter } from '@thingsvis/kernel';
+import { ApiSyncAdapter, NoopSyncAdapter } from '@thingsvis/kernel';
+import { dataSourceManager } from './store';
 
 let currentMode: 'local' | 'cloud' = 'local';
 

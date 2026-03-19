@@ -68,7 +68,7 @@ export class DataSourceManager {
   private syncAdapter: DataSourceSyncAdapter = new NoopSyncAdapter();
   private storageMode: StorageMode = 'local';
 
-  private constructor() {
+  public constructor() {
     // Register built-in adapters
     this.registerAdapterType('STATIC', StaticAdapter);
     this.registerAdapterType('WS', WSAdapter);
@@ -78,6 +78,9 @@ export class DataSourceManager {
 
   public static getInstance(): DataSourceManager {
     if (!DataSourceManager.instance) {
+      console.warn(
+        '[DataSourceManager] getInstance() is deprecated. Create a runtime-scoped instance via createRuntimeServices().',
+      );
       DataSourceManager.instance = new DataSourceManager();
     }
     return DataSourceManager.instance;
@@ -521,4 +524,5 @@ export class DataSourceManager {
   }
 }
 
+/** @deprecated Use runtime.dataSourceManager from createRuntimeServices(). */
 export const dataSourceManager = DataSourceManager.getInstance();

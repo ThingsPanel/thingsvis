@@ -15,7 +15,7 @@ import { messageRouter, MSG_TYPES } from '../embed/message-router';
 import { usePlatformFieldStore, type PlatformFieldItem } from '../lib/stores/platformFieldStore';
 import { usePlatformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { normalizePlatformFieldScope } from '../lib/embedded/default-platform-fields';
-import { dataSourceManager } from '@thingsvis/kernel';
+import { dataSourceManager } from '../lib/store';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 // =============================================================================

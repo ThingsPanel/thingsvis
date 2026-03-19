@@ -1,6 +1,6 @@
-import { UniversalLoader } from '@thingsvis/kernel';
 import type { WidgetMainModule } from '@thingsvis/schema';
 import i18n from '@/i18n';
+import { loader } from '../store';
 import { ensureRegistryLoaded } from './registry-store';
 
 const COMPONENT_LOAD_TIMEOUT_MS = 60_000;
@@ -136,8 +136,8 @@ export async function loadComponent(componentId: string): Promise<LoadedComponen
   const promise = (async () => {
     const loadPromise = (async () => {
       const descriptor = await resolveWidgetDescriptor(componentId);
-      await UniversalLoader.registerRemote(descriptor.remoteName, descriptor.finalUrl);
-      const loaded = await UniversalLoader.loadComponent<Record<string, unknown>>(
+      await loader.registerRemote(descriptor.remoteName, descriptor.finalUrl);
+      const loaded = await loader.loadComponent<Record<string, unknown>>(
         descriptor.remoteName,
         descriptor.exposedModule,
       );

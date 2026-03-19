@@ -4,8 +4,13 @@
  * Executes a list of ActionConfigItems against the current kernel state.
  * This is wired into the `emit` function that widgets receive via WidgetOverlayContext.
  */
+import type { DataSourceManager } from '@thingsvis/kernel';
 import type { EventBus } from './EventBus';
-import { dataSourceManager, SafeExecutor } from '@thingsvis/kernel';
+import { dataSourceManager as defaultDataSourceManager, SafeExecutor } from '@thingsvis/kernel';
+
+export type ActionRuntime = {
+  dataSourceManager?: Pick<DataSourceManager, 'writeDataSource'>;
+};
 
 export interface ActionConfigItem {
   type: 'setVariable' | 'callWrite' | 'navigate' | 'runScript';
@@ -170,8 +175,11 @@ export interface EventHandlerConfig {
 export function executeAction(
   action: ActionConfigItem,
   state: Record<string, unknown>,
-  payload?: unknown
+  payload?: unknown,
+  runtime: ActionRuntime = {},
 ): void {
+  const dataSourceManager = runtime.dataSourceManager ?? defaultDataSourceManager;
+
   switch (action.type) {
     case 'setVariable': {
       const name = action.variableName;
@@ -269,7 +277,8 @@ export function buildEmit(
   getSchema: () => any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getState: () => any,
-  bus?: EventBus
+  bus?: EventBus,
+  runtime: ActionRuntime = {},
 ): (eventName: string, payload?: unknown) => void {
   return (eventName: string, payload?: unknown) => {
     const schema = getSchema();
@@ -282,7 +291,7 @@ export function buildEmit(
     if (matching.length > 0) {
       for (const handler of matching) {
         for (const action of handler.actions ?? []) {
-          executeAction(action, state, payload);
+          executeAction(action, state, payload, runtime);
         }
       }
     }

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import type { KernelStore } from '@thingsvis/kernel';
+import type { ActionRuntime } from '../engine/executeActions';
 import { VisualEngine } from '../engine/VisualEngine';
 
 
@@ -14,6 +15,7 @@ interface PreviewCanvasProps {
      * 0.5 = half-size (VisualEngine scales content for scroll modes).
      */
     zoom?: number;
+    actionRuntime?: ActionRuntime;
 }
 
 /**
@@ -29,6 +31,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     store,
     resolveWidget,
     zoom = 1,
+    actionRuntime,
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef<VisualEngine | undefined>(undefined);
@@ -40,6 +43,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         const engine = new VisualEngine(store, {
             resolveWidget: resolveWidget as any,
             editable: false,
+            actionRuntime,
         });
         engineRef.current = engine;
         engine.mount(containerRef.current);
@@ -52,7 +56,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         };
         // Re-mount only if store or resolveWidget reference changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [store, resolveWidget]);
+    }, [actionRuntime, store, resolveWidget]);
 
     // Update VisualEngine viewport when zoom changes (scroll modes)
     useEffect(() => {

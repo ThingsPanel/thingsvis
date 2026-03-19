@@ -10,6 +10,7 @@ import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
 import { GridSystem } from '@thingsvis/kernel';
 import type { GridSettings, WidgetMainModule, WidgetOverlayContext } from '@thingsvis/schema';
 import { validateCanvasTheme } from '@thingsvis/schema';
+import type { ActionRuntime } from '../engine/executeActions';
 import { useGridLayout } from '../hooks/useGridLayout';
 import { clientPointToGrid, gridToPixel } from '../utils/grid-mapper';
 import { GridCanvasBackground } from './GridCanvasBackground';
@@ -95,6 +96,7 @@ export interface GridCanvasProps {
     centerPadding?: { left?: number; right?: number };
     /** Widget runtime mode forwarded to DOM overlays */
     widgetMode?: WidgetOverlayContext['mode'];
+    actionRuntime?: ActionRuntime;
 }
 
 /** Inset applied to the editor scroll-container so element borders/shadows are never clipped by overflow:hidden. */
@@ -139,6 +141,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     theme,
     centerPadding,
     widgetMode = 'view',
+    actionRuntime,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
@@ -514,6 +517,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                         isSelected={selectedIds.includes(node.id)}
                         theme={normalizedTheme}
                         widgetMode={widgetMode}
+                        actionRuntime={actionRuntime}
                         zoom={zoom}
                         onDragStart={onDragStart}
                         onDragMove={onDragMove}

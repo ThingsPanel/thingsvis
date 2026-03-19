@@ -1,8 +1,7 @@
 import { useCallback } from 'react';
-import { dataSourceManager } from '@thingsvis/kernel';
 import { loadWidget } from '../lib/registry/componentLoader';
 import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
-import { store } from '../lib/store';
+import { dataSourceManager, store } from '../lib/store';
 import type { NodeSchemaType } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 

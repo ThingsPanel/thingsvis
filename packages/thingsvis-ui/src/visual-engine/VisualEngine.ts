@@ -28,7 +28,7 @@ export class VisualEngine {
       // eslint-disable-next-line no-console
       
       // TODO: translate patches into adapter.addNode/update/removeNode calls
-    });
+    }, subscribeToPatches);
   }
 
   stop() {
@@ -37,5 +37,4 @@ export class VisualEngine {
     if (this.stopLoop) this.stopLoop();
   }
 }
-
 

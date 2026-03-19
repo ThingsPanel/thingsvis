@@ -27,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { dataSourceManager } from '@thingsvis/kernel';
 import type { DataSourceType, DataSourceMode, RESTConfig, WSConfig } from '@thingsvis/schema';
 import {
   DEFAULT_AUTH_CONFIG,
@@ -40,7 +39,7 @@ import { WSForm } from '../components/DataSourceConfig/WSForm';
 import { TransformationEditor } from '../components/DataSourceConfig/TransformationEditor';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
-import { store } from '../lib/store';
+import { dataSourceManager, store } from '../lib/store';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {

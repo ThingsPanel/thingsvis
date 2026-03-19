@@ -3,7 +3,7 @@ import type { NodeState, KernelStore } from '@thingsvis/kernel';
 import type { LeaferDisplayObject, RendererFactory } from './types';
 import { Rect } from 'leafer-ui';
 import { PropertyResolver } from '../PropertyResolver';
-import { buildEmit } from '../executeActions';
+import { buildEmit, type ActionRuntime } from '../executeActions';
 import type { EventBus } from '../EventBus';
 
 /**
@@ -58,6 +58,7 @@ function nodeToOverlayContext(
   store: KernelStore,
   opts?: { editable?: boolean },
   bus?: EventBus,
+  runtime?: ActionRuntime,
   // Per-node subscription tracker for automatic cleanup on widget destroy
   subscriptions?: Set<() => void>
 ): WidgetOverlayContext {
@@ -75,7 +76,8 @@ function nodeToOverlayContext(
     emit: buildEmit(
       () => store.getState().nodesById[node.id]?.schemaRef,
       () => store.getState(),
-      bus
+      bus,
+      runtime,
     ),
     on: (event: string, handler: (payload?: unknown) => void) => {
       if (!bus) return () => {};
@@ -94,7 +96,7 @@ function nodeToOverlayContext(
 export function createWidgetRenderer(
   widget: WidgetMainModule,
   store: KernelStore,
-  opts?: { editable?: boolean },
+  opts?: { editable?: boolean; actionRuntime?: ActionRuntime },
   bus?: EventBus
 ): RendererFactory {
   // Per-node subscription tracker: nodeId → Set of unsubscribe functions
@@ -169,7 +171,7 @@ export function createWidgetRenderer(
 
         // 从 node 中提取 linkedNodes（如果存在）
         const linkedNodes = (node as any).linkedNodes;
-        const context = nodeToOverlayContext(node, store, opts, bus, subs);
+        const context = nodeToOverlayContext(node, store, opts, bus, opts?.actionRuntime, subs);
         // 将 linkedNodes 附加到 context
         if (linkedNodes) {
           (context as any).linkedNodes = linkedNodes;
@@ -196,7 +198,14 @@ export function createWidgetRenderer(
           update: overlay.update
             ? (nextNode: NodeState) => {
               const nextLinkedNodes = (nextNode as any).linkedNodes;
-              const nextContext = nodeToOverlayContext(nextNode, store, opts, bus, subs);
+              const nextContext = nodeToOverlayContext(
+                nextNode,
+                store,
+                opts,
+                bus,
+                opts?.actionRuntime,
+                subs,
+              );
               if (nextLinkedNodes) {
                 (nextContext as any).linkedNodes = nextLinkedNodes;
               }
@@ -235,5 +244,3 @@ export function createWidgetRenderer(
     resizable
   };
 }
-
-

@@ -8,13 +8,12 @@ import {
   type IPageConfig,
   DEFAULT_CANVAS_THEME,
 } from '@thingsvis/schema';
-import { dataSourceManager } from '@thingsvis/kernel';
 import { projectStorage } from '../lib/storage/projectStorage';
 import { recentProjects } from '../lib/storage/recentProjects';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
 import { createCloudStorageAdapter } from '../lib/storage/adapter';
 import type { ProjectFile } from '../lib/storage/schemas';
-import { store } from '../lib/store';
+import { dataSourceManager, store } from '../lib/store';
 import { useStorage } from './useStorage';
 import {
   messageRouter,

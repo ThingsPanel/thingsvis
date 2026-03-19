@@ -1,7 +1,9 @@
-/// <reference path="./globals.d.ts" />
 export * from './store';
 export * from './safe-executor';
 export * from './etl-worker';
+export { createRuntimeServices } from './RuntimeServices';
+export type { RuntimeServices, RuntimeServicesOptions } from './RuntimeServices';
+export type { RuntimePatch, SubscribeToPatches } from './store/patchBridge';
 
 export { createKernelStore } from './store/KernelStore';
 export type {
@@ -52,7 +54,7 @@ export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';
 export { safeExecute } from './executor/SafeExecutor';
 export { ResourceLoader } from './loader/ResourceLoader';
-export { UniversalLoader } from './loader/UniversalLoader';
+export { Loader, UniversalLoader } from './loader/UniversalLoader';
 export { CmdStack } from './history/CmdStack';
 export { createNodeDropCommand } from './commands/nodeDrop';
 export { action, subscribeToPatches } from './store';
@@ -60,26 +62,7 @@ export { actionStack } from './history/ActionStack';
 
 // Export event bus
 export { EventBus, type EventHandler, eventBus } from './event-bus';
-import { eventBus as _eventBus } from './event-bus';
 export * from './events/widgetEvents';
-// expose kernel eventBus to host apps via globalThis for loose coupling (used by UI loader)
-try {
-  if (typeof globalThis !== 'undefined' && !globalThis.__thingsvis_kernel_eventbus__) {
-    globalThis.__thingsvis_kernel_eventbus__ = _eventBus;
-  }
-} catch (e) {
-  console.warn('[kernel] Failed to expose eventBus on globalThis', e);
-}
-
-// expose subscribeToPatches for UI runtime via globalThis to avoid static package imports
-try {
-  const sub = require('./store').subscribeToPatches;
-  if (sub && typeof globalThis !== 'undefined') {
-    globalThis.__thingsvis_subscribeToPatches__ = sub;
-  }
-} catch (e) {
-  console.warn('[kernel] Failed to expose subscribeToPatches on globalThis', e);
-}
 
 // Legacy kernel interfaces — no longer on the main code path.
 // Kept as internal files for reference; removed from public exports.

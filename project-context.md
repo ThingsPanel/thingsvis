@@ -19,6 +19,9 @@
 - A follow-up cross-package review showed the issue pool was still incomplete; two more confirmed issues were added for runtime singleton/global-bridge coupling and fragmented widget contract/loader boundaries.
 - A final closure scan of dependency directions and public legacy surfaces did not reveal a new eighth core architecture issue; remaining findings were absorbed into issues `06` and `07`.
 - The issue pool has now been converted into a full executable task backlog under `thingsvis-internal-docs/docs/architecture/tasks`, with one task file per issue and a new execution order led by runtime services, runtime context, and widget contract canonicalization.
+- Task `06` runtime desingleton is now implemented on the main path: Studio creates runtime services explicitly, kernel exposes `createRuntimeServices()`, and UI no longer reads runtime event bus / patch bridge / preview registry URL from `globalThis`.
+- `DataSourceManager` and `Loader` can now be instantiated per runtime. Deprecated singleton exports still exist as compatibility shims, but Studio’s live path now uses the runtime-scoped instances from `apps/studio/src/lib/store.ts`.
+- UI action execution (`buildEmit` / widget overlay paths / preview/grid canvases) now accepts an injected datasource manager runtime, so widget writes follow the Studio runtime instance instead of implicitly using the kernel singleton.
 
 ## Known Issues / Risks
 - The editor still has duplicated page/canvas truth sources and multiple normalization paths.
@@ -32,6 +35,7 @@
 - The widget platform contract is still split between `thingsvis-schema`, `thingsvis-widget-sdk`, Studio registry/loader code, UI loader exports, and legacy kernel interfaces.
 - Public package surfaces still expose deprecated or non-canonical entries, but those risks are now explicitly classified under existing runtime-coupling and widget-contract fragmentation issues rather than as a separate uncovered problem class.
 - The currently agreed system-level guardrails are now explicit in the tasks index: one canonical domain definition per core object, one formal path per core chain, no hidden runtime bridges, no public MVP/legacy dominance, no new cross-layer issue classes, and a stable target dependency graph.
+- Deprecated singleton exports (`dataSourceManager`, `UniversalLoader`, `eventBus`, legacy `subscribeToPatches`) still exist for migration compatibility, so full cleanup remains a follow-up step after downstream consumers finish migrating.
 
 ## Domain Knowledge
 - Theme/background regressions are tied less to schema validation and more to where/when state is read for save and which rehydration path is used for reopen.
@@ -60,3 +64,4 @@
   - `02` editor persistence / preview snapshot
   - `01` asset / background / render invalidation
   - `05` editor entry / main-path unification
+- Current runtime wiring rule: `apps/studio/src/lib/store.ts` is the composition root for Studio runtime services and should remain the source for runtime-scoped `store`, `dataSourceManager`, `loader`, `eventBus`, and `actionRuntime`.

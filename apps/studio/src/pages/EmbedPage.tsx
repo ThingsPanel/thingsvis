@@ -13,13 +13,12 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
-import { dataSourceManager } from '@thingsvis/kernel';
 import type { KernelState } from '@thingsvis/kernel';
 import type { PageSchemaType, DataSource } from '@thingsvis/schema';
 import { DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
 import { getDashboard } from '@/lib/api/dashboards';
 import { apiClient } from '@/lib/api/client';
-import { store } from '@/lib/store';
+import { actionRuntime, dataSourceManager, store } from '@/lib/store';
 import { loadWidget } from '@/lib/registry/componentLoader';
 import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 import { platformDeviceStore } from '@/lib/stores/platformDeviceStore';
@@ -929,6 +928,7 @@ export default function EmbedPage() {
               settings={{ ...gridSettings, showGridLines: false }}
               interactive={false}
               fullWidth={true}
+              actionRuntime={actionRuntime}
             />
           </div>
         ) : (
@@ -943,6 +943,7 @@ export default function EmbedPage() {
                 store={store as any}
                 resolveWidget={resolveWidget as any}
                 zoom={engineZoom}
+                actionRuntime={actionRuntime}
               />
             )}
           </ScaleScreen>

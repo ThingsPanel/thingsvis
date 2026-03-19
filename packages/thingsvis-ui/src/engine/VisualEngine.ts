@@ -7,7 +7,7 @@ import { createWidgetRenderer } from './renderers/widgetRenderer';
 import { errorRenderer } from './renderers/errorRenderer';
 import { GridManager } from './managers/GridManager';
 import { ConnectionManager } from './managers/ConnectionManager';
-import { buildEmit, type EventHandlerConfig } from './executeActions';
+import { buildEmit, type EventHandlerConfig, type ActionRuntime } from './executeActions';
 import { EventBus } from './EventBus';
 import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
@@ -170,6 +170,7 @@ export class VisualEngine {
     private opts?: {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
+      actionRuntime?: ActionRuntime;
     }
   ) { }
 
@@ -515,7 +516,9 @@ export class VisualEngine {
             visible: true,
             emit: buildEmit(
               () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
-              () => this.store.getState()
+              () => this.store.getState(),
+              undefined,
+              this.opts?.actionRuntime,
             ),
             on: (_event: string, _handler: (payload?: unknown) => void) => () => { },
           };
@@ -850,7 +853,9 @@ export class VisualEngine {
 
     const emit = buildEmit(
       () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
-      () => this.store.getState()
+      () => this.store.getState(),
+      undefined,
+      this.opts?.actionRuntime,
     );
 
     const handleClick = (event: MouseEvent) => {
@@ -893,7 +898,15 @@ export class VisualEngine {
       const p = (async () => {
         try {
           const widget = await this.opts!.resolveWidget!(type);
-          this.rendererByType.set(type, createWidgetRenderer(widget, this.store, { editable: this.opts?.editable }, this.eventBus));
+          this.rendererByType.set(
+            type,
+            createWidgetRenderer(
+              widget,
+              this.store,
+              { editable: this.opts?.editable, actionRuntime: this.opts?.actionRuntime },
+              this.eventBus,
+            ),
+          );
           this.errorMessageByType.delete(type);
           this.failedRendererTypes.delete(type);
         } catch (e) {

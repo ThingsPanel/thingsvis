@@ -19,6 +19,5 @@ export class EventBus {
   }
 }
 
-// singleton bus for cross-package eventing (headless, in-memory)
+/** @deprecated Use runtime.eventBus from createRuntimeServices(). */
 export const eventBus = new EventBus();
-

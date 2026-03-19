@@ -15,6 +15,7 @@ import {
   type KernelState,
 } from '@thingsvis/kernel';
 import { validateCanvasTheme } from '@thingsvis/schema';
+import { actionRuntime } from '../lib/store';
 import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
@@ -432,6 +433,7 @@ const CanvasView = forwardRef<
           theme={theme}
           centerPadding={centerPadding}
           widgetMode="edit"
+          actionRuntime={actionRuntime}
           onDropComponent={handleGridDropComponent}
         />
       </div>
@@ -466,6 +468,7 @@ const CanvasView = forwardRef<
         gridSize={20}
         snapToGrid={true}
         centeredMask={true}
+        actionRuntime={actionRuntime}
         panEnabled={activeTool === 'pan'}
         zoomEnabled={activeTool === 'pan'}
         interactive={activeTool !== 'pan'}

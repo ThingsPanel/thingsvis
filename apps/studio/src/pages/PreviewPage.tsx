@@ -19,7 +19,7 @@ import { ScaleScreen } from '../components/ScaleScreen';
 export type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
 export type PreviewAlignY = 'top' | 'center';
 
-import { store } from '../lib/store';
+import { actionRuntime, store } from '../lib/store';
 import { loadWidget } from '../lib/registry/componentLoader';
 import { projectStorage } from '../lib/storage/projectStorage';
 import * as previewSession from '../lib/storage/previewSession';
@@ -452,6 +452,7 @@ export default function PreviewPage() {
               interactive={false}
               fullWidth={true}
               showGridLines={false}
+              actionRuntime={actionRuntime}
             />
           </div>
         ) : (
@@ -466,6 +467,7 @@ export default function PreviewPage() {
                 store={store as any}
                 resolveWidget={resolveWidget as any}
                 zoom={engineZoom}
+                actionRuntime={actionRuntime}
               />
             )}
           </ScaleScreen>

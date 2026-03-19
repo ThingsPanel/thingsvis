@@ -3,8 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 import './i18n'; // Initialize i18next before React renders
 import './index.css';
-import { setPreviewRegistryUrl } from '@thingsvis/ui';
+import { configureDynamicLoader } from '@thingsvis/ui';
 import { configureEmbedApiClient } from './embed/message-router';
+import { eventBus } from './lib/store';
 
 // If PREVIEW_REGISTRY_URL is set in the environment or injected at runtime, configure the UI loader.
 try {
@@ -12,7 +13,10 @@ try {
     typeof process !== 'undefined' && (process.env as any).PREVIEW_REGISTRY_URL
       ? (process.env as any).PREVIEW_REGISTRY_URL
       : undefined;
-  if (envUrl) setPreviewRegistryUrl(envUrl);
+  configureDynamicLoader({
+    eventBus,
+    previewRegistryUrl: envUrl,
+  });
 } catch {}
 
 // 🔑 在 React 渲染之前，从 URL 读取嵌入模式的 token 并配置 API client

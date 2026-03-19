@@ -63,3 +63,11 @@
 - **How it was tested**: Verified the final contents of `/architecture/tasks/00-index.md`, checked the task file list under the internal docs tasks directory, and confirmed `/architecture/issues/00-index.md` now points to the new task files and priority order.
 - **Key decisions & rationale**: Prioritized `06 -> 03 -> 07` ahead of the earlier user-visible symptom work because the user explicitly asked to treat “system-wide single source of truth” as the gating rule before starting execution.
 - **Time/Iteration count**: 1 iteration
+
+## Sub-task 9: Execute Task 06 runtime services / desingleton refactor
+- **What was done**: Added kernel-level `RuntimeServices` and `createRuntimeServices()`, introduced a store-backed patch bridge, made `DataSourceManager` and `Loader` constructible per runtime, removed kernel/globalThis runtime bridges, replaced UI loader global inputs with explicit runtime configuration, and switched Studio’s composition root plus main consumers to a shared explicit runtime instance from `apps/studio/src/lib/store.ts`.
+- **What was tried & failed**: One large multi-file patch failed to apply cleanly because a few target blocks had drifted from the expected context. The work was then reapplied file-by-file to keep the migration deterministic.
+- **What succeeded**: The main runtime path no longer uses `globalThis` for event bus / patch subscribe / preview registry URL. Studio now creates one explicit runtime instance and routes datasource + loader access through it. UI action execution can consume an injected datasource manager, while deprecated singleton exports remain only as compatibility shims.
+- **How it was tested**: `pnpm --filter @thingsvis/kernel typecheck`, `pnpm --filter @thingsvis/ui typecheck`, and `pnpm --filter studio typecheck` all passed. A repository-wide search also confirmed the removed `__thingsvis_*` globals no longer appear under `apps/` or `packages/`.
+- **Key decisions & rationale**: Kept deprecated singleton exports temporarily to avoid breaking non-migrated consumers, but removed them from the Studio main path. Used explicit `actionRuntime` prop threading in UI/studio rather than adding new hidden globals or relying on process-wide default runtime mutation.
+- **Time/Iteration count**: 1 iteration

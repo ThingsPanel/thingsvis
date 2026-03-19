@@ -31,6 +31,9 @@ export class Loader {
 
   static get instance(): Loader {
     if (!Loader._instance) {
+      console.warn(
+        '[Loader] Loader.instance is deprecated. Create a runtime-scoped instance via createRuntimeServices().',
+      );
       Loader._instance = new Loader();
     }
     return Loader._instance;
@@ -42,8 +45,8 @@ export class Loader {
   private remoteEntryFetchPromises = new Map<string, Promise<string>>();
   private host?: unknown;
 
-  private constructor() {
-    // singleton – use Loader.instance
+  public constructor() {
+    // Runtime-scoped loader instances are now supported.
   }
 
   /**
@@ -225,4 +228,5 @@ export class Loader {
   }
 }
 
+/** @deprecated Use runtime.loader from createRuntimeServices(). */
 export const UniversalLoader = Loader.instance;

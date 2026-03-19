@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { KernelStore } from '@thingsvis/kernel';
-import type { EventHandlerConfig, ActionConfigItem } from '../engine/executeActions';
+import type { EventHandlerConfig, ActionConfigItem, ActionRuntime } from '../engine/executeActions';
 import { executeAction } from '../engine/executeActions';
 
 interface UseActionExecutorReturn {
@@ -33,6 +33,7 @@ interface UseActionExecutorReturn {
 export function useActionExecutor(
   handlers: EventHandlerConfig[],
   store: KernelStore,
+  runtime?: ActionRuntime,
 ): UseActionExecutorReturn {
   // Keep a stable ref to handlers so execute() doesn't need to re-create on each render
   const handlersRef = useRef<EventHandlerConfig[]>(handlers);
@@ -46,14 +47,14 @@ export function useActionExecutor(
       for (const handler of matchingHandlers) {
         for (const action of handler.actions as ActionConfigItem[]) {
           try {
-            executeAction(action, state, payload);
+            executeAction(action, state, payload, runtime);
           } catch (e) {
             console.error('[useActionExecutor] Action execution error:', action, e);
           }
         }
       }
     },
-    [store],
+    [runtime, store],
   );
 
   return { execute };

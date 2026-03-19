@@ -6,7 +6,7 @@ export { VisualEngine } from "./engine/VisualEngine";
 export { DataContainer } from "./components/DataContainer";
 export { HeadlessErrorBoundary } from "./components/HeadlessErrorBoundary";
 export { Button } from "./Button";
-export { getRegistryEntries, loadWidget } from "./loader/dynamicLoader";
+export { configureDynamicLoader, getRegistryEntries, loadWidget } from "./loader/dynamicLoader";
 export { screenToCanvas, canvasToScreen } from "./utils/coords";
 export { setPreviewRegistryUrl } from "./loader/dynamicLoader";
 export { EventBus } from "./engine/EventBus";
