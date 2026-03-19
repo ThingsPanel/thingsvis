@@ -27,7 +27,6 @@ export const controls = createControlPanel()
     b.addSwitch('disabled', { label: `${W}.disabled` });
   }, { label: `${W}.groupContent` })
   .addGroup('Style', (b) => {
-    b.addColorPicker('backgroundColor', { label: `${W}.backgroundColor` });
     b.addColorPicker('textColor', { label: `${W}.textColor` });
     b.addColorPicker('borderColor', { label: `${W}.borderColor` });
     b.addColorPicker('accentColor', { label: `${W}.accentColor` });

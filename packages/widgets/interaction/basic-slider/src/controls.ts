@@ -13,7 +13,6 @@ export const controls = createControlPanel()
   }, { label: `${W}.groupContent` })
   .addGroup('Style', (b) => {
     b.addColorPicker('trackColor', { label: `${W}.trackColor`, binding: true });
-    b.addColorPicker('backgroundColor', { label: `${W}.backgroundColor`, binding: true });
     b.addColorPicker('textColor', { label: `${W}.textColor`, binding: true });
     b.addSwitch('disabled', { label: `${W}.disabled` });
   }, { label: `${W}.groupStyle` })

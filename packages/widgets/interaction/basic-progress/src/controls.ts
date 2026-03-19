@@ -22,7 +22,6 @@ export const controls = createControlPanel()
     });
     b.addColorPicker('color', { label: `${W}.color` });
     b.addColorPicker('trackColor', { label: `${W}.trackColor` });
-    b.addColorPicker('backgroundColor', { label: `${W}.backgroundColor` });
     b.addColorPicker('textColor', { label: `${W}.textColor` });
     b.addSlider('fontSize', { label: `${W}.fontSize`, min: 10, max: 32, step: 1, default: 13 });
     b.addSlider('borderRadius', { label: `${W}.borderRadius`, min: 0, max: 20, step: 1, default: 8 });

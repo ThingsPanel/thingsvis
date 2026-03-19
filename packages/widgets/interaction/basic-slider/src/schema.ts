@@ -9,7 +9,6 @@ export const PropsSchema = z.object({
   unit: z.string().default('').describe('props.unit'),
   showValue: z.boolean().default(true).describe('props.showValue'),
   trackColor: z.string().default('#3b82f6').describe('props.trackColor'),
-  backgroundColor: z.string().default('#1e293b').describe('props.bgColor'),
   textColor: z.string().default('#f1f5f9').describe('props.textColor'),
   disabled: z.boolean().default(false).describe('props.disabled'),
 });

@@ -8,7 +8,6 @@ export const controls = createControlPanel()
     b.addSwitch('showPresets', { label: `${W}.showPresets` });
   }, { label: `${W}.groupContent` })
   .addGroup('Style', (b) => {
-    b.addColorPicker('backgroundColor', { label: `${W}.backgroundColor` });
     b.addColorPicker('textColor', { label: `${W}.textColor` });
     b.addColorPicker('accentColor', { label: `${W}.accentColor` });
     b.addSlider('fontSize', { label: `${W}.fontSize`, min: 10, max: 20, step: 1, default: 12 });

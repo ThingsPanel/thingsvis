@@ -37,11 +37,7 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
   };
 
   return (
-    <Accordion
-      type="multiple"
-      defaultValue={['background', 'border', 'shadow', 'others']}
-      className="w-full"
-    >
+    <Accordion type="multiple" defaultValue={['background', 'border', 'others']} className="w-full">
       {/* Background */}
       <AccordionItem value="background" className="border-b px-1">
         <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
@@ -69,7 +65,7 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Border */}
+      {/* Border — compact single-row for width/radius, color below */}
       <AccordionItem value="border" className="border-b px-1">
         <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
           {t('propsPanel.baseStyle.border', '边框')}
@@ -117,7 +113,7 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
         </AccordionContent>
       </AccordionItem>
 
-      {/* Shadow */}
+      {/* Shadow — collapsed by default */}
       <AccordionItem value="shadow" className="border-b px-1">
         <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
           {t('propsPanel.baseStyle.shadow', '发光 / 阴影')}
@@ -149,32 +145,34 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-muted-foreground">
-              {t('propsPanel.baseStyle.blur', '模糊半径')}
-            </label>
-            <NumericInput
-              value={baseStyle.shadow?.blur}
-              onValueChange={(nextValue) => updateStyle('shadow', 'blur', nextValue)}
-              className="h-8 text-sm"
-              placeholder="0"
-              allowEmpty
-              min={0}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-muted-foreground">
-              {t('propsPanel.baseStyle.shadowColor', '阴影颜色')}
-            </label>
-            <ColorInput
-              value={baseStyle.shadow?.color || ''}
-              onChange={(v) => updateStyle('shadow', 'color', v)}
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-muted-foreground">
+                {t('propsPanel.baseStyle.blur', '模糊半径')}
+              </label>
+              <NumericInput
+                value={baseStyle.shadow?.blur}
+                onValueChange={(nextValue) => updateStyle('shadow', 'blur', nextValue)}
+                className="h-8 text-sm"
+                placeholder="0"
+                allowEmpty
+                min={0}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-muted-foreground">
+                {t('propsPanel.baseStyle.shadowColor', '阴影颜色')}
+              </label>
+              <ColorInput
+                value={baseStyle.shadow?.color || ''}
+                onChange={(v) => updateStyle('shadow', 'color', v)}
+              />
+            </div>
           </div>
         </AccordionContent>
       </AccordionItem>
 
-      {/* Others (Padding & Opacity) */}
+      {/* Others (Padding & Opacity) — always open */}
       <AccordionItem value="others" className="border-b px-1">
         <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
           {t('propsPanel.baseStyle.others', '其他外观')}

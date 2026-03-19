@@ -12,10 +12,7 @@ import { z } from 'zod';
  * 多语言 map: Studio 按当前语言取对应字段，第三方 SDK 组件不需要在 locale 文件里注册
  * 示例: { en: 'Primary Color', zh: '主色调' }
  */
-export const I18nLabelSchema = z.union([
-  z.string().min(1),
-  z.record(z.string(), z.string()),
-]);
+export const I18nLabelSchema = z.union([z.string().min(1), z.record(z.string(), z.string())]);
 export type I18nLabel = z.infer<typeof I18nLabelSchema>;
 
 export const BindingModeSchema = z.enum(['static', 'field', 'expr', 'rule']);
@@ -23,7 +20,7 @@ export type BindingMode = z.infer<typeof BindingModeSchema>;
 
 /**
  * 控件类型枚举
- * 
+ *
  * 分类：
  * - 基础：string, number, boolean
  * - 颜色：color, gradient, colorScheme
@@ -72,13 +69,13 @@ export const ControlOptionSchema = z.object({
   label: I18nLabelSchema,
   value: z.union([z.string(), z.number()]),
   /** Lucide 图标名称（用于 segmented 等控件） */
-  icon: z.string().optional()
+  icon: z.string().optional(),
 });
 export type ControlOption = z.infer<typeof ControlOptionSchema>;
 
 export const ControlBindingSchema = z.object({
   enabled: z.boolean(),
-  modes: z.array(BindingModeSchema)
+  modes: z.array(BindingModeSchema),
 });
 export type ControlBinding = z.infer<typeof ControlBindingSchema>;
 
@@ -102,10 +99,12 @@ export const ControlFieldSchema = z.object({
   /** 是否禁用 */
   disabled: z.boolean().optional(),
   /** 条件显示（依赖其他字段） */
-  showWhen: z.object({
-    field: z.string(),
-    value: z.unknown(),
-  }).optional(),
+  showWhen: z
+    .object({
+      field: z.string(),
+      value: z.unknown(),
+    })
+    .optional(),
   /** 数值范围（slider/number 使用） */
   min: z.number().optional(),
   max: z.number().optional(),
@@ -122,11 +121,30 @@ export const ControlGroupSchema = z.object({
   label: I18nLabelSchema.optional(),
   /** 是否默认展开 */
   expanded: z.boolean().optional(),
-  fields: z.array(ControlFieldSchema)
+  fields: z.array(ControlFieldSchema),
 });
 export type ControlGroup = z.infer<typeof ControlGroupSchema>;
 
 export const WidgetControlsSchema = z.object({
-  groups: z.array(ControlGroupSchema)
+  groups: z.array(ControlGroupSchema),
 });
 export type WidgetControls = z.infer<typeof WidgetControlsSchema>;
+
+/**
+ * Property paths managed exclusively by BaseStylePanel.
+ * Widget controls MUST NOT define fields with these paths.
+ * Enforced at validation time by getWidgetControls() in Studio.
+ */
+export const BASE_STYLE_MANAGED_PATHS: ReadonlySet<string> = new Set([
+  'backgroundColor',
+  'backgroundImage',
+  'borderWidth',
+  'borderColor',
+  'borderStyle',
+  'shadowBlur',
+  'shadowColor',
+  'shadowOffsetX',
+  'shadowOffsetY',
+  'opacity',
+  'padding',
+]);

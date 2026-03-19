@@ -10,7 +10,6 @@ export const controls = createControlPanel()
     b.addSlider('fontSize', { label: `${W}.fontSize`, min: 10, max: 48, step: 1, default: 14 });
   }, { label: `${W}.groupContent` })
   .addGroup('Style', (b) => {
-    b.addColorPicker('backgroundColor', { label: `${W}.backgroundColor`, binding: true });
     b.addColorPicker('textColor', { label: `${W}.textColor`, binding: true });
     b.addColorPicker('borderColor', { label: `${W}.borderColor`, binding: true });
     b.addSlider('borderRadius', { label: `${W}.borderRadius`, min: 0, max: 50, step: 1, default: 6 });

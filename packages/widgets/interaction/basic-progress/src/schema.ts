@@ -14,7 +14,6 @@ export const PropsSchema = z.object({
   orientation: z.enum(['horizontal', 'vertical']).default('horizontal').describe('props.orientation'),
   color: z.string().default('#3b82f6').describe('props.color'),
   trackColor: z.string().default('rgba(255,255,255,0.1)').describe('props.trackColor'),
-  backgroundColor: z.string().default('#1e1e2e').describe('props.bgColor'),
   textColor: z.string().default('#e2e8f0').describe('props.textColor'),
   fontSize: z.number().min(10).max(32).default(13).describe('props.fontSize'),
   borderRadius: z.number().min(0).max(20).default(8).describe('props.borderRadius'),
