@@ -12,9 +12,8 @@ RUN npm install -g pnpm@9
 # Copy workspace config
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
-# Copy all package.json files for workspace resolution
-COPY apps/server/package.json ./apps/server/
-COPY apps/server/prisma ./apps/server/prisma
+# Copy server app so package lifecycle scripts can resolve local Prisma schema
+COPY apps/server/ ./apps/server/
 COPY packages/ ./packages/
 
 # Install deps (all workspace packages needed for build)
@@ -42,8 +41,6 @@ COPY . .
 WORKDIR /app/apps/server
 ARG PORT=8000
 ARG DATABASE_URL="postgresql://thingsvis:thingsvis_password@thingsvis-postgres:5432/thingsvis_db?schema=public"
-ARG AUTH_SECRET="build-placeholder-secret-replace-in-production"
-ARG AUTH_URL="http://localhost:${PORT}"
 
 RUN npx prisma generate
 RUN pnpm build
@@ -75,7 +72,6 @@ ARG PORT=8000
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=$PORT
-ENV AUTH_TRUST_HOST=true
 
 RUN apk add --no-cache openssl libssl3
 

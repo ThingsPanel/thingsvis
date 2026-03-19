@@ -78,7 +78,6 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             DATABASE_URL=file:./prisma/dev.db
-            AUTH_SECRET=${{ secrets.AUTH_SECRET }}
 
       # Studio image (nginx + static files + plugins)
       - name: Build & push Studio image

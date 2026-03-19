@@ -14,5 +14,7 @@ npx prisma@5.22.0 db seed || echo "Seed failed or skipped"
 
 cd /app
 
+export AUTH_TRUST_HOST="${AUTH_TRUST_HOST:-true}"
+
 echo ">>> Starting Next.js server..."
 exec node apps/server/server.js

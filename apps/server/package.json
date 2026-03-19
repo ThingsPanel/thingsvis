@@ -3,21 +3,22 @@
   "version": "1.0.1",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate --schema ./prisma/schema.prisma",
     "predev": "node scripts/dev-prisma-generate.mjs",
     "dev": "next dev -p 8000",
-    "prebuild": "prisma generate",
+    "prebuild": "prisma generate --schema ./prisma/schema.prisma",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src --ext .ts,.tsx",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio",
+    "db:generate": "prisma generate --schema ./prisma/schema.prisma",
+    "db:push": "prisma db push --schema ./prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema ./prisma/schema.prisma",
+    "db:studio": "prisma studio --schema ./prisma/schema.prisma",
     "seed": "tsx scripts/seed.ts"
   },
   "prisma": {
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "schema": "./prisma/schema.prisma"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
