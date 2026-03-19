@@ -16,6 +16,44 @@ import { GridCanvasBackground } from './GridCanvasBackground';
 import { GridDropTarget } from './GridDropTarget';
 import { GridNodeItem, type ResizeHandle } from './GridNodeItem';
 
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
+
+function normalizeImageSource(source: string): string {
+    const trimmed = source.trim();
+    if (
+        !trimmed ||
+        trimmed.startsWith('data:') ||
+        trimmed.startsWith('blob:') ||
+        trimmed.startsWith('//') ||
+        ABSOLUTE_URL_RE.test(trimmed)
+    ) {
+        return trimmed;
+    }
+
+    const base = (() => {
+        if (typeof window === 'undefined') return undefined;
+
+        const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
+        if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
+            try {
+                return new URL(document.referrer).origin;
+            } catch {
+                // Fall back to the current page URL below.
+            }
+        }
+
+        return window.location.href;
+    })();
+
+    if (!base) return trimmed;
+
+    try {
+        return new URL(trimmed, base).toString();
+    } catch {
+        return trimmed;
+    }
+}
+
 // ─── Props ───────────────────────────────────────────────────────────────────
 
 export interface GridCanvasProps {
@@ -127,6 +165,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
         repeat: 'no-repeat',
         attachment: 'scroll'
     };
+    const backgroundImageUrl = normalizeImageSource(String(background.image || ''));
 
     // ── ResizeObserver to track container width ───────────────────────────────
 
@@ -423,7 +462,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 minHeight: canvasMinH,
                 position: 'relative',
                 backgroundColor: background.color ? String(background.color) : 'hsl(var(--w-canvas-bg, 220 13% 12%))',
-                backgroundImage: background.image ? `url(${background.image})` : 'none',
+                backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : 'none',
                 backgroundSize: background.size ? String(background.size) : 'cover',
                 backgroundRepeat: background.repeat ? String(background.repeat) : 'no-repeat',
                 backgroundAttachment: background.attachment ? String(background.attachment) : 'scroll',

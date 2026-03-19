@@ -15,7 +15,6 @@
     },
     "dependencies": {
         "@thingsvis/widget-sdk": "workspace:*",
-        "lucide": "^0.577.0",
         "zod": "^3.22.4"
     },
     "devDependencies": {

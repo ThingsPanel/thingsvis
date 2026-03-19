@@ -11,6 +11,44 @@ type WidgetLocale = keyof typeof localeCatalog;
 type PlaceholderState = 'empty' | 'loading' | 'error' | 'ready';
 type PlaceholderMessageKey = Exclude<PlaceholderState, 'ready'>;
 
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
+
+function normalizeImageSource(source: string): string {
+  const trimmed = source.trim();
+  if (
+    !trimmed ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('//') ||
+    ABSOLUTE_URL_RE.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  const base = (() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
+    if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
+      try {
+        return new URL(document.referrer).origin;
+      } catch {
+        // Fall back to the current page URL below.
+      }
+    }
+
+    return window.location.href;
+  })();
+
+  if (!base) return trimmed;
+
+  try {
+    return new URL(trimmed, base).toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 function resolveLocalePack(locale: string | undefined) {
   const candidates = [
     locale,
@@ -125,7 +163,7 @@ export const Main = defineWidget({
     };
 
     const beginImageLoad = (source: string) => {
-      const normalizedSource = source.trim();
+      const normalizedSource = normalizeImageSource(source);
       currentSrc = normalizedSource;
 
       if (!normalizedSource) {

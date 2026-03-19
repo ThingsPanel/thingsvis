@@ -1,13 +1,13 @@
 /**
  * SaveIndicator Component
- * 
+ *
  * Displays the current save status with visual feedback.
  * Shows saving spinner, saved checkmark, or error icon.
  */
 
-import React from 'react'
-import { useTranslation } from 'react-i18next'
-import type { SaveStatus } from '../lib/storage/types'
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import type { SaveStatus } from '../lib/storage/types';
 
 // =============================================================================
 // Props
@@ -15,13 +15,13 @@ import type { SaveStatus } from '../lib/storage/types'
 
 export interface SaveIndicatorProps {
   /** Current save status */
-  status: SaveStatus
+  status: SaveStatus;
   /** Last saved timestamp (optional) */
-  lastSavedAt?: number | null
+  lastSavedAt?: number | null;
   /** Error message if status is 'error' */
-  error?: string | null
+  error?: string | null;
   /** Additional CSS classes */
-  className?: string
+  className?: string;
 }
 
 // =============================================================================
@@ -30,49 +30,41 @@ export interface SaveIndicatorProps {
 
 export function SaveIndicator({
   status,
-  lastSavedAt,
+  lastSavedAt: _lastSavedAt,
   error,
   className = '',
 }: SaveIndicatorProps) {
-  const { t } = useTranslation('editor')
+  const { t } = useTranslation('editor');
 
   const getStatusText = (): string => {
     switch (status) {
-      case 'idle':
-        return lastSavedAt ? t('saveIndicator.saved') : ''
       case 'dirty':
-        return t('saveIndicator.unsaved')
+        return t('saveIndicator.unsaved');
       case 'saving':
-        return t('saveIndicator.saving')
-      case 'saved':
-        return t('saveIndicator.saved')
+        return t('saveIndicator.saving');
       case 'error':
-        return error || t('saveIndicator.error')
+        return error || t('saveIndicator.error');
       default:
-        return ''
+        return '';
     }
-  }
+  };
 
   const getStatusIcon = () => {
     switch (status) {
       case 'saving':
-        return <SpinnerIcon className="animate-spin" />
-      case 'saved':
-        return <DotIcon className="text-green-500" />
+        return <SpinnerIcon className="animate-spin" />;
       case 'error':
-        return <ErrorIcon className="text-red-500" />
+        return <ErrorIcon className="text-red-500" />;
       case 'dirty':
-        return <DotIcon className="text-yellow-500" />
-      case 'idle':
-        return lastSavedAt ? <DotIcon className="text-green-500" /> : null
+        return <DotIcon className="text-yellow-500" />;
       default:
-        return null
+        return null;
     }
-  }
+  };
 
-  const statusText = getStatusText()
-  if (!statusText && status === 'idle') {
-    return null
+  const statusText = getStatusText();
+  if (!statusText) {
+    return null;
   }
 
   return (
@@ -83,26 +75,7 @@ export function SaveIndicator({
       {getStatusIcon()}
       <span>{statusText}</span>
     </div>
-  )
-}
-
-// =============================================================================
-// Helper Functions
-// =============================================================================
-
-function formatLastSaved(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-
-  if (diff < 60000) {
-    return 'Saved just now'
-  } else if (diff < 3600000) {
-    const minutes = Math.floor(diff / 60000)
-    return `Saved ${minutes}m ago`
-  } else {
-    const date = new Date(timestamp)
-    return `Saved at ${date.toLocaleTimeString()}`
-  }
+  );
 }
 
 // =============================================================================
@@ -117,40 +90,14 @@ function SpinnerIcon({ className = '' }: { className?: string }) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle
-        className="opacity-25"
-        cx="12"
-        cy="12"
-        r="10"
-        stroke="currentColor"
-        strokeWidth="4"
-      />
+      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
       <path
         className="opacity-75"
         fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
       />
     </svg>
-  )
-}
-
-function CheckIcon({ className = '' }: { className?: string }) {
-  return (
-    <svg
-      className={`w-4 h-4 ${className}`}
-      viewBox="0 0 24 24"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M5 13l4 4L19 7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  )
+  );
 }
 
 function ErrorIcon({ className = '' }: { className?: string }) {
@@ -162,14 +109,9 @@ function ErrorIcon({ className = '' }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M12 8v4m0 4h.01"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M12 8v4m0 4h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
-  )
+  );
 }
 
 function DotIcon({ className = '' }: { className?: string }) {
@@ -182,7 +124,7 @@ function DotIcon({ className = '' }: { className?: string }) {
     >
       <circle cx="12" cy="12" r="4" />
     </svg>
-  )
+  );
 }
 
-export default SaveIndicator
+export default SaveIndicator;
