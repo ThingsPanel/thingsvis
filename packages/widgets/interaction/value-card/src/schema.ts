@@ -9,7 +9,7 @@ export const PropsSchema = z.object({
   // Data Settings
   title: z.string().default('总览数值').describe('props.title'),
   prefix: z.string().default('').describe('props.prefix'),
-  value: z.union([z.number().default(0), z.string(), z.null()]).default(128450).describe('props.value'),
+  value: z.union([z.number().default(0), z.string(), z.null()]).default(0).describe('props.value'),
   suffix: z.string().default('元').describe('props.suffix'),
   subtitle: z.string().default('较上月').describe('props.subtitle'),
   trend: z.number().default(0).describe('props.trend'),
