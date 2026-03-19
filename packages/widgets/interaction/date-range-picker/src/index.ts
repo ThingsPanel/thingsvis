@@ -122,12 +122,12 @@ function renderDatePicker(
   emit?: (event: string, data: unknown) => void
 ): void {
   const messages = getRuntimeMessages(locale);
-  const textPrimary = colors.fg;
+  const textPrimary = props.textColor || colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.7);
   const borderColor = withAlpha(textPrimary, 0.15);
-  const borderFocusColor = colors.primary;
+  const borderFocusColor = props.accentColor || colors.primary;
   const inputBg = withAlpha(textPrimary, 0.05);
-  const accentColor = colors.primary;
+  const accentColor = props.accentColor || colors.primary;
   
   const isDarkText = textPrimary.includes('#000') || textPrimary.includes('#111') || textPrimary.includes('rgba(0,') || textPrimary.includes('rgba(17,') || textPrimary.includes('rgb(0,');
   const colorScheme = isDarkText ? 'light' : 'dark';

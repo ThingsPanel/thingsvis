@@ -43,10 +43,10 @@ function pct(value: number, max: number): number {
 }
 
 function renderProgress(element: HTMLElement, props: Props, colors: WidgetColors): void {
-  const textPrimary = colors.fg;
+  const textPrimary = props.textColor || colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.7);
-  const trackColor = withAlpha(textPrimary, 0.1);
-  const primaryColor = colors.primary || '#3b82f6';
+  const trackColor = props.trackColor || withAlpha(textPrimary, 0.1);
+  const primaryColor = props.color || colors.primary || '#3b82f6';
   
   const percentage = pct(props.value, props.max);
   const barColor = resolveColor(props.value, primaryColor, props.thresholds);

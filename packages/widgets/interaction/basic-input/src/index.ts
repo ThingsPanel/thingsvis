@@ -30,10 +30,10 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 function renderInput(element: HTMLElement, props: Props, colors: WidgetColors, emit?: (event: string, data: unknown) => void): void {
-  const textPrimary = colors.fg;
+  const textPrimary = props.textColor || colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.6);
-  const borderColor = withAlpha(textPrimary, 0.15);
-  const accentColor = colors.primary;
+  const borderColor = props.borderColor || withAlpha(textPrimary, 0.15);
+  const accentColor = props.accentColor || colors.primary;
   const inputBg = withAlpha(textPrimary, 0.05);
   
   element.style.cssText = `

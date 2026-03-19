@@ -7,9 +7,9 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 function renderSlider(element: HTMLElement, props: Props, colors: WidgetColors, emit?: (event: string, data: unknown) => void): () => void {
-  const textPrimary = colors.fg;
-  const textSecondary = colors.fg + '99'; // 60% opacity
-  const trackColor = colors.primary || '#3b82f6';
+  const textPrimary = props.textColor || colors.fg;
+  const textSecondary = textPrimary + '99'; // 60% opacity
+  const trackColor = props.trackColor || colors.primary;
   
   element.style.cssText = `
     width: 100%;

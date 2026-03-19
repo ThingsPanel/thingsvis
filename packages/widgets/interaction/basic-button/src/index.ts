@@ -42,7 +42,8 @@ function renderButton(element: HTMLElement, props: Props, colors: WidgetColors, 
   
   // Determine colors based on variant
   const buttonBg = isOutline || isGhost ? 'transparent' : primaryColor;
-  const buttonColor = isOutline || isGhost ? primaryColor : '#ffffff';
+  const defaultTextColor = isOutline || isGhost ? primaryColor : '#ffffff';
+  const buttonColor = props.textColor || defaultTextColor;
   const border = isOutline ? `2px solid ${primaryColor}` : 'none';
   
   element.style.cssText = `

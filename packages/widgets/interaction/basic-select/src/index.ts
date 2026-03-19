@@ -38,8 +38,8 @@ function parseOptions(optionsJson: string): Array<{ label: string; value: string
 }
 
 function renderSelect(element: HTMLElement, props: Props, colors: WidgetColors, emit?: (event: string, data: unknown) => void): void {
-  const textPrimary = colors.fg;
-  const borderColor = withAlpha(textPrimary, 0.15);
+  const textPrimary = props.textColor || colors.fg;
+  const borderColor = props.borderColor || withAlpha(textPrimary, 0.15);
   const selectBg = withAlpha(textPrimary, 0.05);
   
   element.style.cssText = `

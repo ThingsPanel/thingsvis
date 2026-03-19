@@ -8,8 +8,8 @@ export const PropsSchema = z.object({
   step: z.number().min(0.01).default(1).describe('props.step'),
   unit: z.string().default('').describe('props.unit'),
   showValue: z.boolean().default(true).describe('props.showValue'),
-  trackColor: z.string().default('#3b82f6').describe('props.trackColor'),
-  textColor: z.string().default('#f1f5f9').describe('props.textColor'),
+  trackColor: z.string().default('').describe('props.trackColor'),
+  textColor: z.string().default('').describe('props.textColor'),
   disabled: z.boolean().default(false).describe('props.disabled'),
 });
 
