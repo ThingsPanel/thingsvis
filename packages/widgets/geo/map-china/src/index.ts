@@ -1,4 +1,9 @@
-﻿import { defineWidget } from '@thingsvis/widget-sdk';
+﻿import {
+  defineWidget,
+  resolveWidgetColors,
+  type WidgetColors,
+  type WidgetOverlayContext,
+} from '@thingsvis/widget-sdk';
 import { PropsSchema, type Props } from './schema';
 import { metadata } from './metadata';
 import { controls } from './controls';
@@ -8,96 +13,112 @@ import geoJson from './assets/china.json';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-// Register map data
+// Register map data once
 echarts.registerMap('china', geoJson as any);
+
+function buildOption(props: Props, colors: WidgetColors): echarts.EChartsOption {
+  const areaColor = props.areaColor || colors.series[0];
+  // For emphasis, blend the area color slightly toward white/black;
+  // since we can't easily tint programmatically, use the second series color as fallback
+  const emphasisColor = props.emphasisAreaColor || colors.series[1];
+  const borderColor = props.borderColor || colors.border;
+  const labelColor = props.labelColor || colors.fg;
+
+  return {
+    backgroundColor: 'transparent',
+    visualMap: {
+      show: false,
+      min: props.visualMapMin,
+      max: props.visualMapMax,
+      inRange: {
+        color: [props.inRangeColorStart, props.inRangeColorEnd],
+      },
+      calculable: true,
+    },
+    series: [
+      {
+        type: 'map',
+        map: 'china',
+        label: {
+          show: props.showLabel,
+          color: labelColor,
+        },
+        itemStyle: {
+          areaColor,
+          borderColor,
+          borderWidth: props.borderWidth,
+        },
+        emphasis: {
+          itemStyle: {
+            areaColor: emphasisColor,
+          },
+          label: {
+            show: props.showLabel,
+            color: labelColor,
+          },
+        },
+        data: [],
+      },
+    ],
+  };
+}
+
+function renderMap(element: HTMLElement, props: Props, _ctx: WidgetOverlayContext) {
+  element.style.width = '100%';
+  element.style.height = '100%';
+
+  let currentProps = props;
+  let colors: WidgetColors = resolveWidgetColors(element);
+
+  const chart = echarts.init(element, null, { renderer: 'canvas' });
+
+  const scheduleRender = () => {
+    requestAnimationFrame(() => {
+      if (!chart.isDisposed()) {
+        colors = resolveWidgetColors(element);
+        chart.setOption(buildOption(currentProps, colors), true);
+        chart.resize();
+      }
+    });
+  };
+
+  scheduleRender();
+
+  // Track size changes
+  let ro: ResizeObserver | null = null;
+  if (typeof ResizeObserver !== 'undefined') {
+    ro = new ResizeObserver(() => scheduleRender());
+    ro.observe(element);
+  }
+
+  // Track canvas theme changes (the same pattern as echarts-line)
+  let themeObserver: MutationObserver | null = null;
+  const themeTarget = element.closest('[data-canvas-theme]');
+  if (themeTarget && typeof MutationObserver !== 'undefined') {
+    themeObserver = new MutationObserver(() => scheduleRender());
+    themeObserver.observe(themeTarget, {
+      attributes: true,
+      attributeFilter: ['data-canvas-theme'],
+    });
+  }
+
+  return {
+    update: (newProps: Props, _newCtx: WidgetOverlayContext) => {
+      currentProps = newProps;
+      scheduleRender();
+    },
+    destroy: () => {
+      ro?.disconnect();
+      themeObserver?.disconnect();
+      chart.dispose();
+    },
+  };
+}
 
 export const Main = defineWidget({
   ...metadata,
   schema: PropsSchema,
   locales: { zh, en },
   controls,
-
-  render: (el: HTMLElement, props: Props, ctx) => {
-    const box = document.createElement('div');
-    box.style.width = '100%';
-    box.style.height = '100%';
-    el.appendChild(box);
-
-    const chart = echarts.init(box, null, { renderer: 'canvas' });
-
-    const getOption = (currentProps: Props, currentTheme: 'light' | 'dark' | string) => {
-      // Default theme handling
-      const isDark = currentTheme === 'dark';
-      const defaultAreaColor = currentProps.areaColor || (isDark ? '#323c48' : '#eee');
-      const defaultBorderColor = currentProps.borderColor || (isDark ? '#111' : '#ccc');
-      const defaultEmphasisColor = currentProps.emphasisAreaColor || (isDark ? '#2a333d' : '#ddd');
-      const defaultLabelColor = currentProps.labelColor || (isDark ? '#fff' : '#000');
-
-      return {
-        backgroundColor: 'transparent',
-        visualMap: {
-          show: false,
-          min: currentProps.visualMapMin,
-          max: currentProps.visualMapMax,
-          inRange: {
-            color: [currentProps.inRangeColorStart, currentProps.inRangeColorEnd]
-          },
-          calculable: true,
-        },
-        series: [
-          {
-            type: 'map',
-            map: 'china',
-            label: {
-              show: currentProps.showLabel,
-              color: defaultLabelColor,
-            },
-            itemStyle: {
-              areaColor: defaultAreaColor,
-              borderColor: defaultBorderColor,
-              borderWidth: currentProps.borderWidth,
-            },
-            emphasis: {
-              itemStyle: {
-                areaColor: defaultEmphasisColor,
-              },
-              label: {
-                show: currentProps.showLabel,
-                color: defaultLabelColor,
-              },
-            },
-            data: [
-              // Mock data mapping to provinces
-              { name: '北京', value: 100 },
-              { name: '广东', value: 50 },
-              { name: '上海', value: 80 },
-              { name: '浙江', value: 60 },
-              { name: '江苏', value: 70 },
-            ],
-          },
-        ]
-      };
-    };
-
-    // Initial render
-    // Use optional chaining for ctx?.theme if it's available, otherwise fallback
-    const initialTheme = (ctx as any)?.theme || 'dark';
-    chart.setOption(getOption(props, initialTheme));
-
-    const resizeObserver = new ResizeObserver(() => {
-      chart.resize();
-    });
-    resizeObserver.observe(box);
-
-    return {
-      update: (newProps: Props, newCtx) => {
-        const theme = (newCtx as any)?.theme || 'dark';
-        chart.setOption(getOption(newProps, theme));
-      },
-      destroy: () => {
-        resizeObserver.disconnect();
-        chart.dispose();
-      },
-    };
-  },
+  render: renderMap,
 });
