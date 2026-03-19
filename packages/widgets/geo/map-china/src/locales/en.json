@@ -1,0 +1,12 @@
+{
+    "editor": {
+        "widgets": {
+            "geo/map-china": {
+                "name": "map-china",
+                "style": "Style",
+                "fillColor": "Fill Color",
+                "opacity": "Opacity"
+            }
+        }
+    }
+}

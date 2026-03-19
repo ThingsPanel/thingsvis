@@ -83,6 +83,12 @@ function createWidgetConfig(pluginDir, opts = {}) {
     module: {
       rules: [
         {
+          test: /\.m?js$/,
+          resolve: {
+            fullySpecified: false,
+          },
+        },
+        {
           test: /\.(ts|tsx)$/,
           use: [
             {
