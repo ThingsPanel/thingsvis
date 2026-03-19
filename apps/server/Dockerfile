@@ -73,7 +73,7 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=$PORT
 
-RUN apk add --no-cache openssl libssl3
+RUN apk add --no-cache openssl libssl3 postgresql-client
 
 # Copy Next.js standalone output
 COPY --from=builder /app/apps/server/.next/standalone ./
