@@ -1,13 +1,22 @@
 /**
  * useStorage Hook
- * 
+ *
  * Provides a unified interface for storage operations that automatically
  * switches between local and cloud storage based on authentication state.
  */
 
 import { useMemo, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
-import { localStorageAdapter, createCloudStorageAdapter, type StorageAdapter, type StorageProject, type ListOptions, type ListResult, type StorageProjectMeta } from '@/lib/storage/adapter';
+import { useRuntimeContext } from '@/runtime/RuntimeContextProvider';
+import {
+  localStorageAdapter,
+  createCloudStorageAdapter,
+  type StorageAdapter,
+  type StorageProject,
+  type ListOptions,
+  type ListResult,
+  type StorageProjectMeta,
+} from '@/lib/storage/adapter';
 
 export interface UseStorageResult {
   // Current storage backend
@@ -29,18 +38,19 @@ export interface UseStorageResult {
 
 /**
  * Hook to get the appropriate storage adapter based on auth state and save strategy.
- * 
+ *
  * @param projectId - Optional project ID for cloud storage operations
  * @returns Storage operations and current backend type
  */
 export function useStorage(projectId?: string): UseStorageResult {
-  const { isAuthenticated, storageMode } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const { storageMode, channel } = useRuntimeContext();
 
   // Get the appropriate adapter based on auth state and save strategy
   const adapter: StorageAdapter = useMemo(() => {
     /**
      * 存储后端选择逻辑:
-     * 
+     *
      * 1. 独立运行 + 已登录 → 云端存储
      * 2. 独立运行 + 未登录 → 本地存储 (IndexedDB)
      * 3. 嵌入模式 + saveTarget=self → 云端存储 (ThingsVis API)
@@ -48,17 +58,14 @@ export function useStorage(projectId?: string): UseStorageResult {
      */
 
     // 嵌入模式: 优先使用云端 (除非明确要保存到宿主)
-    if (storageMode === 'embed') {
+    if (channel === 'embed') {
       // 嵌入模式总是尝试使用云端存储
       // saveTarget=host 的情况由 SaveStrategy.executeSave 处理
-
       return createCloudStorageAdapter(projectId);
     }
 
-    // 独立运行: 根据认证状态选择
-    const shouldUseCloud = isAuthenticated && storageMode === 'cloud';
-
-
+    // 独立运行: 根据 RuntimeContext storageMode 选择
+    const shouldUseCloud = storageMode === 'cloud';
 
     if (shouldUseCloud) {
       return createCloudStorageAdapter(projectId);
@@ -66,32 +73,20 @@ export function useStorage(projectId?: string): UseStorageResult {
 
     // 未登录独立运行: 使用本地存储
     return localStorageAdapter;
-  }, [isAuthenticated, storageMode, projectId]);
+  }, [isAuthenticated, storageMode, channel, projectId]);
 
   const backend = adapter.backend;
   const isCloud = backend === 'cloud';
   const isLocal = backend === 'local';
 
   // Wrap adapter methods to ensure stable references
-  const list = useCallback(
-    (options?: ListOptions) => adapter.list(options),
-    [adapter]
-  );
+  const list = useCallback((options?: ListOptions) => adapter.list(options), [adapter]);
 
-  const get = useCallback(
-    (id: string) => adapter.get(id),
-    [adapter]
-  );
+  const get = useCallback((id: string) => adapter.get(id), [adapter]);
 
-  const save = useCallback(
-    (project: StorageProject) => adapter.save(project),
-    [adapter]
-  );
+  const save = useCallback((project: StorageProject) => adapter.save(project), [adapter]);
 
-  const deleteProject = useCallback(
-    (id: string) => adapter.delete(id),
-    [adapter]
-  );
+  const deleteProject = useCallback((id: string) => adapter.delete(id), [adapter]);
 
   const duplicate = useCallback(
     (id: string, newName: string) => {
@@ -100,7 +95,7 @@ export function useStorage(projectId?: string): UseStorageResult {
       }
       throw new Error('Duplicate not supported');
     },
-    [adapter]
+    [adapter],
   );
 
   const exportProject = useCallback(
@@ -110,7 +105,7 @@ export function useStorage(projectId?: string): UseStorageResult {
       }
       throw new Error('Export not supported');
     },
-    [adapter]
+    [adapter],
   );
 
   const importProject = useCallback(
@@ -120,7 +115,7 @@ export function useStorage(projectId?: string): UseStorageResult {
       }
       throw new Error('Import not supported');
     },
-    [adapter]
+    [adapter],
   );
 
   return {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './lib/auth';
+import { RuntimeContextProvider } from './runtime/RuntimeContextProvider';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { LoginPage, RegisterPage, DataSourcesPage, PreviewPage, EmbedPage } from './pages';
 import ImageUploadSettingsPage from './pages/ImageUploadSettingsPage';
@@ -37,9 +38,11 @@ export default function App() {
           <Route
             element={
               <AuthProvider>
-                <ProjectProvider>
-                  <Outlet />
-                </ProjectProvider>
+                <RuntimeContextProvider>
+                  <ProjectProvider>
+                    <Outlet />
+                  </ProjectProvider>
+                </RuntimeContextProvider>
               </AuthProvider>
             }
           >

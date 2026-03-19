@@ -32,7 +32,9 @@ export const BROWSER_TOKEN_EXPIRY_KEY = 'thingsvis_browser_token_expiry';
 export const BROWSER_USER_KEY = 'thingsvis_browser_user';
 const GUEST_MODE_KEY = 'thingsvis_guest_mode';
 
+/** @deprecated Use `StorageMode` from `@/runtime/RuntimeContext` instead. */
 export type StorageMode = 'local' | 'cloud' | 'embed';
+/** @deprecated Use `RuntimeChannel` from `@/runtime/RuntimeContext` instead. */
 export type AuthChannel = 'none' | 'browser' | 'embed' | 'guest';
 
 export interface AuthContextValue {

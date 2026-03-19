@@ -7,6 +7,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useRuntimeContext } from '@/runtime/RuntimeContextProvider';
 import * as projectsApi from '@/lib/api/projects';
 import type { Project } from '@/lib/api/projects';
 import { STORAGE_CONSTANTS } from '@/lib/storage/constants';
@@ -31,7 +32,8 @@ const ProjectContext = createContext<ProjectContextValue | null>(null);
 const CURRENT_PROJECT_KEY = STORAGE_CONSTANTS.CURRENT_BACKEND_PROJECT_ID_KEY;
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading: authLoading, authChannel, storageMode } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { channel, storageMode } = useRuntimeContext();
 
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +47,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     }
 
     const canUseBrowserProjects =
-      isAuthenticated && authChannel === 'browser' && storageMode === 'cloud';
+      isAuthenticated && channel === 'browser' && storageMode === 'cloud';
 
     if (!canUseBrowserProjects) {
       setCurrentProject(null);
@@ -105,7 +107,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     };
 
     initializeProject();
-  }, [authChannel, authLoading, isAuthenticated, storageMode]);
+  }, [channel, authLoading, isAuthenticated, storageMode]);
 
   const switchProject = useCallback(async (projectId: string) => {
     setIsLoading(true);
