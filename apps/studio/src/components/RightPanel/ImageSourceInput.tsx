@@ -21,6 +21,44 @@ interface ImageSourceInputProps {
   onChange: (value: string) => void;
 }
 
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
+
+function normalizeImageSource(source: string): string {
+  const trimmed = source.trim();
+  if (
+    !trimmed ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('//') ||
+    ABSOLUTE_URL_RE.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  const base = (() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
+    if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
+      try {
+        return new URL(document.referrer).origin;
+      } catch {
+        // Fall back to the current page URL below.
+      }
+    }
+
+    return window.location.href;
+  })();
+
+  if (!base) return trimmed;
+
+  try {
+    return new URL(trimmed, base).toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
   const { t } = useTranslation('editor');
   const [mode, setMode] = useState<InputMode>(() => {
@@ -71,7 +109,7 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
       if (result.error) {
         setError(result.error);
       } else if (result.data) {
-        onChange(result.data.url);
+        onChange(normalizeImageSource(result.data.url));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : t('upload.failed', 'Upload failed'));
@@ -86,7 +124,7 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
 
   const handleUrlChange = (url: string) => {
     setUrlInput(url);
-    onChange(url);
+    onChange(normalizeImageSource(url));
   };
 
   const handleBase64Change = (base64: string) => {
@@ -166,7 +204,7 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
             <div className="relative w-full h-20 rounded-lg border border-border overflow-hidden bg-muted/10">
               <div
                 className="absolute inset-0 bg-center bg-contain bg-no-repeat"
-                style={{ backgroundImage: `url(${value})` }}
+                style={{ backgroundImage: `url(${normalizeImageSource(value)})` }}
               />
               <div className="absolute bottom-0 inset-x-0 flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm">
                 <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />
@@ -267,7 +305,7 @@ export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {
         <div className="relative w-full h-14 rounded-lg border border-border overflow-hidden bg-muted/10">
           <div
             className="absolute inset-0 bg-center bg-contain bg-no-repeat"
-            style={{ backgroundImage: `url(${value})` }}
+            style={{ backgroundImage: `url(${normalizeImageSource(value)})` }}
           />
           <div className="absolute bottom-0 inset-x-0 flex items-center gap-1.5 px-2 py-1 bg-background/80 backdrop-blur-sm">
             <CheckCircle2 className="w-3 h-3 text-green-500 flex-shrink-0" />

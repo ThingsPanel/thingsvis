@@ -650,6 +650,17 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           setShowProjectDialog(false);
         }}
         onProjectLoad={(project) => {
+          const loadedTheme = validateCanvasTheme((project.canvas as any).theme);
+          const loadedBackground =
+            typeof project.canvas.background === 'object' && project.canvas.background !== null
+              ? project.canvas.background
+              : typeof project.canvas.background === 'string' &&
+                  project.canvas.background.length > 0
+                ? ({ color: project.canvas.background } as Record<string, string>)
+                : undefined;
+          const loadedPreviewAlignY =
+            (project.canvas as any).previewAlignY === 'top' ? 'top' : 'center';
+
           setHasSelectedDashboard(true);
           try {
             localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, project.meta.id);
@@ -663,9 +674,25 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               mode: project.canvas.mode,
               width: project.canvas.width,
               height: project.canvas.height,
-              theme: (project.canvas as any).theme || 'dawn',
+              theme: loadedTheme,
+              scaleMode: (project.canvas as any).scaleMode,
+              previewAlignY: loadedPreviewAlignY,
+              background: loadedBackground as any,
             },
           });
+          if (project.canvas.mode === 'grid') {
+            store.getState().setGridSettings?.({
+              cols: project.canvas.gridCols ?? 24,
+              rowHeight: project.canvas.gridRowHeight ?? 50,
+              gap: project.canvas.gridGap ?? 10,
+              compactVertical: true,
+              minW: 1,
+              minH: 1,
+              showGridLines: project.canvas.gridEnabled ?? true,
+              breakpoints: [],
+              responsive: true,
+            } as any);
+          }
           try {
             store.temporal.getState().clear?.();
           } catch {}
@@ -677,15 +704,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             mode: project.canvas.mode,
             width: project.canvas.width,
             height: project.canvas.height,
-            theme: validateCanvasTheme((project.canvas as any).theme),
+            theme: loadedTheme,
+            scaleMode: (project.canvas as any).scaleMode,
+            previewAlignY: loadedPreviewAlignY,
             bgValue:
               typeof project.canvas.background === 'string'
                 ? project.canvas.background
                 : prev.bgValue,
-            background:
-              typeof project.canvas.background === 'object' && project.canvas.background !== null
-                ? project.canvas.background
-                : prev.background,
+            background: loadedBackground ?? prev.background,
             gridCols: project.canvas.gridCols ?? prev.gridCols,
             gridRowHeight: project.canvas.gridRowHeight ?? prev.gridRowHeight,
             gridGap: project.canvas.gridGap ?? prev.gridGap,

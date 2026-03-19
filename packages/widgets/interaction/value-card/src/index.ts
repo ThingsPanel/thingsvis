@@ -2,7 +2,6 @@ import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
 import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
-import { icons, createElement } from 'lucide';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -37,6 +36,24 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
     maximumFractionDigits: precision,
     useGrouping,
   }).format(num);
+}
+
+function iconLabelFromValue(icon: string): string {
+  const trimmed = icon.trim();
+  if (!trimmed) return '';
+
+  const raw = trimmed.startsWith('i-lucide:') ? trimmed.slice('i-lucide:'.length) : trimmed;
+  const words = raw
+    .split(/[-_:]/g)
+    .map(part => part.trim())
+    .filter(Boolean);
+
+  if (words.length === 0) return '';
+
+  return words
+    .slice(0, 2)
+    .map(word => word.charAt(0).toUpperCase())
+    .join('');
 }
 
 // ============================================================================
@@ -76,21 +93,30 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
 
   let iconHtml = '';
   if (icon) {
-    const iconData = icons[icon as keyof typeof icons];
-    if (iconData) {
-      try {
-        const svgEl = createElement(iconData);
-        svgEl.setAttribute('width', String(iconSize));
-        svgEl.setAttribute('height', String(iconSize));
-        svgEl.setAttribute('stroke', 'currentColor');
-        svgEl.setAttribute('stroke-width', '2');
-        svgEl.style.display = 'inline-block';
-        // Make sure flex-shrink is 0 so it doesn't get squeezed
-        svgEl.style.flexShrink = '0';
-        iconHtml = svgEl.outerHTML;
-      } catch (e) {
-        // Ignore in non-browser context if any
-      }
+    const iconLabel = iconLabelFromValue(icon);
+    if (iconLabel) {
+      const badgeSize = Math.max(iconSize, 16);
+      const fontSize = Math.max(10, Math.round(badgeSize * 0.42));
+      iconHtml = `
+        <div style="
+          width: ${badgeSize}px;
+          height: ${badgeSize}px;
+          min-width: ${badgeSize}px;
+          border-radius: 999px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          font-size: ${fontSize}px;
+          font-weight: 700;
+          letter-spacing: 0.04em;
+          color: ${colors.bg};
+          background: ${colors.fg};
+          opacity: 0.9;
+        ">
+          ${escapeHtml(iconLabel)}
+        </div>
+      `;
     }
   }
 

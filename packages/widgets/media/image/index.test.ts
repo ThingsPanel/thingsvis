@@ -46,4 +46,29 @@ describe('media/image widget', () => {
 
     harness.destroy();
   });
+
+  it('resolves root-relative image URLs against the host origin when embedded', () => {
+    vi.stubGlobal('Image', ImageMock);
+    Object.defineProperty(window, 'parent', {
+      configurable: true,
+      value: {},
+    });
+    Object.defineProperty(document, 'referrer', {
+      configurable: true,
+      value: 'https://demo.thingspanel.com/visualization/thingsvis-editor?id=1',
+    });
+
+    const harness = mountWidget(Main, { locale: 'en' });
+
+    harness.update({
+      props: {
+        dataUrl: '/uploads/widget.png',
+      },
+    });
+
+    const img = harness.element.querySelector('img');
+    expect(img?.getAttribute('src')).toBe('https://demo.thingspanel.com/uploads/widget.png');
+
+    harness.destroy();
+  });
 });

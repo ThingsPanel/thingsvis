@@ -108,9 +108,11 @@ export default function PreviewPage() {
   }, [kernelState]);
 
   useEffect(() => {
-    const targets = [document.documentElement, document.body, document.getElementById('root')].filter(
-      (target): target is HTMLElement => Boolean(target),
-    );
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.getElementById('root'),
+    ].filter((target): target is HTMLElement => Boolean(target));
     const previous = targets.map((target) => ({
       target,
       backgroundColor: target.style.backgroundColor,
@@ -287,9 +289,22 @@ export default function PreviewPage() {
   }, [projectId, hasAnyNodes, applyProjectToStore]);
 
   const handleBack = useCallback(() => {
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.focus?.();
+        window.close();
+        return;
+      }
+    } catch {}
+
     const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
     const isEmbedded = params.get('mode') === 'embedded';
     // projectId is already in state (projectId const)
+
+    if (!isEmbedded && window.history.length > 1) {
+      window.history.back();
+      return;
+    }
 
     if (projectId) {
       if (isEmbedded) {

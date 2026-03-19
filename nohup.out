@@ -1,0 +1,209 @@
+
+> thingsvis@1.0.1 dev:full /Users/junhong/Downloads/code/thingsvis
+> pnpm clean && pnpm build:widgets && pnpm dev:app
+
+
+> thingsvis@1.0.1 clean /Users/junhong/Downloads/code/thingsvis
+> rimraf --glob apps/*/.next apps/*/.turbo packages/*/.turbo && echo Cleaned .next and turbo cache
+
+Cleaned .next and turbo cache
+
+> thingsvis@1.0.1 build:widgets /Users/junhong/Downloads/code/thingsvis
+> pnpm -r --if-present --filter="thingsvis-widget-*..." build && pnpm run deploy:widgets
+
+Scope: 25 of 33 workspace projects
+packages/thingsvis-schema build$ rspack build && tsc --emitDeclarationOnly
+packages/thingsvis-schema build: Rspack compiled successfully in 235 ms
+packages/thingsvis-schema build: Done
+packages/thingsvis-widget-sdk build$ tsup
+packages/thingsvis-widget-sdk build: CLI Building entry: src/index.ts
+packages/thingsvis-widget-sdk build: CLI Using tsconfig: tsconfig.json
+packages/thingsvis-widget-sdk build: CLI tsup v8.5.1
+packages/thingsvis-widget-sdk build: CLI Using tsup config: /Users/junhong/Downloads/code/thingsvis/packages/thingsvis-widget-sdk/tsup.config.ts
+packages/thingsvis-widget-sdk build: CLI Target: es2020
+packages/thingsvis-widget-sdk build: CLI Cleaning output folder
+packages/thingsvis-widget-sdk build: CJS Build start
+packages/thingsvis-widget-sdk build: ESM Build start
+packages/thingsvis-widget-sdk build: ESM dist/index.mjs     24.66 KB
+packages/thingsvis-widget-sdk build: ESM dist/index.mjs.map 58.15 KB
+packages/thingsvis-widget-sdk build: ESM ⚡️ Build success in 19ms
+packages/thingsvis-widget-sdk build: CJS dist/index.js     27.27 KB
+packages/thingsvis-widget-sdk build: CJS dist/index.js.map 59.82 KB
+packages/thingsvis-widget-sdk build: CJS ⚡️ Build success in 19ms
+packages/thingsvis-widget-sdk build: DTS Build start
+packages/thingsvis-widget-sdk build: DTS ⚡️ Build success in 1206ms
+packages/thingsvis-widget-sdk build: DTS dist/index.d.ts  26.78 KB
+packages/thingsvis-widget-sdk build: DTS dist/index.d.mts 26.78 KB
+packages/thingsvis-widget-sdk build: Done
+packages/widgets/basic/circle build$ rspack build
+packages/widgets/basic/line build$ rspack build
+packages/widgets/basic/table build$ rspack build
+packages/widgets/basic/rectangle build$ rspack build
+packages/widgets/basic/circle build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/line build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/table build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/rectangle build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/circle build: Rspack compiled successfully in 264 ms
+packages/widgets/basic/rectangle build: Rspack compiled successfully in 266 ms
+packages/widgets/basic/table build: Rspack compiled successfully in 270 ms
+packages/widgets/basic/circle build: Done
+packages/widgets/basic/text build$ rspack build
+packages/widgets/basic/line build: Rspack compiled successfully in 276 ms
+packages/widgets/basic/table build: Done
+packages/widgets/chart/echarts-bar build$ rspack build
+packages/widgets/basic/line build: Done
+packages/widgets/basic/rectangle build: Done
+packages/widgets/chart/echarts-line build$ rspack build
+packages/widgets/chart/echarts-gauge build$ rspack build
+packages/widgets/chart/echarts-gauge build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/chart/echarts-line build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/chart/echarts-bar build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/text build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/basic/text build: Rspack compiled successfully in 453 ms
+packages/widgets/basic/text build: Done
+packages/widgets/chart/echarts-pie build$ rspack build
+packages/widgets/chart/echarts-pie build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/chart/echarts-bar build: Rspack compiled successfully in 2.42 s
+packages/widgets/chart/echarts-bar build: Done
+packages/widgets/chart/uplot-line build$ rspack build
+packages/widgets/chart/echarts-line build: Rspack compiled successfully in 2.48 s
+packages/widgets/chart/echarts-line build: Done
+.../widgets/interaction/basic-button build$ rspack build
+packages/widgets/chart/echarts-gauge build: Rspack compiled successfully in 2.60 s
+packages/widgets/chart/echarts-gauge build: Done
+packages/widgets/interaction/basic-input build$ rspack build
+packages/widgets/chart/uplot-line build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../widgets/interaction/basic-button build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/interaction/basic-input build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/chart/uplot-line build: Rspack compiled successfully in 485 ms
+packages/widgets/chart/uplot-line build: Done
+.../widgets/interaction/basic-progress build$ rspack build
+packages/widgets/chart/echarts-pie build: Rspack compiled successfully in 2.20 s
+.../widgets/interaction/basic-button build: Rspack compiled successfully in 330 ms
+packages/widgets/chart/echarts-pie build: Done
+.../widgets/interaction/basic-select build$ rspack build
+packages/widgets/interaction/basic-input build: Rspack compiled successfully in 289 ms
+.../widgets/interaction/basic-button build: Done
+.../widgets/interaction/basic-slider build$ rspack build
+packages/widgets/interaction/basic-input build: Done
+.../widgets/interaction/basic-switch build$ rspack build
+.../widgets/interaction/basic-progress build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../widgets/interaction/basic-select build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../widgets/interaction/basic-switch build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../widgets/interaction/basic-slider build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../widgets/interaction/basic-progress build: Rspack compiled successfully in 295 ms
+.../widgets/interaction/basic-progress build: Done
+.../interaction/date-range-picker build$ rspack build
+.../widgets/interaction/basic-switch build: Rspack compiled successfully in 302 ms
+.../widgets/interaction/basic-select build: Rspack compiled successfully in 315 ms
+.../widgets/interaction/basic-switch build: Done
+packages/widgets/interaction/value-card build$ rspack build
+.../widgets/interaction/basic-slider build: Rspack compiled successfully in 270 ms
+.../widgets/interaction/basic-select build: Done
+.../widgets/interaction/basic-slider build: Done
+.../interaction/value-card-simple build$ rspack build
+packages/widgets/media/iframe build$ rspack build
+.../interaction/date-range-picker build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/interaction/value-card build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../interaction/value-card-simple build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/media/iframe build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+.../interaction/date-range-picker build: Rspack compiled successfully in 227 ms
+.../interaction/date-range-picker build: Done
+packages/widgets/media/image build$ rspack build
+packages/widgets/interaction/value-card build: Rspack compiled successfully in 241 ms
+packages/widgets/interaction/value-card build: Done
+packages/widgets/media/video-player build$ rspack build
+.../interaction/value-card-simple build: Rspack compiled successfully in 246 ms
+.../interaction/value-card-simple build: Done
+packages/widgets/media/iframe build: Rspack compiled successfully in 261 ms
+packages/widgets/media/iframe build: Done
+packages/widgets/media/image build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/media/video-player build: [ Module Federation Manifest Plugin ] Warn Manifest will use absolute path resolution via its host at runtime, reason: publicPath='auto'
+packages/widgets/media/image build: Rspack compiled successfully in 185 ms
+packages/widgets/media/video-player build: Rspack compiled successfully in 188 ms
+packages/widgets/media/image build: Done
+packages/widgets/media/video-player build: Done
+
+> thingsvis@1.0.1 deploy:widgets /Users/junhong/Downloads/code/thingsvis
+> node scripts/deploy-widgets.mjs
+
+✓ Deployed widget: basic/circle
+✓ Deployed widget: basic/line
+✓ Deployed widget: basic/rectangle
+✓ Deployed widget: basic/table
+✓ Deployed widget: basic/text
+✓ Deployed widget: chart/echarts-bar
+✓ Deployed widget: chart/echarts-gauge
+✓ Deployed widget: chart/echarts-line
+✓ Deployed widget: chart/echarts-pie
+✓ Deployed widget: chart/uplot-line
+✓ Deployed widget: interaction/basic-button
+✓ Deployed widget: interaction/basic-input
+✓ Deployed widget: interaction/basic-progress
+✓ Deployed widget: interaction/basic-select
+✓ Deployed widget: interaction/basic-slider
+✓ Deployed widget: interaction/basic-switch
+✓ Deployed widget: interaction/date-range-picker
+✓ Deployed widget: interaction/value-card
+✓ Deployed widget: interaction/value-card-simple
+✓ Deployed widget: media/iframe
+✓ Deployed widget: media/image
+✓ Deployed widget: media/video-player
+
+> thingsvis@1.0.1 dev:app /Users/junhong/Downloads/code/thingsvis
+> pnpm -r --parallel --filter=@thingsvis/kernel --filter=studio --filter=@thingsvis/server dev
+
+Scope: 3 of 33 workspace projects
+apps/server predev$ prisma generate
+apps/studio dev$ rsbuild dev
+packages/thingsvis-kernel dev$ rspack build --watch
+apps/studio dev:   Rsbuild v0.4.15
+packages/thingsvis-kernel dev: Rspack compiled successfully in 59 ms
+apps/server predev: Environment variables loaded from .env
+apps/server predev: Prisma schema loaded from prisma/schema.prisma
+apps/server predev: ✔ Generated Prisma Client (v5.22.0) to ./../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client in 241ms
+apps/server predev: Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+apps/server predev: Tip: Easily identify and fix slow SQL queries in your app. Optimize helps you enhance your visibility: https://pris.ly/--optimize
+apps/server predev: Done
+apps/server dev$ next dev -p 8000
+apps/studio dev:   > Local:    http://localhost:3000/
+apps/studio dev:   > Network:  http://192.168.0.100:3000/
+apps/studio dev:   > Network:  http://10.147.17.233:3000/
+apps/studio dev:   > Network:  http://192.168.196.233:3000/
+apps/studio dev:   > Network:  http://198.18.0.1:3000/
+apps/studio dev:   > Network:  http://192.168.139.3:3000/
+apps/studio dev:   > Network:  http://100.107.52.14:3000/
+apps/studio dev:   > Network:  http://172.20.0.0:3000/
+apps/studio dev: start   Compiling...
+apps/studio dev: [GenerateRegistryPlugin] Auto-generated registry.json with 22 components
+apps/studio dev: [GenerateRegistryPlugin] Auto-generated registry.json with 22 components
+apps/studio dev: [GenerateRegistryPlugin] Auto-generated registry.json with 22 components
+apps/server dev:  ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+apps/server dev:  We detected multiple lockfiles and selected the directory of /Users/junhong/package-lock.json as the root directory.
+apps/server dev:  To silence this warning, set `outputFileTracingRoot` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+apps/server dev:    See https://nextjs.org/docs/app/api-reference/config/next-config-js/output#caveats for more information.
+apps/server dev:  Detected additional lockfiles: 
+apps/server dev:    * /Users/junhong/Downloads/code/thingsvis/pnpm-lock.yaml
+apps/server dev:    ▲ Next.js 15.5.9
+apps/server dev:    - Local:        http://localhost:8000
+apps/server dev:    - Network:      http://192.168.0.100:8000
+apps/server dev:    - Environments: .env
+apps/server dev:    - Experiments (use with caution):
+apps/server dev:      · serverActions
+apps/server dev:  ✓ Starting...
+apps/server dev: Done
+packages/thingsvis-kernel dev: Rspack compiled successfully in 42 ms
+packages/thingsvis-kernel dev: Rspack compiled successfully in 24 ms
+packages/thingsvis-kernel dev: Rspack compiled successfully in 37 ms
+packages/thingsvis-kernel dev: Rspack compiled successfully in 24 ms
+apps/studio dev: Unhandled Exception Error:  Error [ERR_IPC_CHANNEL_CLOSED]: Channel closed
+apps/studio dev:     at target.send (node:internal/child_process:761:16)
+apps/studio dev:     at ChildProcess.<anonymous> (/Users/junhong/Downloads/code/thingsvis/node_modules/.pnpm/@module-federation+dts-plugin@0.6.16_typescript@5.9.3/node_modules/@module-federation/dts-plugin/dist/fork-dev-worker.js:1499:21)
+apps/studio dev:     at ChildProcess.emit (node:events:508:20)
+apps/studio dev:     at emit (node:internal/child_process:956:14)
+apps/studio dev:     at process.processTicksAndRejections (node:internal/process/task_queues:91:21) {
+apps/studio dev:   code: 'ERR_IPC_CHANNEL_CLOSED'
+apps/studio dev: }
+apps/studio dev: Failed
+sh: line 1:  1497 Killed: 9               pnpm dev:app
+ ELIFECYCLE  Command failed with exit code 137.

@@ -8,6 +8,44 @@ import { calculateScaleToFit } from '../modes/mode-controller';
 
 type Mode = 'fixed' | 'infinite' | 'grid';
 
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
+
+function normalizeImageSource(source: string): string {
+  const trimmed = source.trim();
+  if (
+    !trimmed ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('//') ||
+    ABSOLUTE_URL_RE.test(trimmed)
+  ) {
+    return trimmed;
+  }
+
+  const base = (() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
+    if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
+      try {
+        return new URL(document.referrer).origin;
+      } catch {
+        // Fall back to the current page URL below.
+      }
+    }
+
+    return window.location.href;
+  })();
+
+  if (!base) return trimmed;
+
+  try {
+    return new URL(trimmed, base).toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 type Props = {
   store: KernelStore;
   resolveWidget?: (type: string) => Promise<any>;
@@ -64,6 +102,7 @@ export const CanvasView: React.FC<Props> = ({
 
   const pageConfig = (kernelState.page as any)?.config || {};
   const background = pageConfig.background || { color: 'transparent', size: 'cover', repeat: 'no-repeat' };
+  const backgroundImageUrl = normalizeImageSource(String(background.image || ''));
 
   const [internalZoom, setInternalZoom] = useState(1);
   // We use external zoom if provided (works for both fixed and grid modes)
@@ -370,8 +409,8 @@ export const CanvasView: React.FC<Props> = ({
       backgroundColor: mode === 'infinite' ? background.color : 'hsl(var(--workspace-bg))',
       // Infinite mode: fall back to --w-artboard-gradient when no custom image is set
       backgroundImage: mode === 'infinite'
-        ? (background.image
-            ? `url(${background.image})`
+        ? (backgroundImageUrl
+            ? `url(${backgroundImageUrl})`
             : (containerRef.current
                 ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
                 : 'none'))
@@ -389,8 +428,8 @@ export const CanvasView: React.FC<Props> = ({
           height: height * vZoom,
           backgroundColor: background.color || 'hsl(var(--w-bg))',
           // Fall back to --w-artboard-gradient when no custom image is set
-          backgroundImage: background.image
-            ? `url(${background.image})`
+          backgroundImage: backgroundImageUrl
+            ? `url(${backgroundImageUrl})`
             : (containerRef.current
                 ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
                 : 'none'),

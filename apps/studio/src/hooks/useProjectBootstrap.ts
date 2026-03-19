@@ -172,7 +172,7 @@ export function useProjectBootstrap({
     return generateId();
   }, [dashboardId]);
 
-  const [canvasConfig, setCanvasConfig] = useState<CanvasConfigSchema>(() => {
+  const [canvasConfig, setCanvasConfigState] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId();
     const defaultMode = 'fixed';
     return {
@@ -206,6 +206,21 @@ export function useProjectBootstrap({
       gridEnabled: true,
     };
   });
+  const canvasConfigRef = useRef(canvasConfig);
+  const setCanvasConfig = useCallback<React.Dispatch<React.SetStateAction<CanvasConfigSchema>>>(
+    (value) => {
+      setCanvasConfigState((prev) => {
+        const next = typeof value === 'function' ? value(prev) : value;
+        canvasConfigRef.current = next;
+        return next;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    canvasConfigRef.current = canvasConfig;
+  }, [canvasConfig]);
 
   const projectId = canvasConfig.id;
   const bootstrappingRef = useRef(true);
@@ -217,6 +232,7 @@ export function useProjectBootstrap({
   const storage = useStorage(projectId);
 
   const getProjectState = useCallback((): ProjectFile => {
+    const currentCanvasConfig = canvasConfigRef.current;
     const state = store.getState();
     const nodes = state.layerOrder
       .map((id: string) => state.nodesById[id]?.schemaRef)
@@ -225,32 +241,32 @@ export function useProjectBootstrap({
     return {
       meta: {
         version: '1.0.0',
-        id: projectId,
-        name: canvasConfig.name,
-        thumbnail: canvasConfig.thumbnail,
-        createdAt: canvasConfig.createdAt,
+        id: currentCanvasConfig.id,
+        name: currentCanvasConfig.name,
+        thumbnail: currentCanvasConfig.thumbnail,
+        createdAt: currentCanvasConfig.createdAt,
         updatedAt: Date.now(),
       },
       canvas: {
-        mode: canvasConfig.mode,
-        width: canvasConfig.width,
-        height: canvasConfig.height,
-        background: canvasConfig.background ?? canvasConfig.bgValue,
-        theme: canvasConfig.theme,
-        scaleMode: canvasConfig.scaleMode,
-        previewAlignY: canvasConfig.previewAlignY,
-        gridCols: canvasConfig.gridCols,
-        gridRowHeight: canvasConfig.gridRowHeight,
-        gridGap: canvasConfig.gridGap,
-        gridEnabled: canvasConfig.gridEnabled,
-        gridSize: canvasConfig.gridSize,
-        homeFlag: canvasConfig.homeFlag,
+        mode: currentCanvasConfig.mode,
+        width: currentCanvasConfig.width,
+        height: currentCanvasConfig.height,
+        background: currentCanvasConfig.background ?? currentCanvasConfig.bgValue,
+        theme: currentCanvasConfig.theme,
+        scaleMode: currentCanvasConfig.scaleMode,
+        previewAlignY: currentCanvasConfig.previewAlignY,
+        gridCols: currentCanvasConfig.gridCols,
+        gridRowHeight: currentCanvasConfig.gridRowHeight,
+        gridGap: currentCanvasConfig.gridGap,
+        gridEnabled: currentCanvasConfig.gridEnabled,
+        gridSize: currentCanvasConfig.gridSize,
+        homeFlag: currentCanvasConfig.homeFlag,
       },
       nodes: nodes,
       dataSources: dataSourceManager.getAllConfigs(),
       variables: state.variableDefinitions ?? [],
     };
-  }, [projectId, canvasConfig]);
+  }, []);
 
   // Bootstrap logic
   useEffect(() => {
