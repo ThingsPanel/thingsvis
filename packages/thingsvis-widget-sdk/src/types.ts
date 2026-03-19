@@ -1,181 +1,67 @@
 /**
- * 核心类型定义
- * 
- * 与 @thingsvis/schema 保持兼容，同时提供更丰富的类型
+ * Widget SDK type definitions.
+ *
+ * Canonical control/contract types are re-exported from @thingsvis/schema
+ * (the single source of truth). This file adds SDK-specific authoring
+ * helpers such as generic WidgetMainModule<TProps> and extended
+ * WidgetOverlayContext.
  */
 
-import type { WidgetCategory } from '@thingsvis/schema';
-export type { WidgetCategory };
+import type {
+  WidgetCategory,
+  WidgetMainModule as CanonicalWidgetMainModule,
+  WidgetOverlayContext as SchemaOverlayContext,
+  PluginOverlayInstance as SchemaPluginOverlayInstance,
+} from '@thingsvis/schema';
 
 import type { z } from 'zod';
 
-/**
- * i18n label 类型：可以是字符串或多语言 map
- * 与 @thingsvis/schema 中的 I18nLabel 保持结构兼容
- */
-export type I18nLabel = string | Record<string, string>;
-
 // ============================================================================
-// 绑定模式
+// Re-export canonical types from @thingsvis/schema (single source of truth)
 // ============================================================================
 
-/** 绑定模式：静态值 | 字段选择 | 表达式 | 规则 */
-export type BindingMode = 'static' | 'field' | 'expr' | 'rule';
+export type { WidgetCategory };
 
-/** 绑定配置 */
-export type ControlBinding = {
-  enabled: boolean;
-  modes: BindingMode[];
-};
-
-// ============================================================================
-// 控件类型 - 扩展版
-// ============================================================================
-
-/** 
- * 控件类型枚举
- * 
- * 分类：
- * - 基础：string, number, boolean
- * - 颜色：color, gradient, colorScheme
- * - 选择：select, multiSelect, radio, segmented
- * - 复杂：json, code, expression
- * - 特殊：image, icon, font
- * - 数据：dataField, dataSource, nodeSelect
- * - 布局：slider, rangeSlider, margin, padding
- */
-export type ControlKind =
-  // 基础
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'textarea'
-  // 颜色
-  | 'color'
-  | 'gradient'
-  | 'colorScheme'
-  // 选择
-  | 'select'
-  | 'multiSelect'
-  | 'radio'
-  | 'segmented'
-  // 复杂
-  | 'json'
-  | 'code'
-  | 'expression'
-  // 特殊
-  | 'image'
-  | 'icon'
-  | 'font'
-  // 数据
-  | 'dataField'
-  | 'dataSource'
-  | 'nodeSelect'
-  // 布局
-  | 'slider'
-  | 'rangeSlider'
-  | 'margin'
-  | 'padding';
-
-/** 下拉选项 */
-export type ControlOption = {
-  label: I18nLabel;
-  value: string | number;
-  /** Lucide 图标名称（用于 segmented 等控件） */
-  icon?: string;
-};
+export type {
+  I18nLabel,
+  BindingMode,
+  ControlBinding,
+  ControlKind,
+  ControlOption,
+  ControlField,
+  ControlGroup,
+  ControlGroupId,
+  WidgetControls,
+} from '@thingsvis/schema';
 
 // ============================================================================
-// 控件字段定义
+// SDK-specific standard group IDs (DX convenience)
 // ============================================================================
 
-/** 控件字段完整定义 */
-export type ControlField = {
-  /** 属性路径（映射到 props 的 key） */
-  path: string;
-  /** 显示标签（支持字符串 i18n key 或 { en, zh, ... } 多语言 map） */
-  label: I18nLabel;
-  /** 控件类型 */
-  kind: ControlKind;
-  /** 下拉选项（select/multiSelect/radio/segmented 使用） */
-  options?: ControlOption[];
-  /** 默认值 */
-  default?: unknown;
-  /** 数据绑定配置 */
-  binding?: ControlBinding;
-  /** 占位提示文字 */
-  placeholder?: string;
-  /** 描述/帮助文字 */
-  description?: string;
-  /** 是否禁用 */
-  disabled?: boolean;
-  /** 条件显示（依赖其他字段） */
-  showWhen?: {
-    field: string;
-    value: unknown;
-  };
-  /** 数值范围（slider/number 使用） */
-  min?: number;
-  max?: number;
-  step?: number;
-};
+/** Recommended group IDs for widget controls. */
+export type StandardGroupId = 'Content' | 'Style' | 'Data' | 'Advanced';
 
 // ============================================================================
-// 控件分组
-// ============================================================================
-
-/** 标准分组 ID */
-export type ControlGroupId = 'Content' | 'Style' | 'Data' | 'Advanced';
-
-/** 控件分组 */
-export type ControlGroup = {
-  id: ControlGroupId | string;
-  label?: I18nLabel;
-  /** 是否默认展开 */
-  expanded?: boolean;
-  fields: ControlField[];
-};
-
-/** 插件控件配置（序列化格式） */
-export type WidgetControls = {
-  groups: ControlGroup[];
-};
-
-// ============================================================================
-// Overlay 相关类型
+// Overlay types — extend canonical schema definitions
 // ============================================================================
 
 /** 主题预设标识 */
 export type WidgetTheme = 'dawn' | 'midnight' | string;
 
-/** DOM Overlay 上下文 */
-export type WidgetOverlayContext = {
+/**
+ * DOM Overlay 上下文（SDK 扩展版）
+ *
+ * Extends the canonical WidgetOverlayContext from @thingsvis/schema
+ * with SDK-specific runtime fields (id, type, linkedNodes).
+ */
+export type WidgetOverlayContext = SchemaOverlayContext & {
+  /** 组件实例 id */
   id?: string;
+  /** 组件类型标识 */
   type?: string;
-  /** 位置（画布坐标） */
-  position?: { x: number; y: number };
-  /** 尺寸 */
-  size?: { width: number; height: number };
-  /** 组件属性（已解析） */
-  props?: Record<string, unknown>;
   /** 当前画布的主题上下文 (Dawn/Midnight) */
   theme?: WidgetTheme;
-  /** 当前语言 (e.g. 'zh', 'en') */
-  locale?: string;
-  /** 当前运行模式 */
-  mode?: 'edit' | 'preview' | 'view';
-  /** 组件是否可见（被裁剪/折叠等情况下为 false） */
-  visible?: boolean;
-  /** 向宿主发送事件（用于联动、动作触发） */
-  emit?: (event: string, payload?: unknown) => void;
-  /** 监听宿主事件（如全局变量变化） */
-  on?: (event: string, handler: (payload?: unknown) => void) => (() => void);
-  /**
-   * transformData 钩子的输出结果。
-   * 若 Widget 声明了 transformData，宿主在每次 update 前填充此字段。
-   * Widget 可从 ctx.data 读取已处理好的数据，无需再手动访问原始数据源。
-   */
-  data?: unknown;
+  /** 关联节点信息 */
   linkedNodes?: Record<
     string,
     {
@@ -186,7 +72,12 @@ export type WidgetOverlayContext = {
   >;
 };
 
-/** DOM Overlay 实例 */
+/**
+ * DOM Overlay 实例
+ *
+ * Re-exported from canonical @thingsvis/schema definition.
+ * update() callback receives the SDK-extended WidgetOverlayContext.
+ */
 export type PluginOverlayInstance = {
   /** DOM 根元素 */
   element: HTMLElement;
@@ -197,7 +88,7 @@ export type PluginOverlayInstance = {
 };
 
 // ============================================================================
-// 插件主模块类型
+// Widget main module — generic authoring version
 // ============================================================================
 
 /** 组件尺寸约束 */
@@ -215,7 +106,14 @@ export type WidgetConstraints = {
 };
 
 /**
- * 插件主模块接口
+ * SDK authoring version of WidgetMainModule.
+ *
+ * Extends the canonical `WidgetMainModule` from `@thingsvis/schema` with:
+ * - Generic `<TProps>` parameter for Zod schema type inference
+ * - SDK-extended `WidgetOverlayContext` (with id, type, linkedNodes)
+ *
+ * At runtime this type is structurally compatible with the schema version
+ * when `TProps = Record<string, unknown>`.
  */
 export type WidgetMainModule<TProps = Record<string, unknown>> = {
   /** 组件唯一标识 */
@@ -231,10 +129,10 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   locales?: Record<string, unknown>;
   /** Standalone-only demo props merged over schema defaults on initial creation. */
   standaloneDefaults?: Record<string, unknown>;
-  /** Zod Schema */
+  /** Zod Schema (generic for authoring-time type inference) */
   schema?: z.ZodType<TProps>;
   /** 控件配置 */
-  controls?: WidgetControls;
+  controls?: import('@thingsvis/schema').WidgetControls;
   /** 组件默认尺寸 */
   defaultSize?: { width: number; height: number };
   /** 组件尺寸约束 */

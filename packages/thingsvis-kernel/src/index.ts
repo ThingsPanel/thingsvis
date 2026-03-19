@@ -81,9 +81,9 @@ try {
   console.warn('[kernel] Failed to expose subscribeToPatches on globalThis', e);
 }
 
-// Export kernel interfaces
-export { type IVisualComponent } from './interfaces/visual-component';
-export { type IWidgetFactory } from './interfaces/widget-factory';
+// Legacy kernel interfaces — no longer on the main code path.
+// Kept as internal files for reference; removed from public exports.
+// See: issues/07-widget-contract-registry-runtime-fragmentation-architecture-debt.md
 
 // Export DataSource Management
 export { dataSourceManager, DataSourceManager } from './datasources/DataSourceManager';

@@ -65,6 +65,9 @@ export {
   type WidgetMainModule,
   type WidgetComponentId,
   type WidgetOverlayContext,
+  type PluginOverlayInstance,
+  type PluginPropSchema,
+  type PluginSchema,
 } from './widget-module';
 
 // Export base style schema and types

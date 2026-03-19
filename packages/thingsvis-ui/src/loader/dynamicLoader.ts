@@ -115,6 +115,11 @@ export function setPreviewRegistryUrl(url: string | undefined) {
   }
 }
 
+/**
+ * @deprecated This stub loader will be replaced by the canonical widget loader
+ * after Task 06 (runtime de-singleton) is completed. Do not add new consumers.
+ * See: issues/07-widget-contract-registry-runtime-fragmentation-architecture-debt.md
+ */
 export async function loadWidget(remoteEntryUrl: string, exposedModule: string): Promise<any> {
   // Emit start event
   try {
