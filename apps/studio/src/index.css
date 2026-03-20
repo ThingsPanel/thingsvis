@@ -329,6 +329,15 @@
     box-shadow 0.3s ease;
 }
 
+/* Text widget exception - keep clear and readable, no glass effect */
+.theme-frost [data-overlay-node-id]:has([data-thingsvis-overlay="basic-text"]) {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Crystal highlight on hover */
 .theme-frost [data-overlay-node-id]:hover {
   background: 
@@ -345,6 +354,15 @@
     0 6px 32px rgba(0, 0, 0, 0.3),
     0 0 0 1px rgba(124, 140, 248, 0.12),
     0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Text widget hover exception */
+.theme-frost [data-overlay-node-id]:has([data-thingsvis-overlay="basic-text"]):hover {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* ─── Frost Light (Crystal Glass) ──────────────────────────────────────────
@@ -426,6 +444,15 @@
     box-shadow 0.3s ease;
 }
 
+/* Text widget exception - keep clear and readable, no glass effect */
+.theme-frostLight [data-overlay-node-id]:has([data-thingsvis-overlay="basic-text"]) {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
 /* Light crystal hover state */
 .theme-frostLight [data-overlay-node-id]:hover {
   background: 
@@ -441,6 +468,15 @@
     0 4px 24px rgba(0, 0, 0, 0.08),
     0 8px 32px rgba(0, 0, 0, 0.06),
     0 0 0 1px rgba(99, 102, 241, 0.08);
+}
+
+/* Text widget hover exception */
+.theme-frostLight [data-overlay-node-id]:has([data-thingsvis-overlay="basic-text"]):hover {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Glassmorphism for dark canvas themes (Widget components can opt-in) */
