@@ -68,10 +68,10 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
   const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.45, 0, 1));
   const midLayer = withAlpha("#ffffff", preset.opacity);
   const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.6, 0.08));
-  const tintLayer = withAlpha(tint, preset.tint);
+  const tintLayer = withAlpha(tint, clamp(preset.tint * 1.2, 0, 0.85));
   const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.1, 0, 1));
-  const sideGlow = withAlpha(tint, clamp(preset.tint * 0.75, 0, 1));
-  const bottomTint = withAlpha(tint, clamp(preset.tint * 0.4, 0, 1));
+  const sideGlow = withAlpha(tint, clamp(preset.tint * 0.9, 0, 0.75));
+  const bottomTint = withAlpha(tint, clamp(preset.tint * 0.7, 0, 0.6));
   const softShade = withAlpha(colors.bg || "#dbe4ee", Math.min(preset.opacity * 0.14, 0.1));
   const ambientShadow = withAlpha("#0f172a", 0.04 + preset.opacity * 0.06);
   const innerHighlight = withAlpha("#ffffff", 0.2 + preset.highlight * 0.45);
@@ -97,12 +97,18 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
       position:relative;
       box-sizing:border-box;
       background:
+        /* Top-left white glow */
         radial-gradient(circle at top left, ${topGlow} 0%, transparent 42%),
-        radial-gradient(circle at 82% 18%, ${sideGlow} 0%, transparent 34%),
-        radial-gradient(circle at 50% 120%, ${softShade} 0%, transparent 58%),
+        /* Top-right tinted glow - stronger */
+        radial-gradient(ellipse at 85% 15%, ${sideGlow} 0%, transparent 45%),
+        /* Bottom tinted shade - stronger */
+        radial-gradient(ellipse at 50% 120%, ${bottomTint} 0%, transparent 55%),
+        /* Base surface layers */
         linear-gradient(180deg, ${topLayer} 0%, ${midLayer} 38%, ${bottomLayer} 100%),
-        linear-gradient(135deg, ${tintLayer} 0%, transparent 68%),
-        linear-gradient(0deg, ${bottomTint} 0%, transparent 40%);
+        /* Main color tint wash */
+        linear-gradient(160deg, ${tintLayer} 0%, transparent 60%),
+        /* Bottom edge tint */
+        linear-gradient(0deg, ${bottomTint} 0%, transparent 50%);
       backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
       -webkit-backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
       box-shadow:

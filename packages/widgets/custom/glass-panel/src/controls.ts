@@ -51,7 +51,7 @@ export const controls = createControlPanel()
       min: 0,
       max: 1,
       step: 0.01,
-      default: 0.1
+      default: 0.35
     });
   })
   .build();
