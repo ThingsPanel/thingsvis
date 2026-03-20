@@ -39,10 +39,7 @@ describe('platformDeviceCompat', () => {
       } as unknown as DataSource,
     ];
 
-    expect(findLegacyPlatformDataSourceIdsForAdoption(dataSources)).toEqual([
-      '__platform__',
-      'legacy-platform',
-    ]);
+    expect(findLegacyPlatformDataSourceIdsForAdoption(dataSources)).toEqual(['legacy-platform']);
   });
 
   it('adopts legacy datasource configs to the active runtime device', () => {
@@ -54,7 +51,7 @@ describe('platformDeviceCompat', () => {
 
     const adopted = adoptLegacyPlatformDataSources(dataSources, 'dev-1');
 
-    expect((adopted[0]!.config as any).deviceId).toBe('dev-1');
+    expect((adopted[0]!.config as any).deviceId).toBeUndefined();
     expect((adopted[1]!.config as any).deviceId).toBe('dev-1');
     expect((adopted[2]!.config as any).deviceId).toBe('dev-9');
   });

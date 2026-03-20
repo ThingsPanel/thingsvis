@@ -1,5 +1,7 @@
 import type { DataSource, PlatformFieldConfig } from '@thingsvis/schema';
 
+const GLOBAL_PLATFORM_DATA_SOURCE_ID = '__platform__';
+
 function normalizeDataSourceType(type: unknown): string {
   return typeof type === 'string' ? type.toUpperCase() : '';
 }
@@ -59,6 +61,7 @@ export function isCanonicalPlatformDeviceDataSourceId(dataSourceId: string): boo
 export function findLegacyPlatformDataSourceIdsForAdoption(dataSources: DataSource[]): string[] {
   return dataSources
     .filter((dataSource) => isPlatformFieldDataSource(dataSource))
+    .filter((dataSource) => dataSource.id !== GLOBAL_PLATFORM_DATA_SOURCE_ID)
     .filter((dataSource) => !isCanonicalPlatformDeviceDataSourceId(dataSource.id))
     .map((dataSource) => dataSource.id);
 }
@@ -96,6 +99,7 @@ export function adoptLegacyPlatformDataSources(
 ): DataSource[] {
   return dataSources.map((dataSource) => {
     if (!isPlatformFieldDataSource(dataSource)) return dataSource;
+    if (dataSource.id === GLOBAL_PLATFORM_DATA_SOURCE_ID) return dataSource;
     if (isCanonicalPlatformDeviceDataSourceId(dataSource.id)) return dataSource;
 
     const config = (dataSource.config ?? {}) as PlatformFieldConfig;
