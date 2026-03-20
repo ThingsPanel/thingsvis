@@ -8,7 +8,7 @@
  * To add a new theme:
  *   1. Register it in packages/thingsvis-schema/src/theme-registry.ts
  *   2. Add a matching [data-canvas-theme="<id>"] block below
- *   3. Add a matching .theme-<id> block in apps/studio/src/index.css
+ *   3. Add a matching .theme-<id> block in apps/studio/src/index.css (UI vars only)
  *   4. Zero TypeScript changes required.
  */
 
@@ -87,23 +87,84 @@
   --w-series-6: #0366d6;
 }
 
-/* ─── Theme: frost (glassmorphism dark) ──────────────────────────────────── */
+/* ─── Theme: frost (Crystal Glass - Dark) ───────────────────────────────────
+ * Inspired by iPhone 17 crystal glass aesthetic
+ * Features: High transparency, edge light reflection, subtle chromatic dispersion
+ */
 [data-canvas-theme="frost"] {
-  --w-bg:       #0b0d20;
-  --w-fg:       #e0e6f0;
-  --w-axis:     rgba(124, 140, 248, 0.12);
-  --w-primary:  #7c8cf8;
-  --w-border:   rgba(224, 230, 240, 0.1);
-  --w-series-1: #7c8cf8;
-  --w-series-2: #64d8cb;
-  --w-series-3: #a78bfa;
-  --w-series-4: #f472b6;
+  --w-bg:       rgba(11, 13, 32, 0.65);
+  --w-fg:       #f1f5f9;
+  --w-axis:     rgba(148, 163, 184, 0.15);
+  --w-primary:  #94a3b8;
+  --w-border:   rgba(255, 255, 255, 0.15);
+  --w-series-1: #818cf8;
+  --w-series-2: #2dd4bf;
+  --w-series-3: #f472b6;
+  --w-series-4: #fbbf24;
   --w-series-5: #38bdf8;
-  --w-series-6: #fbbf24;
-  /* Artboard background gradient for glassmorphism depth effect */
+  --w-series-6: #a78bfa;
+  
+  /* Crystal glass variables */
+  --w-glass-opacity: 0.15;
+  --w-glass-blur: 20px;
+  --w-glass-saturate: 180%;
+  --w-edge-glow: rgba(255, 255, 255, 0.3);
+  --w-inner-shadow: rgba(255, 255, 255, 0.1);
+  --w-chromatic-tint: rgba(129, 140, 248, 0.08);
+  
+  /* Enhanced artboard gradient with crystal depth */
   --w-artboard-gradient:
-    radial-gradient(ellipse at 22% 30%, rgba(99, 102, 241, 0.22) 0%, transparent 52%),
-    radial-gradient(ellipse at 78% 68%, rgba(100, 216, 203, 0.16) 0%, transparent 48%),
-    radial-gradient(ellipse at 50% 95%, rgba(124, 140, 248, 0.12) 0%, transparent 40%),
-    linear-gradient(145deg, #0b0d20 0%, #111730 45%, #090e1e 100%);
+    /* Top-right crystal highlight */
+    radial-gradient(ellipse at 85% 15%, rgba(255, 255, 255, 0.08) 0%, transparent 40%),
+    /* Bottom-left subtle reflection */
+    radial-gradient(ellipse at 15% 85%, rgba(45, 212, 191, 0.12) 0%, transparent 45%),
+    /* Central depth glow */
+    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.06) 0%, transparent 60%),
+    /* Base gradient */
+    linear-gradient(165deg, 
+      rgba(11, 13, 32, 0.95) 0%, 
+      rgba(17, 24, 39, 0.9) 35%, 
+      rgba(15, 23, 42, 0.95) 70%,
+      rgba(10, 14, 26, 1) 100%
+    );
+}
+
+/* ─── Theme: frostLight (Crystal Glass - Light) ────────────────────────────
+ * Light crystal glass with iOS-style clarity
+ * Features: Ultra-transparent, subtle blue tint, premium edge highlights
+ */
+[data-canvas-theme="frostLight"] {
+  --w-bg:       rgba(255, 255, 255, 0.72);
+  --w-fg:       #0f172a;
+  --w-axis:     rgba(99, 102, 241, 0.12);
+  --w-primary:  #4f46e5;
+  --w-border:   rgba(255, 255, 255, 0.8);
+  --w-series-1: #6366f1;
+  --w-series-2: #0ea5e9;
+  --w-series-3: #8b5cf6;
+  --w-series-4: #ec4899;
+  --w-series-5: #14b8a6;
+  --w-series-6: #f59e0b;
+  
+  /* Crystal glass variables */
+  --w-glass-opacity: 0.25;
+  --w-glass-blur: 24px;
+  --w-glass-saturate: 200%;
+  --w-edge-glow: rgba(255, 255, 255, 0.9);
+  --w-inner-shadow: rgba(255, 255, 255, 0.6);
+  --w-chromatic-tint: rgba(99, 102, 241, 0.05);
+  
+  /* Soft ambient gradient for light crystal effect */
+  --w-artboard-gradient:
+    /* Top highlight for glass reflection */
+    radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.4) 0%, transparent 35%),
+    /* Subtle color dispersion */
+    radial-gradient(ellipse at 20% 30%, rgba(99, 102, 241, 0.06) 0%, transparent 40%),
+    radial-gradient(ellipse at 80% 70%, rgba(14, 165, 233, 0.04) 0%, transparent 40%),
+    /* Base light gradient */
+    linear-gradient(180deg,
+      rgba(248, 250, 252, 0.98) 0%,
+      rgba(241, 245, 249, 0.95) 50%,
+      rgba(226, 232, 240, 0.98) 100%
+    );
 }

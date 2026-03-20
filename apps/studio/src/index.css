@@ -75,25 +75,18 @@
 }
 
 /* ============================================================================
-   画布专用主题变量隔离 (Widget Themes)
-   说明：基于 CSS 局部变量隔离设计的 Dawn 与 Midnight 预设
+   Canvas Theme Styles (Studio UI)
+   
+   NOTE: Widget-level CSS variables (--w-*) are defined in 
+   packages/thingsvis-ui/src/styles/canvas-themes.css
+   
+   This file only contains Studio UI theme variables.
    ============================================================================ */
 
+/* ─── Dawn ───────────────────────────────────────────────────────────────── */
 .theme-dawn {
-  /* Dawn — Ultra bright and airy (hex for resolveWidgetColors, HSL for Tailwind) */
-  --w-bg: #ffffff;
-  --w-fg: #1a1a2e;
-  --w-axis: rgba(0, 0, 0, 0.08);
-  --w-border: rgba(0, 0, 0, 0.06);
   --w-canvas-bg: 0 0% 100%;
   --w-canvas-dot: 210 15% 94%;
-  --w-primary: #6965db;
-  --w-series-1: #6965db;
-  --w-series-2: #4ea8a6;
-  --w-series-3: #e8945a;
-  --w-series-4: #e05d6f;
-  --w-series-5: #8b5cf6;
-  --w-series-6: #0ea5e9;
 
   --background: 220 14% 96%;
   --foreground: 220 20% 10%;
@@ -114,7 +107,6 @@
   --border: 210 20% 94%;
   --input: 210 20% 94%;
   --ring: 243 58% 63%;
-  --radius: 0.75rem;
   --canvas-dot: 210 15% 94%;
   --chart-1: 41.116 22.2% 64.6%;
   --chart-2: 184.704 11.8% 60%;
@@ -123,21 +115,10 @@
   --chart-5: 70.08 18.8% 76.9%;
 }
 
+/* ─── Midnight ───────────────────────────────────────────────────────────── */
 .theme-midnight {
-  /* Midnight — Cozy dark sci-fi theme */
-  --w-bg: #0f1729;
-  --w-fg: #c8d6f0;
-  --w-axis: rgba(120, 160, 255, 0.15);
-  --w-border: rgba(200, 214, 240, 0.12);
   --w-canvas-bg: 225 25% 12%;
   --w-canvas-dot: 225 20% 30%;
-  --w-primary: #4e80ee;
-  --w-series-1: #4e80ee;
-  --w-series-2: #5b8def;
-  --w-series-3: #3d6ad6;
-  --w-series-4: #7c5cfc;
-  --w-series-5: #38bdf8;
-  --w-series-6: #f472b6;
 
   --background: 225 25% 12%;
   --foreground: 220 20% 94%;
@@ -158,7 +139,6 @@
   --border: 225 20% 28%;
   --input: 225 20% 28%;
   --ring: 243 58% 63%;
-  --radius: 0.75rem;
   --canvas-dot: 225 20% 32%;
   --chart-1: 264.376 24.3% 48.8%;
   --chart-2: 162.48 17% 69.6%;
@@ -167,21 +147,10 @@
   --chart-5: 16.439 24.6% 64.5%;
 }
 
+/* ─── Ocean ──────────────────────────────────────────────────────────────── */
 .theme-ocean {
-  /* Ocean — Deep navy-teal dark theme */
-  --w-bg: #0a192f;
-  --w-fg: #ccd6f6;
-  --w-axis: rgba(100, 255, 218, 0.12);
-  --w-border: rgba(204, 214, 246, 0.1);
   --w-canvas-bg: 216 65% 11%;
   --w-canvas-dot: 216 50% 25%;
-  --w-primary: #64ffda;
-  --w-series-1: #64ffda;
-  --w-series-2: #57cbff;
-  --w-series-3: #ff6b9d;
-  --w-series-4: #ffd93d;
-  --w-series-5: #6c5ce7;
-  --w-series-6: #a8e6cf;
 
   --background: 216 65% 11%;
   --foreground: 220 60% 91%;
@@ -202,7 +171,6 @@
   --border: 216 40% 25%;
   --input: 216 40% 25%;
   --ring: 166 100% 69%;
-  --radius: 0.75rem;
   --canvas-dot: 216 50% 25%;
   --chart-1: 166 100% 69%;
   --chart-2: 197 100% 67%;
@@ -212,21 +180,10 @@
   --chart-6: 151 51% 75%;
 }
 
+/* ─── Ember ──────────────────────────────────────────────────────────────── */
 .theme-ember {
-  /* Ember — Dark warm fire-toned theme */
-  --w-bg: #1a1020;
-  --w-fg: #f0e6ff;
-  --w-axis: rgba(255, 107, 53, 0.15);
-  --w-border: rgba(240, 230, 255, 0.1);
   --w-canvas-bg: 278 33% 9%;
   --w-canvas-dot: 278 25% 22%;
-  --w-primary: #ff6b35;
-  --w-series-1: #ff6b35;
-  --w-series-2: #ffb366;
-  --w-series-3: #ff4757;
-  --w-series-4: #ffc048;
-  --w-series-5: #a855f7;
-  --w-series-6: #fb923c;
 
   --background: 278 33% 9%;
   --foreground: 270 100% 95%;
@@ -247,7 +204,6 @@
   --border: 278 20% 22%;
   --input: 278 20% 22%;
   --ring: 19 100% 60%;
-  --radius: 0.75rem;
   --canvas-dot: 278 25% 22%;
   --chart-1: 19 100% 60%;
   --chart-2: 35 100% 70%;
@@ -257,21 +213,10 @@
   --chart-6: 24 96% 60%;
 }
 
+/* ─── Aurora ─────────────────────────────────────────────────────────────── */
 .theme-aurora {
-  /* Aurora — Clean light GitHub-inspired theme */
-  --w-bg: #fafbfc;
-  --w-fg: #24292e;
-  --w-axis: rgba(0, 0, 0, 0.06);
-  --w-border: rgba(0, 0, 0, 0.08);
   --w-canvas-bg: 210 17% 98%;
   --w-canvas-dot: 210 12% 90%;
-  --w-primary: #2188ff;
-  --w-series-1: #2188ff;
-  --w-series-2: #28a745;
-  --w-series-3: #6f42c1;
-  --w-series-4: #e36209;
-  --w-series-5: #d73a49;
-  --w-series-6: #0366d6;
 
   --background: 210 17% 98%;
   --foreground: 210 12% 16%;
@@ -292,7 +237,6 @@
   --border: 210 18% 90%;
   --input: 210 18% 90%;
   --ring: 212 100% 56%;
-  --radius: 0.75rem;
   --canvas-dot: 210 12% 90%;
   --chart-1: 212 100% 56%;
   --chart-2: 134 61% 41%;
@@ -302,21 +246,16 @@
   --chart-6: 212 98% 42%;
 }
 
+/* ─── Frost Dark (Crystal Glass) ───────────────────────────────────────────
+ * Enhanced crystal glass effect with:
+ * - Higher transparency for premium glass look
+ * - Edge light reflection (iPhone 17 style)
+ * - Chromatic dispersion hints
+ * - Multi-layer shadow for depth
+ */
 .theme-frost {
-  /* Frost — glassmorphism dark theme (indigo-teal palette) */
-  --w-bg: #0b0d20;
-  --w-fg: #e0e6f0;
-  --w-axis: rgba(124, 140, 248, 0.12);
-  --w-border: rgba(224, 230, 240, 0.1);
   --w-canvas-bg: 234 42% 8%;
   --w-canvas-dot: 234 25% 20%;
-  --w-primary: #7c8cf8;
-  --w-series-1: #7c8cf8;
-  --w-series-2: #64d8cb;
-  --w-series-3: #a78bfa;
-  --w-series-4: #f472b6;
-  --w-series-5: #38bdf8;
-  --w-series-6: #fbbf24;
 
   --background: 234 42% 8%;
   --foreground: 225 25% 92%;
@@ -334,10 +273,9 @@
   --accent-foreground: 0 0% 100%;
   --destructive: 0 63% 52%;
   --destructive-foreground: 0 0% 100%;
-  --border: 234 26% 19%;
+  --border: 234 26% 22%;
   --input: 234 26% 19%;
   --ring: 233 91% 73%;
-  --radius: 0.75rem;
   --canvas-dot: 234 25% 20%;
   --chart-1: 233 91% 73%;
   --chart-2: 168 58% 62%;
@@ -347,16 +285,162 @@
   --chart-6: 45 93% 56%;
 }
 
-/* Frost theme: translucent panel style for widget overlay containers.
-   No backdrop-filter — blurring sibling overlays destroys chart readability.
-   Visual depth comes from the artboard gradient background instead. */
+/* Crystal Glass Dark - Widget Overlay Styles */
 .theme-frost [data-overlay-node-id] {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  /* Multi-layer glass background */
+  background: 
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+  
+  /* Enhanced backdrop blur with saturation */
+  backdrop-filter: 
+    blur(20px) 
+    saturate(180%) 
+    brightness(1.05);
+  -webkit-backdrop-filter: 
+    blur(20px) 
+    saturate(180%) 
+    brightness(1.05);
+  
+  /* Crystal edge border with gradient */
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-top-color: rgba(255, 255, 255, 0.28);
+  border-left-color: rgba(255, 255, 255, 0.22);
+  
+  /* Multi-layer shadow for depth */
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 2px 12px rgba(0, 0, 0, 0.25),
-    0 0 1px rgba(124, 140, 248, 0.15);
+    /* Inner highlight (top edge reflection) */
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    /* Soft ambient shadow */
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    /* Colored glow for crystal effect */
+    0 0 0 1px rgba(124, 140, 248, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.3);
+  
+  /* Smooth transitions */
+  transition: 
+    backdrop-filter 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Crystal highlight on hover */
+.theme-frost [data-overlay-node-id]:hover {
+  background: 
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.07) 50%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1),
+    0 6px 32px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(124, 140, 248, 0.12),
+    0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* ─── Frost Light (Crystal Glass) ──────────────────────────────────────────
+ * Light crystal glass with iOS 17 style clarity
+ * Ultra-transparent with premium edge highlights
+ */
+.theme-frostLight {
+  --w-canvas-bg: 210 40% 98%;
+  --w-canvas-dot: 210 20% 88%;
+
+  --background: 210 40% 98%;
+  --foreground: 215 25% 27%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 25% 27%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 215 25% 27%;
+  --primary: 239 84% 67%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 30% 96%;
+  --secondary-foreground: 215 25% 27%;
+  --muted: 210 25% 94%;
+  --muted-foreground: 215 15% 45%;
+  --accent: 239 70% 60%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 239 84% 67%;
+  --canvas-dot: 210 20% 88%;
+  --chart-1: 239 84% 67%;
+  --chart-2: 168 76% 40%;
+  --chart-3: 263 70% 60%;
+  --chart-4: 330 75% 60%;
+  --chart-5: 199 89% 48%;
+  --chart-6: 38 92% 50%;
+}
+
+/* Crystal Glass Light - Widget Overlay Styles */
+.theme-frostLight [data-overlay-node-id] {
+  /* Ultra-transparent white glass */
+  background: 
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0.65) 50%,
+      rgba(255, 255, 255, 0.45) 100%
+    );
+  
+  /* Enhanced blur with high saturation for vibrant look */
+  backdrop-filter: 
+    blur(24px) 
+    saturate(200%) 
+    brightness(1.02);
+  -webkit-backdrop-filter: 
+    blur(24px) 
+    saturate(200%) 
+    brightness(1.02);
+  
+  /* Premium edge border */
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.6);
+  border-right-color: rgba(255, 255, 255, 0.7);
+  
+  /* Soft shadow for floating effect */
+  box-shadow:
+    /* Inner top highlight */
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02),
+    /* Soft ambient shadow */
+    0 2px 16px rgba(0, 0, 0, 0.06),
+    0 4px 24px rgba(0, 0, 0, 0.04),
+    /* Subtle blue tint glow */
+    0 0 0 1px rgba(99, 102, 241, 0.06);
+  
+  transition: 
+    backdrop-filter 0.3s ease,
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* Light crystal hover state */
+.theme-frostLight [data-overlay-node-id]:hover {
+  background: 
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(255, 255, 255, 0.72) 50%,
+      rgba(255, 255, 255, 0.52) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.02),
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(99, 102, 241, 0.08);
 }
 
 /* Glassmorphism for dark canvas themes (Widget components can opt-in) */

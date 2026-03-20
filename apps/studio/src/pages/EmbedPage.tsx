@@ -158,6 +158,11 @@ export default function EmbedPage() {
     );
   }, [kernelState]);
 
+  const pageTheme = useMemo(() => {
+    const page = kernelState?.page as any;
+    return (page?.config?.theme as string) ?? DEFAULT_CANVAS_THEME;
+  }, [kernelState]);
+
   useEffect(() => {
     const targets = [
       document.documentElement,
@@ -902,7 +907,7 @@ export default function EmbedPage() {
   // Auto-calculation of zoom for non-grid layouts (Fixed/Infinite)
   return (
     <div
-      className="relative overflow-auto thingsvis-embed-surface"
+      className={`theme-${pageTheme} relative overflow-auto thingsvis-embed-surface`}
       style={{
         width: '100vw',
         height: '100vh',
