@@ -241,6 +241,7 @@ export interface EmbedInitPayload {
       mode?: string;
       width?: number;
       height?: number;
+      theme?: string;
       scaleMode?: string;
       previewAlignY?: string;
       /** May be a CSS string or a PageBackground object { color, image, ... }. */
@@ -270,6 +271,7 @@ export interface ProcessedEmbedData {
     mode: string;
     width: number;
     height: number;
+    theme?: string;
     scaleMode: PreviewScaleMode;
     previewAlignY: PreviewAlignY;
     /** Preserved as-is from the host payload — may be string or PageBackground object. */
@@ -351,6 +353,7 @@ export function processEmbedInitPayload(
     mode: normalizeEmbedCanvasMode(data.canvas?.mode),
     width: data.canvas?.width || 1920,
     height: data.canvas?.height || 1080,
+    theme: typeof data.canvas?.theme === 'string' ? data.canvas.theme : undefined,
     scaleMode: normalizeEmbedCanvasScaleMode(data.canvas?.scaleMode),
     previewAlignY: normalizeEmbedPreviewAlignY(data.canvas?.previewAlignY),
     // Use ?? so a falsy-but-defined value (e.g. empty string) is preserved;

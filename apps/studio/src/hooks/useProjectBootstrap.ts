@@ -493,8 +493,24 @@ export function useProjectBootstrap({
         return;
       }
 
-      // FIX-G1: Compute a lightweight fingerprint; skip if identical to the last processed init
-      const fingerprint = `${processed.projectId}:${processed.nodes.length}:${(processed.dataSources as unknown[]).length}:${processed.canvas.mode}:${processed.canvas.width}:${processed.canvas.height}:${processed.canvas.scaleMode}:${processed.canvas.previewAlignY}`;
+      // FIX-G1: Include visual canvas settings so theme/background-only init payloads are not skipped.
+      const fingerprint = JSON.stringify({
+        projectId: processed.projectId,
+        nodeCount: processed.nodes.length,
+        dataSourceCount: (processed.dataSources as unknown[]).length,
+        canvas: {
+          mode: processed.canvas.mode,
+          width: processed.canvas.width,
+          height: processed.canvas.height,
+          theme: processed.canvas.theme,
+          background: processed.canvas.background,
+          scaleMode: processed.canvas.scaleMode,
+          previewAlignY: processed.canvas.previewAlignY,
+          gridCols: processed.canvas.gridCols,
+          gridRowHeight: processed.canvas.gridRowHeight,
+          gridGap: processed.canvas.gridGap,
+        },
+      });
       if (fingerprint === lastInitFingerprintRef.current) {
         return;
       }

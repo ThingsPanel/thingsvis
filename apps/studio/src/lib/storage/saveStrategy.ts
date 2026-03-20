@@ -49,6 +49,7 @@ export interface SavePayload {
     mode: string;
     width: number;
     height: number;
+    theme?: string;
     scaleMode?: 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
     previewAlignY?: 'top' | 'center';
     /** Stored as PageBackground object or legacy CSS string. */
