@@ -28,13 +28,17 @@ export interface SaveIndicatorProps {
 // Component
 // =============================================================================
 
-export function SaveIndicator({
-  status,
-  lastSavedAt: _lastSavedAt,
-  error,
-  className = '',
-}: SaveIndicatorProps) {
+export function SaveIndicator({ status, lastSavedAt, error, className = '' }: SaveIndicatorProps) {
   const { t } = useTranslation('editor');
+
+  const lastSavedText =
+    lastSavedAt != null
+      ? new Intl.DateTimeFormat(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }).format(lastSavedAt)
+      : null;
 
   const getStatusText = (): string => {
     switch (status) {
@@ -44,6 +48,10 @@ export function SaveIndicator({
         return t('saveIndicator.saving');
       case 'error':
         return error || t('saveIndicator.error');
+      case 'saved':
+        return t('saveIndicator.saved');
+      case 'idle':
+        return lastSavedAt != null ? t('saveIndicator.saved') : '';
       default:
         return '';
     }
@@ -57,6 +65,9 @@ export function SaveIndicator({
         return <ErrorIcon className="text-red-500" />;
       case 'dirty':
         return <DotIcon className="text-yellow-500" />;
+      case 'saved':
+      case 'idle':
+        return lastSavedAt != null ? <CheckIcon className="text-emerald-500" /> : null;
       default:
         return null;
     }
@@ -67,10 +78,17 @@ export function SaveIndicator({
     return null;
   }
 
+  const title =
+    status === 'error'
+      ? error || undefined
+      : lastSavedText
+        ? t('saveIndicator.lastSaved', { time: lastSavedText })
+        : undefined;
+
   return (
     <div
       className={`flex items-center gap-1.5 text-sm text-muted-foreground ${className}`}
-      title={status === 'error' ? error || undefined : undefined}
+      title={title}
     >
       {getStatusIcon()}
       <span>{statusText}</span>
@@ -123,6 +141,26 @@ function DotIcon({ className = '' }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
     >
       <circle cx="12" cy="12" r="4" />
+    </svg>
+  );
+}
+
+function CheckIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      className={`w-4 h-4 ${className}`}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+      <path
+        d="M8 12.5l2.5 2.5L16 9.5"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
