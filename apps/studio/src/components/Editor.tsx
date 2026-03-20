@@ -44,6 +44,7 @@ import {
   type CanvasConfigSchema,
   generateId,
 } from '../hooks/useProjectBootstrap';
+import { buildHashRoute } from '../lib/embed/navigation';
 import { useEditorStartup } from '../hooks/useEditorStartup';
 import { useEditorSync } from '../hooks/useEditorSync';
 import { useEditorDragDrop } from '../hooks/useEditorDragDrop';
@@ -295,7 +296,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const openPreview = useCallback(async () => {
     await saveNow();
     if (embedVisibility.isEmbedded) {
-      window.location.hash = `#/preview?projectId=${encodeURIComponent(projectId)}&mode=embedded`;
+      window.location.hash = buildHashRoute('#/preview', {
+        preserveCurrentParams: true,
+        params: { projectId, resumeSession: null },
+      });
       return;
     }
     const previewHash = `#/preview?projectId=${encodeURIComponent(projectId)}`;
@@ -429,7 +433,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         onOpenDataSources={async () => {
           if (embedVisibility.isEmbedded) {
             await saveNow();
-            window.location.hash = `#/data-sources?projectId=${encodeURIComponent(projectId)}&mode=embedded`;
+            window.location.hash = buildHashRoute('#/data-sources', {
+              preserveCurrentParams: true,
+              params: { projectId, resumeSession: null },
+            });
           } else {
             window.open('#/data-sources', '_blank');
           }

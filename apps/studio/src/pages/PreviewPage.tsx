@@ -24,6 +24,7 @@ import { loadWidget } from '../lib/registry/componentLoader';
 import { projectStorage } from '../lib/storage/projectStorage';
 import * as previewSession from '../lib/storage/previewSession';
 import * as dashboardsApi from '../lib/api/dashboards';
+import { buildHashRoute } from '../lib/embed/navigation';
 
 function getPreviewParamsFromHash(): { projectId: string | null } {
   const hash = window.location.hash || '';
@@ -308,7 +309,10 @@ export default function PreviewPage() {
 
     if (projectId) {
       if (isEmbedded) {
-        window.location.hash = `#/editor/${projectId}?mode=embedded`;
+        window.location.hash = buildHashRoute(`#/editor/${projectId}`, {
+          preserveCurrentParams: true,
+          params: { projectId: null, resumeSession: '1' },
+        });
       } else {
         window.location.hash = `#/editor/${projectId}`;
       }

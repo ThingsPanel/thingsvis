@@ -24,6 +24,7 @@ import {
   type SavePayload,
 } from '../lib/storage/saveStrategy';
 import { requestSave as sendToHost } from '../embed/message-router';
+import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 
 // =============================================================================
 // Hook Options
@@ -59,6 +60,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     async (project: ProjectFile) => {
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
+        setEmbedSessionSnapshot(project.meta.id, project, 'host-save');
         const payload: SavePayload = {
           meta: {
             id: project.meta.id,

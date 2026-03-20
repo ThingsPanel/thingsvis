@@ -23,6 +23,8 @@ temp/
 .env.production
 .env.staging
 .env.*.local
+.env-*
+**/.env-*
 # Preserve example config
 !.env.example
 
@@ -116,6 +118,8 @@ apps/docs/.vitepress/cache/
 # Internal Iteration Logs (widget-level dev notes)
 # ============================================================
 **/widget-iteration-log.md
+iteration-log.md
+project-context.md
 
 # ============================================================
 # Debug & Local Test Scripts

@@ -29,6 +29,7 @@ import {
 import { platformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
+import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -227,8 +228,100 @@ export function useProjectBootstrap({
   const [bootstrapSummary, setBootstrapSummary] =
     useState<BootstrapSummary>(EMPTY_BOOTSTRAP_SUMMARY);
   const canvasInitializedRef = useRef(false);
+  const skipNextEmbedInitRequestRef = useRef(false);
 
   const storage = useStorage(projectId);
+
+  const applyProjectToEditor = useCallback(
+    async (loaded: ProjectFile) => {
+      setBootstrapSummary(createBootstrapSummary(loaded.nodes));
+      const loadedBackground =
+        typeof loaded.canvas.background === 'object' && loaded.canvas.background !== null
+          ? loaded.canvas.background
+          : typeof loaded.canvas.background === 'string' && loaded.canvas.background.length > 0
+            ? { color: loaded.canvas.background }
+            : undefined;
+      store.getState().loadPage({
+        id: loaded.meta.id,
+        type: 'page' as const,
+        version: loaded.meta.version,
+        nodes: loaded.nodes,
+        config: {
+          mode: normalizeCanvasMode(loaded.canvas.mode),
+          width: loaded.canvas.width,
+          height: loaded.canvas.height,
+          theme: validateCanvasTheme((loaded.canvas as any).theme),
+          scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
+          previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
+          background: loadedBackground as unknown as
+            | NonNullable<IPageConfig['background']>
+            | undefined,
+        },
+      });
+      setCanvasConfig((prev) => ({
+        ...prev,
+        id: loaded.meta.id,
+        name: loaded.meta.name,
+        thumbnail: loaded.meta.thumbnail || '',
+        projectId: loaded.meta.projectId || prev.projectId,
+        projectName: loaded.meta.projectName,
+        createdAt: loaded.meta.createdAt,
+        mode: normalizeCanvasMode(loaded.canvas.mode),
+        width: loaded.canvas.width,
+        height: loaded.canvas.height,
+        theme: validateCanvasTheme((loaded.canvas as any).theme),
+        scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
+        previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
+        bgValue:
+          typeof loaded.canvas.background === 'string' ? loaded.canvas.background : prev.bgValue,
+        background: (loadedBackground as CanvasBackground | undefined) ?? prev.background,
+        gridCols: loaded.canvas.gridCols ?? prev.gridCols,
+        gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
+        gridGap: loaded.canvas.gridGap ?? prev.gridGap,
+        gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
+        gridSize: loaded.canvas.gridSize ?? prev.gridSize,
+        dataSources: (loaded.dataSources as any) ?? prev.dataSources,
+      }));
+
+      if (loadedBackground) {
+        store.getState().updatePageConfig({ background: loadedBackground } as any);
+      }
+
+      if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
+        for (const ds of loaded.dataSources) {
+          try {
+            await dataSourceManager.registerDataSource(ds as any, false);
+          } catch (e) {
+            console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e);
+          }
+        }
+      }
+
+      if (loaded.canvas.mode === 'grid') {
+        store.getState().setGridSettings({
+          cols: loaded.canvas.gridCols ?? 24,
+          rowHeight: loaded.canvas.gridRowHeight ?? 50,
+          gap: loaded.canvas.gridGap ?? 10,
+          compactVertical: true,
+          minW: 1,
+          minH: 1,
+          showGridLines: loaded.canvas.gridEnabled ?? true,
+          breakpoints: [],
+          responsive: true,
+        } as any);
+      }
+
+      if (loaded.variables && Array.isArray(loaded.variables)) {
+        store.getState().setVariableDefinitions(loaded.variables as any);
+        store.getState().initVariablesFromDefinitions(loaded.variables as any);
+      }
+
+      try {
+        store.temporal.getState().clear?.();
+      } catch {}
+    },
+    [setCanvasConfig],
+  );
 
   const getProjectState = useCallback((): ProjectFile => {
     const currentCanvasConfig = canvasConfigRef.current;
@@ -271,6 +364,7 @@ export function useProjectBootstrap({
   useEffect(() => {
     let cancelled = false;
     canvasInitializedRef.current = false;
+    skipNextEmbedInitRequestRef.current = false;
     (async () => {
       bootstrappingRef.current = true;
       setIsBootstrapping(true);
@@ -284,13 +378,23 @@ export function useProjectBootstrap({
           // dashboard ID, which would cause a second bootstrap if we only checked
           // the string pattern ('widget' / 'embed-*').
           const hashQuery = window.location.hash.split('?')[1] || '';
-          const urlSaveTarget = new URLSearchParams(hashQuery).get('saveTarget') || '';
+          const hashParams = new URLSearchParams(hashQuery);
+          const urlSaveTarget = hashParams.get('saveTarget') || '';
+          const shouldResumeFromSession = hashParams.get('resumeSession') === '1';
           const isHostProject =
             embedVisibility.isEmbedded &&
             (urlSaveTarget === 'host' || projectId === 'widget' || projectId.startsWith('embed-'));
 
           if (isHostProject) {
-            setBootstrapSummary({ ...EMPTY_BOOTSTRAP_SUMMARY, projectLoaded: true });
+            const sessionSnapshot = shouldResumeFromSession
+              ? getEmbedSessionSnapshot(projectId)
+              : null;
+            if (sessionSnapshot?.project) {
+              skipNextEmbedInitRequestRef.current = true;
+              await applyProjectToEditor(sessionSnapshot.project);
+            } else {
+              setBootstrapSummary({ ...EMPTY_BOOTSTRAP_SUMMARY, projectLoaded: true });
+            }
             bootstrappingRef.current = false;
             setIsBootstrapping(false);
             return;
@@ -331,93 +435,7 @@ export function useProjectBootstrap({
         if (cancelled) return;
 
         if (loaded) {
-          setBootstrapSummary(createBootstrapSummary(loaded.nodes));
-          const loadedBackground =
-            typeof loaded.canvas.background === 'object' && loaded.canvas.background !== null
-              ? loaded.canvas.background
-              : typeof loaded.canvas.background === 'string' && loaded.canvas.background.length > 0
-                ? { color: loaded.canvas.background }
-                : undefined;
-          store.getState().loadPage({
-            id: loaded.meta.id,
-            type: 'page' as const,
-            version: loaded.meta.version,
-            nodes: loaded.nodes,
-            config: {
-              mode: normalizeCanvasMode(loaded.canvas.mode),
-              width: loaded.canvas.width,
-              height: loaded.canvas.height,
-              theme: validateCanvasTheme((loaded.canvas as any).theme),
-              scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
-              previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
-              background: loadedBackground as unknown as
-                | NonNullable<IPageConfig['background']>
-                | undefined,
-            },
-          });
-          setCanvasConfig((prev) => ({
-            ...prev,
-            id: loaded.meta.id,
-            name: loaded.meta.name,
-            thumbnail: loaded.meta.thumbnail || '',
-            projectId: loaded.meta.projectId || prev.projectId,
-            projectName: loaded.meta.projectName,
-            createdAt: loaded.meta.createdAt,
-            mode: normalizeCanvasMode(loaded.canvas.mode),
-            width: loaded.canvas.width,
-            height: loaded.canvas.height,
-            theme: validateCanvasTheme((loaded.canvas as any).theme),
-            scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
-            previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
-            bgValue:
-              typeof loaded.canvas.background === 'string'
-                ? loaded.canvas.background
-                : prev.bgValue,
-            background: (loadedBackground as CanvasBackground | undefined) ?? prev.background,
-            gridCols: loaded.canvas.gridCols ?? prev.gridCols,
-            gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
-            gridGap: loaded.canvas.gridGap ?? prev.gridGap,
-            gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
-            gridSize: loaded.canvas.gridSize ?? prev.gridSize,
-            dataSources: (loaded.dataSources as any) ?? prev.dataSources,
-          }));
-
-          if (loadedBackground) {
-            store.getState().updatePageConfig({ background: loadedBackground } as any);
-          }
-
-          if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
-            for (const ds of loaded.dataSources) {
-              try {
-                await dataSourceManager.registerDataSource(ds as any, false);
-              } catch (e) {
-                console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e);
-              }
-            }
-          }
-
-          if (loaded.canvas.mode === 'grid') {
-            store.getState().setGridSettings({
-              cols: loaded.canvas.gridCols ?? 24,
-              rowHeight: loaded.canvas.gridRowHeight ?? 50,
-              gap: loaded.canvas.gridGap ?? 10,
-              compactVertical: true,
-              minW: 1,
-              minH: 1,
-              showGridLines: loaded.canvas.gridEnabled ?? true,
-              breakpoints: [],
-              responsive: false,
-            } as any);
-          }
-
-          if (loaded.variables && Array.isArray(loaded.variables)) {
-            store.getState().setVariableDefinitions(loaded.variables as any);
-            store.getState().initVariablesFromDefinitions(loaded.variables as any);
-          }
-
-          try {
-            store.temporal.getState().clear?.();
-          } catch {}
+          await applyProjectToEditor(loaded);
         } else {
           setBootstrapSummary({
             ...EMPTY_BOOTSTRAP_SUMMARY,
@@ -459,7 +477,7 @@ export function useProjectBootstrap({
     return () => {
       cancelled = true;
     };
-  }, [projectId, storage.isCloud]);
+  }, [projectId, storage.isCloud, applyProjectToEditor, embedVisibility.isEmbedded]);
 
   // Embed mode host init payload handler
   // FIX-G1: Idempotent guard — skip duplicate tv:init payloads from host retry mechanism
@@ -672,6 +690,37 @@ export function useProjectBootstrap({
         }
       }
 
+      setEmbedSessionSnapshot(
+        processed.projectId,
+        {
+          meta: {
+            version: '1.0.0',
+            id: processed.projectId,
+            name: loadedMeta?.name || processed.projectName,
+            thumbnail: loadedMeta?.thumbnail || processed.thumbnail,
+            createdAt: loadedMeta?.createdAt || Date.now(),
+            updatedAt: Date.now(),
+          },
+          canvas: {
+            mode: resolvedCanvasMode,
+            width: resolvedCanvas?.width || 1920,
+            height: resolvedCanvas?.height || 1080,
+            background: rawBg ?? 'transparent',
+            theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+            scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
+            previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
+            gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
+            gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
+            gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+            homeFlag: (resolvedCanvas as any)?.homeFlag,
+          },
+          nodes: nodesToLoad,
+          dataSources: mergedDataSources as any,
+          variables: store.getState().variableDefinitions ?? [],
+        },
+        'host-init',
+      );
+
       // FIX-G2: Restore markDirty responsiveness after React reconciliation
       requestAnimationFrame(() => {
         bootstrappingRef.current = false;
@@ -688,6 +737,10 @@ export function useProjectBootstrap({
     if (!embedVisibility.isEmbedded) return;
     if (bootstrappingRef.current) return;
     if (isBootstrapping) return;
+    if (skipNextEmbedInitRequestRef.current) {
+      skipNextEmbedInitRequestRef.current = false;
+      return;
+    }
     messageRouter.send(MSG_TYPES.READY);
     setTimeout(() => {
       messageRouter.send(MSG_TYPES.REQUEST_INIT);

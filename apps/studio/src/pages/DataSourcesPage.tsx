@@ -40,6 +40,7 @@ import { TransformationEditor } from '../components/DataSourceConfig/Transformat
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { dataSourceManager, store } from '../lib/store';
+import { buildHashRoute } from '../lib/embed/navigation';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -230,7 +231,10 @@ export default function DataSourcesPage() {
 
     if (projectId) {
       if (isEmbedded) {
-        window.location.hash = `#/editor/${projectId}?mode=embedded`;
+        window.location.hash = buildHashRoute(`#/editor/${projectId}`, {
+          preserveCurrentParams: true,
+          params: { projectId: null, resumeSession: '1' },
+        });
       } else {
         window.location.hash = `#/editor/${projectId}`;
       }

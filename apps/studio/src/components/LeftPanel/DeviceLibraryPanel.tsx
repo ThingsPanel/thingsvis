@@ -133,20 +133,28 @@ export default function DeviceLibraryPanel() {
     preset: PlatformDevicePreset,
   ) => {
     try {
-      // 1. Clone the widget JSON
-      const widgetStr = JSON.stringify(preset.widget);
+      const rawPayload =
+        preset.schema && Array.isArray(preset.schema.nodes) && preset.schema.nodes.length > 0
+          ? JSON.stringify({
+              kind: 'thingsvis-preset-schema',
+              presetId: preset.id,
+              name: preset.name,
+              schema: preset.schema,
+            })
+          : JSON.stringify(preset.widget);
 
       // 2. Perform variable substitution for this specific device
       // The preset JSON should use ^{{ ds.__platform___deviceId___.data.xxx }} as convention,
       // or we can just replace a generic placeholder like __DEVICE_ID__ depending on host convention.
       // Here we replace the generic ds.__platform__.data with ds.__platform_{deviceId}__.data
-      const resolvedStr = widgetStr.replace(
+      const resolvedStr = rawPayload.replace(
         /ds\.__platform__\.data/g,
         `ds.__platform_${device.deviceId}__.data`,
       );
 
       // payload type 'thingsvis-widget-snippet' signals the canvas it's a pre-configured node JSON
       e.dataTransfer.setData('application/thingsvis-widget-snippet', resolvedStr);
+      e.dataTransfer.setData('text/plain', resolvedStr);
       e.dataTransfer.effectAllowed = 'copy';
     } catch (err) {
       console.error('Failed to serialize widget preset', err);

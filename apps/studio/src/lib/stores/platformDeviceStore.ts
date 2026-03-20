@@ -20,7 +20,12 @@ export interface PlatformDevicePreset {
   id: string;
   name: string;
   thumbnail?: string;
-  widget: Record<string, unknown>; // The actual node JSON snippet
+  widget?: Record<string, unknown>; // Legacy single-node snippet
+  schema?: {
+    canvas?: Record<string, unknown>;
+    nodes: Record<string, unknown>[];
+    dataSources?: unknown[];
+  };
 }
 
 export interface PlatformDeviceGroup {

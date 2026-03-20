@@ -14,8 +14,9 @@ import {
   createNodeDropCommand,
   type KernelState,
 } from '@thingsvis/kernel';
-import { validateCanvasTheme } from '@thingsvis/schema';
-import { actionRuntime } from '../lib/store';
+import { validateCanvasTheme, type NodeSchemaType } from '@thingsvis/schema';
+import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
+import { actionRuntime, dataSourceManager } from '../lib/store';
 import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
@@ -31,6 +32,79 @@ function generateId(prefix = 'node') {
     }
   } catch {}
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function cloneDropPayload<T>(payload: T): T {
+  if (payload == null) return payload;
+  return JSON.parse(JSON.stringify(payload)) as T;
+}
+
+function isNodeSnippetPayload(payload: unknown): payload is NodeSchemaType {
+  return Boolean(
+    payload &&
+    typeof payload === 'object' &&
+    !Array.isArray(payload) &&
+    typeof (payload as { type?: unknown }).type === 'string',
+  );
+}
+
+type PresetSchemaPayload = {
+  kind: 'thingsvis-preset-schema';
+  presetId?: string;
+  name?: string;
+  schema?: {
+    canvas?: Record<string, unknown>;
+    nodes?: NodeSchemaType[];
+    dataSources?: unknown[];
+  };
+};
+
+function isPresetSchemaPayload(payload: unknown): payload is PresetSchemaPayload {
+  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+  const value = payload as PresetSchemaPayload;
+  return value.kind === 'thingsvis-preset-schema' && Array.isArray(value.schema?.nodes);
+}
+
+function buildDroppedPresetNodes(
+  sourceNodes: NodeSchemaType[],
+  dropPoint: { x: number; y: number },
+): NodeSchemaType[] {
+  const clonedNodes = cloneDropPayload(sourceNodes);
+  const xValues = clonedNodes
+    .map((node) => node.position?.x)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  const yValues = clonedNodes
+    .map((node) => node.position?.y)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+
+  const minX = xValues.length > 0 ? Math.min(...xValues) : 0;
+  const minY = yValues.length > 0 ? Math.min(...yValues) : 0;
+
+  const idMap = new Map<string, string>();
+  clonedNodes.forEach((node) => {
+    idMap.set(node.id, generateId('node'));
+  });
+
+  return clonedNodes.map((node) => {
+    const nextNode = cloneDropPayload(node);
+    const nextId = idMap.get(node.id) || generateId('node');
+    nextNode.id = nextId;
+
+    if (typeof node.position?.x === 'number' && typeof node.position?.y === 'number') {
+      nextNode.position = {
+        x: dropPoint.x + (node.position.x - minX),
+        y: dropPoint.y + (node.position.y - minY),
+      };
+    } else {
+      nextNode.position = { x: dropPoint.x, y: dropPoint.y };
+    }
+
+    if (node.parentId && idMap.has(node.parentId)) {
+      nextNode.parentId = idMap.get(node.parentId);
+    }
+
+    return nextNode;
+  });
 }
 
 export type StudioCanvasHandle = {
@@ -103,6 +177,23 @@ const CanvasView = forwardRef<
     () => store.getState() as KernelState,
   );
 
+  const hydratePlatformDataSourcesForNodes = useCallback(async (nodes: NodeSchemaType[]) => {
+    const currentConfigs = dataSourceManager.getAllConfigs();
+    const nextConfigs = augmentPlatformDataSourcesForNodes(
+      currentConfigs,
+      nodes as Array<Record<string, unknown>>,
+    );
+
+    for (const nextConfig of nextConfigs) {
+      const prevConfig = currentConfigs.find((config) => config.id === nextConfig.id);
+      if (prevConfig && JSON.stringify(prevConfig) === JSON.stringify(nextConfig)) {
+        continue;
+      }
+
+      await dataSourceManager.registerDataSource(nextConfig, false);
+    }
+  }, []);
+
   // Detect grid layout mode
   const isGridMode = state.canvas?.mode === 'grid';
 
@@ -164,21 +255,15 @@ const CanvasView = forwardRef<
   async function handleDrop(e: React.DragEvent) {
     if (isPanTool) return;
     e.preventDefault();
-    // Attempt to read plugin info from dataTransfer
-    const payload =
-      e.dataTransfer.getData('application/thingsvis-widget') ||
-      e.dataTransfer.getData('text/plain');
+    const snippetPayload = e.dataTransfer.getData('application/thingsvis-widget-snippet');
+    const widgetPayload = e.dataTransfer.getData('application/thingsvis-widget');
+    const payload = snippetPayload || widgetPayload || e.dataTransfer.getData('text/plain');
+    const isSnippetDrop = Boolean(snippetPayload);
     let entry: any = null;
     try {
       entry = payload ? JSON.parse(payload) : null;
     } catch {
       entry = null;
-    }
-
-    // Only create node if we have valid plugin data from component library
-    // This prevents creating text nodes when user drags existing nodes or images
-    if (!entry || !entry.type) {
-      return;
     }
 
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
@@ -191,7 +276,6 @@ const CanvasView = forwardRef<
         ? vpRef.current
         : { width: rect.width, height: rect.height, zoom: 1, offsetX: 0, offsetY: 0 };
 
-    // Convert screen coords to world coords taking zoom and offset into account
     let worldX = (localX - vpState.offsetX) / vpState.zoom;
     let worldY = (localY - vpState.offsetY) / vpState.zoom;
 
@@ -201,6 +285,33 @@ const CanvasView = forwardRef<
     if (isGridEnabled) {
       worldX = Math.round(worldX / gridSize) * gridSize;
       worldY = Math.round(worldY / gridSize) * gridSize;
+    }
+
+    if (
+      isPresetSchemaPayload(entry) &&
+      Array.isArray(entry.schema?.nodes) &&
+      entry.schema.nodes.length > 0
+    ) {
+      const droppedNodes = buildDroppedPresetNodes(entry.schema.nodes, { x: worldX, y: worldY });
+      try {
+        if (store.getState().addNodes) {
+          store.getState().addNodes(droppedNodes as any);
+        } else {
+          droppedNodes.forEach((node) => kernelAction.addNode(pageId, node as any));
+        }
+
+        await hydratePlatformDataSourcesForNodes(droppedNodes);
+        onUserEdit?.();
+      } catch (error) {
+        console.error('[CanvasView] Failed to drop preset schema', error);
+      }
+      return;
+    }
+
+    // Only create node if we have valid plugin data from component library
+    // This prevents creating text nodes when user drags existing nodes or images
+    if (!entry || !entry.type) {
+      return;
     }
 
     // Fetch the remote/local widget bundle to get exact default properties.
@@ -215,9 +326,12 @@ const CanvasView = forwardRef<
 
     const nodeId = generateId('node');
     const moduleDefs = widgetModule?.entry || widgetModule; // handle both {entry: Main} and direct Main returns
+    const snippetEntry =
+      isSnippetDrop && isNodeSnippetPayload(entry) ? cloneDropPayload(entry) : null;
     // 对于 resizable: false 的组件，不设置 size（由内容撑开）
     const isResizable = moduleDefs?.resizable !== false && (entry as any)?.resizable !== false;
-    const pluginDefaultSize = moduleDefs?.defaultSize || (entry as any)?.defaultSize;
+    const pluginDefaultSize =
+      snippetEntry?.size || moduleDefs?.defaultSize || (entry as any)?.defaultSize;
     const constraints = moduleDefs?.constraints || (entry as any)?.constraints;
 
     // Build initial size from widget metadata, clamped by constraints
@@ -257,12 +371,27 @@ const CanvasView = forwardRef<
       position: { x: worldX, y: worldY },
       // 只有可调整尺寸的组件才设置 size
       ...(initialSize ? { size: initialSize } : {}),
-      props: resolveInitialWidgetProps({
-        schema: moduleDefs?.schema,
-        standaloneDefaults: moduleDefs?.standaloneDefaults,
-        fallbackDefaults: entry?.defaultProps,
-      }),
+      props: {
+        ...resolveInitialWidgetProps({
+          schema: moduleDefs?.schema,
+          standaloneDefaults: moduleDefs?.standaloneDefaults,
+          fallbackDefaults: entry?.defaultProps,
+        }),
+        ...(snippetEntry?.props && typeof snippetEntry.props === 'object'
+          ? snippetEntry.props
+          : {}),
+      },
     };
+
+    if (snippetEntry) {
+      if (snippetEntry.name) node.name = snippetEntry.name;
+      if (snippetEntry.style) node.style = snippetEntry.style;
+      if (snippetEntry.baseStyle) node.baseStyle = snippetEntry.baseStyle;
+      if (typeof snippetEntry.rotation === 'number') node.rotation = snippetEntry.rotation;
+      if (Array.isArray(snippetEntry.data)) node.data = snippetEntry.data;
+      if (Array.isArray(snippetEntry.events)) node.events = snippetEntry.events;
+      if (snippetEntry.widgetVersion) node.widgetVersion = snippetEntry.widgetVersion;
+    }
 
     // Add grid position for grid mode - calculate from widget defaultSize
     if (isGridMode) {
@@ -310,6 +439,7 @@ const CanvasView = forwardRef<
         kernelAction.addNode(pageId, node as any);
       }
 
+      await hydratePlatformDataSourcesForNodes([node]);
       // Ensure autosave is scheduled even if this mutation doesn't hit temporal.
       onUserEdit?.();
     } catch (e) {
@@ -420,6 +550,8 @@ const CanvasView = forwardRef<
         ref={containerRef as any}
         className={`theme-${normalizedTheme}`}
         data-testid="studio-canvas"
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         style={{ width: '100%', height: '100%', position: 'relative' }}
       >
         <GridCanvas
