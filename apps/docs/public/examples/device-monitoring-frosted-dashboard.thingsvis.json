@@ -44,7 +44,7 @@
       "props": {
         "text": "设备总览",
         "fontSize": 18,
-        "fontFamily": "Microsoft YaHei",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "600",
         "fontStyle": "normal",
         "textAlign": "left",
@@ -70,7 +70,7 @@
       "props": {
         "text": "◫",
         "fontSize": 16,
-        "fontFamily": "Arial",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "700",
         "fontStyle": "normal",
         "textAlign": "center",
@@ -117,7 +117,7 @@
       "props": {
         "text": "2026-03-17 16:30 / 自动刷新 5 分钟",
         "fontSize": 15,
-        "fontFamily": "Microsoft YaHei",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "500",
         "fontStyle": "normal",
         "textAlign": "right",

@@ -5,12 +5,28 @@ import {
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
 import { metadata } from './metadata';
-import { PropsSchema, type Props } from './schema';
+import { PropsSchema, THINGSVIS_SANS_STACK, type Props } from './schema';
 import { controls } from './controls';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const DEFAULT_TEXT_FILL = '#333333';
+const LEGACY_SANS_FONT_FAMILIES = new Set([
+  'sans-serif',
+  'Arial',
+  'Helvetica',
+  'Times New Roman',
+  'Georgia',
+  'Courier New',
+  'Microsoft YaHei',
+  'PingFang SC',
+  'SimHei',
+  'SimSun',
+  'SF Pro Display',
+  'Segoe UI',
+  'Roboto',
+  'Helvetica Neue',
+]);
 
 type RuntimeMessages = {
   runtime?: {
@@ -52,7 +68,7 @@ function applyStyles(
   element.dataset.thingsvisPlaceholder = content.isPlaceholder ? 'true' : 'false';
 
   element.style.fontSize = `${props.fontSize}px`;
-  element.style.fontFamily = props.fontFamily;
+  element.style.fontFamily = normalizeFontFamily(props.fontFamily);
   element.style.fontWeight = props.fontWeight;
   element.style.fontStyle = props.fontStyle;
   element.style.textAlign = props.textAlign;
@@ -70,6 +86,23 @@ function applyStyles(
 
   element.style.wordBreak = 'break-word';
   element.style.whiteSpace = 'pre-wrap';
+}
+
+function normalizeFontFamily(fontFamily: string): string {
+  const normalized = fontFamily.trim();
+  if (!normalized) {
+    return THINGSVIS_SANS_STACK;
+  }
+
+  if (normalized.includes('Noto Sans') || normalized === 'Inter' || normalized === 'serif' || normalized === 'monospace') {
+    return normalized;
+  }
+
+  if (LEGACY_SANS_FONT_FAMILIES.has(normalized)) {
+    return THINGSVIS_SANS_STACK;
+  }
+
+  return normalized;
 }
 
 function getFlexAlign(align: Props['textAlign']): string {

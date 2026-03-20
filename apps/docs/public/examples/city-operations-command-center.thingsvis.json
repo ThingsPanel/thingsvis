@@ -141,7 +141,7 @@
       "props": {
         "text": "城市运行监测中心",
         "fontSize": 34,
-        "fontFamily": "Microsoft YaHei",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "700",
         "fontStyle": "normal",
         "textAlign": "center",
@@ -167,7 +167,7 @@
       "props": {
         "text": "CITY OPERATIONS / MOCK DATA",
         "fontSize": 16,
-        "fontFamily": "Arial",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "600",
         "fontStyle": "normal",
         "textAlign": "left",
@@ -193,7 +193,7 @@
       "props": {
         "text": "12 MAR 2026 / REFRESH 5 MIN",
         "fontSize": 16,
-        "fontFamily": "Arial",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "600",
         "fontStyle": "normal",
         "textAlign": "right",
@@ -492,7 +492,7 @@
       "props": {
         "text": "模拟场景：整合设备在线率、告警、能耗和工单指标，用于展示 ThingsVis 在工业运行大屏中的典型编排能力。",
         "fontSize": 16,
-        "fontFamily": "Microsoft YaHei",
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
         "fontWeight": "500",
         "fontStyle": "normal",
         "textAlign": "left",

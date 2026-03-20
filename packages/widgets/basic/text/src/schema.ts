@@ -13,6 +13,8 @@
 
 import { z } from 'zod';
 
+export const THINGSVIS_SANS_STACK = 'Inter, Noto Sans SC, Noto Sans, sans-serif';
+
 export const PropsSchema = z.object({
   // ========================================
   // Content
@@ -29,20 +31,7 @@ export const PropsSchema = z.object({
   fontSize: z.number().min(8).max(200).default(16).describe('props.fontSize'),
 
   /** Font family */
-  fontFamily: z.enum([
-    'sans-serif',
-    'serif',
-    'monospace',
-    'Arial',
-    'Helvetica',
-    'Times New Roman',
-    'Georgia',
-    'Courier New',
-    'Microsoft YaHei',
-    'PingFang SC',
-    'SimHei',
-    'SimSun',
-  ]).default('sans-serif').describe('props.fontFamily'),
+  fontFamily: z.string().default(THINGSVIS_SANS_STACK).describe('props.fontFamily'),
 
   /** Font weight */
   fontWeight: z.enum(['normal', 'bold', 'lighter', '100', '200', '300', '400', '500', '600', '700', '800', '900']).default('normal').describe('props.fontWeight'),

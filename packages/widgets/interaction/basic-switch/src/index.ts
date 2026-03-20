@@ -57,7 +57,7 @@ function renderSwitch(
     box-sizing: border-box;
     overflow: hidden;
     border-radius: inherit;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
   `;
   
   const labelHtml = props.showLabel ? `

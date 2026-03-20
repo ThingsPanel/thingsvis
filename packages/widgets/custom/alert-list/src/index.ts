@@ -83,7 +83,7 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
     box-sizing: border-box;
     overflow: visible;
     border-radius: inherit;
-    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
   `;
 
   if (items.length === 0) {

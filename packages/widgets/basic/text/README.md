@@ -85,7 +85,7 @@ pnpm build
 | fontSize | number | 16 | 字号（像素） |
 | fontWeight | 'normal' \| 'bold' | 'normal' | 字重 |
 | textAlign | 'left' \| 'center' \| 'right' | 'left' | 对齐方式 |
-| fontFamily | string | 'sans-serif' | 字体 |
+| fontFamily | string | 'Inter, Noto Sans SC, Noto Sans, sans-serif' | 字体 |
 
 ## 数据绑定
 

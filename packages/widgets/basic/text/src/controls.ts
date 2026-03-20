@@ -34,18 +34,13 @@ export const controls = createControlPanel()
       .addSelect('fontFamily', {
         label: 'widgets.thingsvis-widget-basic-text.label_3',
         options: [
+          { label: 'widgets.thingsvis-widget-basic-text.label_7', value: 'Inter, Noto Sans SC, Noto Sans, sans-serif' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_8', value: 'Inter' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_9', value: 'Noto Sans SC' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_10', value: 'Noto Sans' },
           { label: 'widgets.thingsvis-widget-basic-text.label_4', value: 'sans-serif' },
           { label: 'widgets.thingsvis-widget-basic-text.label_5', value: 'serif' },
           { label: 'widgets.thingsvis-widget-basic-text.label_6', value: 'monospace' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_7', value: 'Arial' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_8', value: 'Helvetica' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_9', value: 'Times New Roman' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_10', value: 'Georgia' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_11', value: 'Courier New' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_12', value: 'Microsoft YaHei' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_13', value: 'PingFang SC' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_14', value: 'SimHei' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_15', value: 'SimSun' },
         ],
       })
       .addSelect('fontWeight', {

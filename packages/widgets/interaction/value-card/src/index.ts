@@ -211,7 +211,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
     box-sizing: border-box;
     overflow: hidden;
     border-radius: inherit;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', system-ui, sans-serif;
+    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   `;

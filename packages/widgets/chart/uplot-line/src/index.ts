@@ -307,7 +307,7 @@ export const Main = defineWidget({
             emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
             const axisFontSize = Math.round(12 * scale);
-            const axisFont = `${axisFontSize}px system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`;
+            const axisFont = `${axisFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
 
             const opts: uPlot.Options = {
                 width: cw,

@@ -141,7 +141,7 @@ function renderDatePicker(
     justify-content: space-between;
     overflow: hidden;
     border-radius: inherit;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
   `;
   
   const labelHtml = props.label ? `
