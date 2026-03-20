@@ -1,7 +1,7 @@
 import { defineWidget, resolveWidgetColors, type WidgetColors } from "@thingsvis/widget-sdk";
 import { controls } from "./controls";
 import { metadata } from "./metadata";
-import { PropsSchema, type Props } from "./schema";
+import { PropsSchema, type Props, PRESETS } from "./schema";
 import zh from "./locales/zh.json";
 import en from "./locales/en.json";
 
@@ -49,21 +49,36 @@ function withAlpha(color: string | undefined | null, alpha: number): string {
   return normalized;
 }
 
+function getPresetValues(props: Props): { blur: number; opacity: number; highlight: number; tint: number } {
+  const preset = PRESETS[props.preset];
+  if (props.preset !== "custom" && preset) {
+    return { blur: preset.blur, opacity: preset.opacity, highlight: preset.highlight, tint: preset.tint };
+  }
+  return { 
+    blur: props.blurStrength, 
+    opacity: props.surfaceOpacity, 
+    highlight: props.highlightOpacity, 
+    tint: props.tintStrength 
+  };
+}
+
 function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): void {
+  const preset = getPresetValues(props);
   const tint = VARIANT_TINTS[props.variant] ?? VARIANT_TINTS.neutral;
-  const topLayer = withAlpha("#ffffff", clamp(props.surfaceOpacity + props.highlightOpacity * 0.42, 0, 1));
-  const midLayer = withAlpha("#ffffff", props.surfaceOpacity);
-  const bottomLayer = withAlpha("#ffffff", Math.max(props.surfaceOpacity * 0.64, 0.1));
-  const tintLayer = withAlpha(tint, props.tintStrength);
-  const topGlow = withAlpha("#ffffff", clamp(props.highlightOpacity * 1.06, 0, 1));
-  const sideGlow = withAlpha(tint, clamp(props.tintStrength * 0.72, 0, 1));
-  const bottomTint = withAlpha(tint, clamp(props.tintStrength * 0.38, 0, 1));
-  const softShade = withAlpha(colors.bg || "#dbe4ee", Math.min(props.surfaceOpacity * 0.16, 0.12));
-  const ambientShadow = withAlpha("#0f172a", 0.05 + props.surfaceOpacity * 0.08);
-  const innerHighlight = withAlpha("#ffffff", 0.18 + props.highlightOpacity * 0.4);
-  const lowerHighlight = withAlpha("#ffffff", props.highlightOpacity * 0.14);
-  const frostTexture = withAlpha("#ffffff", 0.02 + props.highlightOpacity * 0.06);
-  const edgeShade = withAlpha(colors.bg || "#dbe4ee", 0.03 + props.tintStrength * 0.05);
+  const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.45, 0, 1));
+  const midLayer = withAlpha("#ffffff", preset.opacity);
+  const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.6, 0.08));
+  const tintLayer = withAlpha(tint, preset.tint);
+  const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.1, 0, 1));
+  const sideGlow = withAlpha(tint, clamp(preset.tint * 0.75, 0, 1));
+  const bottomTint = withAlpha(tint, clamp(preset.tint * 0.4, 0, 1));
+  const softShade = withAlpha(colors.bg || "#dbe4ee", Math.min(preset.opacity * 0.14, 0.1));
+  const ambientShadow = withAlpha("#0f172a", 0.04 + preset.opacity * 0.06);
+  const innerHighlight = withAlpha("#ffffff", 0.2 + preset.highlight * 0.45);
+  const lowerHighlight = withAlpha("#ffffff", preset.highlight * 0.12);
+  const frostTexture = withAlpha("#ffffff", 0.015 + preset.highlight * 0.05);
+  const edgeShade = withAlpha(colors.bg || "#dbe4ee", 0.025 + preset.tint * 0.04);
+
 
   element.style.cssText = `
     width: 100%;
@@ -88,12 +103,12 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
         linear-gradient(180deg, ${topLayer} 0%, ${midLayer} 38%, ${bottomLayer} 100%),
         linear-gradient(135deg, ${tintLayer} 0%, transparent 68%),
         linear-gradient(0deg, ${bottomTint} 0%, transparent 40%);
-      backdrop-filter: blur(${props.blurStrength}px) saturate(165%) brightness(1.04);
-      -webkit-backdrop-filter: blur(${props.blurStrength}px) saturate(165%) brightness(1.04);
+      backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
+      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
       box-shadow:
         inset 0 1px 0 ${innerHighlight},
         inset 0 -1px 0 ${lowerHighlight},
-        inset 1px 0 0 ${withAlpha("#ffffff", props.highlightOpacity * 0.1)};
+        inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.1)};
     ">
       <div style="
         position:absolute;
@@ -114,7 +129,7 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
         inset:0;
         border-radius:inherit;
         background:
-          linear-gradient(180deg, ${withAlpha("#ffffff", props.highlightOpacity * 0.34)} 0%, transparent 24%, transparent 76%, ${edgeShade} 100%);
+          linear-gradient(180deg, ${withAlpha("#ffffff", preset.highlight * 0.34)} 0%, transparent 24%, transparent 76%, ${edgeShade} 100%);
         pointer-events:none;
       "></div>
     </div>

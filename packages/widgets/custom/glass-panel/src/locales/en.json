@@ -5,6 +5,7 @@
         "name": "Glass",
         "groupStyle": "Style",
         "variant": "Tint",
+        "preset": "Texture Preset",
         "blurStrength": "Blur Strength",
         "surfaceOpacity": "Surface Opacity",
         "highlightOpacity": "Highlight Opacity",

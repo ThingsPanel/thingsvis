@@ -15,33 +15,43 @@ export const controls = createControlPanel()
         { label: { zh: "琥珀", en: "Amber" }, value: "amber" }
       ]
     });
+    builder.addSelect("preset", {
+      label: `${W}.preset`,
+      options: [
+        { label: { zh: "💎 水晶质感", en: "💎 Crystal" }, value: "crystal" },
+        { label: { zh: "🧊 磨砂玻璃", en: "🧊 Frost" }, value: "frost" },
+        { label: { zh: "🔲 半实心", en: "🔲 Solid" }, value: "solid" },
+        { label: { zh: "✨ 极简轻薄", en: "✨ Minimal" }, value: "minimal" },
+        { label: { zh: "⚙️ 自定义", en: "⚙️ Custom" }, value: "custom" }
+      ]
+    });
     builder.addSlider("blurStrength", {
       label: `${W}.blurStrength`,
       min: 0,
       max: 40,
       step: 1,
-      default: 22
+      default: 24
     });
     builder.addSlider("surfaceOpacity", {
       label: `${W}.surfaceOpacity`,
       min: 0.05,
       max: 1,
       step: 0.01,
-      default: 0.36
+      default: 0.22
     });
     builder.addSlider("highlightOpacity", {
       label: `${W}.highlightOpacity`,
       min: 0,
       max: 1,
       step: 0.01,
-      default: 0.28
+      default: 0.32
     });
     builder.addSlider("tintStrength", {
       label: `${W}.tintStrength`,
       min: 0,
       max: 1,
       step: 0.01,
-      default: 0.08
+      default: 0.1
     });
   })
   .build();
