@@ -92,7 +92,8 @@ export const createGridSlice: StateCreator<
       };
     });
 
-    const cols = state.gridState.effectiveCols;
+    // schema.grid is authored in design-space columns, not responsive effectiveCols.
+    const cols = state.gridState.settings?.cols ?? state.gridState.effectiveCols;
     const shouldCompact = state.gridState.settings?.compactVertical ?? true;
 
     const result = GridSystem.moveItem(gridItems, nodeId, newPos, cols, shouldCompact);
@@ -137,7 +138,8 @@ export const createGridSlice: StateCreator<
       };
     });
 
-    const cols = state.gridState.effectiveCols;
+    // schema.grid is authored in design-space columns, not responsive effectiveCols.
+    const cols = state.gridState.settings?.cols ?? state.gridState.effectiveCols;
     const shouldCompact = state.gridState.settings?.compactVertical ?? true;
 
     const result = GridSystem.resizeItem(gridItems, nodeId, newSize, cols, shouldCompact);
@@ -175,7 +177,8 @@ export const createGridSlice: StateCreator<
       };
     });
 
-    const cols = state.gridState.effectiveCols;
+    // schema.grid is authored in design-space columns, not responsive effectiveCols.
+    const cols = state.gridState.settings?.cols ?? state.gridState.effectiveCols;
     const result = GridSystem.compact(gridItems, cols);
 
     set((s) => {
@@ -271,7 +274,8 @@ export const createGridSlice: StateCreator<
       };
     });
 
-    const cols = state.gridState.effectiveCols;
+    // schema.grid is authored in design-space columns, not responsive effectiveCols.
+    const cols = state.gridState.settings?.cols ?? state.gridState.effectiveCols;
     const shouldCompact = state.gridState.settings?.compactVertical ?? true;
 
     const result = GridSystem.moveItem(gridItems, nodeId, newPos, cols, shouldCompact);
@@ -318,7 +322,8 @@ export const createGridSlice: StateCreator<
       };
     });
 
-    const cols = state.gridState.effectiveCols;
+    // schema.grid is authored in design-space columns, not responsive effectiveCols.
+    const cols = state.gridState.settings?.cols ?? state.gridState.effectiveCols;
     const shouldCompact = state.gridState.settings?.compactVertical ?? true;
 
     const result = GridSystem.resizeItem(gridItems, nodeId, newSize, cols, shouldCompact);

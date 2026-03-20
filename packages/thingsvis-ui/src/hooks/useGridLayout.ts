@@ -237,7 +237,8 @@ export function useGridLayout(options: UseGridLayoutOptions): UseGridLayoutRetur
 
       try {
         if (!dragState.nodeId) return;
-        const simResult = GridSystem.moveItem(gridItems, dragState.nodeId, { x: newX, y: newY }, effectiveCols, shouldCompact);
+        // Keep preview simulation in design-space so it matches the persisted schema.grid coordinates.
+        const simResult = GridSystem.moveItem(gridItems, dragState.nodeId, { x: newX, y: newY }, settings.cols, shouldCompact);
         for (const item of simResult.items) {
           if (item.id !== dragState.nodeId) {
             pushedItems[item.id] = { x: item.x, y: item.y, w: item.w, h: item.h };
@@ -378,7 +379,8 @@ export function useGridLayout(options: UseGridLayoutOptions): UseGridLayoutRetur
 
       const targetPos = { ...gridPos, w: newW, h: newH };
       try {
-        const simResult = GridSystem.resizeItem(gridItems, resizeState.nodeId, { w: newW, h: newH }, effectiveCols, shouldCompact);
+        // Keep preview simulation in design-space so it matches the persisted schema.grid coordinates.
+        const simResult = GridSystem.resizeItem(gridItems, resizeState.nodeId, { w: newW, h: newH }, settings.cols, shouldCompact);
         for (const item of simResult.items) {
           if (item.id !== resizeState.nodeId) {
             pushedItems[item.id] = { x: item.x, y: item.y, w: item.w, h: item.h };
