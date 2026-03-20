@@ -406,7 +406,7 @@ export function useProjectBootstrap({
               minH: 1,
               showGridLines: loaded.canvas.gridEnabled ?? true,
               breakpoints: [],
-              responsive: true,
+              responsive: false,
             } as any);
           }
 

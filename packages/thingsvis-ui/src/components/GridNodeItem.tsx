@@ -369,6 +369,12 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         )('click', { nativeEvent: e.nativeEvent });
     }, [actionRuntime, isPreviewClickable, nodeId, store]);
 
+    const handleMouseLeave = useCallback(() => {
+        if (!interactive || !isSelected) return;
+        if (dragDelta || resizeDelta) return;
+        store.getState().selectNode?.(null);
+    }, [dragDelta, interactive, isSelected, resizeDelta, store]);
+
     // ── Resize handle handling ────────────────────────────────────────────────
 
     const buildResizeHandler = useCallback(
@@ -438,6 +444,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                 data-node-id={nodeId}
                 onMouseDown={handleMouseDown}
                 onClick={handlePreviewClick}
+                onMouseLeave={handleMouseLeave}
                 style={{
                     position: 'absolute',
                     left: renderX,

@@ -690,7 +690,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               minH: 1,
               showGridLines: project.canvas.gridEnabled ?? true,
               breakpoints: [],
-              responsive: true,
+              responsive: false,
             } as any);
           }
           try {
