@@ -259,11 +259,19 @@ const CanvasView = forwardRef<
     const widgetPayload = e.dataTransfer.getData('application/thingsvis-widget');
     const payload = snippetPayload || widgetPayload || e.dataTransfer.getData('text/plain');
     const isSnippetDrop = Boolean(snippetPayload);
+    const isLibraryWidgetDrop = Boolean(widgetPayload) && !isSnippetDrop;
     let entry: any = null;
     try {
       entry = payload ? JSON.parse(payload) : null;
     } catch {
       entry = null;
+    }
+
+    // In grid mode, widget-library drops are handled exclusively by GridCanvas.
+    // Letting the outer canvas also consume the same payload creates a duplicate
+    // node whose fallback grid position lands at the top-left corner.
+    if (isGridMode && isLibraryWidgetDrop) {
+      return;
     }
 
     const rect = (containerRef.current as HTMLDivElement).getBoundingClientRect();
@@ -361,9 +369,6 @@ const CanvasView = forwardRef<
       }
       initialSize = size;
     }
-
-    // Check if in grid mode to add grid position
-    const isGridMode = state.canvas?.mode === 'grid';
 
     const node: any = {
       id: nodeId,
