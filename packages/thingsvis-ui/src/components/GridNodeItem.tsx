@@ -55,6 +55,8 @@ const HANDLE_BASE_STYLE: React.CSSProperties = {
 
 export interface GridNodeItemProps {
     nodeId: string;
+    /** Stable layer index (bottom=0) used for actual stacking order */
+    layerIndex: number;
     /** Pixel rect derived from gridToPixel() for this node */
     pixelRect: PixelRect;
     store: KernelStore;
@@ -151,6 +153,7 @@ function isBasicTextNode(node: NodeState | undefined): boolean {
  */
 export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     nodeId,
+    layerIndex,
     pixelRect,
     store,
     resolveWidget,
@@ -293,6 +296,13 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         ? (nodeState?.schemaRef as any)?.props?.text
         : String((nodeState?.schemaRef as any)?.props?.text ?? '');
     const textProps = ((nodeState?.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+    const outerBorderRadius = typeof nodeBaseStyle.border?.radius === 'number'
+        ? nodeBaseStyle.border.radius
+        : 0;
+    const outerBorderWidth = typeof nodeBaseStyle.border?.width === 'number'
+        ? nodeBaseStyle.border.width
+        : 0;
+    const innerClipRadius = Math.max(outerBorderRadius - outerBorderWidth, 0);
     const [isInlineEditing, setIsInlineEditing] = React.useState(false);
     const [draftText, setDraftText] = React.useState(liveText);
     const inlineEditorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -520,7 +530,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     outline: isSelected && interactive ? '2px solid #0078d4' : undefined,
                     outlineOffset: -1,
                     cursor: interactive ? (dragDelta ? 'grabbing' : 'move') : (isPreviewClickable ? 'pointer' : 'default'),
-                    zIndex: isSelected ? 10 : 1,
+                    zIndex: layerIndex + 1,
                     // Remove transition during active dragging/resizing for immediate response
                     transition: isInteracting ? 'none' : 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease',
                     // baseStyle — applied from user settings in BaseStylePanel
@@ -537,64 +547,76 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     borderStyle: nodeBaseStyle.border?.width != null
                         ? (nodeBaseStyle.border.style ?? 'solid')
                         : undefined,
-                    borderRadius: nodeBaseStyle.border?.radius != null
-                        ? `${nodeBaseStyle.border.radius}px`
+                    borderRadius: outerBorderRadius > 0
+                        ? `${outerBorderRadius}px`
                         : undefined,
                     boxShadow: nodeBaseStyle.shadow?.blur != null
                         ? `${nodeBaseStyle.shadow.offsetX ?? 0}px ${nodeBaseStyle.shadow.offsetY ?? 0}px ${nodeBaseStyle.shadow.blur}px ${nodeBaseStyle.shadow.color ?? 'rgba(0,0,0,0.2)'}`
                         : undefined,
                     opacity: nodeBaseStyle.opacity != null ? nodeBaseStyle.opacity : undefined,
-                    padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : undefined,
-                    overflow: isInlineEditing ? 'visible' : undefined,
                 }}
             >
-                {/* Widget content mount point */}
                 <div
-                    ref={contentRef}
-                    style={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: interactive ? 'none' : 'auto' }}
-                />
-
-                {isInlineEditing && (
-                    <textarea
-                        ref={inlineEditorRef}
-                        value={draftText}
-                        onChange={(e) => setDraftText(e.target.value)}
-                        onBlur={commitInlineEdit}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Escape') {
-                                e.preventDefault();
-                                cancelInlineEdit();
-                            }
-                            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-                                e.preventDefault();
-                                commitInlineEdit();
-                            }
-                        }}
-                        style={{
-                            position: 'absolute',
-                            inset: 0,
-                            width: '100%',
-                            height: '100%',
-                            padding: '6px 8px',
-                            margin: 0,
-                            border: '1px solid #6965db',
-                            borderRadius: 6,
-                            outline: 'none',
-                            resize: 'none',
-                            background: 'rgba(255,255,255,0.96)',
-                            color: String(textProps.fill ?? '#333333'),
-                            fontSize: `${Number(textProps.fontSize ?? 16)}px`,
-                            fontFamily: String(textProps.fontFamily ?? 'Inter, Noto Sans SC, Noto Sans, sans-serif'),
-                            fontWeight: String(textProps.fontWeight ?? 'normal'),
-                            fontStyle: String(textProps.fontStyle ?? 'normal'),
-                            textAlign: (textProps.textAlign as React.CSSProperties['textAlign']) ?? 'left',
-                            lineHeight: String(textProps.lineHeight ?? 1.4),
-                            letterSpacing: `${Number(textProps.letterSpacing ?? 0)}px`,
-                            boxSizing: 'border-box',
-                            zIndex: 20,
-                        }}
+                    style={{
+                        position: 'absolute',
+                        inset: 0,
+                        boxSizing: 'border-box',
+                        borderRadius: innerClipRadius > 0
+                            ? `${innerClipRadius}px`
+                            : undefined,
+                        overflow: 'hidden',
+                        padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : undefined,
+                    }}
+                >
+                    {/* Widget content mount point */}
+                    <div
+                        ref={contentRef}
+                        style={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: interactive ? 'none' : 'auto' }}
                     />
-                )}
+
+                    {isInlineEditing && (
+                        <textarea
+                            ref={inlineEditorRef}
+                            value={draftText}
+                            onChange={(e) => setDraftText(e.target.value)}
+                            onBlur={commitInlineEdit}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') {
+                                    e.preventDefault();
+                                    cancelInlineEdit();
+                                }
+                                if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                                    e.preventDefault();
+                                    commitInlineEdit();
+                                }
+                            }}
+                            style={{
+                                position: 'absolute',
+                                inset: 0,
+                                width: '100%',
+                                height: '100%',
+                                padding: '6px 8px',
+                                margin: 0,
+                                border: '1px solid #6965db',
+                                borderRadius: 6,
+                                outline: 'none',
+                                resize: 'none',
+                                overflow: 'hidden',
+                                background: 'rgba(255,255,255,0.96)',
+                                color: String(textProps.fill ?? '#333333'),
+                                fontSize: `${Number(textProps.fontSize ?? 16)}px`,
+                                fontFamily: String(textProps.fontFamily ?? 'Inter, Noto Sans SC, Noto Sans, sans-serif'),
+                                fontWeight: String(textProps.fontWeight ?? 'normal'),
+                                fontStyle: String(textProps.fontStyle ?? 'normal'),
+                                textAlign: (textProps.textAlign as React.CSSProperties['textAlign']) ?? 'left',
+                                lineHeight: String(textProps.lineHeight ?? 1.4),
+                                letterSpacing: `${Number(textProps.letterSpacing ?? 0)}px`,
+                                boxSizing: 'border-box',
+                                zIndex: 20,
+                            }}
+                        />
+                    )}
+                </div>
 
                 {/* Resize handles — only visible when selected in interactive mode */}
                 {isSelected && interactive && !isInlineEditing && RESIZE_HANDLES.map(({ dir, style }) => (
@@ -612,6 +634,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
 export default React.memo(GridNodeItem, (prev, next) => {
     return (
         prev.nodeId === next.nodeId &&
+        prev.layerIndex === next.layerIndex &&
         prev.interactive === next.interactive &&
         prev.isSelected === next.isSelected &&
         prev.theme === next.theme &&

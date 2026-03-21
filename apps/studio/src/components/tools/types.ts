@@ -1,16 +1,16 @@
 /**
  * Creation Tool Types
- * 
+ *
  * Type definitions for node creation tools
  */
 
 /**
  * Tool interaction mode
  */
-export type ToolInteractionMode = 
-  | 'drag'      // Drag to create with custom size (rectangle, circle)
-  | 'click'     // Click to create at position (text)
-  | 'auto'      // Auto-place after selection (image)
+export type ToolInteractionMode =
+  | 'drag' // Drag to create with custom size (rectangle, circle)
+  | 'click' // Click to create at position (text)
+  | 'auto'; // Auto-place after selection (image)
 
 /**
  * Specification for a creation tool
@@ -42,7 +42,7 @@ export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
     componentId: 'basic/rectangle',
     defaultSize: { width: 120, height: 80 },
     minSize: { width: 20, height: 20 },
-    defaultProps: {},
+    defaultProps: { fill: '#dbeafe', stroke: 'transparent', strokeWidth: 0, cornerRadius: 0 },
     resizable: true,
     interactionMode: 'drag',
   },
@@ -50,7 +50,7 @@ export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
     componentId: 'basic/circle',
     defaultSize: { width: 100, height: 100 },
     minSize: { width: 20, height: 20 },
-    defaultProps: {},
+    defaultProps: { fill: '#dbeafe', stroke: 'transparent', strokeWidth: 0 },
     resizable: true,
     interactionMode: 'drag',
   },

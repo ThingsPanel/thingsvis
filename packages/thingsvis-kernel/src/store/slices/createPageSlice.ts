@@ -74,6 +74,8 @@ export const createPageSlice: StateCreator<
         mode: (config.mode as string) || 'infinite',
         width: (config.width as number) || CANVAS_DEFAULT_WIDTH,
         height: (config.height as number) || CANVAS_DEFAULT_HEIGHT,
+        gridEnabled: Boolean(config.gridEnabled),
+        gridSize: typeof config.gridSize === 'number' ? config.gridSize : defaultCanvas.gridSize,
       } as typeof state.canvas;
       // Initialize layer order from nodes
       state.layerOrder = nodes.map((n: NodeSchemaType) => n.id);
@@ -95,6 +97,12 @@ export const createPageSlice: StateCreator<
       if (configPartial.mode) state.canvas.mode = configPartial.mode as any;
       if (configPartial.width !== undefined) state.canvas.width = configPartial.width;
       if (configPartial.height !== undefined) state.canvas.height = configPartial.height;
+      if (configPartial.gridEnabled !== undefined) {
+        state.canvas.gridEnabled = Boolean(configPartial.gridEnabled);
+      }
+      if (configPartial.gridSize !== undefined) {
+        state.canvas.gridSize = Number(configPartial.gridSize);
+      }
     });
   },
 });

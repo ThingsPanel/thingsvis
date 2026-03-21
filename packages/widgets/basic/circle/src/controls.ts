@@ -3,11 +3,10 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
   groups: {
-    Style: ['fill', 'stroke', 'strokeWidth', 'opacity'],
+    Style: ['fill', 'opacity'],
   },
 
   overrides: {
     fill: { kind: 'color' },
-    stroke: { kind: 'color' },
   },
 });

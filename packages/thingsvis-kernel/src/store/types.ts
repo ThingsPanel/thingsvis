@@ -22,6 +22,8 @@ export type CanvasState = {
   zoom: number;
   offsetX: number;
   offsetY: number;
+  gridEnabled: boolean;
+  gridSize: number;
 };
 
 export type GridState = {
@@ -152,7 +154,12 @@ export type KernelActions = {
   setVariableDefinitions: (defs: DashboardVariable[]) => void;
   initVariablesFromDefinitions: (defs: DashboardVariable[]) => void;
   setVariableValue: (name: string, value: unknown) => void;
-  updatePageConfig: (configPartial: Partial<IPageConfig>) => void;
+  updatePageConfig: (
+    configPartial: Partial<IPageConfig> & {
+      gridEnabled?: boolean;
+      gridSize?: number;
+    },
+  ) => void;
 };
 
 export type KernelStoreState = KernelState & KernelActions;

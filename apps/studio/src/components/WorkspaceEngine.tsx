@@ -23,6 +23,8 @@ export interface WorkspaceEngineProps {
   showLeftPanel: boolean;
   showRightPanel: boolean;
   markDirty: () => void;
+  formatBrushActive?: boolean;
+  onApplyFormatBrush?: (targetNodeId: string) => boolean;
 }
 
 export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
@@ -35,6 +37,8 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
   showLeftPanel,
   showRightPanel,
   markDirty,
+  formatBrushActive = false,
+  onApplyFormatBrush,
 }) => {
   const { t } = useTranslation('editor');
   const { isAuthenticated } = useAuth();
@@ -110,6 +114,8 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
             pendingImageUrl={pendingImageUrl}
             onImagePickerRequest={handleImagePickerRequest}
             onImagePickerComplete={handleImagePickerComplete}
+            formatBrushActive={formatBrushActive}
+            onApplyFormatBrush={onApplyFormatBrush}
             centerPadding={{
               left: embedVisibility.showLibrary && showLeftPanel ? 320 : 0,
               right: embedVisibility.showProps && showRightPanel ? 340 : 0,

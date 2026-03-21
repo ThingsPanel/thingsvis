@@ -5,6 +5,7 @@ import React, {
   useImperativeHandle,
   useState,
   useCallback,
+  useMemo,
 } from 'react';
 import { useSyncExternalStore } from 'react';
 import { CanvasView as UI_CanvasView, GridCanvas, useGridLayout } from '@thingsvis/ui';
@@ -22,6 +23,7 @@ import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
 import { isCreationTool } from './tools/types';
+import { orderNodeStatesByLayerOrder } from '../lib/layerOrder';
 import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
 import {
   isPlatformFieldDataSource,
@@ -196,6 +198,8 @@ const CanvasView = forwardRef<
     onImagePickerComplete?: () => void;
     theme?: string;
     centerPadding?: { left?: number; right?: number };
+    formatBrushActive?: boolean;
+    onApplyFormatBrush?: (targetNodeId: string) => boolean;
   }
 >(function CanvasView(
   {
@@ -214,6 +218,8 @@ const CanvasView = forwardRef<
     onImagePickerComplete,
     theme,
     centerPadding,
+    formatBrushActive = false,
+    onApplyFormatBrush,
   },
   ref,
 ) {
@@ -305,6 +311,7 @@ const CanvasView = forwardRef<
 
   const handleProxyMouseDownCapture = useCallback(
     (event: React.MouseEvent<HTMLDivElement>) => {
+      if (formatBrushActive) return;
       if (event.button !== 0 || event.detail < 2) return;
 
       const target = event.target as HTMLElement | null;
@@ -321,7 +328,25 @@ const CanvasView = forwardRef<
       event.stopPropagation();
       openInlineTextEditor(nodeId);
     },
-    [openInlineTextEditor, state.nodesById],
+    [formatBrushActive, openInlineTextEditor, state.nodesById],
+  );
+
+  const handleFormatBrushMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!formatBrushActive) return;
+
+      const target = event.target as HTMLElement | null;
+      const nodeTarget = target?.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const applied = onApplyFormatBrush?.(nodeId);
+      if (!applied) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [formatBrushActive, onApplyFormatBrush],
   );
 
   const hydratePlatformDataSourcesForNodes = useCallback(
@@ -347,6 +372,7 @@ const CanvasView = forwardRef<
 
   // Detect grid layout mode
   const isGridMode = state.canvas?.mode === 'grid';
+  const showGridLines = state.gridState?.settings?.showGridLines ?? true;
 
   // Grid layout hook (provides grid-aware drag/resize handlers)
   const gridLayout = useGridLayout({
@@ -606,7 +632,10 @@ const CanvasView = forwardRef<
     }
   }
 
-  const nodes = Object.values(state.nodesById);
+  const nodes = useMemo(
+    () => orderNodeStatesByLayerOrder(state.nodesById, state.layerOrder),
+    [state.nodesById, state.layerOrder],
+  );
   const inlineEditorNode = inlineTextEditor ? state.nodesById[inlineTextEditor.nodeId] : undefined;
   // vp is now from useState, no need to read from ref
   const isPanTool = activeTool === 'pan';
@@ -716,7 +745,7 @@ const CanvasView = forwardRef<
         console.error('[CanvasView] Failed to add grid node', nodeId, e);
       }
     },
-    [resolveWidget, store, onUserEdit],
+    [resolveWidget, state.gridState?.settings, store, onUserEdit],
   );
 
   // ── Grid mode: GridCanvas is the sole renderer (same engine for edit and preview) ──
@@ -730,7 +759,13 @@ const CanvasView = forwardRef<
         data-testid="studio-canvas"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        style={{ width: '100%', height: '100%', position: 'relative' }}
+        onMouseDownCapture={handleFormatBrushMouseDownCapture}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          cursor: formatBrushActive ? 'copy' : 'default',
+        }}
       >
         <GridCanvas
           store={store}
@@ -744,6 +779,7 @@ const CanvasView = forwardRef<
           centerPadding={centerPadding}
           widgetMode="edit"
           actionRuntime={actionRuntime}
+          showGridLines={showGridLines}
           onDropComponent={handleGridDropComponent}
         />
       </div>
@@ -767,7 +803,13 @@ const CanvasView = forwardRef<
       }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      style={{ width: '100%', height: '100%', position: 'relative', cursor: canvasCursor }}
+      onMouseDownCapture={handleFormatBrushMouseDownCapture}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        cursor: formatBrushActive ? 'copy' : canvasCursor,
+      }}
     >
       <UI_CanvasView
         store={store}
@@ -777,6 +819,7 @@ const CanvasView = forwardRef<
         height={state.canvas.height}
         gridSize={20}
         snapToGrid={true}
+        showGridLines={showGridLines}
         centeredMask={true}
         actionRuntime={actionRuntime}
         panEnabled={activeTool === 'pan'}
@@ -857,7 +900,7 @@ const CanvasView = forwardRef<
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
                   pointerEvents: isPanTool ? 'none' : 'auto',
-                  cursor: isPanTool ? canvasCursor : 'pointer',
+                  cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'pointer',
                   border: showBorder ? '1px solid #0066ff' : 'none',
                 }}
               />
@@ -944,7 +987,12 @@ const CanvasView = forwardRef<
             containerRef={proxyWrapperRef}
             dragContainerRef={proxyLayerRef}
             kernelStore={store}
-            enabled={activeTool !== 'pan' && !isCreationTool(activeTool) && !inlineTextEditor}
+            enabled={
+              activeTool !== 'pan' &&
+              !formatBrushActive &&
+              !isCreationTool(activeTool) &&
+              !inlineTextEditor
+            }
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
@@ -955,7 +1003,7 @@ const CanvasView = forwardRef<
       </div>
 
       {/* Line Connection Tool - shows handles when a line is selected */}
-      {activeTool !== 'pan' && !isCreationTool(activeTool) && (
+      {activeTool !== 'pan' && !formatBrushActive && !isCreationTool(activeTool) && (
         <LineConnectionTool
           kernelStore={store}
           containerRef={proxyLayerRef}

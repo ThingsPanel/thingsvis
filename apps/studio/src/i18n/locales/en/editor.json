@@ -34,6 +34,10 @@
         "text": "Text",
         "image": "Image",
         "pan": "Pan",
+        "showGrid": "Show Grid Lines",
+        "hideGrid": "Hide Grid Lines",
+        "formatBrush": "Format Brush",
+        "formatBrushActive": "Disable Format Brush",
         "align": {
             "left": "Align Left",
             "center-h": "Center Horizontally",
