@@ -55,6 +55,7 @@ type Props = {
   height?: number;
   gridSize?: number;
   snapToGrid?: boolean;
+  showGridLines?: boolean;
   centeredMask?: boolean;
   zoom?: number;
   onZoomChange?: (zoom: number) => void;
@@ -78,6 +79,7 @@ export const CanvasView: React.FC<Props> = ({
   height: propsHeight,
   gridSize = 16,
   snapToGrid = false,
+  showGridLines = true,
   centeredMask = true,
   zoom: propsZoom,
   onZoomChange,
@@ -203,6 +205,7 @@ export const CanvasView: React.FC<Props> = ({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!showGridLines) return;
     ctx.scale(dpr, dpr);
     ctx.strokeStyle = 'rgba(0,0,0,0.06)';
     ctx.lineWidth = 1;
@@ -257,7 +260,7 @@ export const CanvasView: React.FC<Props> = ({
         ctx.stroke();
       }
     }
-  }, [gridSize, viewportInfo, mode, width, height]);
+  }, [gridSize, viewportInfo, mode, width, height, showGridLines]);
 
   useEffect(() => {
     drawGrid();

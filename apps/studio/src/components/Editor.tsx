@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useProject } from '@/contexts/ProjectContext';
 import { store } from '../lib/store';
 import type { KernelState, KernelStore } from '@thingsvis/kernel';
-import { validateCanvasTheme } from '@thingsvis/schema';
+import { validateCanvasTheme, type NodeSchemaType } from '@thingsvis/schema';
 
 import { EditorTopNav } from './EditorTopNav';
 import { HelpDialog } from './HelpDialog';
@@ -49,6 +49,14 @@ import { useEditorStartup } from '../hooks/useEditorStartup';
 import { useEditorSync } from '../hooks/useEditorSync';
 import { useEditorDragDrop } from '../hooks/useEditorDragDrop';
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands';
+import { getResolvedWidget, loadWidget } from '../lib/registry/componentLoader';
+import { getWidgetControls } from '../lib/registry/getControls';
+import {
+  buildFormatBrushPatch,
+  createFormatBrushSnapshot,
+  type FormatBrushSnapshot,
+} from '../lib/formatBrush';
+import { syncShapeStylePatch } from '../lib/shapeStyleSync';
 
 import {
   MousePointer2,
@@ -90,6 +98,11 @@ export interface EditorHandle {
   getCanvasConfig: () => CanvasConfigSchema;
 }
 
+type FormatBrushState = {
+  active: boolean;
+  snapshot: FormatBrushSnapshot | null;
+};
+
 const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
   const {
     isAuthenticated,
@@ -113,6 +126,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [showVariablesPanel, setShowVariablesPanel] = useState(false);
+  const [formatBrush, setFormatBrush] = useState<FormatBrushState>({
+    active: false,
+    snapshot: null,
+  });
   const [hasSelectedDashboard, setHasSelectedDashboard] = useState(() => {
     try {
       return !!localStorage.getItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY);
@@ -146,6 +163,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     () => store.getState() as KernelState,
   );
   const selectedElement = kernelState.selection.nodeIds[0] || null;
+  const selectedNode = selectedElement
+    ? ((kernelState.nodesById[selectedElement]?.schemaRef as NodeSchemaType | undefined) ?? null)
+    : null;
 
   const hasDevices = usePlatformDeviceStore(
     (state) => state.devices.length > 0 || state.groups.length > 0,
@@ -221,6 +241,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   }, [embedVisibility.showLibrary, embedVisibility.showTopRight]);
 
   const toggleLeftPanel = useCallback(() => setShowLeftPanel((prev) => !prev), []);
+  const clearFormatBrush = useCallback(() => {
+    setFormatBrush({ active: false, snapshot: null });
+  }, []);
 
   const {
     canvasConfig,
@@ -324,6 +347,84 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     document.documentElement.classList.toggle('dark');
   };
 
+  const handleToolChange = useCallback(
+    (tool: Tool) => {
+      if (formatBrush.active) {
+        clearFormatBrush();
+      }
+      setActiveTool(tool);
+    },
+    [clearFormatBrush, formatBrush.active],
+  );
+
+  const handleToggleGrid = useCallback(() => {
+    setCanvasConfig((prev) => ({ ...prev, gridEnabled: !prev.gridEnabled }));
+  }, [setCanvasConfig]);
+
+  const handleToggleFormatBrush = useCallback(async () => {
+    if (formatBrush.active) {
+      clearFormatBrush();
+      return;
+    }
+
+    if (!selectedNode) return;
+
+    let widgetEntry = getResolvedWidget(selectedNode.type);
+    if (!widgetEntry) {
+      try {
+        widgetEntry = (await loadWidget(selectedNode.type)).entry;
+      } catch {
+        widgetEntry = null;
+      }
+    }
+
+    const controls = getWidgetControls(widgetEntry ?? undefined).controls;
+    const snapshot = createFormatBrushSnapshot(selectedNode, controls);
+
+    setActiveTool('select');
+    setFormatBrush({
+      active: true,
+      snapshot,
+    });
+  }, [clearFormatBrush, formatBrush.active, selectedNode]);
+
+  const handleApplyFormatBrush = useCallback(
+    (targetNodeId: string) => {
+      if (!formatBrush.active || !formatBrush.snapshot) return false;
+
+      const targetNode = store.getState().nodesById[targetNodeId]?.schemaRef as
+        | NodeSchemaType
+        | undefined;
+      if (!targetNode) return false;
+
+      const patch = buildFormatBrushPatch(formatBrush.snapshot, targetNode);
+      const syncedPatch = syncShapeStylePatch(
+        targetNode.type,
+        patch,
+        (targetNode.props ?? {}) as Record<string, unknown>,
+      );
+      if (!syncedPatch.baseStyle && !syncedPatch.props) return false;
+
+      store.getState().updateNode(targetNodeId, syncedPatch);
+      markDirty();
+      return true;
+    },
+    [formatBrush.active, formatBrush.snapshot, markDirty],
+  );
+
+  useEffect(() => {
+    if (!formatBrush.active) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      clearFormatBrush();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [clearFormatBrush, formatBrush.active]);
+
   useEffect(() => {
     registerDefaultCommands({
       saveProject: async () => await saveNow(),
@@ -339,8 +440,20 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         const future = (store.temporal.getState().futureStates ?? []) as unknown[];
         return future.length > 0;
       },
+      bringSelectionForward: () => {
+        const state = store.getState();
+        const selectedIds = state.selection.nodeIds.filter((id) => Boolean(state.nodesById[id]));
+        if (selectedIds.length === 0) return;
+        state.bringForward(selectedIds);
+      },
+      sendSelectionBackward: () => {
+        const state = store.getState();
+        const selectedIds = state.selection.nodeIds.filter((id) => Boolean(state.nodesById[id]));
+        if (selectedIds.length === 0) return;
+        state.sendBackward(selectedIds);
+      },
       showShortcutsPanel: () => setShowShortcuts(true),
-      setTool: (tool) => setActiveTool(tool as Tool),
+      setTool: (tool) => handleToolChange(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
       openPreview,
       logout: () => {
@@ -353,7 +466,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         kernel.selectNodes(selectIds);
       },
     });
-  }, [saveNow, projectId, openPreview]);
+  }, [saveNow, projectId, openPreview, handleToolChange, logout]);
 
   useKeyboardShortcuts({ registry: commandRegistry });
 
@@ -381,13 +494,15 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         <WorkspaceEngine
           canvasConfig={canvasConfig}
           activeTool={activeTool}
-          setActiveTool={setActiveTool}
+          setActiveTool={handleToolChange}
           zoom={zoom}
           setZoom={setZoom}
           embedVisibility={embedVisibility}
           showLeftPanel={showLeftPanel}
           showRightPanel={showRightPanel}
           markDirty={markDirty}
+          formatBrushActive={formatBrush.active}
+          onApplyFormatBrush={handleApplyFormatBrush}
         />
       </ErrorBoundary>
       <EditorStartupOverlay startup={startup} visible={!isStartupReady} />
@@ -404,6 +519,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         showRightPanel={showRightPanel}
         showLibrary={embedVisibility.showLibrary}
         isFullscreen={!!document.fullscreenElement}
+        gridVisible={canvasConfig.gridEnabled}
+        canUseFormatBrush={Boolean(selectedNode)}
+        formatBrushActive={formatBrush.active}
         saveStatus={saveState.status}
         lastSavedAt={saveState.lastSavedAt}
         saveError={saveState.error}
@@ -413,12 +531,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         user={user}
         projectName={canvasConfig.name}
         projectId={projectId}
-        onToolChange={setActiveTool}
+        onToolChange={handleToolChange}
         onProjectNameChange={(name: string) => setCanvasConfig({ ...canvasConfig, name })}
         onSave={() => saveNow()}
         onPreview={openPreview}
         onPublish={openPublish}
         onToggleTheme={toggleTheme}
+        onToggleGrid={handleToggleGrid}
+        onToggleFormatBrush={handleToggleFormatBrush}
         onToggleRightPanel={() => setShowRightPanel(true)}
         showLeftPanel={showLeftPanel}
         onToggleLeftPanel={toggleLeftPanel}

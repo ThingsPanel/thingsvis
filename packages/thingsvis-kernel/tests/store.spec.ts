@@ -14,12 +14,14 @@ describe('KernelStore', () => {
             expect(state.canvas.mode).toBe('infinite');
             expect(state.canvas.width).toBe(1920);
             expect(state.canvas.height).toBe(1080);
+            expect(state.canvas.gridEnabled).toBe(false);
+            expect(state.canvas.gridSize).toBe(20);
             expect(state.page).toBeUndefined();
         });
 
         it('should load a page correctly', () => {
             const mockPage = {
-                config: { mode: 'grid', width: 800, height: 600 },
+                config: { mode: 'grid', width: 800, height: 600, gridEnabled: true, gridSize: 24 },
                 nodes: [
                     { id: 'node-1', type: 'basic/rect' },
                     { id: 'node-2', type: 'basic/text' }
@@ -34,15 +36,19 @@ describe('KernelStore', () => {
             expect(state.canvas.mode).toBe('grid');
             expect(state.canvas.width).toBe(800);
             expect(state.canvas.height).toBe(600);
+            expect(state.canvas.gridEnabled).toBe(true);
+            expect(state.canvas.gridSize).toBe(24);
             expect(Object.keys(state.nodesById)).toHaveLength(2);
             expect(state.layerOrder).toEqual(['node-1', 'node-2']);
         });
 
         it('should update canvas state', () => {
-            useStore.getState().updateCanvas({ zoom: 1.5, offsetX: 100 });
+            useStore.getState().updateCanvas({ zoom: 1.5, offsetX: 100, gridEnabled: true, gridSize: 32 });
             const state = useStore.getState();
             expect(state.canvas.zoom).toBe(1.5);
             expect(state.canvas.offsetX).toBe(100);
+            expect(state.canvas.gridEnabled).toBe(true);
+            expect(state.canvas.gridSize).toBe(32);
             expect(state.canvas.offsetY).toBe(0); // unchanged
         });
     });

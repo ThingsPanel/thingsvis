@@ -5,6 +5,7 @@ import React, {
   useImperativeHandle,
   useState,
   useCallback,
+  useMemo,
 } from 'react';
 import { useSyncExternalStore } from 'react';
 import { CanvasView as UI_CanvasView, GridCanvas, useGridLayout } from '@thingsvis/ui';
@@ -15,13 +16,19 @@ import {
   type KernelState,
 } from '@thingsvis/kernel';
 import { validateCanvasTheme, type NodeSchemaType } from '@thingsvis/schema';
+import type { DataSource, PlatformFieldConfig } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 import { actionRuntime, dataSourceManager } from '../lib/store';
 import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
 import { isCreationTool } from './tools/types';
+import { orderNodeStatesByLayerOrder } from '../lib/layerOrder';
 import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
+import {
+  isPlatformFieldDataSource,
+  normalizePlatformBufferSize,
+} from '../embed/platformDeviceCompat';
 
 function generateId(prefix = 'node') {
   try {
@@ -55,7 +62,7 @@ type PresetSchemaPayload = {
   schema?: {
     canvas?: Record<string, unknown>;
     nodes?: NodeSchemaType[];
-    dataSources?: unknown[];
+    dataSources?: DataSource[];
   };
 };
 
@@ -107,6 +114,66 @@ function buildDroppedPresetNodes(
   });
 }
 
+function mergePresetDataSources(
+  currentConfigs: DataSource[],
+  presetDataSources: DataSource[],
+): DataSource[] {
+  const merged = new Map<string, DataSource>(currentConfigs.map((config) => [config.id, config]));
+
+  presetDataSources.forEach((incomingConfig) => {
+    if (!incomingConfig?.id) return;
+
+    const existingConfig = merged.get(incomingConfig.id);
+    if (!existingConfig) {
+      merged.set(incomingConfig.id, incomingConfig);
+      return;
+    }
+
+    const existingIsPlatform = isPlatformFieldDataSource(existingConfig);
+    const incomingIsPlatform = isPlatformFieldDataSource(incomingConfig);
+
+    if (existingIsPlatform || incomingIsPlatform) {
+      const existingPlatformConfig = (existingConfig.config ?? {}) as PlatformFieldConfig;
+      const incomingPlatformConfig = (incomingConfig.config ?? {}) as PlatformFieldConfig;
+      merged.set(incomingConfig.id, {
+        ...existingConfig,
+        ...incomingConfig,
+        type: 'PLATFORM_FIELD',
+        config: {
+          ...existingPlatformConfig,
+          ...incomingPlatformConfig,
+          bufferSize: Math.max(
+            normalizePlatformBufferSize(existingPlatformConfig.bufferSize),
+            normalizePlatformBufferSize(incomingPlatformConfig.bufferSize),
+          ),
+          requestedFields: Array.from(
+            new Set([
+              ...((existingPlatformConfig.requestedFields ?? []).filter(
+                (fieldId): fieldId is string => typeof fieldId === 'string',
+              ) || []),
+              ...((incomingPlatformConfig.requestedFields ?? []).filter(
+                (fieldId): fieldId is string => typeof fieldId === 'string',
+              ) || []),
+            ]),
+          ),
+        },
+      });
+      return;
+    }
+
+    merged.set(incomingConfig.id, {
+      ...existingConfig,
+      ...incomingConfig,
+      config: {
+        ...(existingConfig.config ?? {}),
+        ...(incomingConfig.config ?? {}),
+      },
+    } as DataSource);
+  });
+
+  return Array.from(merged.values());
+}
+
 export type StudioCanvasHandle = {
   dispatchToKernel: (payload: unknown) => void;
   mount: () => void;
@@ -131,6 +198,8 @@ const CanvasView = forwardRef<
     onImagePickerComplete?: () => void;
     theme?: string;
     centerPadding?: { left?: number; right?: number };
+    formatBrushActive?: boolean;
+    onApplyFormatBrush?: (targetNodeId: string) => boolean;
   }
 >(function CanvasView(
   {
@@ -149,15 +218,26 @@ const CanvasView = forwardRef<
     onImagePickerComplete,
     theme,
     centerPadding,
+    formatBrushActive = false,
+    onApplyFormatBrush,
   },
   ref,
 ) {
   const mountedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inlineTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   // Use state for viewport so changes trigger re-render
   const [vp, setVp] = useState({ width: 0, height: 0, zoom: zoom, offsetX: 0, offsetY: 0 });
   const vpRef = useRef(vp);
   vpRef.current = vp; // Keep ref in sync for callbacks
+  const [inlineTextEditor, setInlineTextEditor] = useState<{
+    nodeId: string;
+    draft: string;
+  } | null>(null);
+  const inlineTextEditorRef = useRef<{
+    nodeId: string;
+    draft: string;
+  } | null>(null);
 
   // Sync state when zoom prop changes
   useEffect(() => {
@@ -166,6 +246,9 @@ const CanvasView = forwardRef<
       zoom: zoom,
     }));
   }, [zoom]);
+  useEffect(() => {
+    inlineTextEditorRef.current = inlineTextEditor;
+  }, [inlineTextEditor]);
   const [isPointerDown, setIsPointerDown] = useState(false);
   const proxyWrapperRef = useRef<HTMLDivElement | null>(null);
   const proxyLayerRef = useRef<HTMLDivElement | null>(null);
@@ -177,25 +260,119 @@ const CanvasView = forwardRef<
     () => store.getState() as KernelState,
   );
 
-  const hydratePlatformDataSourcesForNodes = useCallback(async (nodes: NodeSchemaType[]) => {
-    const currentConfigs = dataSourceManager.getAllConfigs();
-    const nextConfigs = augmentPlatformDataSourcesForNodes(
-      currentConfigs,
-      nodes as Array<Record<string, unknown>>,
-    );
+  const closeInlineTextEditor = useCallback(
+    (options?: { commit?: boolean }) => {
+      const active = inlineTextEditorRef.current;
+      if (!active) return;
 
-    for (const nextConfig of nextConfigs) {
-      const prevConfig = currentConfigs.find((config) => config.id === nextConfig.id);
-      if (prevConfig && JSON.stringify(prevConfig) === JSON.stringify(nextConfig)) {
-        continue;
+      if (options?.commit !== false) {
+        const currentNode = (store.getState() as KernelState).nodesById[active.nodeId];
+        const currentProps = ((currentNode?.schemaRef as any)?.props ?? {}) as Record<
+          string,
+          unknown
+        >;
+        if ((currentProps.text ?? '') !== active.draft) {
+          store.getState().updateNode?.(active.nodeId, {
+            props: {
+              ...currentProps,
+              text: active.draft,
+            },
+          });
+          onUserEdit?.();
+        }
       }
 
-      await dataSourceManager.registerDataSource(nextConfig, false);
-    }
-  }, []);
+      inlineTextEditorRef.current = null;
+      setInlineTextEditor(null);
+    },
+    [onUserEdit, store],
+  );
+
+  const openInlineTextEditor = useCallback(
+    (nodeId: string) => {
+      const currentNode = (store.getState() as KernelState).nodesById[nodeId];
+      if (String((currentNode?.schemaRef as any)?.type ?? '') !== 'basic/text') return;
+
+      const currentProps = ((currentNode?.schemaRef as any)?.props ?? {}) as Record<
+        string,
+        unknown
+      >;
+      const nextDraft =
+        typeof currentProps.text === 'string' ? currentProps.text : String(currentProps.text ?? '');
+
+      if (inlineTextEditorRef.current?.nodeId === nodeId) return;
+
+      closeInlineTextEditor({ commit: true });
+      store.getState().selectNode?.(nodeId);
+      setInlineTextEditor({ nodeId, draft: nextDraft });
+    },
+    [closeInlineTextEditor, store],
+  );
+
+  const handleProxyMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (formatBrushActive) return;
+      if (event.button !== 0 || event.detail < 2) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target || target.closest('textarea')) return;
+
+      const nodeTarget = target.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const currentNode = state.nodesById[nodeId];
+      if (String((currentNode?.schemaRef as any)?.type ?? '') !== 'basic/text') return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      openInlineTextEditor(nodeId);
+    },
+    [formatBrushActive, openInlineTextEditor, state.nodesById],
+  );
+
+  const handleFormatBrushMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!formatBrushActive) return;
+
+      const target = event.target as HTMLElement | null;
+      const nodeTarget = target?.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const applied = onApplyFormatBrush?.(nodeId);
+      if (!applied) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [formatBrushActive, onApplyFormatBrush],
+  );
+
+  const hydratePlatformDataSourcesForNodes = useCallback(
+    async (nodes: NodeSchemaType[], presetDataSources: DataSource[] = []) => {
+      const currentConfigs = dataSourceManager.getAllConfigs();
+      const mergedConfigs = mergePresetDataSources(currentConfigs, presetDataSources);
+      const nextConfigs = augmentPlatformDataSourcesForNodes(
+        mergedConfigs,
+        nodes as Array<Record<string, unknown>>,
+      );
+
+      for (const nextConfig of nextConfigs) {
+        const prevConfig = currentConfigs.find((config) => config.id === nextConfig.id);
+        if (prevConfig && JSON.stringify(prevConfig) === JSON.stringify(nextConfig)) {
+          continue;
+        }
+
+        await dataSourceManager.registerDataSource(nextConfig, false);
+      }
+    },
+    [],
+  );
 
   // Detect grid layout mode
   const isGridMode = state.canvas?.mode === 'grid';
+  const showGridLines = state.gridState?.settings?.showGridLines ?? true;
 
   // Grid layout hook (provides grid-aware drag/resize handlers)
   const gridLayout = useGridLayout({
@@ -308,7 +485,10 @@ const CanvasView = forwardRef<
           droppedNodes.forEach((node) => kernelAction.addNode(pageId, node as any));
         }
 
-        await hydratePlatformDataSourcesForNodes(droppedNodes);
+        await hydratePlatformDataSourcesForNodes(
+          droppedNodes,
+          Array.isArray(entry.schema?.dataSources) ? entry.schema.dataSources : [],
+        );
         onUserEdit?.();
       } catch (error) {
         console.error('[CanvasView] Failed to drop preset schema', error);
@@ -452,10 +632,32 @@ const CanvasView = forwardRef<
     }
   }
 
-  const nodes = Object.values(state.nodesById);
+  const nodes = useMemo(
+    () => orderNodeStatesByLayerOrder(state.nodesById, state.layerOrder),
+    [state.nodesById, state.layerOrder],
+  );
+  const inlineEditorNode = inlineTextEditor ? state.nodesById[inlineTextEditor.nodeId] : undefined;
   // vp is now from useState, no need to read from ref
   const isPanTool = activeTool === 'pan';
   const canvasCursor = isPanTool ? (isPointerDown ? 'grabbing' : 'grab') : 'default';
+
+  useEffect(() => {
+    const active = inlineTextEditor;
+    if (!active) return;
+
+    const currentNode = state.nodesById[active.nodeId];
+    if (!currentNode || String((currentNode.schemaRef as any)?.type ?? '') !== 'basic/text') {
+      closeInlineTextEditor({ commit: false });
+    }
+  }, [closeInlineTextEditor, inlineTextEditor, state.nodesById]);
+
+  useEffect(() => {
+    if (!inlineTextEditor?.nodeId) return;
+    requestAnimationFrame(() => {
+      inlineTextareaRef.current?.focus();
+      inlineTextareaRef.current?.select();
+    });
+  }, [inlineTextEditor?.nodeId]);
 
   // Normalize theme via registry (fallback to state if undefined)
   const fallbackTheme = (state.page as any)?.config?.theme;
@@ -543,7 +745,7 @@ const CanvasView = forwardRef<
         console.error('[CanvasView] Failed to add grid node', nodeId, e);
       }
     },
-    [resolveWidget, store, onUserEdit],
+    [resolveWidget, state.gridState?.settings, store, onUserEdit],
   );
 
   // ── Grid mode: GridCanvas is the sole renderer (same engine for edit and preview) ──
@@ -557,7 +759,13 @@ const CanvasView = forwardRef<
         data-testid="studio-canvas"
         onDragOver={handleDragOver}
         onDrop={handleDrop}
-        style={{ width: '100%', height: '100%', position: 'relative' }}
+        onMouseDownCapture={handleFormatBrushMouseDownCapture}
+        style={{
+          width: '100%',
+          height: '100%',
+          position: 'relative',
+          cursor: formatBrushActive ? 'copy' : 'default',
+        }}
       >
         <GridCanvas
           store={store}
@@ -571,6 +779,7 @@ const CanvasView = forwardRef<
           centerPadding={centerPadding}
           widgetMode="edit"
           actionRuntime={actionRuntime}
+          showGridLines={showGridLines}
           onDropComponent={handleGridDropComponent}
         />
       </div>
@@ -594,7 +803,13 @@ const CanvasView = forwardRef<
       }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
-      style={{ width: '100%', height: '100%', position: 'relative', cursor: canvasCursor }}
+      onMouseDownCapture={handleFormatBrushMouseDownCapture}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        cursor: formatBrushActive ? 'copy' : canvasCursor,
+      }}
     >
       <UI_CanvasView
         store={store}
@@ -604,6 +819,7 @@ const CanvasView = forwardRef<
         height={state.canvas.height}
         gridSize={20}
         snapToGrid={true}
+        showGridLines={showGridLines}
         centeredMask={true}
         actionRuntime={actionRuntime}
         panEnabled={activeTool === 'pan'}
@@ -645,6 +861,7 @@ const CanvasView = forwardRef<
         <div
           ref={proxyWrapperRef}
           className="proxy-wrapper"
+          onMouseDownCapture={handleProxyMouseDownCapture}
           style={{
             position: 'absolute',
             left: vp.offsetX,
@@ -668,7 +885,7 @@ const CanvasView = forwardRef<
             const isLine = schema.type === 'basic/line';
             const isSelected = state.selection.nodeIds.includes(node.id);
             // Line components use LineConnectionTool for selection UI, don't show border
-            const showBorder = isSelected && !isLine;
+            const showBorder = isSelected && !isLine && inlineTextEditor?.nodeId !== node.id;
             return (
               <div
                 key={node.id}
@@ -683,19 +900,99 @@ const CanvasView = forwardRef<
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
                   pointerEvents: isPanTool ? 'none' : 'auto',
-                  cursor: isPanTool ? canvasCursor : 'pointer',
+                  cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'pointer',
                   border: showBorder ? '1px solid #0066ff' : 'none',
                 }}
               />
             );
           })}
 
+          {inlineTextEditor && inlineEditorNode ? (
+            <div
+              style={{
+                position: 'absolute',
+                left: inlineEditorNode.schemaRef.position?.x ?? 0,
+                top: inlineEditorNode.schemaRef.position?.y ?? 0,
+                width: inlineEditorNode.schemaRef.size?.width ?? 0,
+                height: inlineEditorNode.schemaRef.size?.height ?? 0,
+                transform:
+                  ((inlineEditorNode.schemaRef as any)?.props?._rotation ??
+                    (inlineEditorNode.schemaRef as any)?.rotation ??
+                    0) !== 0
+                    ? `rotate(${(inlineEditorNode.schemaRef as any)?.props?._rotation ?? (inlineEditorNode.schemaRef as any)?.rotation ?? 0}deg)`
+                    : undefined,
+                transformOrigin: 'center center',
+                zIndex: 30,
+                pointerEvents: 'auto',
+              }}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <textarea
+                ref={inlineTextareaRef}
+                value={inlineTextEditor.draft}
+                onChange={(event) =>
+                  setInlineTextEditor((current) =>
+                    current ? { ...current, draft: event.target.value } : current,
+                  )
+                }
+                onBlur={() => closeInlineTextEditor({ commit: true })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeInlineTextEditor({ commit: false });
+                    return;
+                  }
+                  if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    closeInlineTextEditor({ commit: true });
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  margin: 0,
+                  padding: '6px 8px',
+                  overflow: 'hidden',
+                  resize: 'none',
+                  border: '1px solid #6965db',
+                  borderRadius: 6,
+                  outline: 'none',
+                  background: 'rgba(255,255,255,0.96)',
+                  boxSizing: 'border-box',
+                  color: String((inlineEditorNode.schemaRef as any)?.props?.fill ?? '#333333'),
+                  fontSize: `${Number((inlineEditorNode.schemaRef as any)?.props?.fontSize ?? 16)}px`,
+                  fontFamily: String(
+                    (inlineEditorNode.schemaRef as any)?.props?.fontFamily ??
+                      'Inter, Noto Sans SC, Noto Sans, sans-serif',
+                  ),
+                  fontWeight: String(
+                    (inlineEditorNode.schemaRef as any)?.props?.fontWeight ?? 'normal',
+                  ),
+                  fontStyle: String(
+                    (inlineEditorNode.schemaRef as any)?.props?.fontStyle ?? 'normal',
+                  ),
+                  textAlign: String(
+                    (inlineEditorNode.schemaRef as any)?.props?.textAlign ?? 'left',
+                  ) as any,
+                  lineHeight: String((inlineEditorNode.schemaRef as any)?.props?.lineHeight ?? 1.4),
+                  letterSpacing: `${Number((inlineEditorNode.schemaRef as any)?.props?.letterSpacing ?? 0)}px`,
+                }}
+              />
+            </div>
+          ) : null}
+
           {/* TransformControls inside scaled wrapper */}
           <TransformControls
             containerRef={proxyWrapperRef}
             dragContainerRef={proxyLayerRef}
             kernelStore={store}
-            enabled={activeTool !== 'pan' && !isCreationTool(activeTool)}
+            enabled={
+              activeTool !== 'pan' &&
+              !formatBrushActive &&
+              !isCreationTool(activeTool) &&
+              !inlineTextEditor
+            }
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
@@ -706,7 +1003,7 @@ const CanvasView = forwardRef<
       </div>
 
       {/* Line Connection Tool - shows handles when a line is selected */}
-      {activeTool !== 'pan' && !isCreationTool(activeTool) && (
+      {activeTool !== 'pan' && !formatBrushActive && !isCreationTool(activeTool) && (
         <LineConnectionTool
           kernelStore={store}
           containerRef={proxyLayerRef}

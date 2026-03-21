@@ -1,10 +1,10 @@
 /**
  * Command system constants
- * 
+ *
  * Command IDs and default shortcut mappings
  */
 
-import type { ShortcutKey } from './types'
+import type { ShortcutKey } from './types';
 
 // =============================================================================
 // Built-in Command IDs
@@ -30,6 +30,8 @@ export const COMMAND_IDS = {
   EDIT_DESELECT: 'edit.deselect',
   EDIT_GROUP: 'edit.group',
   EDIT_UNGROUP: 'edit.ungroup',
+  EDIT_BRING_FORWARD: 'edit.bringForward',
+  EDIT_SEND_BACKWARD: 'edit.sendBackward',
 
   // View commands
   VIEW_ZOOM_IN: 'view.zoomIn',
@@ -48,7 +50,7 @@ export const COMMAND_IDS = {
 
   // Help commands
   HELP_SHORTCUTS: 'help.shortcuts',
-} as const
+} as const;
 
 // =============================================================================
 // Default Shortcut Mappings
@@ -72,6 +74,8 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
   [COMMAND_IDS.EDIT_DELETE]: ['delete'],
   [COMMAND_IDS.EDIT_SELECT_ALL]: ['mod', 'a'],
   [COMMAND_IDS.EDIT_DESELECT]: ['escape'],
+  [COMMAND_IDS.EDIT_BRING_FORWARD]: ['ctrl', ']'],
+  [COMMAND_IDS.EDIT_SEND_BACKWARD]: ['ctrl', '['],
 
   // View
   [COMMAND_IDS.VIEW_ZOOM_IN]: ['mod', '='],
@@ -90,7 +94,7 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
 
   // Help
   [COMMAND_IDS.HELP_SHORTCUTS]: ['?'],
-} as const
+} as const;
 
 // =============================================================================
 // Removed Category Labels (handled by i18n directly)

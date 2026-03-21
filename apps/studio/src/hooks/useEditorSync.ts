@@ -151,9 +151,17 @@ export function useEditorSync({
       mode: canvasConfig.mode,
       width: canvasConfig.width,
       height: canvasConfig.height,
+      gridEnabled: canvasConfig.gridEnabled,
+      gridSize: canvasConfig.gridSize,
     });
     syncingRef.current = false;
-  }, [canvasConfig.mode, canvasConfig.width, canvasConfig.height]);
+  }, [
+    canvasConfig.mode,
+    canvasConfig.width,
+    canvasConfig.height,
+    canvasConfig.gridEnabled,
+    canvasConfig.gridSize,
+  ]);
 
   useEffect(() => {
     const unsubscribe = store.subscribe((state) => {
@@ -188,8 +196,14 @@ export function useEditorSync({
       cols: canvasConfig.gridCols ?? 24,
       rowHeight: canvasConfig.gridRowHeight ?? 50,
       gap: canvasConfig.gridGap ?? 10,
+      showGridLines: canvasConfig.gridEnabled,
     });
-  }, [canvasConfig.gridCols, canvasConfig.gridRowHeight, canvasConfig.gridGap]);
+  }, [
+    canvasConfig.gridCols,
+    canvasConfig.gridRowHeight,
+    canvasConfig.gridGap,
+    canvasConfig.gridEnabled,
+  ]);
 
   return { saveState, markDirty, saveNow };
 }

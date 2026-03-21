@@ -33,6 +33,8 @@ import {
   Minimize,
   Maximize,
   Braces,
+  Grid3x3,
+  Paintbrush,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -56,6 +58,9 @@ interface EditorTopNavProps {
   showRightPanel: boolean;
   showLibrary: boolean;
   isFullscreen: boolean;
+  gridVisible: boolean;
+  canUseFormatBrush: boolean;
+  formatBrushActive: boolean;
   // Save state
   saveStatus: string;
   lastSavedAt: number | null;
@@ -76,6 +81,8 @@ interface EditorTopNavProps {
   onPublish: () => void;
   onOpenVariables: () => void;
   onToggleTheme: () => void;
+  onToggleGrid: () => void;
+  onToggleFormatBrush: () => void | Promise<void>;
   onToggleRightPanel: () => void;
   showLeftPanel: boolean;
   onToggleLeftPanel: () => void;
@@ -99,6 +106,9 @@ export function EditorTopNav({
   showRightPanel,
   showLibrary,
   isFullscreen,
+  gridVisible,
+  canUseFormatBrush,
+  formatBrushActive,
   saveStatus,
   lastSavedAt,
   saveError,
@@ -115,6 +125,8 @@ export function EditorTopNav({
   onPublish,
   onOpenVariables,
   onToggleTheme,
+  onToggleGrid,
+  onToggleFormatBrush,
   onToggleRightPanel,
   showLeftPanel,
   onToggleLeftPanel,
@@ -252,6 +264,35 @@ export function EditorTopNav({
               </Button>
             );
           })}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${
+            gridVisible
+              ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
+          }`}
+          onClick={onToggleGrid}
+          title={gridVisible ? t('toolbar.hideGrid') : t('toolbar.showGrid')}
+        >
+          <Grid3x3 className={`h-4.5 w-4.5 ${gridVisible ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          disabled={!formatBrushActive && !canUseFormatBrush}
+          className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none disabled:opacity-40 ${
+            formatBrushActive
+              ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
+          }`}
+          onClick={onToggleFormatBrush}
+          title={formatBrushActive ? t('toolbar.formatBrushActive') : t('toolbar.formatBrush')}
+        >
+          <Paintbrush
+            className={`h-4.5 w-4.5 ${formatBrushActive ? 'stroke-[2.5px]' : 'stroke-2'}`}
+          />
+        </Button>
         {/* Alignment Tools (only visible when multiple nodes selected) */}
         <AlignTools kernelStore={store} onUserEdit={onSave} />
       </div>

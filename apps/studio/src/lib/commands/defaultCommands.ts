@@ -1,15 +1,15 @@
 /**
  * Default Commands
- * 
+ *
  * Registers all built-in commands for the editor.
  * Commands are organized by category: tool, edit, project, view, help.
  */
 
-import type { Command } from './types'
-import { COMMAND_IDS, DEFAULT_SHORTCUTS } from './constants'
-import { commandRegistry } from './CommandRegistry'
-import type { KernelState } from '@thingsvis/kernel'
-import type { NodeSchemaType } from '@thingsvis/schema'
+import type { Command } from './types';
+import { COMMAND_IDS, DEFAULT_SHORTCUTS } from './constants';
+import { commandRegistry } from './CommandRegistry';
+import type { KernelState } from '@thingsvis/kernel';
+import type { NodeSchemaType } from '@thingsvis/schema';
 import {
   copyNodes,
   readClipboard,
@@ -17,7 +17,7 @@ import {
   nextPasteOffset,
   makePastedNodes,
   createDuplicatePayload,
-} from '../clipboard'
+} from '../clipboard';
 
 // =============================================================================
 // Command Factory Helpers
@@ -31,7 +31,7 @@ function createCommand(
   label: string,
   category: Command['category'],
   execute: Command['execute'],
-  options: Partial<Command> = {}
+  options: Partial<Command> = {},
 ): Command {
   return {
     id,
@@ -40,7 +40,7 @@ function createCommand(
     shortcut: DEFAULT_SHORTCUTS[id],
     execute,
     ...options,
-  }
+  };
 }
 
 // =============================================================================
@@ -53,106 +53,85 @@ function createCommand(
  */
 export interface DefaultCommandsDependencies {
   /** Function to save the current project */
-  saveProject: () => Promise<void>
+  saveProject: () => Promise<void>;
   /** Function to open the project dialog */
-  openProjectDialog?: () => void
+  openProjectDialog?: () => void;
   /** Function to export the current project */
-  exportProject?: () => void
+  exportProject?: () => void;
   /** Function to open preview */
-  openPreview?: () => void | Promise<void>
+  openPreview?: () => void | Promise<void>;
   /** Function to show shortcuts help panel */
-  showShortcutsPanel?: () => void
+  showShortcutsPanel?: () => void;
   /** Function to logout */
-  logout?: () => void
+  logout?: () => void;
   /** Function to set the current tool */
-  setTool?: (tool: string) => void
+  setTool?: (tool: string) => void;
   /** Function to undo */
-  undo?: () => void
+  undo?: () => void;
   /** Function to redo */
-  redo?: () => void
+  redo?: () => void;
   /** Function to check if undo is available */
-  canUndo?: () => boolean
+  canUndo?: () => boolean;
   /** Function to check if redo is available */
-  canRedo?: () => boolean
+  canRedo?: () => boolean;
 
   /** Read-only access to the current kernel state */
-  getKernelState?: () => KernelState
+  getKernelState?: () => KernelState;
 
   /** Delete nodes by id (must participate in undo/redo via the store) */
-  deleteNodes?: (nodeIds: string[]) => void
+  deleteNodes?: (nodeIds: string[]) => void;
+  /** Move the current selection one layer forward */
+  bringSelectionForward?: () => void;
+  /** Move the current selection one layer backward */
+  sendSelectionBackward?: () => void;
 
   /**
    * Atomic operation: insert new nodes AND update selection in a single state change.
    * This ensures undo/redo captures both node creation and selection together.
    */
-  applyNodeInsertAndSelect?: (nodes: NodeSchemaType[], selectIds: string[]) => void
+  applyNodeInsertAndSelect?: (nodes: NodeSchemaType[], selectIds: string[]) => void;
 }
 
 /**
  * Creates and returns all default commands.
  */
 export function createDefaultCommands(deps: DefaultCommandsDependencies): Command[] {
-  const commands: Command[] = []
+  const commands: Command[] = [];
 
   // ==========================================================================
   // Project Commands
   // ==========================================================================
 
   commands.push(
-    createCommand(
-      COMMAND_IDS.PROJECT_SAVE,
-      'Save',
-      'project',
-      async () => {
-        await deps.saveProject()
-      }
-    )
-  )
+    createCommand(COMMAND_IDS.PROJECT_SAVE, 'Save', 'project', async () => {
+      await deps.saveProject();
+    }),
+  );
 
   if (deps.openProjectDialog) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.PROJECT_OPEN,
-        'Open',
-        'project',
-        () => deps.openProjectDialog!()
-      )
-    )
+      createCommand(COMMAND_IDS.PROJECT_OPEN, 'Open', 'project', () => deps.openProjectDialog!()),
+    );
   }
 
   if (deps.exportProject) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.PROJECT_EXPORT,
-        'Export',
-        'project',
-        () => deps.exportProject!()
-      )
-    )
+      createCommand(COMMAND_IDS.PROJECT_EXPORT, 'Export', 'project', () => deps.exportProject!()),
+    );
   }
 
   if (deps.openPreview) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.PROJECT_PREVIEW,
-        'Preview',
-        'project',
-        async () => {
-          await deps.openPreview!()
-        }
-      )
-    )
+      createCommand(COMMAND_IDS.PROJECT_PREVIEW, 'Preview', 'project', async () => {
+        await deps.openPreview!();
+      }),
+    );
   }
 
   if (deps.logout) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.AUTH_LOGOUT,
-        'Logout',
-        'project',
-        () => deps.logout!()
-      )
-    )
+      createCommand(COMMAND_IDS.AUTH_LOGOUT, 'Logout', 'project', () => deps.logout!()),
+    );
   }
 
   // ==========================================================================
@@ -161,43 +140,15 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
   if (deps.setTool) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.TOOL_SELECT,
-        'Select',
-        'tool',
-        () => deps.setTool!('select')
+      createCommand(COMMAND_IDS.TOOL_SELECT, 'Select', 'tool', () => deps.setTool!('select')),
+      createCommand(COMMAND_IDS.TOOL_RECTANGLE, 'Rectangle', 'tool', () =>
+        deps.setTool!('rectangle'),
       ),
-      createCommand(
-        COMMAND_IDS.TOOL_RECTANGLE,
-        'Rectangle',
-        'tool',
-        () => deps.setTool!('rectangle')
-      ),
-      createCommand(
-        COMMAND_IDS.TOOL_CIRCLE,
-        'Circle',
-        'tool',
-        () => deps.setTool!('circle')
-      ),
-      createCommand(
-        COMMAND_IDS.TOOL_TEXT,
-        'Text',
-        'tool',
-        () => deps.setTool!('text')
-      ),
-      createCommand(
-        COMMAND_IDS.TOOL_IMAGE,
-        'Image',
-        'tool',
-        () => deps.setTool!('image')
-      ),
-      createCommand(
-        COMMAND_IDS.TOOL_PAN,
-        'Pan',
-        'tool',
-        () => deps.setTool!('pan')
-      )
-    )
+      createCommand(COMMAND_IDS.TOOL_CIRCLE, 'Circle', 'tool', () => deps.setTool!('circle')),
+      createCommand(COMMAND_IDS.TOOL_TEXT, 'Text', 'tool', () => deps.setTool!('text')),
+      createCommand(COMMAND_IDS.TOOL_IMAGE, 'Image', 'tool', () => deps.setTool!('image')),
+      createCommand(COMMAND_IDS.TOOL_PAN, 'Pan', 'tool', () => deps.setTool!('pan')),
+    );
   }
 
   // ==========================================================================
@@ -206,28 +157,18 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
   if (deps.undo) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.EDIT_UNDO,
-        'Undo',
-        'edit',
-        () => deps.undo!(), {
+      createCommand(COMMAND_IDS.EDIT_UNDO, 'Undo', 'edit', () => deps.undo!(), {
         when: deps.canUndo,
-      }
-      )
-    )
+      }),
+    );
   }
 
   if (deps.redo) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.EDIT_REDO,
-        'Redo',
-        'edit',
-        () => deps.redo!(), {
+      createCommand(COMMAND_IDS.EDIT_REDO, 'Redo', 'edit', () => deps.redo!(), {
         when: deps.canRedo,
-      }
-      )
-    )
+      }),
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -235,29 +176,24 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
   // --------------------------------------------------------------------------
   if (deps.getKernelState) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.EDIT_COPY,
-        'Copy',
-        'edit',
-        () => {
-          const state = deps.getKernelState!()
-          const selectedIds = state.selection.nodeIds
-          if (selectedIds.length === 0) {
-            // No-op: preserve existing clipboard
-            return
-          }
-
-          // Serialize selected nodes
-          const selectedNodes = selectedIds
-            .map(id => state.nodesById[id]?.schemaRef)
-            .filter((node): node is NodeSchemaType => !!node)
-
-          if (selectedNodes.length > 0) {
-            copyNodes(selectedNodes)
-          }
+      createCommand(COMMAND_IDS.EDIT_COPY, 'Copy', 'edit', () => {
+        const state = deps.getKernelState!();
+        const selectedIds = state.selection.nodeIds;
+        if (selectedIds.length === 0) {
+          // No-op: preserve existing clipboard
+          return;
         }
-      )
-    )
+
+        // Serialize selected nodes
+        const selectedNodes = selectedIds
+          .map((id) => state.nodesById[id]?.schemaRef)
+          .filter((node): node is NodeSchemaType => !!node);
+
+        if (selectedNodes.length > 0) {
+          copyNodes(selectedNodes);
+        }
+      }),
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -270,24 +206,25 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         'Paste',
         'edit',
         () => {
-          const clipboard = readClipboard()
+          const clipboard = readClipboard();
           if (!clipboard || clipboard.nodes.length === 0) {
             // No-op: empty clipboard
-            return
+            return;
           }
 
           // Get next offset and create new nodes
-          const offset = nextPasteOffset()
-          const newNodes = makePastedNodes(clipboard, offset)
-          const newIds = newNodes.map(n => n.id)
+          const offset = nextPasteOffset();
+          const newNodes = makePastedNodes(clipboard, offset);
+          const newIds = newNodes.map((n) => n.id);
 
           // Atomic insert + select
-          deps.applyNodeInsertAndSelect!(newNodes, newIds)
-        }, {
-        when: () => hasClipboardContent(),
-      }
-      )
-    )
+          deps.applyNodeInsertAndSelect!(newNodes, newIds);
+        },
+        {
+          when: () => hasClipboardContent(),
+        },
+      ),
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -300,41 +237,42 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         'Duplicate',
         'edit',
         () => {
-          const state = deps.getKernelState!()
-          const selectedIds = state.selection.nodeIds
+          const state = deps.getKernelState!();
+          const selectedIds = state.selection.nodeIds;
           if (selectedIds.length === 0) {
             // No-op: nothing to duplicate
-            return
+            return;
           }
 
           // Get selected nodes
           const selectedNodes = selectedIds
-            .map(id => state.nodesById[id]?.schemaRef)
-            .filter((node): node is NodeSchemaType => !!node)
+            .map((id) => state.nodesById[id]?.schemaRef)
+            .filter((node): node is NodeSchemaType => !!node);
 
           if (selectedNodes.length === 0) {
-            return
+            return;
           }
 
           // Create duplicate payload (does not modify clipboard)
-          const payload = createDuplicatePayload(selectedNodes)
-          if (!payload) return
+          const payload = createDuplicatePayload(selectedNodes);
+          if (!payload) return;
 
           // Get next offset and create new nodes
-          const offset = nextPasteOffset()
-          const newNodes = makePastedNodes(payload, offset)
-          const newIds = newNodes.map(n => n.id)
+          const offset = nextPasteOffset();
+          const newNodes = makePastedNodes(payload, offset);
+          const newIds = newNodes.map((n) => n.id);
 
           // Atomic insert + select
-          deps.applyNodeInsertAndSelect!(newNodes, newIds)
-        }, {
-        when: () => {
-          const state = deps.getKernelState!()
-          return state.selection.nodeIds.length > 0
+          deps.applyNodeInsertAndSelect!(newNodes, newIds);
         },
-      }
-      )
-    )
+        {
+          when: () => {
+            const state = deps.getKernelState!();
+            return state.selection.nodeIds.length > 0;
+          },
+        },
+      ),
+    );
   }
 
   // --------------------------------------------------------------------------
@@ -347,28 +285,57 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         'Delete',
         'edit',
         () => {
-          const state = deps.getKernelState!()
-          const selectedIds = state.selection.nodeIds
-          if (selectedIds.length === 0) return
+          const state = deps.getKernelState!();
+          const selectedIds = state.selection.nodeIds;
+          if (selectedIds.length === 0) return;
 
-          const deletableIds = selectedIds.filter(id => {
-            const node = state.nodesById[id]
-            return !!node && !node.locked
-          })
+          const deletableIds = selectedIds.filter((id) => {
+            const node = state.nodesById[id];
+            return !!node && !node.locked;
+          });
 
-          if (deletableIds.length === 0) return
-          deps.deleteNodes!(deletableIds)
-        }, {
-        when: () => {
-          const state = deps.getKernelState!()
-          return state.selection.nodeIds.some(id => {
-            const node = state.nodesById[id]
-            return !!node && !node.locked
-          })
+          if (deletableIds.length === 0) return;
+          deps.deleteNodes!(deletableIds);
         },
-      }
-      )
-    )
+        {
+          when: () => {
+            const state = deps.getKernelState!();
+            return state.selection.nodeIds.some((id) => {
+              const node = state.nodesById[id];
+              return !!node && !node.locked;
+            });
+          },
+        },
+      ),
+    );
+  }
+
+  if (deps.getKernelState && deps.bringSelectionForward) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_BRING_FORWARD,
+        'Bring Forward',
+        'edit',
+        () => deps.bringSelectionForward!(),
+        {
+          when: () => deps.getKernelState!().selection.nodeIds.length > 0,
+        },
+      ),
+    );
+  }
+
+  if (deps.getKernelState && deps.sendSelectionBackward) {
+    commands.push(
+      createCommand(
+        COMMAND_IDS.EDIT_SEND_BACKWARD,
+        'Send Backward',
+        'edit',
+        () => deps.sendSelectionBackward!(),
+        {
+          when: () => deps.getKernelState!().selection.nodeIds.length > 0,
+        },
+      ),
+    );
   }
 
   // ==========================================================================
@@ -377,36 +344,26 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
 
   if (deps.showShortcutsPanel) {
     commands.push(
-      createCommand(
-        COMMAND_IDS.HELP_SHORTCUTS,
-        'Keyboard Shortcuts',
-        'help',
-        () => deps.showShortcutsPanel!()
-      )
-    )
+      createCommand(COMMAND_IDS.HELP_SHORTCUTS, 'Keyboard Shortcuts', 'help', () =>
+        deps.showShortcutsPanel!(),
+      ),
+    );
   }
 
-  return commands
+  return commands;
 }
 
 /**
  * Registers all default commands with the command registry.
  */
 export function registerDefaultCommands(deps: DefaultCommandsDependencies): void {
-  const commands = createDefaultCommands(deps)
-  commandRegistry.registerAll(commands)
+  const commands = createDefaultCommands(deps);
+  commandRegistry.registerAll(commands);
 }
 
 /**
  * Registers just the save command (for initial MVP).
  */
 export function registerSaveCommand(saveProject: () => Promise<void>): void {
-  commandRegistry.register(
-    createCommand(
-      COMMAND_IDS.PROJECT_SAVE,
-      'Save',
-      'project',
-      saveProject
-    )
-  )
+  commandRegistry.register(createCommand(COMMAND_IDS.PROJECT_SAVE, 'Save', 'project', saveProject));
 }

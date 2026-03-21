@@ -16,6 +16,8 @@ export const defaultCanvas: CanvasState = {
   zoom: 1,
   offsetX: 0,
   offsetY: 0,
+  gridEnabled: false,
+  gridSize: 20,
 };
 
 export const createCanvasSlice: StateCreator<

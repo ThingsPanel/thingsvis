@@ -25,6 +25,7 @@ import EventsTab from './EventsTab';
 
 import { getResolvedWidget, loadWidget } from '@/lib/registry/componentLoader';
 import { getWidgetControls } from '@/lib/registry/getControls';
+import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
 import type { I18nLabel } from '@thingsvis/schema';
@@ -125,6 +126,13 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   if (!node) return null;
 
   function updateNode(changes: any) {
+    if (changes?.baseStyle || changes?.props) {
+      changes = syncShapeStylePatch(
+        componentType,
+        changes,
+        (schema?.props ?? {}) as Record<string, unknown>,
+      );
+    }
     kernelStore.getState().updateNode(nodeId, changes);
     onUserEdit?.();
   }

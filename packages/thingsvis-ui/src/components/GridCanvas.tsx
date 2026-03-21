@@ -489,7 +489,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
             )}
 
             {/* Widget nodes */}
-            {nodes.map((node: NodeState) => {
+            {nodes.map((node: NodeState, layerIndex: number) => {
                 const schema = node.schemaRef as Record<string, unknown>;
                 const gridRaw = schema.grid as { x: number; y: number; w: number; h: number };
                 // Use compacted display position when in a responsive breakpoint,
@@ -509,6 +509,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                     <GridNodeItem
                         key={node.id}
                         nodeId={node.id}
+                        layerIndex={layerIndex}
                         pixelRect={pixelRect}
                         previewPixelRect={pushedRect}
                         store={store}
