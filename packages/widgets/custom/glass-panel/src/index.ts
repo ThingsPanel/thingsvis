@@ -5,19 +5,8 @@ import { PropsSchema, type Props, PRESETS } from "./schema";
 import zh from "./locales/zh.json";
 import en from "./locales/en.json";
 
-type VariantName = Props["variant"];
-
-const VARIANT_TINTS: Record<VariantName, string> = {
-  neutral: "#f8fbff",
-  blue: "#dbeafe",
-  warm: "#fde8dc",
-  cyan: "#dbf5ff",
-  emerald: "#dcf7eb",
-  amber: "#fff0d8"
-};
-
 function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
+  return Math.max(min, Math.min(value, max));
 }
 
 function withAlpha(color: string | undefined | null, alpha: number): string {
@@ -49,36 +38,56 @@ function withAlpha(color: string | undefined | null, alpha: number): string {
   return normalized;
 }
 
-function getPresetValues(props: Props): { blur: number; opacity: number; highlight: number; tint: number } {
+function getPresetValues(props: Props): {
+  blur: number;
+  opacity: number;
+  highlight: number;
+  tint: number;
+  color: string;
+} {
   const preset = PRESETS[props.preset];
-  if (props.preset !== "custom" && preset) {
-    return { blur: preset.blur, opacity: preset.opacity, highlight: preset.highlight, tint: preset.tint };
+  if (preset) {
+    return {
+      blur: preset.blur,
+      opacity: preset.opacity,
+      highlight: preset.highlight,
+      tint: preset.tint,
+      color: preset.color
+    };
   }
-  return { 
-    blur: props.blurStrength, 
-    opacity: props.surfaceOpacity, 
-    highlight: props.highlightOpacity, 
-    tint: props.tintStrength 
+  // 自定义模式 - 使用滑块值，颜色默认蓝
+  return {
+    blur: props.blurStrength,
+    opacity: props.surfaceOpacity,
+    highlight: props.highlightOpacity,
+    tint: props.tintStrength,
+    color: "#60a5fa"
   };
 }
 
 function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): void {
   const preset = getPresetValues(props);
-  const tint = VARIANT_TINTS[props.variant] ?? VARIANT_TINTS.neutral;
-  const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.45, 0, 1));
-  const midLayer = withAlpha("#ffffff", preset.opacity);
-  const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.6, 0.08));
-  const tintLayer = withAlpha(tint, clamp(preset.tint * 1.2, 0, 0.85));
-  const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.1, 0, 1));
-  const sideGlow = withAlpha(tint, clamp(preset.tint * 0.9, 0, 0.75));
-  const bottomTint = withAlpha(tint, clamp(preset.tint * 0.7, 0, 0.6));
-  const softShade = withAlpha(colors.bg || "#dbe4ee", Math.min(preset.opacity * 0.14, 0.1));
-  const ambientShadow = withAlpha("#0f172a", 0.04 + preset.opacity * 0.06);
-  const innerHighlight = withAlpha("#ffffff", 0.2 + preset.highlight * 0.45);
-  const lowerHighlight = withAlpha("#ffffff", preset.highlight * 0.12);
-  const frostTexture = withAlpha("#ffffff", 0.015 + preset.highlight * 0.05);
-  const edgeShade = withAlpha(colors.bg || "#dbe4ee", 0.025 + preset.tint * 0.04);
+  const tintColor = preset.color;
 
+  // 各层透明度计算
+  const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.5, 0, 1));
+  const midLayer = withAlpha("#ffffff", preset.opacity);
+  const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.55, 0.06));
+
+  // 色调层
+  const tintLayer = withAlpha(tintColor, clamp(preset.tint * 1.3, 0, 0.9));
+  const sideGlow = withAlpha(tintColor, clamp(preset.tint, 0, 0.8));
+  const bottomTint = withAlpha(tintColor, clamp(preset.tint * 0.8, 0, 0.65));
+
+  // 高光和阴影
+  const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.2, 0, 1));
+  const softShade = withAlpha(colors.bg || "#0f172a", Math.min(preset.opacity * 0.12, 0.08));
+  const innerHighlight = withAlpha("#ffffff", 0.22 + preset.highlight * 0.5);
+  const lowerHighlight = withAlpha("#ffffff", preset.highlight * 0.1);
+  const edgeShade = withAlpha(colors.bg || "#0f172a", 0.02 + preset.tint * 0.03);
+
+  //  Frost 纹理（仅在高光较高时显示）
+  const frostTexture = withAlpha("#ffffff", 0.01 + preset.highlight * 0.04);
 
   element.style.cssText = `
     width: 100%;
@@ -97,25 +106,27 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
       position:relative;
       box-sizing:border-box;
       background:
-        /* Top-left white glow */
-        radial-gradient(circle at top left, ${topGlow} 0%, transparent 42%),
-        /* Top-right tinted glow - stronger */
-        radial-gradient(ellipse at 85% 15%, ${sideGlow} 0%, transparent 45%),
-        /* Bottom tinted shade - stronger */
-        radial-gradient(ellipse at 50% 120%, ${bottomTint} 0%, transparent 55%),
-        /* Base surface layers */
-        linear-gradient(180deg, ${topLayer} 0%, ${midLayer} 38%, ${bottomLayer} 100%),
-        /* Main color tint wash */
-        linear-gradient(160deg, ${tintLayer} 0%, transparent 60%),
-        /* Bottom edge tint */
-        linear-gradient(0deg, ${bottomTint} 0%, transparent 50%);
-      backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
-      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(180%) brightness(1.05);
+        /* 左上角高光 */
+        radial-gradient(circle at 5% 5%, ${topGlow} 0%, transparent 40%),
+        /* 右上角色调光晕 */
+        radial-gradient(ellipse at 95% 10%, ${sideGlow} 0%, transparent 50%),
+        /* 底部色调阴影 */
+        radial-gradient(ellipse at 50% 100%, ${bottomTint} 0%, transparent 60%),
+        /* 底部环境阴影 */
+        radial-gradient(ellipse at 50% 120%, ${softShade} 0%, transparent 50%),
+        /* 主体白色层 */
+        linear-gradient(165deg, ${topLayer} 0%, ${midLayer} 45%, ${bottomLayer} 100%),
+        /* 主色调覆盖层 */
+        linear-gradient(160deg, ${tintLayer} 0%, transparent 65%);
+      backdrop-filter: blur(${preset.blur}px) saturate(185%) brightness(1.06);
+      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(185%) brightness(1.06);
       box-shadow:
         inset 0 1px 0 ${innerHighlight},
         inset 0 -1px 0 ${lowerHighlight},
-        inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.1)};
+        inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.08)},
+        0 4px 20px rgba(0, 0, 0, ${0.15 + preset.opacity * 0.15});
     ">
+      ${preset.highlight > 0.15 ? `
       <div style="
         position:absolute;
         inset:0;
@@ -124,18 +135,18 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
           repeating-linear-gradient(
             135deg,
             ${frostTexture} 0 2px,
-            transparent 2px 7px
+            transparent 2px 6px
           );
-        mix-blend-mode:soft-light;
-        opacity:0.5;
+        mix-blend-mode:overlay;
+        opacity:0.6;
         pointer-events:none;
-      "></div>
+      "></div>` : ''}
       <div style="
         position:absolute;
         inset:0;
         border-radius:inherit;
         background:
-          linear-gradient(180deg, ${withAlpha("#ffffff", preset.highlight * 0.34)} 0%, transparent 24%, transparent 76%, ${edgeShade} 100%);
+          linear-gradient(180deg, ${withAlpha("#ffffff", preset.highlight * 0.4)} 0%, transparent 20%, transparent 80%, ${edgeShade} 100%);
         pointer-events:none;
       "></div>
     </div>

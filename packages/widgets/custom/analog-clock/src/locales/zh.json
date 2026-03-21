@@ -1,0 +1,15 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-analog-clock": {
+        "name": "表盘时钟",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "showSecondHand": "显示秒针",
+        "showNumbers": "显示数字刻度",
+        "bezelWidth": "表圈宽度",
+        "timeZone": "时区"
+      }
+    }
+  }
+}

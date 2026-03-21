@@ -4,7 +4,6 @@
       "thingsvis-widget-custom-glass-panel": {
         "name": "磨砂面板",
         "groupStyle": "样式",
-        "variant": "色调",
         "preset": "质感预设",
         "blurStrength": "模糊强度",
         "surfaceOpacity": "表面不透明度",

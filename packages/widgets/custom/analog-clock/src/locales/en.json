@@ -1,0 +1,15 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-analog-clock": {
+        "name": "Analog Clock",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "showSecondHand": "Show Second Hand",
+        "showNumbers": "Show Numbers",
+        "bezelWidth": "Bezel Width",
+        "timeZone": "Time Zone"
+      }
+    }
+  }
+}

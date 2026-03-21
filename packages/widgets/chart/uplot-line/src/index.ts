@@ -29,6 +29,7 @@ type RuntimeMessages = {
     runtime?: {
         defaultSeriesName?: string;
         emptyState?: string;
+        previewState?: string;
     };
 };
 
@@ -162,6 +163,19 @@ function getFallbackRangeSec(timeRangePreset: Props['timeRangePreset']): number 
     return timeRangePreset === 'all' ? TIME_RANGE_SEC['1h'] : TIME_RANGE_SEC[timeRangePreset];
 }
 
+function buildPreviewSeries(timeRangePreset: Props['timeRangePreset']): ParsedPoint[] {
+    const rangeSec = getFallbackRangeSec(timeRangePreset);
+    const endSec = Math.floor(Date.now() / 1000);
+    const pointCount = 6;
+    const stepSec = Math.max(60, Math.floor(rangeSec / (pointCount - 1)));
+    const sampleValues = [18, 24, 21, 29, 34, 31];
+
+    return sampleValues.map((value, index) => ({
+        tsSec: endSec - stepSec * (pointCount - index - 1),
+        value,
+    }));
+}
+
 function pickLineColor(props: Props, colors: WidgetColors): string {
     return colors.series[0] ?? colors.primary ?? (props.primaryColor?.trim() || LEGACY_DEFAULT_PRIMARY);
 }
@@ -274,14 +288,15 @@ export const Main = defineWidget({
 
             const points = normalizeSeries(currentProps.data, currentProps.timeRangePreset);
             const hasData = points.length > 0;
+            const renderPoints = hasData ? points : buildPreviewSeries(currentProps.timeRangePreset);
             const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
             const fallbackEndSec = Math.floor(Date.now() / 1000);
-            const finalTimes = hasData
-                ? points.map((p) => p.tsSec)
+            const finalTimes = renderPoints.length > 0
+                ? renderPoints.map((p) => p.tsSec)
                 : [fallbackEndSec - fallbackRangeSec, fallbackEndSec];
-            const finalValues = hasData
-                ? points.map((p) => p.value)
-                : [null, null];
+            const finalValues = renderPoints.length > 0
+                ? renderPoints.map((p) => p.value)
+                : [18, 31];
 
             const chartData = [
                 finalTimes,
@@ -303,7 +318,10 @@ export const Main = defineWidget({
             applyHeader(scale);
             emptyStateEl.style.color = withAlpha(resolveWidgetColors(element).fg, 0.65);
             emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
-            emptyStateEl.textContent = hasData ? '' : (runtimeMessages.runtime?.emptyState || 'Waiting for time series data');
+            emptyStateEl.style.alignItems = 'flex-start';
+            emptyStateEl.style.justifyContent = 'flex-end';
+            emptyStateEl.style.padding = `${Math.max(10, Math.round(12 * scale))}px ${Math.max(12, Math.round(16 * scale))}px`;
+            emptyStateEl.textContent = hasData ? '' : (runtimeMessages.runtime?.previewState || 'Preview style - data appears after binding');
             emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
             const axisFontSize = Math.round(12 * scale);
@@ -313,17 +331,6 @@ export const Main = defineWidget({
                 width: cw,
                 height: ch,
                 padding: [8, WIDGET_PADDING, WIDGET_PADDING, WIDGET_PADDING],
-                scales: hasData ? undefined : {
-                    x: {
-                        time: true,
-                        auto: false,
-                        range: [finalTimes[0] ?? fallbackEndSec - fallbackRangeSec, finalTimes[finalTimes.length - 1] ?? fallbackEndSec],
-                    },
-                    y: {
-                        auto: false,
-                        range: [0, 1],
-                    },
-                },
                 legend: {
                     show: !!currentProps.showLegend,
                 },

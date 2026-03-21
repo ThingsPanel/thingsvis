@@ -15,6 +15,7 @@ import {
   type PlatformDevice,
   type PlatformDevicePreset,
 } from '@/lib/stores/platformDeviceStore';
+import { hydrateDevicePresetSchema, hydrateDevicePresetWidget } from '@/lib/devicePresetHydration';
 
 export default function DeviceLibraryPanel() {
   const { t } = useTranslation('editor');
@@ -133,24 +134,20 @@ export default function DeviceLibraryPanel() {
     preset: PlatformDevicePreset,
   ) => {
     try {
-      const rawPayload =
+      const resolvedPayload =
         preset.schema && Array.isArray(preset.schema.nodes) && preset.schema.nodes.length > 0
-          ? JSON.stringify({
+          ? {
               kind: 'thingsvis-preset-schema',
               presetId: preset.id,
               name: preset.name,
-              schema: preset.schema,
-            })
-          : JSON.stringify(preset.widget);
+              schema: hydrateDevicePresetSchema(preset.schema, device.deviceId),
+            }
+          : hydrateDevicePresetWidget(
+              (preset.widget ?? {}) as Record<string, unknown>,
+              device.deviceId,
+            );
 
-      // 2. Perform variable substitution for this specific device
-      // The preset JSON should use ^{{ ds.__platform___deviceId___.data.xxx }} as convention,
-      // or we can just replace a generic placeholder like __DEVICE_ID__ depending on host convention.
-      // Here we replace the generic ds.__platform__.data with ds.__platform_{deviceId}__.data
-      const resolvedStr = rawPayload.replace(
-        /ds\.__platform__\.data/g,
-        `ds.__platform_${device.deviceId}__.data`,
-      );
+      const resolvedStr = JSON.stringify(resolvedPayload);
 
       // payload type 'thingsvis-widget-snippet' signals the canvas it's a pre-configured node JSON
       e.dataTransfer.setData('application/thingsvis-widget-snippet', resolvedStr);

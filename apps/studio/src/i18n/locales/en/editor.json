@@ -225,6 +225,7 @@
     },
     "leftPanel": {
         "library": "Library",
+        "devices": "Devices",
         "layers": "Layers"
     },
     "loading": "Loading...",

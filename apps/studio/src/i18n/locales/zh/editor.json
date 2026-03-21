@@ -222,6 +222,7 @@
     },
     "leftPanel": {
         "library": "组件库",
+        "devices": "Devices",
         "layers": "图层"
     },
     "loading": "正在加载...",

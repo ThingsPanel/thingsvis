@@ -1,0 +1,18 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-digital-clock": {
+        "name": "Digital Clock",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "hourCycle": "Hour Cycle",
+        "showSeconds": "Show Seconds",
+        "showDate": "Show Date",
+        "align": "Alignment",
+        "timeFontSize": "Time Font Size",
+        "dateFontSize": "Date Font Size",
+        "timeZone": "Time Zone"
+      }
+    }
+  }
+}
