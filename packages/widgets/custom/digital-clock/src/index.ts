@@ -1,5 +1,6 @@
 import {
   defineWidget,
+  resolveLayeredColor,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -75,8 +76,16 @@ export const Main = defineWidget({
       stackEl.style.alignItems = getHorizontalAlign(currentProps.align);
       timeEl.style.textAlign = currentProps.align;
       dateEl.style.textAlign = currentProps.align;
-      timeEl.style.color = colors.fg;
-      dateEl.style.color = colors.fg;
+      timeEl.style.color = resolveLayeredColor({
+        instance: currentProps.timeColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+      });
+      dateEl.style.color = resolveLayeredColor({
+        instance: currentProps.dateColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+      });
       timeEl.style.fontSize = `${currentProps.timeFontSize}px`;
       dateEl.style.fontSize = `${currentProps.dateFontSize}px`;
 

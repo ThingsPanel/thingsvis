@@ -1,5 +1,6 @@
 import {
   defineWidget,
+  resolveLayeredColor,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -49,7 +50,12 @@ function getRuntimeMessages(locale?: string): RuntimeMessages {
 }
 
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
-  return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
+  return resolveLayeredColor({
+    instance: primaryColor,
+    theme: colors.series[0] ?? colors.primary,
+    fallback: LEGACY_DEFAULT_PRIMARY,
+    inheritValues: [LEGACY_DEFAULT_PRIMARY],
+  });
 }
 
 function withAlpha(color: string, alpha: number): string {
@@ -258,9 +264,31 @@ function buildOption(
   messages: RuntimeMessages,
   scale: number = 1,
 ): echarts.EChartsOption {
-  const { title, titleAlign, data, primaryColor, showLegend, smooth, showArea, showXAxis, showYAxis, timeRangePreset } = props;
+  const {
+    title,
+    titleAlign,
+    data,
+    primaryColor,
+    titleColor,
+    axisLabelColor,
+    showLegend,
+    smooth,
+    showArea,
+    showXAxis,
+    showYAxis,
+    timeRangePreset,
+  } = props;
 
-  const textColor = colors.fg;
+  const resolvedTitleColor = resolveLayeredColor({
+    instance: titleColor,
+    theme: colors.fg,
+    fallback: colors.fg,
+  });
+  const resolvedAxisLabelColor = resolveLayeredColor({
+    instance: axisLabelColor,
+    theme: colors.fg,
+    fallback: colors.fg,
+  });
   const splitLineColor = colors.axis;
   const seriesColor = pickSeriesColor(primaryColor, colors);
   const normalizedData = normalizeLineData(data, timeRangePreset);
@@ -280,7 +308,7 @@ function buildOption(
     min: hasData ? undefined : emptyTimeWindow.startMs,
     max: hasData ? undefined : emptyTimeWindow.endMs,
     axisLabel: {
-      color: textColor,
+      color: resolvedAxisLabelColor,
       fontSize: Math.round(12 * scale),
       hideOverlap: true,
       formatter: (value: string | number) =>
@@ -291,7 +319,7 @@ function buildOption(
   } : {
     show: showXAxis !== false,
     type: 'category',
-    axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
+    axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
     axisLine: { lineStyle: { color: splitLineColor } },
     axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
   };
@@ -312,7 +340,7 @@ function buildOption(
       silent: true,
       style: {
         text: messages.runtime?.emptyState || 'Add data points or bind a data series',
-        fill: textColor,
+        fill: resolvedAxisLabelColor,
         opacity: 0.58,
         fontSize: Math.round(12 * scale),
       },
@@ -321,7 +349,7 @@ function buildOption(
       text: title,
       left: resolveChartLeft(titleAlign),
       textAlign: resolveTitleTextAlign(titleAlign),
-      textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: textColor },
+      textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
       top: padding,
     } : undefined,
     tooltip: {
@@ -334,7 +362,7 @@ function buildOption(
       left: 'center',
       selectedMode: true,
       icon: 'roundRect',
-      textStyle: { color: textColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
+      textStyle: { color: resolvedAxisLabelColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
     },
     grid: {
       left: padding,
@@ -354,7 +382,7 @@ function buildOption(
       min: hasData ? undefined : 0,
       max: hasData ? undefined : 1,
       splitLine: { lineStyle: { color: splitLineColor } },
-      axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
+      axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
       // 补充刻度展示属性
       axisLine: { show: true, lineStyle: { color: splitLineColor } },
       axisTick: { show: true, lineStyle: { color: splitLineColor } },

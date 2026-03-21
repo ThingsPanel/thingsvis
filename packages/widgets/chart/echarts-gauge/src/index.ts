@@ -6,11 +6,13 @@ import * as echarts from 'echarts';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
+import { defineWidget, resolveLayeredColor, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const CHART_PADDING = 16;
+const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
 function parseGaugeData(raw: Props['data'], fallbackName: string): { value: number; name: string } | null {
@@ -41,10 +43,56 @@ function parseGaugeData(raw: Props['data'], fallbackName: string): { value: numb
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { title, data, primaryColor, max } = props;
+function withAlpha(color: string, alpha: number): string {
+    const clamped = Math.max(0, Math.min(1, alpha));
+    const normalized = color.trim();
+    const hexMatch = normalized.match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+    if (hexMatch?.[1]) {
+        const hex = hexMatch[1];
+        const fullHex = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+        const num = Number.parseInt(fullHex, 16);
+        const r = (num >> 16) & 255;
+        const g = (num >> 8) & 255;
+        const b = num & 255;
+        return `rgba(${r}, ${g}, ${b}, ${clamped})`;
+    }
+    const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
+    if (rgbMatch?.[1]) {
+        const parts = rgbMatch[1].split(',').map((part) => part.trim());
+        if (parts.length >= 3) {
+            return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${clamped})`;
+        }
+    }
+    return normalized;
+}
 
-    const textColor = colors.fg;
+function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+    const { title, data, primaryColor, titleColor, axisLabelColor, detailColor, max } = props;
+
+    const accentColor = resolveLayeredColor({
+        instance: primaryColor,
+        theme: colors.series[0] ?? colors.primary,
+        fallback: LEGACY_DEFAULT_PRIMARY,
+        inheritValues: [LEGACY_DEFAULT_PRIMARY],
+    });
+    const accentTailColor = (primaryColor ?? '').trim()
+        ? withAlpha(accentColor, 0.55)
+        : (colors.series[1] ?? accentColor);
+    const resolvedTitleColor = resolveLayeredColor({
+        instance: titleColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+    });
+    const resolvedAxisLabelColor = resolveLayeredColor({
+        instance: axisLabelColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+    });
+    const resolvedDetailColor = resolveLayeredColor({
+        instance: detailColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+    });
     const splitLineColor = colors.axis;
     const axisLineColor = colors.axis;
     const padding = Math.round(CHART_PADDING * scale);
@@ -65,7 +113,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             silent: true,
             style: {
                 text: '暂无数据',
-                fill: colors.fg,
+                fill: resolvedAxisLabelColor,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
             },
@@ -75,7 +123,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             left: 'center',
             textStyle: {
                 fontSize: Math.round(14 * scale),
-                color: textColor,
+                color: resolvedTitleColor,
                 fontWeight: 'normal'
             },
             top: padding,
@@ -101,8 +149,8 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                     width: Math.round(12 * scale),
                     itemStyle: {
                         color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                            { offset: 0, color: colors.series[0] || primaryColor },
-                            { offset: 1, color: colors.series[1] || primaryColor }
+                            { offset: 0, color: accentColor },
+                            { offset: 1, color: accentTailColor }
                         ]),
                         borderRadius: Math.round(6 * scale)
                     }
@@ -113,7 +161,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                     width: Math.round(4 * scale),
                     offsetCenter: [0, '5%'],
                     itemStyle: {
-                        color: primaryColor
+                        color: accentColor
                     }
                 },
                 axisTick: {
@@ -136,7 +184,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 axisLabel: {
                     show: true,
                     distance: Math.round(-30 * scale),
-                    color: textColor,
+                    color: resolvedAxisLabelColor,
                     fontSize: Math.round(10 * scale)
                 },
                 anchor: {
@@ -145,7 +193,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                     size: Math.round(14 * scale),
                     itemStyle: {
                         borderWidth: Math.round(3 * scale),
-                        borderColor: primaryColor,
+                        borderColor: accentColor,
                         color: '#fff',
                         shadowBlur: 10,
                         shadowColor: 'rgba(0,0,0,0.2)'
@@ -155,14 +203,14 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                     show: true,
                     offsetCenter: [0, '40%'],
                     fontSize: Math.round(12 * scale),
-                    color: textColor,
+                    color: resolvedAxisLabelColor,
                     opacity: 0.8
                 },
                 detail: {
                     valueAnimation: true,
                     offsetCenter: [0, '75%'],
                     formatter: '{value}',
-                    color: textColor,
+                    color: resolvedDetailColor,
                     fontSize: Math.round(26 * scale),
                     fontWeight: 'bold'
                 },
@@ -171,8 +219,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         ] : [],
     };
 }
-
-import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 export const Main = defineWidget({
     id: metadata.id,
@@ -214,9 +260,19 @@ export const Main = defineWidget({
         scheduleResize();
 
         let ro: ResizeObserver | null = null;
+        let themeObserver: MutationObserver | null = null;
         if (typeof ResizeObserver !== 'undefined') {
             ro = new ResizeObserver(() => scheduleResize());
             ro.observe(element);
+        }
+
+        const themeTarget = element.closest('[data-canvas-theme]');
+        if (themeTarget && typeof MutationObserver !== 'undefined') {
+            themeObserver = new MutationObserver(() => {
+                colors = resolveWidgetColors(element);
+                scheduleResize();
+            });
+            themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
         }
 
         return {
@@ -232,6 +288,7 @@ export const Main = defineWidget({
             },
             destroy: () => {
                 ro?.disconnect();
+                themeObserver?.disconnect();
                 chart.dispose();
             },
         };

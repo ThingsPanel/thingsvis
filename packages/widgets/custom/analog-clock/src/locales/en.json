@@ -8,6 +8,14 @@
         "showSecondHand": "Show Second Hand",
         "showNumbers": "Show Numbers",
         "bezelWidth": "Bezel Width",
+        "dialColor": "Dial Background",
+        "bezelColor": "Bezel Color",
+        "numberColor": "Number Color",
+        "hourHandColor": "Hour Hand Color",
+        "minuteHandColor": "Minute Hand Color",
+        "secondHandColor": "Second Hand Color",
+        "centerColor": "Center Dot Color",
+        "centerBorderColor": "Center Border Color",
         "timeZone": "Time Zone"
       }
     }

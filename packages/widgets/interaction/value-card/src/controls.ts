@@ -24,6 +24,16 @@ export const controls = createControlPanel()
     b.addSlider('subtitleFontSize', { label: `${W}.subtitleFontSize`, min: 10, max: 100, step: 1, default: 12 });
   }, { label: `${W}.groupTypography` })
 
+  .addGroup('Color', (b) => {
+    b.addColorPicker('titleColor', { label: `${W}.titleColor`, default: '' });
+    b.addColorPicker('valueColor', { label: `${W}.valueColor`, default: '' });
+    b.addColorPicker('subtitleColor', { label: `${W}.subtitleColor`, default: '' });
+    b.addColorPicker('iconColor', { label: `${W}.iconColor`, default: '' });
+    b.addColorPicker('iconBackgroundColor', { label: `${W}.iconBackgroundColor`, default: '' });
+    b.addColorPicker('trendUpColor', { label: `${W}.trendUpColor`, default: '' });
+    b.addColorPicker('trendDownColor', { label: `${W}.trendDownColor`, default: '' });
+  }, { label: `${W}.groupColor` })
+
   // Layout Group
   .addGroup('Layout', (b) => {
     b.addSelect('align', {

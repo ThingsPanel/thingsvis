@@ -4,7 +4,13 @@ import { controls } from './controls';
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import * as LucideIcons from 'lucide-react';
-import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import {
+  defineWidget,
+  resolveLayeredColor,
+  type WidgetOverlayContext,
+  resolveWidgetColors,
+  type WidgetColors,
+} from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -46,6 +52,29 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
     maximumFractionDigits: precision,
     useGrouping,
   }).format(num);
+}
+
+function withAlpha(color: string, alpha: number): string {
+  const clamped = Math.max(0, Math.min(1, alpha));
+  const normalized = color.trim();
+  const hexMatch = normalized.match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+  if (hexMatch?.[1]) {
+    const hex = hexMatch[1];
+    const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const num = Number.parseInt(fullHex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    return `rgba(${r}, ${g}, ${b}, ${clamped})`;
+  }
+  const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbMatch?.[1]) {
+    const parts = rgbMatch[1].split(',').map(p => p.trim());
+    if (parts.length >= 3) {
+      return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${clamped})`;
+    }
+  }
+  return normalized;
 }
 
 function iconComponentNameFromValue(icon: string): string {
@@ -119,10 +148,10 @@ function renderIconBadgeFrame(contentHtml: string, badgeSize: number): string {
 // ============================================================================
 // Render helpers
 // ============================================================================
-function renderTrendBadge(trend: number, fontSize: number): string {
+function renderTrendBadge(trend: number, fontSize: number, positiveColor: string, negativeColor: string): string {
   if (trend === 0) return '';
   const isPositive = trend > 0;
-  const color = isPositive ? TREND_COLOR_POSITIVE : TREND_COLOR_NEGATIVE;
+  const color = isPositive ? positiveColor : negativeColor;
   const sign = isPositive ? '+' : '';
   const arrow = isPositive ? '▲' : '▼';
   const displayTrend = `${sign}${trend.toFixed(2)}%`;
@@ -137,7 +166,7 @@ function renderTrendBadge(trend: number, fontSize: number): string {
       font-size: ${Math.max(10, fontSize - 2)}px;
       font-weight: 600;
       color: ${color};
-      background: ${color}1a;
+      background: ${withAlpha(color, 0.1)};
       white-space: nowrap;
       flex-shrink: 0;
     ">
@@ -155,6 +184,13 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
     title, prefix, value, suffix, subtitle, trend, precision,
     icon, iconSize,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
+    titleColor: titleColorProp,
+    valueColor: valueColorProp,
+    subtitleColor: subtitleColorProp,
+    iconColor: iconColorProp,
+    iconBackgroundColor: iconBackgroundColorProp,
+    trendUpColor: trendUpColorProp,
+    trendDownColor: trendDownColorProp,
     align
   } = props;
 
@@ -165,6 +201,41 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
   const unitSize = suffixFontSize;
   const subTitleSize = subtitleFontSize;
   const contentGap = 8;
+  const titleColor = resolveLayeredColor({
+    instance: titleColorProp,
+    theme: withAlpha(colors.fg, 0.72),
+    fallback: withAlpha(colors.fg, 0.72),
+  });
+  const valueColor = resolveLayeredColor({
+    instance: valueColorProp,
+    theme: colors.fg,
+    fallback: colors.fg,
+  });
+  const subtitleColor = resolveLayeredColor({
+    instance: subtitleColorProp,
+    theme: withAlpha(colors.fg, 0.55),
+    fallback: withAlpha(colors.fg, 0.55),
+  });
+  const iconColor = resolveLayeredColor({
+    instance: iconColorProp,
+    theme: colors.bg,
+    fallback: colors.bg,
+  });
+  const iconBackgroundColor = resolveLayeredColor({
+    instance: iconBackgroundColorProp,
+    theme: colors.fg,
+    fallback: colors.fg,
+  });
+  const trendUpColor = resolveLayeredColor({
+    instance: trendUpColorProp,
+    component: TREND_COLOR_POSITIVE,
+    fallback: TREND_COLOR_POSITIVE,
+  });
+  const trendDownColor = resolveLayeredColor({
+    instance: trendDownColorProp,
+    component: TREND_COLOR_NEGATIVE,
+    fallback: TREND_COLOR_NEGATIVE,
+  });
 
   // Formatting value (always useGrouping internally as per spec)
   const displayValue = formatValue(value, precision, true);
@@ -190,17 +261,17 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
 
     if (iconComponent) {
       iconHtml = renderIconBadgeFrame(
-        `<div data-value-card-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:${colors.bg};"></div>`,
+        `<div data-value-card-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:${iconColor};"></div>`,
         badgeSize,
-      ).replace('color: currentColor;', `color: ${colors.bg};`).replace('background: currentColor;', `background: ${colors.fg};`);
+      ).replace('color: currentColor;', `color: ${iconColor};`).replace('background: currentColor;', `background: ${iconBackgroundColor};`);
     } else {
       const iconLabel = iconLabelFromValue(icon);
       if (iconLabel) {
         const fontSize = Math.max(MIN_ICON_FONT_SIZE, Math.round(badgeSize * 0.42));
         iconHtml = renderIconBadgeFrame(
-          `<span style="font-size:${fontSize}px;font-weight:700;letter-spacing:0.04em;color:${colors.bg};">${escapeHtml(iconLabel)}</span>`,
+          `<span style="font-size:${fontSize}px;font-weight:700;letter-spacing:0.04em;color:${iconColor};">${escapeHtml(iconLabel)}</span>`,
           badgeSize,
-        ).replace('color: currentColor;', `color: ${colors.bg};`).replace('background: currentColor;', `background: ${colors.fg};`);
+        ).replace('color: currentColor;', `color: ${iconColor};`).replace('background: currentColor;', `background: ${iconBackgroundColor};`);
       }
     }
   }
@@ -217,7 +288,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
   `;
 
   // Trend badge HTML
-  const trendHtml = renderTrendBadge(trend, subtitleFontSize);
+  const trendHtml = renderTrendBadge(trend, subtitleFontSize, trendUpColor, trendDownColor);
 
   // Row 1 visibility: only render when icon or trend exists
   const hasRow1 = iconHtml || trendHtml;
@@ -235,7 +306,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
       align-items: ${alignItems};
       text-align: ${textAlign};
       padding: ${paddingY}px ${paddingX}px;
-      color: ${colors.fg};
+      color: ${valueColor};
       background: transparent;
     ">
       ${hasRow1 ? `
@@ -252,7 +323,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
 
       <div style="
         font-size: ${titleSize}px;
-        opacity: 0.7;
+        color: ${titleColor};
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -274,15 +345,15 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
         justify-content: ${align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'};
       ">
         ${prefix ? `
-          <span style="font-size: ${unitSize}px; opacity: 0.8;">
+          <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
             ${escapeHtml(prefix)}
           </span>
         ` : ''}
-        <span style="font-size: ${mainValueSize}px; font-weight: 600;">
+        <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
           ${escapeHtml(displayValue)}
         </span>
         ${suffix ? `
-          <span style="font-size: ${unitSize}px; opacity: 0.8;">
+          <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
             ${escapeHtml(suffix)}
           </span>
         ` : ''}
@@ -291,7 +362,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
       ${subtitle ? `
         <div style="
           font-size: ${subTitleSize}px;
-          opacity: 0.5;
+          color: ${subtitleColor};
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -309,7 +380,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
       const iconRoot = createRoot(iconSlot);
       iconRoot.render(createElement(iconComponent, {
         size: iconGlyphSize,
-        color: colors.bg,
+        color: iconColor,
         strokeWidth: DEFAULT_ICON_STROKE_WIDTH,
       }));
       return iconRoot;
@@ -339,6 +410,7 @@ export const Main = defineWidget({
     let currentProps = props;
     let colors = resolveWidgetColors(element);
     let iconRoot: Root | null = null;
+    let themeObserver: MutationObserver | null = null;
 
     const renderWidget = () => {
       iconRoot?.unmount();
@@ -355,6 +427,15 @@ export const Main = defineWidget({
       });
       ro.observe(element);
     }
+
+    const themeTarget = element.closest('[data-canvas-theme]');
+    if (themeTarget && typeof MutationObserver !== 'undefined') {
+      themeObserver = new MutationObserver(() => {
+        colors = resolveWidgetColors(element);
+        renderWidget();
+      });
+      themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
+    }
     
     return {
       update: (newProps: Props) => {
@@ -365,6 +446,7 @@ export const Main = defineWidget({
       destroy: () => {
         iconRoot?.unmount();
         ro?.disconnect();
+        themeObserver?.disconnect();
         element.innerHTML = '';
       }
     };

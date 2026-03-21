@@ -4,7 +4,17 @@ const W = "widgets.thingsvis-widget-custom-glass-panel";
 
 export const controls = createControlPanel()
   .addStyleGroup((builder) => {
-    // 精品预设选择 - 基础质感
+    // 风格模式：控制立体感程度
+    builder.addSelect("styleMode", {
+      label: `${W}.styleMode`,
+      options: [
+        { label: { zh: "🧊 玻璃立体（多层光影）", en: "🧊 Glass (Multi-layer)" }, value: "glass" },
+        { label: { zh: "⬜ 微质感扁平（推荐）", en: "⬜ Flat Micro (Recommended)" }, value: "flat" },
+        { label: { zh: "▭ 极简线条（仅边框）", en: "▭ Line Only" }, value: "line" }
+      ]
+    });
+
+    // 精品预设选择 - 基础质感+色调
     builder.addSelect("preset", {
       label: `${W}.preset`,
       options: [
@@ -52,12 +62,6 @@ export const controls = createControlPanel()
       max: 0.3,
       step: 0.01,
       default: 0
-    });
-
-    // 文字颜色 - 独立设置，默认继承主题
-    builder.addColorPicker("textColor", {
-      label: `${W}.textColor`,
-      default: ""
     });
   })
   .build();

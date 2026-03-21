@@ -15,5 +15,13 @@ export const controls = createControlPanel()
       step: 1,
       default: 10,
     });
+    b.addColorPicker('dialColor', { label: `${W}.dialColor`, default: '' });
+    b.addColorPicker('bezelColor', { label: `${W}.bezelColor`, default: '' });
+    b.addColorPicker('numberColor', { label: `${W}.numberColor`, default: '' });
+    b.addColorPicker('hourHandColor', { label: `${W}.hourHandColor`, default: '' });
+    b.addColorPicker('minuteHandColor', { label: `${W}.minuteHandColor`, default: '' });
+    b.addColorPicker('secondHandColor', { label: `${W}.secondHandColor`, default: '' });
+    b.addColorPicker('centerColor', { label: `${W}.centerColor`, default: '' });
+    b.addColorPicker('centerBorderColor', { label: `${W}.centerBorderColor`, default: '' });
   })
   .build();

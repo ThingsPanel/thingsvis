@@ -11,6 +11,8 @@
         "align": "Alignment",
         "timeFontSize": "Time Font Size",
         "dateFontSize": "Date Font Size",
+        "timeColor": "Time Color",
+        "dateColor": "Date Color",
         "timeZone": "Time Zone"
       }
     }
