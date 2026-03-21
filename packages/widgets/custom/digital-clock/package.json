@@ -1,0 +1,36 @@
+{
+  "name": "thingsvis-widget-custom-digital-clock",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack serve --port 3223",
+    "build": "rspack build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@thingsvis/widget-sdk": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "leafer-ui": "^1.0.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "@thingsvis/widget-config": "workspace:*",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
+  },
+  "thingsvis": {
+    "displayName": "数字时钟",
+    "icon": "Clock",
+    "i18n": {
+      "zh": "数字时钟",
+      "en": "Digital Clock"
+    }
+  }
+}

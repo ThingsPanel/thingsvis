@@ -14,6 +14,14 @@ import { createRoot, type Root } from 'react-dom/client';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
 export class VisualEngine {
+  private activeInlineTextEditor?:
+    | {
+        nodeId: string;
+        overlayBox: HTMLDivElement;
+        textarea: HTMLTextAreaElement;
+        cleanup: () => void;
+      }
+    | undefined;
   private app?: App;
   private instanceMap = new Map<
     string,
@@ -203,6 +211,147 @@ export class VisualEngine {
     return result;
   }
 
+  private isInlineEditableTextNode(node: NodeState | undefined): boolean {
+    if (this.opts?.editable === false || !node) return false;
+    return String((node.schemaRef as any)?.type ?? '') === 'basic/text';
+  }
+
+  private getOverlayPointerEvents(nodeId: string): 'none' | 'auto' {
+    return this.activeInlineTextEditor?.nodeId === nodeId
+      ? 'auto'
+      : this.opts?.editable !== false
+        ? 'none'
+        : 'auto';
+  }
+
+  private closeInlineTextEditor(options?: { commit?: boolean }) {
+    const active = this.activeInlineTextEditor;
+    if (!active) return;
+
+    const { nodeId, overlayBox, textarea, cleanup } = active;
+    const shouldCommit = options?.commit !== false;
+    const node = (this.store.getState() as KernelState).nodesById[nodeId];
+
+    if (shouldCommit && node) {
+      const currentProps = (((node.schemaRef as any)?.props ?? {}) as Record<string, unknown>);
+      const nextText = textarea.value;
+      if ((currentProps.text ?? '') !== nextText) {
+        (this.store.getState() as KernelState & {
+          updateNode?: (id: string, changes: { props?: Record<string, unknown> }) => void;
+        }).updateNode?.(nodeId, {
+          props: {
+            ...currentProps,
+            text: nextText,
+          },
+        });
+      }
+    }
+
+    cleanup();
+    this.activeInlineTextEditor = undefined;
+    overlayBox.style.pointerEvents = this.getOverlayPointerEvents(nodeId);
+  }
+
+  private openInlineTextEditor(nodeId: string, overlayBox: HTMLDivElement) {
+    const node = (this.store.getState() as KernelState).nodesById[nodeId];
+    if (!this.isInlineEditableTextNode(node)) return;
+    if (this.activeInlineTextEditor?.nodeId === nodeId) return;
+
+    this.closeInlineTextEditor({ commit: true });
+
+    const props = (((node?.schemaRef as any)?.props ?? {}) as Record<string, unknown>);
+    const textarea = document.createElement('textarea');
+    textarea.value = typeof props.text === 'string' ? props.text : String(props.text ?? '');
+    textarea.style.position = 'absolute';
+    textarea.style.inset = '0';
+    textarea.style.width = '100%';
+    textarea.style.height = '100%';
+    textarea.style.margin = '0';
+    textarea.style.padding = '6px 8px';
+    textarea.style.border = '1px solid #6965db';
+    textarea.style.borderRadius = '6px';
+    textarea.style.outline = 'none';
+    textarea.style.resize = 'none';
+    textarea.style.background = 'rgba(255,255,255,0.96)';
+    textarea.style.color = String(props.fill ?? '#333333');
+    textarea.style.fontSize = `${Number(props.fontSize ?? 16)}px`;
+    textarea.style.fontFamily = String(
+      props.fontFamily ?? 'Inter, Noto Sans SC, Noto Sans, sans-serif',
+    );
+    textarea.style.fontWeight = String(props.fontWeight ?? 'normal');
+    textarea.style.fontStyle = String(props.fontStyle ?? 'normal');
+    textarea.style.textAlign = String(props.textAlign ?? 'left') as any;
+    textarea.style.lineHeight = String(props.lineHeight ?? 1.4);
+    textarea.style.letterSpacing = `${Number(props.letterSpacing ?? 0)}px`;
+    textarea.style.boxSizing = 'border-box';
+    textarea.style.zIndex = '30';
+
+    const handleBlur = () => this.closeInlineTextEditor({ commit: true });
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        this.closeInlineTextEditor({ commit: false });
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        event.preventDefault();
+        this.closeInlineTextEditor({ commit: true });
+      }
+    };
+
+    textarea.addEventListener('blur', handleBlur);
+    textarea.addEventListener('keydown', handleKeyDown);
+    overlayBox.style.pointerEvents = 'auto';
+    overlayBox.appendChild(textarea);
+
+    const cleanup = () => {
+      textarea.removeEventListener('blur', handleBlur);
+      textarea.removeEventListener('keydown', handleKeyDown);
+      textarea.remove();
+    };
+
+    this.activeInlineTextEditor = { nodeId, overlayBox, textarea, cleanup };
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.select();
+    });
+  }
+
+  private handleCanvasDoubleClick = (event: MouseEvent) => {
+    if (this.opts?.editable === false) return;
+
+    let matched: { nodeId: string; overlayBox: HTMLDivElement; zIndex: number } | null = null;
+
+    this.instanceMap.forEach((entry, nodeId) => {
+      const node = (this.store.getState() as KernelState).nodesById[nodeId];
+      if (!this.isInlineEditableTextNode(node) || !entry.overlayBox) return;
+
+      const rect = entry.overlayBox.getBoundingClientRect();
+      const containsPoint =
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+      if (!containsPoint) return;
+
+      const zIndex = Number(entry.overlayBox.style.zIndex || '0');
+      if (!matched || zIndex >= matched.zIndex) {
+        matched = { nodeId, overlayBox: entry.overlayBox, zIndex };
+      }
+    });
+
+    if (!matched) return;
+    const target = matched as { nodeId: string; overlayBox: HTMLDivElement; zIndex: number };
+
+    event.preventDefault();
+    event.stopPropagation();
+    (this.store.getState() as KernelState & { selectNode?: (id: string | null) => void }).selectNode?.(
+      target.nodeId,
+    );
+    this.openInlineTextEditor(target.nodeId, target.overlayBox);
+  };
+
   mount(container: HTMLElement) {
     this.containerEl = container;
     // DOM overlay 根节点（用于 ECharts/HTML 叠加）
@@ -214,6 +363,7 @@ export class VisualEngine {
     overlayRoot.style.background = 'transparent';
     container.appendChild(overlayRoot);
     this.overlayRoot = overlayRoot;
+    container.addEventListener('dblclick', this.handleCanvasDoubleClick);
 
     // Stamp the initial canvas theme so CSS selectors in canvas-themes.css take effect immediately.
     const initialTheme = (this.store.getState().page as any)?.config?.theme ?? DEFAULT_CANVAS_THEME;
@@ -260,7 +410,7 @@ export class VisualEngine {
         entry.instance.set({ draggable: editable, cursor });
       }
       if (entry.overlayBox) {
-        entry.overlayBox.style.pointerEvents = editable ? 'none' : 'auto';
+        entry.overlayBox.style.pointerEvents = this.getOverlayPointerEvents(nodeId);
       }
       const node = nodesById[nodeId];
       if (node) {
@@ -270,6 +420,8 @@ export class VisualEngine {
   }
 
   unmount() {
+    this.closeInlineTextEditor({ commit: true });
+    this.containerEl?.removeEventListener('dblclick', this.handleCanvasDoubleClick);
     if (this.unsubscribe) this.unsubscribe();
     this.unsubscribe = undefined;
     if (this.overlayRoot && this.overlayRoot.parentElement) {
@@ -344,6 +496,9 @@ export class VisualEngine {
       for (const [id, entry] of Array.from(this.instanceMap.entries())) {
         const nextNode = nodes[id];
         if (!nextNode || !nextNode.visible) {
+          if (this.activeInlineTextEditor?.nodeId === id) {
+            this.closeInlineTextEditor({ commit: false });
+          }
           entry.overlayClickCleanup?.();
           entry.renderer.destroy(entry.instance);
           if (entry.renderer.destroyOverlay && entry.overlayInst) {
@@ -495,7 +650,7 @@ export class VisualEngine {
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
         overlayBox.style.position = 'absolute';
-        overlayBox.style.pointerEvents = this.opts?.editable !== false ? 'none' : 'auto';
+        overlayBox.style.pointerEvents = this.getOverlayPointerEvents(node.id);
         overlayBox.style.background = 'transparent';
         // Add data attribute for TransformControls to find and sync transforms during drag
         overlayBox.setAttribute('data-overlay-node-id', node.id);
@@ -657,7 +812,7 @@ export class VisualEngine {
     // 更新 overlay
     const isResizable = existing.renderer.resizable !== false;
     if (existing.overlayBox) {
-      existing.overlayBox.style.pointerEvents = this.opts?.editable !== false ? 'none' : 'auto';
+      existing.overlayBox.style.pointerEvents = this.getOverlayPointerEvents(node.id);
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
       this.syncOverlayClickFallback(node, existing);
 

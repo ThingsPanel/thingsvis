@@ -135,6 +135,11 @@ function isBasicNode(node: NodeState | undefined): boolean {
     return type.startsWith('basic/');
 }
 
+function isBasicTextNode(node: NodeState | undefined): boolean {
+    const type = String((node?.schemaRef as Record<string, unknown> | undefined)?.type ?? '');
+    return type === 'basic/text';
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 /**
@@ -282,7 +287,58 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         () => store.getState() as KernelState
     );
     const nodeState = kernelState.nodesById[nodeId];
+    const isInlineEditableText = interactive && isBasicTextNode(nodeState);
     const isPreviewClickable = !interactive && isBasicNode(nodeState) && hasClickActions(nodeState);
+    const liveText = typeof (nodeState?.schemaRef as any)?.props?.text === 'string'
+        ? (nodeState?.schemaRef as any)?.props?.text
+        : String((nodeState?.schemaRef as any)?.props?.text ?? '');
+    const textProps = ((nodeState?.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+    const [isInlineEditing, setIsInlineEditing] = React.useState(false);
+    const [draftText, setDraftText] = React.useState(liveText);
+    const inlineEditorRef = useRef<HTMLTextAreaElement | null>(null);
+
+    useEffect(() => {
+        if (!isInlineEditing) {
+            setDraftText(liveText);
+        }
+    }, [isInlineEditing, liveText]);
+
+    useEffect(() => {
+        if (!isInlineEditing) return;
+        const frame = requestAnimationFrame(() => {
+            inlineEditorRef.current?.focus();
+            inlineEditorRef.current?.select();
+        });
+        return () => cancelAnimationFrame(frame);
+    }, [isInlineEditing]);
+
+    const commitInlineEdit = useCallback(() => {
+        if (!isInlineEditableText || !nodeState) {
+            setIsInlineEditing(false);
+            return;
+        }
+
+        const currentProps = ((nodeState.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+        if ((currentProps.text ?? '') === draftText) {
+            setIsInlineEditing(false);
+            return;
+        }
+
+        (store.getState() as KernelState & {
+            updateNode?: (id: string, changes: { props?: Record<string, unknown> }) => void;
+        }).updateNode?.(nodeId, {
+            props: {
+                ...currentProps,
+                text: draftText,
+            },
+        });
+        setIsInlineEditing(false);
+    }, [draftText, isInlineEditableText, nodeId, nodeState, store]);
+
+    const cancelInlineEdit = useCallback(() => {
+        setDraftText(liveText);
+        setIsInlineEditing(false);
+    }, [liveText]);
 
     // Build a cache key fragment from the live values of referenced data sources.
     const dataSourceKey = React.useMemo(() => {
@@ -330,8 +386,14 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
 
     const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (!interactive) return;
+        if (isInlineEditing) return;
         // Left button only
         if (e.button !== 0) return;
+        if (isInlineEditableText && e.detail >= 2) {
+            e.stopPropagation();
+            onSelect(nodeId);
+            return;
+        }
         e.stopPropagation();
 
         onSelect(nodeId);
@@ -357,7 +419,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         };
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('mouseup', handleMouseUp);
-    }, [interactive, nodeId, onDragStart, onDragMove, onDragEnd, onSelect]);
+    }, [interactive, isInlineEditableText, isInlineEditing, nodeId, onDragStart, onDragMove, onDragEnd, onSelect, zoom]);
 
     const handlePreviewClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         if (!isPreviewClickable) return;
@@ -368,6 +430,15 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             actionRuntime,
         )('click', { nativeEvent: e.nativeEvent });
     }, [actionRuntime, isPreviewClickable, nodeId, store]);
+
+    const handleDoubleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        if (!isInlineEditableText) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onSelect(nodeId);
+        setDraftText(liveText);
+        setIsInlineEditing(true);
+    }, [isInlineEditableText, liveText, nodeId, onSelect]);
 
     // ── Resize handle handling ────────────────────────────────────────────────
 
@@ -438,6 +509,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                 data-node-id={nodeId}
                 onMouseDown={handleMouseDown}
                 onClick={handlePreviewClick}
+                onDoubleClick={handleDoubleClick}
                 style={{
                     position: 'absolute',
                     left: renderX,
@@ -473,6 +545,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                         : undefined,
                     opacity: nodeBaseStyle.opacity != null ? nodeBaseStyle.opacity : undefined,
                     padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : undefined,
+                    overflow: isInlineEditing ? 'visible' : undefined,
                 }}
             >
                 {/* Widget content mount point */}
@@ -481,8 +554,50 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     style={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: interactive ? 'none' : 'auto' }}
                 />
 
+                {isInlineEditing && (
+                    <textarea
+                        ref={inlineEditorRef}
+                        value={draftText}
+                        onChange={(e) => setDraftText(e.target.value)}
+                        onBlur={commitInlineEdit}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Escape') {
+                                e.preventDefault();
+                                cancelInlineEdit();
+                            }
+                            if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                                e.preventDefault();
+                                commitInlineEdit();
+                            }
+                        }}
+                        style={{
+                            position: 'absolute',
+                            inset: 0,
+                            width: '100%',
+                            height: '100%',
+                            padding: '6px 8px',
+                            margin: 0,
+                            border: '1px solid #6965db',
+                            borderRadius: 6,
+                            outline: 'none',
+                            resize: 'none',
+                            background: 'rgba(255,255,255,0.96)',
+                            color: String(textProps.fill ?? '#333333'),
+                            fontSize: `${Number(textProps.fontSize ?? 16)}px`,
+                            fontFamily: String(textProps.fontFamily ?? 'Inter, Noto Sans SC, Noto Sans, sans-serif'),
+                            fontWeight: String(textProps.fontWeight ?? 'normal'),
+                            fontStyle: String(textProps.fontStyle ?? 'normal'),
+                            textAlign: (textProps.textAlign as React.CSSProperties['textAlign']) ?? 'left',
+                            lineHeight: String(textProps.lineHeight ?? 1.4),
+                            letterSpacing: `${Number(textProps.letterSpacing ?? 0)}px`,
+                            boxSizing: 'border-box',
+                            zIndex: 20,
+                        }}
+                    />
+                )}
+
                 {/* Resize handles — only visible when selected in interactive mode */}
-                {isSelected && interactive && RESIZE_HANDLES.map(({ dir, style }) => (
+                {isSelected && interactive && !isInlineEditing && RESIZE_HANDLES.map(({ dir, style }) => (
                     <div
                         key={dir}
                         onMouseDown={buildResizeHandler(dir)}

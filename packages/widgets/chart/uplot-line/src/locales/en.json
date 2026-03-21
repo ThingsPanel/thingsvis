@@ -8,6 +8,7 @@
     },
     "runtime": {
         "defaultSeriesName": "Value",
-        "emptyState": "Waiting for time series data"
+        "emptyState": "Waiting for time series data",
+        "previewState": "Preview style - data appears after binding"
     }
 }

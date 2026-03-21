@@ -107,6 +107,7 @@ const CATEGORY_DEFS = [
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
+const HIDDEN_COMPONENT_IDS = new Set(['geo/map-china']);
 
 function resolveEntryDisplayName(entry: RegistryListEntry, language: string): string {
   const normalized = (language || '').toLowerCase();
@@ -137,7 +138,9 @@ export default function ComponentsList({
     });
   }, []);
 
-  const entries = registrySnapshot?.entries ?? [];
+  const entries = (registrySnapshot?.entries ?? []).filter(
+    (entry) => !HIDDEN_COMPONENT_IDS.has(entry.componentId),
+  );
   const isLoading = registrySnapshot == null && error == null;
 
   function handleDragStart(e: React.DragEvent, entry: RegistryListEntry) {

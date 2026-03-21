@@ -466,7 +466,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   <button
                     onClick={() => setLeftPanelTab('devices')}
                     className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'devices' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                    title="Entities"
+                    title={t('leftPanel.devices')}
                   >
                     <Box className="h-4 w-4" />
                   </button>
