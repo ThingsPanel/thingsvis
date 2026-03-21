@@ -16,8 +16,9 @@
  *   throw new Error('Invalid platform token')
  * }
  */
-export async function verifyPlatformToken(_token: string): Promise<boolean> {
+export async function verifyPlatformToken(token: string): Promise<boolean> {
   try {
+    void token;
     // TODO: Implement actual platform token verification.
     // Call the host platform's token verification endpoint, e.g.:
     // const response = await fetch(`${process.env.PLATFORM_API_URL}/api/auth/verify`, {
@@ -42,13 +43,14 @@ export async function verifyPlatformToken(_token: string): Promise<boolean> {
  * @param token - Platform JWT token
  * @returns Promise<UserInfo | null> - User information or null if the request fails
  */
-export async function getPlatformUserInfo(_token: string): Promise<{
+export async function getPlatformUserInfo(token: string): Promise<{
   id: string;
   email: string;
   name?: string;
   tenantId: string;
 } | null> {
   try {
+    void token;
     // TODO: Implement actual platform user info API call, e.g.:
     // const response = await fetch(`${process.env.PLATFORM_API_URL}/api/user/me`, {
     //   headers: { 'Authorization': `Bearer ${token}` }

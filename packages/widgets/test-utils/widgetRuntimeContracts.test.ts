@@ -152,6 +152,33 @@ const widgetModuleLoaders = import.meta.glob<{ default?: WidgetMainModule; Main?
 );
 
 const widgetModulePaths = Object.keys(widgetModuleLoaders).sort();
+const expectedWidgetModulePaths = [
+  '../basic/circle/src/index.ts',
+  '../basic/line/src/index.ts',
+  '../basic/rectangle/src/index.ts',
+  '../basic/table/src/index.ts',
+  '../basic/text/src/index.ts',
+  '../chart/echarts-bar/src/index.ts',
+  '../chart/echarts-gauge/src/index.ts',
+  '../chart/echarts-line/src/index.ts',
+  '../chart/echarts-pie/src/index.ts',
+  '../chart/uplot-line/src/index.ts',
+  '../custom/alert-list/src/index.ts',
+  '../custom/glass-panel/src/index.ts',
+  '../geo/map-china/src/index.ts',
+  '../interaction/basic-button/src/index.ts',
+  '../interaction/basic-input/src/index.ts',
+  '../interaction/basic-progress/src/index.ts',
+  '../interaction/basic-select/src/index.ts',
+  '../interaction/basic-slider/src/index.ts',
+  '../interaction/basic-switch/src/index.ts',
+  '../interaction/date-range-picker/src/index.ts',
+  '../interaction/value-card-simple/src/index.ts',
+  '../interaction/value-card/src/index.ts',
+  '../media/iframe/src/index.ts',
+  '../media/image/src/index.ts',
+  '../media/video-player/src/index.ts',
+].sort();
 const runtimeContractModulePaths = widgetModulePaths.filter(
   (modulePath) => !modulePath.includes('../chart/') && !modulePath.includes('../media/video-player/'),
 );
@@ -169,7 +196,7 @@ describe('widget runtime contracts', () => {
   });
 
   it('discovers every widget package', () => {
-    expect(widgetModulePaths).toHaveLength(24);
+    expect(widgetModulePaths).toEqual(expectedWidgetModulePaths);
   });
 
   it('keeps chart and video-player widgets on dedicated runtime tests', () => {

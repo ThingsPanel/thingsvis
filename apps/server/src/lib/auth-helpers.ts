@@ -37,7 +37,7 @@ export async function getSessionUser(request?: NextRequest) {
       role: payload.role as string,
       tenantId: payload.tenantId as string,
     };
-  } catch (_error) {
+  } catch {
     return null;
   }
 }

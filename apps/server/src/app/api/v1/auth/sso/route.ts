@@ -14,7 +14,7 @@ function addCorsHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-export async function OPTIONS(_request: NextRequest) {
+export async function OPTIONS() {
   const response = new NextResponse(null, { status: 204 });
   return addCorsHeaders(response);
 }
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { platform, platformToken: _platformToken, userInfo } = result.data;
+    const { platform, userInfo } = result.data;
 
     let tenant = await prisma.tenant.findUnique({
       where: { slug: `${platform}-${userInfo.tenantId}` },

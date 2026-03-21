@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
       uploadedAt: new Date().toISOString(),
       uploadedBy: userId || 'anonymous',
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
   }
 }

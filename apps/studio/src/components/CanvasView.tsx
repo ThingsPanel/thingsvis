@@ -9,12 +9,7 @@ import React, {
 } from 'react';
 import { useSyncExternalStore } from 'react';
 import { CanvasView as UI_CanvasView, GridCanvas, useGridLayout } from '@thingsvis/ui';
-import {
-  action as kernelAction,
-  actionStack,
-  createNodeDropCommand,
-  type KernelState,
-} from '@thingsvis/kernel';
+import { action as kernelAction, type KernelState } from '@thingsvis/kernel';
 import { validateCanvasTheme, type NodeSchemaType } from '@thingsvis/schema';
 import type { DataSource, PlatformFieldConfig } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
@@ -616,7 +611,6 @@ const CanvasView = forwardRef<
       }
     }
 
-    // Prefer kernel actionStack if available (records undo/redo globally)
     try {
       if (store.getState().addNodes) {
         store.getState().addNodes([node as any]);
@@ -627,7 +621,7 @@ const CanvasView = forwardRef<
       await hydratePlatformDataSourcesForNodes([node]);
       // Ensure autosave is scheduled even if this mutation doesn't hit temporal.
       onUserEdit?.();
-    } catch (e) {
+    } catch {
       // eslint-disable-next-line no-console
     }
   }

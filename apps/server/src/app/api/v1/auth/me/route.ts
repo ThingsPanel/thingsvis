@@ -50,10 +50,10 @@ export async function GET(request: NextRequest) {
             }
           : null,
       });
-    } catch (_jwtError) {
+    } catch {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

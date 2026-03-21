@@ -10,6 +10,14 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { PlatformFieldAdapter } from '@thingsvis/kernel';
 
+type PlatformWriteMessage = {
+  type: 'tv:platform-write';
+  payload: {
+    dataSourceId: string;
+    data: Record<string, unknown>;
+  };
+};
+
 // Helper: 模拟 host → ThingsVis iframe 的 postMessage
 function simulateHostMessage(data: unknown) {
   const event = new MessageEvent('message', { data });
@@ -235,7 +243,7 @@ describe('E2E-04: 反向写回 (tv:platform-write)', () => {
     await adapter.write({ switch: true });
 
     expect(capturedMessages).toHaveLength(1);
-    const msg = capturedMessages[0] as any;
+    const msg = capturedMessages[0] as PlatformWriteMessage;
     expect(msg.type).toBe('tv:platform-write');
     expect(msg.payload.dataSourceId).toBe('__platform__');
     expect(msg.payload.data).toEqual({ switch: true });
