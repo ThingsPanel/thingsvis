@@ -44,6 +44,7 @@ function getPresetValues(props: Props): {
   highlight: number;
   tint: number;
   color: string;
+  noise: number;
 } {
   const preset = PRESETS[props.preset];
   if (preset) {
@@ -52,16 +53,18 @@ function getPresetValues(props: Props): {
       opacity: preset.opacity,
       highlight: preset.highlight,
       tint: preset.tint,
-      color: preset.color
+      color: preset.color,
+      noise: preset.noise
     };
   }
-  // 自定义模式 - 使用滑块值，颜色默认蓝
+  // 自定义模式
   return {
     blur: props.blurStrength,
     opacity: props.surfaceOpacity,
     highlight: props.highlightOpacity,
     tint: props.tintStrength,
-    color: "#60a5fa"
+    color: "#60a5fa",
+    noise: 0.04
   };
 }
 
@@ -69,25 +72,25 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
   const preset = getPresetValues(props);
   const tintColor = preset.color;
 
-  // 各层透明度计算
-  const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.5, 0, 1));
+  // 各层透明度计算 - 更通透
+  const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.55, 0, 0.95));
   const midLayer = withAlpha("#ffffff", preset.opacity);
-  const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.55, 0.06));
+  const bottomLayer = withAlpha("#ffffff", Math.max(preset.opacity * 0.45, 0.04));
 
-  // 色调层
-  const tintLayer = withAlpha(tintColor, clamp(preset.tint * 1.3, 0, 0.9));
-  const sideGlow = withAlpha(tintColor, clamp(preset.tint, 0, 0.8));
-  const bottomTint = withAlpha(tintColor, clamp(preset.tint * 0.8, 0, 0.65));
+  // 色调层 - 更自然
+  const tintLayer = withAlpha(tintColor, clamp(preset.tint * 1.4, 0, 0.85));
+  const sideGlow = withAlpha(tintColor, clamp(preset.tint * 1.1, 0, 0.75));
+  const bottomTint = withAlpha(tintColor, clamp(preset.tint * 0.9, 0, 0.7));
 
-  // 高光和阴影
-  const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.2, 0, 1));
-  const softShade = withAlpha(colors.bg || "#0f172a", Math.min(preset.opacity * 0.12, 0.08));
-  const innerHighlight = withAlpha("#ffffff", 0.22 + preset.highlight * 0.5);
-  const lowerHighlight = withAlpha("#ffffff", preset.highlight * 0.1);
-  const edgeShade = withAlpha(colors.bg || "#0f172a", 0.02 + preset.tint * 0.03);
+  // 高光和阴影 - 更柔和
+  const topGlow = withAlpha("#ffffff", clamp(preset.highlight * 1.3, 0, 1));
+  const softShade = withAlpha(colors.bg || "#0f172a", Math.min(preset.opacity * 0.08, 0.05));
+  const innerHighlight = withAlpha("#ffffff", 0.28 + preset.highlight * 0.55);
+  const lowerHighlight = withAlpha("#ffffff", preset.highlight * 0.08);
+  const edgeShade = withAlpha(colors.bg || "#0f172a", 0.015 + preset.tint * 0.02);
 
-  //  Frost 纹理（仅在高光较高时显示）
-  const frostTexture = withAlpha("#ffffff", 0.01 + preset.highlight * 0.04);
+  // 噪点纹理强度
+  const noiseOpacity = preset.noise;
 
   element.style.cssText = `
     width: 100%;
@@ -106,47 +109,74 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
       position:relative;
       box-sizing:border-box;
       background:
-        /* 左上角高光 */
-        radial-gradient(circle at 5% 5%, ${topGlow} 0%, transparent 40%),
+        /* 顶部主高光 */
+        radial-gradient(ellipse at 30% 0%, ${topGlow} 0%, transparent 55%),
         /* 右上角色调光晕 */
-        radial-gradient(ellipse at 95% 10%, ${sideGlow} 0%, transparent 50%),
-        /* 底部色调阴影 */
-        radial-gradient(ellipse at 50% 100%, ${bottomTint} 0%, transparent 60%),
-        /* 底部环境阴影 */
-        radial-gradient(ellipse at 50% 120%, ${softShade} 0%, transparent 50%),
-        /* 主体白色层 */
-        linear-gradient(165deg, ${topLayer} 0%, ${midLayer} 45%, ${bottomLayer} 100%),
-        /* 主色调覆盖层 */
-        linear-gradient(160deg, ${tintLayer} 0%, transparent 65%);
-      backdrop-filter: blur(${preset.blur}px) saturate(185%) brightness(1.06);
-      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(185%) brightness(1.06);
+        radial-gradient(ellipse at 90% 15%, ${sideGlow} 0%, transparent 45%),
+        /* 底部色调渐变 */
+        radial-gradient(ellipse at 50% 100%, ${bottomTint} 0%, transparent 55%),
+        /* 底部环境阴影 - 更淡 */
+        radial-gradient(ellipse at 50% 130%, ${softShade} 0%, transparent 40%),
+        /* 主体渐变 - 角度更柔和 */
+        linear-gradient(170deg, ${topLayer} 0%, ${midLayer} 50%, ${bottomLayer} 100%),
+        /* 主色调覆盖 */
+        linear-gradient(155deg, ${tintLayer} 0%, transparent 70%);
+      backdrop-filter: blur(${preset.blur}px) saturate(190%) brightness(1.08);
+      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(190%) brightness(1.08);
       box-shadow:
-        inset 0 1px 0 ${innerHighlight},
+        /* 顶部内发光 */
+        inset 0 1.5px 0 ${innerHighlight},
+        /* 底部内阴影 */
         inset 0 -1px 0 ${lowerHighlight},
-        inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.08)},
-        0 4px 20px rgba(0, 0, 0, ${0.15 + preset.opacity * 0.15});
+        /* 左侧微光 */
+        inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.06)},
+        /* 外阴影 - 更柔和 */
+        0 8px 32px rgba(0, 0, 0, ${0.08 + preset.opacity * 0.12}),
+        0 2px 8px rgba(0, 0, 0, ${0.04 + preset.opacity * 0.08});
     ">
-      ${preset.highlight > 0.15 ? `
+      <!-- 微噪点纹理层 - 模拟真实玻璃表面的微观粗糙 -->
+      <div style="
+        position:absolute;
+        inset:0;
+        border-radius:inherit;
+        background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 200\"><filter id=\"noise\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"4\" stitchTiles=\"stitch\"/></filter><rect width=\"100%\" height=\"100%\" filter=\"url(%23noise)\" opacity=\"0.5\"/></svg>');
+        background-size: 150px 150px;
+        opacity:${noiseOpacity};
+        mix-blend-mode:overlay;
+        pointer-events:none;
+      "></div>
+      
+      <!-- 细腻斜纹 - 更淡更密 -->
       <div style="
         position:absolute;
         inset:0;
         border-radius:inherit;
         background:
           repeating-linear-gradient(
-            135deg,
-            ${frostTexture} 0 2px,
-            transparent 2px 6px
+            125deg,
+            transparent 0,
+            transparent 2px,
+            ${withAlpha("#ffffff", noiseOpacity * 0.5)} 2px,
+            ${withAlpha("#ffffff", noiseOpacity * 0.5)} 3px,
+            transparent 3px,
+            transparent 5px
           );
-        mix-blend-mode:overlay;
-        opacity:0.6;
+        mix-blend-mode:soft-light;
         pointer-events:none;
-      "></div>` : ''}
+      "></div>
+      
+      <!-- 边缘高光渐变 -->
       <div style="
         position:absolute;
         inset:0;
         border-radius:inherit;
         background:
-          linear-gradient(180deg, ${withAlpha("#ffffff", preset.highlight * 0.4)} 0%, transparent 20%, transparent 80%, ${edgeShade} 100%);
+          linear-gradient(180deg, 
+            ${withAlpha("#ffffff", preset.highlight * 0.5)} 0%, 
+            transparent 15%, 
+            transparent 85%, 
+            ${edgeShade} 100%
+          );
         pointer-events:none;
       "></div>
     </div>
