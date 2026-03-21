@@ -10,6 +10,7 @@ export type RegistryListEntry = ComponentRegistryEntry & {
   displayName: string;
   icon?: string;
   iconUrl?: string;
+  order?: number;
 };
 
 export async function fetchRegistry(url = '/registry.json'): Promise<ComponentRegistry> {
@@ -37,6 +38,7 @@ export function toRegistryEntries(registry: ComponentRegistry): RegistryListEntr
       displayName: entry.name ?? componentId,
       icon: entry.icon,
       iconUrl: entryMeta.iconUrl,
+      order: entry.order,
     });
 
     if (entry.localEntryUrl) {
@@ -46,9 +48,15 @@ export function toRegistryEntries(registry: ComponentRegistry): RegistryListEntr
         displayName: `${entry.name ?? componentId} (Local)`,
         icon: entry.icon,
         iconUrl: entryMeta.iconUrl,
+        order: entry.order,
       });
     }
   });
 
-  return entries;
+  // 按 order 排序，未设置 order 的组件排在最后
+  return entries.sort((a, b) => {
+    const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
+    const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
+    return orderA - orderB;
+  });
 }

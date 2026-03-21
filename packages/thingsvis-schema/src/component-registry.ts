@@ -24,6 +24,7 @@ export const ComponentRegistryEntrySchema = z.object({
   author: z.string().optional(),
   tags: z.array(z.string()).optional(),
   thumbnailUrl: z.string().optional(),
+  order: z.number().optional(), // 组件排序值，越小越靠前
   defaultSize: z
     .object({
       width: z.number(),

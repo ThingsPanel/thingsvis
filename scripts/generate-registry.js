@@ -105,7 +105,10 @@ function readMetadataTs(widgetDir) {
             }
         }
 
-        return { icon, name, id, description, tags, defaultSize, constraints };
+        // Extract order (for component sorting)
+        const order = extractNumber('order');
+
+        return { icon, name, id, description, tags, defaultSize, constraints, order };
     } catch (err) {
         console.warn(`  ⚠️  Failed to parse metadata.ts: ${err.message}`);
         return null;
@@ -180,6 +183,7 @@ function generate() {
                 ...(meta.thumbnailUrl ? { thumbnailUrl: meta.thumbnailUrl } : {}),
                 ...(metadata.defaultSize || meta.defaultSize ? { defaultSize: metadata.defaultSize || meta.defaultSize } : {}),
                 ...(metadata.constraints || meta.constraints ? { constraints: metadata.constraints || meta.constraints } : {}),
+                ...(metadata.order !== undefined ? { order: metadata.order } : {}),
             };
 
             console.log(`  ✅ ${componentId} → ${remoteName} (port: ${devPort || 'default'})`);
