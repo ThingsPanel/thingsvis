@@ -8,8 +8,14 @@ export const PropsSchema = z.object({
     /** 图表标题 */
     title: z.string().default('').describe('props.chartTitle'),
 
-    /** 主色调 (供扩展用或单色场景，但饼图默认使用ECharts自带的色板最佳) */
-    primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
+    /** 主色调 (留空使用主题色板) */
+    primaryColor: z.string().default('').describe('props.primaryColor'),
+
+    /** 标题颜色 */
+    titleColor: z.string().default('').describe('props.titleColor'),
+
+    /** 标签颜色 */
+    labelColor: z.string().default('').describe('props.labelColor'),
 
     /** 是否显示图例 */
     showLegend: z.boolean().default(true).describe('props.showLegend'),

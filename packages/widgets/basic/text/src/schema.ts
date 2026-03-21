@@ -62,8 +62,8 @@ export const PropsSchema = z.object({
   // Color
   // ========================================
 
-  /** Text color */
-  fill: z.string().default('#333333').describe('props.textColor'),
+  /** Text color (empty = inherit theme) */
+  fill: z.string().default('').describe('props.textColor'),
 
   // ========================================
   // Effects

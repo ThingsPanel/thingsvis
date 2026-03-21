@@ -9,7 +9,16 @@ export const PropsSchema = z.object({
     title: z.string().default('').describe('props.chartTitle'),
 
     /** 主色调 */
-    primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
+    primaryColor: z.string().default('').describe('props.primaryColor'),
+
+    /** 标题颜色 */
+    titleColor: z.string().default('').describe('props.titleColor'),
+
+    /** 刻度颜色 */
+    axisLabelColor: z.string().default('').describe('props.axisLabelColor'),
+
+    /** 数值颜色 */
+    detailColor: z.string().default('').describe('props.detailColor'),
 
     /** 刻度最大值 */
     max: z.number().default(100).describe('props.max'),

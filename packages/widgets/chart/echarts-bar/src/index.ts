@@ -6,7 +6,7 @@ import * as echarts from 'echarts';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import type { WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLayeredColor, resolveWidgetColors, type WidgetColors, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -23,10 +23,6 @@ const STANDALONE_BAR_SERIES = [
     { name: 'Wed', value: 31 },
     { name: 'Thu', value: 27 },
 ];
-
-function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
-    return (colors.series[0] ?? colors.primary ?? (primaryColor ?? '').trim()) || LEGACY_DEFAULT_PRIMARY;
-}
 
 function withAlpha(color: string, alpha: number): string {
     const clamped = Math.max(0, Math.min(1, alpha));
@@ -158,13 +154,27 @@ function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 
  * Build ECharts option from props and theme colors
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { title, titleAlign, data, primaryColor, showLegend, showXAxis, showYAxis } = props;
+    const { title, titleAlign, data, primaryColor, titleColor, axisLabelColor, showLegend, showXAxis, showYAxis } = props;
     const normalizedData = normalizeCategoryData(data);
     const hasData = normalizedData.length > 0;
 
-    const textColor = colors.fg;
+    const resolvedTitleColor = resolveLayeredColor({
+        instance: titleColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+    });
+    const resolvedAxisLabelColor = resolveLayeredColor({
+        instance: axisLabelColor,
+        theme: colors.fg,
+        fallback: colors.fg,
+    });
     const splitLineColor = colors.axis;
-    const seriesColor = pickSeriesColor(primaryColor, colors);
+    const seriesColor = resolveLayeredColor({
+        instance: primaryColor,
+        theme: colors.series[0] ?? colors.primary,
+        fallback: LEGACY_DEFAULT_PRIMARY,
+        inheritValues: [LEGACY_DEFAULT_PRIMARY],
+    });
     const padding = Math.round(CHART_PADDING * scale);
     const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
     const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
@@ -185,7 +195,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             silent: true,
             style: {
                 text: '暂无数据',
-                fill: textColor,
+                fill: resolvedAxisLabelColor,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
             },
@@ -194,7 +204,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             text: title,
             left: resolveChartLeft(titleAlign),
             textAlign: resolveTitleTextAlign(titleAlign),
-            textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: textColor },
+            textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
             top: padding,
         } : undefined,
         tooltip: {
@@ -208,7 +218,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             left: 'center',
             selectedMode: true,
             icon: 'roundRect',
-            textStyle: { color: textColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
+            textStyle: { color: resolvedAxisLabelColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
         },
         grid: {
             left: padding,
@@ -224,7 +234,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         xAxis: {
             show: showXAxis !== false,
             type: 'category',
-            axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
+            axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
             axisLine: { lineStyle: { color: splitLineColor } },
             axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
         },
@@ -232,7 +242,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             show: showYAxis !== false,
             type: 'value',
             splitLine: { lineStyle: { color: splitLineColor } },
-            axisLabel: { color: textColor, fontSize: Math.round(12 * scale) },
+            axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
             axisLine: { show: true, lineStyle: { color: splitLineColor } },
             axisTick: { show: true, lineStyle: { color: splitLineColor } },
         },
@@ -249,8 +259,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         ] : [],
     };
 }
-
-import { defineWidget, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 export const Main = defineWidget({
     id: metadata.id,

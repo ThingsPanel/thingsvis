@@ -1,5 +1,6 @@
 import {
   defineWidget,
+  resolveLayeredColor,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -118,7 +119,11 @@ export const Main = defineWidget({
 
       faceEl.style.width = `${dimension}px`;
       faceEl.style.height = `${dimension}px`;
-      faceEl.style.border = `${currentProps.bezelWidth}px solid rgba(255,255,255,0.08)`;
+      faceEl.style.border = `${currentProps.bezelWidth}px solid ${resolveLayeredColor({
+        instance: currentProps.bezelColor,
+        component: 'rgba(255,255,255,0.08)',
+        fallback: 'rgba(255,255,255,0.08)',
+      })}`;
       faceEl.style.boxShadow = 'none';
 
       numberEls.forEach((numberEl, index) => {
@@ -136,20 +141,49 @@ export const Main = defineWidget({
 
     const renderClock = () => {
       colors = resolveWidgetColors(element);
+      faceEl.style.background = resolveLayeredColor({
+        instance: currentProps.dialColor,
+        component: 'radial-gradient(circle at 30% 25%, #1f2236, #07090f 72%)',
+        fallback: 'radial-gradient(circle at 30% 25%, #1f2236, #07090f 72%)',
+      });
       const now = resolveNow(currentProps.timeZone);
       const hours = now.getHours() % 12;
       const minutes = now.getMinutes();
       const seconds = now.getSeconds();
 
       numberEls.forEach((numberEl) => {
-        numberEl.style.color = colors.fg;
+        numberEl.style.color = resolveLayeredColor({
+          instance: currentProps.numberColor,
+          theme: colors.fg,
+          fallback: colors.fg,
+        });
       });
-      hourHand.style.background = '#b874ff';
-      minuteHand.style.background = '#b874ff';
-      secondHand.style.background = colors.primary;
+      hourHand.style.background = resolveLayeredColor({
+        instance: currentProps.hourHandColor,
+        component: '#b874ff',
+        fallback: '#b874ff',
+      });
+      minuteHand.style.background = resolveLayeredColor({
+        instance: currentProps.minuteHandColor,
+        component: '#b874ff',
+        fallback: '#b874ff',
+      });
+      secondHand.style.background = resolveLayeredColor({
+        instance: currentProps.secondHandColor,
+        theme: colors.primary,
+        fallback: colors.primary,
+      });
       secondHand.style.display = currentProps.showSecondHand ? 'block' : 'none';
-      hubEl.style.background = 'rgba(255,255,255,0.12)';
-      hubEl.style.border = `4px solid ${colors.primary}`;
+      hubEl.style.background = resolveLayeredColor({
+        instance: currentProps.centerColor,
+        component: 'rgba(255,255,255,0.12)',
+        fallback: 'rgba(255,255,255,0.12)',
+      });
+      hubEl.style.border = `4px solid ${resolveLayeredColor({
+        instance: currentProps.centerBorderColor,
+        theme: colors.primary,
+        fallback: colors.primary,
+      })}`;
 
       hourHand.style.transform = `translateX(-50%) rotate(${hours * 30 + minutes * 0.5}deg)`;
       minuteHand.style.transform = `translateX(-50%) rotate(${minutes * 6 + seconds * 0.1}deg)`;

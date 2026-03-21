@@ -9,6 +9,14 @@ export type WidgetColors = {
     series: [string, string, string, string, string, string];
 };
 
+export type ResolveLayeredColorOptions = {
+    instance?: string | null;
+    component?: string | null;
+    theme?: string | null;
+    fallback?: string;
+    inheritValues?: string[];
+};
+
 /** Dawn fallbacks (used when CSS custom properties are not available) */
 const DAWN_FALLBACKS = {
     bg: 'transparent',
@@ -18,6 +26,40 @@ const DAWN_FALLBACKS = {
     border: 'rgba(0, 0, 0, 0.06)',
     series: ['#6965db', '#4ea8a6', '#e8945a', '#e05d6f', '#8b5cf6', '#0ea5e9'],
 } as const;
+
+const DEFAULT_INHERIT_TOKENS = ['auto', 'theme', 'inherit'];
+
+function normalizeColorCandidate(value: string | null | undefined, inheritValues: Set<string>): string | null {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    return inheritValues.has(trimmed.toLowerCase()) ? null : trimmed;
+}
+
+/**
+ * Resolve widget colors with explicit precedence:
+ * instance override -> component default -> theme token -> fallback.
+ */
+export function resolveLayeredColor({
+    instance,
+    component,
+    theme,
+    fallback = '',
+    inheritValues = [],
+}: ResolveLayeredColorOptions): string {
+    const normalizedInheritValues = new Set(
+        [...DEFAULT_INHERIT_TOKENS, ...inheritValues]
+            .map((value) => value.trim().toLowerCase())
+            .filter(Boolean),
+    );
+
+    return (
+        normalizeColorCandidate(instance, normalizedInheritValues)
+        ?? normalizeColorCandidate(component, normalizedInheritValues)
+        ?? normalizeColorCandidate(theme, normalizedInheritValues)
+        ?? fallback
+    );
+}
 
 /**
  * Extracts CSS custom property values to build a chart color palette.
