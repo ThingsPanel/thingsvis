@@ -23,7 +23,7 @@
     {
       "id": "nav-pill-bg",
       "name": "Nav Pill Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 34, "y": 24 },
       "size": { "width": 164, "height": 48 },
       "props": {
@@ -137,7 +137,7 @@
     {
       "id": "kpi-bg-1",
       "name": "KPI Background 1",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 60, "y": 196 },
       "size": { "width": 420, "height": 116 },
       "props": {
@@ -152,7 +152,7 @@
     {
       "id": "kpi-bg-2",
       "name": "KPI Background 2",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 500, "y": 196 },
       "size": { "width": 420, "height": 116 },
       "props": {
@@ -167,7 +167,7 @@
     {
       "id": "kpi-bg-3",
       "name": "KPI Background 3",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 940, "y": 196 },
       "size": { "width": 420, "height": 116 },
       "props": {
@@ -182,7 +182,7 @@
     {
       "id": "kpi-bg-4",
       "name": "KPI Background 4",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 1380, "y": 196 },
       "size": { "width": 480, "height": 116 },
       "props": {
@@ -273,7 +273,7 @@
     {
       "id": "panel-trend-bg",
       "name": "Trend Panel Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 60, "y": 340 },
       "size": { "width": 1160, "height": 332 },
       "props": {
@@ -336,7 +336,7 @@
     {
       "id": "panel-alerts-bg",
       "name": "Alerts Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 1240, "y": 340 },
       "size": { "width": 620, "height": 332 },
       "props": {
@@ -420,7 +420,7 @@
     {
       "id": "panel-active-bg",
       "name": "Active Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 60, "y": 700 },
       "size": { "width": 780, "height": 320 },
       "props": {
@@ -531,7 +531,7 @@
     {
       "id": "panel-status-bg",
       "name": "Status Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 860, "y": 700 },
       "size": { "width": 360, "height": 320 },
       "props": {
@@ -586,7 +586,7 @@
     {
       "id": "panel-table-bg",
       "name": "Table Background",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 1240, "y": 700 },
       "size": { "width": 620, "height": 320 },
       "props": {
