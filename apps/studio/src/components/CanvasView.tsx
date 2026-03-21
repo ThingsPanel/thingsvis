@@ -303,6 +303,27 @@ const CanvasView = forwardRef<
     [closeInlineTextEditor, store],
   );
 
+  const handleProxyMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (event.button !== 0 || event.detail < 2) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target || target.closest('textarea')) return;
+
+      const nodeTarget = target.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const currentNode = state.nodesById[nodeId];
+      if (String((currentNode?.schemaRef as any)?.type ?? '') !== 'basic/text') return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      openInlineTextEditor(nodeId);
+    },
+    [openInlineTextEditor, state.nodesById],
+  );
+
   const hydratePlatformDataSourcesForNodes = useCallback(
     async (nodes: NodeSchemaType[], presetDataSources: DataSource[] = []) => {
       const currentConfigs = dataSourceManager.getAllConfigs();
@@ -602,12 +623,12 @@ const CanvasView = forwardRef<
   }, [closeInlineTextEditor, inlineTextEditor, state.nodesById]);
 
   useEffect(() => {
-    if (!inlineTextEditor) return;
+    if (!inlineTextEditor?.nodeId) return;
     requestAnimationFrame(() => {
       inlineTextareaRef.current?.focus();
       inlineTextareaRef.current?.select();
     });
-  }, [inlineTextEditor]);
+  }, [inlineTextEditor?.nodeId]);
 
   // Normalize theme via registry (fallback to state if undefined)
   const fallbackTheme = (state.page as any)?.config?.theme;
@@ -797,6 +818,7 @@ const CanvasView = forwardRef<
         <div
           ref={proxyWrapperRef}
           className="proxy-wrapper"
+          onMouseDownCapture={handleProxyMouseDownCapture}
           style={{
             position: 'absolute',
             left: vp.offsetX,
@@ -825,12 +847,6 @@ const CanvasView = forwardRef<
               <div
                 key={node.id}
                 data-node-id={node.id}
-                onDoubleClick={(event) => {
-                  if (schema.type !== 'basic/text') return;
-                  event.preventDefault();
-                  event.stopPropagation();
-                  openInlineTextEditor(node.id);
-                }}
                 className="node-proxy-target"
                 style={{
                   position: 'absolute',
@@ -894,6 +910,7 @@ const CanvasView = forwardRef<
                   height: '100%',
                   margin: 0,
                   padding: '6px 8px',
+                  overflow: 'hidden',
                   resize: 'none',
                   border: '1px solid #6965db',
                   borderRadius: 6,
@@ -927,7 +944,7 @@ const CanvasView = forwardRef<
             containerRef={proxyWrapperRef}
             dragContainerRef={proxyLayerRef}
             kernelStore={store}
-            enabled={activeTool !== 'pan' && !isCreationTool(activeTool)}
+            enabled={activeTool !== 'pan' && !isCreationTool(activeTool) && !inlineTextEditor}
             onUserEdit={onUserEdit}
             getViewport={getViewport}
             zoom={vp.zoom}
