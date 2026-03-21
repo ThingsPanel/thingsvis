@@ -28,61 +28,61 @@ export const PRESETS: Record<string, {
 }> = {
   // ===== 水晶系列 - 高透高亮 =====
   "crystal-white": {
-    blur: 28,
-    opacity: 0.12,  // 更低透明度，更通透
-    highlight: 0.42,
+    blur: 32,
+    opacity: 0.05,  // 极低透明度，接近纯透
+    highlight: 0.48,
     tint: 0.0,
     color: "#ffffff",
-    noise: 0.03,
+    noise: 0.02,
     desc: "💎 水晶白 - 最通透"
   },
   "crystal-blue": {
-    blur: 28,
-    opacity: 0.12,
-    highlight: 0.42,
-    tint: 0.5,
+    blur: 32,
+    opacity: 0.05,
+    highlight: 0.48,
+    tint: 0.55,
     color: "#60a5fa",
-    noise: 0.03,
+    noise: 0.02,
     desc: "💎 水晶蓝 - 科技冷调"
   },
   "crystal-purple": {
-    blur: 28,
-    opacity: 0.12,
-    highlight: 0.42,
-    tint: 0.45,
+    blur: 32,
+    opacity: 0.05,
+    highlight: 0.48,
+    tint: 0.5,
     color: "#a78bfa",
-    noise: 0.03,
+    noise: 0.02,
     desc: "💎 水晶紫 - 高端优雅"
   },
 
   // ===== 磨砂系列 - 平衡柔和 =====
   "frost-white": {
-    blur: 20,
-    opacity: 0.28,  // 磨砂稍实一些
-    highlight: 0.28,
+    blur: 24,
+    opacity: 0.15,  // 更透
+    highlight: 0.35,
     tint: 0.0,
     color: "#ffffff",
-    noise: 0.06,    // 更多纹理
+    noise: 0.04,
     desc: "🧊 磨砂白 - 平衡柔和"
   },
   "frost-warm": {
-    blur: 20,
-    opacity: 0.28,
-    highlight: 0.28,
-    tint: 0.42,
+    blur: 24,
+    opacity: 0.15,
+    highlight: 0.35,
+    tint: 0.48,
     color: "#fdba74",
-    noise: 0.06,
+    noise: 0.04,
     desc: "🧊 磨砂暖 - 温暖亲和"
   },
 
   // ===== 极简系列 - 轻薄透亮 =====
   "minimal-white": {
-    blur: 16,
-    opacity: 0.08,  // 非常薄
-    highlight: 0.22,
+    blur: 20,
+    opacity: 0.02,  // 几乎看不见
+    highlight: 0.28,
     tint: 0.0,
     color: "#ffffff",
-    noise: 0.02,    // 极少纹理
+    noise: 0.01,
     desc: "✨ 极简白 - 最轻薄"
   },
 
@@ -99,12 +99,12 @@ export const PRESETS: Record<string, {
 
   // ===== 自定义 =====
   "custom": {
-    blur: 26,
-    opacity: 0.15,
-    highlight: 0.38,
-    tint: 0.4,
+    blur: 32,
+    opacity: 0.05,
+    highlight: 0.48,
+    tint: 0.5,
     color: "#60a5fa",
-    noise: 0.04,
+    noise: 0.02,
     desc: "⚙️ 自定义 - 手动调节"
   }
 };

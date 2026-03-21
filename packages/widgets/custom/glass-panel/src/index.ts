@@ -109,20 +109,20 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
       position:relative;
       box-sizing:border-box;
       background:
-        /* 顶部主高光 */
-        radial-gradient(ellipse at 30% 0%, ${topGlow} 0%, transparent 55%),
+        /* 顶部主高光 - 更大更柔和 */
+        radial-gradient(ellipse at 50% 0%, ${topGlow} 0%, transparent 60%),
+        /* 左上角色调光晕 */
+        radial-gradient(ellipse at 0% 20%, ${sideGlow} 0%, transparent 40%),
         /* 右上角色调光晕 */
-        radial-gradient(ellipse at 90% 15%, ${sideGlow} 0%, transparent 45%),
+        radial-gradient(ellipse at 100% 20%, ${sideGlow} 0%, transparent 40%),
         /* 底部色调渐变 */
-        radial-gradient(ellipse at 50% 100%, ${bottomTint} 0%, transparent 55%),
-        /* 底部环境阴影 - 更淡 */
-        radial-gradient(ellipse at 50% 130%, ${softShade} 0%, transparent 40%),
-        /* 主体渐变 - 角度更柔和 */
-        linear-gradient(170deg, ${topLayer} 0%, ${midLayer} 50%, ${bottomLayer} 100%),
+        radial-gradient(ellipse at 50% 100%, ${bottomTint} 0%, transparent 50%),
+        /* 主体渐变 - 更均匀 */
+        linear-gradient(180deg, ${topLayer} 0%, ${midLayer} 40%, ${bottomLayer} 100%),
         /* 主色调覆盖 */
-        linear-gradient(155deg, ${tintLayer} 0%, transparent 70%);
-      backdrop-filter: blur(${preset.blur}px) saturate(190%) brightness(1.08);
-      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(190%) brightness(1.08);
+        linear-gradient(160deg, ${tintLayer} 0%, transparent 65%);
+      backdrop-filter: blur(${preset.blur}px) saturate(200%) brightness(1.12);
+      -webkit-backdrop-filter: blur(${preset.blur}px) saturate(200%) brightness(1.12);
       box-shadow:
         /* 顶部内发光 */
         inset 0 1.5px 0 ${innerHighlight},
@@ -131,8 +131,10 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
         /* 左侧微光 */
         inset 1px 0 0 ${withAlpha("#ffffff", preset.highlight * 0.06)},
         /* 外阴影 - 更柔和 */
-        0 8px 32px rgba(0, 0, 0, ${0.08 + preset.opacity * 0.12}),
-        0 2px 8px rgba(0, 0, 0, ${0.04 + preset.opacity * 0.08});
+        0 8px 32px rgba(0, 0, 0, ${0.06 + preset.opacity * 0.1}),
+        0 4px 12px rgba(0, 0, 0, ${0.03 + preset.opacity * 0.06}),
+        /* 边缘发光 */
+        inset 0 0 20px ${withAlpha("#ffffff", preset.highlight * 0.15)};
     ">
       <!-- 玻璃纹理层 - 模拟真实磨砂玻璃效果 -->
       <div style="
