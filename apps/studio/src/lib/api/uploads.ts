@@ -20,10 +20,6 @@ export interface UploadProgress {
   total: number;
   percentage: number;
 }
-const API_BASE_URL =
-  typeof window !== 'undefined'
-    ? window.location.origin
-    : (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000');
 
 /**
  * Upload a file to the server.
@@ -60,9 +56,8 @@ export async function uploadFile(
         if (xhr.status >= 200 && xhr.status < 300) {
           try {
             const data = JSON.parse(xhr.responseText);
-            // Fix relative URL to absolute URL
             if (data.url && data.url.startsWith('/')) {
-              data.url = `${API_BASE_URL}${data.url}`;
+              data.url = apiClient.resolveAssetUrl(data.url);
             }
             resolve({ data });
           } catch {
@@ -82,7 +77,7 @@ export async function uploadFile(
         resolve({ error: 'Network error' });
       });
 
-      xhr.open('POST', `${API_BASE_URL}/api/v1/uploads`);
+      xhr.open('POST', apiClient.getRequestUrl('/uploads'));
       if (token) {
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
       }

@@ -45,6 +45,24 @@ function resolveDefaultApiBaseUrl(): string {
 const DEFAULT_API_BASE_URL = resolveDefaultApiBaseUrl();
 const BROWSER_TOKEN_KEY = 'thingsvis_browser_token';
 
+function toAbsoluteBaseUrl(baseUrl: string): string {
+  if (/^https?:\/\//i.test(baseUrl)) return baseUrl;
+
+  if (typeof window !== 'undefined') {
+    return new URL(baseUrl, window.location.origin).toString();
+  }
+
+  return `http://localhost:8000${baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`}`;
+}
+
+function joinApiUrl(baseUrl: string, path: string): string {
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
+}
+
 export interface ApiClientConfig {
   baseUrl?: string;
   getToken?: () => string | null;
@@ -80,6 +98,21 @@ class ApiClient {
     if (config.onUnauthorized) this.onUnauthorized = config.onUnauthorized;
   }
 
+  getBaseUrl() {
+    return this.baseUrl;
+  }
+
+  getRequestUrl(path: string) {
+    return joinApiUrl(this.baseUrl, path);
+  }
+
+  resolveAssetUrl(path: string) {
+    if (!path) return path;
+    if (/^https?:\/\//i.test(path)) return path;
+
+    return new URL(path, toAbsoluteBaseUrl(this.baseUrl)).toString();
+  }
+
   getAccessToken() {
     return this.getToken();
   }
@@ -90,7 +123,7 @@ class ApiClient {
     body?: unknown,
     options: RequestInit = {},
   ): Promise<ApiResponse<T>> {
-    const url = `${this.baseUrl}${path}`;
+    const url = this.getRequestUrl(path);
     const token = this.getToken();
 
     const headers: HeadersInit = {
@@ -151,7 +184,7 @@ class ApiClient {
 
   // File upload
   async upload(path: string, file: File): Promise<ApiResponse<{ url: string }>> {
-    const url = `${this.baseUrl}${path}`;
+    const url = this.getRequestUrl(path);
     const token = this.getToken();
 
     const formData = new FormData();
