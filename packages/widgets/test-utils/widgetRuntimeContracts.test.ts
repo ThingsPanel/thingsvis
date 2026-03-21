@@ -164,6 +164,8 @@ const expectedWidgetModulePaths = [
   '../chart/echarts-pie/src/index.ts',
   '../chart/uplot-line/src/index.ts',
   '../custom/alert-list/src/index.ts',
+  '../custom/analog-clock/src/index.ts',
+  '../custom/digital-clock/src/index.ts',
   '../custom/glass-panel/src/index.ts',
   '../geo/map-china/src/index.ts',
   '../interaction/basic-button/src/index.ts',

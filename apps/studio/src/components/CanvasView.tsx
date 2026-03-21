@@ -67,6 +67,16 @@ function isPresetSchemaPayload(payload: unknown): payload is PresetSchemaPayload
   return value.kind === 'thingsvis-preset-schema' && Array.isArray(value.schema?.nodes);
 }
 
+function getNodeProps(
+  node: { schemaRef?: NodeSchemaType } | null | undefined,
+): Record<string, unknown> {
+  return node?.schemaRef?.props ?? {};
+}
+
+function isTextNode(node: { schemaRef?: NodeSchemaType } | null | undefined): boolean {
+  return node?.schemaRef?.type === 'basic/text';
+}
+
 function buildDroppedPresetNodes(
   sourceNodes: NodeSchemaType[],
   dropPoint: { x: number; y: number },
@@ -262,10 +272,7 @@ const CanvasView = forwardRef<
 
       if (options?.commit !== false) {
         const currentNode = (store.getState() as KernelState).nodesById[active.nodeId];
-        const currentProps = ((currentNode?.schemaRef as any)?.props ?? {}) as Record<
-          string,
-          unknown
-        >;
+        const currentProps = getNodeProps(currentNode);
         if ((currentProps.text ?? '') !== active.draft) {
           store.getState().updateNode?.(active.nodeId, {
             props: {
@@ -286,12 +293,9 @@ const CanvasView = forwardRef<
   const openInlineTextEditor = useCallback(
     (nodeId: string) => {
       const currentNode = (store.getState() as KernelState).nodesById[nodeId];
-      if (String((currentNode?.schemaRef as any)?.type ?? '') !== 'basic/text') return;
+      if (!isTextNode(currentNode)) return;
 
-      const currentProps = ((currentNode?.schemaRef as any)?.props ?? {}) as Record<
-        string,
-        unknown
-      >;
+      const currentProps = getNodeProps(currentNode);
       const nextDraft =
         typeof currentProps.text === 'string' ? currentProps.text : String(currentProps.text ?? '');
 
@@ -317,7 +321,7 @@ const CanvasView = forwardRef<
       if (!nodeId) return;
 
       const currentNode = state.nodesById[nodeId];
-      if (String((currentNode?.schemaRef as any)?.type ?? '') !== 'basic/text') return;
+      if (!isTextNode(currentNode)) return;
 
       event.preventDefault();
       event.stopPropagation();
@@ -640,7 +644,7 @@ const CanvasView = forwardRef<
     if (!active) return;
 
     const currentNode = state.nodesById[active.nodeId];
-    if (!currentNode || String((currentNode.schemaRef as any)?.type ?? '') !== 'basic/text') {
+    if (!isTextNode(currentNode)) {
       closeInlineTextEditor({ commit: false });
     }
   }, [closeInlineTextEditor, inlineTextEditor, state.nodesById]);

@@ -44,7 +44,7 @@ describe('chart/uplot-line widget', () => {
     vi.unstubAllGlobals();
   });
 
-  it('shows localized empty guidance when no time-series data is configured', async () => {
+  it('shows localized preview guidance when no time-series data is configured', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
@@ -53,7 +53,7 @@ describe('chart/uplot-line widget', () => {
       },
     });
 
-    expect(harness.element.textContent).toContain('Waiting for time series data');
+    expect(harness.element.textContent).toContain('Preview style - data appears after binding');
 
     harness.destroy();
   });
