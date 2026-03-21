@@ -16,6 +16,7 @@ export const metadata = {
   category: 'basic',
   icon: 'Type',
   version: '1.0.0',
+  order: 3,
   resizable: false, // 文本组件根据内容自适应尺寸
   defaultSize: { width: 160, height: 40 },
   constraints: { minWidth: 20, minHeight: 12 },
