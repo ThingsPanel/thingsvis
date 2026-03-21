@@ -8,24 +8,30 @@ export const PropsSchema = z.object({
     "solid-white",
     "custom"
   ]).default("crystal-white").describe("props.preset"),
-  blurStrength: z.number().min(0).max(40).default(26).describe("props.blurStrength"),
-  surfaceOpacity: z.number().min(0.05).max(1).default(0.15).describe("props.surfaceOpacity"),
-  highlightOpacity: z.number().min(0).max(1).default(0.38).describe("props.highlightOpacity"),
-  tintStrength: z.number().min(0).max(1).default(0.4).describe("props.tintStrength")
+  // 自定义参数：作为对预设的微调偏移量（-1 ~ +1 表示 -100% ~ +100%）
+  blurOffset: z.number().min(-20).max(20).default(0).describe("props.blurOffset"),
+  opacityOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.opacityOffset"),
+  highlightOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.highlightOffset"),
+  tintOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.tintOffset"),
+  // 文字颜色：默认继承主题，可独立设置
+  textColor: z.string().default("").describe("props.textColor")
 });
 
 export type Props = z.infer<typeof PropsSchema>;
 
-/** 精品预设 - 每个都是独立调优的质感+色调组合 */
-export const PRESETS: Record<string, {
+/** 预设基础值类型 */
+export interface PresetValues {
   blur: number;
   opacity: number;
   highlight: number;
   tint: number;
   color: string;
-  noise: number; // 噪点强度
+  noise: number;
   desc: string;
-}> = {
+}
+
+/** 精品预设 - 每个都是独立调优的质感+色调组合 */
+export const PRESETS: Record<string, PresetValues> = {
   // ===== 水晶系列 - 高透高亮 =====
   "crystal-white": {
     blur: 32,
@@ -99,15 +105,35 @@ export const PRESETS: Record<string, {
 
   // ===== 自定义 =====
   "custom": {
-    blur: 32,
-    opacity: 0.05,
-    highlight: 0.48,
-    tint: 0.5,
+    blur: 24,
+    opacity: 0.15,
+    highlight: 0.35,
+    tint: 0.0,
     color: "#60a5fa",
-    noise: 0.02,
-    desc: "⚙️ 自定义 - 手动调节"
+    noise: 0.04,
+    desc: "⚙️ 自定义 - 从滑块基准值开始"
   }
 };
+
+/**
+ * 计算最终渲染值：预设值 + 用户微调偏移
+ */
+export function computeFinalValues(
+  preset: PresetValues,
+  blurOffset: number,
+  opacityOffset: number,
+  highlightOffset: number,
+  tintOffset: number
+): PresetValues {
+  return {
+    ...preset,
+    blur: Math.max(0, Math.min(40, preset.blur + blurOffset)),
+    opacity: Math.max(0.05, Math.min(1, preset.opacity + opacityOffset)),
+    highlight: Math.max(0, Math.min(1, preset.highlight + highlightOffset)),
+    tint: Math.max(0, Math.min(1, preset.tint + tintOffset)),
+    desc: preset.desc
+  };
+}
 
 export function getDefaultProps(): Props {
   return PropsSchema.parse({});

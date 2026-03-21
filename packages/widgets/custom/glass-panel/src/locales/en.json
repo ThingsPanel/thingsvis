@@ -5,10 +5,11 @@
         "name": "Glass Panel",
         "groupStyle": "Style",
         "preset": "Texture Preset",
-        "blurStrength": "Blur Strength",
-        "surfaceOpacity": "Surface Opacity",
-        "highlightOpacity": "Highlight Opacity",
-        "tintStrength": "Tint Strength"
+        "blurOffset": "Blur Fine-tune",
+        "opacityOffset": "Opacity Fine-tune",
+        "highlightOffset": "Highlight Fine-tune",
+        "tintOffset": "Tint Fine-tune",
+        "textColor": "Text Color (empty = inherit theme)"
       }
     }
   }

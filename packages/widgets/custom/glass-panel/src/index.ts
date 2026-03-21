@@ -1,7 +1,7 @@
 import { defineWidget, resolveWidgetColors, type WidgetColors } from "@thingsvis/widget-sdk";
 import { controls } from "./controls";
 import { metadata } from "./metadata";
-import { PropsSchema, type Props, PRESETS } from "./schema";
+import { PropsSchema, type Props, PRESETS, computeFinalValues } from "./schema";
 import zh from "./locales/zh.json";
 import en from "./locales/en.json";
 
@@ -46,31 +46,23 @@ function getPresetValues(props: Props): {
   color: string;
   noise: number;
 } {
-  const preset = PRESETS[props.preset];
-  if (preset) {
-    return {
-      blur: preset.blur,
-      opacity: preset.opacity,
-      highlight: preset.highlight,
-      tint: preset.tint,
-      color: preset.color,
-      noise: preset.noise
-    };
-  }
-  // 自定义模式
-  return {
-    blur: props.blurStrength,
-    opacity: props.surfaceOpacity,
-    highlight: props.highlightOpacity,
-    tint: props.tintStrength,
-    color: "#60a5fa",
-    noise: 0.04
-  };
+  const basePreset = PRESETS[props.preset] ?? PRESETS["frost-white"];
+  // 使用偏移量计算最终值
+  return computeFinalValues(
+    basePreset,
+    props.blurOffset,
+    props.opacityOffset,
+    props.highlightOffset,
+    props.tintOffset
+  );
 }
 
 function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): void {
   const preset = getPresetValues(props);
   const tintColor = preset.color;
+  
+  // 文字颜色：优先使用用户设置，其次继承主题
+  const textColor = props.textColor || colors.fg || "#f1f5f9";
 
   // 各层透明度计算 - 更通透
   const topLayer = withAlpha("#ffffff", clamp(preset.opacity + preset.highlight * 0.55, 0, 0.95));
@@ -98,6 +90,7 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
     box-sizing: border-box;
     overflow: visible;
     border-radius: inherit;
+    color: ${textColor};
   `;
 
   element.innerHTML = `

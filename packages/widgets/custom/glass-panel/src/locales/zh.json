@@ -5,10 +5,11 @@
         "name": "磨砂面板",
         "groupStyle": "样式",
         "preset": "质感预设",
-        "blurStrength": "模糊强度",
-        "surfaceOpacity": "表面不透明度",
-        "highlightOpacity": "高光强度",
-        "tintStrength": "色调强度"
+        "blurOffset": "模糊微调",
+        "opacityOffset": "透明度微调",
+        "highlightOffset": "高光微调",
+        "tintOffset": "色调微调",
+        "textColor": "文字颜色（留空继承主题）"
       }
     }
   }
