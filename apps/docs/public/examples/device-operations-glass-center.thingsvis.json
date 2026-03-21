@@ -144,7 +144,7 @@
     {
       "id": "panel-left",
       "name": "Status Panel",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 60, "y": 300 },
       "size": { "width": 340, "height": 420 },
       "props": {
@@ -203,7 +203,7 @@
     {
       "id": "panel-center",
       "name": "Trend Panel",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 430, "y": 300 },
       "size": { "width": 920, "height": 420 },
       "props": {
@@ -271,7 +271,7 @@
     {
       "id": "panel-right-top",
       "name": "Health Panel",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 1380, "y": 300 },
       "size": { "width": 480, "height": 200 },
       "props": {
@@ -324,7 +324,7 @@
     {
       "id": "panel-right-bottom",
       "name": "Ranking Panel",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 1380, "y": 520 },
       "size": { "width": 480, "height": 200 },
       "props": {
@@ -385,7 +385,7 @@
     {
       "id": "panel-bottom",
       "name": "Bottom Panel",
-      "type": "custom/glass-panel",
+      "type": "basic/glass-panel",
       "position": { "x": 60, "y": 750 },
       "size": { "width": 1800, "height": 270 },
       "props": {

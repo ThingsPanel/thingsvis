@@ -1,7 +1,7 @@
 export const metadata = {
-  id: 'custom/analog-clock',
+  id: 'basic/analog-clock',
   name: '表盘时钟',
-  category: 'custom',
+  category: 'basic',
   icon: 'GaugeCircle',
   version: '1.0.0',
   defaultSize: { width: 260, height: 260 },

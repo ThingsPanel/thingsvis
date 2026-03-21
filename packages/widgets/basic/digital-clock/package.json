@@ -1,9 +1,9 @@
 {
-  "name": "thingsvis-widget-custom-analog-clock",
+  "name": "thingsvis-widget-basic-digital-clock",
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "rspack serve --port 3225",
+    "dev": "rspack serve --port 3223",
     "build": "rspack build",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -26,11 +26,11 @@
     "typescript": "^5.3.3"
   },
   "thingsvis": {
-    "displayName": "表盘时钟",
-    "icon": "GaugeCircle",
+    "displayName": "数字时钟",
+    "icon": "Clock",
     "i18n": {
-      "zh": "表盘时钟",
-      "en": "Analog Clock"
+      "zh": "数字时钟",
+      "en": "Digital Clock"
     }
   }
 }
