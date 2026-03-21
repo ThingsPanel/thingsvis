@@ -134,19 +134,22 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
         0 8px 32px rgba(0, 0, 0, ${0.08 + preset.opacity * 0.12}),
         0 2px 8px rgba(0, 0, 0, ${0.04 + preset.opacity * 0.08});
     ">
-      <!-- 微噪点纹理层 - 模拟真实玻璃表面的微观粗糙 -->
+      <!-- 玻璃纹理层 - 模拟真实磨砂玻璃效果 -->
       <div style="
         position:absolute;
         inset:0;
         border-radius:inherit;
-        background-image: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 200 200\"><filter id=\"noise\"><feTurbulence type=\"fractalNoise\" baseFrequency=\"0.9\" numOctaves=\"4\" stitchTiles=\"stitch\"/></filter><rect width=\"100%\" height=\"100%\" filter=\"url(%23noise)\" opacity=\"0.5\"/></svg>');
-        background-size: 150px 150px;
-        opacity:${noiseOpacity};
+        background:
+          /* 细密噪点纹理 */
+          radial-gradient(circle at 25% 25%, ${withAlpha("#ffffff", noiseOpacity)} 1px, transparent 1px),
+          radial-gradient(circle at 75% 75%, ${withAlpha("#ffffff", noiseOpacity * 0.8)} 1px, transparent 1px),
+          radial-gradient(circle at 50% 50%, ${withAlpha("#ffffff", noiseOpacity * 0.6)} 0.5px, transparent 0.5px);
+        background-size: 50px 50px, 40px 40px, 30px 30px;
         mix-blend-mode:overlay;
         pointer-events:none;
       "></div>
       
-      <!-- 细腻斜纹 - 更淡更密 -->
+      <!-- 细腻斜纹 - 模拟磨砂玻璃加工痕迹 -->
       <div style="
         position:absolute;
         inset:0;
@@ -154,12 +157,12 @@ function renderPanel(element: HTMLElement, props: Props, colors: WidgetColors): 
         background:
           repeating-linear-gradient(
             125deg,
-            transparent 0,
-            transparent 2px,
-            ${withAlpha("#ffffff", noiseOpacity * 0.5)} 2px,
-            ${withAlpha("#ffffff", noiseOpacity * 0.5)} 3px,
+            transparent 0px,
             transparent 3px,
-            transparent 5px
+            ${withAlpha("#ffffff", noiseOpacity * 0.4)} 3px,
+            ${withAlpha("#ffffff", noiseOpacity * 0.4)} 4px,
+            transparent 4px,
+            transparent 7px
           );
         mix-blend-mode:soft-light;
         pointer-events:none;
