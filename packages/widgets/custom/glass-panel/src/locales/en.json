@@ -2,9 +2,8 @@
   "editor": {
     "widgets": {
       "thingsvis-widget-custom-glass-panel": {
-        "name": "Glass",
+        "name": "Glass Panel",
         "groupStyle": "Style",
-        "variant": "Tint",
         "preset": "Texture Preset",
         "blurStrength": "Blur Strength",
         "surfaceOpacity": "Surface Opacity",

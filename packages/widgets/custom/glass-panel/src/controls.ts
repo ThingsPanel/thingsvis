@@ -4,27 +4,27 @@ const W = "widgets.thingsvis-widget-custom-glass-panel";
 
 export const controls = createControlPanel()
   .addStyleGroup((builder) => {
-    builder.addSelect("variant", {
-      label: `${W}.variant`,
-      options: [
-        { label: { zh: "中性白", en: "Neutral" }, value: "neutral" },
-        { label: { zh: "冷蓝", en: "Blue" }, value: "blue" },
-        { label: { zh: "暖光", en: "Warm" }, value: "warm" },
-        { label: { zh: "青蓝", en: "Cyan" }, value: "cyan" },
-        { label: { zh: "翡翠", en: "Emerald" }, value: "emerald" },
-        { label: { zh: "琥珀", en: "Amber" }, value: "amber" }
-      ]
-    });
+    // 精品预设选择 - 一个下拉框搞定质感和色调
     builder.addSelect("preset", {
       label: `${W}.preset`,
       options: [
-        { label: { zh: "💎 水晶质感", en: "💎 Crystal" }, value: "crystal" },
-        { label: { zh: "🧊 磨砂玻璃", en: "🧊 Frost" }, value: "frost" },
-        { label: { zh: "🔲 半实心", en: "🔲 Solid" }, value: "solid" },
-        { label: { zh: "✨ 极简轻薄", en: "✨ Minimal" }, value: "minimal" },
+        // 水晶系列
+        { label: { zh: "💎 水晶白", en: "💎 Crystal White" }, value: "crystal-white" },
+        { label: { zh: "💎 水晶蓝", en: "💎 Crystal Blue" }, value: "crystal-blue" },
+        { label: { zh: "💎 水晶紫", en: "💎 Crystal Purple" }, value: "crystal-purple" },
+        // 磨砂系列
+        { label: { zh: "🧊 磨砂白", en: "🧊 Frost White" }, value: "frost-white" },
+        { label: { zh: "🧊 磨砂暖", en: "🧊 Frost Warm" }, value: "frost-warm" },
+        // 极简系列
+        { label: { zh: "✨ 极简白", en: "✨ Minimal White" }, value: "minimal-white" },
+        // 半实心系列
+        { label: { zh: "🔲 半实心白", en: "🔲 Solid White" }, value: "solid-white" },
+        // 自定义
         { label: { zh: "⚙️ 自定义", en: "⚙️ Custom" }, value: "custom" }
       ]
     });
+
+    // 自定义参数滑块（仅在自定义预设时生效）
     builder.addSlider("blurStrength", {
       label: `${W}.blurStrength`,
       min: 0,
