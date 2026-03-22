@@ -3,76 +3,40 @@ import { pluginReact } from '@rsbuild/plugin-react';
 import { ModuleFederationPlugin } from '@module-federation/rspack';
 import path from 'path';
 import fs from 'fs';
+import { execFileSync } from 'child_process';
 
 // -- 自动生成 Registry 插件 --
 class GenerateRegistryPlugin {
   apply(compiler: any) {
+    const publicOutput = path.join(__dirname, 'public/registry.json');
+    const scriptPath = path.resolve(__dirname, '../../scripts/generate-registry.js');
+
     const generate = () => {
-      const ROOT = path.resolve(__dirname, '../../');
-      const WIDGETS_DIR = path.join(ROOT, 'packages', 'widgets');
-
-      const sanitizeMfName = (name: string) => String(name).replace(/[^a-zA-Z0-9_]/g, '_');
-      const extractDevPort = (scripts: any) => {
-        const match = (scripts?.dev || '').match(/--port\s+(\d+)/);
-        return match ? parseInt(match[1], 10) : null;
-      };
-
-      if (!fs.existsSync(WIDGETS_DIR)) return null;
-
-      const components: Record<string, any> = {};
-      const categories = fs.readdirSync(WIDGETS_DIR, { withFileTypes: true }).filter(d => d.isDirectory());
-
-      for (const category of categories) {
-        const categoryPath = path.join(WIDGETS_DIR, category.name);
-        const widgets = fs.readdirSync(categoryPath, { withFileTypes: true }).filter(d => d.isDirectory());
-
-        for (const widget of widgets) {
-          const pkgPath = path.join(categoryPath, widget.name, 'package.json');
-          if (!fs.existsSync(pkgPath)) continue;
-
-          try {
-            const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-            const meta = pkg.thingsvis || {};
-            const componentId = `${category.name}/${widget.name}`;
-            const devPort = extractDevPort(pkg.scripts);
-
-            components[componentId] = {
-              remoteName: sanitizeMfName(pkg.name),
-              remoteEntryUrl: devPort ? `http://localhost:${devPort}/remoteEntry.js` : ``,
-              staticEntryUrl: `/widgets/${componentId}/dist/remoteEntry.js`,
-              debugSource: 'static',
-              exposedModule: './Main',
-              version: pkg.version || '0.0.1',
-              ...(meta.icon && { icon: meta.icon }),
-              ...(meta.displayName && { name: meta.displayName }),
-              ...(meta.i18n && { i18n: meta.i18n }),
-            };
-          } catch (e) {
-            console.warn(`[GenerateRegistryPlugin] Failed to parse ${pkgPath}`, e);
-          }
-        }
-      }
-
-      return { schemaVersion: 1, generatedAt: new Date().toISOString(), components };
+      execFileSync(process.execPath, [scriptPath], {
+        cwd: path.resolve(__dirname, '../../'),
+        stdio: 'ignore',
+      });
+      const raw = fs.readFileSync(publicOutput, 'utf8');
+      return JSON.parse(raw);
     };
 
     // Write to public/ for dev server
     compiler.hooks.beforeCompile.tap('GenerateRegistryPlugin', () => {
-      const registry = generate();
-      if (!registry) return;
-      const publicOutput = path.join(__dirname, 'public/registry.json');
-      fs.mkdirSync(path.dirname(publicOutput), { recursive: true });
-      fs.writeFileSync(publicOutput, JSON.stringify(registry, null, 2) + '\n', 'utf8');
-      console.log(`[GenerateRegistryPlugin] Auto-generated registry.json with ${Object.keys(registry.components).length} components`);
+      try {
+        const registry = generate();
+        console.log(
+          `[GenerateRegistryPlugin] Auto-generated registry.json with ${Object.keys(registry.components).length} components`,
+        );
+      } catch (error) {
+        console.warn('[GenerateRegistryPlugin] Failed to generate registry.json', error);
+      }
     });
 
     // Also write to dist/ after build to guarantee it's in the output
     compiler.hooks.afterEmit.tap('GenerateRegistryPlugin', () => {
-      const registry = generate();
-      if (!registry) return;
       const distOutput = path.join(__dirname, 'dist/registry.json');
-      if (fs.existsSync(path.dirname(distOutput))) {
-        fs.writeFileSync(distOutput, JSON.stringify(registry, null, 2) + '\n', 'utf8');
+      if (fs.existsSync(publicOutput) && fs.existsSync(path.dirname(distOutput))) {
+        fs.copyFileSync(publicOutput, distOutput);
       }
     });
   }
@@ -165,4 +129,3 @@ export default defineConfig({
     }
   }
 });
-

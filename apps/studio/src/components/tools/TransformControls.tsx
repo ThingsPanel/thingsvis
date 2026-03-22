@@ -4,6 +4,7 @@ import Moveable from 'moveable';
 import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
+import { shouldCommitCanvasDrag } from '@/lib/canvasInteraction';
 
 /** Grid layout handlers from useGridLayout hook */
 type GridLayoutHandlers = {
@@ -504,6 +505,7 @@ export default function TransformControls({
 
         if (isMultiDrag) {
           // Commit all selected nodes using the same delta
+          let didCommit = false;
           for (const id of selectedIds) {
             const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el) el.style.willChange = '';
@@ -512,6 +514,20 @@ export default function TransformControls({
               x: (lastEvent as any)?.beforeTranslate?.[0] ?? 0,
               y: (lastEvent as any)?.beforeTranslate?.[1] ?? 0,
             };
+            if (!shouldCommitCanvasDrag(delta)) {
+              if (el) {
+                el.style.transform = '';
+              }
+              const overlayEl = findOverlayElement(id);
+              if (overlayEl) {
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
+              }
+              continue;
+            }
             const baseWorld = baseWorldPositionByIdRef.current[id];
             const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
             const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
@@ -537,8 +553,11 @@ export default function TransformControls({
               delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
+            didCommit = true;
           }
-          onUserEdit?.();
+          if (didCommit) {
+            onUserEdit?.();
+          }
           return;
         }
 
@@ -553,6 +572,20 @@ export default function TransformControls({
           dragTranslateByIdRef.current[nodeId || '']?.y ??
           (lastEvent as any)?.beforeTranslate?.[1] ??
           0;
+        if (!shouldCommitCanvasDrag({ x: dx, y: dy })) {
+          target.style.transform = '';
+          if (nodeId) {
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              const rotation = overlayRotationRef[nodeId] || '';
+              overlayEl.style.transform = rotation;
+              overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+              delete originalOverlayZIndexRef[nodeId];
+              delete overlayRotationRef[nodeId];
+            }
+          }
+          return;
+        }
 
         const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
 
