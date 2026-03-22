@@ -116,7 +116,7 @@ function readMetadataTs(widgetDir) {
 }
 
 // ─── Main ──────────────────────────────────────────────────────────
-function generate() {
+function generateRegistryData() {
     if (!fs.existsSync(WIDGETS_DIR)) {
         console.error('❌ widgets/ directory not found at', WIDGETS_DIR);
         process.exit(1);
@@ -190,17 +190,30 @@ function generate() {
         }
     }
 
-    const registry = {
+    return {
         schemaVersion: 1,
         generatedAt: new Date().toISOString(),
         components,
     };
-
-    fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
-    fs.writeFileSync(OUTPUT, JSON.stringify(registry, null, 2) + '\n', 'utf8');
-
-    const count = Object.keys(components).length;
-    console.log(`\n✅ Generated registry.json with ${count} widgets → ${path.relative(ROOT, OUTPUT)}`);
 }
 
-generate();
+function writeRegistryFile(output = OUTPUT) {
+    const registry = generateRegistryData();
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+    fs.writeFileSync(output, JSON.stringify(registry, null, 2) + '\n', 'utf8');
+    const count = Object.keys(registry.components).length;
+    console.log(`\n✅ Generated registry.json with ${count} widgets → ${path.relative(ROOT, output)}`);
+    return registry;
+}
+
+module.exports = {
+    ROOT,
+    WIDGETS_DIR,
+    OUTPUT,
+    generateRegistryData,
+    writeRegistryFile,
+};
+
+if (require.main === module) {
+    writeRegistryFile();
+}

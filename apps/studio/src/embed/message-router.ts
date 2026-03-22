@@ -274,8 +274,8 @@ export interface ProcessedEmbedData {
     theme?: string;
     scaleMode: PreviewScaleMode;
     previewAlignY: PreviewAlignY;
-    /** Preserved as-is from the host payload — may be string or PageBackground object. */
-    background: string | Record<string, unknown>;
+    /** Explicit background only. When omitted, rendering falls back locally. */
+    background?: string | Record<string, unknown>;
     gridCols: number;
     gridRowHeight: number;
     gridGap: number;
@@ -356,9 +356,7 @@ export function processEmbedInitPayload(
     theme: typeof data.canvas?.theme === 'string' ? data.canvas.theme : undefined,
     scaleMode: normalizeEmbedCanvasScaleMode(data.canvas?.scaleMode),
     previewAlignY: normalizeEmbedPreviewAlignY(data.canvas?.previewAlignY),
-    // Use ?? so a falsy-but-defined value (e.g. empty string) is preserved;
-    // object values (PageBackground) are always truthy and pass through unchanged.
-    background: data.canvas?.background ?? 'transparent',
+    background: normalizeCanvasBackground(data.canvas?.background),
     gridCols: data.canvas?.gridCols ?? 24,
     gridRowHeight: data.canvas?.gridRowHeight ?? 50,
     gridGap: data.canvas?.gridGap ?? 5,
@@ -429,6 +427,7 @@ import {
   type SaveTarget,
 } from '../lib/storage/saveStrategy';
 import { apiClient } from '../lib/api/client';
+import { normalizeCanvasBackground } from '../lib/canvasBackground';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import { NodeSchema, type NodeSchemaType } from '@thingsvis/schema';

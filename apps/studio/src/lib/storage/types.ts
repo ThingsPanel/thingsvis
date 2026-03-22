@@ -1,6 +1,6 @@
 /**
  * TypeScript types and interfaces for the storage layer
- * 
+ *
  * Runtime types that don't need Zod validation
  */
 
@@ -12,22 +12,22 @@
  * Possible save statuses for UI feedback
  */
 export type SaveStatus =
-  | 'idle'       // No unsaved changes
-  | 'dirty'      // Has unsaved changes
-  | 'saving'     // Save in progress
-  | 'saved'      // Just saved (briefly shown, then returns to idle)
-  | 'error'      // Save failed
+  | 'idle' // No unsaved changes
+  | 'dirty' // Has unsaved changes
+  | 'saving' // Save in progress
+  | 'saved' // Just saved (briefly shown, then returns to idle)
+  | 'error'; // Save failed
 
 /**
  * Current save state for the active project
  */
 export interface SaveState {
   /** Current save status */
-  status: SaveStatus
+  status: SaveStatus;
   /** Timestamp of last successful save (null if never saved) */
-  lastSavedAt: number | null
+  lastSavedAt: number | null;
   /** Error message if save failed */
-  error: string | null
+  error: string | null;
 }
 
 // =============================================================================
@@ -40,17 +40,17 @@ export interface SaveState {
  */
 export interface PreviewSession {
   /** UUID token for one-time use */
-  token: string
+  token: string;
   /** Project ID to load in preview */
-  projectId: string
+  projectId: string;
   /** Creation timestamp for expiry check (5 min TTL) */
-  createdAt: number
+  createdAt: number;
 }
 
 /**
  * Preview mode types
  */
-export type PreviewMode = 'dev' | 'user' | 'kiosk'
+export type PreviewMode = 'dev' | 'user' | 'kiosk';
 
 // =============================================================================
 // Storage Operation Results
@@ -60,16 +60,16 @@ export type PreviewMode = 'dev' | 'user' | 'kiosk'
  * Result of an import operation
  */
 export interface ImportResult<T> {
-  success: boolean
-  data?: T
-  error?: string
-  field?: string
+  success: boolean;
+  data?: T;
+  error?: string;
+  field?: string;
 }
 
 /**
  * Listener for save state changes
  */
-export type SaveStateListener = (state: SaveState) => void
+export type SaveStateListener = (state: SaveState) => void;
 
 // =============================================================================
 // Auto-Save Configuration
@@ -80,9 +80,11 @@ export type SaveStateListener = (state: SaveState) => void
  */
 export interface AutoSaveConfig {
   /** Debounce delay in milliseconds (default: 1000) */
-  debounceDelay?: number
+  debounceDelay?: number;
   /** Periodic save interval in milliseconds (default: 10000) */
-  periodicInterval?: number
+  periodicInterval?: number;
   /** Whether to warn on page unload (default: true) */
-  warnOnUnload?: boolean
+  warnOnUnload?: boolean;
+  /** Save behavior: auto = debounce/periodic save, manual = only track dirty and require explicit saveNow() */
+  mode?: 'auto' | 'manual';
 }

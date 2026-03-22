@@ -40,7 +40,6 @@ function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): Stora
       mode: 'infinite',
       width: 1920,
       height: 1080,
-      background: '#1e1e2e',
     }),
     homeFlag: dashboard.homeFlag || false,
   };

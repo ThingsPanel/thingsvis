@@ -1,11 +1,18 @@
 /**
  * Local Storage Adapter
- * 
+ *
  * Implements StorageAdapter using IndexedDB for local browser storage.
  * This is the default storage mode when user is not authenticated.
  */
 
-import type { StorageAdapter, StorageProject, StorageProjectMeta, ListOptions, ListResult, StorageBackend } from './types';
+import type {
+  StorageAdapter,
+  StorageProject,
+  StorageProjectMeta,
+  ListOptions,
+  ListResult,
+  StorageBackend,
+} from './types';
 import { loadProject, saveProject, deleteProject } from '../projectStorage';
 import { recentProjects } from '../recentProjects';
 import type { z } from 'zod';
@@ -44,7 +51,6 @@ function storageProjectToProjectFile(project: StorageProject): ProjectFile {
       mode: 'infinite',
       width: 1920,
       height: 1080,
-      background: '#1e1e2e',
     },
     nodes: project.schema.nodes || [],
     dataSources: project.schema.dataSources || [],
@@ -64,15 +70,13 @@ export function createLocalStorageAdapter(): StorageAdapter {
         // Apply search filter
         if (options?.search) {
           const search = options.search.toLowerCase();
-          filtered = filtered.filter(p => 
-            p.name.toLowerCase().includes(search)
-          );
+          filtered = filtered.filter((p) => p.name.toLowerCase().includes(search));
         }
 
         // Apply sorting
         const sortBy = options?.sortBy || 'updatedAt';
         const sortOrder = options?.sortOrder || 'desc';
-        
+
         filtered.sort((a, b) => {
           let comparison = 0;
           if (sortBy === 'name') {
@@ -93,7 +97,7 @@ export function createLocalStorageAdapter(): StorageAdapter {
         const paginated = filtered.slice(offset, offset + limit);
 
         return {
-          data: paginated.map(p => ({
+          data: paginated.map((p) => ({
             id: p.id,
             name: p.name,
             thumbnail: p.thumbnail,
@@ -104,7 +108,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
           hasMore: offset + limit < total,
         };
       } catch (error) {
-        
         return { data: [], total: 0, hasMore: false };
       }
     },
@@ -115,7 +118,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
         if (!projectFile) return null;
         return projectFileToStorageProject(projectFile);
       } catch (error) {
-        
         return null;
       }
     },
@@ -137,7 +139,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
         await saveProject(projectFile);
         return { id };
       } catch (error) {
-        
         throw error;
       }
     },
@@ -147,7 +148,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
         await deleteProject(id);
         return true;
       } catch (error) {
-        
         return false;
       }
     },
@@ -171,7 +171,6 @@ export function createLocalStorageAdapter(): StorageAdapter {
 
         return this.save(duplicated);
       } catch (error) {
-        
         throw error;
       }
     },
@@ -192,14 +191,14 @@ export function createLocalStorageAdapter(): StorageAdapter {
           try {
             const content = e.target?.result as string;
             const parsed = JSON.parse(content) as ProjectFile;
-            
+
             // Generate new ID for imported project
             const newId = crypto.randomUUID();
             const project = projectFileToStorageProject(parsed);
             project.meta.id = newId;
             project.meta.createdAt = Date.now();
             project.meta.updatedAt = Date.now();
-            
+
             const result = await this.save(project);
             resolve(result);
           } catch (error) {

@@ -30,6 +30,7 @@ import { platformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
+import { deriveCanvasBackgroundState, normalizeCanvasBackground } from '../lib/canvasBackground';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -73,7 +74,7 @@ export type CanvasConfigSchema = {
   dataSources: Array<{ id: string; name: string; type: string; config: any }>;
 
   // Legacy (保持向后兼容)
-  background: CanvasBackground;
+  background?: CanvasBackground;
   gridEnabled: boolean;
 };
 
@@ -175,6 +176,7 @@ export function useProjectBootstrap({
   const [canvasConfig, setCanvasConfigState] = useState<CanvasConfigSchema>(() => {
     const initialId = resolveInitialProjectId();
     const defaultMode = 'fixed';
+    const backgroundState = deriveCanvasBackgroundState(undefined);
     return {
       id: initialId,
       projectId: '',
@@ -196,13 +198,13 @@ export function useProjectBootstrap({
       scaleMode: 'fit-min' as PreviewScaleMode,
       previewAlignY: 'center' as PreviewAlignY,
       gridSize: 20,
-      bgType: 'color' as 'color' | 'image',
-      bgValue: '#1a1a1a',
-      bgColor: '#1a1a1a',
-      bgImage: '',
+      bgType: backgroundState.bgType,
+      bgValue: backgroundState.bgValue,
+      bgColor: backgroundState.bgColor,
+      bgImage: backgroundState.bgImage,
       variables: {} as Record<string, any>,
       dataSources: [] as Array<{ id: string; name: string; type: string; config: any }>,
-      background: '#1a1a1a',
+      background: backgroundState.background,
       gridEnabled: true,
     };
   });
@@ -235,12 +237,8 @@ export function useProjectBootstrap({
   const applyProjectToEditor = useCallback(
     async (loaded: ProjectFile) => {
       setBootstrapSummary(createBootstrapSummary(loaded.nodes));
-      const loadedBackground =
-        typeof loaded.canvas.background === 'object' && loaded.canvas.background !== null
-          ? loaded.canvas.background
-          : typeof loaded.canvas.background === 'string' && loaded.canvas.background.length > 0
-            ? { color: loaded.canvas.background }
-            : undefined;
+      const backgroundState = deriveCanvasBackgroundState(loaded.canvas.background);
+      const loadedBackground = backgroundState.background;
       store.getState().loadPage({
         id: loaded.meta.id,
         type: 'page' as const,
@@ -272,9 +270,11 @@ export function useProjectBootstrap({
         theme: validateCanvasTheme((loaded.canvas as any).theme),
         scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
         previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
-        bgValue:
-          typeof loaded.canvas.background === 'string' ? loaded.canvas.background : prev.bgValue,
-        background: (loadedBackground as CanvasBackground | undefined) ?? prev.background,
+        bgType: backgroundState.bgType,
+        bgValue: backgroundState.bgValue,
+        bgColor: backgroundState.bgColor,
+        bgImage: backgroundState.bgImage,
+        background: loadedBackground as CanvasBackground | undefined,
         gridCols: loaded.canvas.gridCols ?? prev.gridCols,
         gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
         gridGap: loaded.canvas.gridGap ?? prev.gridGap,
@@ -282,10 +282,6 @@ export function useProjectBootstrap({
         gridSize: loaded.canvas.gridSize ?? prev.gridSize,
         dataSources: (loaded.dataSources as any) ?? prev.dataSources,
       }));
-
-      if (loadedBackground) {
-        store.getState().updatePageConfig({ background: loadedBackground } as any);
-      }
 
       if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
         for (const ds of loaded.dataSources) {
@@ -343,7 +339,7 @@ export function useProjectBootstrap({
         mode: currentCanvasConfig.mode,
         width: currentCanvasConfig.width,
         height: currentCanvasConfig.height,
-        background: currentCanvasConfig.background ?? currentCanvasConfig.bgValue,
+        background: normalizeCanvasBackground(currentCanvasConfig.background),
         theme: currentCanvasConfig.theme,
         scaleMode: currentCanvasConfig.scaleMode,
         previewAlignY: currentCanvasConfig.previewAlignY,
@@ -622,14 +618,10 @@ export function useProjectBootstrap({
       ) as Array<Record<string, any>>;
 
       // Restore background — may be a PageBackground object or a CSS string.
-      const rawBg = loadedCanvas?.background ?? processed.canvas.background;
-      const bgObj =
-        typeof rawBg === 'object' && rawBg !== null
-          ? (rawBg as Record<string, unknown>)
-          : typeof rawBg === 'string' && rawBg.length > 0
-            ? ({ color: rawBg } as Record<string, unknown>)
-            : undefined;
-      const bgStr = typeof rawBg === 'string' ? rawBg : undefined;
+      const backgroundState = deriveCanvasBackgroundState(
+        loadedCanvas?.background ?? processed.canvas.background,
+      );
+      const bgObj = backgroundState.background;
 
       setCanvasConfig((prev) => ({
         ...prev,
@@ -641,8 +633,11 @@ export function useProjectBootstrap({
         theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
         scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
         previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
-        bgValue: bgStr ?? prev.bgValue,
-        background: (bgObj as CanvasBackground | undefined) ?? prev.background,
+        bgType: backgroundState.bgType,
+        bgValue: backgroundState.bgValue,
+        bgColor: backgroundState.bgColor,
+        bgImage: backgroundState.bgImage,
+        background: bgObj as CanvasBackground | undefined,
         gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
         gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
         gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
@@ -650,51 +645,45 @@ export function useProjectBootstrap({
         dataSources: mergedDataSources as any,
       }));
 
-      // Immediately push background to store — avoids relying on useEditorSync timing.
-      if (bgObj) {
-        store.getState().updatePageConfig({
-          background: bgObj as unknown as NonNullable<IPageConfig['background']>,
-        });
-      }
+      store.getState().loadPage({
+        id: processed.projectId,
+        type: 'page' as const,
+        version: '1.0.0',
+        nodes: nodesToLoad,
+        config: {
+          mode: resolvedCanvasMode,
+          width: resolvedCanvas?.width || 1920,
+          height: resolvedCanvas?.height || 1080,
+          theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+          scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
+          previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
+          background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
+          gridSettings: {
+            cols: resolvedCanvas?.gridCols ?? 24,
+            rowHeight: resolvedCanvas?.gridRowHeight ?? 50,
+            gap: resolvedCanvas?.gridGap ?? 10,
+            compactVertical: false,
+            responsive: false,
+            minW: 1,
+            minH: 1,
+            showGridLines: true,
+            breakpoints: [],
+          },
+        },
+      });
 
       if (nodesToLoad.length > 0) {
         setBootstrapSummary(createBootstrapSummary(nodesToLoad));
-        store.getState().loadPage({
-          id: processed.projectId,
-          type: 'page' as const,
-          version: '1.0.0',
-          nodes: nodesToLoad,
-          config: {
-            mode: resolvedCanvasMode,
-            width: resolvedCanvas?.width || 1920,
-            height: resolvedCanvas?.height || 1080,
-            theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
-            scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
-            previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
-            background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
-            gridSettings: {
-              cols: resolvedCanvas?.gridCols ?? 24,
-              rowHeight: resolvedCanvas?.gridRowHeight ?? 50,
-              gap: resolvedCanvas?.gridGap ?? 10,
-              compactVertical: false,
-              responsive: false,
-              minW: 1,
-              minH: 1,
-              showGridLines: true,
-              breakpoints: [],
-            },
-          },
-        });
-
-        try {
-          store.temporal.getState().clear?.();
-        } catch {}
       } else {
         setBootstrapSummary({
           ...EMPTY_BOOTSTRAP_SUMMARY,
           projectLoaded: true,
         });
       }
+
+      try {
+        store.temporal.getState().clear?.();
+      } catch {}
 
       if (mergedDataSources.length > 0) {
         for (const ds of mergedDataSources) {
@@ -721,7 +710,7 @@ export function useProjectBootstrap({
             mode: resolvedCanvasMode,
             width: resolvedCanvas?.width || 1920,
             height: resolvedCanvas?.height || 1080,
-            background: rawBg ?? 'transparent',
+            background: bgObj,
             theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
             scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
             previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),

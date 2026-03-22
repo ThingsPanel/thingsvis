@@ -4,6 +4,7 @@ import { store } from '../lib/store';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
 import type { ProjectFile } from '../lib/storage/schemas';
 import type { CanvasConfigSchema } from './useProjectBootstrap';
+import { normalizeCanvasBackground } from '../lib/canvasBackground';
 
 export interface UseEditorSyncProps {
   projectId: string;
@@ -28,14 +29,16 @@ export function useEditorSync({
   canvasInitializedRef,
   bootstrappingRef,
 }: UseEditorSyncProps) {
-  const autoSaveEnabled = !isBootstrapping && (!isWidgetMode || projectId !== 'widget');
+  const autoSaveEnabled = !isBootstrapping;
+  const saveMode = isWidgetMode ? 'manual' : 'auto';
 
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
     projectId,
     cloudProjectId,
     getProjectState,
-    enabled: autoSaveEnabled, // Keep host-managed dashboard editor savable; only disable legacy widget mode.
+    enabled: autoSaveEnabled,
+    saveMode,
     onIdChange: (newId) => {
       setCanvasConfig((prev) => ({ ...prev, id: newId }));
       try {
@@ -77,8 +80,9 @@ export function useEditorSync({
   // Sync background changes to kernel store
   useEffect(() => {
     if (isBootstrapping || bootstrappingRef.current) return;
-    if (!canvasConfig.background || typeof canvasConfig.background !== 'object') return;
-    store.getState().updatePageConfig({ background: canvasConfig.background } as any);
+    store.getState().updatePageConfig({
+      background: normalizeCanvasBackground(canvasConfig.background),
+    } as any);
   }, [canvasConfig.background, isBootstrapping, bootstrappingRef]);
 
   // Sync theme changes to kernel store

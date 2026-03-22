@@ -57,6 +57,7 @@ import {
   type FormatBrushSnapshot,
 } from '../lib/formatBrush';
 import { syncShapeStylePatch } from '../lib/shapeStyleSync';
+import { deriveCanvasBackgroundState } from '../lib/canvasBackground';
 
 import {
   MousePointer2,
@@ -778,13 +779,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         }}
         onProjectLoad={(project) => {
           const loadedTheme = validateCanvasTheme((project.canvas as any).theme);
-          const loadedBackground =
-            typeof project.canvas.background === 'object' && project.canvas.background !== null
-              ? project.canvas.background
-              : typeof project.canvas.background === 'string' &&
-                  project.canvas.background.length > 0
-                ? ({ color: project.canvas.background } as Record<string, string>)
-                : undefined;
+          const backgroundState = deriveCanvasBackgroundState(project.canvas.background);
+          const loadedBackground = backgroundState.background;
           const loadedPreviewAlignY =
             (project.canvas as any).previewAlignY === 'top' ? 'top' : 'center';
 
@@ -834,11 +830,11 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             theme: loadedTheme,
             scaleMode: (project.canvas as any).scaleMode,
             previewAlignY: loadedPreviewAlignY,
-            bgValue:
-              typeof project.canvas.background === 'string'
-                ? project.canvas.background
-                : prev.bgValue,
-            background: loadedBackground ?? prev.background,
+            bgType: backgroundState.bgType,
+            bgValue: backgroundState.bgValue,
+            bgColor: backgroundState.bgColor,
+            bgImage: backgroundState.bgImage,
+            background: loadedBackground,
             gridCols: project.canvas.gridCols ?? prev.gridCols,
             gridRowHeight: project.canvas.gridRowHeight ?? prev.gridRowHeight,
             gridGap: project.canvas.gridGap ?? prev.gridGap,

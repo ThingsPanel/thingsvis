@@ -18,6 +18,7 @@ import { normalizePlatformFieldScope } from '../lib/embedded/default-platform-fi
 import { dataSourceManager } from '../lib/store';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
+import { normalizeCanvasBackground } from '../lib/canvasBackground';
 // =============================================================================
 // Interfaces & Types
 // =============================================================================
@@ -32,7 +33,7 @@ export interface EmbedInitPayload {
     mode?: string;
     width?: number;
     height?: number;
-    background?: string;
+    background?: string | Record<string, unknown>;
     gridCols?: number;
     gridRowHeight?: number;
     gridGap?: number;
@@ -157,7 +158,7 @@ export class WidgetModeStrategy implements EditorStrategy {
         mode: (payload.canvas?.mode || 'fixed') as 'fixed' | 'infinite' | 'grid',
         width: payload.canvas?.width || 1920,
         height: payload.canvas?.height || 1080,
-        background: payload.canvas?.background || '#ffffff',
+        background: normalizeCanvasBackground(payload.canvas?.background),
         gridCols: payload.canvas?.gridCols,
         gridRowHeight: payload.canvas?.gridRowHeight,
         gridGap: payload.canvas?.gridGap,

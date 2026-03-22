@@ -1,20 +1,17 @@
 /**
  * Project Storage Service
- * 
+ *
  * IndexedDB-based project persistence using idb-keyval.
  * Handles project CRUD operations and export/import functionality.
  */
 
-import { createStore, get, set, del, keys } from 'idb-keyval'
-import { ProjectFileSchema, type ProjectFile, type RecentProjectEntry } from './schemas'
-import { STORAGE_CONSTANTS } from './constants'
-import { recentProjects } from './recentProjects'
+import { createStore, get, set, del, keys } from 'idb-keyval';
+import { ProjectFileSchema, type ProjectFile, type RecentProjectEntry } from './schemas';
+import { STORAGE_CONSTANTS } from './constants';
+import { recentProjects } from './recentProjects';
 
 // Create custom store for projects
-const projectsStore = createStore(
-  STORAGE_CONSTANTS.DB_NAME,
-  STORAGE_CONSTANTS.PROJECTS_STORE
-)
+const projectsStore = createStore(STORAGE_CONSTANTS.DB_NAME, STORAGE_CONSTANTS.PROJECTS_STORE);
 
 // =============================================================================
 // Error Types
@@ -24,20 +21,20 @@ export class ImportError extends Error {
   constructor(
     message: string,
     public readonly field?: string,
-    public readonly details?: unknown
+    public readonly details?: unknown,
   ) {
-    super(message)
-    this.name = 'ImportError'
+    super(message);
+    this.name = 'ImportError';
   }
 }
 
 export class StorageError extends Error {
   constructor(
     message: string,
-    public readonly cause?: unknown
+    public readonly cause?: unknown,
   ) {
-    super(message)
-    this.name = 'StorageError'
+    super(message);
+    this.name = 'StorageError';
   }
 }
 
@@ -58,9 +55,9 @@ export async function saveProject(project: ProjectFile): Promise<void> {
         ...project.meta,
         updatedAt: Date.now(),
       },
-    }
+    };
 
-    await set(project.meta.id, updatedProject, projectsStore)
+    await set(project.meta.id, updatedProject, projectsStore);
 
     // Update recent projects list
     recentProjects.add({
@@ -68,16 +65,16 @@ export async function saveProject(project: ProjectFile): Promise<void> {
       name: updatedProject.meta.name,
       thumbnail: updatedProject.meta.thumbnail || '',
       updatedAt: updatedProject.meta.updatedAt,
-    })
+    });
 
     // Track the last opened project for restore-on-reload
     try {
-      localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, updatedProject.meta.id)
+      localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, updatedProject.meta.id);
     } catch {
       // ignore storage quota / privacy mode errors
     }
   } catch (error) {
-    throw new StorageError('Failed to save project', error)
+    throw new StorageError('Failed to save project', error);
   }
 }
 
@@ -87,10 +84,10 @@ export async function saveProject(project: ProjectFile): Promise<void> {
  */
 export async function loadProject(projectId: string): Promise<ProjectFile | null> {
   try {
-    const project = await get<ProjectFile>(projectId, projectsStore)
-    return project ?? null
+    const project = await get<ProjectFile>(projectId, projectsStore);
+    return project ?? null;
   } catch (error) {
-    throw new StorageError('Failed to load project', error)
+    throw new StorageError('Failed to load project', error);
   }
 }
 
@@ -100,10 +97,10 @@ export async function loadProject(projectId: string): Promise<ProjectFile | null
  */
 export async function deleteProject(projectId: string): Promise<void> {
   try {
-    await del(projectId, projectsStore)
-    recentProjects.remove(projectId)
+    await del(projectId, projectsStore);
+    recentProjects.remove(projectId);
   } catch (error) {
-    throw new StorageError('Failed to delete project', error)
+    throw new StorageError('Failed to delete project', error);
   }
 }
 
@@ -112,10 +109,10 @@ export async function deleteProject(projectId: string): Promise<void> {
  */
 export async function projectExists(projectId: string): Promise<boolean> {
   try {
-    const allKeys = await keys<string>(projectsStore)
-    return allKeys.includes(projectId)
+    const allKeys = await keys<string>(projectsStore);
+    return allKeys.includes(projectId);
   } catch (error) {
-    throw new StorageError('Failed to check project existence', error)
+    throw new StorageError('Failed to check project existence', error);
   }
 }
 
@@ -124,9 +121,9 @@ export async function projectExists(projectId: string): Promise<boolean> {
  */
 export async function getAllProjectIds(): Promise<string[]> {
   try {
-    return await keys<string>(projectsStore)
+    return await keys<string>(projectsStore);
   } catch (error) {
-    throw new StorageError('Failed to get project IDs', error)
+    throw new StorageError('Failed to get project IDs', error);
   }
 }
 
@@ -138,25 +135,25 @@ export async function getAllProjectIds(): Promise<string[]> {
  * Export project as downloadable JSON blob.
  */
 export function exportAsBlob(project: ProjectFile): Blob {
-  const json = JSON.stringify(project, null, 2)
-  return new Blob([json], { type: STORAGE_CONSTANTS.MIME_TYPE })
+  const json = JSON.stringify(project, null, 2);
+  return new Blob([json], { type: STORAGE_CONSTANTS.MIME_TYPE });
 }
 
 /**
  * Download project as a .thingsvis file.
  */
 export function downloadProject(project: ProjectFile): void {
-  const blob = exportAsBlob(project)
-  const url = URL.createObjectURL(blob)
-  const filename = `${project.meta.name}${STORAGE_CONSTANTS.FILE_EXTENSION}`
+  const blob = exportAsBlob(project);
+  const url = URL.createObjectURL(blob);
+  const filename = `${project.meta.name}${STORAGE_CONSTANTS.FILE_EXTENSION}`;
 
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
 /**
@@ -169,38 +166,38 @@ export async function importFromFile(file: File): Promise<ProjectFile> {
   if (!file.name.endsWith(STORAGE_CONSTANTS.FILE_EXTENSION) && !file.name.endsWith('.json')) {
     throw new ImportError(
       `Invalid file type. Expected ${STORAGE_CONSTANTS.FILE_EXTENSION} or .json file.`,
-      'filename'
-    )
+      'filename',
+    );
   }
 
   // Read file content
-  let content: string
+  let content: string;
   try {
-    content = await file.text()
+    content = await file.text();
   } catch (error) {
-    throw new ImportError('Failed to read file content', 'file', error)
+    throw new ImportError('Failed to read file content', 'file', error);
   }
 
   // Parse JSON
-  let parsed: unknown
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(content)
+    parsed = JSON.parse(content);
   } catch (error) {
-    throw new ImportError('Invalid JSON format', 'content', error)
+    throw new ImportError('Invalid JSON format', 'content', error);
   }
 
   // Validate schema
-  const result = ProjectFileSchema.safeParse(parsed)
+  const result = ProjectFileSchema.safeParse(parsed);
   if (!result.success) {
-    const firstError = result.error.errors[0]
+    const firstError = result.error.errors[0];
     throw new ImportError(
       `Invalid project file: ${firstError?.message ?? 'Unknown error'}`,
       firstError?.path.join('.'),
-      result.error.errors
-    )
+      result.error.errors,
+    );
   }
 
-  return result.data
+  return result.data;
 }
 
 // =============================================================================
@@ -211,8 +208,8 @@ export async function importFromFile(file: File): Promise<ProjectFile> {
  * Create a new project with default values.
  */
 export function createNewProject(name = 'Untitled Project'): ProjectFile {
-  const now = Date.now()
-  const id = crypto.randomUUID()
+  const now = Date.now();
+  const id = crypto.randomUUID();
 
   return {
     meta: {
@@ -226,11 +223,10 @@ export function createNewProject(name = 'Untitled Project'): ProjectFile {
       mode: 'fixed',
       width: 1920,
       height: 1080,
-      background: '#ffffff',
     },
     nodes: [],
     dataSources: [],
-  }
+  };
 }
 
 // =============================================================================
@@ -247,4 +243,4 @@ export const projectStorage = {
   download: downloadProject,
   importFromFile,
   createNew: createNewProject,
-}
+};

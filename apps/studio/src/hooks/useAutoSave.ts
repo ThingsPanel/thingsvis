@@ -39,6 +39,8 @@ export interface UseAutoSaveOptions {
   getProjectState: () => ProjectFile;
   /** Whether auto-save is enabled */
   enabled?: boolean;
+  /** Save behavior: auto saves on dirty, manual only saves on explicit saveNow() */
+  saveMode?: 'auto' | 'manual';
   /** Callback when a new storage ID is assigned */
   onIdChange?: (newId: string) => void;
 }
@@ -52,7 +54,14 @@ export interface UseAutoSaveOptions {
  * Returns save state and methods to trigger save operations.
  */
 export function useAutoSave(options: UseAutoSaveOptions) {
-  const { projectId, cloudProjectId, getProjectState, enabled = true, onIdChange } = options;
+  const {
+    projectId,
+    cloudProjectId,
+    getProjectState,
+    enabled = true,
+    saveMode = 'auto',
+    onIdChange,
+  } = options;
   const storage = useStorage(cloudProjectId);
   const saveStrategy = useSaveStrategy();
 
@@ -130,7 +139,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     () => autoSaveManager.getStatus(),
   );
 
-  // Initialize auto-save manager - 只在 projectId/enabled 变化时重新初始化
+  // Initialize auto-save manager - reconfigure when projectId/enabled/saveMode changes
   useEffect(() => {
     if (!enabled) return;
 
@@ -139,12 +148,13 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       projectId,
       () => getProjectStateRef.current(),
       (project) => saveProjectRef.current(project),
+      { mode: saveMode },
     );
 
     return () => {
       autoSaveManager.destroy();
     };
-  }, [projectId, enabled]);
+  }, [projectId, enabled, saveMode]);
 
   // Mark dirty - call this when state changes
   const markDirty = useCallback(

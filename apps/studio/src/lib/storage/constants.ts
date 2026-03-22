@@ -1,6 +1,6 @@
 /**
  * Storage layer constants
- * 
+ *
  * Configuration values for IndexedDB, localStorage, and auto-save behavior
  */
 
@@ -53,7 +53,7 @@ export const STORAGE_CONSTANTS = {
   /** Thumbnail dimensions for recent projects */
   THUMBNAIL_WIDTH: 800,
   THUMBNAIL_HEIGHT: 450,
-} as const
+} as const;
 
 /**
  * Default canvas configuration for new projects
@@ -62,7 +62,6 @@ export const DEFAULT_CANVAS_CONFIG = {
   mode: 'fixed' as const,
   width: 1920,
   height: 1080,
-  background: '#ffffff',
   gridEnabled: false,
   gridSize: 10,
-}
+};
