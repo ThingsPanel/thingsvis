@@ -4,12 +4,12 @@
       "thingsvis-widget-custom-glass-panel": {
         "name": "Glass Panel",
         "groupStyle": "Style",
-        "styleMode": "Style Mode",
         "preset": "Texture Preset",
         "blurOffset": "Blur Fine-tune",
         "opacityOffset": "Opacity Fine-tune",
         "highlightOffset": "Highlight Fine-tune",
-        "tintOffset": "Tint Fine-tune"
+        "tintOffset": "Tint Fine-tune",
+        "textColor": "Text Color (empty = inherit theme)"
       }
     }
   }

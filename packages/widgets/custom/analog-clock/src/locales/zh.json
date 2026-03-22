@@ -8,14 +8,6 @@
         "showSecondHand": "显示秒针",
         "showNumbers": "显示数字刻度",
         "bezelWidth": "表圈宽度",
-        "dialColor": "表盘背景",
-        "bezelColor": "表圈颜色",
-        "numberColor": "刻度数字颜色",
-        "hourHandColor": "时针颜色",
-        "minuteHandColor": "分针颜色",
-        "secondHandColor": "秒针颜色",
-        "centerColor": "中心点颜色",
-        "centerBorderColor": "中心描边颜色",
         "timeZone": "时区"
       }
     }

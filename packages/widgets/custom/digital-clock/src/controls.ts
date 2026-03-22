@@ -37,7 +37,5 @@ export const controls = createControlPanel()
       step: 1,
       default: 22,
     });
-    b.addColorPicker('timeColor', { label: `${W}.timeColor`, default: '' });
-    b.addColorPicker('dateColor', { label: `${W}.dateColor`, default: '' });
   })
   .build();

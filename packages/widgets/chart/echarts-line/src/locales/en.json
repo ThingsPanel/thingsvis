@@ -11,8 +11,6 @@
           "showYAxis": "Show Y Axis",
           "timeRangePreset": "Time Range",
           "primaryColor": "Primary Color",
-          "titleColor": "Title Color",
-          "axisLabelColor": "Axis Label Color",
           "smooth": "Smooth Curve",
           "showArea": "Show Area Fill",
           "data": "Preview Data"

@@ -1,6 +1,5 @@
 import {
   defineWidget,
-  resolveLayeredColor,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -52,15 +51,10 @@ function resolveDisplayText(props: Props, ctx: WidgetOverlayContext) {
 }
 
 function resolveTextColor(props: Props, colors: WidgetColors, isPlaceholder: boolean) {
-  if (isPlaceholder) {
+  if (isPlaceholder || props.fill === DEFAULT_TEXT_FILL) {
     return colors.fg;
   }
-  return resolveLayeredColor({
-    instance: props.fill,
-    theme: colors.fg,
-    fallback: colors.fg,
-    inheritValues: [DEFAULT_TEXT_FILL],
-  });
+  return props.fill;
 }
 
 function applyStyles(
@@ -170,13 +164,6 @@ export const Main = defineWidget({
 
     renderText();
 
-    let themeObserver: MutationObserver | null = null;
-    const themeTarget = element.closest('[data-canvas-theme]');
-    if (themeTarget && typeof MutationObserver !== 'undefined') {
-      themeObserver = new MutationObserver(() => renderText());
-      themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
-    }
-
     return {
       update: (nextProps: Props, nextCtx: WidgetOverlayContext) => {
         currentProps = nextProps;
@@ -184,7 +171,6 @@ export const Main = defineWidget({
         renderText();
       },
       destroy: () => {
-        themeObserver?.disconnect();
         element.innerHTML = '';
       },
     };

@@ -3,13 +3,7 @@ import uPlot from 'uplot';
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import {
-    defineWidget,
-    resolveLayeredColor,
-    type WidgetOverlayContext,
-    resolveWidgetColors,
-    type WidgetColors,
-} from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -183,12 +177,7 @@ function buildPreviewSeries(timeRangePreset: Props['timeRangePreset']): ParsedPo
 }
 
 function pickLineColor(props: Props, colors: WidgetColors): string {
-    return resolveLayeredColor({
-        instance: props.primaryColor,
-        theme: colors.series[0] ?? colors.primary,
-        fallback: LEGACY_DEFAULT_PRIMARY,
-        inheritValues: [LEGACY_DEFAULT_PRIMARY],
-    });
+    return colors.series[0] ?? colors.primary ?? (props.primaryColor?.trim() || LEGACY_DEFAULT_PRIMARY);
 }
 
 function pad2(value: number): string {
@@ -285,11 +274,7 @@ export const Main = defineWidget({
 
             titleEl.textContent = currentProps.title || '';
             titleEl.style.display = showTitle ? 'block' : 'none';
-            titleEl.style.color = resolveLayeredColor({
-                instance: currentProps.titleColor,
-                theme: colors.fg,
-                fallback: colors.fg,
-            });
+            titleEl.style.color = colors.fg;
             titleEl.style.fontSize = `${Math.round(14 * scale)}px`;
             titleEl.style.fontWeight = '600';
             titleEl.style.textAlign = getTitleAlignment(currentProps.titleAlign);
@@ -325,17 +310,13 @@ export const Main = defineWidget({
             lastScale = scale;
 
             const currentColors = resolveWidgetColors(element);
-            const currentAxisLabelColor = resolveLayeredColor({
-                instance: currentProps.axisLabelColor,
-                theme: currentColors?.fg,
-                fallback: currentColors?.fg ?? '#333',
-            });
+            const currentTextColor = currentColors?.fg ?? '#333';
             const currentGridColor = currentColors?.axis ?? '#00000010';
             const lineColor = pickLineColor(currentProps, currentColors);
             const spanSec = finalTimes.length > 1 ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!) : fallbackRangeSec;
             const runtimeMessages = getRuntimeMessages(currentLocale);
             applyHeader(scale);
-            emptyStateEl.style.color = withAlpha(currentAxisLabelColor, 0.65);
+            emptyStateEl.style.color = withAlpha(resolveWidgetColors(element).fg, 0.65);
             emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
             emptyStateEl.style.alignItems = 'flex-start';
             emptyStateEl.style.justifyContent = 'flex-end';
@@ -355,7 +336,7 @@ export const Main = defineWidget({
                 },
                 axes: [
                     {
-                        stroke: currentAxisLabelColor,
+                        stroke: currentTextColor,
                         font: axisFont,
                         space: Math.max(72, Math.round(96 * scale)),
                         values: (_u: uPlot, vals: number[]) => vals.map((v) => formatTick(Number(v), spanSec)),
@@ -363,7 +344,7 @@ export const Main = defineWidget({
                         ticks: { stroke: currentGridColor, width: 1 },
                     },
                     {
-                        stroke: currentAxisLabelColor,
+                        stroke: currentTextColor,
                         font: axisFont,
                         grid: { stroke: currentGridColor, width: 1, dash: [5, 5] },
                         ticks: { stroke: currentGridColor, width: 0 },
@@ -386,7 +367,7 @@ export const Main = defineWidget({
                     points: {
                         size: 6,
                         fill: lineColor,
-                        stroke: currentAxisLabelColor,
+                        stroke: currentTextColor,
                     },
                 },
             };

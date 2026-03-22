@@ -6,13 +6,7 @@ import * as echarts from 'echarts';
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import {
-    defineWidget,
-    resolveLayeredColor,
-    type WidgetOverlayContext,
-    resolveWidgetColors,
-    type WidgetColors,
-} from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -32,38 +26,20 @@ function normalizePieData(data: Props['data']) {
     });
 }
 
-const LEGACY_DEFAULT_PRIMARY = '#6965db';
-
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { title, data, primaryColor, titleColor, labelColor, showLegend, isDoughnut } = props;
+    const { title, data, showLegend, isDoughnut } = props;
     const normalizedData = normalizePieData(data);
     const hasData = normalizedData.length > 0;
     const compactMode = scale < 0.85 || normalizedData.length > 6;
 
-    const resolvedTitleColor = resolveLayeredColor({
-        instance: titleColor,
-        theme: colors.fg,
-        fallback: colors.fg,
-    });
-    const resolvedLabelColor = resolveLayeredColor({
-        instance: labelColor,
-        theme: colors.fg,
-        fallback: colors.fg,
-    });
-    const primarySliceColor = resolveLayeredColor({
-        instance: primaryColor,
-        theme: colors.series[0] ?? colors.primary,
-        fallback: LEGACY_DEFAULT_PRIMARY,
-        inheritValues: [LEGACY_DEFAULT_PRIMARY],
-    });
-    const palette = [primarySliceColor, ...colors.series.slice(1)];
+    const textColor = colors.fg;
 
     return {
         backgroundColor: 'transparent',
-        color: palette,
+        color: colors.series,
         graphic: hasData ? undefined : {
             type: 'text',
             left: 'center',
@@ -71,7 +47,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             silent: true,
             style: {
                 text: '暂无数据',
-                fill: resolvedLabelColor,
+                fill: textColor,
                 opacity: 0.65,
                 fontSize: Math.round(14 * scale),
             },
@@ -79,7 +55,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         title: title ? {
             text: title,
             left: 'center',
-            textStyle: { fontSize: Math.round(14 * scale), color: resolvedTitleColor },
+            textStyle: { fontSize: Math.round(14 * scale), color: textColor },
             top: Math.round(10 * scale),
         } : undefined,
         tooltip: {
@@ -89,7 +65,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             show: showLegend,
             bottom: 10,
             left: 'center',
-            textStyle: { color: resolvedLabelColor, fontSize: Math.round(12 * scale) },
+            textStyle: { color: textColor, fontSize: Math.round(12 * scale) },
         },
         dataset: hasData ? {
             source: normalizedData
@@ -113,7 +89,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 avoidLabelOverlap: true,
                 minAngle: 10,
                 label: {
-                    color: resolvedLabelColor,
+                    color: textColor,
                     show: !compactMode,
                     fontSize: Math.max(10, Math.round(12 * scale)),
                     position: compactMode ? 'inside' : 'outer',
@@ -164,19 +140,9 @@ export const Main = defineWidget({
         scheduleResize();
 
         let ro: ResizeObserver | null = null;
-        let themeObserver: MutationObserver | null = null;
         if (typeof ResizeObserver !== 'undefined') {
             ro = new ResizeObserver(() => scheduleResize());
             ro.observe(element);
-        }
-
-        const themeTarget = element.closest('[data-canvas-theme]');
-        if (themeTarget && typeof MutationObserver !== 'undefined') {
-            themeObserver = new MutationObserver(() => {
-                colors = resolveWidgetColors(element);
-                scheduleResize();
-            });
-            themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
         }
 
         return {
@@ -192,7 +158,6 @@ export const Main = defineWidget({
             },
             destroy: () => {
                 ro?.disconnect();
-                themeObserver?.disconnect();
                 chart.dispose();
             },
         };

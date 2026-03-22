@@ -122,7 +122,7 @@ export const controls = createControlPanel()
     builder
       .addColorPicker('fill', {
         label: 'widgets.thingsvis-widget-basic-text.label_49',
-        default: '',
+        default: '#333333',
         binding: true,
       });
   })

@@ -7,8 +7,6 @@ export const PropsSchema = z.object({
   align: z.enum(['left', 'center', 'right']).default('center').describe('align'),
   timeFontSize: z.number().min(18).max(120).default(56).describe('timeFontSize'),
   dateFontSize: z.number().min(10).max(48).default(22).describe('dateFontSize'),
-  timeColor: z.string().default('').describe('timeColor'),
-  dateColor: z.string().default('').describe('dateColor'),
   timeZone: z.string().default('').describe('timeZone'),
 });
 

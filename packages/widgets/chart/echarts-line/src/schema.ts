@@ -21,13 +21,7 @@ export const PropsSchema = z.object({
   titleAlign: z.enum(['left', 'center', 'right']).default('left').describe('props.titleAlign'),
 
   /** 主色调 */
-  primaryColor: z.string().default('').describe('props.primaryColor'),
-
-  /** 标题颜色 */
-  titleColor: z.string().default('').describe('props.titleColor'),
-
-  /** 轴文字颜色 */
-  axisLabelColor: z.string().default('').describe('props.axisLabelColor'),
+  primaryColor: z.string().default('#6965db').describe('props.primaryColor'),
 
   /** 是否显示图例 */
   showLegend: z.boolean().default(true).describe('props.showLegend'),

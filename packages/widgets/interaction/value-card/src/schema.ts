@@ -25,15 +25,6 @@ export const PropsSchema = z.object({
   suffixFontSize: z.number().int().min(10).max(100).default(DEFAULT_SUFFIX_FONT_SIZE).describe('props.suffixFontSize'),
   subtitleFontSize: z.number().int().min(10).max(100).default(DEFAULT_SUBTITLE_FONT_SIZE).describe('props.subtitleFontSize'),
 
-  // Color Settings
-  titleColor: z.string().default('').describe('props.titleColor'),
-  valueColor: z.string().default('').describe('props.valueColor'),
-  subtitleColor: z.string().default('').describe('props.subtitleColor'),
-  iconColor: z.string().default('').describe('props.iconColor'),
-  iconBackgroundColor: z.string().default('').describe('props.iconBackgroundColor'),
-  trendUpColor: z.string().default('').describe('props.trendUpColor'),
-  trendDownColor: z.string().default('').describe('props.trendDownColor'),
-
   // Layout Settings
   align: z.enum(['left', 'center', 'right']).default('left').describe('props.align'),
 });

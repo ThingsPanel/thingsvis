@@ -11,8 +11,6 @@
           "showYAxis": "显示 Y 轴",
           "timeRangePreset": "时间范围",
           "primaryColor": "主色",
-          "titleColor": "标题颜色",
-          "axisLabelColor": "坐标文字颜色",
           "smooth": "平滑曲线",
           "showArea": "显示面积填充",
           "data": "预览数据"

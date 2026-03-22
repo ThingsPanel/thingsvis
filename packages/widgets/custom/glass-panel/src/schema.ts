@@ -8,13 +8,13 @@ export const PropsSchema = z.object({
     "solid-white",
     "custom"
   ]).default("crystal-white").describe("props.preset"),
-  // 风格模式：控制立体感程度
-  styleMode: z.enum(["glass", "flat", "line"]).default("glass").describe("props.styleMode"),
-  // 自定义参数：作为对预设的微调偏移量
+  // 自定义参数：作为对预设的微调偏移量（-1 ~ +1 表示 -100% ~ +100%）
   blurOffset: z.number().min(-20).max(20).default(0).describe("props.blurOffset"),
   opacityOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.opacityOffset"),
   highlightOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.highlightOffset"),
-  tintOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.tintOffset")
+  tintOffset: z.number().min(-0.5).max(0.5).default(0).describe("props.tintOffset"),
+  // 文字颜色：默认继承主题，可独立设置
+  textColor: z.string().default("").describe("props.textColor")
 });
 
 export type Props = z.infer<typeof PropsSchema>;
