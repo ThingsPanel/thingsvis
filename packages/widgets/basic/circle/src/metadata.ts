@@ -8,7 +8,6 @@ export const metadata = {
   category: 'basic',
   icon: 'Circle',
   version: '1.0.0',
-  order: 2,
   resizable: true,
   defaultSize: { width: 100, height: 100 },
   constraints: { minWidth: 20, minHeight: 20 },
