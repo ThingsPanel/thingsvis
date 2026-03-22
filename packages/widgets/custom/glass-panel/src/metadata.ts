@@ -1,7 +1,7 @@
 export const metadata = {
-  id: "basic/glass-panel",
+  id: "custom/glass-panel",
   name: "磨砂面板",
-  category: "basic",
+  category: "custom",
   icon: "AppWindow",
   version: "1.0.0",
   defaultSize: { width: 360, height: 220 },

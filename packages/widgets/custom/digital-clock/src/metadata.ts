@@ -1,7 +1,7 @@
 export const metadata = {
-  id: 'basic/digital-clock',
+  id: 'custom/digital-clock',
   name: '数字时钟',
-  category: 'basic',
+  category: 'custom',
   icon: 'Clock',
   version: '1.0.0',
   defaultSize: { width: 320, height: 132 },

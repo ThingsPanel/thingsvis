@@ -1,4 +1,4 @@
-# basic/glass-panel
+# custom/glass-panel
 
 Decorative glassmorphism panel widget for ThingsVis screens.
 
