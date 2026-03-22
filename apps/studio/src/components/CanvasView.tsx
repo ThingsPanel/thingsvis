@@ -24,7 +24,6 @@ import {
   isPlatformFieldDataSource,
   normalizePlatformBufferSize,
 } from '../embed/platformDeviceCompat';
-import { extractCanvasNodeIdFromTarget } from '../lib/canvasInteraction';
 
 function generateId(prefix = 'node') {
   try {
@@ -335,28 +334,18 @@ const CanvasView = forwardRef<
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (!formatBrushActive) return;
 
-      const nodeId = extractCanvasNodeIdFromTarget(event.target);
-
-      event.preventDefault();
-      event.stopPropagation();
+      const target = event.target as HTMLElement | null;
+      const nodeTarget = target?.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
       if (!nodeId) return;
 
       const applied = onApplyFormatBrush?.(nodeId);
       if (!applied) return;
+
+      event.preventDefault();
+      event.stopPropagation();
     },
     [formatBrushActive, onApplyFormatBrush],
-  );
-
-  const handleContextMenuCapture = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      const nodeId = extractCanvasNodeIdFromTarget(event.target);
-      if (!nodeId) return;
-
-      const selectedIds = (store.getState() as KernelState).selection.nodeIds;
-      if (selectedIds.includes(nodeId)) return;
-      store.getState().selectNode?.(nodeId);
-    },
-    [store],
   );
 
   const hydratePlatformDataSourcesForNodes = useCallback(
@@ -769,7 +758,6 @@ const CanvasView = forwardRef<
         onDragOver={handleDragOver}
         onDrop={handleDrop}
         onMouseDownCapture={handleFormatBrushMouseDownCapture}
-        onContextMenuCapture={handleContextMenuCapture}
         style={{
           width: '100%',
           height: '100%',
@@ -814,7 +802,6 @@ const CanvasView = forwardRef<
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onMouseDownCapture={handleFormatBrushMouseDownCapture}
-      onContextMenuCapture={handleContextMenuCapture}
       style={{
         width: '100%',
         height: '100%',

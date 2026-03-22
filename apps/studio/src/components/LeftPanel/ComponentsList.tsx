@@ -183,20 +183,8 @@ export default function ComponentsList({
       map[category].push(entry);
     });
 
-    Object.keys(map).forEach((category) => {
-      map[category] = [...(map[category] ?? [])].sort((a, b) => {
-        const orderA = a.order ?? Number.MAX_SAFE_INTEGER;
-        const orderB = b.order ?? Number.MAX_SAFE_INTEGER;
-        if (orderA !== orderB) return orderA - orderB;
-
-        const nameA = resolveEntryDisplayName(a, i18n.resolvedLanguage ?? i18n.language);
-        const nameB = resolveEntryDisplayName(b, i18n.resolvedLanguage ?? i18n.language);
-        return nameA.localeCompare(nameB, 'zh-Hans-CN-u-co-pinyin');
-      });
-    });
-
     return map;
-  }, [entries, i18n.language, i18n.resolvedLanguage]);
+  }, [entries]);
 
   const filteredCategoriesMap = useMemo(() => {
     if (!searchQuery.trim()) {
