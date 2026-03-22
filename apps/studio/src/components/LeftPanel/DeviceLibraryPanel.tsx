@@ -89,6 +89,8 @@ export default function DeviceLibraryPanel() {
     () => devices.filter((device) => device.groupId === selectedGroupId),
     [devices, selectedGroupId],
   );
+  const isSelectedGroupLoaded =
+    !selectedGroupId || loadedGroupIds.includes(selectedGroupId) || window.parent === window;
 
   React.useEffect(() => {
     if (groupDevices.length === 0) {
@@ -197,7 +199,11 @@ export default function DeviceLibraryPanel() {
             disabled={groupDevices.length === 0}
           >
             {groupDevices.length === 0 ? (
-              <option value="">{t('binding.loadingData', 'Loading data...')}</option>
+              <option value="">
+                {isSelectedGroupLoaded
+                  ? t('binding.noDevicesInGroup', '该分组下暂无设备')
+                  : t('binding.loadingData', 'Loading data...')}
+              </option>
             ) : (
               groupDevices.map((device) => (
                 <option key={device.deviceId} value={device.deviceId}>
@@ -224,7 +230,9 @@ export default function DeviceLibraryPanel() {
       <div className="flex-1 overflow-y-auto p-2">
         {filteredDevices.length === 0 ? (
           <div className="p-4 text-center text-sm text-muted-foreground">
-            {t('components.noResults', '无匹配结果')}
+            {groupDevices.length === 0 && isSelectedGroupLoaded
+              ? t('components.noDevicesInGroup', '当前分组下暂无设备')
+              : t('components.noResults', '无匹配结果')}
           </div>
         ) : (
           <Accordion
