@@ -46,7 +46,8 @@ function getPresetValues(props: Props): {
   color: string;
   noise: number;
 } {
-  const basePreset = PRESETS[props.preset] ?? PRESETS["frost-white"];
+  const fallbackPreset = PRESETS["frost-white"]!;
+  const basePreset = PRESETS[props.preset] ?? fallbackPreset;
   // 使用偏移量计算最终值
   return computeFinalValues(
     basePreset,
