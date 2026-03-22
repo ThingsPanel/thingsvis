@@ -31,7 +31,7 @@ export interface PresetValues {
 }
 
 /** 精品预设 - 每个都是独立调优的质感+色调组合 */
-export const PRESETS: Record<Props["preset"], PresetValues> = {
+export const PRESETS: Record<string, PresetValues> = {
   // ===== 水晶系列 - 高透高亮 =====
   "crystal-white": {
     blur: 32,
