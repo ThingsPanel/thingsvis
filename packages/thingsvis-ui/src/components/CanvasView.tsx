@@ -1,51 +1,15 @@
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
+import { validateCanvasTheme } from '@thingsvis/schema';
 import type { ActionRuntime } from '../engine/executeActions';
 import { VisualEngine } from '../engine/VisualEngine';
 import { snapPointToGrid } from '../utils/snapping';
 import type { Point } from '../utils/coords';
 import { calculateScaleToFit } from '../modes/mode-controller';
+import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
 
 type Mode = 'fixed' | 'infinite' | 'grid';
-
-const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
-
-function normalizeImageSource(source: string): string {
-  const trimmed = source.trim();
-  if (
-    !trimmed ||
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:') ||
-    trimmed.startsWith('//') ||
-    ABSOLUTE_URL_RE.test(trimmed)
-  ) {
-    return trimmed;
-  }
-
-  const base = (() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
-    if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
-      try {
-        return new URL(document.referrer).origin;
-      } catch {
-        // Fall back to the current page URL below.
-      }
-    }
-
-    return window.location.href;
-  })();
-
-  if (!base) return trimmed;
-
-  try {
-    return new URL(trimmed, base).toString();
-  } catch {
-    return trimmed;
-  }
-}
 
 type Props = {
   store: KernelStore;
@@ -106,8 +70,9 @@ export const CanvasView: React.FC<Props> = ({
   const height = propsHeight || kernelState.canvas.height || 1080;
 
   const pageConfig = (kernelState.page as any)?.config || {};
-  const background = pageConfig.background || { color: 'transparent', size: 'cover', repeat: 'no-repeat' };
-  const backgroundImageUrl = normalizeImageSource(String(background.image || ''));
+  const background = pageConfig.background || {};
+  const normalizedTheme = validateCanvasTheme(pageConfig.theme);
+  const backgroundStyle = resolveCanvasBackgroundStyle(background);
 
   const [internalZoom, setInternalZoom] = useState(1);
   // We use external zoom if provided (works for both fixed and grid modes)
@@ -411,23 +376,25 @@ export const CanvasView: React.FC<Props> = ({
   } : {};
 
   return (
-    <div ref={containerRef} style={{
-      width: '100%',
-      height: '100%',
-      position: 'relative',
-      overflow: 'hidden',
-      backgroundColor: mode === 'infinite' ? background.color : 'hsl(var(--workspace-bg))',
-      // Infinite mode: fall back to --w-artboard-gradient when no custom image is set
-      backgroundImage: mode === 'infinite'
-        ? (backgroundImageUrl
-            ? `url(${backgroundImageUrl})`
-            : (containerRef.current
-                ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
-                : 'none'))
-        : 'none',
-      backgroundSize: background.size,
-      backgroundRepeat: background.repeat,
-    }}>
+    <div
+      ref={containerRef}
+      data-canvas-theme={normalizedTheme}
+      style={{
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        overflow: 'hidden',
+        ...(mode === 'infinite'
+          ? backgroundStyle
+          : {
+              backgroundColor: 'hsl(var(--workspace-bg))',
+              backgroundImage: 'none',
+              backgroundSize: 'auto',
+              backgroundRepeat: 'repeat',
+              backgroundAttachment: 'scroll',
+            }),
+      }}
+    >
       {/* Artboard background (underneath grid and nodes) */}
       {(mode === 'fixed' || mode === 'grid') && (
         <div style={{
@@ -436,15 +403,7 @@ export const CanvasView: React.FC<Props> = ({
           top: vOffset.y,
           width: width * vZoom,
           height: height * vZoom,
-          backgroundColor: background.color || 'hsl(var(--w-bg))',
-          // Fall back to --w-artboard-gradient when no custom image is set
-          backgroundImage: backgroundImageUrl
-            ? `url(${backgroundImageUrl})`
-            : (containerRef.current
-                ? getComputedStyle(containerRef.current).getPropertyValue('--w-artboard-gradient').trim() || 'none'
-                : 'none'),
-          backgroundSize: background.size,
-          backgroundRepeat: background.repeat,
+          ...backgroundStyle,
           pointerEvents: 'none',
         }} />
       )}
