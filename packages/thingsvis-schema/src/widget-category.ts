@@ -10,6 +10,7 @@ export const WIDGET_CATEGORIES = [
   'chart',
   'interaction',
   'media',
+  'resources',
   'data',
   'layout',
   'indicator',
