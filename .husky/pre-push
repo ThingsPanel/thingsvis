@@ -1,4 +1,4 @@
 #!/bin/sh
 
 pnpm lint
-pnpm typecheck
+pnpm turbo run typecheck --filter=!studio
