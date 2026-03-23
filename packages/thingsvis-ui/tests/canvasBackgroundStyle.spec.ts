@@ -27,12 +27,12 @@ describe('canvasBackgroundStyle', () => {
       }),
     ).toMatchObject({
       backgroundColor: '#112233',
-      backgroundImage: 'var(--w-artboard-gradient, none)',
+      backgroundImage: 'none',
       backgroundRepeat: 'repeat-x',
     });
   });
 
-  it('normalizes relative image urls and keeps theme gradient as the fallback layer', () => {
+  it('normalizes relative image urls without mixing in the theme gradient', () => {
     expect(normalizeCanvasBackgroundImageSource('/uploads/demo.png')).toBe(
       'http://localhost:3000/uploads/demo.png',
     );
@@ -41,11 +41,23 @@ describe('canvasBackgroundStyle', () => {
         image: '/uploads/demo.png',
       }),
     ).toMatchObject({
-      backgroundColor: 'var(--w-bg, hsl(var(--w-canvas-bg, 0 0% 100%)))',
-      backgroundImage: 'url(http://localhost:3000/uploads/demo.png), var(--w-artboard-gradient, none)',
+      backgroundColor: 'transparent',
+      backgroundImage: 'url(http://localhost:3000/uploads/demo.png)',
       backgroundSize: 'cover',
       backgroundRepeat: 'no-repeat',
       backgroundAttachment: 'scroll',
+    });
+  });
+
+  it('keeps explicit color as the fallback under an explicit image', () => {
+    expect(
+      resolveCanvasBackgroundStyle({
+        color: '#112233',
+        image: '/uploads/demo.png',
+      }),
+    ).toMatchObject({
+      backgroundColor: 'transparent',
+      backgroundImage: 'url(http://localhost:3000/uploads/demo.png)',
     });
   });
 });

@@ -1,0 +1,17 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-resources-model-3d": {
+        "name": "3D Model"
+      }
+    }
+  },
+  "runtime": {
+    "emptyTitle": "Model URL required",
+    "emptyDescription": "Provide a reachable GLB or GLTF URL in the editor.",
+    "loadingTitle": "Loading model",
+    "loadingDescription": "Large model files may take a little longer.",
+    "errorTitle": "Failed to load model",
+    "errorDescription": "Check the model URL, CORS policy, or switch to proxy mode."
+  }
+}

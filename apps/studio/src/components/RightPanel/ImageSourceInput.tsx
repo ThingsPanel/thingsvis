@@ -13,6 +13,7 @@ import { Upload, Link2, Code, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { uploadFile, dataUrlToFile } from '@/lib/api/uploads';
+import { normalizeCanvasBackgroundImage } from '@/lib/canvasBackground';
 
 type InputMode = 'upload' | 'url' | 'base64';
 
@@ -21,42 +22,8 @@ interface ImageSourceInputProps {
   onChange: (value: string) => void;
 }
 
-const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
-
 function normalizeImageSource(source: string): string {
-  const trimmed = source.trim();
-  if (
-    !trimmed ||
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:') ||
-    trimmed.startsWith('//') ||
-    ABSOLUTE_URL_RE.test(trimmed)
-  ) {
-    return trimmed;
-  }
-
-  const base = (() => {
-    if (typeof window === 'undefined') return undefined;
-
-    const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
-    if (isEmbedded && typeof document !== 'undefined' && document.referrer) {
-      try {
-        return new URL(document.referrer).origin;
-      } catch {
-        // Fall back to the current page URL below.
-      }
-    }
-
-    return window.location.href;
-  })();
-
-  if (!base) return trimmed;
-
-  try {
-    return new URL(trimmed, base).toString();
-  } catch {
-    return trimmed;
-  }
+  return normalizeCanvasBackgroundImage(source) ?? source.trim();
 }
 
 export function ImageSourceInput({ value, onChange }: ImageSourceInputProps) {

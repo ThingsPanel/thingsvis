@@ -67,14 +67,20 @@ export function resolveCanvasBackgroundStyle(
   const color = normalizeString(background.color);
   const rawImage = normalizeString(background.image);
   const imageUrl = rawImage ? normalizeCanvasBackgroundImageSource(rawImage) : '';
+  const hasExplicitColor = isExplicitBackgroundColor(color);
+  const hasExplicitImage = imageUrl.length > 0;
 
   return {
-    backgroundColor: isExplicitBackgroundColor(color)
-      ? color
-      : 'var(--w-bg, hsl(var(--w-canvas-bg, 0 0% 100%)))',
-    backgroundImage: imageUrl
-      ? `url(${imageUrl}), var(--w-artboard-gradient, none)`
-      : 'var(--w-artboard-gradient, none)',
+    backgroundColor: hasExplicitImage
+      ? 'transparent'
+      : hasExplicitColor
+        ? color
+        : 'var(--w-bg, hsl(var(--w-canvas-bg, 0 0% 100%)))',
+    backgroundImage: hasExplicitImage
+      ? `url(${imageUrl})`
+      : hasExplicitColor
+        ? 'none'
+        : 'var(--w-artboard-gradient, none)',
     backgroundSize: normalizeString(background.size) ?? 'cover',
     backgroundRepeat: normalizeString(background.repeat) ?? 'no-repeat',
     backgroundAttachment: normalizeString(background.attachment) ?? 'scroll',

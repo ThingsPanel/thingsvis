@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { deriveCanvasBackgroundState, normalizeCanvasBackground } from './canvasBackground';
+import { apiClient } from './api/client';
+import {
+  deriveCanvasBackgroundState,
+  normalizeCanvasBackground,
+  normalizeCanvasBackgroundImage,
+} from './canvasBackground';
 
 describe('canvasBackground', () => {
   it('keeps missing background undefined instead of inventing a fallback', () => {
@@ -34,7 +39,7 @@ describe('canvasBackground', () => {
       }),
     ).toEqual({
       color: 'transparent',
-      image: '/uploads/bg.png',
+      image: 'http://localhost:3000/api/v1/uploads/bg.png',
       size: 'cover',
       repeat: 'no-repeat',
       attachment: 'scroll',
@@ -50,7 +55,7 @@ describe('canvasBackground', () => {
     ).toEqual({
       background: {
         color: '#101010',
-        image: '/uploads/bg.png',
+        image: 'http://localhost:3000/api/v1/uploads/bg.png',
         size: 'cover',
         repeat: 'no-repeat',
         attachment: 'scroll',
@@ -58,7 +63,35 @@ describe('canvasBackground', () => {
       bgType: 'image',
       bgValue: '#101010',
       bgColor: '#101010',
-      bgImage: '/uploads/bg.png',
+      bgImage: 'http://localhost:3000/api/v1/uploads/bg.png',
     });
+  });
+
+  it('normalizes upload asset paths against the configured api base', () => {
+    expect(normalizeCanvasBackgroundImage('/uploads/bg.png')).toBe(
+      'http://localhost:3000/api/v1/uploads/bg.png',
+    );
+    expect(normalizeCanvasBackgroundImage('uploads/bg.png')).toBe(
+      'http://localhost:3000/api/v1/uploads/bg.png',
+    );
+    expect(normalizeCanvasBackgroundImage('/api/v1/uploads/bg.png')).toBe(
+      'http://localhost:3000/api/v1/uploads/bg.png',
+    );
+  });
+
+  it('keeps upload assets on the embed proxy path instead of falling back to host root', () => {
+    apiClient.configure({ baseUrl: 'http://localhost:5002/thingsvis-api' });
+
+    expect(normalizeCanvasBackgroundImage('/uploads/bg.png')).toBe(
+      'http://localhost:5002/thingsvis-api/uploads/bg.png',
+    );
+    expect(normalizeCanvasBackgroundImage('/api/v1/uploads/bg.png')).toBe(
+      'http://localhost:5002/thingsvis-api/uploads/bg.png',
+    );
+    expect(normalizeCanvasBackgroundImage('http://localhost:5002/api/v1/uploads/bg.png')).toBe(
+      'http://localhost:5002/thingsvis-api/uploads/bg.png',
+    );
+
+    apiClient.configure({ baseUrl: 'http://localhost:3000/api/v1' });
   });
 });

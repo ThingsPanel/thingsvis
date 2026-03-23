@@ -55,6 +55,47 @@ function toAbsoluteBaseUrl(baseUrl: string): string {
   return `http://localhost:8000${baseUrl.startsWith('/') ? baseUrl : `/${baseUrl}`}`;
 }
 
+function trimTrailingSlash(value: string): string {
+  return value.endsWith('/') ? value.slice(0, -1) : value;
+}
+
+function extractUploadPath(source: string, baseUrl: string): string | null {
+  const trimmed = source.trim();
+  if (!trimmed) return null;
+
+  const normalizeUploadPath = (pathname: string): string | null => {
+    if (pathname.startsWith('/uploads/')) return pathname;
+    if (pathname.startsWith('/api/v1/uploads/')) {
+      return pathname.slice('/api/v1'.length);
+    }
+    return null;
+  };
+
+  if (trimmed.startsWith('uploads/')) {
+    return `/${trimmed}`;
+  }
+
+  if (trimmed.startsWith('/')) {
+    return normalizeUploadPath(trimmed);
+  }
+
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return null;
+  }
+
+  try {
+    const base = new URL(toAbsoluteBaseUrl(baseUrl));
+    const candidate = new URL(trimmed);
+    if (candidate.origin !== base.origin) {
+      return null;
+    }
+
+    return normalizeUploadPath(candidate.pathname);
+  } catch {
+    return null;
+  }
+}
+
 function joinApiUrl(baseUrl: string, path: string): string {
   if (/^https?:\/\//i.test(path)) return path;
 
@@ -108,9 +149,16 @@ class ApiClient {
 
   resolveAssetUrl(path: string) {
     if (!path) return path;
+    const uploadPath = extractUploadPath(path, this.baseUrl);
+    if (uploadPath) {
+      return this.getRequestUrl(uploadPath);
+    }
+
     if (/^https?:\/\//i.test(path)) return path;
 
-    return new URL(path, toAbsoluteBaseUrl(this.baseUrl)).toString();
+    const absoluteBase = new URL(toAbsoluteBaseUrl(this.baseUrl));
+    const baseOrigin = `${absoluteBase.origin}${trimTrailingSlash(absoluteBase.pathname) || ''}/`;
+    return new URL(path, baseOrigin).toString();
   }
 
   getAccessToken() {

@@ -1,0 +1,17 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-resources-model-3d": {
+        "name": "3D模型"
+      }
+    }
+  },
+  "runtime": {
+    "emptyTitle": "等待模型地址",
+    "emptyDescription": "请在右侧输入可访问的 GLB/GLTF 地址。",
+    "loadingTitle": "正在加载模型",
+    "loadingDescription": "模型资源较大时会稍慢一些。",
+    "errorTitle": "模型加载失败",
+    "errorDescription": "请检查模型地址、跨域策略或改用代理加载。"
+  }
+}

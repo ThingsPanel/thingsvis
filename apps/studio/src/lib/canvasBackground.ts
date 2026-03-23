@@ -1,4 +1,5 @@
 import type { IPageConfig } from '@thingsvis/schema';
+import { apiClient } from './api/client';
 
 export type ExplicitCanvasBackground = NonNullable<IPageConfig['background']>;
 
@@ -23,6 +24,7 @@ const BACKGROUND_DEFAULTS: Pick<
 const BACKGROUND_SIZES = ['auto', 'cover', 'contain', '100% 100%'] as const;
 const BACKGROUND_REPEATS = ['no-repeat', 'repeat', 'repeat-x', 'repeat-y'] as const;
 const BACKGROUND_ATTACHMENTS = ['fixed', 'scroll'] as const;
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
 
 function normalizeString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
@@ -33,6 +35,26 @@ function normalizeString(value: unknown): string | undefined {
 function normalizeEnum<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
   const normalized = normalizeString(value);
   return normalized && allowed.includes(normalized as T) ? (normalized as T) : undefined;
+}
+
+export function normalizeCanvasBackgroundImage(value: unknown): string | undefined {
+  const trimmed = normalizeString(value);
+  if (!trimmed) return undefined;
+
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('//')) {
+    return trimmed;
+  }
+
+  if (
+    trimmed.startsWith('/uploads/') ||
+    trimmed.startsWith('uploads/') ||
+    trimmed.startsWith('/api/v1/uploads/') ||
+    ABSOLUTE_URL_RE.test(trimmed)
+  ) {
+    return apiClient.resolveAssetUrl(trimmed);
+  }
+
+  return trimmed;
 }
 
 export function normalizeCanvasBackground(input: unknown): ExplicitCanvasBackground | undefined {
@@ -47,7 +69,7 @@ export function normalizeCanvasBackground(input: unknown): ExplicitCanvasBackgro
 
   const raw = input as Record<string, unknown>;
   const color = normalizeString(raw.color);
-  const image = normalizeString(raw.image);
+  const image = normalizeCanvasBackgroundImage(raw.image);
   const size = normalizeEnum(raw.size, BACKGROUND_SIZES);
   const repeat = normalizeEnum(raw.repeat, BACKGROUND_REPEATS);
   const attachment = normalizeEnum(raw.attachment, BACKGROUND_ATTACHMENTS);
@@ -76,7 +98,7 @@ export function deriveCanvasBackgroundState(input: unknown): CanvasBackgroundSta
         : '';
   const bgImage =
     input && typeof input === 'object'
-      ? (normalizeString((input as Record<string, unknown>).image) ?? '')
+      ? (normalizeCanvasBackgroundImage((input as Record<string, unknown>).image) ?? '')
       : '';
 
   return {
