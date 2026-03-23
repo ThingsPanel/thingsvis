@@ -11,8 +11,6 @@ function renderRectangle(element: HTMLElement, props: Props): void {
   element.style.height = '100%';
   element.style.boxSizing = 'border-box';
   element.style.backgroundColor = props.fill;
-  element.style.border = props.strokeWidth > 0 ? `${props.strokeWidth}px solid ${props.stroke}` : 'none';
-  element.style.borderRadius = props.cornerRadius > 0 ? `${props.cornerRadius}px` : '0';
   element.style.opacity = String(props.opacity);
 }
 
