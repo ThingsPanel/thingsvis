@@ -75,6 +75,9 @@ ENV PORT=$PORT
 
 RUN apk add --no-cache openssl libssl3 postgresql-client
 
+# Install tsx and prisma for running seed scripts and migrations
+RUN npm install -g tsx prisma@5.22.0
+
 # Copy Next.js standalone output
 COPY --from=builder /app/apps/server/.next/standalone ./
 COPY --from=builder /app/apps/server/.next/static ./apps/server/.next/static
@@ -84,6 +87,8 @@ COPY --from=builder /app/apps/server/public ./apps/server/public
 COPY --from=builder /app/apps/server/prisma ./apps/server/prisma
 COPY --from=builder /app/apps/server/node_modules/.prisma ./apps/server/node_modules/.prisma
 COPY --from=builder /app/apps/server/node_modules/@prisma ./apps/server/node_modules/@prisma
+COPY --from=builder /app/apps/server/node_modules/bcryptjs ./apps/server/node_modules/bcryptjs
+COPY --from=builder /app/apps/server/node_modules/.bin/bcryptjs ./apps/server/node_modules/.bin/bcryptjs
 
 # Copy seed script + dependencies for first-run seeding
 COPY --from=builder /app/apps/server/scripts ./apps/server/scripts
