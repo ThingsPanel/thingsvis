@@ -517,6 +517,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         <WidgetErrorBoundary widgetType={nodeId}>
             <div
                 data-node-id={nodeId}
+                data-overlay-node-id={nodeId}
                 onMouseDown={handleMouseDown}
                 onClick={handlePreviewClick}
                 onDoubleClick={handleDoubleClick}

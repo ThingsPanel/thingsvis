@@ -58,7 +58,12 @@ export function resolveCanvasBackgroundStyle(
   | 'backgroundRepeat'
   | 'backgroundAttachment'
 > {
-  const background = input && typeof input === 'object' ? (input as Record<string, unknown>) : {};
+  const background =
+    typeof input === 'string'
+      ? { color: input }
+      : input && typeof input === 'object'
+        ? (input as Record<string, unknown>)
+        : {};
   const color = normalizeString(background.color);
   const rawImage = normalizeString(background.image);
   const imageUrl = rawImage ? normalizeCanvasBackgroundImageSource(rawImage) : '';

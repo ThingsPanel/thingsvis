@@ -127,6 +127,22 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const pageConfig = (kernelState.page as Record<string, unknown>)?.config as Record<string, unknown> | undefined;
     const background = (pageConfig?.background as Record<string, unknown>) || {};
     const backgroundStyle = resolveCanvasBackgroundStyle(background);
+    const explicitBackgroundColor =
+        typeof background.color === 'string' ? background.color.trim() : '';
+    const explicitBackgroundImage =
+        typeof background.image === 'string' ? background.image.trim() : '';
+    const shouldUseExplicitGridBackground =
+        (explicitBackgroundColor.length > 0 && explicitBackgroundColor.toLowerCase() !== 'transparent') ||
+        explicitBackgroundImage.length > 0;
+    const gridSurfaceBackgroundStyle = shouldUseExplicitGridBackground
+        ? backgroundStyle
+        : {
+            backgroundColor: 'transparent',
+            backgroundImage: 'none',
+            backgroundSize: 'auto',
+            backgroundRepeat: 'repeat',
+            backgroundAttachment: 'scroll',
+        };
 
     // ── ResizeObserver to track container width ───────────────────────────────
 
@@ -422,7 +438,11 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 width: canvasW,
                 minHeight: canvasMinH,
                 position: 'relative',
-                ...backgroundStyle,
+                backgroundColor: 'transparent',
+                backgroundImage: 'none',
+                backgroundSize: 'auto',
+                backgroundRepeat: 'repeat',
+                backgroundAttachment: 'scroll',
                 boxSizing: 'border-box',
                 // Bottom breathing room: add padding so the last row of widgets is not flush
                 // with the canvas bottom edge (only relevant in fluid editor mode).
@@ -430,6 +450,16 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 ...(fullWidth ? {} : { boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }),
             }}
         >
+            <div
+                aria-hidden="true"
+                style={{
+                    position: 'absolute',
+                    inset: 0,
+                    pointerEvents: 'none',
+                    ...gridSurfaceBackgroundStyle,
+                }}
+            />
+
             {/* Grid line background */}
             {(showGridLinesProp ?? effectiveSettings.showGridLines) && colWidth > 0 && (
                 <GridCanvasBackground
