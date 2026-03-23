@@ -67,9 +67,6 @@ export async function POST(request: NextRequest) {
           plan: 'FREE',
         },
       });
-
-      // First-time SSO login: seed default project + home dashboard for this tenant
-      await seedSsoTenantDefaultData(tenant.id, userInfo.id);
     }
 
     let user = await prisma.user.findFirst({
@@ -99,6 +96,8 @@ export async function POST(request: NextRequest) {
           tenant: true,
         },
       });
+      // First-time SSO login: seed default project + home dashboard for this tenant
+      await seedSsoTenantDefaultData(tenant.id, user.id);
     } else {
       user = await prisma.user.update({
         where: { id: user.id },
