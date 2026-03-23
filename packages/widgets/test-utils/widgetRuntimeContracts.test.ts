@@ -180,9 +180,13 @@ const expectedWidgetModulePaths = [
   '../media/iframe/src/index.ts',
   '../media/image/src/index.ts',
   '../media/video-player/src/index.ts',
+  '../resources/model-3d/src/index.ts',
 ].sort();
 const runtimeContractModulePaths = widgetModulePaths.filter(
-  (modulePath) => !modulePath.includes('../chart/') && !modulePath.includes('../media/video-player/'),
+  (modulePath) =>
+    !modulePath.includes('../chart/') &&
+    !modulePath.includes('../media/video-player/') &&
+    !modulePath.includes('../resources/model-3d/'),
 );
 
 describe('widget runtime contracts', () => {
@@ -201,7 +205,7 @@ describe('widget runtime contracts', () => {
     expect(widgetModulePaths).toEqual(expectedWidgetModulePaths);
   });
 
-  it('keeps chart and video-player widgets on dedicated runtime tests', () => {
+  it('keeps chart, video-player, and WebGL widgets on dedicated runtime tests', () => {
     expect(widgetModulePaths.filter((modulePath) => !runtimeContractModulePaths.includes(modulePath))).toEqual([
       '../chart/echarts-bar/src/index.ts',
       '../chart/echarts-gauge/src/index.ts',
@@ -209,6 +213,7 @@ describe('widget runtime contracts', () => {
       '../chart/echarts-pie/src/index.ts',
       '../chart/uplot-line/src/index.ts',
       '../media/video-player/src/index.ts',
+      '../resources/model-3d/src/index.ts',
     ]);
   });
 
