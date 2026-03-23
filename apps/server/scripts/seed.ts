@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client'
 import { hash } from 'bcryptjs'
-import { LOCAL_AUTH_TYPE } from '../src/lib/validators/auth'
+
+const LOCAL_AUTH_TYPE = 'LOCAL'
 
 const prisma = new PrismaClient()
 
