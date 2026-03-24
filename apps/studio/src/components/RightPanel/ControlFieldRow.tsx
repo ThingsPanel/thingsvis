@@ -147,7 +147,7 @@ export function ControlFieldRow({
     // For 'field', we wait for a concrete FieldPicker selection to persist.
   };
 
-  const showOverriddenHint = mode !== 'static' && propsValue !== undefined;
+  const showOverriddenHint = Boolean(binding) && propsValue !== undefined;
   const numberFieldUsesFloat =
     [propsValue, field.default, field.min, field.max, field.step].some(
       (candidate) => typeof candidate === 'number' && !Number.isInteger(candidate),
@@ -460,7 +460,12 @@ export function ControlFieldRow({
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   } as any),
                 });
+                return;
               }
+
+              updateNode({
+                data: removeBinding(bindings, field.path),
+              });
             }}
           />
         )}

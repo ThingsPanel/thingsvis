@@ -305,13 +305,6 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
   // Non-platform: prefer cached fieldSchema (offline-friendly); fall back to live snapshot traversal.
   const { paths, pathInfos, truncated } = useMemo(() => {
     if (isPlatformSource) {
-      if (platformSnapshot && typeof platformSnapshot === 'object') {
-        return listFieldPaths(platformSnapshot, {
-          maxDepth: maxDepth ?? 5,
-          maxNodes: maxNodes ?? 200,
-        });
-      }
-      // Fallback: static field list + optional jsonSchema sub-path hints
       const staticInfos: FieldPathInfo[] = [];
       (
         platformFields as Array<{ id: string; type?: string; jsonSchema?: Record<string, string> }>
@@ -326,6 +319,24 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           });
         }
       });
+
+      if (platformSnapshot && typeof platformSnapshot === 'object') {
+        const snapshotResult = listFieldPaths(platformSnapshot, {
+          maxDepth: maxDepth ?? 5,
+          maxNodes: maxNodes ?? 200,
+        });
+        const merged = new Map<string, FieldPathInfo>();
+        snapshotResult.pathInfos.forEach((info) => merged.set(info.path, info));
+        staticInfos.forEach((info) => {
+          if (!merged.has(info.path)) merged.set(info.path, info);
+        });
+        const mergedInfos = Array.from(merged.values());
+        return {
+          paths: mergedInfos.map((info) => info.path),
+          pathInfos: mergedInfos,
+          truncated: snapshotResult.truncated,
+        };
+      }
       return { paths: staticInfos.map((i) => i.path), pathInfos: staticInfos, truncated: false };
     }
     if (fieldSchema && fieldSchema.length > 0) {
