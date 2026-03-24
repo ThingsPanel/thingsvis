@@ -1,15 +1,14 @@
 /**
- * 属性面板控制配置
+ * Text widget control panel configuration.
  *
- * 使用 @thingsvis/widget-sdk 的 createControlPanel Builder API
- * NOTE: backgroundColor / opacity / padding 已迁移至画布引擎的 BaseStylePanel 统一管理
+ * Note: backgroundColor / opacity / padding are handled by BaseStylePanel.
  */
 
 import { createControlPanel } from '@thingsvis/widget-sdk';
 
 export const controls = createControlPanel()
   // ============================================
-  // 内容分组
+  // Content group
   // ============================================
   .addContentGroup((builder) => {
     builder.addCustom('text', 'textarea', {
@@ -20,7 +19,18 @@ export const controls = createControlPanel()
   })
 
   // ============================================
-  // 字体分组
+  // Style group
+  // ============================================
+  .addStyleGroup((builder) => {
+    builder.addColorPicker('fill', {
+      label: 'widgets.thingsvis-widget-basic-text.label_49',
+      default: '',
+      binding: true,
+    });
+  })
+
+  // ============================================
+  // Font group
   // ============================================
   .addGroup('Font', (builder) => {
     builder
@@ -70,7 +80,7 @@ export const controls = createControlPanel()
   }, { label: { zh: '字体', en: 'Font' } })
 
   // ============================================
-  // 排版分组
+  // Layout group
   // ============================================
   .addGroup('Layout', (builder) => {
     builder
@@ -116,19 +126,7 @@ export const controls = createControlPanel()
   }, { label: { zh: '排版', en: 'Layout' } })
 
   // ============================================
-  // 颜色分组 — 只保留文字色（背景/透明度由 BaseStylePanel 管理）
-  // ============================================
-  .addStyleGroup((builder) => {
-    builder
-      .addColorPicker('fill', {
-        label: 'widgets.thingsvis-widget-basic-text.label_49',
-        default: '',
-        binding: true,
-      });
-  })
-
-  // ============================================
-  // 阴影分组
+  // Shadow group
   // ============================================
   .addGroup('Shadow', (builder) => {
     builder
