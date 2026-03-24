@@ -9,6 +9,7 @@ import * as LucideIcons from 'lucide-react';
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
 import { IconPicker } from './IconPicker';
 import ImageSourceInput from './ImageSourceInput';
+import ModelSourceInput from './ModelSourceInput';
 import { resolveLabel } from './PropsPanel';
 import { ColorInput } from '@/components/ui/color-input';
 import {
@@ -25,6 +26,7 @@ import {
 type Props = {
   kernelStore: KernelStore;
   nodeId: string;
+  componentType?: string;
   field: ControlField;
   propsValue: unknown;
   bindings: DataBinding[] | undefined;
@@ -43,6 +45,7 @@ function allowedModes(field: ControlField): BindingMode[] {
 export function ControlFieldRow({
   kernelStore,
   nodeId,
+  componentType,
   field,
   propsValue,
   bindings,
@@ -207,18 +210,24 @@ export function ControlFieldRow({
       <div className="w-full min-w-0 flex flex-col justify-center">
         {mode === 'static' && (
           <>
-            {field.kind === 'string' && (
-              <Input
-                value={typeof propsValue === 'string' ? propsValue : ''}
-                onChange={(e) => setStatic(e.target.value)}
-                className="h-8 text-sm"
-                placeholder={
-                  field.placeholder
-                    ? t(field.placeholder, { defaultValue: field.placeholder })
-                    : undefined
-                }
-              />
-            )}
+            {field.kind === 'string' &&
+              (componentType === 'resources/model-3d' && field.path === 'modelUrl' ? (
+                <ModelSourceInput
+                  value={typeof propsValue === 'string' ? propsValue : ''}
+                  onChange={(nextValue) => setStatic(nextValue)}
+                />
+              ) : (
+                <Input
+                  value={typeof propsValue === 'string' ? propsValue : ''}
+                  onChange={(e) => setStatic(e.target.value)}
+                  className="h-8 text-sm"
+                  placeholder={
+                    field.placeholder
+                      ? t(field.placeholder, { defaultValue: field.placeholder })
+                      : undefined
+                  }
+                />
+              ))}
 
             {field.kind === 'textarea' && (
               <textarea

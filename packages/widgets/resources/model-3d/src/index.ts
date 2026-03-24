@@ -7,6 +7,7 @@ import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+import { resolveWidgetApiBaseUrl } from './api-base';
 
 type RuntimeMessages = (typeof zh)['runtime'];
 type RequestMode = Props['requestMode'];
@@ -89,8 +90,26 @@ function isRemoteHttpUrl(source: string): boolean {
   }
 }
 
+function isManagedUploadUrl(source: string): boolean {
+  try {
+    const url = new URL(source);
+    const pathname = url.pathname;
+    return (
+      pathname.startsWith('/uploads/') ||
+      pathname.startsWith('/api/v1/uploads/') ||
+      pathname.includes('/thingsvis-api/uploads/')
+    );
+  } catch {
+    return false;
+  }
+}
+
 function shouldProxyRequest(source: string, requestMode: RequestMode): boolean {
   if (!isRemoteHttpUrl(source)) {
+    return false;
+  }
+
+  if (isManagedUploadUrl(source)) {
     return false;
   }
 
@@ -118,10 +137,8 @@ function buildProxyUrl(source: string): string {
     return source;
   }
 
-  return new URL(
-    `/api/v1/public/assets/proxy?url=${encodeURIComponent(source)}`,
-    window.location.origin,
-  ).toString();
+  const apiBaseUrl = resolveWidgetApiBaseUrl().replace(/\/$/, '');
+  return `${apiBaseUrl}/public/assets/proxy?url=${encodeURIComponent(source)}`;
 }
 
 function getRequestUrl(source: string, requestMode: RequestMode): string {

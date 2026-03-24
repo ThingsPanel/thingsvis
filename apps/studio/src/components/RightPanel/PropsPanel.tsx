@@ -354,6 +354,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                         key={field.path}
                         kernelStore={kernelStore}
                         nodeId={nodeId}
+                        componentType={componentType}
                         field={field}
                         propsValue={schema.props?.[field.path]}
                         bindings={schema.data}

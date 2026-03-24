@@ -21,6 +21,15 @@ export interface UploadProgress {
   percentage: number;
 }
 
+export interface ImportRemoteAssetResponse {
+  url: string;
+  filename: string;
+  size: number;
+  type: string | null;
+  sourceUrl: string;
+  importedAt: string;
+}
+
 /**
  * Upload a file to the server.
  *
@@ -149,4 +158,27 @@ export async function uploadDataUrl(
 ): Promise<{ data?: UploadResponse; error?: string }> {
   const file = dataUrlToFile(dataUrl, filename);
   return uploadFile(file);
+}
+
+export async function importRemoteAsset(
+  url: string,
+): Promise<{ data?: ImportRemoteAssetResponse; error?: string }> {
+  const response = await apiClient.post<ImportRemoteAssetResponse>('/public/assets/import', {
+    url,
+  });
+
+  if (response.error) {
+    return { error: response.error };
+  }
+
+  if (!response.data) {
+    return { error: 'Import failed' };
+  }
+
+  const data = { ...response.data };
+  if (data.url.startsWith('/')) {
+    data.url = apiClient.resolveAssetUrl(data.url);
+  }
+
+  return { data };
 }
