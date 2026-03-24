@@ -33,7 +33,6 @@
   "devDependencies": {
     "@commitlint/cli": "^20.4.2",
     "@commitlint/config-conventional": "^20.4.2",
-    "@playwright/test": "^1.58.0",
     "@rspack/cli": "^1.0.0",
     "@rspack/core": "^1.0.0",
     "@types/node": "^20.10.6",

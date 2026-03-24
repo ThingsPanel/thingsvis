@@ -1,0 +1,17 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-luxury-clock": {
+        "name": "奢华表盘",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "showSecondHand": "显示秒针",
+        "showNumbers": "显示数字",
+        "showTicks": "显示刻度",
+        "smoothSweep": "平滑扫秒",
+        "romanNumerals": "罗马数字",
+        "accentColor": "强调色"
+      }
+    }
+  }
+}

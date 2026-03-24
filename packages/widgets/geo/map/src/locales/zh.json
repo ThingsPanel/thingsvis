@@ -1,0 +1,22 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-geo-map": {
+        "name": "地图定位",
+        "groupContent": "位置",
+        "groupStyle": "样式",
+        "lat": "纬度",
+        "lng": "经度",
+        "zoom": "缩放级别",
+        "showMarker": "显示标记",
+        "markerTitle": "标记标题",
+        "mapStyle": "地图样式",
+        "styleStandard": "标准",
+        "styleDark": "暗黑",
+        "styleLight": "浅色",
+        "showZoomControl": "显示缩放控件",
+        "interactive": "允许交互"
+      }
+    }
+  }
+}
