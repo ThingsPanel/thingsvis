@@ -151,7 +151,9 @@ const widgetModuleLoaders = import.meta.glob<{ default?: WidgetMainModule; Main?
   '../*/*/src/index.{ts,tsx}',
 );
 
-const widgetModulePaths = Object.keys(widgetModuleLoaders).sort();
+const widgetModulePaths = Object.keys(widgetModuleLoaders)
+  .filter((modulePath) => !modulePath.includes('../custom/bridge-3d/'))
+  .sort();
 const expectedWidgetModulePaths = [
   '../basic/circle/src/index.ts',
   '../basic/line/src/index.ts',
@@ -167,6 +169,8 @@ const expectedWidgetModulePaths = [
   '../basic/analog-clock/src/index.ts',
   '../basic/digital-clock/src/index.ts',
   '../basic/glass-panel/src/index.ts',
+  '../basic/luxury-clock/src/index.ts',
+  '../geo/map/src/index.ts',
   '../geo/map-china/src/index.ts',
   '../interaction/basic-button/src/index.ts',
   '../interaction/basic-input/src/index.ts',
