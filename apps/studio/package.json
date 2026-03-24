@@ -6,8 +6,7 @@
     "dev": "rsbuild dev",
     "build": "rsbuild build",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc --noEmit",
-    "test:e2e": "playwright test"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.4",
@@ -50,7 +49,6 @@
   },
   "devDependencies": {
     "@module-federation/rspack": "^0.6.0",
-    "@playwright/test": "^1.58.0",
     "@types/react": "^18.2.41",
     "@types/react-dom": "^18.2.17",
     "@types/react-router-dom": "^5.3.3",

@@ -1,0 +1,22 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-geo-map": {
+        "name": "Map Location",
+        "groupContent": "Location",
+        "groupStyle": "Style",
+        "lat": "Latitude",
+        "lng": "Longitude",
+        "zoom": "Zoom Level",
+        "showMarker": "Show Marker",
+        "markerTitle": "Marker Title",
+        "mapStyle": "Map Style",
+        "styleStandard": "Standard",
+        "styleDark": "Dark",
+        "styleLight": "Light",
+        "showZoomControl": "Show Zoom Control",
+        "interactive": "Interactive"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "thingsvis-widget-geo-map",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack serve --port 3227",
+    "build": "rspack build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@thingsvis/widget-sdk": "workspace:*",
+    "leaflet": "^1.9.4",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "@thingsvis/widget-config": "workspace:*",
+    "@types/leaflet": "^1.9.8",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
+  },
+  "thingsvis": {
+    "displayName": "地图定位",
+    "icon": "MapPin",
+    "i18n": {
+      "zh": "地图定位",
+      "en": "Map Location"
+    }
+  }
+}

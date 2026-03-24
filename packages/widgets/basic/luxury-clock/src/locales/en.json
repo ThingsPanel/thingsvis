@@ -1,0 +1,17 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-luxury-clock": {
+        "name": "Luxury Clock",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "showSecondHand": "Show Second Hand",
+        "showNumbers": "Show Numbers",
+        "showTicks": "Show Ticks",
+        "smoothSweep": "Smooth Sweep",
+        "romanNumerals": "Roman Numerals",
+        "accentColor": "Accent Color"
+      }
+    }
+  }
+}
