@@ -384,6 +384,7 @@ export class FieldBuilder {
 
 /** 标准选项类型 */
 export type StandardOption = 'opacity' | 'shadow' | 'border' | 'background' | 'transform';
+export type GroupOptions = { label?: I18nLabel; expanded?: boolean };
 
 /**
  * 控件面板构建器
@@ -419,7 +420,7 @@ export class ControlPanelBuilder {
   addGroup(
     id: ControlGroupId | string,
     builderFn: (builder: FieldBuilder) => void,
-    options: { label?: I18nLabel; expanded?: boolean } = {}
+    options: GroupOptions = {}
   ): this {
     const fieldBuilder = new FieldBuilder();
     builderFn(fieldBuilder);
@@ -435,18 +436,18 @@ export class ControlPanelBuilder {
   }
 
   /** 添加内容分组（快捷方法） */
-  addContentGroup(builderFn: (builder: FieldBuilder) => void): this {
-    return this.addGroup('Content', builderFn, { label: '内容' });
+  addContentGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
+    return this.addGroup('Content', builderFn, { label: '内容', ...options });
   }
 
   /** 添加样式分组（快捷方法） */
-  addStyleGroup(builderFn: (builder: FieldBuilder) => void): this {
-    return this.addGroup('Style', builderFn, { label: '样式' });
+  addStyleGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
+    return this.addGroup('Style', builderFn, { label: '样式', ...options });
   }
 
   /** 添加数据分组（快捷方法） */
-  addDataGroup(builderFn: (builder: FieldBuilder) => void): this {
-    return this.addGroup('Data', builderFn, { label: '数据' });
+  addDataGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
+    return this.addGroup('Data', builderFn, { label: '数据', ...options });
   }
 
   /** 添加高级分组（快捷方法） */

@@ -2,8 +2,10 @@
 
 export const PropsSchema = z.object({
   areaColor: z.string().default('').describe('Area Color'),
-  borderColor: z.string().default('').describe('Border Color'),
-  borderWidth: z.number().min(0).max(10).default(1).describe('Border Width'),
+  regionBorderColor: z.string().default('').describe('Region Border Color'),
+  regionBorderWidth: z.number().min(0).max(10).default(1).describe('Region Border Width'),
+  borderColor: z.string().optional().describe('Legacy Region Border Color'),
+  borderWidth: z.number().min(0).max(10).optional().describe('Legacy Region Border Width'),
   emphasisAreaColor: z.string().default('').describe('Emphasis Area Color'),
   showLabel: z.boolean().default(false).describe('Show Province Label'),
   labelColor: z.string().default('').describe('Label Color'),

@@ -47,10 +47,12 @@ function renderProgress(element: HTMLElement, props: Props, colors: WidgetColors
   const textSecondary = withAlpha(textPrimary, 0.7);
   const trackColor = props.trackColor || withAlpha(textPrimary, 0.1);
   const primaryColor = props.color || colors.primary || '#3b82f6';
-  
+  const radius = Math.max(0, props.borderRadius);
   const percentage = pct(props.value, props.max);
   const barColor = resolveColor(props.value, primaryColor, props.thresholds);
-  
+  const isCompactHorizontal = props.orientation === 'horizontal' && !props.label && props.showValue;
+  const transition = props.animated ? 'width 0.4s ease, height 0.4s ease, background 0.3s ease' : 'none';
+
   element.style.cssText = `
     width: 100%;
     height: 100%;
@@ -87,7 +89,50 @@ function renderProgress(element: HTMLElement, props: Props, colors: WidgetColors
       ${valueHtml}
     </div>
   ` : '';
-  
+
+  if (isCompactHorizontal) {
+    const trackHeight = Math.max(8, Math.min(16, element.clientHeight - 8));
+
+    element.innerHTML = `
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        height: 100%;
+        padding: 4px 8px;
+        box-sizing: border-box;
+      ">
+        <div style="
+          flex: 1 1 auto;
+          min-width: 0;
+          height: ${trackHeight}px;
+          border-radius: ${radius}px;
+          overflow: hidden;
+          background: ${trackColor};
+        ">
+          <div style="
+            height: 100%;
+            width: ${percentage}%;
+            border-radius: ${radius}px;
+            background: ${barColor};
+            transition: ${transition};
+          "></div>
+        </div>
+        <span style="
+          flex: 0 0 auto;
+          font-size: ${props.fontSize}px;
+          font-weight: 600;
+          color: ${barColor};
+          line-height: 1;
+          white-space: nowrap;
+        ">${props.value}${props.unit}</span>
+      </div>
+    `;
+
+    return;
+  }
+
   element.innerHTML = `
     <div style="
       display: flex;
@@ -102,16 +147,16 @@ function renderProgress(element: HTMLElement, props: Props, colors: WidgetColors
       <div style="
         width: 100%;
         height: 12px;
-        border-radius: 6px;
+        border-radius: ${radius}px;
         overflow: hidden;
         background: ${trackColor};
       ">
         <div style="
           height: 100%;
           width: ${percentage}%;
-          border-radius: 6px;
+          border-radius: ${radius}px;
           background: ${barColor};
-          transition: width 0.4s ease, background 0.3s;
+          transition: ${transition};
         "></div>
       </div>
     </div>

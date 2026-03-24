@@ -37,7 +37,7 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
   };
 
   return (
-    <Accordion type="multiple" defaultValue={['background', 'border', 'others']} className="w-full">
+    <Accordion type="multiple" defaultValue={[]} className="w-full">
       {/* Background */}
       <AccordionItem value="background" className="border-b px-1">
         <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">

@@ -3,7 +3,8 @@ import { z } from 'zod';
 export const PropsSchema = z.object({
   modelUrl: z.string().default('').describe('Remote GLB/GLTF URL'),
   requestMode: z.enum(['auto', 'direct', 'proxy']).default('auto').describe('Model request mode'),
-  backgroundColor: z.string().default('transparent').describe('Canvas background color'),
+  canvasBackgroundColor: z.string().default('transparent').describe('Canvas background color'),
+  backgroundColor: z.string().optional().describe('Legacy canvas background color'),
   modelScale: z.number().min(0.01).max(20).default(1).describe('Model scale'),
   positionX: z.number().min(-1000).max(1000).default(0).describe('Model position X'),
   positionY: z.number().min(-1000).max(1000).default(0).describe('Model position Y'),

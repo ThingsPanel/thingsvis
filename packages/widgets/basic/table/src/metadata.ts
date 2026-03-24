@@ -6,7 +6,7 @@ export const metadata = {
   version: '1.1.0',
   order: 4,
   description: 'Clean data table with theme-aware styling',
-  defaultSize: { width: 600, height: 220 },
+  defaultSize: { width: 300, height: 160 },
   resizable: true,
   constraints: { minWidth: 180, minHeight: 100 },
 };

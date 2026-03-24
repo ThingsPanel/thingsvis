@@ -314,7 +314,9 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const renderControlsPanel = () => {
     if (!controls) return null;
 
-    const defaultOpenGroups = controls.groups.map((g) => g.id);
+    const defaultOpenGroups = controls.groups
+      .filter((group) => group.expanded !== false)
+      .map((group) => group.id);
 
     return (
       <Tabs defaultValue="style" className="w-full">

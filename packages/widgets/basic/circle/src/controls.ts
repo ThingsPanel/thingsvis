@@ -9,4 +9,6 @@ export const controls = generateControls(PropsSchema, {
   overrides: {
     fill: { kind: 'color' },
   },
+
+  exclude: ['stroke', 'strokeWidth'],
 });

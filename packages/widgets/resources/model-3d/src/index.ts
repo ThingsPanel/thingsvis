@@ -29,6 +29,10 @@ function resolveMessages(locale: string | undefined): RuntimeMessages {
   return zh.runtime;
 }
 
+function getCanvasBackgroundColor(value: Props): string {
+  return value.canvasBackgroundColor || value.backgroundColor || 'transparent';
+}
+
 function normalizeModelUrl(source: string): string {
   const trimmed = source.trim();
   if (
@@ -391,7 +395,7 @@ export const Main = defineWidget({
     element.style.height = '100%';
     element.style.position = 'relative';
     element.style.overflow = 'hidden';
-    element.style.background = currentProps.backgroundColor;
+    element.style.background = getCanvasBackgroundColor(currentProps);
 
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -519,7 +523,7 @@ export const Main = defineWidget({
     };
 
     const syncSceneSettings = () => {
-      element.style.background = currentProps.backgroundColor;
+      element.style.background = getCanvasBackgroundColor(currentProps);
       ambientLight.intensity = currentProps.ambientLightIntensity;
       mainLight.intensity = currentProps.directionalLightIntensity;
       fillLight.intensity = currentProps.fillLightIntensity;

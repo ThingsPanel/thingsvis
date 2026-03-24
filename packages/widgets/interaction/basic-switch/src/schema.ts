@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const PropsSchema = z.object({
   // ── Content ────────────────────────────────────
-  value: z.boolean().default(false).describe('props.switchStatus'),
+  value: z.boolean().default(true).describe('props.switchStatus'),
   label: z.string().default('开关').describe('props.label'),
   showLabel: z.boolean().default(true).describe('props.showLabel'),
   labelPosition: z.enum(['left', 'right']).default('right').describe('props.labelPosition'),

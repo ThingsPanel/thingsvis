@@ -3,7 +3,11 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
   groups: {
-    Style: ['fill', 'opacity'],
+    Style: ['fill'],
+  },
+
+  groupOptions: {
+    Style: { expanded: false },
   },
 
   overrides: {
@@ -12,6 +16,5 @@ export const controls = generateControls(PropsSchema, {
 
   bindings: {
     fill: { enabled: true, modes: ['static', 'field', 'expr'] },
-    opacity: { enabled: true, modes: ['static', 'field', 'expr'] },
   },
 });

@@ -21,7 +21,8 @@ function buildOption(props: Props, colors: WidgetColors): echarts.EChartsOption 
   // For emphasis, blend the area color slightly toward white/black;
   // since we can't easily tint programmatically, use the second series color as fallback
   const emphasisColor = props.emphasisAreaColor || colors.series[1];
-  const borderColor = props.borderColor || colors.border;
+  const regionBorderColor = props.regionBorderColor || props.borderColor || colors.border;
+  const regionBorderWidth = props.regionBorderWidth ?? props.borderWidth ?? 1;
   const labelColor = props.labelColor || colors.fg;
 
   return {
@@ -45,8 +46,8 @@ function buildOption(props: Props, colors: WidgetColors): echarts.EChartsOption 
         },
         itemStyle: {
           areaColor,
-          borderColor,
-          borderWidth: props.borderWidth,
+          borderColor: regionBorderColor,
+          borderWidth: regionBorderWidth,
         },
         emphasis: {
           itemStyle: {

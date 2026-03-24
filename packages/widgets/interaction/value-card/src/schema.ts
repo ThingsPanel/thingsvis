@@ -8,15 +8,15 @@ const DEFAULT_SUBTITLE_FONT_SIZE = 12;
 export const PropsSchema = z.object({
   // Data Settings
   title: z.string().default('总览数值').describe('props.title'),
-  prefix: z.string().default('').describe('props.prefix'),
+  prefix: z.string().default('￥').describe('props.prefix'),
   value: z.union([z.number().default(0), z.string(), z.null()]).default(0).describe('props.value'),
   suffix: z.string().default('元').describe('props.suffix'),
   subtitle: z.string().default('较上月').describe('props.subtitle'),
-  trend: z.number().default(0).describe('props.trend'),
-  precision: z.number().int().min(0).max(6).default(0).describe('props.precision'),
+  trend: z.number().default(10).describe('props.trend'),
+  precision: z.number().int().min(0).max(6).default(2).describe('props.precision'),
 
   // Icon Settings
-  icon: z.string().default('').describe('props.icon'),
+  icon: z.string().default('i-lucide:activity').describe('props.icon'),
   iconSize: z.number().int().min(12).max(100).default(24).describe('props.iconSize'),
 
   // Typography Settings
