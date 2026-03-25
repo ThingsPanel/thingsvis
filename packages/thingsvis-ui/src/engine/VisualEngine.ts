@@ -68,6 +68,8 @@ function isVerticalSegment(a: { x: number; y: number }, b: { x: number; y: numbe
   return Math.abs(a.x - b.x) < eps;
 }
 
+const PIPE_STRAIGHT_SNAP_THRESHOLD = 20;
+
 function orthogonalizePipePoints(
   points: Array<{ x: number; y: number }>,
   sourceAnchor?: string,
@@ -144,6 +146,17 @@ function orthogonalizePipePoints(
     compacted.push(curr);
   }
   compacted.push(result[result.length - 1]!);
+
+  if (compacted.length >= 2) {
+    const start = compacted[0]!;
+    const end = compacted[compacted.length - 1]!;
+    if (Math.abs(start.y - end.y) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: end.x, y: start.y }];
+    }
+    if (Math.abs(start.x - end.x) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: start.x, y: end.y }];
+    }
+  }
 
   if (compacted.length > 4) {
     return buildElbowRoutePoints(

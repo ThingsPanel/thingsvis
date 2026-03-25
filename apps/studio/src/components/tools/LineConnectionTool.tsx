@@ -197,6 +197,8 @@ function buildCanonicalPipeRoute(
   return buildElbowRoutePoints(start, end, sourceAnchor, targetAnchor);
 }
 
+const PIPE_STRAIGHT_SNAP_THRESHOLD = 20;
+
 function simplifyPipePoints(
   points: Array<{ x: number; y: number }>,
   sourceAnchor?: AnchorType,
@@ -250,6 +252,18 @@ function simplifyPipePoints(
     const end = compacted[compacted.length - 1]!;
     if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
       return [start, end];
+    }
+    if (Math.abs(start.y - end.y) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [
+        start,
+        { x: end.x, y: start.y },
+      ];
+    }
+    if (Math.abs(start.x - end.x) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [
+        start,
+        { x: start.x, y: end.y },
+      ];
     }
   }
 
@@ -422,7 +436,7 @@ export default function LineConnectionTool({
 
     if (isPipeType(schema.type)) {
       if (rawPoints && rawPoints.length >= 3) {
-        return orthogonalizePipePoints(
+        return simplifyPipePoints(
           rawPoints
             .map((point, index) => {
               if (index === 0) return start;
@@ -439,6 +453,40 @@ export default function LineConnectionTool({
 
     return [start, end];
   }, [getAnchorWorldPosition, getPreviewTranslate, selectedLine, selectedLineId, state.nodesById]);
+
+  useEffect(() => {
+    if (!selectedLineId || !selectedLine || dragState || !isSelectedPipe) return;
+
+    const schema = selectedLine.schemaRef as any;
+    const currentProps = schema?.props || {};
+    const rawPoints = Array.isArray(currentProps.points) ? currentProps.points : null;
+    if (!rawPoints || rawPoints.length < 3) return;
+
+    const worldPoints = getRouteWorldPoints();
+    if (!worldPoints || worldPoints.length < 2) return;
+
+    const normalized = normalizeWorldPointsToNode(
+      worldPoints,
+      getConnectorPadding(currentProps.strokeWidth),
+    );
+    const samePosition =
+      schema.position?.x === normalized.position.x && schema.position?.y === normalized.position.y;
+    const sameSize =
+      schema.size?.width === normalized.size.width && schema.size?.height === normalized.size.height;
+    const samePoints =
+      JSON.stringify(currentProps.points) === JSON.stringify(normalized.points);
+
+    if (samePosition && sameSize && samePoints) return;
+
+    const updateNode = (kernelStore.getState() as any).updateNode;
+    if (!updateNode) return;
+
+    updateNode(selectedLineId, {
+      props: { ...currentProps, points: normalized.points },
+      position: normalized.position,
+      size: normalized.size,
+    });
+  }, [dragState, getRouteWorldPoints, isSelectedPipe, kernelStore, selectedLine, selectedLineId]);
 
   const screenToWorld = useCallback(
     (screenX: number, screenY: number) => {

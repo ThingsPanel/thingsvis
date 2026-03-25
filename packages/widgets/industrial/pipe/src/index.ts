@@ -110,6 +110,8 @@ function isVerticalSegment(a: Pt, b: Pt, eps = 1) {
   return Math.abs(a.x - b.x) < eps;
 }
 
+const PIPE_STRAIGHT_SNAP_THRESHOLD = 20;
+
 function orthogonalizePipePoints(points: Pt[], sourceAnchor?: AnchorType, targetAnchor?: AnchorType): Pt[] {
   if (points.length < 2) return points;
 
@@ -182,6 +184,17 @@ function orthogonalizePipePoints(points: Pt[], sourceAnchor?: AnchorType, target
     compacted.push(curr);
   }
   compacted.push(result[result.length - 1]!);
+
+  if (compacted.length >= 2) {
+    const start = compacted[0]!;
+    const end = compacted[compacted.length - 1]!;
+    if (Math.abs(start.y - end.y) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: end.x, y: start.y }];
+    }
+    if (Math.abs(start.x - end.x) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: start.x, y: end.y }];
+    }
+  }
 
   if (compacted.length > 4) {
     return buildCanonicalPipeRoute(
