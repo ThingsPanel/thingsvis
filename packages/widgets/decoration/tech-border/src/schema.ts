@@ -19,6 +19,8 @@ export const PropsSchema = z.object({
   
   /** 边框宽度 */
   borderWidth: z.number().min(1).max(10).default(2).describe('props.borderWidth'),
+  contentPadding: z.number().min(0).max(40).default(12).describe('props.contentPadding'),
+  backgroundColor: z.string().default('transparent').describe('props.backgroundColor'),
   
   // ========================================
   // 发光效果

@@ -14,7 +14,7 @@ export const controls = createControlPanel()
         label: 'widgets.thingsvis-widget-industrial-capsule-ranking.label_1',
         default: '排行榜',
       })
-      .addCustom('data', 'json-editor', {
+      .addJsonEditor('data', {
         label: 'widgets.thingsvis-widget-industrial-capsule-ranking.label_2',
         binding: true,
       });

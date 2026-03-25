@@ -29,6 +29,16 @@ export const controls = createControlPanel()
         min: 1,
         max: 10,
         default: 2,
+      })
+      .addSlider('contentPadding', {
+        label: 'Content Padding',
+        min: 0,
+        max: 40,
+        default: 12,
+      })
+      .addColorPicker('backgroundColor', {
+        label: 'Background Color',
+        default: 'transparent',
       });
   })
 

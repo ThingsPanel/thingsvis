@@ -40,7 +40,7 @@ function getRankColor(index: number, props: Props, colors: WidgetColors): string
   
   // 使用胶囊颜色数组循环
   const colorIndex = index % props.capsuleColors.length;
-  return props.capsuleColors[colorIndex];
+  return props.capsuleColors[colorIndex] ?? colors.primary;
 }
 
 /**
