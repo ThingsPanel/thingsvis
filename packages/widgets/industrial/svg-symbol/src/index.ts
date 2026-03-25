@@ -23,8 +23,12 @@ function renderSvg(element: HTMLElement, props: Props): void {
   let finalSvg: string;
 
   // Priority 1: use selected icon from registry
-  if (props.selectedIconId && INDUSTRIAL_ICONS_MAP[props.selectedIconId]) {
-    finalSvg = INDUSTRIAL_ICONS_MAP[props.selectedIconId].svgContent;
+  const selectedIcon = props.selectedIconId
+    ? INDUSTRIAL_ICONS_MAP[props.selectedIconId]
+    : undefined;
+
+  if (selectedIcon) {
+    finalSvg = selectedIcon.svgContent;
   } else {
     // Priority 2: fall back to custom raw SVG content
     finalSvg = props.svgContent;
