@@ -26,11 +26,11 @@
     "@thingsvis/widget-config": "workspace:*"
   },
   "thingsvis": {
-    "displayName": "SVG 智能图元",
+    "displayName": "图形符号",
     "icon": "Layers",
     "i18n": {
-      "zh": "SVG 智能图元",
-      "en": "SVG Symbol"
+      "zh": "图形符号",
+      "en": "Graphic Symbol"
     }
   }
 }

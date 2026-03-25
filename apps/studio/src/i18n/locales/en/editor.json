@@ -80,7 +80,8 @@
             "media": "Media",
             "resources": "Resources",
             "geo": "Geo",
-            "custom": "Custom"
+            "custom": "Custom",
+            "industrial": "Industrial"
         }
     },
     "layers": {

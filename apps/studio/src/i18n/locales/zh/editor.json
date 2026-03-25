@@ -80,7 +80,8 @@
             "media": "媒体展示",
             "resources": "资源组件",
             "geo": "地理信息",
-            "custom": "自定义"
+            "custom": "自定义",
+            "industrial": "工业组态"
         }
     },
     "layers": {

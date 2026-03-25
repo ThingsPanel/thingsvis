@@ -39,6 +39,9 @@ import {
   GaugeCircle,
   SquareMenu,
   Bell,
+  Cpu,
+  Cog,
+  Shapes,
 } from 'lucide-react';
 import {
   Accordion,
@@ -94,6 +97,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
   GaugeCircle,
   SquareMenu,
   Bell,
+  Cpu,
+  Cog,
+  Shapes,
 };
 
 const CATEGORY_DEFS = [
@@ -104,6 +110,7 @@ const CATEGORY_DEFS = [
   { key: 'resources', Icon: Folder },
   { key: 'geo', Icon: Globe },
   { key: 'custom', Icon: Sparkles },
+  { key: 'industrial', Icon: Cpu },
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
@@ -169,6 +176,7 @@ export default function ComponentsList({
       resources: 'resources',
       custom: 'custom',
       geo: 'geo',
+      industrial: 'industrial',
     };
 
     CATEGORY_DEFS.forEach((def) => {

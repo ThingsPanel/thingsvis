@@ -1,6 +1,8 @@
 {
-  "name": "SVG 智能图元",
+  "name": "图形符号",
   "props": {
-    "svgContent": "SVG 源代码"
+    "selectedIconId": "工业符号",
+    "iconColor": "图标颜色（覆盖）",
+    "svgContent": "自定义 SVG 源码"
   }
 }

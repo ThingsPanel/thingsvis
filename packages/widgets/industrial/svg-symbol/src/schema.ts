@@ -1,12 +1,25 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-  svgContent: z
-    .string()
-    .default(
-      '<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">\n  <rect id="bg" width="100%" height="100%" fill="#292929" rx="10" />\n  <circle id="core" cx="100" cy="100" r="50" fill="#4caf50" />\n  <text id="label" x="100" y="105" font-family="Arial" font-size="20" fill="white" text-anchor="middle">SVG</text>\n</svg>',
-    ),
-  fillSettings: z.record(z.string()).optional(),
+  /**
+   * ID of the selected industrial symbol from the built-in registry.
+   * Defaults to the first entry (centrifugal pump) so the widget renders
+   * something meaningful immediately after dropping onto the canvas.
+   */
+  selectedIconId: z.string().default('pump-centrifugal'),
+
+  /**
+   * Raw SVG fallback / custom paste.
+   * Used only when selectedIconId is empty.
+   */
+  svgContent: z.string().default(''),
+
+  /**
+   * Optional accent color override.
+   * If set, replaces the primary fill color in the rendered SVG.
+   * Leave empty to preserve original SVG colors.
+   */
+  iconColor: z.string().default(''),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

@@ -16,6 +16,7 @@ export const WIDGET_CATEGORIES = [
   'indicator',
   'geo',
   'custom',
+  'industrial',
 ] as const;
 
 export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];

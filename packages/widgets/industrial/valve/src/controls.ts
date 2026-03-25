@@ -34,4 +34,3 @@ export const controls: WidgetControls = {
     },
   ],
 };
-

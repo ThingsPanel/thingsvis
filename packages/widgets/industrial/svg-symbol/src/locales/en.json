@@ -1,6 +1,8 @@
 {
-  "name": "SVG Symbol",
+  "name": "Process Symbol",
   "props": {
-    "svgContent": "SVG Source Code"
+    "selectedIconId": "Industrial Symbol",
+    "iconColor": "Icon Color (Override)",
+    "svgContent": "Custom SVG Source"
   }
 }

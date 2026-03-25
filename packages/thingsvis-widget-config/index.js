@@ -133,6 +133,7 @@ function createWidgetConfig(pluginDir, opts = {}) {
           react: { singleton: true, requiredVersion: false, import: false },
           'react-dom': { singleton: true, requiredVersion: false, import: false },
           'leafer-ui': { singleton: true, requiredVersion: false, import: false },
+          'zod': { singleton: true, requiredVersion: false },
           '@thingsvis/schema': { singleton: true, requiredVersion: false, import: false },
           '@thingsvis/utils': { singleton: true, requiredVersion: false, import: false },
           '@thingsvis/kernel': { singleton: true, requiredVersion: false, import: false },

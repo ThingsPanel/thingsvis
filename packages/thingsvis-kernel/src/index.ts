@@ -80,6 +80,3 @@ export { JsonPathResolver } from './datasources/JsonPathResolver';
 export { FieldMappingExecutor } from './datasources/FieldMappingExecutor';
 export { SandboxExecutor, runInSandbox } from './sandbox/SandboxExecutor';
 export type { SandboxResult } from './sandbox/SandboxExecutor';
-
-// Export SCADA extension engines
-export * from './scada';
