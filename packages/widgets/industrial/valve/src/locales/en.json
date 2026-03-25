@@ -1,0 +1,9 @@
+{
+  "name": "Pipe Valve",
+  "props": {
+    "openColor": "Open Color",
+    "closedColor": "Closed Color",
+    "isOpen": "Is Open",
+    "hasError": "Has Error"
+  }
+}

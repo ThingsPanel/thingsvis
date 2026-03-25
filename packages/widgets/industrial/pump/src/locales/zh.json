@@ -1,0 +1,9 @@
+{
+  "name": "离心泵",
+  "props": {
+    "baseColor": "基础颜色",
+    "isRunning": "运行状态",
+    "hasError": "故障告警",
+    "rpm": "转速系数"
+  }
+}

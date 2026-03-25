@@ -1,0 +1,6 @@
+{
+  "name": "SVG 智能图元",
+  "props": {
+    "svgContent": "SVG 源代码"
+  }
+}

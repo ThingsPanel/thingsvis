@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 // SYNC: must match @thingsvis/schema WIDGET_CATEGORIES (packages/thingsvis-schema/src/widget-category.ts)
-const categories = ['basic', 'chart', 'interaction', 'media', 'resources', 'data', 'layout', 'indicator', 'geo', 'custom'];
+const categories = ['basic', 'chart', 'interaction', 'media', 'resources', 'data', 'layout', 'indicator', 'geo', 'custom', 'industrial'];
 
 categories.forEach((cat) => {
     const directory = `packages/widgets/${cat}`;

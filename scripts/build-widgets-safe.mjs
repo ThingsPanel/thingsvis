@@ -20,7 +20,7 @@ const ROOT = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:
 const WIDGETS_DIR = join(ROOT, 'packages', 'widgets');
 
 // SYNC with deploy-widgets.mjs
-const CATEGORIES = ['basic', 'chart', 'interaction', 'media', 'resources', 'data', 'layout', 'indicator', 'geo', 'custom'];
+const CATEGORIES = ['basic', 'chart', 'interaction', 'media', 'resources', 'data', 'layout', 'indicator', 'geo', 'custom', 'industrial'];
 
 /**
  * Collect all widget package directories.

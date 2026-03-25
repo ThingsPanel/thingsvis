@@ -54,7 +54,7 @@ export { HistoryManager } from './history/HistoryManager';
 export type { Command } from './history/HistoryManager';
 export { safeExecute } from './executor/SafeExecutor';
 export { ResourceLoader } from './loader/ResourceLoader';
-export { Loader, UniversalLoader } from './loader/UniversalLoader';
+export { Loader, getLegacyLoader } from './loader/UniversalLoader';
 export { CmdStack } from './history/CmdStack';
 export { createNodeDropCommand } from './commands/nodeDrop';
 export { action, subscribeToPatches } from './store';
@@ -69,7 +69,7 @@ export * from './events/widgetEvents';
 // See: issues/07-widget-contract-registry-runtime-fragmentation-architecture-debt.md
 
 // Export DataSource Management
-export { dataSourceManager, DataSourceManager } from './datasources/DataSourceManager';
+export { getLegacyDataSourceManager, DataSourceManager } from './datasources/DataSourceManager';
 export { BaseAdapter } from './datasources/BaseAdapter';
 export { PlatformFieldAdapter } from './datasources/PlatformFieldAdapter';
 export type { WriteResult } from './datasources/BaseAdapter';
@@ -80,3 +80,6 @@ export { JsonPathResolver } from './datasources/JsonPathResolver';
 export { FieldMappingExecutor } from './datasources/FieldMappingExecutor';
 export { SandboxExecutor, runInSandbox } from './sandbox/SandboxExecutor';
 export type { SandboxResult } from './sandbox/SandboxExecutor';
+
+// Export SCADA extension engines
+export * from './scada';

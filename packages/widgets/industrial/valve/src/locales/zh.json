@@ -1,0 +1,9 @@
+{
+  "name": "管路阀门",
+  "props": {
+    "openColor": "开启颜色",
+    "closedColor": "关闭颜色",
+    "isOpen": "是否开启",
+    "hasError": "故障告警"
+  }
+}

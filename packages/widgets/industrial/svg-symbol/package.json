@@ -1,0 +1,36 @@
+{
+  "name": "thingsvis-widget-industrial-svg-symbol",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack serve --port 3201",
+    "build": "rspack build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@thingsvis/widget-sdk": "workspace:*",
+    "@thingsvis/schema": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "typescript": "^5.3.3",
+    "ts-loader": "^9.5.1",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "@thingsvis/widget-config": "workspace:*"
+  },
+  "thingsvis": {
+    "displayName": "SVG 智能图元",
+    "icon": "Layers",
+    "i18n": {
+      "zh": "SVG 智能图元",
+      "en": "SVG Symbol"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Centrifugal Pump",
+  "props": {
+    "baseColor": "Base Color",
+    "isRunning": "Is Running",
+    "hasError": "Has Error",
+    "rpm": "RPM Factor"
+  }
+}
