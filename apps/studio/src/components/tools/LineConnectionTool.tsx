@@ -43,6 +43,13 @@ type SegmentDragState = {
 
 type DragState = EndpointDragState | SegmentDragState;
 
+type NodeDragPreviewDetail = {
+  nodeId: string;
+  x: number;
+  y: number;
+  active: boolean;
+};
+
 function isPipeType(type?: string) {
   return type === 'industrial/pipe';
 }
@@ -81,7 +88,15 @@ function buildElbowRoutePoints(
   return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
 }
 
-function normalizeWorldPointsToNode(worldPoints: Array<{ x: number; y: number }>, padding = 24) {
+function getConnectorPadding(strokeWidth?: unknown) {
+  const width = Number(strokeWidth ?? 2);
+  return Math.max(28, Math.ceil(width * 2 + 16));
+}
+
+function normalizeWorldPointsToNode(
+  worldPoints: Array<{ x: number; y: number }>,
+  padding = getConnectorPadding(),
+) {
   const minX = Math.min(...worldPoints.map((point) => point.x));
   const minY = Math.min(...worldPoints.map((point) => point.y));
   const maxX = Math.max(...worldPoints.map((point) => point.x));
@@ -112,6 +127,9 @@ export default function LineConnectionTool({
   );
 
   const [dragState, setDragState] = useState<DragState | null>(null);
+  const [dragPreviewById, setDragPreviewById] = useState<Record<string, { x: number; y: number }>>(
+    {},
+  );
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredAnchor, setHoveredAnchor] = useState<AnchorType | null>(null);
   const endpointsRef = useRef<{
@@ -127,6 +145,42 @@ export default function LineConnectionTool({
   const selectedLine = selectedLineId ? state.nodesById[selectedLineId] : null;
   const selectedType = (selectedLine?.schemaRef as any)?.type as string | undefined;
   const isSelectedPipe = isPipeType(selectedType);
+
+  useEffect(() => {
+    const handleDragPreview = (event: Event) => {
+      const detail = (event as CustomEvent<NodeDragPreviewDetail>).detail;
+      if (!detail?.nodeId) return;
+
+      setDragPreviewById((prev) => {
+        if (!detail.active) {
+          if (!(detail.nodeId in prev)) return prev;
+          const next = { ...prev };
+          delete next[detail.nodeId];
+          return next;
+        }
+
+        const current = prev[detail.nodeId];
+        if (current && current.x === detail.x && current.y === detail.y) return prev;
+        return {
+          ...prev,
+          [detail.nodeId]: { x: detail.x, y: detail.y },
+        };
+      });
+    };
+
+    window.addEventListener('thingsvis:node-drag-preview', handleDragPreview as EventListener);
+    return () => {
+      window.removeEventListener('thingsvis:node-drag-preview', handleDragPreview as EventListener);
+    };
+  }, []);
+
+  const getPreviewTranslate = useCallback(
+    (nodeId?: string | null) => {
+      if (!nodeId) return { x: 0, y: 0 };
+      return dragPreviewById[nodeId] ?? { x: 0, y: 0 };
+    },
+    [dragPreviewById],
+  );
 
   const getAnchorWorldPosition = useCallback(
     (schema: any, anchor: AnchorType): { x: number; y: number } => {
@@ -156,7 +210,9 @@ export default function LineConnectionTool({
     if (!selectedLine) return null;
 
     const schema = selectedLine.schemaRef as any;
-    const pos = schema.position || { x: 0, y: 0 };
+    const preview = getPreviewTranslate(selectedLineId);
+    const basePos = schema.position || { x: 0, y: 0 };
+    const pos = { x: basePos.x + preview.x, y: basePos.y + preview.y };
     const size = schema.size || { width: 200, height: 40 };
     const props = schema.props || {};
     const rawPoints = Array.isArray(props.points) ? props.points : null;
@@ -201,7 +257,7 @@ export default function LineConnectionTool({
     }
 
     return [start, end];
-  }, [getAnchorWorldPosition, selectedLine, state.nodesById]);
+  }, [getAnchorWorldPosition, getPreviewTranslate, selectedLine, selectedLineId, state.nodesById]);
 
   const screenToWorld = useCallback(
     (screenX: number, screenY: number) => {
@@ -392,7 +448,10 @@ export default function LineConnectionTool({
 
       if (dragState.kind === 'segment') {
         const worldPoints = getDraggedSegmentPoints(dragState);
-        const normalized = normalizeWorldPointsToNode(worldPoints);
+        const normalized = normalizeWorldPointsToNode(
+          worldPoints,
+          getConnectorPadding(currentProps.strokeWidth),
+        );
         updateNode(dragState.lineId, {
           props: { ...currentProps, points: normalized.points },
           position: normalized.position,
@@ -441,17 +500,23 @@ export default function LineConnectionTool({
               nextWorldPoints[nextWorldPoints.length - 1] = dragged;
             }
 
-            const normalized = normalizeWorldPointsToNode(nextWorldPoints);
+            const normalized = normalizeWorldPointsToNode(
+              nextWorldPoints,
+              getConnectorPadding(currentProps.strokeWidth),
+            );
             updateNode(dragState.lineId, {
               props: { ...nextProps, points: normalized.points },
               position: normalized.position,
               size: normalized.size,
             });
           } else {
-            const normalized = normalizeWorldPointsToNode([
-              dragState.endpoint === 'start' ? dragged : otherEndpoint,
-              dragState.endpoint === 'start' ? otherEndpoint : dragged,
-            ]);
+            const normalized = normalizeWorldPointsToNode(
+              [
+                dragState.endpoint === 'start' ? dragged : otherEndpoint,
+                dragState.endpoint === 'start' ? otherEndpoint : dragged,
+              ],
+              getConnectorPadding(currentProps.strokeWidth),
+            );
             updateNode(dragState.lineId, {
               props: { ...nextProps, points: normalized.points },
               position: normalized.position,
@@ -564,6 +629,92 @@ export default function LineConnectionTool({
     );
   };
 
+  /* const renderMoveSurface = () => {
+    if (!isSelectedPipe) return null;
+
+    const props = selectedProps || {};
+    if (props.sourceNodeId || props.targetNodeId) return null;
+
+    const schema = selectedLine.schemaRef as any;
+    const pos = schema.position || { x: 0, y: 0 };
+    const size = schema.size || { width: 0, height: 0 };
+    const topLeft = worldToScreen(pos.x, pos.y);
+    const bottomRight = worldToScreen(pos.x + size.width, pos.y + size.height);
+    const isDragging = dragState?.kind === 'move';
+    const left = topLeft.x;
+    const top = topLeft.y;
+    const width = bottomRight.x - topLeft.x;
+    const height = bottomRight.y - topLeft.y;
+
+    return (
+      <div
+        className="absolute"
+        style={{
+          left: topLeft.x,
+          top: topLeft.y,
+          width: bottomRight.x - topLeft.x,
+          height: bottomRight.y - topLeft.y,
+          zIndex: 997,
+          pointerEvents: 'auto',
+          cursor: isDragging ? 'grabbing' : 'grab',
+          background: 'transparent',
+        }}
+        title="拖动移动整条管道"
+      />
+    );
+  };
+
+  const renderMoveHint = () => {
+    if (!isSelectedPipe) return null;
+
+    const props = selectedProps || {};
+    if (props.sourceNodeId || props.targetNodeId) return null;
+
+    const schema = selectedLine.schemaRef as any;
+    const pos = schema.position || { x: 0, y: 0 };
+    const size = schema.size || { width: 0, height: 0 };
+    const topLeft = worldToScreen(pos.x, pos.y);
+    const bottomRight = worldToScreen(pos.x + size.width, pos.y + size.height);
+    const isDragging = dragState?.kind === 'move';
+    const left = topLeft.x;
+    const top = topLeft.y;
+    const width = bottomRight.x - topLeft.x;
+    const height = bottomRight.y - topLeft.y;
+
+    return (
+      <>
+        <div
+          className="absolute rounded-md border border-dashed pointer-events-none"
+          style={{
+            left,
+            top,
+            width,
+            height,
+            zIndex: 996,
+            borderColor: isDragging ? '#2563eb' : 'rgba(37,99,235,0.45)',
+            background: isDragging ? 'rgba(37,99,235,0.06)' : 'transparent',
+          }}
+        />
+        <div
+          className="absolute rounded-md border px-2 py-1 text-[11px] font-medium select-none pointer-events-none"
+          style={{
+            left: left + width / 2,
+            top: top - 12,
+            transform: 'translate(-50%, -100%)',
+            zIndex: 998,
+            color: '#1d4ed8',
+            borderColor: isDragging ? '#2563eb' : 'rgba(37,99,235,0.35)',
+            background: 'rgba(255,255,255,0.96)',
+            boxShadow: '0 1px 4px rgba(37,99,235,0.12)',
+          }}
+        >
+          拖动整条管道
+        </div>
+      </>
+    );
+  };
+
+  */
   const renderHoveredAnchors = () => {
     if (dragState?.kind !== 'endpoint' || !hoveredNodeId) return null;
     const node = state.nodesById[hoveredNodeId];

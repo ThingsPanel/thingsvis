@@ -408,6 +408,20 @@ export default function TransformControls({
         target.style.transform = '';
       });
 
+      const emitNodeDragPreview = (
+        nodeId: string | null | undefined,
+        x: number,
+        y: number,
+        active: boolean,
+      ) => {
+        if (!nodeId) return;
+        window.dispatchEvent(
+          new CustomEvent('thingsvis:node-drag-preview', {
+            detail: { nodeId, x, y, active },
+          }),
+        );
+      };
+
       // Helper to find overlay element for a node ID
       // The overlay is rendered by VisualEngine inside #visual-engine-mount's overlay div
       const findOverlayElement = (nodeId: string): HTMLElement | null => {
@@ -443,6 +457,7 @@ export default function TransformControls({
         if (isMultiDrag) {
           for (const id of selectedIds) {
             dragTranslateByIdRef.current[id] = { x: tx, y: ty };
+            emitNodeDragPreview(id, tx, ty, true);
             // Use dragContainer to find elements since that's where Moveable is mounted
             const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el && el !== target) {
@@ -461,6 +476,7 @@ export default function TransformControls({
 
         if (nodeId) {
           dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+          emitNodeDragPreview(nodeId, tx, ty, true);
           // Also update the visual overlay element for real-time visual feedback
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
@@ -479,6 +495,7 @@ export default function TransformControls({
         if (!isDrag) {
           if (isMultiDrag) {
             for (const id of selectedIds) {
+              emitNodeDragPreview(id, 0, 0, false);
               const el = dragContainer.querySelector(
                 `[data-node-id="${id}"]`,
               ) as HTMLElement | null;
@@ -497,6 +514,7 @@ export default function TransformControls({
               }
             }
           } else {
+            emitNodeDragPreview(nodeId, 0, 0, false);
             target.style.willChange = '';
             target.style.transform = '';
             // Clear overlay transform and restore zIndex for single node
@@ -585,6 +603,7 @@ export default function TransformControls({
 
         // Clear overlay transform and restore zIndex - store update will reposition it
         if (nodeId) {
+          emitNodeDragPreview(nodeId, 0, 0, false);
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
@@ -645,6 +664,7 @@ export default function TransformControls({
           const nodeId = t.getAttribute('data-node-id');
           if (nodeId) {
             dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+            emitNodeDragPreview(nodeId, tx, ty, true);
             // Also update the visual overlay element for real-time visual feedback
             const overlayEl = findOverlayElement(nodeId);
             if (overlayEl) {
@@ -664,6 +684,7 @@ export default function TransformControls({
             t.style.transform = '';
             // Clear overlay transform too
             if (nodeId) {
+              emitNodeDragPreview(nodeId, 0, 0, false);
               const overlayEl = findOverlayElement(nodeId);
               if (overlayEl) {
                 overlayEl.style.transform = '';
@@ -692,6 +713,7 @@ export default function TransformControls({
           }
           t.style.transform = '';
           // Clear overlay transform - store update will reposition it
+          emitNodeDragPreview(nodeId, 0, 0, false);
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
@@ -942,7 +964,11 @@ export default function TransformControls({
 
       const moveableTargetIds = validSelectedIds.filter((id) => {
         const node = state.nodesById[id];
-        return !isConnectorNodeType(node?.schemaRef?.type);
+        const type = node?.schemaRef?.type;
+        if (!isConnectorNodeType(type)) return true;
+        if (!isPipeNodeType(type)) return false;
+        const props = (node?.schemaRef as any)?.props || {};
+        return !(props.sourceNodeId || props.targetNodeId);
       });
 
       const targets = moveableTargetIds

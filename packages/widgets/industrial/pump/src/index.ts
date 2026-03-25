@@ -9,51 +9,47 @@ function renderPump(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
 
-  // 与其他工业组件统一的配色
-  const baseColor = props.hasError ? '#ff4d4f' : '#334155';  // slate-700, 同tank
+  const uuid = Math.random().toString(36).slice(2, 9);
+  const pipeGradId = `pipeGrad-${uuid}`;
+  const shellGradId = `shellGrad-${uuid}`;
+
+  // 故障闪烁的颜色
+  const currentBaseColor = props.hasError ? '#ff4d4f' : (props.baseColor || '#334155');
   const borderColor = props.hasError ? '#ff7875' : '#0ea5e9'; // sky-500
   const pipeColor = '#64748b'; // slate-500
   const fanColor = props.hasError ? '#ff7875' : '#0ea5e9';
-  const animationDuration = props.isRunning && props.rpm > 0 ? `${(1 / props.rpm).toFixed(2)}s` : '0s';
+  // Rpm = 每分钟转数(Rotations Per Minute), 因此转一圈需要 60 / rpm 秒。
+  // 我们同时在代码级别加入下限防御 (最小 0.05s, 即每秒20圈上限) 防止浏览器因为超速动画假死
+  const durSec = props.rpm > 0 ? Math.max(60 / props.rpm, 0.05).toFixed(3) : '1';
 
   element.innerHTML = `
 <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <style>
-      @keyframes spin { 
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); } 
-      }
-      .fan-spin {
-        transform-origin: 50px 50px;
-        animation: spin ${animationDuration} linear infinite;
-      }
-    </style>
-    <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+    <linearGradient id="${pipeGradId}" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:${lightenColor(pipeColor, 15)}" />
       <stop offset="50%" style="stop-color:${pipeColor}" />
       <stop offset="100%" style="stop-color:${darkenColor(pipeColor, 15)}" />
     </linearGradient>
-    <linearGradient id="shellGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 10)}" />
-      <stop offset="100%" style="stop-color:${baseColor}" />
+    <linearGradient id="${shellGradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(currentBaseColor, 10)}" />
+      <stop offset="100%" style="stop-color:${currentBaseColor}" />
     </linearGradient>
   </defs>
   
   <!-- 左下管道（入口） -->
-  <rect x="10" y="55" width="30" height="16" fill="url(#pipeGrad)" stroke="#475569" stroke-width="1"/>
+  <rect x="10" y="55" width="30" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
   
   <!-- 右上管道（出口） -->
-  <rect x="60" y="28" width="30" height="16" fill="url(#pipeGrad)" stroke="#475569" stroke-width="1"/>
+  <rect x="60" y="28" width="30" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
   
   <!-- 泵体外壳 -->
-  <circle cx="50" cy="50" r="28" fill="url(#shellGrad)" stroke="${borderColor}" stroke-width="2"/>
+  <circle cx="50" cy="50" r="28" fill="url(#${shellGradId})" stroke="${borderColor}" stroke-width="2"/>
   
   <!-- 内部圆 -->
   <circle cx="50" cy="50" r="22" fill="#1e293b" stroke="${borderColor}" stroke-width="1" opacity="0.5"/>
   
   <!-- 风扇叶轮 -->
-  <g class="${props.isRunning ? 'fan-spin' : ''}">
+  <g>
     <!-- 4个弯曲叶片 -->
     <path d="M 50 50 L 50 28 Q 65 35 50 50" fill="${fanColor}" opacity="0.9"/>
     <path d="M 50 50 L 72 50 Q 65 65 50 50" fill="${fanColor}" opacity="0.8"/>
@@ -61,6 +57,18 @@ function renderPump(element: HTMLElement, props: Props): void {
     <path d="M 50 50 L 28 50 Q 35 35 50 50" fill="${fanColor}" opacity="0.8"/>
     <!-- 中心圆 -->
     <circle cx="50" cy="50" r="5" fill="#1e293b" stroke="${borderColor}" stroke-width="1"/>
+    
+    <!-- 原生 SVG 自旋动画 -->
+    ${props.isRunning && props.rpm > 0 ? `
+    <animateTransform 
+      attributeName="transform" 
+      type="rotate" 
+      from="0 50 50" 
+      to="360 50 50" 
+      dur="${durSec}s" 
+      repeatCount="indefinite"
+    />
+    ` : ''}
   </g>
   
   <!-- 故障闪烁 -->

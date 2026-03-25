@@ -26,6 +26,11 @@ function isConnectorNodeType(type: string | undefined): boolean {
   return isLineNodeType(type) || isPipeNodeType(type);
 }
 
+function getConnectorPadding(strokeWidth?: unknown): number {
+  const width = Number(strokeWidth ?? 2);
+  return Math.max(28, Math.ceil(width * 2 + 16));
+}
+
 function buildElbowRoutePoints(
   a: { x: number; y: number },
   b: { x: number; y: number },
@@ -161,7 +166,7 @@ export class VisualEngine {
       ? this.getAnchorWorldPoint(target.position, target.size, props.targetAnchor)
       : localToWorld(lastPt, { x: lp.x + (ls.width ?? 0), y: lp.y + (ls.height ?? 0) / 2 });
 
-    const padding = 24;
+    const padding = getConnectorPadding(props.strokeWidth);
     let worldPoints: Array<{ x: number; y: number }>;
     if (isPipeNodeType(node.schemaRef.type)) {
       if (pts && pts.length >= 3) {
