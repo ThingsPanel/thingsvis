@@ -16,6 +16,7 @@ export const WIDGET_CATEGORIES = [
   'indicator',
   'geo',
   'custom',
+  'decoration',
   'industrial',
 ] as const;
 

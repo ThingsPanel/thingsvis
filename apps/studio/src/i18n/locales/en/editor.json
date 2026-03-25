@@ -81,6 +81,7 @@
             "resources": "Resources",
             "geo": "Geo",
             "custom": "Custom",
+            "decoration": "Decoration",
             "industrial": "Industrial"
         }
     },

@@ -7,4 +7,4 @@ export const metadata = {
   defaultSize: { width: 100, height: 100 },
   constraints: { minWidth: 40, minHeight: 40 },
   resizable: true,
-};
+} as const;

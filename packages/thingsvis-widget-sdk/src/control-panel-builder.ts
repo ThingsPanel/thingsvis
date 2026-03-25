@@ -384,7 +384,11 @@ export class FieldBuilder {
 
 /** 标准选项类型 */
 export type StandardOption = 'opacity' | 'shadow' | 'border' | 'background' | 'transform';
-export type GroupOptions = { label?: I18nLabel; expanded?: boolean };
+export type GroupOptions = {
+  label?: I18nLabel;
+  expanded?: boolean;
+  showWhen?: { field: string; value: unknown };
+};
 
 /**
  * 控件面板构建器
@@ -429,6 +433,7 @@ export class ControlPanelBuilder {
       id,
       label: options.label ?? this.getDefaultLabel(id),
       expanded: options.expanded ?? true,
+      showWhen: options.showWhen,
       fields: fieldBuilder.getFields(),
     });
 

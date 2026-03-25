@@ -230,6 +230,21 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
 
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
+
+  const uuid = Math.random().toString(36).slice(2, 9);
+  const glowId = `pipe-glow-${uuid}`;
+  const defs = document.createElementNS(svgNS, 'defs');
+  defs.innerHTML = `
+    <filter id="${glowId}" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  `;
+  svg.appendChild(defs);
+
   svg.setAttribute('width', '100%');
   svg.setAttribute('height', '100%');
   svg.setAttribute('viewBox', '0 0 1 1');
@@ -310,7 +325,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
   function applyPipeAttrs(el: SVGElement, props: Props) {
     const strokeWidth = getStrokeWidthPx(props.strokeWidth);
     const dashArray = props.flowEnabled ? '' : getStrokeDasharray(props.strokeStyle, strokeWidth);
-    el.setAttribute('stroke', props.stroke);
+    el.setAttribute('stroke', props.pipeInnerColor || props.stroke);
     el.setAttribute('stroke-width', String(strokeWidth));
     el.setAttribute('opacity', String(props.opacity));
     el.setAttribute('stroke-linecap', 'square');
@@ -349,11 +364,20 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     }
 
     const strokeWidth = getStrokeWidthPx(props.strokeWidth);
-    const flowWidth = Math.max(2, Math.min(strokeWidth - 1, Math.round(strokeWidth * 0.5) || 1));
+    const flowWidth = Math.max(2, Math.min(strokeWidth - 2, Math.round(strokeWidth * 0.5) || 2));
     el.style.display = '';
-    el.setAttribute('stroke', props.flowColor || props.stroke);
+    
+    if (props.glowEffect) {
+       el.setAttribute('filter', `url(#${glowId})`);
+       el.setAttribute('stroke', props.glowColor || props.flowColor || props.stroke);
+       el.style.transition = 'stroke 0.2s';
+    } else {
+       el.removeAttribute('filter');
+       el.setAttribute('stroke', props.flowColor || props.stroke);
+    }
+    
     el.setAttribute('stroke-width', String(flowWidth));
-    el.setAttribute('opacity', '0.9');
+    el.setAttribute('opacity', '1');
     el.setAttribute('stroke-linecap', 'round');
     el.setAttribute('stroke-linejoin', 'round');
     el.setAttribute('stroke-dasharray', `${props.flowLength} ${props.flowSpacing}`);

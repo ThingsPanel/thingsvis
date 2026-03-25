@@ -17,13 +17,16 @@ export const PropsSchema = z.object({
   strokeStyle: z.enum(['solid', 'dashed', 'dotted']).default('solid'),
   opacity: z.number().min(0).max(1).default(1),
   lineCap: z.enum(['butt', 'round', 'square']).default('square'),
-  pipeBackground: z.string().default('#dbeafe'),
+  pipeBackground: z.string().default('#0f172a'), // slate-900 工业深色管壁
+  pipeInnerColor: z.string().default('#1e293b'), // slate-800 工业深色管芯
   flowEnabled: z.boolean().default(false),
+  glowEffect: z.boolean().default(true),
+  glowColor: z.string().default('#38bdf8'), // sky-400 默认科技蓝发光
   flowDirection: z.enum(['forward', 'reverse']).default('forward'),
-  flowSpeed: z.number().min(0).max(1000).default(120),
-  flowSpacing: z.number().min(2).max(200).default(16),
-  flowLength: z.number().min(1).max(100).default(8),
-  flowColor: z.string().default('#2563eb'),
+  flowSpeed: z.number().min(0).max(1000).default(60),
+  flowSpacing: z.number().min(2).max(200).default(24),
+  flowLength: z.number().min(1).max(100).default(12),
+  flowColor: z.string().default('#38bdf8'),
   sourceNodeId: z.string().optional(),
   sourceAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional(),
   targetNodeId: z.string().optional(),

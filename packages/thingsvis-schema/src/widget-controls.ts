@@ -121,6 +121,12 @@ export const ControlGroupSchema = z.object({
   label: I18nLabelSchema.optional(),
   /** 是否默认展开 */
   expanded: z.boolean().optional(),
+  showWhen: z
+    .object({
+      field: z.string(),
+      value: z.unknown(),
+    })
+    .optional(),
   fields: z.array(ControlFieldSchema),
 });
 export type ControlGroup = z.infer<typeof ControlGroupSchema>;

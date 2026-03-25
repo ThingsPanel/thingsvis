@@ -110,6 +110,7 @@ const CATEGORY_DEFS = [
   { key: 'resources', Icon: Folder },
   { key: 'geo', Icon: Globe },
   { key: 'custom', Icon: Sparkles },
+  { key: 'decoration', Icon: Shapes },
   { key: 'industrial', Icon: Cpu },
 ] as const;
 
@@ -176,6 +177,7 @@ export default function ComponentsList({
       resources: 'resources',
       custom: 'custom',
       geo: 'geo',
+      decoration: 'decoration',
       industrial: 'industrial',
     };
 

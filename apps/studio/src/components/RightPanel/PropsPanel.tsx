@@ -311,6 +311,15 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     return currentValue === depValue;
   };
 
+  const shouldShowGroup = (group: any) => {
+    if (!group.showWhen) return true;
+    const { field: depField, value: depValue } = group.showWhen;
+    const currentValue = schema.props?.[depField];
+    if (depValue === true) return Boolean(currentValue);
+    if (depValue === false) return !currentValue;
+    return currentValue === depValue;
+  };
+
   const renderControlsPanel = () => {
     if (!controls) return null;
 
@@ -339,6 +348,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
 
           <Accordion type="multiple" defaultValue={defaultOpenGroups} className="w-full">
             {controls.groups.map((group) => {
+              if (!shouldShowGroup(group)) return null;
               // 过滤出应该显示的字段
               const visibleFields = group.fields.filter(shouldShowField);
               if (visibleFields.length === 0) return null;

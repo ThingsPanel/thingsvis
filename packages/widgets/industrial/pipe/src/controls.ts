@@ -10,7 +10,10 @@ export const controls = generateControls(PropsSchema, {
       'strokeStyle',
       'opacity',
       'pipeBackground',
+      'pipeInnerColor',
       'flowEnabled',
+      'glowEffect',
+      'glowColor',
       'flowDirection',
       'flowSpeed',
       'flowSpacing',
@@ -31,8 +34,15 @@ export const controls = generateControls(PropsSchema, {
       ],
     },
     opacity: { label: '透明度' },
-    pipeBackground: { kind: 'color', label: '管道背景' },
+    pipeBackground: { kind: 'color', label: '管壁颜色' },
+    pipeInnerColor: { kind: 'color', label: '管芯颜色' },
     flowEnabled: { label: '流动动画' },
+    glowEffect: { label: '霓虹发光', showWhen: { field: 'flowEnabled', value: true } },
+    glowColor: { 
+      kind: 'color', 
+      label: '发光颜色', 
+      showWhen: { field: 'glowEffect', value: true }
+    },
     flowDirection: {
       label: '流动方向',
       showWhen: { field: 'flowEnabled', value: true },
