@@ -1,78 +1,177 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 
 type Props = {
   kernelStore: KernelStore;
   containerRef: React.RefObject<HTMLElement>;
-  getViewport: () => { width: number; height: number; zoom: number; offsetX: number; offsetY: number };
+  getViewport: () => {
+    width: number;
+    height: number;
+    zoom: number;
+    offsetX: number;
+    offsetY: number;
+  };
   onUserEdit?: () => void;
 };
 
 type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
 
-type DragState = {
+type EndpointDragState = {
+  kind: 'endpoint';
   lineId: string;
   endpoint: 'start' | 'end';
   startWorldPos: { x: number; y: number };
   currentWorldPos: { x: number; y: number };
 };
 
-/**
- * LineConnectionTool
- * 
- * 处理线条组件的连接交互：
- * 1. 选中线条时显示端点连接手柄
- * 2. 拖动手柄到其他组件时显示锚点
- * 3. 释放时自动连接
- */
-export default function LineConnectionTool({ kernelStore, containerRef, getViewport, onUserEdit }: Props) {
+type SegmentDragState = {
+  kind: 'segment';
+  lineId: string;
+  segmentIndex: number;
+  axis: 'x' | 'y';
+  baseWorldPoints: Array<{ x: number; y: number }>;
+  startWorldPos: { x: number; y: number };
+  currentWorldPos: { x: number; y: number };
+};
+
+type DragState = EndpointDragState | SegmentDragState;
+
+function isPipeType(type?: string) {
+  return type === 'industrial/pipe';
+}
+
+function isConnectorType(type?: string) {
+  return type === 'basic/line' || type === 'industrial/pipe';
+}
+
+function buildElbowRoutePoints(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  sourceAnchor?: AnchorType,
+  targetAnchor?: AnchorType,
+) {
+  const sourceHorizontal = sourceAnchor === 'left' || sourceAnchor === 'right';
+  const sourceVertical = sourceAnchor === 'top' || sourceAnchor === 'bottom';
+  const targetHorizontal = targetAnchor === 'left' || targetAnchor === 'right';
+  const targetVertical = targetAnchor === 'top' || targetAnchor === 'bottom';
+
+  if (sourceVertical && targetVertical) {
+    const midY = (a.y + b.y) / 2;
+    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
+  }
+  if (sourceHorizontal && targetHorizontal) {
+    const midX = (a.x + b.x) / 2;
+    return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+  }
+  if (sourceVertical && targetHorizontal) {
+    return [a, { x: a.x, y: b.y }, b];
+  }
+  if (sourceHorizontal && targetVertical) {
+    return [a, { x: b.x, y: a.y }, b];
+  }
+
+  const midX = (a.x + b.x) / 2;
+  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+}
+
+function normalizeWorldPointsToNode(worldPoints: Array<{ x: number; y: number }>, padding = 24) {
+  const minX = Math.min(...worldPoints.map((point) => point.x));
+  const minY = Math.min(...worldPoints.map((point) => point.y));
+  const maxX = Math.max(...worldPoints.map((point) => point.x));
+  const maxY = Math.max(...worldPoints.map((point) => point.y));
+
+  const position = { x: minX - padding, y: minY - padding };
+  const size = {
+    width: Math.max(40, maxX - minX + padding * 2),
+    height: Math.max(40, maxY - minY + padding * 2),
+  };
+  const points = worldPoints.map((point) => ({
+    x: point.x - position.x,
+    y: point.y - position.y,
+  }));
+
+  return { position, size, points };
+}
+
+export default function LineConnectionTool({
+  kernelStore,
+  containerRef,
+  getViewport,
+  onUserEdit,
+}: Props) {
   const state = useSyncExternalStore(
     useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),
-    () => kernelStore.getState() as KernelState
+    () => kernelStore.getState() as KernelState,
   );
 
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [hoveredAnchor, setHoveredAnchor] = useState<AnchorType | null>(null);
+  const endpointsRef = useRef<{
+    start: { x: number; y: number };
+    end: { x: number; y: number };
+  } | null>(null);
 
-  // Keep latest endpoints available to event handlers (mouse up is registered once)
-  const endpointsRef = useRef<{ start: { x: number; y: number }; end: { x: number; y: number } } | null>(null);
-
-  // 获取选中的线条组件
   const selectedLineIds = state.selection.nodeIds.filter((id) => {
     const node = state.nodesById[id];
-    return node?.schemaRef?.type === 'basic/line';
+    return isConnectorType(node?.schemaRef?.type);
   });
-
   const selectedLineId = selectedLineIds.length === 1 ? selectedLineIds[0] : null;
   const selectedLine = selectedLineId ? state.nodesById[selectedLineId] : null;
+  const selectedType = (selectedLine?.schemaRef as any)?.type as string | undefined;
+  const isSelectedPipe = isPipeType(selectedType);
 
-  // 获取节点锚点的世界坐标
-  function getAnchorWorldPosition(schema: any, anchor: AnchorType): { x: number; y: number } {
-    const pos = schema.position || { x: 0, y: 0 };
-    const size = schema.size || { width: 100, height: 100 };
-    const cx = pos.x + size.width / 2;
-    const cy = pos.y + size.height / 2;
+  const getAnchorWorldPosition = useCallback(
+    (schema: any, anchor: AnchorType): { x: number; y: number } => {
+      const pos = schema.position || { x: 0, y: 0 };
+      const size = schema.size || { width: 100, height: 100 };
+      const cx = pos.x + size.width / 2;
+      const cy = pos.y + size.height / 2;
 
-    switch (anchor) {
-      case 'top': return { x: cx, y: pos.y };
-      case 'right': return { x: pos.x + size.width, y: cy };
-      case 'bottom': return { x: cx, y: pos.y + size.height };
-      case 'left': return { x: pos.x, y: cy };
-      case 'center':
-      default: return { x: cx, y: cy };
-    }
-  }
+      switch (anchor) {
+        case 'top':
+          return { x: cx, y: pos.y };
+        case 'right':
+          return { x: pos.x + size.width, y: cy };
+        case 'bottom':
+          return { x: cx, y: pos.y + size.height };
+        case 'left':
+          return { x: pos.x, y: cy };
+        case 'center':
+        default:
+          return { x: cx, y: cy };
+      }
+    },
+    [],
+  );
 
-  // 获取线条的端点世界坐标
-  // 优先使用节点绑定的锚点；否则使用 props.points；再否则回退到线条 bbox 左右中心。
-  const getEndpointWorldPositions = useCallback(() => {
+  const getRouteWorldPoints = useCallback(() => {
     if (!selectedLine) return null;
 
     const schema = selectedLine.schemaRef as any;
     const pos = schema.position || { x: 0, y: 0 };
     const size = schema.size || { width: 200, height: 40 };
     const props = schema.props || {};
+    const rawPoints = Array.isArray(props.points) ? props.points : null;
+    const normalized =
+      !!rawPoints &&
+      rawPoints.every((p: any) => typeof p?.x === 'number' && typeof p?.y === 'number') &&
+      Math.max(...rawPoints.map((p: any) => Math.max(p.x, p.y))) <= 1;
+
+    const localToWorld = (point: any) => {
+      if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') return null;
+      return {
+        x: pos.x + (normalized ? point.x * size.width : point.x),
+        y: pos.y + (normalized ? point.y * size.height : point.y),
+      };
+    };
 
     const resolveBound = (nodeId?: string, anchor?: AnchorType) => {
       if (!nodeId) return null;
@@ -81,264 +180,288 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
       return getAnchorWorldPosition(boundNode.schemaRef as any, (anchor || 'center') as AnchorType);
     };
 
-    const startBound = resolveBound(props.sourceNodeId, props.sourceAnchor);
-    const endBound = resolveBound(props.targetNodeId, props.targetAnchor);
-    if (startBound || endBound) {
-      // If only one end is bound, keep the other end from points/bbox.
-      const fallback = () => {
-        const pts = Array.isArray(props.points) ? props.points : null;
-        if (pts && pts.length >= 2) {
-          const first = pts[0];
-          const last = pts[pts.length - 1];
-          const normalized =
-            [first, last].every((p) => typeof p?.x === 'number' && typeof p?.y === 'number') &&
-            Math.max(first.x, first.y, last.x, last.y) <= 1;
-          const fx = normalized ? first.x * size.width : first.x;
-          const fy = normalized ? first.y * size.height : first.y;
-          const lx = normalized ? last.x * size.width : last.x;
-          const ly = normalized ? last.y * size.height : last.y;
-          return {
-            start: { x: pos.x + fx, y: pos.y + fy },
-            end: { x: pos.x + lx, y: pos.y + ly },
-          };
-        }
-        return {
-          start: { x: pos.x, y: pos.y + size.height / 2 },
-          end: { x: pos.x + size.width, y: pos.y + size.height / 2 },
-        };
-      };
+    const firstPoint = rawPoints && rawPoints.length > 0 ? rawPoints[0] : null;
+    const lastPoint = rawPoints && rawPoints.length > 0 ? rawPoints[rawPoints.length - 1] : null;
+    const start = resolveBound(props.sourceNodeId, props.sourceAnchor) ??
+      localToWorld(firstPoint) ?? { x: pos.x, y: pos.y + size.height / 2 };
+    const end = resolveBound(props.targetNodeId, props.targetAnchor) ??
+      localToWorld(lastPoint) ?? { x: pos.x + size.width, y: pos.y + size.height / 2 };
 
-      const fb = fallback();
-      return {
-        start: startBound ?? fb.start,
-        end: endBound ?? fb.end,
-      };
-    }
-
-    // Not bound: try explicit points.
-    const pts = Array.isArray(props.points) ? props.points : null;
-    if (pts && pts.length >= 2) {
-      const first = pts[0];
-      const last = pts[pts.length - 1];
-      const normalized =
-        [first, last].every((p) => typeof p?.x === 'number' && typeof p?.y === 'number') &&
-        Math.max(first.x, first.y, last.x, last.y) <= 1;
-      const fx = normalized ? first.x * size.width : first.x;
-      const fy = normalized ? first.y * size.height : first.y;
-      const lx = normalized ? last.x * size.width : last.x;
-      const ly = normalized ? last.y * size.height : last.y;
-      return {
-        start: { x: pos.x + fx, y: pos.y + fy },
-        end: { x: pos.x + lx, y: pos.y + ly },
-      };
-    }
-
-    // Fallback: bbox left/right center
-    const startPos = { x: pos.x, y: pos.y + size.height / 2 };
-    const endPos = { x: pos.x + size.width, y: pos.y + size.height / 2 };
-    return { start: startPos, end: endPos };
-  }, [selectedLine]);
-
-  // 将屏幕坐标转换为世界坐标
-  const screenToWorld = useCallback((screenX: number, screenY: number) => {
-    const container = containerRef.current;
-    if (!container) return { x: screenX, y: screenY };
-
-    const rect = container.getBoundingClientRect();
-    const vp = getViewport();
-
-    // 屏幕坐标 → 容器内局部坐标 → 缩放变换还原 → 世界坐标
-    const localX = screenX - rect.left;
-    const localY = screenY - rect.top;
-    const x = (localX - vp.offsetX) / vp.zoom;
-    const y = (localY - vp.offsetY) / vp.zoom;
-
-    return { x, y };
-  }, [containerRef, getViewport]);
-
-  // 将世界坐标转换为屏幕坐标
-  const worldToScreen = useCallback((worldX: number, worldY: number) => {
-    const container = containerRef.current;
-    if (!container) return { x: worldX, y: worldY };
-
-    const rect = container.getBoundingClientRect();
-    const vp = getViewport();
-
-    // 世界坐标 → 缩放变换 → 容器内局部坐标 → 屏幕坐标
-    const x = worldX * vp.zoom + vp.offsetX + rect.left;
-    const y = worldY * vp.zoom + vp.offsetY + rect.top;
-
-    return { x, y };
-  }, [containerRef, getViewport]);
-
-  // 检测鼠标位置下的节点和最近锚点
-  const detectNodeAndAnchor = useCallback((worldPos: { x: number; y: number }) => {
-    const nodes = Object.values(state.nodesById);
-
-    for (const node of nodes) {
-      if (node.id === selectedLineId) continue; // 跳过当前线条
-      if (node.schemaRef?.type === 'basic/line') continue; // 跳过其他线条
-      if (!node.visible) continue;
-
-      const schema = node.schemaRef as any;
-      const pos = schema.position || { x: 0, y: 0 };
-      const size = schema.size || { width: 100, height: 100 };
-
-      // 检查是否在节点范围内（扩大检测区域）
-      const padding = 30;
-      if (
-        worldPos.x >= pos.x - padding &&
-        worldPos.x <= pos.x + size.width + padding &&
-        worldPos.y >= pos.y - padding &&
-        worldPos.y <= pos.y + size.height + padding
-      ) {
-        // 找到最近的锚点
-        const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
-        let closestAnchor: AnchorType = 'center';
-        let closestDist = Infinity;
-
-        for (const anchor of anchors) {
-          const anchorPos = getAnchorWorldPosition(schema, anchor);
-          const dist = Math.hypot(worldPos.x - anchorPos.x, worldPos.y - anchorPos.y);
-          if (dist < closestDist) {
-            closestDist = dist;
-            closestAnchor = anchor;
-          }
-        }
-
-        return { nodeId: node.id, anchor: closestAnchor };
+    if (isPipeType(schema.type)) {
+      if (rawPoints && rawPoints.length >= 3) {
+        return rawPoints
+          .map((point, index) => {
+            if (index === 0) return start;
+            if (index === rawPoints.length - 1) return end;
+            return localToWorld(point);
+          })
+          .filter(Boolean) as Array<{ x: number; y: number }>;
       }
+      return buildElbowRoutePoints(start, end, props.sourceAnchor, props.targetAnchor);
     }
 
-    return null;
-  }, [state.nodesById, selectedLineId]);
+    return [start, end];
+  }, [getAnchorWorldPosition, selectedLine, state.nodesById]);
 
-  // 处理手柄拖拽开始
-  const handleHandleMouseDown = useCallback((endpoint: 'start' | 'end', e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const screenToWorld = useCallback(
+    (screenX: number, screenY: number) => {
+      const container = containerRef.current;
+      if (!container) return { x: screenX, y: screenY };
 
-    if (!selectedLineId) return;
+      const rect = container.getBoundingClientRect();
+      const vp = getViewport();
+      return {
+        x: (screenX - rect.left - vp.offsetX) / vp.zoom,
+        y: (screenY - rect.top - vp.offsetY) / vp.zoom,
+      };
+    },
+    [containerRef, getViewport],
+  );
 
-    const worldPos = screenToWorld(e.clientX, e.clientY);
+  const worldToScreen = useCallback(
+    (worldX: number, worldY: number) => {
+      const container = containerRef.current;
+      if (!container) return { x: worldX, y: worldY };
 
-    setDragState({
-      lineId: selectedLineId,
-      endpoint,
-      startWorldPos: worldPos,
-      currentWorldPos: worldPos,
-    });
-  }, [selectedLineId, screenToWorld]);
+      const rect = container.getBoundingClientRect();
+      const vp = getViewport();
+      return {
+        x: worldX * vp.zoom + vp.offsetX + rect.left,
+        y: worldY * vp.zoom + vp.offsetY + rect.top,
+      };
+    },
+    [containerRef, getViewport],
+  );
 
-  // 处理双击手柄：断开连接
-  const handleHandleDoubleClick = useCallback((endpoint: 'start' | 'end', e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const detectNodeAndAnchor = useCallback(
+    (worldPos: { x: number; y: number }) => {
+      const nodes = Object.values(state.nodesById);
+      for (const node of nodes) {
+        if (node.id === selectedLineId) continue;
+        if (isConnectorType(node.schemaRef?.type)) continue;
+        if (!node.visible) continue;
 
-    if (!selectedLineId) return;
+        const schema = node.schemaRef as any;
+        const pos = schema.position || { x: 0, y: 0 };
+        const size = schema.size || { width: 100, height: 100 };
+        const padding = 30;
 
-    const currentState = kernelStore.getState() as any;
-    const updateNode = currentState.updateNode;
-    if (!updateNode) return;
+        if (
+          worldPos.x >= pos.x - padding &&
+          worldPos.x <= pos.x + size.width + padding &&
+          worldPos.y >= pos.y - padding &&
+          worldPos.y <= pos.y + size.height + padding
+        ) {
+          const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
+          let closestAnchor: AnchorType = 'center';
+          let closestDist = Infinity;
 
-    const node = state.nodesById[selectedLineId];
-    const currentProps = (node?.schemaRef as any)?.props || {};
+          for (const anchor of anchors) {
+            const anchorPos = getAnchorWorldPosition(schema, anchor);
+            const dist = Math.hypot(worldPos.x - anchorPos.x, worldPos.y - anchorPos.y);
+            if (dist < closestDist) {
+              closestDist = dist;
+              closestAnchor = anchor;
+            }
+          }
 
-    const propKey = endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
-    const anchorKey = endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
+          return { nodeId: node.id, anchor: closestAnchor };
+        }
+      }
 
-    // 如果当前端点有连接，则断开
-    if (currentProps[propKey]) {
-      const newProps = { ...currentProps };
-      delete newProps[propKey];
-      delete newProps[anchorKey];
+      return null;
+    },
+    [getAnchorWorldPosition, selectedLineId, state.nodesById],
+  );
 
-      updateNode(selectedLineId, { props: newProps });
-      onUserEdit?.();
+  const getDraggedSegmentPoints = useCallback((segmentState: SegmentDragState) => {
+    const deltaX = segmentState.currentWorldPos.x - segmentState.startWorldPos.x;
+    const deltaY = segmentState.currentWorldPos.y - segmentState.startWorldPos.y;
+    const nextPoints = segmentState.baseWorldPoints.map((point) => ({ ...point }));
+    const first = nextPoints[segmentState.segmentIndex];
+    const second = nextPoints[segmentState.segmentIndex + 1];
+    if (!first || !second) return nextPoints;
+
+    if (segmentState.axis === 'x') {
+      first.x += deltaX;
+      second.x += deltaX;
+    } else {
+      first.y += deltaY;
+      second.y += deltaY;
     }
-  }, [selectedLineId, kernelStore, state.nodesById, onUserEdit]);
 
-  // 处理全局鼠标移动
+    return nextPoints;
+  }, []);
+
+  const handleHandleMouseDown = useCallback(
+    (endpoint: 'start' | 'end', e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!selectedLineId) return;
+
+      const worldPos = screenToWorld(e.clientX, e.clientY);
+      setDragState({
+        kind: 'endpoint',
+        lineId: selectedLineId,
+        endpoint,
+        startWorldPos: worldPos,
+        currentWorldPos: worldPos,
+      });
+    },
+    [screenToWorld, selectedLineId],
+  );
+
+  const handleSegmentMouseDown = useCallback(
+    (
+      segmentIndex: number,
+      axis: 'x' | 'y',
+      baseWorldPoints: Array<{ x: number; y: number }>,
+      e: React.MouseEvent,
+    ) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!selectedLineId) return;
+
+      const worldPos = screenToWorld(e.clientX, e.clientY);
+      setDragState({
+        kind: 'segment',
+        lineId: selectedLineId,
+        segmentIndex,
+        axis,
+        baseWorldPoints,
+        startWorldPos: worldPos,
+        currentWorldPos: worldPos,
+      });
+    },
+    [screenToWorld, selectedLineId],
+  );
+
+  const handleHandleDoubleClick = useCallback(
+    (endpoint: 'start' | 'end', e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!selectedLineId) return;
+
+      const currentState = kernelStore.getState() as any;
+      const updateNode = currentState.updateNode;
+      if (!updateNode) return;
+
+      const node = state.nodesById[selectedLineId];
+      const currentProps = (node?.schemaRef as any)?.props || {};
+      const propKey = endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
+      const anchorKey = endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
+
+      if (currentProps[propKey]) {
+        const newProps = { ...currentProps };
+        delete newProps[propKey];
+        delete newProps[anchorKey];
+        updateNode(selectedLineId, { props: newProps });
+        onUserEdit?.();
+      }
+    },
+    [kernelStore, onUserEdit, selectedLineId, state.nodesById],
+  );
+
   useEffect(() => {
     if (!dragState) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const worldPos = screenToWorld(e.clientX, e.clientY);
-      setDragState((prev) => prev ? { ...prev, currentWorldPos: worldPos } : null);
+      setDragState((prev) => (prev ? { ...prev, currentWorldPos: worldPos } : null));
 
-      // 检测悬停的节点和锚点
-      const detected = detectNodeAndAnchor(worldPos);
-      if (detected) {
-        setHoveredNodeId(detected.nodeId);
-        setHoveredAnchor(detected.anchor);
-      } else {
-        setHoveredNodeId(null);
-        setHoveredAnchor(null);
+      if (dragState.kind === 'endpoint') {
+        const detected = detectNodeAndAnchor(worldPos);
+        if (detected) {
+          setHoveredNodeId(detected.nodeId);
+          setHoveredAnchor(detected.anchor);
+        } else {
+          setHoveredNodeId(null);
+          setHoveredAnchor(null);
+        }
       }
     };
 
     const handleMouseUp = () => {
-      if (dragState) {
-        const currentState = kernelStore.getState() as any;
-        const updateNode = currentState.updateNode;
-        if (updateNode) {
-          const lineNode = state.nodesById[dragState.lineId];
-          const lineSchema = lineNode?.schemaRef as any;
-          const currentProps = lineSchema?.props || {};
+      const currentState = kernelStore.getState() as any;
+      const updateNode = currentState.updateNode;
+      if (!updateNode) return;
 
-          const propKey = dragState.endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
-          const anchorKey = dragState.endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
+      const lineNode = state.nodesById[dragState.lineId];
+      const lineSchema = lineNode?.schemaRef as any;
+      const currentProps = lineSchema?.props || {};
 
-          // Determine new props:
-          // - drop on anchor => connect
-          // - drop on empty => disconnect that endpoint
-          const nextProps: any = { ...currentProps };
-          if (hoveredNodeId && hoveredAnchor) {
-            nextProps[propKey] = hoveredNodeId;
-            nextProps[anchorKey] = hoveredAnchor;
-          } else {
-            delete nextProps[propKey];
-            delete nextProps[anchorKey];
-          }
+      if (dragState.kind === 'segment') {
+        const worldPoints = getDraggedSegmentPoints(dragState);
+        const normalized = normalizeWorldPointsToNode(worldPoints);
+        updateNode(dragState.lineId, {
+          props: { ...currentProps, points: normalized.points },
+          position: normalized.position,
+          size: normalized.size,
+        });
+        onUserEdit?.();
+      } else {
+        const propKey = dragState.endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
+        const anchorKey = dragState.endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
+        const nextProps: any = { ...currentProps };
 
-          const latest = endpointsRef.current;
-          if (latest) {
-            const otherEndpoint = dragState.endpoint === 'start' ? latest.end : latest.start;
-            const dragged =
-              hoveredNodeId && hoveredAnchor && state.nodesById[hoveredNodeId]
-                ? getAnchorWorldPosition((state.nodesById[hoveredNodeId].schemaRef as any) || {}, hoveredAnchor)
-                : dragState.currentWorldPos;
+        if (hoveredNodeId && hoveredAnchor) {
+          nextProps[propKey] = hoveredNodeId;
+          nextProps[anchorKey] = hoveredAnchor;
+        } else {
+          delete nextProps[propKey];
+          delete nextProps[anchorKey];
+        }
 
-            // If dropped on an anchor, snap to the anchor world position.
-            const a = dragState.endpoint === 'start' ? dragged : otherEndpoint;
-            const b = dragState.endpoint === 'start' ? otherEndpoint : dragged;
+        const latest = endpointsRef.current;
+        if (latest) {
+          const otherEndpoint = dragState.endpoint === 'start' ? latest.end : latest.start;
+          const dragged =
+            hoveredNodeId && hoveredAnchor && state.nodesById[hoveredNodeId]
+              ? getAnchorWorldPosition(
+                  (state.nodesById[hoveredNodeId].schemaRef as any) || {},
+                  hoveredAnchor,
+                )
+              : dragState.currentWorldPos;
 
-            const padding = 24;
-            const minX = Math.min(a.x, b.x) - padding;
-            const minY = Math.min(a.y, b.y) - padding;
-            const maxX = Math.max(a.x, b.x) + padding;
-            const maxY = Math.max(a.y, b.y) + padding;
-            const nextPosition = { x: minX, y: minY };
-            const nextSize = {
-              width: Math.max(40, maxX - minX),
-              height: Math.max(40, maxY - minY),
-            };
+          if (isPipeType(lineSchema?.type)) {
+            const existingWorldPoints = getRouteWorldPoints() ?? [latest.start, latest.end];
+            const nextWorldPoints =
+              existingWorldPoints.length >= 3
+                ? existingWorldPoints.map((point) => ({ ...point }))
+                : buildElbowRoutePoints(
+                    dragState.endpoint === 'start' ? dragged : otherEndpoint,
+                    dragState.endpoint === 'start' ? otherEndpoint : dragged,
+                    nextProps.sourceAnchor,
+                    nextProps.targetAnchor,
+                  );
 
-            const points = [
-              { x: a.x - nextPosition.x, y: a.y - nextPosition.y },
-              { x: b.x - nextPosition.x, y: b.y - nextPosition.y },
-            ];
+            if (dragState.endpoint === 'start') {
+              nextWorldPoints[0] = dragged;
+            } else {
+              nextWorldPoints[nextWorldPoints.length - 1] = dragged;
+            }
 
+            const normalized = normalizeWorldPointsToNode(nextWorldPoints);
             updateNode(dragState.lineId, {
-              props: { ...nextProps, points },
-              position: nextPosition,
-              size: nextSize,
+              props: { ...nextProps, points: normalized.points },
+              position: normalized.position,
+              size: normalized.size,
             });
-            onUserEdit?.();
           } else {
-            updateNode(dragState.lineId, { props: nextProps });
-            onUserEdit?.();
+            const normalized = normalizeWorldPointsToNode([
+              dragState.endpoint === 'start' ? dragged : otherEndpoint,
+              dragState.endpoint === 'start' ? otherEndpoint : dragged,
+            ]);
+            updateNode(dragState.lineId, {
+              props: { ...nextProps, points: normalized.points },
+              position: normalized.position,
+              size: normalized.size,
+            });
           }
+          onUserEdit?.();
+        } else {
+          updateNode(dragState.lineId, { props: nextProps });
+          onUserEdit?.();
         }
       }
 
@@ -349,53 +472,63 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
 
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragState, hoveredNodeId, hoveredAnchor, kernelStore, state.nodesById, screenToWorld, detectNodeAndAnchor, onUserEdit]);
+  }, [
+    detectNodeAndAnchor,
+    dragState,
+    getAnchorWorldPosition,
+    getDraggedSegmentPoints,
+    getRouteWorldPoints,
+    hoveredAnchor,
+    hoveredNodeId,
+    kernelStore,
+    onUserEdit,
+    screenToWorld,
+    state.nodesById,
+  ]);
 
-  // 如果没有选中线条，不渲染
-  if (!selectedLineId || !selectedLine) {
+  const routePoints = useMemo(() => {
+    if (!selectedLine) return null;
+    if (dragState?.kind === 'segment') {
+      return getDraggedSegmentPoints(dragState);
+    }
+    return getRouteWorldPoints();
+  }, [dragState, getDraggedSegmentPoints, getRouteWorldPoints, selectedLine]);
+
+  if (!selectedLineId || !selectedLine || !routePoints || routePoints.length < 2) {
     return null;
   }
 
-  const endpoints = getEndpointWorldPositions();
-  if (!endpoints) {
-    return null;
-  }
-
-  endpointsRef.current = endpoints;
-
-  const handleSize = 14;
-
-  // 检查端点是否已连接
-  const isEndpointConnected = (endpoint: 'start' | 'end') => {
-    const schema = selectedLine.schemaRef as any;
-    const props = schema.props || {};
-    return endpoint === 'start' ? !!props.sourceNodeId : !!props.targetNodeId;
+  const endpoints = {
+    start: routePoints[0]!,
+    end: routePoints[routePoints.length - 1]!,
   };
+  endpointsRef.current = endpoints;
+  const handleSize = 14;
+  const selectedProps = (selectedLine.schemaRef as any)?.props || {};
 
-  // 渲染端点手柄
+  const isEndpointConnected = (endpoint: 'start' | 'end') =>
+    endpoint === 'start' ? !!selectedProps.sourceNodeId : !!selectedProps.targetNodeId;
+
   const renderHandle = (worldPos: { x: number; y: number }, endpoint: 'start' | 'end') => {
-    const isDragging = dragState?.endpoint === endpoint;
+    const isDragging = dragState?.kind === 'endpoint' && dragState.endpoint === endpoint;
     const isConnected = isEndpointConnected(endpoint);
-    const displayWorldPos = isDragging && dragState ? dragState.currentWorldPos : worldPos;
+    const displayWorldPos = isDragging ? dragState.currentWorldPos : worldPos;
     const screenPos = worldToScreen(displayWorldPos.x, displayWorldPos.y);
-
-    // 已连接的端点显示绿色，未连接显示紫色
-    const baseColor = isConnected ? 'green' : '[#6965db]';
     const borderColor = isConnected ? 'border-green-500' : 'border-[#6965db]';
     const hoverBg = isConnected ? 'hover:bg-green-500/20' : 'hover:bg-[#6965db]/20';
 
     return (
       <div
         key={endpoint}
-        className={`absolute rounded-full border-2 cursor-grab transition-all duration-75 ${isDragging
+        className={`absolute rounded-full border-2 cursor-grab transition-all duration-75 ${
+          isDragging
             ? 'bg-blue-500 border-blue-600 scale-125 shadow-lg'
             : `bg-white ${borderColor} ${hoverBg} hover:scale-110`
-          }`}
+        }`}
         style={{
           left: screenPos.x - handleSize / 2,
           top: screenPos.y - handleSize / 2,
@@ -410,20 +543,14 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     );
   };
 
-  // 渲染连接线（拖拽时显示）
   const renderDragLine = () => {
-    if (!dragState) return null;
-
-    // 获取拖拽起点：如果是 start 端点，用 end 作为起点，反之亦然
+    if (!dragState || dragState.kind !== 'endpoint') return null;
     const otherEndpoint = dragState.endpoint === 'start' ? endpoints.end : endpoints.start;
     const startScreenPos = worldToScreen(otherEndpoint.x, otherEndpoint.y);
     const endScreenPos = worldToScreen(dragState.currentWorldPos.x, dragState.currentWorldPos.y);
 
     return (
-      <svg
-        className="fixed inset-0 pointer-events-none"
-        style={{ zIndex: 999 }}
-      >
+      <svg className="fixed inset-0 pointer-events-none" style={{ zIndex: 999 }}>
         <line
           x1={startScreenPos.x}
           y1={startScreenPos.y}
@@ -437,16 +564,13 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     );
   };
 
-  // 渲染悬停节点的锚点
   const renderHoveredAnchors = () => {
-    if (!hoveredNodeId) return null;
-
+    if (dragState?.kind !== 'endpoint' || !hoveredNodeId) return null;
     const node = state.nodesById[hoveredNodeId];
     if (!node) return null;
 
     const schema = node.schemaRef as any;
     const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
-
     return anchors.map((anchor) => {
       const anchorPos = getAnchorWorldPosition(schema, anchor);
       const screenPos = worldToScreen(anchorPos.x, anchorPos.y);
@@ -456,10 +580,9 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
       return (
         <div
           key={anchor}
-          className={`absolute rounded-full border-2 pointer-events-none transition-all duration-100 ${isActive
-              ? 'bg-green-500 border-green-600 shadow-lg'
-              : 'bg-white border-gray-400'
-            }`}
+          className={`absolute rounded-full border-2 pointer-events-none transition-all duration-100 ${
+            isActive ? 'bg-green-500 border-green-600 shadow-lg' : 'bg-white border-gray-400'
+          }`}
           style={{
             left: screenPos.x - anchorSize / 2,
             top: screenPos.y - anchorSize / 2,
@@ -472,17 +595,14 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     });
   };
 
-  // 渲染节点高亮边框
   const renderNodeHighlight = () => {
-    if (!hoveredNodeId) return null;
-
+    if (dragState?.kind !== 'endpoint' || !hoveredNodeId) return null;
     const node = state.nodesById[hoveredNodeId];
     if (!node) return null;
 
     const schema = node.schemaRef as any;
     const pos = schema.position || { x: 0, y: 0 };
     const size = schema.size || { width: 100, height: 100 };
-
     const topLeft = worldToScreen(pos.x, pos.y);
     const bottomRight = worldToScreen(pos.x + size.width, pos.y + size.height);
 
@@ -501,21 +621,61 @@ export default function LineConnectionTool({ kernelStore, containerRef, getViewp
     );
   };
 
+  const renderSegmentHandles = () => {
+    if (!isSelectedPipe || routePoints.length < 2) return null;
+
+    return routePoints.slice(0, -1).map((point, index) => {
+      const next = routePoints[index + 1]!;
+      const dx = next.x - point.x;
+      const dy = next.y - point.y;
+      const horizontal = Math.abs(dx) >= Math.abs(dy);
+      const axis: 'x' | 'y' = horizontal ? 'y' : 'x';
+      const isEdgeSegment = index === 0 || index === routePoints.length - 2;
+      if (
+        (index === 0 && selectedProps.sourceNodeId) ||
+        (index === routePoints.length - 2 && selectedProps.targetNodeId)
+      ) {
+        return null;
+      }
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return null;
+
+      const mid = { x: (point.x + next.x) / 2, y: (point.y + next.y) / 2 };
+      const screenPos = worldToScreen(mid.x, mid.y);
+      const isDragging = dragState?.kind === 'segment' && dragState.segmentIndex === index;
+
+      return (
+        <div
+          key={`segment-${index}`}
+          className={`absolute rounded border transition-all duration-75 ${
+            isDragging
+              ? 'bg-orange-500 border-orange-600 shadow-lg'
+              : 'bg-white/90 border-orange-400 hover:bg-orange-50'
+          }`}
+          style={{
+            left: screenPos.x - 9,
+            top: screenPos.y - 9,
+            width: 18,
+            height: 18,
+            zIndex: isEdgeSegment ? 998 : 999,
+            cursor: axis === 'x' ? 'col-resize' : 'row-resize',
+            pointerEvents: 'auto',
+          }}
+          onMouseDown={(e) => handleSegmentMouseDown(index, axis, routePoints, e)}
+          title={axis === 'x' ? '拖动调整竖向管段' : '拖动调整横向管段'}
+        />
+      );
+    });
+  };
+
   return (
     <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 998 }}>
-      {/* 节点高亮 */}
       {renderNodeHighlight()}
-
-      {/* 端点手柄 */}
       <div className="pointer-events-auto">
         {renderHandle(endpoints.start, 'start')}
         {renderHandle(endpoints.end, 'end')}
+        {renderSegmentHandles()}
       </div>
-
-      {/* 拖拽线 */}
       {renderDragLine()}
-
-      {/* 悬停锚点 */}
       {renderHoveredAnchors()}
     </div>
   );

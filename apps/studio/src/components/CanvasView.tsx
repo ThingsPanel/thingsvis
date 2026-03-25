@@ -77,6 +77,10 @@ function isTextNode(node: { schemaRef?: NodeSchemaType } | null | undefined): bo
   return node?.schemaRef?.type === 'basic/text';
 }
 
+function isConnectorNodeType(type: string | undefined): boolean {
+  return type === 'basic/line' || type === 'industrial/pipe';
+}
+
 function buildDroppedPresetNodes(
   sourceNodes: NodeSchemaType[],
   dropPoint: { x: number; y: number },
@@ -880,7 +884,7 @@ const CanvasView = forwardRef<
             const height = typeof size.height === 'number' ? size.height : 0;
             // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
             const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
-            const isLine = schema.type === 'basic/line';
+            const isLine = isConnectorNodeType(schema.type);
             const isSelected = state.selection.nodeIds.includes(node.id);
             // Line components use LineConnectionTool for selection UI, don't show border
             const showBorder = isSelected && !isLine && inlineTextEditor?.nodeId !== node.id;

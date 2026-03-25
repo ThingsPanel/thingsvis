@@ -1,0 +1,35 @@
+{
+  "name": "thingsvis-widget-industrial-pipe",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack serve --port 3207",
+    "build": "rspack build",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@thingsvis/widget-sdk": "workspace:*",
+    "zod": "^3.22.4"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "@thingsvis/widget-config": "workspace:*",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
+  },
+  "thingsvis": {
+    "displayName": "Industrial Pipe",
+    "icon": "Minus",
+    "i18n": {
+      "zh": "工业管道",
+      "en": "Industrial Pipe"
+    }
+  }
+}

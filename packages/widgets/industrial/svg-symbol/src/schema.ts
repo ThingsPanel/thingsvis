@@ -3,10 +3,9 @@ import { z } from 'zod';
 export const PropsSchema = z.object({
   /**
    * ID of the selected industrial symbol from the built-in registry.
-   * Defaults to the first entry (centrifugal pump) so the widget renders
-   * something meaningful immediately after dropping onto the canvas.
+   * Defaults to control cabinet as a generic industrial equipment symbol.
    */
-  selectedIconId: z.string().default('pump-centrifugal'),
+  selectedIconId: z.string().default('control-cabinet'),
 
   /**
    * Raw SVG fallback / custom paste.

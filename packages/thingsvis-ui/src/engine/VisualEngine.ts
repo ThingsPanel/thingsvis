@@ -13,6 +13,48 @@ import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
+
+function isLineNodeType(type: string | undefined): boolean {
+  return type === 'basic/line';
+}
+
+function isPipeNodeType(type: string | undefined): boolean {
+  return type === 'industrial/pipe';
+}
+
+function isConnectorNodeType(type: string | undefined): boolean {
+  return isLineNodeType(type) || isPipeNodeType(type);
+}
+
+function buildElbowRoutePoints(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  sourceAnchor?: string,
+  targetAnchor?: string,
+) {
+  const sourceHorizontal = sourceAnchor === 'left' || sourceAnchor === 'right';
+  const sourceVertical = sourceAnchor === 'top' || sourceAnchor === 'bottom';
+  const targetHorizontal = targetAnchor === 'left' || targetAnchor === 'right';
+  const targetVertical = targetAnchor === 'top' || targetAnchor === 'bottom';
+
+  if (sourceVertical && targetVertical) {
+    const midY = (a.y + b.y) / 2;
+    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
+  }
+  if (sourceHorizontal && targetHorizontal) {
+    const midX = (a.x + b.x) / 2;
+    return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+  }
+  if (sourceVertical && targetHorizontal) {
+    return [a, { x: a.x, y: b.y }, b];
+  }
+  if (sourceHorizontal && targetVertical) {
+    return [a, { x: b.x, y: a.y }, b];
+  }
+  const midX = (a.x + b.x) / 2;
+  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+}
+
 export class VisualEngine {
   private activeInlineTextEditor?:
     | {
@@ -83,7 +125,7 @@ export class VisualEngine {
 
   private scheduleAutoLayoutConnectedLine(node: NodeState, linkedNodes: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }>) {
     // Only for line nodes that have endpoint bindings
-    if (node.schemaRef.type !== 'basic/line') return;
+    if (!isConnectorNodeType(node.schemaRef.type)) return;
     const schema = node.schemaRef as any;
     const props = (schema.props || {}) as Record<string, any>;
     const hasBinding = !!(props.sourceNodeId || props.targetNodeId);
@@ -120,23 +162,39 @@ export class VisualEngine {
       : localToWorld(lastPt, { x: lp.x + (ls.width ?? 0), y: lp.y + (ls.height ?? 0) / 2 });
 
     const padding = 24;
-    const minX = Math.min(startWorld.x, endWorld.x) - padding;
-    const minY = Math.min(startWorld.y, endWorld.y) - padding;
-    const maxX = Math.max(startWorld.x, endWorld.x) + padding;
-    const maxY = Math.max(startWorld.y, endWorld.y) + padding;
+    let worldPoints: Array<{ x: number; y: number }>;
+    if (isPipeNodeType(node.schemaRef.type)) {
+      if (pts && pts.length >= 3) {
+        worldPoints = pts
+          .filter((p) => typeof p?.x === 'number' && typeof p?.y === 'number')
+          .map((p, index) => {
+            if (index === 0) return startWorld;
+            if (index === pts.length - 1) return endWorld;
+            return localToWorld(p, startWorld);
+          });
+      } else {
+        worldPoints = buildElbowRoutePoints(startWorld, endWorld, props.sourceAnchor, props.targetAnchor);
+      }
+    } else {
+      worldPoints = [startWorld, endWorld];
+    }
 
-    const nextPosition = { x: minX, y: minY };
+    const minPointX = Math.min(...worldPoints.map((point) => point.x));
+    const minPointY = Math.min(...worldPoints.map((point) => point.y));
+    const maxPointX = Math.max(...worldPoints.map((point) => point.x));
+    const maxPointY = Math.max(...worldPoints.map((point) => point.y));
+
+    const nextPosition = { x: minPointX - padding, y: minPointY - padding };
     const nextSize = {
-      width: Math.max(40, maxX - minX),
-      height: Math.max(40, maxY - minY)
+      width: Math.max(40, maxPointX - minPointX + padding * 2),
+      height: Math.max(40, maxPointY - minPointY + padding * 2)
     };
 
-    const nextPoints = [
-      { x: startWorld.x - nextPosition.x, y: startWorld.y - nextPosition.y },
-      { x: endWorld.x - nextPosition.x, y: endWorld.y - nextPosition.y }
-    ];
-
-    const key = JSON.stringify({ startWorld, endWorld, nextPosition, nextSize });
+    const nextPoints = worldPoints.map((point) => ({
+      x: point.x - nextPosition.x,
+      y: point.y - nextPosition.y,
+    }));
+    const key = JSON.stringify({ worldPoints, nextPosition, nextSize });
     const lastKey = this.lastLineAutoLayoutCache.get(node.id);
     if (key === lastKey) return;
     this.lastLineAutoLayoutCache.set(node.id, key);

@@ -5,6 +5,18 @@ import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
 
+function isLineNodeType(type: string | undefined): boolean {
+  return type === 'basic/line';
+}
+
+function isPipeNodeType(type: string | undefined): boolean {
+  return type === 'industrial/pipe';
+}
+
+function isConnectorNodeType(type: string | undefined): boolean {
+  return isLineNodeType(type) || isPipeNodeType(type);
+}
+
 /** Grid layout handlers from useGridLayout hook */
 type GridLayoutHandlers = {
   colWidth: number;
@@ -908,18 +920,32 @@ export default function TransformControls({
         return !!node && !node.locked;
       });
 
-      // Lines should still be draggable when unconnected, but not resizable/rotatable.
-      const anyLinesSelected = validSelectedIds.some(
-        (id) => state.nodesById[id]?.schemaRef?.type === 'basic/line',
+      // Generic lines remain lightweight connectors.
+      const anyLinesSelected = validSelectedIds.some((id) =>
+        isLineNodeType(state.nodesById[id]?.schemaRef?.type),
+      );
+      const anyPipesSelected = validSelectedIds.some((id) =>
+        isPipeNodeType(state.nodesById[id]?.schemaRef?.type),
       );
       const anyConnectedLinesSelected = validSelectedIds.some((id) => {
         const node = state.nodesById[id];
-        if (node?.schemaRef?.type !== 'basic/line') return false;
+        if (!isLineNodeType(node?.schemaRef?.type)) return false;
+        const props = (node.schemaRef as any)?.props || {};
+        return !!(props.sourceNodeId || props.targetNodeId);
+      });
+      const anyConnectedPipesSelected = validSelectedIds.some((id) => {
+        const node = state.nodesById[id];
+        if (!isPipeNodeType(node?.schemaRef?.type)) return false;
         const props = (node.schemaRef as any)?.props || {};
         return !!(props.sourceNodeId || props.targetNodeId);
       });
 
-      const targets = validSelectedIds
+      const moveableTargetIds = validSelectedIds.filter((id) => {
+        const node = state.nodesById[id];
+        return !isConnectorNodeType(node?.schemaRef?.type);
+      });
+
+      const targets = moveableTargetIds
         .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
@@ -934,12 +960,13 @@ export default function TransformControls({
 
       // Disable transforms for locked nodes
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
-      moveableRef.current.draggable = !hasLockedSelection && !anyConnectedLinesSelected;
-      // If any line is selected, or any explicitly non-resizable component is selected, disable resize/rotate
+      moveableRef.current.draggable =
+        !hasLockedSelection && !anyConnectedLinesSelected && !anyConnectedPipesSelected;
+      // Keep connector editing on the custom overlay rather than Moveable handles.
       moveableRef.current.resizable =
-        !hasLockedSelection && !anyLinesSelected && !anyNonResizableSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected;
+        !hasLockedSelection && !anyLinesSelected && !anyPipesSelected && !anyNonResizableSelected;
+      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
+      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
 
       moveableRef.current.target = targets;
 
@@ -950,10 +977,10 @@ export default function TransformControls({
 
       // If we expected targets but found none, the DOM might not be ready yet
       // Schedule a retry after the next paint
-      if (validSelectedIds.length > 0 && targets.length === 0) {
+      if (moveableTargetIds.length > 0 && targets.length === 0) {
         requestAnimationFrame(() => {
           if (!moveableRef.current) return;
-          const retryTargets = validSelectedIds
+          const retryTargets = moveableTargetIds
             .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
             .filter(Boolean) as HTMLElement[];
           if (retryTargets.length > 0) {
