@@ -173,6 +173,15 @@ function orthogonalizePipePoints(
   }
   compacted.push(result[result.length - 1]!);
 
+  if (compacted.length > 4) {
+    return buildCanonicalPipeRoute(
+      compacted[0]!,
+      compacted[compacted.length - 1]!,
+      sourceAnchor,
+      targetAnchor,
+    );
+  }
+
   return compacted;
 }
 
@@ -242,6 +251,15 @@ function simplifyPipePoints(
     if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
       return [start, end];
     }
+  }
+
+  if (compacted.length > 4) {
+    return buildCanonicalPipeRoute(
+      compacted[0]!,
+      compacted[compacted.length - 1]!,
+      sourceAnchor,
+      targetAnchor,
+    );
   }
 
   return compacted;

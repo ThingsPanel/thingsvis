@@ -145,6 +145,15 @@ function orthogonalizePipePoints(
   }
   compacted.push(result[result.length - 1]!);
 
+  if (compacted.length > 4) {
+    return buildElbowRoutePoints(
+      compacted[0]!,
+      compacted[compacted.length - 1]!,
+      sourceAnchor,
+      targetAnchor,
+    );
+  }
+
   return compacted;
 }
 

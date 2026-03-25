@@ -183,7 +183,28 @@ function orthogonalizePipePoints(points: Pt[], sourceAnchor?: AnchorType, target
   }
   compacted.push(result[result.length - 1]!);
 
+  if (compacted.length > 4) {
+    return buildCanonicalPipeRoute(
+      compacted[0]!,
+      compacted[compacted.length - 1]!,
+      sourceAnchor,
+      targetAnchor,
+    );
+  }
+
   return compacted;
+}
+
+function buildCanonicalPipeRoute(
+  start: Pt,
+  end: Pt,
+  sourceAnchor?: AnchorType,
+  targetAnchor?: AnchorType,
+): Pt[] {
+  if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
+    return [start, end];
+  }
+  return buildElbowRoutePoints(start, end, sourceAnchor, targetAnchor);
 }
 
 function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: WidgetOverlayContext) {
