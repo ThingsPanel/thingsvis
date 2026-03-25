@@ -1,10 +1,10 @@
 import type { WidgetControls } from '@thingsvis/schema';
 import { INDUSTRIAL_ICONS } from './icons-registry';
 
-/** Flatten icon registry into select options: "泵阀 > 离心泵" / "Pump & Valve > Centrifugal Pump" */
+/** Flatten icon registry into select options */
 function buildIconOptions() {
   return INDUSTRIAL_ICONS.map((icon) => ({
-    label: `${icon.categoryLabel.zh} > ${icon.label.zh}`,
+    label: { zh: `${icon.categoryLabel.zh} > ${icon.label.zh}`, en: `${icon.categoryLabel.en} > ${icon.label.en}` },
     value: icon.id,
   }));
 }

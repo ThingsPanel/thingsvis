@@ -102,6 +102,90 @@ function buildElbowRoutePoints(a: Pt, b: Pt, sourceAnchor?: AnchorType, targetAn
   return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
 }
 
+function isHorizontalSegment(a: Pt, b: Pt, eps = 1) {
+  return Math.abs(a.y - b.y) < eps;
+}
+
+function isVerticalSegment(a: Pt, b: Pt, eps = 1) {
+  return Math.abs(a.x - b.x) < eps;
+}
+
+function orthogonalizePipePoints(points: Pt[], sourceAnchor?: AnchorType, targetAnchor?: AnchorType): Pt[] {
+  if (points.length < 2) return points;
+
+  const result: Pt[] = [points[0]!];
+
+  const chooseElbow = (
+    a: Pt,
+    b: Pt,
+    prev?: Pt,
+    next?: Pt,
+    isFirst?: boolean,
+    isLast?: boolean,
+  ): Pt => {
+    let firstLeg: 'horizontal' | 'vertical' | null = null;
+
+    if (isFirst) {
+      if (sourceAnchor === 'left' || sourceAnchor === 'right') firstLeg = 'horizontal';
+      if (sourceAnchor === 'top' || sourceAnchor === 'bottom') firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && prev) {
+      if (isHorizontalSegment(prev, a)) firstLeg = 'vertical';
+      else if (isVerticalSegment(prev, a)) firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg && next) {
+      if (isHorizontalSegment(b, next)) firstLeg = 'horizontal';
+      else if (isVerticalSegment(b, next)) firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && isLast) {
+      if (targetAnchor === 'left' || targetAnchor === 'right') firstLeg = 'vertical';
+      if (targetAnchor === 'top' || targetAnchor === 'bottom') firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg) {
+      firstLeg = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'horizontal' : 'vertical';
+    }
+
+    return firstLeg === 'horizontal' ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
+  };
+
+  for (let i = 1; i < points.length; i++) {
+    const a = result[result.length - 1]!;
+    const b = points[i]!;
+
+    if (isHorizontalSegment(a, b) || isVerticalSegment(a, b)) {
+      result.push(b);
+      continue;
+    }
+
+    const prev = result.length >= 2 ? result[result.length - 2] : undefined;
+    const next = i < points.length - 1 ? points[i + 1] : undefined;
+    const elbow = chooseElbow(a, b, prev, next, i === 1, i === points.length - 1);
+
+    if (Math.abs(elbow.x - a.x) >= 1 || Math.abs(elbow.y - a.y) >= 1) {
+      result.push(elbow);
+    }
+    result.push(b);
+  }
+
+  const compacted: Pt[] = [result[0]!];
+  for (let i = 1; i < result.length - 1; i++) {
+    const prev = compacted[compacted.length - 1]!;
+    const curr = result[i]!;
+    const next = result[i + 1]!;
+    const collinearX = isVerticalSegment(prev, curr) && isVerticalSegment(curr, next);
+    const collinearY = isHorizontalSegment(prev, curr) && isHorizontalSegment(curr, next);
+    if (collinearX || collinearY) continue;
+    compacted.push(curr);
+  }
+  compacted.push(result[result.length - 1]!);
+
+  return compacted;
+}
+
 function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: WidgetOverlayContext) {
   element.style.width = '100%';
   element.style.height = '100%';
@@ -260,11 +344,15 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       const rawPoints = Array.isArray(nextProps.points) ? nextProps.points : defaults.points;
       const pxPoints = toPxPoints(rawPoints as Pt[], size);
       if (pxPoints.length >= 3) {
-        points = pxPoints.map((point, index) => {
-          if (index === 0) return startPt;
-          if (index === pxPoints.length - 1) return endPt;
-          return point;
-        });
+        points = orthogonalizePipePoints(
+          pxPoints.map((point, index) => {
+            if (index === 0) return startPt;
+            if (index === pxPoints.length - 1) return endPt;
+            return point;
+          }),
+          nextProps.sourceAnchor,
+          nextProps.targetAnchor,
+        );
       } else {
         points = buildElbowRoutePoints(startPt, endPt, nextProps.sourceAnchor, nextProps.targetAnchor);
       }
@@ -273,7 +361,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       const pxPoints = toPxPoints(rawPoints as Pt[], size);
       points =
         pxPoints.length >= 3
-          ? pxPoints
+          ? orthogonalizePipePoints(pxPoints, nextProps.sourceAnchor, nextProps.targetAnchor)
           : buildElbowRoutePoints(
               pxPoints[0] ?? { x: 0, y: size.height / 2 },
               pxPoints[pxPoints.length - 1] ?? { x: size.width, y: size.height / 2 },

@@ -88,6 +88,165 @@ function buildElbowRoutePoints(
   return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
 }
 
+function isHorizontalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.y - b.y) < eps;
+}
+
+function isVerticalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.x - b.x) < eps;
+}
+
+function orthogonalizePipePoints(
+  points: Array<{ x: number; y: number }>,
+  sourceAnchor?: AnchorType,
+  targetAnchor?: AnchorType,
+) {
+  if (points.length < 2) return points;
+
+  const result: Array<{ x: number; y: number }> = [points[0]!];
+
+  const chooseElbow = (
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+    prev?: { x: number; y: number },
+    next?: { x: number; y: number },
+    isFirst?: boolean,
+    isLast?: boolean,
+  ) => {
+    let firstLeg: 'horizontal' | 'vertical' | null = null;
+
+    if (isFirst) {
+      if (sourceAnchor === 'left' || sourceAnchor === 'right') firstLeg = 'horizontal';
+      if (sourceAnchor === 'top' || sourceAnchor === 'bottom') firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && prev) {
+      if (isHorizontalSegment(prev, a)) firstLeg = 'vertical';
+      else if (isVerticalSegment(prev, a)) firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg && next) {
+      if (isHorizontalSegment(b, next)) firstLeg = 'horizontal';
+      else if (isVerticalSegment(b, next)) firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && isLast) {
+      if (targetAnchor === 'left' || targetAnchor === 'right') firstLeg = 'vertical';
+      if (targetAnchor === 'top' || targetAnchor === 'bottom') firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg) {
+      firstLeg = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'horizontal' : 'vertical';
+    }
+
+    return firstLeg === 'horizontal' ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
+  };
+
+  for (let i = 1; i < points.length; i++) {
+    const a = result[result.length - 1]!;
+    const b = points[i]!;
+
+    if (isHorizontalSegment(a, b) || isVerticalSegment(a, b)) {
+      result.push(b);
+      continue;
+    }
+
+    const prev = result.length >= 2 ? result[result.length - 2] : undefined;
+    const next = i < points.length - 1 ? points[i + 1] : undefined;
+    const elbow = chooseElbow(a, b, prev, next, i === 1, i === points.length - 1);
+
+    if (Math.abs(elbow.x - a.x) >= 1 || Math.abs(elbow.y - a.y) >= 1) {
+      result.push(elbow);
+    }
+    result.push(b);
+  }
+
+  const compacted: Array<{ x: number; y: number }> = [result[0]!];
+  for (let i = 1; i < result.length - 1; i++) {
+    const prev = compacted[compacted.length - 1]!;
+    const curr = result[i]!;
+    const next = result[i + 1]!;
+    const collinearX = isVerticalSegment(prev, curr) && isVerticalSegment(curr, next);
+    const collinearY = isHorizontalSegment(prev, curr) && isHorizontalSegment(curr, next);
+    if (collinearX || collinearY) continue;
+    compacted.push(curr);
+  }
+  compacted.push(result[result.length - 1]!);
+
+  return compacted;
+}
+
+function buildCanonicalPipeRoute(
+  start: { x: number; y: number },
+  end: { x: number; y: number },
+  sourceAnchor?: AnchorType,
+  targetAnchor?: AnchorType,
+) {
+  if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
+    return [start, end];
+  }
+  return buildElbowRoutePoints(start, end, sourceAnchor, targetAnchor);
+}
+
+function simplifyPipePoints(
+  points: Array<{ x: number; y: number }>,
+  sourceAnchor?: AnchorType,
+  targetAnchor?: AnchorType,
+  collapseThreshold = 12,
+) {
+  let compacted = orthogonalizePipePoints(points, sourceAnchor, targetAnchor).filter(
+    (point, index, arr) =>
+      index === 0 ||
+      index === arr.length - 1 ||
+      Math.abs(point.x - arr[index - 1]!.x) >= 1 ||
+      Math.abs(point.y - arr[index - 1]!.y) >= 1,
+  );
+
+  if (compacted.length < 2) return compacted;
+
+  let changed = true;
+  while (changed && compacted.length >= 4) {
+    changed = false;
+
+    for (let i = 0; i <= compacted.length - 4; i++) {
+      const a = compacted[i]!;
+      const b = compacted[i + 1]!;
+      const c = compacted[i + 2]!;
+      const d = compacted[i + 3]!;
+
+      const horizontalDogleg =
+        isHorizontalSegment(a, b) &&
+        isVerticalSegment(b, c) &&
+        isHorizontalSegment(c, d) &&
+        Math.abs(a.y - d.y) < 1 &&
+        Math.abs(b.x - c.x) <= collapseThreshold;
+
+      const verticalDogleg =
+        isVerticalSegment(a, b) &&
+        isHorizontalSegment(b, c) &&
+        isVerticalSegment(c, d) &&
+        Math.abs(a.x - d.x) < 1 &&
+        Math.abs(b.y - c.y) <= collapseThreshold;
+
+      if (horizontalDogleg || verticalDogleg) {
+        compacted = [...compacted.slice(0, i + 1), ...compacted.slice(i + 3)];
+        changed = true;
+        break;
+      }
+    }
+  }
+
+  if (compacted.length >= 2) {
+    const start = compacted[0]!;
+    const end = compacted[compacted.length - 1]!;
+    if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
+      return [start, end];
+    }
+  }
+
+  return compacted;
+}
+
 function getConnectorPadding(strokeWidth?: unknown) {
   const width = Number(strokeWidth ?? 2);
   return Math.max(28, Math.ceil(width * 2 + 16));
@@ -245,13 +404,17 @@ export default function LineConnectionTool({
 
     if (isPipeType(schema.type)) {
       if (rawPoints && rawPoints.length >= 3) {
-        return rawPoints
-          .map((point, index) => {
-            if (index === 0) return start;
-            if (index === rawPoints.length - 1) return end;
-            return localToWorld(point);
-          })
-          .filter(Boolean) as Array<{ x: number; y: number }>;
+        return orthogonalizePipePoints(
+          rawPoints
+            .map((point, index) => {
+              if (index === 0) return start;
+              if (index === rawPoints.length - 1) return end;
+              return localToWorld(point);
+            })
+            .filter(Boolean) as Array<{ x: number; y: number }>,
+          props.sourceAnchor,
+          props.targetAnchor,
+        );
       }
       return buildElbowRoutePoints(start, end, props.sourceAnchor, props.targetAnchor);
     }
@@ -418,6 +581,36 @@ export default function LineConnectionTool({
     [kernelStore, onUserEdit, selectedLineId, state.nodesById],
   );
 
+  const resetPipeRoute = useCallback(() => {
+    if (!selectedLineId || !selectedLine || !isSelectedPipe) return;
+
+    const currentState = kernelStore.getState() as any;
+    const updateNode = currentState.updateNode;
+    if (!updateNode) return;
+
+    const currentProps = (selectedLine.schemaRef as any)?.props || {};
+    const worldPoints = getRouteWorldPoints();
+    if (!worldPoints || worldPoints.length < 2) return;
+
+    const canonical = buildCanonicalPipeRoute(
+      worldPoints[0]!,
+      worldPoints[worldPoints.length - 1]!,
+      currentProps.sourceAnchor,
+      currentProps.targetAnchor,
+    );
+    const normalized = normalizeWorldPointsToNode(
+      canonical,
+      getConnectorPadding(currentProps.strokeWidth),
+    );
+
+    updateNode(selectedLineId, {
+      props: { ...currentProps, points: normalized.points },
+      position: normalized.position,
+      size: normalized.size,
+    });
+    onUserEdit?.();
+  }, [getRouteWorldPoints, isSelectedPipe, kernelStore, onUserEdit, selectedLine, selectedLineId]);
+
   useEffect(() => {
     if (!dragState) return;
 
@@ -447,7 +640,11 @@ export default function LineConnectionTool({
       const currentProps = lineSchema?.props || {};
 
       if (dragState.kind === 'segment') {
-        const worldPoints = getDraggedSegmentPoints(dragState);
+        const worldPoints = simplifyPipePoints(
+          getDraggedSegmentPoints(dragState),
+          currentProps.sourceAnchor,
+          currentProps.targetAnchor,
+        );
         const normalized = normalizeWorldPointsToNode(
           worldPoints,
           getConnectorPadding(currentProps.strokeWidth),
@@ -501,7 +698,7 @@ export default function LineConnectionTool({
             }
 
             const normalized = normalizeWorldPointsToNode(
-              nextWorldPoints,
+              simplifyPipePoints(nextWorldPoints, nextProps.sourceAnchor, nextProps.targetAnchor),
               getConnectorPadding(currentProps.strokeWidth),
             );
             updateNode(dragState.lineId, {
@@ -811,8 +1008,25 @@ export default function LineConnectionTool({
             cursor: axis === 'x' ? 'col-resize' : 'row-resize',
             pointerEvents: 'auto',
           }}
-          onMouseDown={(e) => handleSegmentMouseDown(index, axis, routePoints, e)}
-          title={axis === 'x' ? '拖动调整竖向管段' : '拖动调整横向管段'}
+          onMouseDown={(e) => {
+            if (e.detail >= 2) {
+              e.preventDefault();
+              e.stopPropagation();
+              resetPipeRoute();
+              return;
+            }
+            handleSegmentMouseDown(index, axis, routePoints, e);
+          }}
+          onDoubleClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            resetPipeRoute();
+          }}
+          title={
+            axis === 'x'
+              ? '拖动调整竖向管段，双击恢复标准路由'
+              : '拖动调整横向管段，双击恢复标准路由'
+          }
         />
       );
     });

@@ -5,7 +5,7 @@ export const PropsSchema = z.object({
    * ID of the selected industrial symbol from the built-in registry.
    * Defaults to control cabinet as a generic industrial equipment symbol.
    */
-  selectedIconId: z.string().default('control-cabinet'),
+  selectedIconId: z.string().default('heat-exchanger'),
 
   /**
    * Raw SVG fallback / custom paste.

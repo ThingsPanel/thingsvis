@@ -60,6 +60,94 @@ function buildElbowRoutePoints(
   return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
 }
 
+function isHorizontalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.y - b.y) < eps;
+}
+
+function isVerticalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.x - b.x) < eps;
+}
+
+function orthogonalizePipePoints(
+  points: Array<{ x: number; y: number }>,
+  sourceAnchor?: string,
+  targetAnchor?: string,
+) {
+  if (points.length < 2) return points;
+
+  const result: Array<{ x: number; y: number }> = [points[0]!];
+
+  const chooseElbow = (
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+    prev?: { x: number; y: number },
+    next?: { x: number; y: number },
+    isFirst?: boolean,
+    isLast?: boolean,
+  ) => {
+    let firstLeg: 'horizontal' | 'vertical' | null = null;
+
+    if (isFirst) {
+      if (sourceAnchor === 'left' || sourceAnchor === 'right') firstLeg = 'horizontal';
+      if (sourceAnchor === 'top' || sourceAnchor === 'bottom') firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && prev) {
+      if (isHorizontalSegment(prev, a)) firstLeg = 'vertical';
+      else if (isVerticalSegment(prev, a)) firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg && next) {
+      if (isHorizontalSegment(b, next)) firstLeg = 'horizontal';
+      else if (isVerticalSegment(b, next)) firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && isLast) {
+      if (targetAnchor === 'left' || targetAnchor === 'right') firstLeg = 'vertical';
+      if (targetAnchor === 'top' || targetAnchor === 'bottom') firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg) {
+      firstLeg = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'horizontal' : 'vertical';
+    }
+
+    return firstLeg === 'horizontal' ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
+  };
+
+  for (let i = 1; i < points.length; i++) {
+    const a = result[result.length - 1]!;
+    const b = points[i]!;
+
+    if (isHorizontalSegment(a, b) || isVerticalSegment(a, b)) {
+      result.push(b);
+      continue;
+    }
+
+    const prev = result.length >= 2 ? result[result.length - 2] : undefined;
+    const next = i < points.length - 1 ? points[i + 1] : undefined;
+    const elbow = chooseElbow(a, b, prev, next, i === 1, i === points.length - 1);
+
+    if (Math.abs(elbow.x - a.x) >= 1 || Math.abs(elbow.y - a.y) >= 1) {
+      result.push(elbow);
+    }
+    result.push(b);
+  }
+
+  const compacted: Array<{ x: number; y: number }> = [result[0]!];
+  for (let i = 1; i < result.length - 1; i++) {
+    const prev = compacted[compacted.length - 1]!;
+    const curr = result[i]!;
+    const next = result[i + 1]!;
+    const collinearX = isVerticalSegment(prev, curr) && isVerticalSegment(curr, next);
+    const collinearY = isHorizontalSegment(prev, curr) && isHorizontalSegment(curr, next);
+    if (collinearX || collinearY) continue;
+    compacted.push(curr);
+  }
+  compacted.push(result[result.length - 1]!);
+
+  return compacted;
+}
+
 export class VisualEngine {
   private activeInlineTextEditor?:
     | {
@@ -170,13 +258,17 @@ export class VisualEngine {
     let worldPoints: Array<{ x: number; y: number }>;
     if (isPipeNodeType(node.schemaRef.type)) {
       if (pts && pts.length >= 3) {
-        worldPoints = pts
-          .filter((p) => typeof p?.x === 'number' && typeof p?.y === 'number')
-          .map((p, index) => {
-            if (index === 0) return startWorld;
-            if (index === pts.length - 1) return endWorld;
-            return localToWorld(p, startWorld);
-          });
+        worldPoints = orthogonalizePipePoints(
+          pts
+            .filter((p) => typeof p?.x === 'number' && typeof p?.y === 'number')
+            .map((p, index) => {
+              if (index === 0) return startWorld;
+              if (index === pts.length - 1) return endWorld;
+              return localToWorld(p, startWorld);
+            }),
+          props.sourceAnchor,
+          props.targetAnchor,
+        );
       } else {
         worldPoints = buildElbowRoutePoints(startWorld, endWorld, props.sourceAnchor, props.targetAnchor);
       }
