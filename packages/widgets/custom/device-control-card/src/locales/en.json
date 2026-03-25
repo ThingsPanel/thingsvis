@@ -1,0 +1,29 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-device-control-card": {
+        "name": "Device Control Card",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "title": "Title",
+        "statusText": "Status text",
+        "activeButton": "Active button",
+        "statusTone": "Status tone",
+        "onLabel": "On label",
+        "offLabel": "Off label",
+        "showStatus": "Show status",
+        "disabled": "Disabled",
+        "accentColor": "Accent color",
+        "titleColor": "Title color",
+        "backgroundColor": "Background color",
+        "borderColor": "Border color",
+        "inactiveColor": "Inactive button color",
+        "fontSize": "Title size",
+        "buttonFontSize": "Button size",
+        "padding": "Padding",
+        "borderRadius": "Radius",
+        "glow": "Glow"
+      }
+    }
+  }
+}

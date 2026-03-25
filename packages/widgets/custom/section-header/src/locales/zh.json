@@ -1,0 +1,29 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-section-header": {
+        "name": "分区标题",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "title": "标题",
+        "subtitle": "副标题",
+        "variant": "样式变体",
+        "align": "对齐方式",
+        "showStripe": "显示斜纹装饰",
+        "showTail": "显示尾部连线",
+        "accentColor": "强调色",
+        "lineColor": "描边颜色",
+        "backgroundColor": "背景颜色",
+        "titleColor": "标题颜色",
+        "subtitleColor": "副标题颜色",
+        "fontSize": "标题字号",
+        "subtitleFontSize": "副标题字号",
+        "paddingX": "左右内边距",
+        "paddingY": "上下内边距",
+        "stripeWidth": "装饰宽度",
+        "borderRadius": "圆角",
+        "glow": "启用发光"
+      }
+    }
+  }
+}
