@@ -1,13 +1,12 @@
 /**
  * ActionConfigEditor — Multi-action configuration editor for widget events.
  */
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CodeMirror from '@uiw/react-codemirror';
-import { json } from '@codemirror/lang-json';
 import { javascript } from '@codemirror/lang-javascript';
 
 export type ActionType = 'setVariable' | 'callWrite' | 'navigate' | 'runScript';

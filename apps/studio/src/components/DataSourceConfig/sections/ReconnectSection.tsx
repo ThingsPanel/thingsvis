@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ReconnectPolicy, DEFAULT_RECONNECT_POLICY } from '@thingsvis/schema';
+import { ReconnectPolicy } from '@thingsvis/schema';
 import { cn } from '@/lib/utils';
 
 interface ReconnectSectionProps {
@@ -23,13 +23,16 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({ reconnect, o
   };
 
   const isMaxAttemptsValid = reconnect.maxAttempts >= 0 && reconnect.maxAttempts <= 100;
-  const isInitialIntervalValid = reconnect.initialInterval >= 0.1 && reconnect.initialInterval <= 60;
+  const isInitialIntervalValid =
+    reconnect.initialInterval >= 0.1 && reconnect.initialInterval <= 60;
   const isMaxIntervalValid = reconnect.maxInterval >= 1 && reconnect.maxInterval <= 300;
 
   return (
     <FormSection
       title={t('datasource.reconnectStrategy')}
-      description={reconnect.enabled ? t('datasource.reconnectEnabled') : t('datasource.reconnectDisabled')}
+      description={
+        reconnect.enabled ? t('datasource.reconnectEnabled') : t('datasource.reconnectDisabled')
+      }
       defaultCollapsed={!reconnect.enabled}
     >
       <div className="space-y-4">
@@ -41,13 +44,13 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({ reconnect, o
             onClick={() => handleChange('enabled', !reconnect.enabled)}
             className={cn(
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              reconnect.enabled ? 'bg-primary' : 'bg-muted'
+              reconnect.enabled ? 'bg-primary' : 'bg-muted',
             )}
           >
             <span
               className={cn(
                 'inline-block h-4 w-4 rounded-full bg-white transition-transform',
-                reconnect.enabled ? 'translate-x-6' : 'translate-x-1'
+                reconnect.enabled ? 'translate-x-6' : 'translate-x-1',
               )}
             />
           </button>
@@ -67,7 +70,9 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({ reconnect, o
                   onChange={(e) => handleChange('maxAttempts', parseInt(e.target.value) || 0)}
                   className={cn('w-20 h-8 text-sm', !isMaxAttemptsValid && 'border-destructive')}
                 />
-                <span className="text-sm text-muted-foreground">{t('datasource.zeroUnlimited')}</span>
+                <span className="text-sm text-muted-foreground">
+                  {t('datasource.zeroUnlimited')}
+                </span>
               </div>
             </div>
 
@@ -82,7 +87,10 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({ reconnect, o
                   step={0.1}
                   value={reconnect.initialInterval}
                   onChange={(e) => handleChange('initialInterval', parseFloat(e.target.value) || 1)}
-                  className={cn('w-20 h-8 text-sm', !isInitialIntervalValid && 'border-destructive')}
+                  className={cn(
+                    'w-20 h-8 text-sm',
+                    !isInitialIntervalValid && 'border-destructive',
+                  )}
                 />
                 <span className="text-sm text-muted-foreground">{t('common.seconds')}</span>
               </div>
@@ -96,16 +104,18 @@ export const ReconnectSection: React.FC<ReconnectSectionProps> = ({ reconnect, o
               </div>
               <button
                 type="button"
-                onClick={() => handleChange('useExponentialBackoff', !reconnect.useExponentialBackoff)}
+                onClick={() =>
+                  handleChange('useExponentialBackoff', !reconnect.useExponentialBackoff)
+                }
                 className={cn(
                   'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-                  reconnect.useExponentialBackoff ? 'bg-primary' : 'bg-muted'
+                  reconnect.useExponentialBackoff ? 'bg-primary' : 'bg-muted',
                 )}
               >
                 <span
                   className={cn(
                     'inline-block h-4 w-4 rounded-full bg-white transition-transform',
-                    reconnect.useExponentialBackoff ? 'translate-x-6' : 'translate-x-1'
+                    reconnect.useExponentialBackoff ? 'translate-x-6' : 'translate-x-1',
                   )}
                 />
               </button>

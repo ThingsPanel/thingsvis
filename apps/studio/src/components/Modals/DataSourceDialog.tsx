@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Plus, Database, Trash2, Globe, Zap, FileJson, Info, Activity } from 'lucide-react';
+import { Database, Trash2, Globe, Zap, FileJson, Info, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
@@ -53,8 +53,7 @@ interface DataSourceDialogProps {
 }
 
 export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialogProps) {
-  const { t, i18n } = useTranslation('editor');
-  const language = i18n.language as string;
+  const { t } = useTranslation('editor');
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -112,7 +111,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
       });
       setIsAdding(false);
       setSelectedId(editingSource.id);
-    } catch (e) {}
+    } catch {}
   };
 
   const startAdding = () => {

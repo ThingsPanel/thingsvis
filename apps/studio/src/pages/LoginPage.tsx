@@ -1,6 +1,6 @@
 /**
  * Login Page
- * 
+ *
  * Optimized with Split Layout (Figma/Excalidraw style)
  */
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
       } else {
         setError(getErrorMessage(result.error || t('login.errors.defaultError')));
       }
-    } catch (err) {
+    } catch {
       setError(t('login.errors.unexpectedError'));
     } finally {
       setIsLoading(false);
@@ -81,10 +81,28 @@ export default function LoginPage() {
 
         {/* Floating Elements Animation */}
         <div className="absolute top-20 left-20 opacity-20 animate-pulse">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10" /></svg>
+          <svg
+            width="64"
+            height="64"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+          </svg>
         </div>
         <div className="absolute bottom-20 right-20 opacity-20 animate-bounce delay-1000">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
+          <svg
+            width="80"
+            height="80"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+          </svg>
         </div>
 
         <div className="relative z-10 max-w-lg text-center space-y-8">
@@ -100,7 +118,10 @@ export default function LoginPage() {
       {/* Right Side - Login Form */}
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-background relative">
         <div className="absolute top-8 left-8">
-          <Link to="/" className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors group"
+          >
             <div className="p-2 rounded-lg bg-muted/50 group-hover:bg-muted border border-transparent group-hover:border-border transition-all">
               <ArrowLeft size={18} />
             </div>
@@ -116,7 +137,9 @@ export default function LoginPage() {
 
           {error && (
             <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
-              <span className="h-4 w-4 rounded-full bg-destructive/20 flex items-center justify-center text-xs font-bold">!</span>
+              <span className="h-4 w-4 rounded-full bg-destructive/20 flex items-center justify-center text-xs font-bold">
+                !
+              </span>
               {error}
             </div>
           )}
@@ -135,7 +158,17 @@ export default function LoginPage() {
                   required
                 />
                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" /></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
                 </div>
               </div>
             </div>
@@ -143,7 +176,10 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">{t('login.password')}</Label>
-                <Link to="/forgot-password" className="text-xs font-medium text-primary hover:underline">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
                   {t('login.forgotPassword')}
                 </Link>
               </div>
@@ -151,7 +187,7 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10 pr-10 h-11 bg-muted/30 border-2 border-input focus:border-primary focus:bg-background transition-colors"
@@ -159,7 +195,17 @@ export default function LoginPage() {
                   required
                 />
                 <div className="absolute left-3 top-3.5 text-muted-foreground pointer-events-none">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
                 </div>
                 <button
                   type="button"
@@ -171,7 +217,11 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-11 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -194,12 +244,14 @@ export default function LoginPage() {
 
           <div className="grid gap-2">
             <Link to="/editor" onClick={loginAsGuest}>
-              <Button variant="outline" className="w-full h-11 border-dashed border-border hover:bg-muted/50">
+              <Button
+                variant="outline"
+                className="w-full h-11 border-dashed border-border hover:bg-muted/50"
+              >
                 {t('login.guestMode')}
               </Button>
             </Link>
           </div>
-
 
           <div className="text-center text-sm pt-4">
             <span className="text-muted-foreground">{t('login.noAccount')} </span>

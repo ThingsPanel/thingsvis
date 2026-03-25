@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Upload, Link2, Code, X, Loader2, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { uploadFile, dataUrlToFile } from '@/lib/api/uploads';
+import { uploadFile } from '@/lib/api/uploads';
 import { normalizeCanvasBackgroundImage } from '@/lib/canvasBackground';
 
 type InputMode = 'upload' | 'url' | 'base64';

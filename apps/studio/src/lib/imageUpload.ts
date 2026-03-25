@@ -41,7 +41,7 @@ export function getImageUploadSettings(): ImageUploadSettings {
     if (saved) {
       return JSON.parse(saved);
     }
-  } catch (error) {}
+  } catch {}
   return defaultSettings;
 }
 
@@ -117,7 +117,7 @@ export async function loadLocalImage(id: string): Promise<string | null> {
     const file = await get<File>(id, imageStore);
     if (!file) return null;
     return URL.createObjectURL(file);
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -128,7 +128,7 @@ export async function loadLocalImage(id: string): Promise<string | null> {
 export async function deleteLocalImage(id: string): Promise<void> {
   try {
     await del(id, imageStore);
-  } catch (error) {}
+  } catch {}
 }
 
 /**

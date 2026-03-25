@@ -219,7 +219,7 @@ export default function ComponentsList({
     });
 
     return filtered;
-  }, [entriesByCategory, i18n.language, searchQuery]);
+  }, [entriesByCategory, i18n.language, i18n.resolvedLanguage, searchQuery]);
 
   if (isLoading) {
     return <div className="p-2 text-sm text-muted-foreground">Loading...</div>;

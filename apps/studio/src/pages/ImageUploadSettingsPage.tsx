@@ -1,6 +1,6 @@
 /**
  * Image Upload Settings Page
- * 
+ *
  * Configure image storage (local or OSS).
  */
 
@@ -10,13 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -70,8 +64,7 @@ export default function ImageUploadSettingsPage() {
       saveImageUploadSettings(settings);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (error) {
-
+    } catch {
       alert(t('imageUpload.saveFailed'));
     } finally {
       setIsSaving(false);
@@ -83,11 +76,7 @@ export default function ImageUploadSettingsPage() {
       {/* Header */}
       <header className="bg-white border-b">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" />
             {t('imageUpload.back')}
           </Button>
@@ -100,18 +89,13 @@ export default function ImageUploadSettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle>{t('imageUpload.storageConfig')}</CardTitle>
-            <CardDescription>
-              {t('imageUpload.storageConfigDesc')}
-            </CardDescription>
+            <CardDescription>{t('imageUpload.storageConfigDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Storage Type Selection */}
             <div className="space-y-2">
               <Label>{t('imageUpload.storageMode')}</Label>
-              <Select
-                value={settings.storageType}
-                onValueChange={handleStorageTypeChange}
-              >
+              <Select value={settings.storageType} onValueChange={handleStorageTypeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -131,9 +115,7 @@ export default function ImageUploadSettingsPage() {
                 </SelectContent>
               </Select>
               {settings.storageType === 'local' && (
-                <p className="text-sm text-gray-500">
-                  {t('imageUpload.localModeDesc')}
-                </p>
+                <p className="text-sm text-gray-500">{t('imageUpload.localModeDesc')}</p>
               )}
             </div>
 
@@ -196,27 +178,19 @@ export default function ImageUploadSettingsPage() {
 
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-800">
                   <p className="font-medium mb-1">{t('imageUpload.securityWarning')}</p>
-                  <p>
-                    {t('imageUpload.securityWarningDesc')}
-                  </p>
+                  <p>{t('imageUpload.securityWarningDesc')}</p>
                 </div>
               </div>
             )}
 
             {/* Save Button */}
             <div className="pt-4 flex items-center gap-3">
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="gap-2"
-              >
+              <Button onClick={handleSave} disabled={isSaving} className="gap-2">
                 <Save className="h-4 w-4" />
                 {isSaving ? t('imageUpload.saving') : t('imageUpload.saveButton')}
               </Button>
               {saveSuccess && (
-                <span className="text-sm text-green-600 font-medium">
-                  {t('imageUpload.saved')}
-                </span>
+                <span className="text-sm text-green-600 font-medium">{t('imageUpload.saved')}</span>
               )}
             </div>
           </CardContent>

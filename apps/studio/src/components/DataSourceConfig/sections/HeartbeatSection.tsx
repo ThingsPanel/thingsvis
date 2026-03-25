@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { FormSection } from '@/components/ui/FormSection';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { HeartbeatConfig, DEFAULT_HEARTBEAT_CONFIG } from '@thingsvis/schema';
+import { HeartbeatConfig } from '@thingsvis/schema';
 import { cn } from '@/lib/utils';
 
 interface HeartbeatSectionProps {
@@ -30,7 +30,9 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({ heartbeat, o
   return (
     <FormSection
       title={t('datasource.heartbeat')}
-      description={heartbeat.enabled ? t('datasource.heartbeatEnabled') : t('datasource.heartbeatDisabled')}
+      description={
+        heartbeat.enabled ? t('datasource.heartbeatEnabled') : t('datasource.heartbeatDisabled')
+      }
       defaultCollapsed={!heartbeat.enabled}
     >
       <div className="space-y-4">
@@ -42,13 +44,13 @@ export const HeartbeatSection: React.FC<HeartbeatSectionProps> = ({ heartbeat, o
             onClick={() => handleChange('enabled', !heartbeat.enabled)}
             className={cn(
               'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-              heartbeat.enabled ? 'bg-primary' : 'bg-muted'
+              heartbeat.enabled ? 'bg-primary' : 'bg-muted',
             )}
           >
             <span
               className={cn(
                 'inline-block h-4 w-4 rounded-full bg-white transition-transform',
-                heartbeat.enabled ? 'translate-x-6' : 'translate-x-1'
+                heartbeat.enabled ? 'translate-x-6' : 'translate-x-1',
               )}
             />
           </button>

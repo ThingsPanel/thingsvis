@@ -49,7 +49,7 @@ export function DataSourceSelector({
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger className="h-8 text-sm">
-        <SelectValue />
+        <SelectValue placeholder={placeholder ?? t('dataSourceSelector.selectDataSource')} />
       </SelectTrigger>
       <SelectContent>
         {/* Data Sources Section */}

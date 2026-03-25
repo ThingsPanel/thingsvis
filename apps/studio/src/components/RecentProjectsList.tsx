@@ -5,7 +5,7 @@
  * Allows selecting or removing projects from the list.
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Trash2, FileText } from 'lucide-react';
@@ -38,16 +38,14 @@ export interface RecentProjectsListProps {
 export function RecentProjectsList({
   onSelect,
   onRemove,
-  refreshKey,
+  refreshKey: _refreshKey,
   disabled = false,
   language: langProp,
   maxItems = 10,
 }: RecentProjectsListProps) {
   const { t, i18n } = useTranslation('editor');
   const language = langProp || (i18n.language as 'zh' | 'en');
-  const projects = useMemo(() => {
-    return recentProjects.get().slice(0, maxItems);
-  }, [maxItems, refreshKey]);
+  const projects = recentProjects.get().slice(0, maxItems);
 
   if (projects.length === 0) {
     return (
