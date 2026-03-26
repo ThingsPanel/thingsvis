@@ -5,7 +5,7 @@ export const metadata = {
   icon: 'GaugeCircle',
   version: '1.0.0',
   order: 6,
-  defaultSize: { width: 260, height: 260 },
+  defaultSize: { width: 150, height: 150 },
   resizable: true,
-  constraints: { minWidth: 140, minHeight: 140 },
+  constraints: { minWidth: 100, minHeight: 100 },
 } as const;

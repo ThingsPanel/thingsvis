@@ -5,7 +5,7 @@ export const metadata = {
   icon: 'Crown',
   version: '1.0.0',
   order: 7,
-  defaultSize: { width: 280, height: 280 },
+  defaultSize: { width: 150, height: 150 },
   resizable: true,
-  constraints: { minWidth: 160, minHeight: 160 },
+  constraints: { minWidth: 100, minHeight: 100 },
 } as const;
