@@ -4,6 +4,7 @@ import Moveable from 'moveable';
 import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
+import { resolveCanvasDragCommit, shouldCommitCanvasDrag } from '@/lib/canvasInteraction';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -534,6 +535,7 @@ export default function TransformControls({
 
         if (isMultiDrag) {
           // Commit all selected nodes using the same delta
+          let didCommit = false;
           for (const id of selectedIds) {
             const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el) el.style.willChange = '';
@@ -542,9 +544,27 @@ export default function TransformControls({
               x: (lastEvent as any)?.beforeTranslate?.[0] ?? 0,
               y: (lastEvent as any)?.beforeTranslate?.[1] ?? 0,
             };
-            const baseWorld = baseWorldPositionByIdRef.current[id];
-            const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-            const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+            if (!shouldCommitCanvasDrag(delta)) {
+              emitNodeDragPreview(id, 0, 0, false);
+              if (el) {
+                el.style.transform = '';
+              }
+              const overlayEl = findOverlayElement(id);
+              if (overlayEl) {
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
+              }
+              continue;
+            }
+            const baseWorld = baseWorldPositionByIdRef.current[id] ?? { x: 0, y: 0 };
+            const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+            if (!committedPosition) {
+              continue;
+            }
+            const { x, y } = committedPosition;
 
             if (el) {
               // Write the final committed position immediately so React reconciler
@@ -567,8 +587,9 @@ export default function TransformControls({
               delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
+            didCommit = true;
           }
-          onUserEdit?.();
+          if (didCommit) onUserEdit?.();
           return;
         }
 
@@ -583,11 +604,35 @@ export default function TransformControls({
           dragTranslateByIdRef.current[nodeId || '']?.y ??
           (lastEvent as any)?.beforeTranslate?.[1] ??
           0;
+        if (!shouldCommitCanvasDrag({ x: dx, y: dy })) {
+          emitNodeDragPreview(nodeId, 0, 0, false);
+          target.style.transform = '';
+          if (nodeId) {
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              const rotation = overlayRotationRef[nodeId] || '';
+              overlayEl.style.transform = rotation;
+              overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+              delete originalOverlayZIndexRef[nodeId];
+              delete overlayRotationRef[nodeId];
+            }
+          }
+          return;
+        }
 
+        const fallbackPosition = {
+          x: parseFloat(target.style.left || '0') || 0,
+          y: parseFloat(target.style.top || '0') || 0,
+        };
         const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
-
-        const x = (baseWorld?.x ?? (parseFloat(target.style.left || '0') || 0)) + dx;
-        const y = (baseWorld?.y ?? (parseFloat(target.style.top || '0') || 0)) + dy;
+        const committedPosition = resolveCanvasDragCommit(baseWorld ?? fallbackPosition, {
+          x: dx,
+          y: dy,
+        });
+        if (!committedPosition) {
+          return;
+        }
+        const { x, y } = committedPosition;
 
         // Write the committed position BEFORE clearing transform.
         // React reconciler will find left/top already at the correct value
@@ -676,6 +721,7 @@ export default function TransformControls({
       });
 
       moveableRef.current.on('dragGroupEnd', ({ targets, isDrag }) => {
+        let didCommit = false;
         for (const t of targets) {
           t.style.willChange = '';
           const nodeId = t.getAttribute('data-node-id');
@@ -699,9 +745,21 @@ export default function TransformControls({
           }
 
           const delta = dragTranslateByIdRef.current[nodeId] ?? { x: 0, y: 0 };
-          const baseWorld = baseWorldPositionByIdRef.current[nodeId];
-          const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-          const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+          if (!shouldCommitCanvasDrag(delta)) {
+            t.style.transform = '';
+            emitNodeDragPreview(nodeId, 0, 0, false);
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              overlayEl.style.transform = '';
+            }
+            continue;
+          }
+          const baseWorld = baseWorldPositionByIdRef.current[nodeId] ?? { x: 0, y: 0 };
+          const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+          if (!committedPosition) {
+            continue;
+          }
+          const { x, y } = committedPosition;
 
           // Write the committed position BEFORE clearing transform to prevent flash.
           if (isGridModeRef.current && baseWorld) {
@@ -720,8 +778,9 @@ export default function TransformControls({
           }
 
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
+          didCommit = true;
         }
-        if (isDrag) onUserEdit?.();
+        if (didCommit) onUserEdit?.();
       });
 
       // Resize handling (use transform during resize drag)
@@ -952,13 +1011,13 @@ export default function TransformControls({
       const anyConnectedLinesSelected = validSelectedIds.some((id) => {
         const node = state.nodesById[id];
         if (!isLineNodeType(node?.schemaRef?.type)) return false;
-        const props = (node.schemaRef as any)?.props || {};
+        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
         return !!(props.sourceNodeId || props.targetNodeId);
       });
       const anyConnectedPipesSelected = validSelectedIds.some((id) => {
         const node = state.nodesById[id];
         if (!isPipeNodeType(node?.schemaRef?.type)) return false;
-        const props = (node.schemaRef as any)?.props || {};
+        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
         return !!(props.sourceNodeId || props.targetNodeId);
       });
 

@@ -24,6 +24,7 @@ export class AutoSaveManager {
   private listeners = new Set<SaveStateListener>();
   private baseConfig: Required<AutoSaveConfig>;
   private config: Required<AutoSaveConfig>;
+  private lastDirtyNotification: boolean | null = null;
   private currentState: SaveState = {
     status: 'idle',
     lastSavedAt: null,
@@ -36,6 +37,7 @@ export class AutoSaveManager {
       periodicInterval: config.periodicInterval ?? STORAGE_CONSTANTS.PERIODIC_INTERVAL_MS,
       warnOnUnload: config.warnOnUnload ?? true,
       mode: config.mode ?? 'auto',
+      onDirtyChange: config.onDirtyChange ?? (() => {}),
     };
     this.config = this.baseConfig;
     this.handleUnload = this.handleUnload.bind(this);
@@ -78,6 +80,8 @@ export class AutoSaveManager {
       this.updateStatus({ status: 'idle', lastSavedAt: null, error: null });
     }
 
+    this.notifyDirtyChange(true);
+
     // Start periodic timer only in full auto-save mode.
     if (this.config.mode === 'auto') {
       this.periodicTimer = window.setInterval(() => {
@@ -99,6 +103,7 @@ export class AutoSaveManager {
    */
   markDirty(scheduleSave = true): void {
     this.isDirty = true;
+    this.notifyDirtyChange();
     this.updateStatus({ ...this.currentState, status: 'dirty' });
 
     // Cancel existing debounce timer
@@ -154,6 +159,7 @@ export class AutoSaveManager {
         await this.saveFn(project);
 
         this.isDirty = false;
+        this.notifyDirtyChange();
         const savedAt = Date.now();
         this.updateStatus({ status: 'saved', lastSavedAt: savedAt, error: null });
         // Return to idle after showing "saved" briefly
@@ -243,6 +249,15 @@ export class AutoSaveManager {
         listener(state);
       } catch (error) {}
     }
+  }
+
+  private notifyDirtyChange(force = false): void {
+    if (!force && this.lastDirtyNotification === this.isDirty) {
+      return;
+    }
+
+    this.lastDirtyNotification = this.isDirty;
+    this.config.onDirtyChange(this.isDirty);
   }
 
   /**

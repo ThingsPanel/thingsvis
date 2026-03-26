@@ -23,7 +23,7 @@ import {
   useSaveStrategy,
   type SavePayload,
 } from '../lib/storage/saveStrategy';
-import { requestSave as sendToHost } from '../embed/message-router';
+import { notifyChange, requestSave as sendToHost } from '../embed/message-router';
 import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 
 // =============================================================================
@@ -148,7 +148,10 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       projectId,
       () => getProjectStateRef.current(),
       (project) => saveProjectRef.current(project),
-      { mode: saveMode },
+      {
+        mode: saveMode,
+        onDirtyChange: notifyChange,
+      },
     );
 
     return () => {

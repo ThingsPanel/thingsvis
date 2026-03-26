@@ -13,13 +13,13 @@ function renderPump(element: HTMLElement, props: Props): void {
   const pipeGradId = `pipeGrad-${uuid}`;
   const shellGradId = `shellGrad-${uuid}`;
 
-  // 故障闪烁的颜色
+  // Alert-state color palette.
   const currentBaseColor = props.hasError ? '#ff4d4f' : (props.baseColor || '#334155');
   const borderColor = props.hasError ? '#ff7875' : '#0ea5e9'; // sky-500
   const pipeColor = '#64748b'; // slate-500
   const fanColor = props.hasError ? '#ff7875' : '#0ea5e9';
-  // Rpm = 每分钟转数(Rotations Per Minute), 因此转一圈需要 60 / rpm 秒。
-  // 我们同时在代码级别加入下限防御 (最小 0.05s, 即每秒20圈上限) 防止浏览器因为超速动画假死
+  // RPM is rotations per minute, so one turn takes 60 / rpm seconds.
+  // Clamp the duration to avoid unrealistic animation speeds that browsers may drop.
   const durSec = props.rpm > 0 ? Math.max(60 / props.rpm, 0.05).toFixed(3) : '1';
 
   element.innerHTML = `
@@ -36,29 +36,29 @@ function renderPump(element: HTMLElement, props: Props): void {
     </linearGradient>
   </defs>
   
-  <!-- 左下管道（入口） -->
-  <rect x="10" y="55" width="30" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
+  <!-- Inlet pipe -->
+  <rect x="5" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
   
-  <!-- 右上管道（出口） -->
-  <rect x="60" y="28" width="30" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
+  <!-- Outlet pipe -->
+  <rect x="75" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
   
-  <!-- 泵体外壳 -->
+  <!-- Pump housing -->
   <circle cx="50" cy="50" r="28" fill="url(#${shellGradId})" stroke="${borderColor}" stroke-width="2"/>
   
-  <!-- 内部圆 -->
+  <!-- Inner shell -->
   <circle cx="50" cy="50" r="22" fill="#1e293b" stroke="${borderColor}" stroke-width="1" opacity="0.5"/>
   
-  <!-- 风扇叶轮 -->
+  <!-- Impeller -->
   <g>
-    <!-- 4个弯曲叶片 -->
+    <!-- Four curved blades -->
     <path d="M 50 50 L 50 28 Q 65 35 50 50" fill="${fanColor}" opacity="0.9"/>
     <path d="M 50 50 L 72 50 Q 65 65 50 50" fill="${fanColor}" opacity="0.8"/>
     <path d="M 50 50 L 50 72 Q 35 65 50 50" fill="${fanColor}" opacity="0.9"/>
     <path d="M 50 50 L 28 50 Q 35 35 50 50" fill="${fanColor}" opacity="0.8"/>
-    <!-- 中心圆 -->
+    <!-- Center hub -->
     <circle cx="50" cy="50" r="5" fill="#1e293b" stroke="${borderColor}" stroke-width="1"/>
     
-    <!-- 原生 SVG 自旋动画 -->
+    <!-- Native SVG spin animation -->
     ${props.isRunning && props.rpm > 0 ? `
     <animateTransform 
       attributeName="transform" 
@@ -71,7 +71,7 @@ function renderPump(element: HTMLElement, props: Props): void {
     ` : ''}
   </g>
   
-  <!-- 故障闪烁 -->
+  <!-- Fault pulse -->
   ${props.hasError ? `
   <circle cx="50" cy="50" r="28" fill="none" stroke="#ff4d4f" stroke-width="3" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
@@ -115,7 +115,9 @@ export const Main = defineWidget({
     renderPump(element, props);
     return {
       update: (nextProps: Props) => renderPump(element, nextProps),
-      destroy: () => { element.innerHTML = ''; },
+      destroy: () => {
+        element.innerHTML = '';
+      },
     };
   },
 });
