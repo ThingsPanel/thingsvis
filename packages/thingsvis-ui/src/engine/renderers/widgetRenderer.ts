@@ -56,7 +56,7 @@ function isLeaferDisplayObject(obj: unknown): obj is LeaferDisplayObject {
 function nodeToOverlayContext(
   node: NodeState,
   store: KernelStore,
-  opts?: { editable?: boolean },
+  opts?: { editable?: boolean; locale?: string },
   bus?: EventBus,
   runtime?: ActionRuntime,
   // Per-node subscription tracker for automatic cleanup on widget destroy
@@ -71,7 +71,7 @@ function nodeToOverlayContext(
     size: schema.size,
     props: resolvedProps,
     mode,
-    locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+    locale: opts?.locale ?? 'en',
     visible: true,
     emit: buildEmit(
       () => store.getState().nodesById[node.id]?.schemaRef,
@@ -96,7 +96,7 @@ function nodeToOverlayContext(
 export function createWidgetRenderer(
   widget: WidgetMainModule,
   store: KernelStore,
-  opts?: { editable?: boolean; actionRuntime?: ActionRuntime },
+  opts?: { editable?: boolean; actionRuntime?: ActionRuntime; locale?: string },
   bus?: EventBus
 ): RendererFactory {
   // Per-node subscription tracker: nodeId → Set of unsubscribe functions

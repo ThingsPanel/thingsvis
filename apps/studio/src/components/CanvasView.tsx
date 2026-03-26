@@ -194,6 +194,7 @@ const CanvasView = forwardRef<
   {
     pageId: string;
     store: any;
+    locale?: string;
     resolveWidget?: (t: string) => Promise<any>;
     activeTool: string;
     lineToolProps?: Record<string, unknown>;
@@ -214,6 +215,7 @@ const CanvasView = forwardRef<
   {
     pageId,
     store,
+    locale,
     activeTool,
     resolveWidget,
     lineToolProps,
@@ -772,6 +774,7 @@ const CanvasView = forwardRef<
         <GridCanvas
           store={store}
           resolveWidget={resolveWidget}
+          locale={locale}
           width={state.canvas.width}
           height={state.canvas.height}
           interactive={activeTool !== 'pan'}
@@ -816,6 +819,7 @@ const CanvasView = forwardRef<
       <UI_CanvasView
         store={store}
         resolveWidget={resolveWidget}
+        locale={locale}
         mode={state.canvas.mode}
         width={state.canvas.width}
         height={state.canvas.height}

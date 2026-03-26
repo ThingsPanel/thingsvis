@@ -23,6 +23,7 @@ import type { z } from 'zod';
 export type { WidgetCategory };
 
 export type {
+  ControlText,
   I18nLabel,
   BindingMode,
   ControlBinding,

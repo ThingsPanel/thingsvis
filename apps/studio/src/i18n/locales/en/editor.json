@@ -286,6 +286,25 @@
         "cancel": "Cancel",
         "confirm": "Continue"
     },
+    "controls": {
+        "groups": {
+            "content": "Content",
+            "style": "Style",
+            "data": "Data",
+            "advanced": "Advanced",
+            "standard": "Standard"
+        },
+        "standard": {
+            "opacity": "Opacity",
+            "backgroundColor": "Background Color",
+            "borderWidth": "Border Width",
+            "borderColor": "Border Color",
+            "borderRadius": "Border Radius",
+            "shadowEnabled": "Enable Shadow",
+            "shadowColor": "Shadow Color",
+            "shadowBlur": "Shadow Blur"
+        }
+    },
     "binding": {
         "static": "static",
         "field": "Field",
@@ -544,7 +563,11 @@
         "addEvent": "Add Event",
         "noEvents": "No event handlers",
         "eventName": "Event Name",
+        "selectEvent": "--- Select Event ---",
+        "customEvent": "Custom: {{event}}",
         "actionsCount": "actions",
+        "configureActions": "Configure Actions ({{count}})",
+        "configureActionsTitle": "Event Action Flow: {{event}}",
         "noActions": "No actions. Click button below to add.",
         "addAction": "Add Action",
         "actionSetVariable": "Set Variable",
@@ -557,7 +580,19 @@
         "payload": "Payload",
         "payloadExprHint": "Supports {{expr}} templates or JS expressions. 'payload' = event value",
         "url": "URL or Page ID",
-        "scriptPlaceholder": "// JavaScript code"
+        "scriptPlaceholder": "// JavaScript code",
+        "common": {
+            "click": "Click (click)",
+            "clickShort": "Click",
+            "dblclick": "Double Click (dblclick)",
+            "dblclickShort": "Double Click",
+            "mouseenter": "Mouse Enter (mouseenter)",
+            "mouseenterShort": "Mouse Enter",
+            "mouseleave": "Mouse Leave (mouseleave)",
+            "mouseleaveShort": "Mouse Leave",
+            "change": "Change (change)",
+            "changeShort": "Change"
+        }
     },
     "contextMenu": {
         "copy": "Copy",

@@ -155,7 +155,7 @@ function generateRegistryData() {
 
             // name: metadata.ts (if not i18n key) > package.json thingsvis.displayName > widget name
             let displayName;
-            if (metadata.name && !metadata.name.startsWith('widget.')) {
+            if (metadata.name && !/^(widget|widgets)\./.test(metadata.name)) {
                 displayName = metadata.name;
             } else if (meta.displayName) {
                 displayName = meta.displayName;

@@ -1,7 +1,7 @@
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveLocaleRecord, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -27,8 +27,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
-  const normalized = locale?.toLowerCase();
-  return normalized?.startsWith('zh') ? (localeCatalog.zh as RuntimeMessages) : (localeCatalog.en as RuntimeMessages);
+  return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 const PRESETS: PresetRange[] = [

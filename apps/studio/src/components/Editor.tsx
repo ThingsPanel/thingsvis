@@ -64,7 +64,6 @@ import {
   Square,
   Circle,
   ArrowRight,
-  Type,
   ImageIcon,
   Hand,
   Layers,
@@ -134,7 +133,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   );
   const [searchQuery, setSearchQuery] = useState('');
   const { t, i18n } = useTranslation('editor');
-  const language = i18n.language as string;
+  const language = (i18n.resolvedLanguage ?? i18n.language) as string;
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
@@ -512,7 +511,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     { id: 'line' as Tool, icon: ArrowRight, label: '连线' },
     { id: 'pan' as Tool, icon: Hand, label: '移动' },
     { id: 'image' as Tool, icon: ImageIcon, label: '图片' },
-    { id: 'text' as Tool, icon: Type, label: '文本' },
   ];
 
   return (
@@ -528,6 +526,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       <ErrorBoundary>
         <WorkspaceEngine
           canvasConfig={canvasConfig}
+          locale={language}
           activeTool={activeTool}
           setActiveTool={handleToolChange}
           zoom={zoom}

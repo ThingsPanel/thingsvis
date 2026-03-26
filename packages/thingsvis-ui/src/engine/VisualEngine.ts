@@ -356,6 +356,7 @@ export class VisualEngine {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
       actionRuntime?: ActionRuntime;
+      locale?: string;
     }
   ) { }
 
@@ -844,7 +845,7 @@ export class VisualEngine {
             linkedNodes,
             theme: (this.store.getState().page as any)?.config?.theme || 'dawn',
             mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
-            locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+            locale: this.opts?.locale ?? 'en',
             visible: true,
             emit: buildEmit(
               () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
@@ -1235,7 +1236,11 @@ export class VisualEngine {
             createWidgetRenderer(
               widget,
               this.store,
-              { editable: this.opts?.editable, actionRuntime: this.opts?.actionRuntime },
+              {
+                editable: this.opts?.editable,
+                actionRuntime: this.opts?.actionRuntime,
+                locale: this.opts?.locale,
+              },
               this.eventBus,
             ),
           );

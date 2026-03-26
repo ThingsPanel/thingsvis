@@ -6,6 +6,7 @@ import { controls } from './controls';
 import {
     defineWidget,
     resolveLayeredColor,
+    resolveLocaleRecord,
     type WidgetOverlayContext,
     resolveWidgetColors,
     type WidgetColors,
@@ -13,6 +14,8 @@ import {
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+
+const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 16;
@@ -40,7 +43,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
-    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+    return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 function withAlpha(color: string, alpha: number): string {

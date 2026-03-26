@@ -1,6 +1,7 @@
 import {
   defineWidget,
   resolveLayeredColor,
+  resolveLocaleRecord,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -15,6 +16,8 @@ import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+
+const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const CHART_PADDING = 16;
@@ -46,7 +49,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale?: string): RuntimeMessages {
-  return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+  return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {

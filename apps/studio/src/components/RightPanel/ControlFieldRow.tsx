@@ -10,8 +10,8 @@ import FieldPicker, { type FieldPickerValue } from './FieldPicker';
 import { IconPicker } from './IconPicker';
 import ImageSourceInput from './ImageSourceInput';
 import ModelSourceInput from './ModelSourceInput';
-import { resolveLabel } from './PropsPanel';
 import { ColorInput } from '@/components/ui/color-input';
+import { resolveControlText } from '@/lib/i18n/controlText';
 import {
   detectBindingMode,
   getBinding,
@@ -52,7 +52,7 @@ export function ControlFieldRow({
   updateNode,
 }: Props) {
   const { t, i18n } = useTranslation('editor');
-  const lang = i18n.language;
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const modes = useMemo(() => allowedModes(field), [field]);
 
   const persistedMode = useMemo(
@@ -148,6 +148,8 @@ export function ControlFieldRow({
   };
 
   const showOverriddenHint = Boolean(binding) && propsValue !== undefined;
+  const fieldLabel = resolveControlText(field.label, locale, t);
+  const fieldDescription = resolveControlText(field.description, locale, t);
   const numberFieldUsesFloat =
     [propsValue, field.default, field.min, field.max, field.step].some(
       (candidate) => typeof candidate === 'number' && !Number.isInteger(candidate),
@@ -172,17 +174,9 @@ export function ControlFieldRow({
       <div className="flex items-center justify-between gap-2">
         <label
           className="text-sm font-medium text-muted-foreground truncate flex-1"
-          title={
-            typeof field.label === 'object'
-              ? resolveLabel(field.label, lang)
-              : t(field.label, { defaultValue: field.label })
-          }
+          title={fieldLabel}
         >
-          {typeof field.label === 'object'
-            ? // map 格式：直接取当前语言，第三方 SDK 组件自带多语言
-              resolveLabel(field.label, lang)
-            : // 字符串：尝试当 i18n key 查（内置组件），找不到则原文输出
-              t(field.label, { defaultValue: field.label })}
+          {fieldLabel}
         </label>
 
         {modes.length > 1 && (
@@ -222,9 +216,7 @@ export function ControlFieldRow({
                   onChange={(e) => setStatic(e.target.value)}
                   className="h-8 text-sm"
                   placeholder={
-                    field.placeholder
-                      ? t(field.placeholder, { defaultValue: field.placeholder })
-                      : undefined
+                    field.placeholder ? resolveControlText(field.placeholder, locale, t) : undefined
                   }
                 />
               ))}
@@ -235,9 +227,7 @@ export function ControlFieldRow({
                 onChange={(e) => setStatic(e.target.value)}
                 className="w-full h-20 p-2 text-sm rounded-sm border border-input bg-background focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset focus:outline-none resize-y"
                 placeholder={
-                  field.placeholder
-                    ? t(field.placeholder, { defaultValue: field.placeholder })
-                    : undefined
+                  field.placeholder ? resolveControlText(field.placeholder, locale, t) : undefined
                 }
               />
             )}
@@ -292,9 +282,7 @@ export function ControlFieldRow({
                 <option value="">{t('common.pleaseSelect')}</option>
                 {field.options.map((opt) => (
                   <option key={opt.value} value={opt.value}>
-                    {typeof opt.label === 'object'
-                      ? resolveLabel(opt.label, lang)
-                      : t(opt.label, { defaultValue: opt.label })}
+                    {resolveControlText(opt.label, locale, t)}
                   </option>
                 ))}
               </select>
@@ -352,9 +340,7 @@ export function ControlFieldRow({
                     <button
                       key={opt.value}
                       onClick={() => setStatic(opt.value)}
-                      title={
-                        typeof opt.label === 'object' ? resolveLabel(opt.label, lang) : opt.label
-                      }
+                      title={resolveControlText(opt.label, locale, t)}
                       className={`px-3 py-1.5 text-sm rounded transition-colors flex items-center justify-center ${
                         propsValue === opt.value
                           ? 'bg-background text-foreground shadow-sm'
@@ -363,10 +349,8 @@ export function ControlFieldRow({
                     >
                       {IconComponent ? (
                         <IconComponent className="w-4 h-4" />
-                      ) : typeof opt.label === 'object' ? (
-                        resolveLabel(opt.label, lang)
                       ) : (
-                        t(opt.label, { defaultValue: opt.label })
+                        resolveControlText(opt.label, locale, t)
                       )}
                     </button>
                   );
@@ -496,6 +480,9 @@ export function ControlFieldRow({
           <p className="text-xs text-muted-foreground italic">
             {t('binding.overridden', 'Static value is overridden by binding.')}
           </p>
+        )}
+        {fieldDescription && (
+          <p className="text-xs text-muted-foreground leading-relaxed">{fieldDescription}</p>
         )}
       </div>
     </div>
