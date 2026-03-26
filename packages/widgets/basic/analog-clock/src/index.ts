@@ -123,9 +123,9 @@ export const Main = defineWidget({
       const bezelWidth = Math.min(currentProps.bezelWidth, Math.max(4, dimension * 0.14));
       const dialDimension = Math.max(0, dimension - bezelWidth * 2);
       const dialRadius = dialDimension / 2;
-      const numberFontSize = Math.max(12, Math.round(dimension * 0.075));
+      const numberFontSize = Math.max(14, Math.round(dimension * 0.075));
       const numberBoxSize = Math.max(numberFontSize * 1.4, 26);
-      const numberMargin = Math.max(bezelWidth * 0.45, numberFontSize * 0.45, 8);
+      const numberMargin = Math.max(bezelWidth * 0.35, numberFontSize * 0.35, 6);
       const markerRadius = Math.max(dialRadius * 0.48, dialRadius - numberBoxSize / 2 - numberMargin);
 
       faceEl.style.width = `${dimension}px`;
