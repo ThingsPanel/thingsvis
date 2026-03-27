@@ -1,0 +1,13 @@
+{
+  "widgets": {
+    "thingsvis-widget-decoration-border-glow-pulse": {
+      "groupStyle": "Style",
+      "color": "Glow Color",
+      "secondaryColor": "Secondary Color",
+      "opacity": "Opacity",
+      "groupAnimation": "Animation",
+      "animated": "Enable Animation",
+      "animationSpeed": "Speed (s)"
+    }
+  }
+}

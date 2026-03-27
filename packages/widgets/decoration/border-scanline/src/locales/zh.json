@@ -1,0 +1,13 @@
+{
+  "widgets": {
+    "thingsvis-widget-decoration-border-scanline": {
+      "groupStyle": "样式",
+      "color": "主发光色",
+      "secondaryColor": "辅助色",
+      "opacity": "不透明度",
+      "groupAnimation": "动画",
+      "animated": "启用动画",
+      "animationSpeed": "动画速度(s)"
+    }
+  }
+}
