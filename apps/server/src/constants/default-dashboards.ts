@@ -18,8 +18,8 @@ export interface DefaultDashboardConfig {
 
 export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDashboardConfig> = {
   SUPER_ADMIN: {
-    projectName: 'Super Admin Project',
-    dashboardName: 'Super Admin Home',
+    projectName: '超管首页',
+    dashboardName: '超管首页',
     canvasConfig: JSON.stringify({
       mode: 'grid',
       width: 1500,
@@ -39,7 +39,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'de56f271-4e51-4e69-bc81-0058164d259e',
         type: 'chart/uplot-line',
         props: {
-          title: 'Disk Usage',
+          title: '磁盘占用',
           titleAlign: 'left',
           primaryColor: '#6965db',
           showLegend: true,
@@ -65,9 +65,9 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: '9a4bdf25-78cc-476b-9e8b-79d81583eecf',
         type: 'interaction/value-card-simple',
         props: {
-          title: 'Total Devices',
+          title: '总设备数',
           value: 0,
-          unit: 'units',
+          unit: '个',
           showUnit: true,
           precision: 0,
           showTrend: false,
@@ -93,9 +93,9 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'dc68f31a-2727-4c90-8219-69c0fab96739',
         type: 'interaction/value-card-simple',
         props: {
-          title: 'Online Devices',
+          title: '总在线数',
           value: 0,
-          unit: 'units',
+          unit: '个',
           showUnit: true,
           precision: 0,
           showTrend: false,
@@ -121,9 +121,9 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'db3f0e48-720b-422f-8dd2-6628c766ecc9',
         type: 'interaction/value-card-simple',
         props: {
-          title: 'Offline Devices',
+          title: '总离线数',
           value: 0,
-          unit: 'units',
+          unit: '个',
           showUnit: true,
           precision: 0,
           showTrend: false,
@@ -149,9 +149,9 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: '3e98c169-5679-4102-a2f4-967ca47cf4f5',
         type: 'interaction/value-card-simple',
         props: {
-          title: 'Alarm Devices',
+          title: '总告警设备',
           value: 0,
-          unit: 'units',
+          unit: '个',
           showUnit: true,
           precision: 0,
           showTrend: false,
@@ -177,7 +177,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: '50440e62-8599-40c5-9f42-ca21b81d83aa',
         type: 'chart/uplot-line',
         props: {
-          title: 'Memory Usage',
+          title: '内存占用',
           titleAlign: 'left',
           primaryColor: '#6965db',
           showLegend: true,
@@ -237,8 +237,8 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
   },
 
   TENANT_ADMIN: {
-    projectName: 'Default Project',
-    dashboardName: 'Tenant Admin Home',
+    projectName: '首页项目',
+    dashboardName: '首页看板(租户管理员首页)',
     canvasConfig: JSON.stringify({
       mode: 'fixed',
       width: 1920,
@@ -268,7 +268,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c1t',
         type: 'basic/text',
         props: {
-          text: 'Device Total',
+          text: '设备总数',
           fontSize: 18,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '600',
@@ -283,7 +283,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c1v',
         type: 'basic/text',
         props: {
-          text: '0 units',
+          text: '0 个',
           fontSize: 54,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -296,7 +296,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           {
             targetProp: 'text',
             expression: '{{ ds.__platform__.data.device_total }}',
-            transform: "return String(value ?? 0) + ' units';",
+            transform: "return String(value ?? 0) + ' 个';",
           },
         ],
         grid: { x: 0, y: 1, w: 9, h: 2, static: false, isDraggable: true, isResizable: true },
@@ -315,7 +315,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c3t',
         type: 'basic/text',
         props: {
-          text: 'Online Devices',
+          text: '在线设备数',
           fontSize: 18,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '600',
@@ -330,7 +330,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c3v',
         type: 'basic/text',
         props: {
-          text: '0 units',
+          text: '0 个',
           fontSize: 54,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -343,7 +343,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           {
             targetProp: 'text',
             expression: '{{ ds.__platform__.data.device_online }}',
-            transform: "return String(value ?? 0) + ' units';",
+            transform: "return String(value ?? 0) + ' 个';",
           },
         ],
         grid: { x: 9, y: 1, w: 9, h: 2, static: false, isDraggable: true, isResizable: true },
@@ -362,7 +362,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c2t',
         type: 'basic/text',
         props: {
-          text: 'Offline Devices',
+          text: '离线设备数',
           fontSize: 18,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '600',
@@ -377,7 +377,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c2v',
         type: 'basic/text',
         props: {
-          text: '0 units',
+          text: '0 个',
           fontSize: 54,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -390,7 +390,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           {
             targetProp: 'text',
             expression: '{{ ds.__platform__.data.device_offline }}',
-            transform: "return String(value ?? 0) + ' units';",
+            transform: "return String(value ?? 0) + ' 个';",
           },
         ],
         grid: { x: 0, y: 1, w: 9, h: 2, static: false, isDraggable: true, isResizable: true },
@@ -409,7 +409,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c4t',
         type: 'basic/text',
         props: {
-          text: 'Alarm Count',
+          text: '告警统计',
           fontSize: 18,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '600',
@@ -424,7 +424,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'c4v',
         type: 'basic/text',
         props: {
-          text: '0 units',
+          text: '0 个',
           fontSize: 54,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -437,7 +437,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           {
             targetProp: 'text',
             expression: '{{ ds.__platform__.data.alarm_device_total }}',
-            transform: "return String(value ?? 0) + ' units';",
+            transform: "return String(value ?? 0) + ' 个';",
           },
         ],
         grid: { x: 18, y: 1, w: 6, h: 2, static: false, isDraggable: true, isResizable: true },
@@ -456,7 +456,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p3t',
         type: 'basic/text',
         props: {
-          text: 'Device Online Trend (12h)',
+          text: '设备在线趋势（12小时）',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -506,7 +506,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1t',
         type: 'basic/text',
         props: {
-          text: 'Quick Start Guide',
+          text: '操作指引',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -530,7 +530,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r1t',
         type: 'basic/text',
         props: {
-          text: 'Add Device',
+          text: '添加设备',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -545,7 +545,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r1d',
         type: 'basic/text',
         props: {
-          text: 'Connect devices to platform for unified management',
+          text: '将设备接入平台并开始统一管理',
           fontSize: 13,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '500',
@@ -570,7 +570,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r2t',
         type: 'basic/text',
         props: {
-          text: 'Configure Device',
+          text: '配置设备',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -585,7 +585,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r2d',
         type: 'basic/text',
         props: {
-          text: 'Set properties, parameters and data collection rules',
+          text: '设置属性、参数与数据采集规则',
           fontSize: 13,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '500',
@@ -610,7 +610,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r3t',
         type: 'basic/text',
         props: {
-          text: 'Create Dashboard',
+          text: '创建看板',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -625,7 +625,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p1r3d',
         type: 'basic/text',
         props: {
-          text: 'Combine components to build real-time monitoring views',
+          text: '组合组件构建实时监控与分析视图',
           fontSize: 13,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '500',
@@ -651,7 +651,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p4t',
         type: 'basic/text',
         props: {
-          text: 'Overview',
+          text: '运行概览',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -669,7 +669,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           title: ' ',
           primaryColor: '#5b8cff',
           max: 100,
-          data: { value: 0, name: 'Online Rate' },
+          data: { value: 0, name: '在线率' },
         },
         position: { x: 1528, y: 252 },
         size: { width: 312, height: 176 },
@@ -678,7 +678,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
             targetProp: 'data',
             expression: '{{ ds.__platform__.data }}',
             transform:
-              "const total = Number(value?.device_total ?? 0); const online = Number(value?.device_online ?? 0); return { value: total > 0 ? Math.round((online / total) * 100) : 0, name: 'Online Rate' };",
+              "const total = Number(value?.device_total ?? 0); const online = Number(value?.device_online ?? 0); return { value: total > 0 ? Math.round((online / total) * 100) : 0, name: '在线率' };",
           },
         ],
         grid: { x: 12, y: 4, w: 4, h: 4, static: false, isDraggable: true, isResizable: true },
@@ -697,7 +697,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p5t',
         type: 'basic/text',
         props: {
-          text: 'Alarm Information',
+          text: '告警信息',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -752,7 +752,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p6t',
         type: 'basic/text',
         props: {
-          text: 'Recent Data Reports',
+          text: '最近上报数据',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
@@ -768,10 +768,10 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         type: 'basic/table',
         props: {
           columns: [
-            { key: 'device', title: 'Device Name', align: 'left' },
-            { key: 'metric', title: 'Metric', align: 'left' },
-            { key: 'value', title: 'Value', align: 'right' },
-            { key: 'time', title: 'Last Update', align: 'right' },
+            { key: 'device', title: '设备名称', align: 'left' },
+            { key: 'metric', title: '指标', align: 'left' },
+            { key: 'value', title: '数据值', align: 'right' },
+            { key: 'time', title: '更新时间', align: 'right' },
           ],
           data: [],
           showHeader: true,
@@ -803,7 +803,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'p7t',
         type: 'basic/text',
         props: {
-          text: 'Product Introduction',
+          text: '产品介绍',
           fontSize: 16,
           fontFamily: 'Inter, Noto Sans SC, sans-serif',
           fontWeight: '700',
