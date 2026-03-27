@@ -1,13 +1,25 @@
 {
   "widgets": {
     "thingsvis-widget-decoration-border-scanline": {
+      "groupColor": "颜色",
+      "useThemeColor": "跟随主题色",
+      "color": "流光主色",
+      "secondaryColor": "流光辅助色",
+      "glowColor": "发光色",
       "groupStyle": "样式",
-      "color": "主发光色",
-      "secondaryColor": "辅助色",
+      "borderWidth": "边框粗细",
+      "glowWidth": "发光宽度",
+      "flowLength": "流光长度",
       "opacity": "不透明度",
+      "groupGlow": "发光效果",
+      "glowIntensity": "发光强度",
+      "cornerGlow": "四角发光",
       "groupAnimation": "动画",
       "animated": "启用动画",
-      "animationSpeed": "动画速度(s)"
+      "flowDirection": "流动方向",
+      "directionClockwise": "顺时针",
+      "directionCounter": "逆时针",
+      "animationSpeed": "流动速度(s)"
     }
   }
 }

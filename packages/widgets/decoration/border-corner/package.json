@@ -30,7 +30,7 @@
     "displayName": "Corner Border",
     "icon": "Maximize2",
     "i18n": {
-      "zh": "四角光标边框",
+      "zh": "四角边框",
       "en": "Corner Border"
     }
   }

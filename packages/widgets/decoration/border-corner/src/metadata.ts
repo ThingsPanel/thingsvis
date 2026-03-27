@@ -1,6 +1,6 @@
 export const metadata = {
   id: 'decoration-border-corner',
-  name: '四角光标边框',
+  name: '四角边框',
   category: 'decoration',
   icon: 'Maximize2',
   version: '1.0.0',

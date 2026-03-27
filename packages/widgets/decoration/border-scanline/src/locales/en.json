@@ -1,13 +1,25 @@
 {
   "widgets": {
     "thingsvis-widget-decoration-border-scanline": {
+      "groupColor": "Color",
+      "useThemeColor": "Follow Theme",
+      "color": "Flow Primary",
+      "secondaryColor": "Flow Secondary",
+      "glowColor": "Glow Color",
       "groupStyle": "Style",
-      "color": "Glow Color",
-      "secondaryColor": "Secondary Color",
+      "borderWidth": "Border Width",
+      "glowWidth": "Glow Width",
+      "flowLength": "Flow Length",
       "opacity": "Opacity",
+      "groupGlow": "Glow Effect",
+      "glowIntensity": "Glow Intensity",
+      "cornerGlow": "Corner Glow",
       "groupAnimation": "Animation",
       "animated": "Enable Animation",
-      "animationSpeed": "Speed (s)"
+      "flowDirection": "Flow Direction",
+      "directionClockwise": "Clockwise",
+      "directionCounter": "Counter-Clockwise",
+      "animationSpeed": "Flow Speed(s)"
     }
   }
 }

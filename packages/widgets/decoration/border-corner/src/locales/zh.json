@@ -1,12 +1,22 @@
 {
   "widgets": {
     "thingsvis-widget-decoration-border-corner": {
-      "groupStyle": "样式",
+      "groupColor": "颜色",
+      "useThemeColor": "跟随主题色",
       "color": "主发光色",
       "secondaryColor": "辅助色",
+      "glowColor": "发光色",
+      "groupStyle": "样式",
+      "lineWidth": "线条粗细",
+      "cornerLength": "角长度",
       "opacity": "不透明度",
+      "groupGlow": "发光效果",
+      "glowIntensity": "发光强度",
+      "glowBlur": "发光模糊",
+      "innerGlow": "内发光",
       "groupAnimation": "动画",
       "animated": "启用动画",
+      "pulseMode": "脉冲模式",
       "animationSpeed": "动画速度(s)"
     }
   }
