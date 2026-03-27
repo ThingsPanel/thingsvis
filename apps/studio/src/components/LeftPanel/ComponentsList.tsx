@@ -104,12 +104,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 const CATEGORY_DEFS = [
   { key: 'basic', Icon: Box },
-  { key: 'interaction', Icon: MousePointerClick },
+  { key: 'controls', Icon: MousePointerClick },
+  { key: 'display', Icon: Columns3 },
   { key: 'charts', Icon: BarChart3 },
   { key: 'media', Icon: Film },
-  { key: 'resources', Icon: Folder },
-  { key: 'geo', Icon: Globe },
-  { key: 'custom', Icon: Sparkles },
   { key: 'decoration', Icon: Shapes },
   { key: 'industrial', Icon: Cpu },
 ] as const;
@@ -169,14 +167,11 @@ export default function ComponentsList({
     const map: CategoryMap = {};
     const prefixMap: Record<string, string> = {
       basic: 'basic',
-      interaction: 'interaction',
+      controls: 'controls',
+      display: 'display',
       chart: 'charts',
       charts: 'charts',
       media: 'media',
-      resource: 'resources',
-      resources: 'resources',
-      custom: 'custom',
-      geo: 'geo',
       decoration: 'decoration',
       industrial: 'industrial',
     };
@@ -186,9 +181,11 @@ export default function ComponentsList({
     });
 
     entries.forEach((entry) => {
-      const parts = entry.componentId.split('/');
-      const rawPrefix = (parts[0] || 'basic').toLowerCase();
-      const category = prefixMap[rawPrefix] ?? 'basic';
+      // 优先从注册表读取直接定义好的 category，如果不存在再 fallback 到路径前缀解析
+      const category =
+        (entry as any).category ||
+        prefixMap[(entry.componentId.split('/')[0] || 'basic').toLowerCase()] ||
+        'basic';
       map[category] = map[category] ?? [];
       map[category].push(entry);
     });

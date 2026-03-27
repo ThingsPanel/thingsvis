@@ -74,15 +74,13 @@
         "noResults": "未找到匹配的组件",
         "noComponents": "暂无组件",
         "categories": {
-            "basic": "基础组件",
-            "interaction": "交互组件",
-            "charts": "图表组件",
-            "media": "媒体展示",
-            "resources": "资源组件",
-            "geo": "地理信息",
-            "custom": "自定义",
-            "decoration": "装饰组件",
-            "industrial": "工业组态"
+            "basic": "基础",
+            "controls": "控件",
+            "display": "展示",
+            "charts": "图表",
+            "media": "媒体",
+            "decoration": "装饰",
+            "industrial": "工业"
         }
     },
     "layers": {

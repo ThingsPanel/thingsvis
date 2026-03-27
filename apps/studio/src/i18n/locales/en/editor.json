@@ -75,12 +75,10 @@
         "noComponents": "No components",
         "categories": {
             "basic": "Basic",
-            "interaction": "Interaction",
+            "controls": "Controls",
+            "display": "Display",
             "charts": "Charts",
             "media": "Media",
-            "resources": "Resources",
-            "geo": "Geo",
-            "custom": "Custom",
             "decoration": "Decoration",
             "industrial": "Industrial"
         }
