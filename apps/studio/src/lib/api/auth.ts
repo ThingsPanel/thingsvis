@@ -24,6 +24,7 @@ export interface RegisterData {
   password: string;
   name?: string;
   tenantId?: string;
+  role?: 'SUPER_ADMIN' | 'TENANT_ADMIN';
 }
 
 export interface AuthResponse {
