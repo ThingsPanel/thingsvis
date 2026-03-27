@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Server, Search, CheckCircle2, AlertCircle, Box } from 'lucide-react';
+import { Server, Search, AlertCircle, Box } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Accordion,

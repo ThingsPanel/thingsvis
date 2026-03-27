@@ -14,6 +14,8 @@ import { z } from 'zod';
  */
 export const I18nLabelSchema = z.union([z.string().min(1), z.record(z.string(), z.string())]);
 export type I18nLabel = z.infer<typeof I18nLabelSchema>;
+export const ControlTextSchema = I18nLabelSchema;
+export type ControlText = I18nLabel;
 
 export const BindingModeSchema = z.enum(['static', 'field', 'expr', 'rule']);
 export type BindingMode = z.infer<typeof BindingModeSchema>;
@@ -93,9 +95,9 @@ export const ControlFieldSchema = z.object({
   /** 数据绑定配置 */
   binding: ControlBindingSchema.optional(),
   /** 占位提示文字 */
-  placeholder: z.string().optional(),
+  placeholder: ControlTextSchema.optional(),
   /** 描述/帮助文字 */
-  description: z.string().optional(),
+  description: ControlTextSchema.optional(),
   /** 是否禁用 */
   disabled: z.boolean().optional(),
   /** 条件显示（依赖其他字段） */
@@ -121,6 +123,12 @@ export const ControlGroupSchema = z.object({
   label: I18nLabelSchema.optional(),
   /** 是否默认展开 */
   expanded: z.boolean().optional(),
+  showWhen: z
+    .object({
+      field: z.string(),
+      value: z.unknown(),
+    })
+    .optional(),
   fields: z.array(ControlFieldSchema),
 });
 export type ControlGroup = z.infer<typeof ControlGroupSchema>;

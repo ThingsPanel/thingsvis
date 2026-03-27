@@ -12,6 +12,7 @@ import type {
   ControlKind,
   ControlOption,
   ControlBinding,
+  ControlText,
   I18nLabel,
   WidgetControls,
 } from './types';
@@ -22,9 +23,9 @@ import type {
 
 /** 添加控件的通用选项 */
 export type AddControlOptions = {
-  label?: string;
-  description?: string;
-  placeholder?: string;
+  label?: I18nLabel;
+  description?: ControlText;
+  placeholder?: ControlText;
   default?: unknown;
   binding?: boolean | ControlBinding;
   disabled?: boolean;
@@ -384,7 +385,11 @@ export class FieldBuilder {
 
 /** 标准选项类型 */
 export type StandardOption = 'opacity' | 'shadow' | 'border' | 'background' | 'transform';
-export type GroupOptions = { label?: I18nLabel; expanded?: boolean };
+export type GroupOptions = {
+  label?: I18nLabel;
+  expanded?: boolean;
+  showWhen?: { field: string; value: unknown };
+};
 
 /**
  * 控件面板构建器
@@ -429,6 +434,7 @@ export class ControlPanelBuilder {
       id,
       label: options.label ?? this.getDefaultLabel(id),
       expanded: options.expanded ?? true,
+      showWhen: options.showWhen,
       fields: fieldBuilder.getFields(),
     });
 
@@ -437,22 +443,25 @@ export class ControlPanelBuilder {
 
   /** 添加内容分组（快捷方法） */
   addContentGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
-    return this.addGroup('Content', builderFn, { label: '内容', ...options });
+    return this.addGroup('Content', builderFn, { label: 'controls.groups.content', ...options });
   }
 
   /** 添加样式分组（快捷方法） */
   addStyleGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
-    return this.addGroup('Style', builderFn, { label: '样式', ...options });
+    return this.addGroup('Style', builderFn, { label: 'controls.groups.style', ...options });
   }
 
   /** 添加数据分组（快捷方法） */
   addDataGroup(builderFn: (builder: FieldBuilder) => void, options: GroupOptions = {}): this {
-    return this.addGroup('Data', builderFn, { label: '数据', ...options });
+    return this.addGroup('Data', builderFn, { label: 'controls.groups.data', ...options });
   }
 
   /** 添加高级分组（快捷方法） */
   addAdvancedGroup(builderFn: (builder: FieldBuilder) => void): this {
-    return this.addGroup('Advanced', builderFn, { label: '高级', expanded: false });
+    return this.addGroup('Advanced', builderFn, {
+      label: 'controls.groups.advanced',
+      expanded: false,
+    });
   }
 
   /** 构建最终配置 */
@@ -466,7 +475,7 @@ export class ControlPanelBuilder {
       if (this.standardOptions.includes('opacity')) {
         standardFields.push({
           path: '_opacity',
-          label: '不透明度',
+          label: 'controls.standard.opacity',
           kind: 'slider',
           default: 1,
           min: 0,
@@ -478,7 +487,7 @@ export class ControlPanelBuilder {
       if (this.standardOptions.includes('background')) {
         standardFields.push({
           path: '_backgroundColor',
-          label: '背景色',
+          label: 'controls.standard.backgroundColor',
           kind: 'color',
           default: 'transparent',
         });
@@ -486,24 +495,62 @@ export class ControlPanelBuilder {
 
       if (this.standardOptions.includes('border')) {
         standardFields.push(
-          { path: '_borderWidth', label: '边框宽度', kind: 'number', default: 0, min: 0, max: 20 },
-          { path: '_borderColor', label: '边框颜色', kind: 'color', default: '#000000' },
-          { path: '_borderRadius', label: '圆角', kind: 'number', default: 0, min: 0, max: 100 }
+          {
+            path: '_borderWidth',
+            label: 'controls.standard.borderWidth',
+            kind: 'number',
+            default: 0,
+            min: 0,
+            max: 20,
+          },
+          {
+            path: '_borderColor',
+            label: 'controls.standard.borderColor',
+            kind: 'color',
+            default: '#000000',
+          },
+          {
+            path: '_borderRadius',
+            label: 'controls.standard.borderRadius',
+            kind: 'number',
+            default: 0,
+            min: 0,
+            max: 100,
+          }
         );
       }
 
       if (this.standardOptions.includes('shadow')) {
         standardFields.push(
-          { path: '_shadowEnabled', label: '启用阴影', kind: 'boolean', default: false },
-          { path: '_shadowColor', label: '阴影颜色', kind: 'color', default: 'rgba(0,0,0,0.2)', showWhen: { field: '_shadowEnabled', value: true } },
-          { path: '_shadowBlur', label: '阴影模糊', kind: 'number', default: 10, min: 0, max: 50, showWhen: { field: '_shadowEnabled', value: true } }
+          {
+            path: '_shadowEnabled',
+            label: 'controls.standard.shadowEnabled',
+            kind: 'boolean',
+            default: false,
+          },
+          {
+            path: '_shadowColor',
+            label: 'controls.standard.shadowColor',
+            kind: 'color',
+            default: 'rgba(0,0,0,0.2)',
+            showWhen: { field: '_shadowEnabled', value: true },
+          },
+          {
+            path: '_shadowBlur',
+            label: 'controls.standard.shadowBlur',
+            kind: 'number',
+            default: 10,
+            min: 0,
+            max: 50,
+            showWhen: { field: '_shadowEnabled', value: true },
+          }
         );
       }
 
       if (standardFields.length > 0) {
         allGroups.push({
           id: 'Standard',
-          label: '通用',
+          label: 'controls.groups.standard',
           expanded: false,
           fields: standardFields,
         });
@@ -516,10 +563,11 @@ export class ControlPanelBuilder {
   /** 获取默认分组标签 */
   private getDefaultLabel(id: string): string {
     const labels: Record<string, string> = {
-      Content: '内容',
-      Style: '样式',
-      Data: '数据',
-      Advanced: '高级',
+      Content: 'controls.groups.content',
+      Style: 'controls.groups.style',
+      Data: 'controls.groups.data',
+      Advanced: 'controls.groups.advanced',
+      Standard: 'controls.groups.standard',
     };
     return labels[id] ?? id;
   }

@@ -13,6 +13,163 @@ import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
+
+function isLineNodeType(type: string | undefined): boolean {
+  return type === 'basic/line';
+}
+
+function isPipeNodeType(type: string | undefined): boolean {
+  return type === 'industrial/pipe';
+}
+
+function isConnectorNodeType(type: string | undefined): boolean {
+  return isLineNodeType(type) || isPipeNodeType(type);
+}
+
+function getConnectorPadding(strokeWidth?: unknown): number {
+  const width = Number(strokeWidth ?? 2);
+  return Math.max(28, Math.ceil(width * 2 + 16));
+}
+
+function buildElbowRoutePoints(
+  a: { x: number; y: number },
+  b: { x: number; y: number },
+  sourceAnchor?: string,
+  targetAnchor?: string,
+) {
+  const sourceHorizontal = sourceAnchor === 'left' || sourceAnchor === 'right';
+  const sourceVertical = sourceAnchor === 'top' || sourceAnchor === 'bottom';
+  const targetHorizontal = targetAnchor === 'left' || targetAnchor === 'right';
+  const targetVertical = targetAnchor === 'top' || targetAnchor === 'bottom';
+
+  if (sourceVertical && targetVertical) {
+    const midY = (a.y + b.y) / 2;
+    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
+  }
+  if (sourceHorizontal && targetHorizontal) {
+    const midX = (a.x + b.x) / 2;
+    return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+  }
+  if (sourceVertical && targetHorizontal) {
+    return [a, { x: a.x, y: b.y }, b];
+  }
+  if (sourceHorizontal && targetVertical) {
+    return [a, { x: b.x, y: a.y }, b];
+  }
+  const midX = (a.x + b.x) / 2;
+  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+}
+
+function isHorizontalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.y - b.y) < eps;
+}
+
+function isVerticalSegment(a: { x: number; y: number }, b: { x: number; y: number }, eps = 1) {
+  return Math.abs(a.x - b.x) < eps;
+}
+
+const PIPE_STRAIGHT_SNAP_THRESHOLD = 20;
+
+function orthogonalizePipePoints(
+  points: Array<{ x: number; y: number }>,
+  sourceAnchor?: string,
+  targetAnchor?: string,
+) {
+  if (points.length < 2) return points;
+
+  const result: Array<{ x: number; y: number }> = [points[0]!];
+
+  const chooseElbow = (
+    a: { x: number; y: number },
+    b: { x: number; y: number },
+    prev?: { x: number; y: number },
+    next?: { x: number; y: number },
+    isFirst?: boolean,
+    isLast?: boolean,
+  ) => {
+    let firstLeg: 'horizontal' | 'vertical' | null = null;
+
+    if (isFirst) {
+      if (sourceAnchor === 'left' || sourceAnchor === 'right') firstLeg = 'horizontal';
+      if (sourceAnchor === 'top' || sourceAnchor === 'bottom') firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && prev) {
+      if (isHorizontalSegment(prev, a)) firstLeg = 'vertical';
+      else if (isVerticalSegment(prev, a)) firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg && next) {
+      if (isHorizontalSegment(b, next)) firstLeg = 'horizontal';
+      else if (isVerticalSegment(b, next)) firstLeg = 'vertical';
+    }
+
+    if (!firstLeg && isLast) {
+      if (targetAnchor === 'left' || targetAnchor === 'right') firstLeg = 'vertical';
+      if (targetAnchor === 'top' || targetAnchor === 'bottom') firstLeg = 'horizontal';
+    }
+
+    if (!firstLeg) {
+      firstLeg = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'horizontal' : 'vertical';
+    }
+
+    return firstLeg === 'horizontal' ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
+  };
+
+  for (let i = 1; i < points.length; i++) {
+    const a = result[result.length - 1]!;
+    const b = points[i]!;
+
+    if (isHorizontalSegment(a, b) || isVerticalSegment(a, b)) {
+      result.push(b);
+      continue;
+    }
+
+    const prev = result.length >= 2 ? result[result.length - 2] : undefined;
+    const next = i < points.length - 1 ? points[i + 1] : undefined;
+    const elbow = chooseElbow(a, b, prev, next, i === 1, i === points.length - 1);
+
+    if (Math.abs(elbow.x - a.x) >= 1 || Math.abs(elbow.y - a.y) >= 1) {
+      result.push(elbow);
+    }
+    result.push(b);
+  }
+
+  const compacted: Array<{ x: number; y: number }> = [result[0]!];
+  for (let i = 1; i < result.length - 1; i++) {
+    const prev = compacted[compacted.length - 1]!;
+    const curr = result[i]!;
+    const next = result[i + 1]!;
+    const collinearX = isVerticalSegment(prev, curr) && isVerticalSegment(curr, next);
+    const collinearY = isHorizontalSegment(prev, curr) && isHorizontalSegment(curr, next);
+    if (collinearX || collinearY) continue;
+    compacted.push(curr);
+  }
+  compacted.push(result[result.length - 1]!);
+
+  if (compacted.length >= 2) {
+    const start = compacted[0]!;
+    const end = compacted[compacted.length - 1]!;
+    if (Math.abs(start.y - end.y) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: end.x, y: start.y }];
+    }
+    if (Math.abs(start.x - end.x) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
+      return [start, { x: start.x, y: end.y }];
+    }
+  }
+
+  if (compacted.length > 4) {
+    return buildElbowRoutePoints(
+      compacted[0]!,
+      compacted[compacted.length - 1]!,
+      sourceAnchor,
+      targetAnchor,
+    );
+  }
+
+  return compacted;
+}
+
 export class VisualEngine {
   private activeInlineTextEditor?:
     | {
@@ -83,7 +240,7 @@ export class VisualEngine {
 
   private scheduleAutoLayoutConnectedLine(node: NodeState, linkedNodes: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }>) {
     // Only for line nodes that have endpoint bindings
-    if (node.schemaRef.type !== 'basic/line') return;
+    if (!isConnectorNodeType(node.schemaRef.type)) return;
     const schema = node.schemaRef as any;
     const props = (schema.props || {}) as Record<string, any>;
     const hasBinding = !!(props.sourceNodeId || props.targetNodeId);
@@ -119,24 +276,44 @@ export class VisualEngine {
       ? this.getAnchorWorldPoint(target.position, target.size, props.targetAnchor)
       : localToWorld(lastPt, { x: lp.x + (ls.width ?? 0), y: lp.y + (ls.height ?? 0) / 2 });
 
-    const padding = 24;
-    const minX = Math.min(startWorld.x, endWorld.x) - padding;
-    const minY = Math.min(startWorld.y, endWorld.y) - padding;
-    const maxX = Math.max(startWorld.x, endWorld.x) + padding;
-    const maxY = Math.max(startWorld.y, endWorld.y) + padding;
+    const padding = getConnectorPadding(props.strokeWidth);
+    let worldPoints: Array<{ x: number; y: number }>;
+    if (isPipeNodeType(node.schemaRef.type)) {
+      if (pts && pts.length >= 3) {
+        worldPoints = orthogonalizePipePoints(
+          pts
+            .filter((p) => typeof p?.x === 'number' && typeof p?.y === 'number')
+            .map((p, index) => {
+              if (index === 0) return startWorld;
+              if (index === pts.length - 1) return endWorld;
+              return localToWorld(p, startWorld);
+            }),
+          props.sourceAnchor,
+          props.targetAnchor,
+        );
+      } else {
+        worldPoints = buildElbowRoutePoints(startWorld, endWorld, props.sourceAnchor, props.targetAnchor);
+      }
+    } else {
+      worldPoints = [startWorld, endWorld];
+    }
 
-    const nextPosition = { x: minX, y: minY };
+    const minPointX = Math.min(...worldPoints.map((point) => point.x));
+    const minPointY = Math.min(...worldPoints.map((point) => point.y));
+    const maxPointX = Math.max(...worldPoints.map((point) => point.x));
+    const maxPointY = Math.max(...worldPoints.map((point) => point.y));
+
+    const nextPosition = { x: minPointX - padding, y: minPointY - padding };
     const nextSize = {
-      width: Math.max(40, maxX - minX),
-      height: Math.max(40, maxY - minY)
+      width: Math.max(40, maxPointX - minPointX + padding * 2),
+      height: Math.max(40, maxPointY - minPointY + padding * 2)
     };
 
-    const nextPoints = [
-      { x: startWorld.x - nextPosition.x, y: startWorld.y - nextPosition.y },
-      { x: endWorld.x - nextPosition.x, y: endWorld.y - nextPosition.y }
-    ];
-
-    const key = JSON.stringify({ startWorld, endWorld, nextPosition, nextSize });
+    const nextPoints = worldPoints.map((point) => ({
+      x: point.x - nextPosition.x,
+      y: point.y - nextPosition.y,
+    }));
+    const key = JSON.stringify({ worldPoints, nextPosition, nextSize });
     const lastKey = this.lastLineAutoLayoutCache.get(node.id);
     if (key === lastKey) return;
     this.lastLineAutoLayoutCache.set(node.id, key);
@@ -179,6 +356,7 @@ export class VisualEngine {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
       actionRuntime?: ActionRuntime;
+      locale?: string;
     }
   ) { }
 
@@ -667,7 +845,7 @@ export class VisualEngine {
             linkedNodes,
             theme: (this.store.getState().page as any)?.config?.theme || 'dawn',
             mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
-            locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+            locale: this.opts?.locale ?? 'en',
             visible: true,
             emit: buildEmit(
               () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
@@ -1058,7 +1236,11 @@ export class VisualEngine {
             createWidgetRenderer(
               widget,
               this.store,
-              { editable: this.opts?.editable, actionRuntime: this.opts?.actionRuntime },
+              {
+                editable: this.opts?.editable,
+                actionRuntime: this.opts?.actionRuntime,
+                locale: this.opts?.locale,
+              },
               this.eventBus,
             ),
           );

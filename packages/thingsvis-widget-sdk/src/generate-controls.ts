@@ -4,6 +4,7 @@ import type {
   ControlField,
   ControlGroup,
   ControlGroupId,
+  I18nLabel,
   WidgetControls,
 } from './types';
 import {
@@ -15,7 +16,7 @@ import {
 
 export type GenerateControlsConfig = {
   groups?: Partial<Record<ControlGroupId, string[]>>;
-  groupOptions?: Partial<Record<ControlGroupId, { label?: string; expanded?: boolean }>>;
+  groupOptions?: Partial<Record<ControlGroupId, { label?: I18nLabel; expanded?: boolean }>>;
   overrides?: Record<string, Partial<ControlField>>;
   bindings?: Record<string, ControlBinding>;
   enableAllBindings?: boolean;
@@ -102,6 +103,13 @@ export function generateControls(
   return { groups };
 }
 
-function getGroupLabel(id: ControlGroupId): string {
-  return id;
+function getGroupLabel(id: ControlGroupId): I18nLabel {
+  const standard: Record<string, string> = {
+    Content: 'controls.groups.content',
+    Style: 'controls.groups.style',
+    Data: 'controls.groups.data',
+    Advanced: 'controls.groups.advanced',
+    Standard: 'controls.groups.standard',
+  };
+  return standard[id] ?? id;
 }

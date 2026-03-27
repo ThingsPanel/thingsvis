@@ -64,7 +64,6 @@ import {
   Square,
   Circle,
   ArrowRight,
-  Type,
   ImageIcon,
   Hand,
   Layers,
@@ -104,6 +103,18 @@ type FormatBrushState = {
   snapshot: FormatBrushSnapshot | null;
 };
 
+declare global {
+  interface Window {
+    __THINGSVIS_DEV__?: {
+      store: typeof store;
+      getState: () => KernelState;
+      selectNode: (nodeId: string | null) => void;
+      selectNodes: (nodeIds: string[]) => void;
+      updateNode: (nodeId: string, changes: any) => void;
+    };
+  }
+}
+
 const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props, ref) {
   const {
     isAuthenticated,
@@ -122,7 +133,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   );
   const [searchQuery, setSearchQuery] = useState('');
   const { t, i18n } = useTranslation('editor');
-  const language = i18n.language as string;
+  const language = (i18n.resolvedLanguage ?? i18n.language) as string;
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
@@ -240,6 +251,28 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       setShowLeftPanel(true);
     }
   }, [embedVisibility.showLibrary, embedVisibility.showTopRight]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+
+    window.__THINGSVIS_DEV__ = {
+      store,
+      getState: () => store.getState() as KernelState,
+      selectNode: (nodeId) => {
+        store.getState().selectNode(nodeId);
+      },
+      selectNodes: (nodeIds) => {
+        store.getState().selectNodes(nodeIds);
+      },
+      updateNode: (nodeId, changes) => {
+        store.getState().updateNode(nodeId, changes);
+      },
+    };
+
+    return () => {
+      delete window.__THINGSVIS_DEV__;
+    };
+  }, []);
 
   const toggleLeftPanel = useCallback(() => setShowLeftPanel((prev) => !prev), []);
   const clearFormatBrush = useCallback(() => {
@@ -478,7 +511,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     { id: 'line' as Tool, icon: ArrowRight, label: '连线' },
     { id: 'pan' as Tool, icon: Hand, label: '移动' },
     { id: 'image' as Tool, icon: ImageIcon, label: '图片' },
-    { id: 'text' as Tool, icon: Type, label: '文本' },
   ];
 
   return (
@@ -494,6 +526,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       <ErrorBoundary>
         <WorkspaceEngine
           canvasConfig={canvasConfig}
+          locale={language}
           activeTool={activeTool}
           setActiveTool={handleToolChange}
           zoom={zoom}

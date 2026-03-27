@@ -74,13 +74,13 @@
         "noResults": "未找到匹配的组件",
         "noComponents": "暂无组件",
         "categories": {
-            "basic": "基础组件",
-            "interaction": "交互组件",
-            "charts": "图表组件",
-            "media": "媒体展示",
-            "resources": "资源组件",
-            "geo": "地理信息",
-            "custom": "自定义"
+            "basic": "基础",
+            "controls": "控件",
+            "display": "展示",
+            "charts": "图表",
+            "media": "媒体",
+            "decoration": "装饰",
+            "industrial": "工业"
         }
     },
     "layers": {
@@ -280,6 +280,25 @@
         "seconds": "秒",
         "cancel": "取消",
         "confirm": "继续"
+    },
+    "controls": {
+        "groups": {
+            "content": "内容",
+            "style": "样式",
+            "data": "数据",
+            "advanced": "高级",
+            "standard": "通用"
+        },
+        "standard": {
+            "opacity": "不透明度",
+            "backgroundColor": "背景色",
+            "borderWidth": "边框宽度",
+            "borderColor": "边框颜色",
+            "borderRadius": "圆角",
+            "shadowEnabled": "启用阴影",
+            "shadowColor": "阴影颜色",
+            "shadowBlur": "阴影模糊"
+        }
     },
     "binding": {
         "static": "静态",
@@ -539,7 +558,11 @@
         "addEvent": "添加事件",
         "noEvents": "暂无事件处理器",
         "eventName": "事件名称",
+        "selectEvent": "--- 选择事件 ---",
+        "customEvent": "自定义：{{event}}",
         "actionsCount": "个动作",
+        "configureActions": "配置动作序列（{{count}}）",
+        "configureActionsTitle": "事件动作流配置：{{event}}",
         "noActions": "暂无动作，点击下方按钮添加",
         "addAction": "添加动作",
         "actionSetVariable": "设置变量",
@@ -552,7 +575,19 @@
         "payload": "写入载荷",
         "payloadExprHint": "支持 {{expr}} 模板或 JS 表达式，payload 为事件值",
         "url": "URL 或页面ID",
-        "scriptPlaceholder": "// JavaScript 代码"
+        "scriptPlaceholder": "// JavaScript 代码",
+        "common": {
+            "click": "点击 (click)",
+            "clickShort": "点击",
+            "dblclick": "双击 (dblclick)",
+            "dblclickShort": "双击",
+            "mouseenter": "鼠标移入 (mouseenter)",
+            "mouseenterShort": "移入",
+            "mouseleave": "鼠标移出 (mouseleave)",
+            "mouseleaveShort": "移出",
+            "change": "值改变 (change)",
+            "changeShort": "改变"
+        }
     },
     "contextMenu": {
         "copy": "复制",

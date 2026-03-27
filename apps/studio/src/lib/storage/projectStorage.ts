@@ -6,7 +6,7 @@
  */
 
 import { createStore, get, set, del, keys } from 'idb-keyval';
-import { ProjectFileSchema, type ProjectFile, type RecentProjectEntry } from './schemas';
+import { ProjectFileSchema, type ProjectFile } from './schemas';
 import { STORAGE_CONSTANTS } from './constants';
 import { recentProjects } from './recentProjects';
 

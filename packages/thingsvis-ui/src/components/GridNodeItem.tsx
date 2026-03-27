@@ -66,6 +66,8 @@ export interface GridNodeItemProps {
     theme?: string;
     /** Widget runtime mode forwarded to DOM overlays */
     widgetMode?: WidgetOverlayContext['mode'];
+    /** Explicit locale forwarded into the overlay context */
+    locale?: string;
     /** Drag callbacks fed from useGridLayout */
     onDragStart: (nodeId: string, pixelPos: { x: number; y: number }) => void;
     onDragMove: (pixelPos: { x: number; y: number }) => void;
@@ -95,6 +97,7 @@ function buildOverlayContext(
     pixelRect: PixelRect,
     theme: string | undefined,
     mode: WidgetOverlayContext['mode'] = 'view',
+    locale: string | undefined,
     actionRuntime?: ActionRuntime,
 ): WidgetOverlayContext {
     const state = store.getState() as KernelState & Record<string, unknown>;
@@ -110,7 +113,7 @@ function buildOverlayContext(
         props: resolvedProps,
         theme,
         mode,
-        locale: typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en',
+        locale: locale ?? 'en',
         visible: true,
         emit: buildEmit(
             () => (store.getState() as KernelState).nodesById[node.id]?.schemaRef,
@@ -161,6 +164,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     isSelected,
     theme,
     widgetMode = 'view',
+    locale,
     onDragStart,
     onDragMove,
     onDragEnd,
@@ -229,6 +233,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     pixelRectRef.current,
                     theme,
                     widgetMode,
+                    locale,
                     actionRuntime,
                 );
                 const instance = module.createOverlay(ctx);
@@ -253,6 +258,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                             pixelRectRef.current,
                             theme,
                             widgetMode,
+                            locale,
                             actionRuntime,
                         );
                         instance.update(postMountCtx);
@@ -278,7 +284,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         };
         // Re-mount only when widget type or node changes identity; prop changes go through update effect
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actionRuntime, nodeId, resolveWidget, store, theme, widgetMode]);
+    }, [actionRuntime, locale, nodeId, resolveWidget, store, theme, widgetMode]);
 
     // ── Widget update (props / data / pixelRect / dataSources change) ─────────
 
@@ -384,11 +390,12 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             pixelRectRef.current,
             theme,
             widgetMode,
+            locale,
             actionRuntime,
         );
         overlayRef.current.update(ctx);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actionRuntime, updateKey, theme, store, widgetMode]);
+    }, [actionRuntime, locale, updateKey, theme, store, widgetMode]);
 
     // ── Drag handling ─────────────────────────────────────────────────────────
 

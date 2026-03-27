@@ -4,6 +4,19 @@ import Moveable from 'moveable';
 import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
+import { resolveCanvasDragCommit, shouldCommitCanvasDrag } from '@/lib/canvasInteraction';
+
+function isLineNodeType(type: string | undefined): boolean {
+  return type === 'basic/line';
+}
+
+function isPipeNodeType(type: string | undefined): boolean {
+  return type === 'industrial/pipe';
+}
+
+function isConnectorNodeType(type: string | undefined): boolean {
+  return isLineNodeType(type) || isPipeNodeType(type);
+}
 
 /** Grid layout handlers from useGridLayout hook */
 type GridLayoutHandlers = {
@@ -396,6 +409,20 @@ export default function TransformControls({
         target.style.transform = '';
       });
 
+      const emitNodeDragPreview = (
+        nodeId: string | null | undefined,
+        x: number,
+        y: number,
+        active: boolean,
+      ) => {
+        if (!nodeId) return;
+        window.dispatchEvent(
+          new CustomEvent('thingsvis:node-drag-preview', {
+            detail: { nodeId, x, y, active },
+          }),
+        );
+      };
+
       // Helper to find overlay element for a node ID
       // The overlay is rendered by VisualEngine inside #visual-engine-mount's overlay div
       const findOverlayElement = (nodeId: string): HTMLElement | null => {
@@ -431,6 +458,7 @@ export default function TransformControls({
         if (isMultiDrag) {
           for (const id of selectedIds) {
             dragTranslateByIdRef.current[id] = { x: tx, y: ty };
+            emitNodeDragPreview(id, tx, ty, true);
             // Use dragContainer to find elements since that's where Moveable is mounted
             const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el && el !== target) {
@@ -449,6 +477,7 @@ export default function TransformControls({
 
         if (nodeId) {
           dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+          emitNodeDragPreview(nodeId, tx, ty, true);
           // Also update the visual overlay element for real-time visual feedback
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
@@ -467,6 +496,7 @@ export default function TransformControls({
         if (!isDrag) {
           if (isMultiDrag) {
             for (const id of selectedIds) {
+              emitNodeDragPreview(id, 0, 0, false);
               const el = dragContainer.querySelector(
                 `[data-node-id="${id}"]`,
               ) as HTMLElement | null;
@@ -485,6 +515,7 @@ export default function TransformControls({
               }
             }
           } else {
+            emitNodeDragPreview(nodeId, 0, 0, false);
             target.style.willChange = '';
             target.style.transform = '';
             // Clear overlay transform and restore zIndex for single node
@@ -504,6 +535,7 @@ export default function TransformControls({
 
         if (isMultiDrag) {
           // Commit all selected nodes using the same delta
+          let didCommit = false;
           for (const id of selectedIds) {
             const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
             if (el) el.style.willChange = '';
@@ -512,9 +544,27 @@ export default function TransformControls({
               x: (lastEvent as any)?.beforeTranslate?.[0] ?? 0,
               y: (lastEvent as any)?.beforeTranslate?.[1] ?? 0,
             };
-            const baseWorld = baseWorldPositionByIdRef.current[id];
-            const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-            const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+            if (!shouldCommitCanvasDrag(delta)) {
+              emitNodeDragPreview(id, 0, 0, false);
+              if (el) {
+                el.style.transform = '';
+              }
+              const overlayEl = findOverlayElement(id);
+              if (overlayEl) {
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
+              }
+              continue;
+            }
+            const baseWorld = baseWorldPositionByIdRef.current[id] ?? { x: 0, y: 0 };
+            const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+            if (!committedPosition) {
+              continue;
+            }
+            const { x, y } = committedPosition;
 
             if (el) {
               // Write the final committed position immediately so React reconciler
@@ -537,8 +587,9 @@ export default function TransformControls({
               delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
+            didCommit = true;
           }
-          onUserEdit?.();
+          if (didCommit) onUserEdit?.();
           return;
         }
 
@@ -553,11 +604,35 @@ export default function TransformControls({
           dragTranslateByIdRef.current[nodeId || '']?.y ??
           (lastEvent as any)?.beforeTranslate?.[1] ??
           0;
+        if (!shouldCommitCanvasDrag({ x: dx, y: dy })) {
+          emitNodeDragPreview(nodeId, 0, 0, false);
+          target.style.transform = '';
+          if (nodeId) {
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              const rotation = overlayRotationRef[nodeId] || '';
+              overlayEl.style.transform = rotation;
+              overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+              delete originalOverlayZIndexRef[nodeId];
+              delete overlayRotationRef[nodeId];
+            }
+          }
+          return;
+        }
 
+        const fallbackPosition = {
+          x: parseFloat(target.style.left || '0') || 0,
+          y: parseFloat(target.style.top || '0') || 0,
+        };
         const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
-
-        const x = (baseWorld?.x ?? (parseFloat(target.style.left || '0') || 0)) + dx;
-        const y = (baseWorld?.y ?? (parseFloat(target.style.top || '0') || 0)) + dy;
+        const committedPosition = resolveCanvasDragCommit(baseWorld ?? fallbackPosition, {
+          x: dx,
+          y: dy,
+        });
+        if (!committedPosition) {
+          return;
+        }
+        const { x, y } = committedPosition;
 
         // Write the committed position BEFORE clearing transform.
         // React reconciler will find left/top already at the correct value
@@ -573,6 +648,7 @@ export default function TransformControls({
 
         // Clear overlay transform and restore zIndex - store update will reposition it
         if (nodeId) {
+          emitNodeDragPreview(nodeId, 0, 0, false);
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
@@ -633,6 +709,7 @@ export default function TransformControls({
           const nodeId = t.getAttribute('data-node-id');
           if (nodeId) {
             dragTranslateByIdRef.current[nodeId] = { x: tx, y: ty };
+            emitNodeDragPreview(nodeId, tx, ty, true);
             // Also update the visual overlay element for real-time visual feedback
             const overlayEl = findOverlayElement(nodeId);
             if (overlayEl) {
@@ -644,6 +721,7 @@ export default function TransformControls({
       });
 
       moveableRef.current.on('dragGroupEnd', ({ targets, isDrag }) => {
+        let didCommit = false;
         for (const t of targets) {
           t.style.willChange = '';
           const nodeId = t.getAttribute('data-node-id');
@@ -652,6 +730,7 @@ export default function TransformControls({
             t.style.transform = '';
             // Clear overlay transform too
             if (nodeId) {
+              emitNodeDragPreview(nodeId, 0, 0, false);
               const overlayEl = findOverlayElement(nodeId);
               if (overlayEl) {
                 overlayEl.style.transform = '';
@@ -666,9 +745,21 @@ export default function TransformControls({
           }
 
           const delta = dragTranslateByIdRef.current[nodeId] ?? { x: 0, y: 0 };
-          const baseWorld = baseWorldPositionByIdRef.current[nodeId];
-          const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-          const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+          if (!shouldCommitCanvasDrag(delta)) {
+            t.style.transform = '';
+            emitNodeDragPreview(nodeId, 0, 0, false);
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              overlayEl.style.transform = '';
+            }
+            continue;
+          }
+          const baseWorld = baseWorldPositionByIdRef.current[nodeId] ?? { x: 0, y: 0 };
+          const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+          if (!committedPosition) {
+            continue;
+          }
+          const { x, y } = committedPosition;
 
           // Write the committed position BEFORE clearing transform to prevent flash.
           if (isGridModeRef.current && baseWorld) {
@@ -680,14 +771,16 @@ export default function TransformControls({
           }
           t.style.transform = '';
           // Clear overlay transform - store update will reposition it
+          emitNodeDragPreview(nodeId, 0, 0, false);
           const overlayEl = findOverlayElement(nodeId);
           if (overlayEl) {
             overlayEl.style.transform = '';
           }
 
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
+          didCommit = true;
         }
-        if (isDrag) onUserEdit?.();
+        if (didCommit) onUserEdit?.();
       });
 
       // Resize handling (use transform during resize drag)
@@ -908,18 +1001,36 @@ export default function TransformControls({
         return !!node && !node.locked;
       });
 
-      // Lines should still be draggable when unconnected, but not resizable/rotatable.
-      const anyLinesSelected = validSelectedIds.some(
-        (id) => state.nodesById[id]?.schemaRef?.type === 'basic/line',
+      // Generic lines remain lightweight connectors.
+      const anyLinesSelected = validSelectedIds.some((id) =>
+        isLineNodeType(state.nodesById[id]?.schemaRef?.type),
+      );
+      const anyPipesSelected = validSelectedIds.some((id) =>
+        isPipeNodeType(state.nodesById[id]?.schemaRef?.type),
       );
       const anyConnectedLinesSelected = validSelectedIds.some((id) => {
         const node = state.nodesById[id];
-        if (node?.schemaRef?.type !== 'basic/line') return false;
-        const props = (node.schemaRef as any)?.props || {};
+        if (!isLineNodeType(node?.schemaRef?.type)) return false;
+        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
+        return !!(props.sourceNodeId || props.targetNodeId);
+      });
+      const anyConnectedPipesSelected = validSelectedIds.some((id) => {
+        const node = state.nodesById[id];
+        if (!isPipeNodeType(node?.schemaRef?.type)) return false;
+        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
         return !!(props.sourceNodeId || props.targetNodeId);
       });
 
-      const targets = validSelectedIds
+      const moveableTargetIds = validSelectedIds.filter((id) => {
+        const node = state.nodesById[id];
+        const type = node?.schemaRef?.type;
+        if (!isConnectorNodeType(type)) return true;
+        if (!isPipeNodeType(type)) return false;
+        const props = (node?.schemaRef as any)?.props || {};
+        return !(props.sourceNodeId || props.targetNodeId);
+      });
+
+      const targets = moveableTargetIds
         .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
@@ -934,12 +1045,13 @@ export default function TransformControls({
 
       // Disable transforms for locked nodes
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
-      moveableRef.current.draggable = !hasLockedSelection && !anyConnectedLinesSelected;
-      // If any line is selected, or any explicitly non-resizable component is selected, disable resize/rotate
+      moveableRef.current.draggable =
+        !hasLockedSelection && !anyConnectedLinesSelected && !anyConnectedPipesSelected;
+      // Keep connector editing on the custom overlay rather than Moveable handles.
       moveableRef.current.resizable =
-        !hasLockedSelection && !anyLinesSelected && !anyNonResizableSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected;
+        !hasLockedSelection && !anyLinesSelected && !anyPipesSelected && !anyNonResizableSelected;
+      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
+      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
 
       moveableRef.current.target = targets;
 
@@ -950,10 +1062,10 @@ export default function TransformControls({
 
       // If we expected targets but found none, the DOM might not be ready yet
       // Schedule a retry after the next paint
-      if (validSelectedIds.length > 0 && targets.length === 0) {
+      if (moveableTargetIds.length > 0 && targets.length === 0) {
         requestAnimationFrame(() => {
           if (!moveableRef.current) return;
-          const retryTargets = validSelectedIds
+          const retryTargets = moveableTargetIds
             .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
             .filter(Boolean) as HTMLElement[];
           if (retryTargets.length > 0) {

@@ -27,7 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import type { KernelState, LayerGroup } from '@thingsvis/kernel';
+import type { KernelState } from '@thingsvis/kernel';
 
 interface LayerPanelProps {
   store: any;

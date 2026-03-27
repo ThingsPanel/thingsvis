@@ -14,6 +14,7 @@ type Mode = 'fixed' | 'infinite' | 'grid';
 type Props = {
   store: KernelStore;
   resolveWidget?: (type: string) => Promise<any>;
+  locale?: string;
   mode?: Mode;
   width?: number;
   height?: number;
@@ -38,6 +39,7 @@ type Props = {
 export const CanvasView: React.FC<Props> = ({
   store,
   resolveWidget,
+  locale,
   mode: propsMode,
   width: propsWidth,
   height: propsHeight,
@@ -244,6 +246,7 @@ export const CanvasView: React.FC<Props> = ({
       resolveWidget,
       editable: interactive,
       actionRuntime,
+      locale,
     });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);
@@ -251,7 +254,7 @@ export const CanvasView: React.FC<Props> = ({
       engine.unmount();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionRuntime, store, resolveWidget]);
+  }, [actionRuntime, locale, store, resolveWidget]);
 
   // Update interactivity dynamically without fully remixing the engine
   useEffect(() => {

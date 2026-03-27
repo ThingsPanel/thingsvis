@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import type { DataSourceManager } from '@thingsvis/kernel';
-import { dataSourceManager as defaultDataSourceManager } from '@thingsvis/kernel';
+import { getLegacyDataSourceManager } from '@thingsvis/kernel';
 
 interface UseOptimisticWriteOptions<T> {
   /**
@@ -57,7 +57,7 @@ export function useOptimisticWrite<T = unknown>(
     onOptimisticUpdate,
     onRollback,
     timeout = 5000,
-    dataSourceManager = defaultDataSourceManager,
+    dataSourceManager,
   } = options;
 
   const [state, setState] = useState<OptimisticWriteState>({
@@ -97,7 +97,8 @@ export function useOptimisticWrite<T = unknown>(
       }, timeout);
 
       // Fire the actual write
-      dataSourceManager
+      const manager = dataSourceManager ?? getLegacyDataSourceManager();
+      manager
         .writeDataSource(dataSourceId, payload)
         .then((result) => {
           clearPendingTimeout();

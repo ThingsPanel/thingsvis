@@ -37,3 +37,4 @@ export {
   type ResolveLayeredColorOptions,
   type WidgetColors,
 } from './utils/themeContext';
+export { resolveLocaleRecord } from './utils/locale';

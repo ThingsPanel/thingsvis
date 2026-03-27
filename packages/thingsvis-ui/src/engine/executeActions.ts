@@ -6,7 +6,7 @@
  */
 import type { DataSourceManager } from '@thingsvis/kernel';
 import type { EventBus } from './EventBus';
-import { dataSourceManager as defaultDataSourceManager, SafeExecutor } from '@thingsvis/kernel';
+import { getLegacyDataSourceManager, SafeExecutor } from '@thingsvis/kernel';
 
 export type ActionRuntime = {
   dataSourceManager?: Pick<DataSourceManager, 'writeDataSource'>;
@@ -178,7 +178,7 @@ export function executeAction(
   payload?: unknown,
   runtime: ActionRuntime = {},
 ): void {
-  const dataSourceManager = runtime.dataSourceManager ?? defaultDataSourceManager;
+  const dataSourceManager = runtime.dataSourceManager ?? getLegacyDataSourceManager();
 
   switch (action.type) {
     case 'setVariable': {

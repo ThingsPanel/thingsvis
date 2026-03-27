@@ -525,4 +525,22 @@ export class DataSourceManager {
 }
 
 /** @deprecated Use runtime.dataSourceManager from createRuntimeServices(). */
-export const dataSourceManager = DataSourceManager.getInstance();
+export function getLegacyDataSourceManager(): DataSourceManager {
+  return DataSourceManager.getInstance();
+}
+
+/**
+ * Legacy singleton export kept for direct subpath consumers.
+ * Do not re-export this from the package root; React Refresh inspects root
+ * exports during HMR and would otherwise trigger the deprecation warning.
+ */
+export const dataSourceManager = new Proxy({} as DataSourceManager, {
+  get(_target, prop, receiver) {
+    const instance = getLegacyDataSourceManager();
+    const value = Reflect.get(instance as object, prop, receiver);
+    return typeof value === 'function' ? value.bind(instance) : value;
+  },
+  set(_target, prop, value, receiver) {
+    return Reflect.set(getLegacyDataSourceManager() as object, prop, value, receiver);
+  },
+});

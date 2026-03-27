@@ -26,20 +26,9 @@ import EventsTab from './EventsTab';
 import { getResolvedWidget, loadWidget } from '@/lib/registry/componentLoader';
 import { getWidgetControls } from '@/lib/registry/getControls';
 import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
+import { resolveControlText } from '@/lib/i18n/controlText';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
-import type { I18nLabel } from '@thingsvis/schema';
-
-/**
- * 解析 I18nLabel——支持字符串和多语言 map
- * 字符串: PropsPanel 层优先尝试作为 i18n key，外层由 ControlFieldRow 的 t() 处理
- * Map: 按当前语言取对应字段，找不到则 fallback 到 en，再找不到则取第一个值
- */
-export function resolveLabel(label: I18nLabel | undefined, lang: string): string {
-  if (!label) return '';
-  if (typeof label === 'string') return label;
-  return label[lang] ?? label['en'] ?? Object.values(label)[0] ?? '';
-}
 
 function isHostDataSourceId(id: string): boolean {
   return id === '__platform__' || /^__platform_.+__$/.test(id);
@@ -53,6 +42,7 @@ type Props = {
 
 export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const { t, i18n } = useTranslation('editor');
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
   const showEmbeddedHostUi = serviceConfig.mode === 'embedded';
 
@@ -311,6 +301,15 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     return currentValue === depValue;
   };
 
+  const shouldShowGroup = (group: any) => {
+    if (!group.showWhen) return true;
+    const { field: depField, value: depValue } = group.showWhen;
+    const currentValue = schema.props?.[depField];
+    if (depValue === true) return Boolean(currentValue);
+    if (depValue === false) return !currentValue;
+    return currentValue === depValue;
+  };
+
   const renderControlsPanel = () => {
     if (!controls) return null;
 
@@ -339,6 +338,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
 
           <Accordion type="multiple" defaultValue={defaultOpenGroups} className="w-full">
             {controls.groups.map((group) => {
+              if (!shouldShowGroup(group)) return null;
               // 过滤出应该显示的字段
               const visibleFields = group.fields.filter(shouldShowField);
               if (visibleFields.length === 0) return null;
@@ -346,9 +346,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               return (
                 <AccordionItem key={group.id} value={group.id} className="border-b px-1">
                   <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
-                    {typeof group.label === 'object'
-                      ? resolveLabel(group.label, i18n.language)
-                      : t(group.label || group.id)}
+                    {resolveControlText(group.label ?? group.id, locale, t)}
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3 pb-4 pt-1">
                     {visibleFields.map((field) => (

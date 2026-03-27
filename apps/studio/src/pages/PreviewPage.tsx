@@ -79,7 +79,8 @@ export default function PreviewPage() {
   const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
   const [scaleMode, setScaleMode] = useState<PreviewScaleMode>('fit-min');
   const [previewAlignY, setPreviewAlignY] = useState<PreviewAlignY>('center');
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
 
   // Observe kernel state so we can decide whether to auto-load from storage.
   const kernelState = useSyncExternalStore(
@@ -453,6 +454,7 @@ export default function PreviewPage() {
             <GridCanvas
               store={store as any}
               resolveWidget={resolveWidget as any}
+              locale={locale}
               interactive={false}
               fullWidth={true}
               showGridLines={false}
@@ -470,6 +472,7 @@ export default function PreviewPage() {
               <PreviewCanvas
                 store={store as any}
                 resolveWidget={resolveWidget as any}
+                locale={locale}
                 zoom={engineZoom}
                 actionRuntime={actionRuntime}
               />

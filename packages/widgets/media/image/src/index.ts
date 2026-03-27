@@ -1,13 +1,12 @@
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const localeCatalog = { en, zh } as const;
-type WidgetLocale = keyof typeof localeCatalog;
 type PlaceholderState = 'empty' | 'loading' | 'error' | 'ready';
 type PlaceholderMessageKey = Exclude<PlaceholderState, 'ready'>;
 
@@ -50,19 +49,7 @@ function normalizeImageSource(source: string): string {
 }
 
 function resolveLocalePack(locale: string | undefined) {
-  const candidates = [
-    locale,
-    locale?.toLowerCase(),
-    locale?.split(/[-_]/)[0]?.toLowerCase(),
-  ].filter((value): value is string => Boolean(value));
-
-  for (const candidate of candidates) {
-    if (candidate in localeCatalog) {
-      return localeCatalog[candidate as WidgetLocale];
-    }
-  }
-
-  return localeCatalog.zh;
+  return resolveLocaleRecord(localeCatalog, locale, 'zh');
 }
 
 function getPlaceholderMessage(locale: string | undefined, key: PlaceholderMessageKey): string {

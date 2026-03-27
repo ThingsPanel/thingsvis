@@ -7,6 +7,9 @@ import { z } from 'zod';
  */
 export const WIDGET_CATEGORIES = [
   'basic',
+  'controls',
+  'display',
+  'charts',
   'chart',
   'interaction',
   'media',
@@ -16,6 +19,8 @@ export const WIDGET_CATEGORIES = [
   'indicator',
   'geo',
   'custom',
+  'decoration',
+  'industrial',
 ] as const;
 
 export type WidgetCategory = (typeof WIDGET_CATEGORIES)[number];

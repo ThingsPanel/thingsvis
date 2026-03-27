@@ -14,6 +14,8 @@ import type {
   ControlKind,
   ControlGroupId,
   ControlField,
+  ControlText,
+  I18nLabel,
 } from './types';
 import { generateControls } from './generate-controls';
 
@@ -24,14 +26,14 @@ import { generateControls } from './generate-controls';
 /** 简化的控件配置 */
 export type SimpleControlConfig = {
   kind?: ControlKind;
-  label?: string;
+  label?: I18nLabel;
   binding?: boolean | ControlBinding;
-  placeholder?: string;
-  description?: string;
+  placeholder?: ControlText;
+  description?: ControlText;
   min?: number;
   max?: number;
   step?: number;
-  options?: Array<{ label: string; value: string | number }>;
+  options?: Array<{ label: I18nLabel; value: string | number }>;
 };
 
 /** 简化的分组配置 */

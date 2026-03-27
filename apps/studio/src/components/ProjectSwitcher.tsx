@@ -1,6 +1,6 @@
 /**
  * ProjectSwitcher Component
- * 
+ *
  * Dropdown for switching between projects and creating new ones.
  * Only visible when user is authenticated and using cloud storage.
  */
@@ -34,7 +34,7 @@ export function ProjectSwitcher() {
   const { isAuthenticated } = useAuth();
   const { currentProject, switchProject, createAndSwitchProject, isLoading } = useProject();
   const { projects, loadProjects } = useProjects({ autoLoad: true });
-  
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
@@ -48,9 +48,7 @@ export function ProjectSwitcher() {
   const handleSwitchProject = async (projectId: string) => {
     try {
       await switchProject(projectId);
-    } catch (error) {
-      
-    }
+    } catch {}
   };
 
   const handleCreateProject = async () => {
@@ -58,13 +56,15 @@ export function ProjectSwitcher() {
 
     setIsCreating(true);
     try {
-      await createAndSwitchProject(newProjectName.trim(), newProjectDescription.trim() || undefined);
+      await createAndSwitchProject(
+        newProjectName.trim(),
+        newProjectDescription.trim() || undefined,
+      );
       setIsCreateDialogOpen(false);
       setNewProjectName('');
       setNewProjectDescription('');
       await loadProjects(1);
-    } catch (error) {
-      
+    } catch {
     } finally {
       setIsCreating(false);
     }
@@ -83,7 +83,7 @@ export function ProjectSwitcher() {
         <DropdownMenuContent align="start" className="w-[250px]">
           <DropdownMenuLabel>切换项目</DropdownMenuLabel>
           <DropdownMenuSeparator />
-          
+
           {projects.map((project) => (
             <DropdownMenuItem
               key={project.id}
@@ -105,7 +105,7 @@ export function ProjectSwitcher() {
               </div>
             </DropdownMenuItem>
           ))}
-          
+
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setIsCreateDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -119,11 +119,9 @@ export function ProjectSwitcher() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>新建项目</DialogTitle>
-            <DialogDescription>
-              创建一个新项目来组织您的画布。
-            </DialogDescription>
+            <DialogDescription>创建一个新项目来组织您的画布。</DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">项目名称</Label>
@@ -149,7 +147,7 @@ export function ProjectSwitcher() {
               />
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -158,10 +156,7 @@ export function ProjectSwitcher() {
             >
               取消
             </Button>
-            <Button
-              onClick={handleCreateProject}
-              disabled={!newProjectName.trim() || isCreating}
-            >
+            <Button onClick={handleCreateProject} disabled={!newProjectName.trim() || isCreating}>
               {isCreating ? '创建中...' : '创建'}
             </Button>
           </DialogFooter>
