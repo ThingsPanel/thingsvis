@@ -11,6 +11,54 @@ export type DynamicLoaderRuntime = {
 
 const runtimeConfig: DynamicLoaderRuntime = {};
 
+function mapRegistryEntry(key: string, entry: any): ComponentRegistryEntry {
+  const mapped = {
+    remoteName: entry.remoteName,
+    remoteEntryUrl: entry.remoteEntryUrl,
+    localEntryUrl: entry.localEntryUrl,
+    staticEntryUrl: entry.staticEntryUrl,
+    debugSource: entry.debugSource,
+    exposedModule: entry.exposedModule,
+    version: entry.version,
+    name: entry.name,
+    displayName: entry.name ?? key,
+    iconUrl: entry.iconUrl,
+    icon: entry.icon,
+    i18n: entry.i18n,
+    category: entry.category,
+    description: entry.description,
+    author: entry.author,
+    tags: entry.tags,
+    thumbnailUrl: entry.thumbnailUrl,
+    order: entry.order,
+    defaultSize: entry.defaultSize,
+    constraints: entry.constraints,
+  } as ComponentRegistryEntry;
+  (mapped as any).componentId = key;
+  return mapped;
+}
+
+function mapRegistryEntries(body: any): ComponentRegistryEntry[] {
+  return Object.keys(body.components || {}).map((key) => mapRegistryEntry(key, body.components[key]));
+}
+
+function shouldReadRegistryFromFs(url: string): boolean {
+  if (!url) return false;
+  if (/^[a-zA-Z][a-zA-Z\d+.-]*:/.test(url)) return false;
+  if (url.startsWith("/")) return false;
+  return true;
+}
+
+async function readRegistryFromFs(url: string): Promise<any> {
+  const [{ readFile }, { resolve }] = await Promise.all([
+    import("node:fs/promises"),
+    import("node:path"),
+  ]);
+  const filePath = resolve(url);
+  const raw = await readFile(filePath, "utf8");
+  return JSON.parse(raw);
+}
+
 // Lightweight cross-package event bridge:
 // - Prefer the explicitly configured runtime bus.
 // - Otherwise dispatch DOM CustomEvents for apps to observe.
@@ -62,28 +110,16 @@ export async function getRegistryEntries(
   const envUrl = typeof process !== "undefined" && (process.env as any).PREVIEW_REGISTRY_URL ? (process.env as any).PREVIEW_REGISTRY_URL : undefined;
   const registryUrl = url ?? runtimeUrl ?? envUrl ?? "/registry.json";
   try {
+    if (shouldReadRegistryFromFs(registryUrl)) {
+      const body = await readRegistryFromFs(registryUrl);
+      return mapRegistryEntries(body);
+    }
+
     const res = await fetch(registryUrl, { cache: "no-store" });
     if (res.ok) {
       const body = await res.json();
       // Basic validation left to caller (Zod in packages/thingsvis-schema)
-      return Object.keys(body.components || {}).map((key) => {
-        const entry = body.components[key];
-        const mapped = {
-          remoteName: entry.remoteName,
-          remoteEntryUrl: entry.remoteEntryUrl,
-          localEntryUrl: entry.localEntryUrl,
-          staticEntryUrl: entry.staticEntryUrl,
-          debugSource: entry.debugSource,
-          exposedModule: entry.exposedModule,
-          version: entry.version,
-          displayName: entry.name ?? key,
-          iconUrl: entry.iconUrl,
-          icon: entry.icon,
-          i18n: entry.i18n
-        } as ComponentRegistryEntry;
-        (mapped as any).componentId = key;
-        return mapped;
-      });
+      return mapRegistryEntries(body);
     } else {
       // fallback to bundled fixture
       // eslint-disable-next-line no-console
@@ -99,25 +135,7 @@ export async function getRegistryEntries(
     // require the JSON fixture synchronously
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const fixture = require("../fixtures/registry.json");
-    const body = fixture;
-    return Object.keys(body.components || {}).map((key) => {
-      const entry = body.components[key];
-      const mapped = {
-        remoteName: entry.remoteName,
-        remoteEntryUrl: entry.remoteEntryUrl,
-        localEntryUrl: entry.localEntryUrl,
-        staticEntryUrl: entry.staticEntryUrl,
-        debugSource: entry.debugSource,
-        exposedModule: entry.exposedModule,
-        version: entry.version,
-        displayName: entry.name ?? key,
-        iconUrl: entry.iconUrl,
-        icon: entry.icon,
-        i18n: entry.i18n
-      } as ComponentRegistryEntry;
-      (mapped as any).componentId = key;
-      return mapped;
-    });
+    return mapRegistryEntries(fixture);
   } catch (e) {
     throw new Error("Failed to load registry (network + fixture)");
   }

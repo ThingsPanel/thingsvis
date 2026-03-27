@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { mountWidget } from '../../test-utils/widgetLifecycle';
 import Main from './src/index';
+import { getDefaultProps } from './src/schema';
+
+const defaults = getDefaultProps();
 
 function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
   if (!d) return [];
@@ -18,7 +21,7 @@ function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
 
 function getWorldPathPoints(element: HTMLElement) {
   const svg = element.querySelector('svg');
-  const path = element.querySelector('path[stroke="#2563eb"]');
+  const path = element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
   const points = parsePathPoints(path?.getAttribute('d') ?? null);
   const offsetX = Number.parseFloat(svg?.style.left || '0') || 0;
   const offsetY = Number.parseFloat(svg?.style.top || '0') || 0;
@@ -37,8 +40,8 @@ describe('industrial/pipe widget', () => {
 
     const svg = harness.element.querySelector('svg');
     const visibleShape =
-      harness.element.querySelector('polyline[stroke="#2563eb"]') ??
-      harness.element.querySelector('path[stroke="#2563eb"]');
+      harness.element.querySelector(`polyline[stroke="${defaults.pipeInnerColor}"]`) ??
+      harness.element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
 
     expect(svg?.getAttribute('viewBox')).toBe('0 0 240 80');
     expect(visibleShape?.getAttribute('stroke-width')).toBe('4');
@@ -58,10 +61,22 @@ describe('industrial/pipe widget', () => {
     });
 
     const strokeShapes = Array.from(
-      harness.element.querySelectorAll('polyline[stroke="#2563eb"], path[stroke="#2563eb"]'),
+      harness.element.querySelectorAll(
+        `polyline[stroke="${defaults.pipeInnerColor}"], path[stroke="${defaults.pipeInnerColor}"], polyline[stroke="${defaults.glowColor}"], path[stroke="${defaults.glowColor}"]`,
+      ),
     );
-    const flowShape = strokeShapes.find((node) => node.getAttribute('stroke-dasharray') === '8 16') ?? null;
-    const baseShape = strokeShapes.find((node) => node !== flowShape) ?? null;
+    const flowShape =
+      strokeShapes.find(
+        (node) =>
+          node.getAttribute('stroke') === defaults.glowColor &&
+          node.getAttribute('stroke-dasharray') === '8 16',
+      ) ?? null;
+    const baseShape =
+      strokeShapes.find(
+        (node) =>
+          node.getAttribute('stroke') === defaults.pipeInnerColor &&
+          node !== flowShape,
+      ) ?? null;
 
     expect(flowShape).not.toBeNull();
     expect((flowShape as SVGElement).style.display).not.toBe('none');
