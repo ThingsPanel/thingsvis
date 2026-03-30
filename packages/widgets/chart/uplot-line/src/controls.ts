@@ -3,9 +3,14 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['title', 'titleAlign', 'showLegend', 'timeRangePreset'],
-        Style: ['primaryColor', 'titleColor', 'axisLabelColor'],
+        Content: ['title', 'titleAlign', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
+        Style: [
+            'primaryColor', 'titleColor', 'axisLabelColor',
+            'xAxisFontSize', 'yAxisFontSize',
+            'lineWidth', 'showArea', 'areaFillAlpha', 'smooth',
+        ],
         Data: ['data'],
+        Advanced: ['yAxisMin', 'yAxisMax'],
     },
     overrides: {
         primaryColor: { kind: 'color' },
@@ -33,6 +38,56 @@ export const controls = generateControls(PropsSchema, {
                 { label: '最近 30 天', value: '30d' },
             ],
         },
+        xAxisFontSize: {
+            kind: 'slider',
+            label: { zh: 'X轴字号', en: 'X Axis Font Size' },
+            min: 8,
+            max: 24,
+            step: 1,
+        },
+        yAxisFontSize: {
+            kind: 'slider',
+            label: { zh: 'Y轴字号', en: 'Y Axis Font Size' },
+            min: 8,
+            max: 24,
+            step: 1,
+        },
+        lineWidth: {
+            kind: 'slider',
+            label: { zh: '线条宽度', en: 'Line Width' },
+            min: 1,
+            max: 8,
+            step: 0.5,
+        },
+        areaFillAlpha: {
+            kind: 'slider',
+            label: { zh: '填充透明度', en: 'Fill Opacity' },
+            min: 0,
+            max: 1,
+            step: 0.05,
+        },
+        showArea: { label: { zh: '显示面积填充', en: 'Show Area Fill' } },
+        smooth: { label: { zh: '平滑曲线', en: 'Smooth Curve' } },
+        showXAxis: { label: { zh: '显示X轴', en: 'Show X Axis' } },
+        showYAxis: { label: { zh: '显示Y轴', en: 'Show Y Axis' } },
+        yAxisMin: {
+            kind: 'number',
+            label: { zh: 'Y 轴最小值', en: 'Y axis minimum' },
+            description: {
+                zh: '固定纵轴下限；不填则按数据自动计算范围。',
+                en: 'Fix the lower Y limit; leave empty to auto-range from data.',
+            },
+            placeholder: { zh: '留空为自动', en: 'Empty = auto' },
+        },
+        yAxisMax: {
+            kind: 'number',
+            label: { zh: 'Y 轴最大值', en: 'Y axis maximum' },
+            description: {
+                zh: '固定纵轴上限；不填则按数据自动计算范围。',
+                en: 'Fix the upper Y limit; leave empty to auto-range from data.',
+            },
+            placeholder: { zh: '留空为自动', en: 'Empty = auto' },
+        },
     },
     bindings: {
         title: { enabled: true, modes: ['static', 'field', 'expr'] },
@@ -41,6 +96,16 @@ export const controls = generateControls(PropsSchema, {
         titleColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         showLegend: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
+        xAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
+        yAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
+        yAxisMin: { enabled: true, modes: ['static', 'field', 'expr'] },
+        yAxisMax: { enabled: true, modes: ['static', 'field', 'expr'] },
+        lineWidth: { enabled: true, modes: ['static', 'field', 'expr'] },
+        showArea: { enabled: true, modes: ['static', 'field', 'expr'] },
+        areaFillAlpha: { enabled: true, modes: ['static', 'field', 'expr'] },
+        smooth: { enabled: true, modes: ['static', 'field', 'expr'] },
         data: { enabled: true, modes: ['static', 'field', 'expr'] },
     },
 });
