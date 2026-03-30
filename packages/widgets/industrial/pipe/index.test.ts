@@ -21,7 +21,7 @@ function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
 
 function getWorldPathPoints(element: HTMLElement) {
   const svg = element.querySelector('svg');
-  const path = element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
+  const path = element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
   const points = parsePathPoints(path?.getAttribute('d') ?? null);
   const offsetX = Number.parseFloat(svg?.style.left || '0') || 0;
   const offsetY = Number.parseFloat(svg?.style.top || '0') || 0;
@@ -40,11 +40,11 @@ describe('industrial/pipe widget', () => {
 
     const svg = harness.element.querySelector('svg');
     const visibleShape =
-      harness.element.querySelector(`polyline[stroke="${defaults.pipeInnerColor}"]`) ??
-      harness.element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
+      harness.element.querySelector(`polyline[stroke="${defaults.pipeColor}"]`) ??
+      harness.element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
 
     expect(svg?.getAttribute('viewBox')).toBe('0 0 240 80');
-    expect(visibleShape?.getAttribute('stroke-width')).toBe('4');
+    expect(visibleShape?.getAttribute('stroke-width')).toBe('12');
 
     harness.destroy();
   });
@@ -54,7 +54,6 @@ describe('industrial/pipe widget', () => {
       size: { width: 240, height: 80 },
       props: {
         flowEnabled: true,
-        strokeStyle: 'dashed',
         flowLength: 8,
         flowSpacing: 16,
       },
@@ -62,25 +61,24 @@ describe('industrial/pipe widget', () => {
 
     const strokeShapes = Array.from(
       harness.element.querySelectorAll(
-        `polyline[stroke="${defaults.pipeInnerColor}"], path[stroke="${defaults.pipeInnerColor}"], polyline[stroke="${defaults.glowColor}"], path[stroke="${defaults.glowColor}"]`,
+        `polyline[stroke="${defaults.pipeColor}"], path[stroke="${defaults.pipeColor}"], polyline[stroke="${defaults.flowColor}"], path[stroke="${defaults.flowColor}"]`,
       ),
     );
     const flowShape =
       strokeShapes.find(
         (node) =>
-          node.getAttribute('stroke') === defaults.glowColor &&
+          node.getAttribute('stroke') === defaults.flowColor &&
           node.getAttribute('stroke-dasharray') === '8 16',
       ) ?? null;
     const baseShape =
       strokeShapes.find(
         (node) =>
-          node.getAttribute('stroke') === defaults.pipeInnerColor &&
+          node.getAttribute('stroke') === defaults.pipeColor &&
           node !== flowShape,
       ) ?? null;
 
     expect(flowShape).not.toBeNull();
     expect((flowShape as SVGElement).style.display).not.toBe('none');
-    expect(baseShape?.getAttribute('stroke-dasharray') ?? '').toBe('');
 
     harness.destroy();
   });

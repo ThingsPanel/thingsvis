@@ -4,6 +4,20 @@
       "thingsvis-widget-industrial-pipe": {
         "name": "工业管道"
       }
+    },
+    "controls": {
+      "industrial-pipe": {
+        "pipeColor": "管道颜色",
+        "pipeBackground": "管壁颜色",
+        "flowColor": "流动颜色",
+        "glowEnabled": "发光效果",
+        "glowColor": "发光颜色",
+        "flowDirection": "流动方向",
+        "forward": "正向",
+        "reverse": "反向",
+        "sourceNode": "起点节点",
+        "targetNode": "终点节点"
+      }
     }
   }
 }

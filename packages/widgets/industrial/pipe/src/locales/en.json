@@ -4,6 +4,20 @@
       "thingsvis-widget-industrial-pipe": {
         "name": "Industrial Pipe"
       }
+    },
+    "controls": {
+      "industrial-pipe": {
+        "pipeColor": "Pipe Color",
+        "pipeBackground": "Pipe Wall",
+        "flowColor": "Flow Color",
+        "glowEnabled": "Glow Effect",
+        "glowColor": "Glow Color",
+        "flowDirection": "Flow Direction",
+        "forward": "Forward",
+        "reverse": "Reverse",
+        "sourceNode": "Source Node",
+        "targetNode": "Target Node"
+      }
     }
   }
 }

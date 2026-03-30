@@ -14,7 +14,7 @@ export const PropsSchema = z.object({
   glowBlur: z.number().min(0).max(50).default(8).describe('props.glowBlur'),
   glowSpread: z.number().min(0).max(20).default(2).describe('props.glowSpread'),
 
-  cornerSize: z.number().min(0).max(50).default(15).describe('props.cornerSize'),
+  cornerSize: z.number().min(0).max(50).default(8).describe('props.cornerSize'),
   showCornerDecoration: z.boolean().default(true).describe('props.showCornerDecoration'),
   decorationLength: z.number().min(5).max(100).default(30).describe('props.decorationLength'),
   decorationWidth: z.number().min(1).max(10).default(3).describe('props.decorationWidth'),

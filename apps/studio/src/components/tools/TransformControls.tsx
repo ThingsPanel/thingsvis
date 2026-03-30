@@ -258,6 +258,11 @@ export default function TransformControls({
 
       // Selecto dragStart - stop if clicking on Moveable element or selected target
       selectoRef.current.on('dragStart', (e) => {
+        if ((window as any)._connectionToolActive) {
+          e.stop();
+          return;
+        }
+
         const inputEvent = e.inputEvent;
         const target = inputEvent.target as HTMLElement;
 
@@ -1022,12 +1027,10 @@ export default function TransformControls({
       });
 
       const moveableTargetIds = validSelectedIds.filter((id) => {
-        const node = state.nodesById[id];
-        const type = node?.schemaRef?.type;
+        const type = state.nodesById[id]?.schemaRef?.type;
         if (!isConnectorNodeType(type)) return true;
-        if (!isPipeNodeType(type)) return false;
-        const props = (node?.schemaRef as any)?.props || {};
-        return !(props.sourceNodeId || props.targetNodeId);
+        const props = (state.nodesById[id]?.schemaRef as any)?.props ?? {};
+        return !(props.sourceNodeId && props.targetNodeId);
       });
 
       const targets = moveableTargetIds
@@ -1045,13 +1048,22 @@ export default function TransformControls({
 
       // Disable transforms for locked nodes
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
-      moveableRef.current.draggable =
-        !hasLockedSelection && !anyConnectedLinesSelected && !anyConnectedPipesSelected;
+
+      const anyFullyBoundConnector = validSelectedIds.some((id) => {
+        if (!isConnectorNodeType(state.nodesById[id]?.schemaRef?.type)) return false;
+        const props = (state.nodesById[id]?.schemaRef as any)?.props ?? {};
+        return !!(props.sourceNodeId && props.targetNodeId);
+      });
+      moveableRef.current.draggable = !hasLockedSelection && !anyFullyBoundConnector;
+
       // Keep connector editing on the custom overlay rather than Moveable handles.
+      const anyConnector = validSelectedIds.some((id) =>
+        isConnectorNodeType(state.nodesById[id]?.schemaRef?.type),
+      );
       moveableRef.current.resizable =
-        !hasLockedSelection && !anyLinesSelected && !anyPipesSelected && !anyNonResizableSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
+        !hasLockedSelection && !anyConnector && !anyNonResizableSelected;
+      moveableRef.current.rotatable = !hasLockedSelection && !anyConnector;
+      moveableRef.current.pinchable = !hasLockedSelection && !anyConnector;
 
       moveableRef.current.target = targets;
 

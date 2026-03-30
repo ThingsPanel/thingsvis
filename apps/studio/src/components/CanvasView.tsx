@@ -17,6 +17,7 @@ import { actionRuntime, dataSourceManager } from '../lib/store';
 import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
+import PipeConnectionTool from './tools/PipeConnectionTool';
 import { isCreationTool } from './tools/types';
 import { orderNodeStatesByLayerOrder } from '../lib/layerOrder';
 import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
@@ -1010,12 +1011,20 @@ const CanvasView = forwardRef<
 
       {/* Line Connection Tool - shows handles when a line is selected */}
       {activeTool !== 'pan' && !formatBrushActive && !isCreationTool(activeTool) && (
-        <LineConnectionTool
-          kernelStore={store}
-          containerRef={proxyLayerRef}
-          getViewport={getViewport}
-          onUserEdit={onUserEdit}
-        />
+        <>
+          <LineConnectionTool
+            kernelStore={store}
+            containerRef={proxyLayerRef}
+            getViewport={getViewport}
+            onUserEdit={onUserEdit}
+          />
+          <PipeConnectionTool
+            kernelStore={store}
+            containerRef={proxyLayerRef}
+            getViewport={getViewport}
+            onUserEdit={onUserEdit}
+          />
+        </>
       )}
 
       {/* Creation Tool Layer for rectangle, circle, text, image tools */}

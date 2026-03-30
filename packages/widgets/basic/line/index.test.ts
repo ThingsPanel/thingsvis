@@ -13,10 +13,10 @@ describe('basic/line widget', () => {
     });
 
     const svg = harness.element.querySelector('svg');
-    const polyline = harness.element.querySelector('polyline[points]');
+    const path = harness.element.querySelector('path[stroke]');
 
     expect(svg?.getAttribute('viewBox')).toBe('0 0 240 24');
-    expect(polyline?.getAttribute('points')).toContain('0,12');
+    expect(path?.getAttribute('d')).toContain('M 0 12 L 232 12');
 
     harness.destroy();
   });
