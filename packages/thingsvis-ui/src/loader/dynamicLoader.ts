@@ -50,10 +50,34 @@ function shouldReadRegistryFromFs(url: string): boolean {
 }
 
 async function readRegistryFromFs(url: string): Promise<any> {
-  const [{ readFile }, { resolve }] = await Promise.all([
-    import("node:fs/promises"),
-    import("node:path"),
-  ]);
+  // Avoid static `node:` imports in the browser bundle.
+  // Rspack 0.5 can panic during loader execution even when the branch is runtime-guarded.
+  const getBuiltinModule =
+    typeof process !== "undefined" &&
+    typeof (process as typeof process & { getBuiltinModule?: unknown }).getBuiltinModule ===
+      "function"
+      ? (
+          process as typeof process & {
+            getBuiltinModule: (specifier: string) => any;
+          }
+        ).getBuiltinModule.bind(process)
+      : undefined;
+
+  const requireFn = new Function(
+    "try { return require; } catch { return undefined; }",
+  )() as ((specifier: string) => any) | undefined;
+
+  const readFile =
+    getBuiltinModule?.("node:fs/promises")?.readFile ??
+    requireFn?.("node:fs/promises")?.readFile;
+  const resolve =
+    getBuiltinModule?.("node:path")?.resolve ??
+    requireFn?.("node:path")?.resolve;
+
+  if (typeof readFile !== "function" || typeof resolve !== "function") {
+    throw new Error("Node filesystem access is unavailable in this runtime");
+  }
+
   const filePath = resolve(url);
   const raw = await readFile(filePath, "utf8");
   return JSON.parse(raw);

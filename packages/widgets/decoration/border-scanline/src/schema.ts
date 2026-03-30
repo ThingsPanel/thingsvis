@@ -12,7 +12,6 @@ export const PropsSchema = z.object({
   opacity: z.number().min(0.1).max(1).default(1).describe('props.opacity'),
   
   glowIntensity: z.number().min(0.5).max(3).default(1.5).describe('props.glowIntensity'),
-  showCornerDots: z.boolean().default(true).describe('props.showCornerDots'),
   
   animated: z.boolean().default(true).describe('props.animated'),
   flowDirection: z.enum(['clockwise', 'counterclockwise']).default('clockwise').describe('props.flowDirection'),

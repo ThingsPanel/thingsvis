@@ -16,7 +16,6 @@ export const controls = createControlPanel()
   }, { label: `${W}.groupStyle` })
   .addGroup('Glow', (b) => {
     b.addSlider('glowIntensity', { label: `${W}.glowIntensity`, min: 0.5, max: 3, step: 0.1, default: 1.5 });
-    b.addSwitch('showCornerDots', { label: `${W}.showCornerDots`, default: true });
   }, { label: `${W}.groupGlow` })
   .addGroup('Animation', (b) => {
     b.addSwitch('animated', { label: `${W}.animated`, default: true });

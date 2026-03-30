@@ -13,7 +13,6 @@
       "opacity": "Opacity",
       "groupGlow": "Glow Effect",
       "glowIntensity": "Glow Intensity",
-      "cornerGlow": "Corner Glow",
       "groupAnimation": "Animation",
       "animated": "Enable Animation",
       "flowDirection": "Flow Direction",
