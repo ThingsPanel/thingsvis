@@ -1,9 +1,10 @@
 {
   "metadata": {
     "name": "Tech Border",
-    "description": "Tech-style border decoration with glow and animation"
+    "description": "Tech-style border decoration with glow, gradient, and animation"
   },
   "props": {
+    "useThemeColor": "Follow Theme",
     "variant": "Border Variant",
     "borderColor": "Border Color",
     "borderWidth": "Border Width",
@@ -50,5 +51,6 @@
   "widgets.thingsvis-widget-decoration-tech-border.label_23": "Enable Gradient",
   "widgets.thingsvis-widget-decoration-tech-border.label_24": "Gradient Start",
   "widgets.thingsvis-widget-decoration-tech-border.label_25": "Gradient End",
-  "widgets.thingsvis-widget-decoration-tech-border.label_26": "Gradient Angle"
+  "widgets.thingsvis-widget-decoration-tech-border.label_26": "Gradient Angle",
+  "widgets.thingsvis-widget-decoration-tech-border.label_27": "Follow Theme"
 }
