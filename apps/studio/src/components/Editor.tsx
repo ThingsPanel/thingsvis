@@ -58,6 +58,7 @@ import {
 } from '../lib/formatBrush';
 import { syncShapeStylePatch } from '../lib/shapeStyleSync';
 import { deriveCanvasBackgroundState } from '../lib/canvasBackground';
+import { nudgeSelection } from '../lib/canvas/nudgeSelection';
 
 import {
   MousePointer2,
@@ -349,6 +350,16 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   const handleUndo = useCallback(() => store.temporal.getState().undo(), []);
   const handleRedo = useCallback(() => store.temporal.getState().redo(), []);
+  const nudgeSelectionBy = useCallback(
+    (delta: { x: number; y: number }) => {
+      const kernel = store.getState();
+      const didMove = nudgeSelection(kernel, delta);
+      if (didMove) {
+        markDirty();
+      }
+    },
+    [markDirty],
+  );
 
   const openPreview = useCallback(async () => {
     await saveNow();
@@ -486,6 +497,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         if (selectedIds.length === 0) return;
         state.sendBackward(selectedIds);
       },
+      nudgeSelectionBy,
       showShortcutsPanel: () => setShowShortcuts(true),
       setTool: (tool) => handleToolChange(tool as Tool),
       openProjectDialog: () => setShowProjectDialog(true),
@@ -500,7 +512,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         kernel.selectNodes(selectIds);
       },
     });
-  }, [saveNow, projectId, openPreview, handleToolChange, logout]);
+  }, [saveNow, projectId, openPreview, handleToolChange, logout, nudgeSelectionBy]);
 
   useKeyboardShortcuts({ registry: commandRegistry });
 

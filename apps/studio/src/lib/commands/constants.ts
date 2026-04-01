@@ -32,6 +32,10 @@ export const COMMAND_IDS = {
   EDIT_UNGROUP: 'edit.ungroup',
   EDIT_BRING_FORWARD: 'edit.bringForward',
   EDIT_SEND_BACKWARD: 'edit.sendBackward',
+  EDIT_NUDGE_LEFT: 'edit.nudgeLeft',
+  EDIT_NUDGE_RIGHT: 'edit.nudgeRight',
+  EDIT_NUDGE_UP: 'edit.nudgeUp',
+  EDIT_NUDGE_DOWN: 'edit.nudgeDown',
 
   // View commands
   VIEW_ZOOM_IN: 'view.zoomIn',
@@ -76,6 +80,10 @@ export const DEFAULT_SHORTCUTS: Record<string, ShortcutKey[]> = {
   [COMMAND_IDS.EDIT_DESELECT]: ['escape'],
   [COMMAND_IDS.EDIT_BRING_FORWARD]: ['ctrl', ']'],
   [COMMAND_IDS.EDIT_SEND_BACKWARD]: ['ctrl', '['],
+  [COMMAND_IDS.EDIT_NUDGE_LEFT]: ['left'],
+  [COMMAND_IDS.EDIT_NUDGE_RIGHT]: ['right'],
+  [COMMAND_IDS.EDIT_NUDGE_UP]: ['up'],
+  [COMMAND_IDS.EDIT_NUDGE_DOWN]: ['down'],
 
   // View
   [COMMAND_IDS.VIEW_ZOOM_IN]: ['mod', '='],
