@@ -1,5 +1,20 @@
 {
-  "widget": {
-    "name": "压力表"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-pressure-gauge": {
+        "name": "压力表"
+      }
+    },
+    "controls": {
+      "industrial-pressure-gauge": {
+        "group": "仪表配置",
+        "value": "当前数值",
+        "min": "最小值",
+        "max": "最大值",
+        "dialColor": "表盘颜色",
+        "pointerColor": "指针颜色",
+        "hasError": "故障告警"
+      }
+    }
   }
 }

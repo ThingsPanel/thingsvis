@@ -1,5 +1,20 @@
 {
-  "widget": {
-    "name": "Pressure Gauge"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-pressure-gauge": {
+        "name": "Pressure Gauge"
+      }
+    },
+    "controls": {
+      "industrial-pressure-gauge": {
+        "group": "Gauge Config",
+        "value": "Current Value",
+        "min": "Min Value",
+        "max": "Max Value",
+        "dialColor": "Dial Color",
+        "pointerColor": "Pointer Color",
+        "hasError": "Has Error"
+      }
+    }
   }
 }

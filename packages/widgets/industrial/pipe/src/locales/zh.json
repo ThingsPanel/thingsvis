@@ -7,6 +7,9 @@
     },
     "controls": {
       "industrial-pipe": {
+        "groupStyle": "样式",
+        "groupFlow": "流动",
+        "groupData": "数据",
         "pipeColor": "管道颜色",
         "pipeBackground": "管壁颜色",
         "strokeWidth": "粗细",

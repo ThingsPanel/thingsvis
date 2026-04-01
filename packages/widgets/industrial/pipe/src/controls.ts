@@ -4,7 +4,7 @@ import { generateControls } from '@thingsvis/widget-sdk';
 export const controls = generateControls(PropsSchema, {
   exclude: ['waypoints', 'sourceAnchor', 'targetAnchor', 'points', 'sourcePortId', 'targetPortId'],
   groups: {
-    Style: [
+    'controls.industrial-pipe.groupStyle': [
       'pipeColor',
       'pipeBackground',
       'strokeWidth',
@@ -13,7 +13,7 @@ export const controls = generateControls(PropsSchema, {
       'glowColor',
       'glowIntensity',
     ],
-    Flow: [
+    'controls.industrial-pipe.groupFlow': [
       'flowEnabled',
       'flowSpeed',
       'flowDirection',
@@ -21,16 +21,20 @@ export const controls = generateControls(PropsSchema, {
       'flowLength',
       'flowColor',
     ],
-    Data: ['sourceNodeId', 'targetNodeId'],
+    'controls.industrial-pipe.groupData': ['sourceNodeId', 'targetNodeId'],
   },
   overrides: {
     pipeColor: { kind: 'color', label: 'controls.industrial-pipe.pipeColor' },
     pipeBackground: { kind: 'color', label: 'controls.industrial-pipe.pipeBackground' },
     strokeWidth: { label: 'controls.industrial-pipe.strokeWidth' },
-    flowEnabled: { label: 'controls.industrial-pipe.flowEnabled' },
+    flowEnabled: {
+      label: 'controls.industrial-pipe.flowEnabled',
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
+    },
     flowSpeed: {
       label: 'controls.industrial-pipe.flowSpeed',
       showWhen: { field: 'flowEnabled', value: true },
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
     },
     flowLength: {
       label: 'controls.industrial-pipe.flowLength',
@@ -44,12 +48,17 @@ export const controls = generateControls(PropsSchema, {
       kind: 'color',
       label: 'controls.industrial-pipe.flowColor',
       showWhen: { field: 'flowEnabled', value: true },
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
     },
-    glowEnabled: { label: 'controls.industrial-pipe.glowEnabled' },
+    glowEnabled: {
+      label: 'controls.industrial-pipe.glowEnabled',
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
+    },
     glowColor: {
       kind: 'color',
       label: 'controls.industrial-pipe.glowColor',
       showWhen: { field: 'glowEnabled', value: true },
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
     },
     glowIntensity: {
       label: 'controls.industrial-pipe.glowIntensity',
@@ -58,6 +67,7 @@ export const controls = generateControls(PropsSchema, {
     flowDirection: {
       label: 'controls.industrial-pipe.flowDirection',
       showWhen: { field: 'flowEnabled', value: true },
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] },
       options: [
         { label: 'controls.industrial-pipe.forward', value: 'forward' },
         { label: 'controls.industrial-pipe.reverse', value: 'reverse' },

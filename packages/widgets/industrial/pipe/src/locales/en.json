@@ -7,6 +7,9 @@
     },
     "controls": {
       "industrial-pipe": {
+        "groupStyle": "Style",
+        "groupFlow": "Flow",
+        "groupData": "Data",
         "pipeColor": "Pipe Color",
         "pipeBackground": "Pipe Wall",
         "strokeWidth": "Thickness",

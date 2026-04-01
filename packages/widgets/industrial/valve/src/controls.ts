@@ -4,31 +4,33 @@ export const controls: WidgetControls = {
   groups: [
     {
       id: 'valve-config',
-      label: { zh: '阀门配置', en: 'Valve Config' },
+      label: 'controls.industrial-valve.group',
       fields: [
         {
           path: 'openColor',
           kind: 'color',
-          label: { zh: '开启颜色', en: 'Open Color' },
+          label: 'controls.industrial-valve.openColor',
           default: '#52c41a',
         },
         {
           path: 'closedColor',
           kind: 'color',
-          label: { zh: '关闭颜色', en: 'Closed Color' },
+          label: 'controls.industrial-valve.closedColor',
           default: '#5c5c5c',
         },
         {
           path: 'isOpen',
           kind: 'boolean',
-          label: { zh: '是否开启', en: 'Is Open' },
+          label: 'controls.industrial-valve.isOpen',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'hasError',
           kind: 'boolean',
-          label: { zh: '故障告警', en: 'Has Error' },
+          label: 'controls.industrial-valve.hasError',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
       ],
     },

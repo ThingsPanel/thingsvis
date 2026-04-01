@@ -18,12 +18,12 @@ function renderTank(element: HTMLElement, props: Props): void {
     liquidColor = props.highColor;
   }
 
-  const tankColor = props.hasError ? '#ff4d4f' : props.tankColor;
+  const tankColor = props.hasError ? '#ff4d4f' : (props.tankColor || '#334155');
   const liquidHeight = (props.level / 100) * 80;
   const liquidY = 90 - liquidHeight;
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 100 130" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 60 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="tankGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:${tankColor};stop-opacity:1" />
@@ -35,40 +35,32 @@ function renderTank(element: HTMLElement, props: Props): void {
       <stop offset="100%" style="stop-color:${liquidColor};stop-opacity:0.95" />
     </linearGradient>
     <clipPath id="tankClip">
-      <rect x="20" y="15" width="60" height="90" rx="8" ry="8"/>
+      <rect x="8" y="10" width="44" height="80" rx="6" ry="6"/>
     </clipPath>
   </defs>
 
-  <!-- 顶部法兰 -->
-  <rect x="34" y="0" width="32" height="6" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <circle cx="38" cy="3" r="1" fill="#94a3b8"/>
-  <circle cx="62" cy="3" r="1" fill="#94a3b8"/>
-  <!-- 顶部入口管 -->
-  <rect x="42" y="6" width="16" height="9" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
+  <!-- 顶部短接口 -->
+  <rect x="22" y="0" width="16" height="8" fill="#475569"/>
 
-  <!-- 罐体背景 -->
-  <rect x="20" y="15" width="60" height="90" rx="8" ry="8" fill="url(#tankGradient)" stroke="#1e293b" stroke-width="2"/>
+  <!-- 罐体背景 - 撑满 -->
+  <rect x="8" y="8" width="44" height="84" rx="6" ry="6" fill="url(#tankGradient)" stroke="#1e293b" stroke-width="2"/>
 
   <!-- 液体 -->
   <g clip-path="url(#tankClip)">
-    <rect x="20" y="${liquidY + 5}" width="60" height="${liquidHeight}" fill="url(#liquidGradient)"/>
+    <rect x="8" y="${liquidY}" width="44" height="${liquidHeight}" fill="url(#liquidGradient)"/>
   </g>
 
   <!-- 刻度线 -->
-  <line x1="80" y1="95" x2="85" y2="95" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="80" y1="60" x2="85" y2="60" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="80" y1="15" x2="85" y2="15" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="48" y1="84" x2="52" y2="84" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="48" y1="50" x2="52" y2="50" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="48" y1="16" x2="52" y2="16" stroke="#94a3b8" stroke-width="1"/>
 
-  <!-- 底部出口管 -->
-  <rect x="42" y="105" width="16" height="9" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  <!-- 底部法兰 -->
-  <rect x="34" y="114" width="32" height="6" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <circle cx="38" cy="117" r="1" fill="#94a3b8"/>
-  <circle cx="62" cy="117" r="1" fill="#94a3b8"/>
+  <!-- 底部短接口 -->
+  <rect x="22" y="90" width="16" height="8" fill="#475569"/>
 
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="20" y="15" width="60" height="90" rx="8" ry="8" fill="none" stroke="#ff4d4f" stroke-width="3" opacity="0.6">
+  <rect x="8" y="8" width="44" height="84" rx="6" ry="6" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}
@@ -86,14 +78,7 @@ function lightenColor(hex: string, percent: number): string {
 }
 
 export const Main = defineWidget({
-  id: metadata.id,
-  name: metadata.name,
-  category: metadata.category,
-  icon: metadata.icon,
-  version: metadata.version,
-  defaultSize: metadata.defaultSize,
-  constraints: metadata.constraints,
-  resizable: metadata.resizable,
+  ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
   controls,

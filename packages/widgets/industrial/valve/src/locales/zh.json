@@ -1,9 +1,18 @@
 {
-  "name": "管路阀门",
-  "props": {
-    "openColor": "开启颜色",
-    "closedColor": "关闭颜色",
-    "isOpen": "是否开启",
-    "hasError": "故障告警"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-valve": {
+        "name": "管路阀门"
+      }
+    },
+    "controls": {
+      "industrial-valve": {
+        "group": "阀门配置",
+        "openColor": "开启颜色",
+        "closedColor": "关闭颜色",
+        "isOpen": "是否开启",
+        "hasError": "故障告警"
+      }
+    }
   }
 }
