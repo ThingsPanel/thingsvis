@@ -39,34 +39,38 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
   </defs>
   
   <!-- 左管道 -->
-  <rect x="0" y="22" width="25" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
+  <rect x="0" y="22" width="24" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
+  <!-- 左法兰 -->
+  <rect x="22" y="18" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="25" cy="21" r="1" fill="#94a3b8"/>
+  <circle cx="25" cy="39" r="1" fill="#94a3b8"/>
+
   <!-- 流量计主体 -->
-  <rect x="25" y="12" width="70" height="36" rx="6" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="1"/>
-  
+  <rect x="28" y="12" width="64" height="36" rx="6" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="1"/>
+
   <!-- 观察窗背景 -->
-  <rect x="30" y="17" width="60" height="18" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-  
+  <rect x="32" y="17" width="56" height="18" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+
   <!-- 液体填充 -->
-  <rect x="32" y="19" width="${percentage * 0.56}" height="14" rx="2" fill="url(#liquidGradient)"/>
-  
+  <rect x="34" y="19" width="${percentage * 0.52}" height="14" rx="2" fill="url(#liquidGradient)"/>
+
   <!-- 流动效果线 -->
   ${props.flowSpeed > 0 ? `
-  <line x1="35" y1="26" x2="85" y2="26" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2" 
+  <line x1="36" y1="26" x2="84" y2="26" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2"
     stroke-dasharray="5,5" class="flow-anim" opacity="0.8"/>
   ` : ''}
-  
+
   <!-- 刻度线 -->
-  <line x1="35" y1="22" x2="35" y2="30" stroke="#475569" stroke-width="1"/>
+  <line x1="36" y1="22" x2="36" y2="30" stroke="#475569" stroke-width="1"/>
   <line x1="60" y1="22" x2="60" y2="30" stroke="#475569" stroke-width="1"/>
-  <line x1="85" y1="22" x2="85" y2="30" stroke="#475569" stroke-width="1"/>
-  
-  <!-- 右管道 -->
-  <rect x="95" y="22" width="25" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 法兰盘 -->
-  <rect x="22" y="18" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <line x1="84" y1="22" x2="84" y2="30" stroke="#475569" stroke-width="1"/>
+
+  <!-- 右法兰 -->
   <rect x="92" y="18" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="95" cy="21" r="1" fill="#94a3b8"/>
+  <circle cx="95" cy="39" r="1" fill="#94a3b8"/>
+  <!-- 右管道 -->
+  <rect x="96" y="22" width="24" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
   
   <!-- 数值显示 -->
   ${props.showValue ? `
@@ -77,7 +81,7 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
   
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="25" y="12" width="70" height="36" rx="6" fill="none" stroke="#ff4d4f" stroke-width="2" opacity="0.6">
+  <rect x="28" y="12" width="64" height="36" rx="6" fill="none" stroke="#ff4d4f" stroke-width="2" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}

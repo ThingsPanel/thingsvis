@@ -385,6 +385,21 @@ describe('industrial pipe routeWorld helpers', () => {
     ]);
   });
 
+  it('snaps a near-horizontal dirty world route back to a straight local segment', () => {
+    expect(
+      worldRouteToLocalPoints(
+        [
+          { x: 100, y: 100 },
+          { x: 400, y: 101 },
+        ],
+        { x: 100, y: 100 },
+      ),
+    ).toEqual([
+      { x: 0, y: 0 },
+      { x: 300, y: 0 },
+    ]);
+  });
+
   it('fits a world route back into a stable node box for manual edits', () => {
     const fitted = fitWorldRouteToNodeBox(
       [

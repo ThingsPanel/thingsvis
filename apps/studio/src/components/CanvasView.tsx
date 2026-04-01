@@ -25,10 +25,7 @@ import {
   isPlatformFieldDataSource,
   normalizePlatformBufferSize,
 } from '../embed/platformDeviceCompat';
-import {
-  computeIndustrialPipeWorldPolyline,
-  type Pt as PipeRoutePoint,
-} from '../../../../packages/widgets/industrial/pipe/src/routeWorld';
+import { PipeProxyHits, buildPipeProxySegmentsForNode } from './CanvasView.pipeProxy';
 
 function generateId(prefix = 'node') {
   try {
@@ -84,82 +81,6 @@ function isTextNode(node: { schemaRef?: NodeSchemaType } | null | undefined): bo
 
 function isConnectorNodeType(type: string | undefined): boolean {
   return type === 'basic/line' || type === 'industrial/pipe';
-}
-
-type PipeProxySegment = {
-  key: string;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-};
-
-function getPipeProxyHitThickness(strokeWidth?: unknown): number {
-  const width = Number(strokeWidth ?? 12);
-  const clamped = Number.isFinite(width) ? Math.max(1, Math.min(80, width)) : 12;
-  return Math.max(18, clamped + 10);
-}
-
-function buildPipeProxySegments(
-  worldPoints: PipeRoutePoint[],
-  nodePosition: { x: number; y: number },
-  strokeWidth?: unknown,
-): PipeProxySegment[] {
-  if (!Array.isArray(worldPoints) || worldPoints.length < 2) return [];
-
-  const hitThickness = getPipeProxyHitThickness(strokeWidth);
-  const half = hitThickness / 2;
-  const segments: PipeProxySegment[] = [];
-
-  for (let index = 1; index < worldPoints.length; index++) {
-    const start = worldPoints[index - 1]!;
-    const end = worldPoints[index]!;
-    const localStart = { x: start.x - nodePosition.x, y: start.y - nodePosition.y };
-    const localEnd = { x: end.x - nodePosition.x, y: end.y - nodePosition.y };
-    const dx = localEnd.x - localStart.x;
-    const dy = localEnd.y - localStart.y;
-    const approxHorizontal = Math.abs(dy) <= 2;
-    const approxVertical = Math.abs(dx) <= 2;
-
-    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue;
-
-    if (approxHorizontal) {
-      const y = (localStart.y + localEnd.y) / 2;
-      const left = Math.min(localStart.x, localEnd.x) - half;
-      segments.push({
-        key: `h-${index}`,
-        left,
-        top: y - half,
-        width: Math.abs(dx) + hitThickness,
-        height: hitThickness,
-      });
-      continue;
-    }
-
-    if (approxVertical) {
-      const x = (localStart.x + localEnd.x) / 2;
-      const top = Math.min(localStart.y, localEnd.y) - half;
-      segments.push({
-        key: `v-${index}`,
-        left: x - half,
-        top,
-        width: hitThickness,
-        height: Math.abs(dy) + hitThickness,
-      });
-      continue;
-    }
-
-    // Fall back to a padded bbox hit area for any legacy non-orthogonal segment.
-    segments.push({
-      key: `d-${index}`,
-      left: Math.min(localStart.x, localEnd.x) - half,
-      top: Math.min(localStart.y, localEnd.y) - half,
-      width: Math.abs(dx) + hitThickness,
-      height: Math.abs(dy) + hitThickness,
-    });
-  }
-
-  return segments;
 }
 
 function buildDroppedPresetNodes(
@@ -974,15 +895,11 @@ const CanvasView = forwardRef<
             const isSelected = state.selection.nodeIds.includes(node.id);
             const pipeProxySegments =
               isPipe && width > 0 && height > 0
-                ? buildPipeProxySegments(
-                    computeIndustrialPipeWorldPolyline(
-                      { schemaRef: schema },
-                      state.nodesById,
-                      getViewport,
-                      containerRef.current,
-                    ),
-                    { x: posX, y: posY },
-                    schema.props?.strokeWidth,
+                ? buildPipeProxySegmentsForNode(
+                    schema,
+                    state.nodesById,
+                    getViewport,
+                    containerRef.current,
                   )
                 : [];
             // Line components use LineConnectionTool for selection UI, don't show border
@@ -1012,25 +929,15 @@ const CanvasView = forwardRef<
                   overflow: 'visible',
                 }}
               >
-                {isPipe
-                  ? pipeProxySegments.map((segment) => (
-                      <div
-                        key={segment.key}
-                        data-node-id={node.id}
-                        className="pipe-proxy-hit"
-                        style={{
-                          position: 'absolute',
-                          left: segment.left,
-                          top: segment.top,
-                          width: segment.width,
-                          height: segment.height,
-                          pointerEvents: isPanTool ? 'none' : 'auto',
-                          cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'move',
-                          background: 'transparent',
-                        }}
-                      />
-                    ))
-                  : null}
+                {isPipe ? (
+                  <PipeProxyHits
+                    nodeId={node.id}
+                    segments={pipeProxySegments}
+                    isPanTool={isPanTool}
+                    formatBrushActive={formatBrushActive}
+                    canvasCursor={canvasCursor}
+                  />
+                ) : null}
               </div>
             );
           })}

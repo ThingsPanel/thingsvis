@@ -17,40 +17,48 @@ function renderGauge(element: HTMLElement, props: Props): void {
   const scaleColor = props.hasError ? '#fca5a5' : '#94a3b8';
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 80 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:${lightenColor(dialColor, 10)};stop-opacity:1" />
       <stop offset="100%" style="stop-color:${dialColor};stop-opacity:1" />
     </linearGradient>
   </defs>
-  
+
   <!-- 表盘外圈 -->
-  <circle cx="40" cy="40" r="36" fill="url(#dialGradient)" stroke="${scaleColor}" stroke-width="2"/>
-  
+  <circle cx="40" cy="38" r="34" fill="url(#dialGradient)" stroke="${scaleColor}" stroke-width="2"/>
+
   <!-- 刻度圈 -->
-  <circle cx="40" cy="40" r="30" fill="none" stroke="${scaleColor}" stroke-width="1" opacity="0.5"/>
-  
+  <circle cx="40" cy="38" r="28" fill="none" stroke="${scaleColor}" stroke-width="1" opacity="0.5"/>
+
   <!-- 刻度线 - 0, 50, 100 -->
   ${generateScaleTicks(scaleColor)}
-  
+
   <!-- 指针旋转组 -->
-  <g transform="rotate(${angle}, 40, 40)">
+  <g transform="rotate(${angle}, 40, 38)">
     <!-- 指针 -->
-    <path d="M 40 40 L 40 12 L 43 20 L 40 40 Z" fill="${pointerColor}" />
-    <path d="M 40 40 L 40 12 L 37 20 L 40 40 Z" fill="${darkenColor(pointerColor, 20)}" />
+    <path d="M 40 38 L 40 12 L 43 20 L 40 38 Z" fill="${pointerColor}" />
+    <path d="M 40 38 L 40 12 L 37 20 L 40 38 Z" fill="${darkenColor(pointerColor, 20)}" />
   </g>
-  
+
   <!-- 中心圆点 -->
-  <circle cx="40" cy="40" r="5" fill="#475569" stroke="${scaleColor}" stroke-width="1"/>
-  <circle cx="40" cy="40" r="3" fill="${pointerColor}"/>
-  
-  <!-- 底部连接管 -->
-  <rect x="35" y="74" width="10" height="6" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
+  <circle cx="40" cy="38" r="5" fill="#475569" stroke="${scaleColor}" stroke-width="1"/>
+  <circle cx="40" cy="38" r="3" fill="${pointerColor}"/>
+
+  <!-- 底部细颈 -->
+  <rect x="36" y="72" width="8" height="6" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- 底部标准管 -->
+  <rect x="32" y="78" width="16" height="12" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
+  <!-- 底部法兰 -->
+  <rect x="30" y="88" width="20" height="6" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="34" cy="91" r="1" fill="#94a3b8"/>
+  <circle cx="46" cy="91" r="1" fill="#94a3b8"/>
+  <circle cx="56" cy="91" r="1" fill="#94a3b8"/>
+
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <circle cx="40" cy="40" r="36" fill="none" stroke="#ff4d4f" stroke-width="3" opacity="0.6">
+  <circle cx="40" cy="38" r="34" fill="none" stroke="#ff4d4f" stroke-width="3" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </circle>
   ` : ''}
@@ -61,19 +69,21 @@ function renderGauge(element: HTMLElement, props: Props): void {
 function generateScaleTicks(color: string): string {
   const ticks: string[] = [];
   const positions = [0, 50, 100];
-  
+  const cx = 40;
+  const cy = 38;
+
   for (const pos of positions) {
     const angle = -135 + (pos / 100) * 270;
     const rad = (angle * Math.PI) / 180;
-    
-    const x1 = 40 + 26 * Math.cos(rad);
-    const y1 = 40 + 26 * Math.sin(rad);
-    const x2 = 40 + 30 * Math.cos(rad);
-    const y2 = 40 + 30 * Math.sin(rad);
-    
+
+    const x1 = cx + 24 * Math.cos(rad);
+    const y1 = cy + 24 * Math.sin(rad);
+    const x2 = cx + 28 * Math.cos(rad);
+    const y2 = cy + 28 * Math.sin(rad);
+
     ticks.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`);
   }
-  
+
   return ticks.join('\n');
 }
 

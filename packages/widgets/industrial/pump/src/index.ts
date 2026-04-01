@@ -35,19 +35,27 @@ function renderPump(element: HTMLElement, props: Props): void {
       <stop offset="100%" style="stop-color:${currentBaseColor}" />
     </linearGradient>
   </defs>
-  
+
   <!-- Inlet pipe -->
-  <rect x="5" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
-  
+  <rect x="0" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#1e293b" stroke-width="1"/>
+  <!-- Inlet flange -->
+  <rect x="18" y="38" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="21" cy="41" r="1" fill="#94a3b8"/>
+  <circle cx="21" cy="59" r="1" fill="#94a3b8"/>
+
   <!-- Outlet pipe -->
-  <rect x="75" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#475569" stroke-width="1"/>
-  
+  <rect x="80" y="42" width="20" height="16" fill="url(#${pipeGradId})" stroke="#1e293b" stroke-width="1"/>
+  <!-- Outlet flange -->
+  <rect x="76" y="38" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="79" cy="41" r="1" fill="#94a3b8"/>
+  <circle cx="79" cy="59" r="1" fill="#94a3b8"/>
+
   <!-- Pump housing -->
   <circle cx="50" cy="50" r="28" fill="url(#${shellGradId})" stroke="${borderColor}" stroke-width="2"/>
-  
+
   <!-- Inner shell -->
   <circle cx="50" cy="50" r="22" fill="#1e293b" stroke="${borderColor}" stroke-width="1" opacity="0.5"/>
-  
+
   <!-- Impeller -->
   <g>
     <!-- Four curved blades -->
@@ -57,20 +65,20 @@ function renderPump(element: HTMLElement, props: Props): void {
     <path d="M 50 50 L 28 50 Q 35 35 50 50" fill="${fanColor}" opacity="0.8"/>
     <!-- Center hub -->
     <circle cx="50" cy="50" r="5" fill="#1e293b" stroke="${borderColor}" stroke-width="1"/>
-    
+
     <!-- Native SVG spin animation -->
     ${props.isRunning && props.rpm > 0 ? `
-    <animateTransform 
-      attributeName="transform" 
-      type="rotate" 
-      from="0 50 50" 
-      to="360 50 50" 
-      dur="${durSec}s" 
+    <animateTransform
+      attributeName="transform"
+      type="rotate"
+      from="0 50 50"
+      to="360 50 50"
+      dur="${durSec}s"
       repeatCount="indefinite"
     />
     ` : ''}
   </g>
-  
+
   <!-- Fault pulse -->
   ${props.hasError ? `
   <circle cx="50" cy="50" r="28" fill="none" stroke="#ff4d4f" stroke-width="3" opacity="0.6">

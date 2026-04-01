@@ -208,4 +208,24 @@ describe('industrial/pipe widget', () => {
 
     harness.destroy();
   });
+
+  it('normalizes legacy near-horizontal dirty points into a straight rendered segment', () => {
+    const harness = mountWidget(Main, {
+      position: { x: 220, y: 190 },
+      size: { width: 320, height: 120 },
+      props: {
+        points: [
+          { x: 0, y: 40 },
+          { x: 260, y: 41 },
+        ],
+      },
+    } as any);
+
+    expect(getWorldPathPoints(harness.element)).toEqual([
+      { x: 0, y: 40 },
+      { x: 260, y: 40 },
+    ]);
+
+    harness.destroy();
+  });
 });

@@ -26,6 +26,20 @@ export const controls = generateControls(PropsSchema, {
   overrides: {
     pipeColor: { kind: 'color', label: 'controls.industrial-pipe.pipeColor' },
     pipeBackground: { kind: 'color', label: 'controls.industrial-pipe.pipeBackground' },
+    strokeWidth: { label: 'controls.industrial-pipe.strokeWidth' },
+    flowEnabled: { label: 'controls.industrial-pipe.flowEnabled' },
+    flowSpeed: {
+      label: 'controls.industrial-pipe.flowSpeed',
+      showWhen: { field: 'flowEnabled', value: true },
+    },
+    flowLength: {
+      label: 'controls.industrial-pipe.flowLength',
+      showWhen: { field: 'flowEnabled', value: true },
+    },
+    flowSpacing: {
+      label: 'controls.industrial-pipe.flowSpacing',
+      showWhen: { field: 'flowEnabled', value: true },
+    },
     flowColor: {
       kind: 'color',
       label: 'controls.industrial-pipe.flowColor',
@@ -35,6 +49,10 @@ export const controls = generateControls(PropsSchema, {
     glowColor: {
       kind: 'color',
       label: 'controls.industrial-pipe.glowColor',
+      showWhen: { field: 'glowEnabled', value: true },
+    },
+    glowIntensity: {
+      label: 'controls.industrial-pipe.glowIntensity',
       showWhen: { field: 'glowEnabled', value: true },
     },
     flowDirection: {
