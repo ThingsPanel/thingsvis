@@ -12,7 +12,7 @@
 import React, { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { detectNodeAndAnchor, PortOverlay, type HoverAnchor, type Viewport } from './PortOverlay';
-import type { Pt } from '../../lib/canvas/nodeLayoutTransform';
+import { getAnchorWorld, nodeToLayout, type Pt } from '../../lib/canvas/nodeLayoutTransform';
 import {
   computeIndustrialPipeWorldPolyline,
   fitWorldRouteToNodeBox,
@@ -53,6 +53,110 @@ const PIPE_DETACH_DISTANCE_PX = 24;
 
 function worldDistance(a: Pt, b: Pt): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+function parsePathPoints(d: string | null): Pt[] {
+  if (!d) return [];
+  const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
+  const points: Pt[] = [];
+  for (let i = 0; i < nums.length; i += 2) {
+    const x = nums[i];
+    const y = nums[i + 1];
+    if (typeof x === 'number' && typeof y === 'number') {
+      points.push({ x, y });
+    }
+  }
+  return points;
+}
+
+function getRenderedPipeWorldPoints(
+  pipeId: string,
+  pipeNode: any,
+  pipeColor: string,
+  viewport: Viewport,
+  containerEl?: HTMLElement | null,
+): Pt[] {
+  const overlay =
+    document.querySelector<HTMLElement>(
+      `.thingsvis-widget-layer [data-overlay-node-id="${pipeId}"]`,
+    ) ?? document.querySelector<HTMLElement>(`.thingsvis-widget-layer [data-node-id="${pipeId}"]`);
+  if (!overlay) return [];
+
+  const svg = overlay.querySelector<SVGSVGElement>('svg');
+  const path =
+    overlay.querySelector<SVGPathElement>(`path[stroke="${pipeColor}"]`) ??
+    overlay.querySelector<SVGPathElement>('path');
+  if (!svg || !path) return [];
+
+  const localPoints = parsePathPoints(path.getAttribute('d'));
+  if (localPoints.length < 2) return [];
+
+  const matrix = path.getScreenCTM?.();
+  const containerRect = containerEl?.getBoundingClientRect();
+  const containerLeft = containerRect?.left ?? 0;
+  const containerTop = containerRect?.top ?? 0;
+
+  if (matrix && typeof DOMPoint === 'function') {
+    return localPoints.map((point) => {
+      const screenPoint = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      return {
+        x: (screenPoint.x - containerLeft - viewport.offsetX) / viewport.zoom,
+        y: (screenPoint.y - containerTop - viewport.offsetY) / viewport.zoom,
+      };
+    });
+  }
+
+  const svgLeft = Number.parseFloat(svg.style.left || '0') || 0;
+  const svgTop = Number.parseFloat(svg.style.top || '0') || 0;
+  const widgetPosition = pipeNode?.schemaRef?.position ?? { x: 0, y: 0 };
+
+  return localPoints.map((point) => ({
+    x: widgetPosition.x + svgLeft + point.x,
+    y: widgetPosition.y + svgTop + point.y,
+  }));
+}
+
+function resolveVisiblePipeWorldPoints(
+  pipeId: string,
+  pipeNode: any,
+  state: KernelState,
+  getViewport: () => Viewport,
+  containerEl?: HTMLElement | null,
+): Pt[] {
+  const props = ((pipeNode?.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+  const rendered = getRenderedPipeWorldPoints(
+    pipeId,
+    pipeNode,
+    String(props.pipeColor ?? '#2563eb'),
+    getViewport(),
+    containerEl,
+  );
+  if (rendered.length >= 2) return rendered;
+  return computeIndustrialPipeWorldPolyline(
+    pipeNode,
+    state.nodesById,
+    getViewport,
+    containerEl ?? null,
+  );
+}
+
+function resolveExpectedEndpointWorld(
+  endpoint: Endpoint,
+  props: Record<string, unknown>,
+  state: KernelState,
+): Pt | null {
+  const nodeId =
+    endpoint === 'start'
+      ? (props.sourceNodeId as string | undefined)
+      : (props.targetNodeId as string | undefined);
+  if (!nodeId) return null;
+  const targetNode = state.nodesById[nodeId];
+  if (!targetNode) return null;
+  const anchor =
+    endpoint === 'start'
+      ? (props.sourceAnchor as Parameters<typeof getAnchorWorld>[1] | undefined)
+      : (props.targetAnchor as Parameters<typeof getAnchorWorld>[1] | undefined);
+  return getAnchorWorld(nodeToLayout(targetNode as any), anchor ?? 'center');
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -111,9 +215,10 @@ export default function PipeConnectionTool({
       const schema = selectedPipe.schemaRef as any;
       return {
         pipeId: selectedPipeId,
-        points: computeIndustrialPipeWorldPolyline(
+        points: resolveVisiblePipeWorldPoints(
+          selectedPipeId!,
           selectedPipe,
-          state.nodesById,
+          state,
           getViewport,
           containerRef?.current ?? null,
         ),
@@ -164,9 +269,10 @@ export default function PipeConnectionTool({
       const pipeNode = state.nodesById[ds.pipeId];
       if (!pipeNode) return;
       const nodeProps: Record<string, unknown> = { ...((pipeNode.schemaRef as any)?.props ?? {}) };
-      const worldPoints = computeIndustrialPipeWorldPolyline(
+      const worldPoints = resolveVisiblePipeWorldPoints(
+        ds.pipeId,
         pipeNode,
-        currentState.nodesById,
+        currentState,
         getViewport,
         containerRef?.current ?? null,
       );
@@ -233,6 +339,108 @@ export default function PipeConnectionTool({
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, [kernelStore, getViewport, screenToWorld, state, onUserEdit, rerender]);
+
+  useEffect(() => {
+    if (dragRef.current) return;
+    if (!routePoints.pipeId) return;
+
+    const pipeNode = state.nodesById[routePoints.pipeId];
+    if (!pipeNode) return;
+
+    const nodeProps = ((pipeNode.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+    if (!nodeProps.sourceNodeId && !nodeProps.targetNodeId) return;
+
+    const renderedWorldPoints = getRenderedPipeWorldPoints(
+      routePoints.pipeId,
+      pipeNode,
+      String(nodeProps.pipeColor ?? '#2563eb'),
+      viewport,
+      containerRef?.current ?? null,
+    );
+    if (renderedWorldPoints.length < 2) return;
+
+    const detachDistanceWorld = 12 / Math.max(0.0001, viewport.zoom);
+    const startExpected = resolveExpectedEndpointWorld('start', nodeProps, state);
+    const endExpected = resolveExpectedEndpointWorld('end', nodeProps, state);
+    const detachStart =
+      !!startExpected &&
+      worldDistance(renderedWorldPoints[0]!, startExpected) > detachDistanceWorld;
+    const detachEnd =
+      !!endExpected &&
+      worldDistance(renderedWorldPoints[renderedWorldPoints.length - 1]!, endExpected) >
+        detachDistanceWorld;
+
+    if (!detachStart && !detachEnd) return;
+
+    const nextProps: Record<string, unknown> = { ...nodeProps };
+    if (detachStart) {
+      nextProps.sourceNodeId = undefined;
+      nextProps.sourceAnchor = undefined;
+      nextProps.sourcePortId = undefined;
+    }
+    if (detachEnd) {
+      nextProps.targetNodeId = undefined;
+      nextProps.targetAnchor = undefined;
+      nextProps.targetPortId = undefined;
+    }
+
+    const fitted = fitWorldRouteToNodeBox(renderedWorldPoints, nextProps.strokeWidth);
+    nextProps.points = fitted.points;
+    nextProps.waypoints = fitted.waypoints;
+    kernelStore.getState().updateNode(routePoints.pipeId, {
+      position: fitted.position,
+      size: fitted.size,
+      props: nextProps,
+    });
+    onUserEdit?.();
+  }, [kernelStore, onUserEdit, routePoints.pipeId, state, viewport.zoom]);
+
+  useEffect(() => {
+    if (!routePoints.pipeId) return;
+
+    const overlay =
+      document.querySelector<HTMLElement>(
+        `.thingsvis-widget-layer [data-overlay-node-id="${routePoints.pipeId}"]`,
+      ) ??
+      document.querySelector<HTMLElement>(
+        `.thingsvis-widget-layer [data-node-id="${routePoints.pipeId}"]`,
+      );
+    if (!overlay) return;
+
+    const svg = overlay.querySelector<SVGSVGElement>('svg');
+    const path =
+      overlay.querySelector<SVGPathElement>(
+        `path[stroke="${String(routePoints.props.pipeColor ?? '#2563eb')}"]`,
+      ) ?? overlay.querySelector<SVGPathElement>('path');
+    if (!svg || !path) return;
+
+    let rafId: number | null = null;
+    const scheduleSync = () => {
+      if (rafId != null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        rerender();
+      });
+    };
+
+    const observer = new MutationObserver(() => {
+      scheduleSync();
+    });
+
+    observer.observe(path, {
+      attributes: true,
+      attributeFilter: ['d', 'stroke'],
+    });
+    observer.observe(svg, {
+      attributes: true,
+      attributeFilter: ['style', 'width', 'height', 'viewBox'],
+    });
+
+    return () => {
+      observer.disconnect();
+      if (rafId != null) window.cancelAnimationFrame(rafId);
+    };
+  }, [rerender, routePoints.pipeId, routePoints.props.pipeColor]);
 
   // ── Conditional return AFTER all hooks ───────────────────────────────────
   if (!routePoints.pipeId || routePoints.points.length < 2) return null;

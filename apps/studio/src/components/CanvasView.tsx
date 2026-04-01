@@ -25,6 +25,10 @@ import {
   isPlatformFieldDataSource,
   normalizePlatformBufferSize,
 } from '../embed/platformDeviceCompat';
+import {
+  computeIndustrialPipeWorldPolyline,
+  type Pt as PipeRoutePoint,
+} from '../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function generateId(prefix = 'node') {
   try {
@@ -80,6 +84,68 @@ function isTextNode(node: { schemaRef?: NodeSchemaType } | null | undefined): bo
 
 function isConnectorNodeType(type: string | undefined): boolean {
   return type === 'basic/line' || type === 'industrial/pipe';
+}
+
+type PipeProxySegment = {
+  key: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+function getPipeProxyHitThickness(strokeWidth?: unknown): number {
+  const width = Number(strokeWidth ?? 12);
+  const clamped = Number.isFinite(width) ? Math.max(1, Math.min(80, width)) : 12;
+  return Math.max(18, clamped + 10);
+}
+
+function buildPipeProxySegments(
+  worldPoints: PipeRoutePoint[],
+  nodePosition: { x: number; y: number },
+  strokeWidth?: unknown,
+): PipeProxySegment[] {
+  if (!Array.isArray(worldPoints) || worldPoints.length < 2) return [];
+
+  const hitThickness = getPipeProxyHitThickness(strokeWidth);
+  const half = hitThickness / 2;
+  const segments: PipeProxySegment[] = [];
+
+  for (let index = 1; index < worldPoints.length; index++) {
+    const start = worldPoints[index - 1]!;
+    const end = worldPoints[index]!;
+    const localStart = { x: start.x - nodePosition.x, y: start.y - nodePosition.y };
+    const localEnd = { x: end.x - nodePosition.x, y: end.y - nodePosition.y };
+    const dx = localEnd.x - localStart.x;
+    const dy = localEnd.y - localStart.y;
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue;
+
+    if (Math.abs(dy) < 0.5) {
+      const left = Math.min(localStart.x, localEnd.x) - half;
+      segments.push({
+        key: `h-${index}`,
+        left,
+        top: localStart.y - half,
+        width: Math.abs(dx) + hitThickness,
+        height: hitThickness,
+      });
+      continue;
+    }
+
+    if (Math.abs(dx) < 0.5) {
+      const top = Math.min(localStart.y, localEnd.y) - half;
+      segments.push({
+        key: `v-${index}`,
+        left: localStart.x - half,
+        top,
+        width: hitThickness,
+        height: Math.abs(dy) + hitThickness,
+      });
+    }
+  }
+
+  return segments;
 }
 
 function buildDroppedPresetNodes(
@@ -890,7 +956,21 @@ const CanvasView = forwardRef<
             // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
             const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
             const isLine = isConnectorNodeType(schema.type);
+            const isPipe = schema.type === 'industrial/pipe';
             const isSelected = state.selection.nodeIds.includes(node.id);
+            const pipeProxySegments =
+              isPipe && width > 0 && height > 0
+                ? buildPipeProxySegments(
+                    computeIndustrialPipeWorldPolyline(
+                      { schemaRef: schema },
+                      state.nodesById,
+                      getViewport,
+                      containerRef.current,
+                    ),
+                    { x: posX, y: posY },
+                    schema.props?.strokeWidth,
+                  )
+                : [];
             // Line components use LineConnectionTool for selection UI, don't show border
             const showBorder = isSelected && !isLine && inlineTextEditor?.nodeId !== node.id;
             return (
@@ -906,11 +986,37 @@ const CanvasView = forwardRef<
                   height,
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
-                  pointerEvents: isPanTool ? 'none' : 'auto',
-                  cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'pointer',
+                  pointerEvents: isPanTool ? 'none' : isPipe ? 'none' : 'auto',
+                  cursor: formatBrushActive
+                    ? 'copy'
+                    : isPanTool
+                      ? canvasCursor
+                      : isPipe
+                        ? 'default'
+                        : 'pointer',
                   border: showBorder ? '1px solid #0066ff' : 'none',
+                  overflow: 'visible',
                 }}
-              />
+              >
+                {isPipe
+                  ? pipeProxySegments.map((segment) => (
+                      <div
+                        key={segment.key}
+                        className="pipe-proxy-hit"
+                        style={{
+                          position: 'absolute',
+                          left: segment.left,
+                          top: segment.top,
+                          width: segment.width,
+                          height: segment.height,
+                          pointerEvents: isPanTool ? 'none' : 'auto',
+                          cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'move',
+                          background: 'transparent',
+                        }}
+                      />
+                    ))
+                  : null}
+              </div>
             );
           })}
 

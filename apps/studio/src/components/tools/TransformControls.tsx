@@ -246,7 +246,7 @@ export default function TransformControls({
       selectoRef.current = new Selecto({
         container: dragContainer,
         dragContainer,
-        selectableTargets: ['.node-proxy-target'],
+        selectableTargets: ['.node-proxy-target', '.pipe-proxy-hit'],
         hitRate: 0,
         selectByClick: true,
         selectFromInside: false,
@@ -274,7 +274,7 @@ export default function TransformControls({
 
         // Check if clicking on an already selected target
         const selectedTargets = (kernelStore.getState() as KernelState).selection.nodeIds
-          .map((id) => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .map((id) => dragContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
 
         if (selectedTargets.some((t) => t === target || t.contains(target))) {
@@ -311,7 +311,11 @@ export default function TransformControls({
         });
 
         const getId = (el: Element | null | undefined) =>
-          el?.getAttribute?.('data-node-id') || null;
+          el?.getAttribute?.('data-node-id') ||
+          (el instanceof HTMLElement
+            ? el.closest('.node-proxy-target')?.getAttribute('data-node-id')
+            : null) ||
+          null;
         const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
         const inputEvent = e.inputEvent as MouseEvent | undefined;
         const isAdditive = inputEvent?.ctrlKey || inputEvent?.metaKey || inputEvent?.shiftKey;
@@ -391,7 +395,9 @@ export default function TransformControls({
           dragTranslateByIdRef.current[id] = { x: 0, y: 0 };
 
           // Reset transforms for all participating targets
-          const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+          const el = dragContainer.querySelector(
+            `.node-proxy-target[data-node-id="${id}"]`,
+          ) as HTMLElement | null;
           if (el) {
             el.style.willChange = 'transform';
             el.style.transform = '';
@@ -465,7 +471,9 @@ export default function TransformControls({
             dragTranslateByIdRef.current[id] = { x: tx, y: ty };
             emitNodeDragPreview(id, tx, ty, true);
             // Use dragContainer to find elements since that's where Moveable is mounted
-            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            const el = dragContainer.querySelector(
+              `.node-proxy-target[data-node-id="${id}"]`,
+            ) as HTMLElement | null;
             if (el && el !== target) {
               el.style.transform = `translate(${tx}px, ${ty}px)`;
             }
@@ -503,7 +511,7 @@ export default function TransformControls({
             for (const id of selectedIds) {
               emitNodeDragPreview(id, 0, 0, false);
               const el = dragContainer.querySelector(
-                `[data-node-id="${id}"]`,
+                `.node-proxy-target[data-node-id="${id}"]`,
               ) as HTMLElement | null;
               if (el) {
                 el.style.willChange = '';
@@ -542,7 +550,9 @@ export default function TransformControls({
           // Commit all selected nodes using the same delta
           let didCommit = false;
           for (const id of selectedIds) {
-            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            const el = dragContainer.querySelector(
+              `.node-proxy-target[data-node-id="${id}"]`,
+            ) as HTMLElement | null;
             if (el) el.style.willChange = '';
 
             const delta = dragTranslateByIdRef.current[id] ?? {
@@ -952,7 +962,7 @@ export default function TransformControls({
       const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
       if (currentSelectedIds.length > 0) {
         const initialTargets = currentSelectedIds
-          .map((id) => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .map((id) => dragContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
         if (initialTargets.length > 0) {
           moveableRef.current.target = initialTargets;
@@ -1029,7 +1039,7 @@ export default function TransformControls({
       queryContainer.classList.toggle('connector-moveable-minimal', onlyConnectorsSelected);
 
       const targets = moveableTargetIds
-        .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
+        .map((id) => queryContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
       const anyNonResizableSelected = validSelectedIds.some((id) => {
@@ -1074,7 +1084,7 @@ export default function TransformControls({
         requestAnimationFrame(() => {
           if (!moveableRef.current) return;
           const retryTargets = moveableTargetIds
-            .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
+            .map((id) => queryContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
             .filter(Boolean) as HTMLElement[];
           if (retryTargets.length > 0) {
             moveableRef.current.target = retryTargets;

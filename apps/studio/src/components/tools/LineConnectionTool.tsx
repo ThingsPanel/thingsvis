@@ -336,7 +336,7 @@ export default function LineConnectionTool({
           e.preventDefault();
           isDraggingRef.current = true;
           dragRef.current = {
-            lineId: selectedLineId,
+            lineId: selectedLineId!,
             endpoint,
             startWorld,
             currentWorld: worldPos,
