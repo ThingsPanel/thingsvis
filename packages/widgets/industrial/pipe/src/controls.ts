@@ -24,28 +24,28 @@ export const controls = generateControls(PropsSchema, {
     Data: ['sourceNodeId', 'targetNodeId'],
   },
   overrides: {
-    pipeColor: { kind: 'color', label: 'editor.controls.industrial-pipe.pipeColor' },
-    pipeBackground: { kind: 'color', label: 'editor.controls.industrial-pipe.pipeBackground' },
+    pipeColor: { kind: 'color', label: 'controls.industrial-pipe.pipeColor' },
+    pipeBackground: { kind: 'color', label: 'controls.industrial-pipe.pipeBackground' },
     flowColor: {
       kind: 'color',
-      label: 'editor.controls.industrial-pipe.flowColor',
+      label: 'controls.industrial-pipe.flowColor',
       showWhen: { field: 'flowEnabled', value: true },
     },
-    glowEnabled: { label: 'editor.controls.industrial-pipe.glowEnabled' },
+    glowEnabled: { label: 'controls.industrial-pipe.glowEnabled' },
     glowColor: {
       kind: 'color',
-      label: 'editor.controls.industrial-pipe.glowColor',
+      label: 'controls.industrial-pipe.glowColor',
       showWhen: { field: 'glowEnabled', value: true },
     },
     flowDirection: {
-      label: 'editor.controls.industrial-pipe.flowDirection',
+      label: 'controls.industrial-pipe.flowDirection',
       showWhen: { field: 'flowEnabled', value: true },
       options: [
-        { label: 'editor.controls.industrial-pipe.forward', value: 'forward' },
-        { label: 'editor.controls.industrial-pipe.reverse', value: 'reverse' },
+        { label: 'controls.industrial-pipe.forward', value: 'forward' },
+        { label: 'controls.industrial-pipe.reverse', value: 'reverse' },
       ],
     },
-    sourceNodeId: { kind: 'nodeSelect', label: 'editor.controls.industrial-pipe.sourceNode' },
-    targetNodeId: { kind: 'nodeSelect', label: 'editor.controls.industrial-pipe.targetNode' },
+    sourceNodeId: { kind: 'nodeSelect', label: 'controls.industrial-pipe.sourceNode' },
+    targetNodeId: { kind: 'nodeSelect', label: 'controls.industrial-pipe.targetNode' },
   },
 });

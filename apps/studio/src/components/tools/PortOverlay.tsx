@@ -1,47 +1,69 @@
+/**
+ * PortOverlay
+ *
+ * Renders hover feedback for connector endpoints:
+ *   - Green dot at the active anchor (replaces the old 5-dot noisy display)
+ *   - Rotated diamond at a specific SVG port (if hovered)
+ *
+ * All world-to-screen conversions go through the geometry module so that
+ * anchor positions are always rotation-consistent with what's rendered.
+ */
+
 import React from 'react';
 import type { KernelState } from '@thingsvis/kernel';
+import {
+  getAllAnchorsWorld,
+  closestAnchor,
+  nodeToLayout,
+  type AnchorId,
+  type Viewport,
+} from '../../lib/canvas/nodeLayoutTransform';
 
-export type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
+export type { Viewport };
+export type { AnchorId };
+export type { Pt } from '../../lib/canvas/nodeLayoutTransform';
 
 export type HoverAnchor = {
   nodeId: string;
   portId?: string;
-  anchor: AnchorType;
+  anchor: AnchorId;
   x: number;
   y: number;
-  active?: boolean;
 };
 
-export function getAnchorWorldPosition(node: any, anchor: AnchorType): { x: number; y: number } {
-  const pos = node.position || { x: 0, y: 0 };
-  const size = node.size || { width: 100, height: 100 };
-  const cx = pos.x + size.width / 2;
-  const cy = pos.y + size.height / 2;
-
-  switch (anchor) {
-    case 'top':
-      return { x: cx, y: pos.y };
-    case 'right':
-      return { x: pos.x + size.width, y: cy };
-    case 'bottom':
-      return { x: cx, y: pos.y + size.height };
-    case 'left':
-      return { x: pos.x, y: cy };
-    case 'center':
-    default:
-      return { x: cx, y: cy };
-  }
+/** Convert screen rect center + viewport into world-space position.
+ *  Used when a DOM port element is hit directly. */
+export function screenRectToWorld(
+  rect: DOMRect,
+  viewport: Viewport,
+  containerRect: DOMRect,
+): { x: number; y: number } {
+  return {
+    x: (rect.left + rect.width / 2 - containerRect.left - viewport.offsetX) / viewport.zoom,
+    y: (rect.top + rect.height / 2 - containerRect.top - viewport.offsetY) / viewport.zoom,
+  };
 }
 
+/** Hit-test a world-space point against nodes.
+ *
+ * Strategy:
+ *   1. DOM-based port hit (via elementsFromPoint) — finds precise SVG ports.
+ *   2. Rotation-aware AABB + closest-anchor fallback.
+ *
+ * NOTE: After a node is rotated, its visual bbox no longer aligns with the
+ * unrotated position/size in the schema. This function uses the geometry
+ * module so that anchor positions stay consistent with the CSS-transformed
+ * proxy node in CanvasView.
+ */
 export function detectNodeAndAnchor(
   worldPos: { x: number; y: number },
   screenPos: { x: number; y: number },
   state: KernelState,
   excludeNodeIds: string[],
-  zoom: number,
+  viewport: Viewport,
   container: HTMLElement | null,
 ): HoverAnchor | null {
-  // 1. Precise DOM-based hit testing for custom SVG ports first
+  // 1. Precise DOM-based port hit
   if (container) {
     const elements = document.elementsFromPoint(screenPos.x, screenPos.y);
     for (const el of elements) {
@@ -53,159 +75,106 @@ export function detectNodeAndAnchor(
         const portId = portEl.getAttribute('data-port-id');
         if (nodeId && portId && !excludeNodeIds.includes(nodeId) && state.nodesById[nodeId]) {
           const rect = portEl.getBoundingClientRect();
-          const cx = rect.left + rect.width / 2;
-          const cy = rect.top + rect.height / 2;
-
-          // Map back to world coordinate for snapping precisely exactly to port center
           const containerRect = container.getBoundingClientRect();
-          const vp = (window as any)._thingsvisViewport || { offsetX: 0, offsetY: 0 };
-          const worldCenterX = (cx - containerRect.left - vp.offsetX) / zoom;
-          const worldCenterY = (cy - containerRect.top - vp.offsetY) / zoom;
+          const worldCenter = screenRectToWorld(rect, viewport, containerRect);
 
           return {
             nodeId,
             portId,
-            anchor: 'center', // SVG ports act as a unified connection point
-            x: worldCenterX,
-            y: worldCenterY,
+            anchor: 'center',
+            x: worldCenter.x,
+            y: worldCenter.y,
           };
         }
       }
     }
   }
 
-  // 2. Fallback to general AABB testing
+  // 2. Rotation-aware AABB + closest anchor
+  const containerRect = container?.getBoundingClientRect();
   const nodes = Object.values(state.nodesById);
+
   for (const node of nodes) {
     if (excludeNodeIds.includes(node.id)) continue;
     if (!node.visible) continue;
-    // skip connector nodes for general AABB
-    if (node.schemaRef?.type === 'basic/line' || node.schemaRef?.type === 'industrial/pipe')
-      continue;
+    // Skip connector nodes in the general hit pass
+    const nodeType = (node.schemaRef as any)?.type;
+    if (nodeType === 'basic/line' || nodeType === 'industrial/pipe') continue;
 
-    const schema = node.schemaRef as any;
-    const pos = schema.position || { x: 0, y: 0 };
-    const size = schema.size || { width: 100, height: 100 };
+    const layout = nodeToLayout(node as any);
+
+    // Expand hit region slightly around the bbox
     const padding = 30;
+    const x0 = layout.position.x - padding;
+    const y0 = layout.position.y - padding;
+    const x1 = layout.position.x + layout.size.width + padding;
+    const y1 = layout.position.y + layout.size.height + padding;
 
-    if (
-      worldPos.x >= pos.x - padding &&
-      worldPos.x <= pos.x + size.width + padding &&
-      worldPos.y >= pos.y - padding &&
-      worldPos.y <= pos.y + size.height + padding
-    ) {
-      const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
-      let closestAnchor: AnchorType = 'center';
-      let closestDist = Infinity;
-      let closestWorldPos = { x: 0, y: 0 };
+    if (worldPos.x < x0 || worldPos.x > x1 || worldPos.y < y0 || worldPos.y > y1) continue;
 
-      for (const anchor of anchors) {
-        const anchorPos = getAnchorWorldPosition(schema, anchor);
-        const dist = Math.hypot(worldPos.x - anchorPos.x, worldPos.y - anchorPos.y);
-        if (dist < closestDist) {
-          closestDist = dist;
-          closestAnchor = anchor;
-          closestWorldPos = anchorPos;
-        }
-      }
+    // Find the closest cardinal anchor to the cursor
+    const nearest = closestAnchor(layout, worldPos);
 
-      return {
-        nodeId: node.id,
-        anchor: closestAnchor,
-        x: closestWorldPos.x,
-        y: closestWorldPos.y,
-      };
-    }
+    return {
+      nodeId: node.id,
+      anchor: nearest.anchor,
+      x: nearest.world.x,
+      y: nearest.world.y,
+    };
   }
 
   return null;
 }
 
+// ─── Overlay rendering ────────────────────────────────────────────────────────
+
 type PortOverlayProps = {
   hoveredAnchor: HoverAnchor | null;
   worldToScreen: (wx: number, wy: number) => { x: number; y: number };
   state: KernelState;
+  viewport: Viewport;
 };
 
 export const PortOverlay: React.FC<PortOverlayProps> = ({
   hoveredAnchor,
   worldToScreen,
   state,
+  viewport: _vp,
 }) => {
   if (!hoveredAnchor) return null;
 
-  // Render highlighted node boundary
-  let highlightNode = null;
-  if (hoveredAnchor.nodeId) {
-    const node = state.nodesById[hoveredAnchor.nodeId];
-    if (node) {
-      const schema = node.schemaRef as any;
-      const pos = schema.position || { x: 0, y: 0 };
-      const size = schema.size || { width: 100, height: 100 };
-      const topLeft = worldToScreen(pos.x, pos.y);
-      const bottomRight = worldToScreen(pos.x + size.width, pos.y + size.height);
-
-      highlightNode = (
-        <div
-          className="absolute border-2 border-green-500 border-dashed pointer-events-none"
-          style={{
-            left: topLeft.x,
-            top: topLeft.y,
-            width: bottomRight.x - topLeft.x,
-            height: bottomRight.y - topLeft.y,
-            zIndex: 998,
-            borderRadius: 4,
-          }}
-        />
-      );
-    }
-  }
-
-  // Render available anchors if using AABB logic (not a specific custom SVG port ID)
-  let anchorsView = null;
+  // Active anchor dot (only when NOT over a specific port)
+  let anchorDot: React.ReactNode = null;
   if (hoveredAnchor.nodeId && !hoveredAnchor.portId) {
-    const node = state.nodesById[hoveredAnchor.nodeId];
-    if (node) {
-      const schema = node.schemaRef as any;
-      const anchors: AnchorType[] = ['top', 'right', 'bottom', 'left', 'center'];
-      anchorsView = anchors.map((anchor) => {
-        const anchorPos = getAnchorWorldPosition(schema, anchor);
-        const screenPos = worldToScreen(anchorPos.x, anchorPos.y);
-        const isActive = anchor === hoveredAnchor.anchor;
-        const anchorSize = isActive ? 16 : 10;
-
-        return (
-          <div
-            key={anchor}
-            className={`absolute rounded-full border-2 pointer-events-none transition-all duration-100 ${
-              isActive ? 'bg-green-500 border-green-600 shadow-lg' : 'bg-white border-gray-400'
-            }`}
-            style={{
-              left: screenPos.x - anchorSize / 2,
-              top: screenPos.y - anchorSize / 2,
-              width: anchorSize,
-              height: anchorSize,
-              zIndex: 1001,
-            }}
-          />
-        );
-      });
-    }
+    const screenPos = worldToScreen(hoveredAnchor.x, hoveredAnchor.y);
+    const size = 16;
+    anchorDot = (
+      <div
+        className="absolute rounded-full border-2 bg-green-500 border-green-600 shadow-lg pointer-events-none"
+        style={{
+          left: screenPos.x - size / 2,
+          top: screenPos.y - size / 2,
+          width: size,
+          height: size,
+          zIndex: 1001,
+        }}
+      />
+    );
   }
 
-  // Render specific SVG port highlight if hovering over one
-  let activePortView = null;
+  // Port hit indicator (rotated diamond)
+  let portDot: React.ReactNode = null;
   if (hoveredAnchor.portId) {
     const screenPos = worldToScreen(hoveredAnchor.x, hoveredAnchor.y);
-    const anchorSize = 16;
-    activePortView = (
+    const size = 14;
+    portDot = (
       <div
-        className="absolute rounded border-2 bg-green-500 border-green-600 shadow-lg pointer-events-none transition-all duration-100"
+        className="absolute rounded border-2 bg-green-500 border-green-600 shadow-lg pointer-events-none"
         style={{
-          left: screenPos.x - anchorSize / 2,
-          top: screenPos.y - anchorSize / 2,
-          width: anchorSize,
-          height: anchorSize,
+          left: screenPos.x - size / 2,
+          top: screenPos.y - size / 2,
+          width: size,
+          height: size,
           zIndex: 1002,
           transform: 'rotate(45deg)',
         }}
@@ -215,9 +184,8 @@ export const PortOverlay: React.FC<PortOverlayProps> = ({
 
   return (
     <>
-      {highlightNode}
-      {anchorsView}
-      {activePortView}
+      {anchorDot}
+      {portDot}
     </>
   );
 };

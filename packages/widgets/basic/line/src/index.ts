@@ -12,9 +12,50 @@ type LinkedNodeInfo = {
   size: { width: number; height: number };
 };
 
+type NodeBounds = {
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+};
+
 const defaults = getDefaultProps();
 
-function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt {
+/** Resolve a port's world position from the DOM.
+ *  Falls back to bbox anchor when no DOM port is found. */
+function getPortWorldPosition(
+  nodeId: string,
+  portId: string,
+  zoom: number,
+): { x: number; y: number } | null {
+  const el = document.querySelector<HTMLElement>(
+    `.thingsvis-widget-layer [data-node-id="${nodeId}"][data-port-id="${portId}"]`,
+  );
+  if (!el) return null;
+  const rect = el.getBoundingClientRect();
+  const container = el.closest('[data-node-id]') as HTMLElement | null;
+  const vp = (window as any)._thingsvisViewport as { offsetX: number; offsetY: number } | undefined;
+  const offsetX = vp?.offsetX ?? 0;
+  const offsetY = vp?.offsetY ?? 0;
+  const containerRect = container?.getBoundingClientRect();
+  const left = container ? parseFloat(container.style.left || '0') : 0;
+  const top = container ? parseFloat(container.style.top || '0') : 0;
+  const worldX = (rect.left + rect.width / 2 - (containerRect?.left ?? 0) - offsetX) / zoom - left;
+  const worldY = (rect.top + rect.height / 2 - (containerRect?.top ?? 0) - offsetY) / zoom - top;
+  return { x: worldX, y: worldY };
+}
+
+/** Get node world position from DOM (fallback when linkedNodes is unavailable).
+ *  Returns { position, size } or null if not found. */
+function getNodeWorldFromDom(nodeId: string): { position: { x: number; y: number }; size: { width: number; height: number } } | null {
+  const nodeEl = document.querySelector<HTMLElement>(`.thingsvis-widget-layer [data-node-id="${nodeId}"]`);
+  if (!nodeEl) return null;
+  const x = parseFloat(nodeEl.style.left || '0');
+  const y = parseFloat(nodeEl.style.top || '0');
+  const w = parseFloat(nodeEl.style.width || '100');
+  const h = parseFloat(nodeEl.style.height || '100');
+  return { position: { x, y }, size: { width: w, height: h } };
+}
+
+function getAnchorPoint(node: LinkedNodeInfo | NodeBounds, anchor: AnchorType = 'center'): Pt {
   const { position, size } = node;
   const cx = position.x + size.width / 2;
   const cy = position.y + size.height / 2;
@@ -26,6 +67,57 @@ function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt
     case 'center':
     default: return { x: cx, y: cy };
   }
+}
+
+function degToRad(deg: number): number {
+  return (deg * Math.PI) / 180;
+}
+
+function rotatePt(pt: Pt, origin: Pt, angleDeg: number): Pt {
+  if (angleDeg === 0) return { x: pt.x, y: pt.y };
+  const rad = degToRad(angleDeg);
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const dx = pt.x - origin.x;
+  const dy = pt.y - origin.y;
+  return {
+    x: origin.x + dx * cos - dy * sin,
+    y: origin.y + dx * sin + dy * cos,
+  };
+}
+
+function nodeCenter(position: Pt, size: { width: number; height: number }): Pt {
+  return { x: position.x + size.width / 2, y: position.y + size.height / 2 };
+}
+
+/** Returns the world-space anchor point for a target node, accounting for its rotation.
+ *  This mirrors the nodeLayoutTransform logic so the widget and studio stay in sync. */
+function getTargetAnchorWorld(
+  targetNode: { schemaRef?: { position?: Pt; size?: { width: number; height: number }; props?: { _rotation?: number; rotation?: number } } },
+  anchor: AnchorType,
+): Pt {
+  const schema = targetNode.schemaRef as any;
+  const pos = schema?.position ?? { x: 0, y: 0 };
+  const sz = schema?.size ?? { width: 100, height: 100 };
+  const rotation = schema?.props?._rotation ?? schema?.props?.rotation ?? schema?.rotation ?? 0;
+
+  // Compute center once
+  const cx = pos.x + sz.width / 2;
+  const cy = pos.y + sz.height / 2;
+  const center: Pt = { x: cx, y: cy };
+
+  // Local anchor offset (relative to top-left)
+  let local: Pt;
+  switch (anchor) {
+    case 'top':    local = { x: cx, y: pos.y }; break;
+    case 'right':  local = { x: pos.x + sz.width, y: cy }; break;
+    case 'bottom': local = { x: cx, y: pos.y + sz.height }; break;
+    case 'left':   local = { x: pos.x, y: cy }; break;
+    default:       local = { x: cx, y: cy };
+  }
+
+  if (rotation === 0) return local;
+  return rotatePt(local, center, rotation);
 }
 
 function worldToLocal(worldPt: Pt, linePosition: Pt): Pt {
@@ -190,19 +282,59 @@ function renderLine(element: HTMLElement, initialProps: Props, initialCtx: Widge
 
     const sourceNode = nextProps.sourceNodeId ? linkedNodes?.[nextProps.sourceNodeId] : undefined;
     const targetNode = nextProps.targetNodeId ? linkedNodes?.[nextProps.targetNodeId] : undefined;
-    const hasBinding = !!(sourceNode || targetNode);
+
+    // Fallback: if linkedNodes didn't provide the node, read position from DOM
+    const sourceDomNode = nextProps.sourceNodeId && !sourceNode
+      ? getNodeWorldFromDom(nextProps.sourceNodeId)
+      : undefined;
+    const targetDomNode = nextProps.targetNodeId && !targetNode
+      ? getNodeWorldFromDom(nextProps.targetNodeId)
+      : undefined;
+
+    const hasBinding = !!(sourceNode || targetNode || sourceDomNode || targetDomNode);
 
     let routePoints: Pt[];
-    
+
     if (hasBinding) {
-      const startPt = sourceNode 
-        ? worldToLocal(getAnchorPoint(sourceNode, nextProps.sourceAnchor as AnchorType), linePosition)
-        : { x: 0, y: size.height / 2 };
-        
-      const endPt = targetNode 
-        ? worldToLocal(getAnchorPoint(targetNode, nextProps.targetAnchor as AnchorType), linePosition)
-        : { x: size.width, y: size.height / 2 };
-      
+      // Resolve start anchor (world space, rotation-aware if linkedNodes is available)
+      let startPt: Pt;
+      if (nextProps.sourcePortId && (sourceNode || sourceDomNode)) {
+        const portWorld = getPortWorldPosition(nextProps.sourceNodeId!, nextProps.sourcePortId, (nextCtx as any).zoom ?? 1);
+        if (portWorld) {
+          startPt = worldToLocal(portWorld, linePosition);
+        } else if (sourceNode) {
+          // Use rotation-aware anchor when full node data is available
+          startPt = worldToLocal(getTargetAnchorWorld(sourceNode as any, nextProps.sourceAnchor as AnchorType), linePosition);
+        } else {
+          startPt = worldToLocal(getAnchorPoint(sourceDomNode!, nextProps.sourceAnchor as AnchorType), linePosition);
+        }
+      } else if (sourceNode) {
+        startPt = worldToLocal(getTargetAnchorWorld(sourceNode as any, nextProps.sourceAnchor as AnchorType), linePosition);
+      } else if (sourceDomNode) {
+        startPt = worldToLocal(getAnchorPoint(sourceDomNode, nextProps.sourceAnchor as AnchorType), linePosition);
+      } else {
+        startPt = { x: 0, y: size.height / 2 };
+      }
+
+      // Resolve end anchor (world space, rotation-aware if linkedNodes is available)
+      let endPt: Pt;
+      if (nextProps.targetPortId && (targetNode || targetDomNode)) {
+        const portWorld = getPortWorldPosition(nextProps.targetNodeId!, nextProps.targetPortId, (nextCtx as any).zoom ?? 1);
+        if (portWorld) {
+          endPt = worldToLocal(portWorld, linePosition);
+        } else if (targetNode) {
+          endPt = worldToLocal(getTargetAnchorWorld(targetNode as any, nextProps.targetAnchor as AnchorType), linePosition);
+        } else {
+          endPt = worldToLocal(getAnchorPoint(targetDomNode!, nextProps.targetAnchor as AnchorType), linePosition);
+        }
+      } else if (targetNode) {
+        endPt = worldToLocal(getTargetAnchorWorld(targetNode as any, nextProps.targetAnchor as AnchorType), linePosition);
+      } else if (targetDomNode) {
+        endPt = worldToLocal(getAnchorPoint(targetDomNode, nextProps.targetAnchor as AnchorType), linePosition);
+      } else {
+        endPt = { x: size.width, y: size.height / 2 };
+      }
+
       if (nextProps.routerType === 'orthogonal') {
         routePoints = buildOrthogonalRoute(startPt, endPt, nextProps.sourceAnchor as AnchorType, nextProps.targetAnchor as AnchorType);
       } else {

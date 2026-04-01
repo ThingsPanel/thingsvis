@@ -10,14 +10,7 @@ import {
 } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
-// @ts-ignore: Cross-workspace inline import
-import {
-  type Pt,
-  type AnchorType,
-  buildOrthogonalRoute,
-  simplifyOrthogonal,
-  pointsToPathD,
-} from '../../../basic/line/src/routing';
+import { computeIndustrialPipeLocalRoute, getPipeNodeWorldBoundsFromDom, type Pt } from './routeWorld';
 
 type LinkedNodeInfo = {
   id: string;
@@ -25,26 +18,16 @@ type LinkedNodeInfo = {
   size: { width: number; height: number };
 };
 
-function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt {
-  const { position, size } = node;
-  const cx = position.x + size.width / 2;
-  const cy = position.y + size.height / 2;
+type PipePt = Pt;
 
-  switch (anchor) {
-    case 'top': return { x: cx, y: position.y };
-    case 'right': return { x: position.x + size.width, y: cy };
-    case 'bottom': return { x: cx, y: position.y + size.height };
-    case 'left': return { x: position.x, y: cy };
-    case 'center':
-    default: return { x: cx, y: cy };
+function pipePointsToPathD(points: PipePt[]): string {
+  if (!points || points.length === 0) return '';
+  const first = points[0]!;
+  let d = `M ${first.x} ${first.y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i]!.x} ${points[i]!.y}`;
   }
-}
-
-function worldToLocal(worldPt: Pt, nodePosition: Pt): Pt {
-  return {
-    x: worldPt.x - nodePosition.x,
-    y: worldPt.y - nodePosition.y,
-  };
+  return d;
 }
 
 function clampMinSize(size?: { width: number; height: number }) {
@@ -52,12 +35,6 @@ function clampMinSize(size?: { width: number; height: number }) {
     width: Math.max(1, Number(size?.width ?? 0)),
     height: Math.max(1, Number(size?.height ?? 0)),
   };
-}
-
-function migrateOldPoints(points?: Pt[]): Pt[] {
-  if (!points || points.length < 2) return [];
-  // Old points include start and end, keep only intermediate waypoints
-  return points.slice(1, -1);
 }
 
 function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: WidgetOverlayContext) {
@@ -203,39 +180,23 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     const linkedNodes = (nextCtx as any).linkedNodes as Record<string, LinkedNodeInfo> | undefined;
     const sourceNode = nextProps.sourceNodeId ? linkedNodes?.[nextProps.sourceNodeId] : undefined;
     const targetNode = nextProps.targetNodeId ? linkedNodes?.[nextProps.targetNodeId] : undefined;
-    const hasNodeBinding = !!(sourceNode || targetNode);
 
-    let waypoints = nextProps.waypoints;
-    if (!waypoints || waypoints.length === 0) {
-      waypoints = migrateOldPoints(nextProps.points);
-    }
+    const sourceDomNode =
+      nextProps.sourceNodeId && !sourceNode ? getPipeNodeWorldBoundsFromDom(nextProps.sourceNodeId) : undefined;
+    const targetDomNode =
+      nextProps.targetNodeId && !targetNode ? getPipeNodeWorldBoundsFromDom(nextProps.targetNodeId) : undefined;
 
-    let routePoints: Pt[];
-    if (hasNodeBinding) {
-      // 实时计算起止点
-      const startPt = sourceNode
-        ? worldToLocal(getAnchorPoint(sourceNode, nextProps.sourceAnchor), widgetPosition)
-        : { x: 0, y: size.height / 2 };
-      const endPt = targetNode
-        ? worldToLocal(getAnchorPoint(targetNode, nextProps.targetAnchor), widgetPosition)
-        : { x: size.width, y: size.height / 2 };
-        
-      routePoints = buildOrthogonalRoute(
-        startPt, 
-        endPt, 
-        nextProps.sourceAnchor, 
-        nextProps.targetAnchor, 
-        waypoints
-      );
-    } else {
-      // 自由管道
-      routePoints = waypoints.length >= 2
-        ? simplifyOrthogonal(waypoints)
-        : buildOrthogonalRoute(
-            { x: 0, y: size.height / 2 },
-            { x: size.width, y: size.height / 2 }
-          );
-    }
+    const hasNodeBinding = !!(sourceNode || targetNode || sourceDomNode || targetDomNode);
+
+    const wv = (window as any)._thingsvisViewport as { offsetX: number; offsetY: number; zoom: number } | undefined;
+    let routePoints = computeIndustrialPipeLocalRoute(nextProps, size, widgetPosition, linkedNodes, {
+      viewport: {
+        zoom: (nextCtx as any).zoom ?? wv?.zoom ?? 1,
+        offsetX: wv?.offsetX ?? 0,
+        offsetY: wv?.offsetY ?? 0,
+      },
+      containerEl: null,
+    });
 
     if (hasNodeBinding && routePoints.length) {
       const strokeWidth = getStrokeWidthPx(nextProps.strokeWidth);
@@ -281,7 +242,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
     }
 
-    const d = pointsToPathD(routePoints);
+    const d = pipePointsToPathD(routePoints);
     borderPath.setAttribute('d', d);
     pipePath.setAttribute('d', d);
     flowPath.setAttribute('d', d);

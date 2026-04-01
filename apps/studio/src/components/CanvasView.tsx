@@ -1014,15 +1014,15 @@ const CanvasView = forwardRef<
         <>
           <LineConnectionTool
             kernelStore={store}
-            containerRef={proxyLayerRef}
             getViewport={getViewport}
             onUserEdit={onUserEdit}
+            containerRef={containerRef}
           />
           <PipeConnectionTool
             kernelStore={store}
-            containerRef={proxyLayerRef}
             getViewport={getViewport}
             onUserEdit={onUserEdit}
+            containerRef={containerRef}
           />
         </>
       )}

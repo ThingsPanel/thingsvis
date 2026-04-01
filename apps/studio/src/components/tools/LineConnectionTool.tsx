@@ -1,287 +1,407 @@
-import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+/**
+ * LineConnectionTool
+ *
+ * Pure overlay for connector editing. Renders endpoint handles and drag previews
+ * above the proxy layer (absolute inset-0 within the canvas container, same coords as worldToScreen).
+ *
+ * Key design decisions:
+ *   1. Never fights Moveable — endpoint handles intercept pointerdown with
+ *      stopImmediatePropagation so Moveable never sees the event.
+ *   2. All drag state lives in useRef (not useState) for per-frame performance.
+ *   3. Document-level mousemove/mouseup during drag so cursor tracking works
+ *      even when the mouse leaves the handle element.
+ *   4. Anchor detection uses the same geometry module as the widget renderer,
+ *      guaranteeing handle positions and line endpoints stay in sync.
+ *   5. No selection box — feedback is purely through handle appearance and
+ *      the drag-line preview.
+ *
+ * IMPORTANT: All hooks must be called unconditionally. Conditional returns come
+ * after the hooks section.
+ */
+
+import React, { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
+import { detectNodeAndAnchor, PortOverlay, type HoverAnchor, type Viewport } from './PortOverlay';
 import {
-  detectNodeAndAnchor,
-  PortOverlay,
-  type AnchorType,
-  type HoverAnchor,
-  getAnchorWorldPosition,
-} from './PortOverlay';
+  getAnchorWorld,
+  nodeToLayout,
+  buildOrthogonalRoute,
+  type AnchorId,
+  type Pt,
+} from '../../lib/canvas/nodeLayoutTransform';
 
 type Props = {
   kernelStore: KernelStore;
-  containerRef: React.RefObject<HTMLElement>;
-  getViewport: () => {
-    width: number;
-    height: number;
-    zoom: number;
-    offsetX: number;
-    offsetY: number;
-  };
+  getViewport: () => Viewport;
   onUserEdit?: () => void;
+  /** Ref to the canvas container (containerRef from CanvasView).
+   *  Required for accurate clientX/Y → world coordinate conversion
+   *  when the canvas is not at viewport origin (e.g. sidebar/header present). */
+  containerRef?: React.RefObject<HTMLElement | null>;
 };
 
-type EndpointDragState = {
+type Endpoint = 'start' | 'end';
+
+type DragState = {
   lineId: string;
-  endpoint: 'start' | 'end';
-  startWorldPos: { x: number; y: number };
-  currentWorldPos: { x: number; y: number };
+  endpoint: Endpoint;
+  startWorld: Pt;
+  currentWorld: Pt;
+  targetHover: HoverAnchor | null;
 };
 
 export default function LineConnectionTool({
   kernelStore,
-  containerRef,
   getViewport,
   onUserEdit,
+  containerRef,
 }: Props) {
+  // ── All hooks MUST come before any conditional returns ────────────────────
+
   const state = useSyncExternalStore(
     useCallback((cb) => kernelStore.subscribe(cb), [kernelStore]),
     () => kernelStore.getState() as KernelState,
   );
 
-  const [dragState, setDragState] = useState<EndpointDragState | null>(null);
-  const [hoveredAnchor, setHoveredAnchor] = useState<HoverAnchor | null>(null);
+  const dragRef = useRef<DragState | null>(null);
+  const hoveredAnchorRef = useRef<HoverAnchor | null>(null);
+  const isDraggingRef = useRef(false);
+  const [, forceRender] = React.useState(0);
+  const rerender = useCallback(() => forceRender((n) => n + 1), []);
 
-  const selectedLineIds = state.selection.nodeIds.filter((id) => {
-    return state.nodesById[id]?.schemaRef?.type === 'basic/line';
-  });
-  const selectedLineId = selectedLineIds.length === 1 ? selectedLineIds[0]! : null;
+  // ── Derived values (after hooks) ───────────────────────────────────────────
+  const selectedLineIds = state.selection.nodeIds.filter(
+    (id) => (state.nodesById[id]?.schemaRef as any)?.type === 'basic/line',
+  );
+  const selectedLineId = selectedLineIds.length === 1 ? selectedLineIds[0] : null;
   const selectedLine = selectedLineId ? state.nodesById[selectedLineId] : null;
+  const viewport = getViewport();
 
-  const getPreviewTranslate = useCallback((nodeId?: string | null) => {
-    // Line uses endpoints calculation. Typically lines don't use node-drag-preview directly
-    // but rely on full reactivity from KernelStore. We'll simplify this in v3.
-    return { x: 0, y: 0 };
-  }, []);
+  // ── Coordinate helpers ────────────────────────────────────────────────────
+  const worldToScreen = useCallback(
+    (wx: number, wy: number) => {
+      const vp = viewport;
+      return { x: wx * vp.zoom + vp.offsetX, y: wy * vp.zoom + vp.offsetY };
+    },
+    [viewport],
+  );
 
   const screenToWorld = useCallback(
-    (screenX: number, screenY: number) => {
-      const container = containerRef.current;
-      if (!container) return { x: screenX, y: screenY };
-      const rect = container.getBoundingClientRect();
-      const vp = getViewport();
-      return {
-        x: (screenX - rect.left - vp.offsetX) / vp.zoom,
-        y: (screenY - rect.top - vp.offsetY) / vp.zoom,
-      };
+    (sx: number, sy: number) => {
+      const vp = viewport;
+      // When a containerRef is provided, subtract its viewport offset
+      // so that clientX/Y (viewport-relative) are converted to container-local first.
+      const containerRect = containerRef?.current?.getBoundingClientRect();
+      const left = containerRect?.left ?? 0;
+      const top = containerRect?.top ?? 0;
+      return { x: (sx - left - vp.offsetX) / vp.zoom, y: (sy - top - vp.offsetY) / vp.zoom };
     },
-    [containerRef, getViewport],
+    [viewport, containerRef],
   );
 
-  const worldToScreen = useCallback(
-    (worldX: number, worldY: number) => {
-      const container = containerRef.current;
-      if (!container) return { x: worldX, y: worldY };
-      const rect = container.getBoundingClientRect();
-      const vp = getViewport();
+  // ── Compute endpoints (outside component to avoid hook ordering issues) ──
+  const endpoints = React.useMemo(() => {
+    if (!selectedLine)
       return {
-        x: worldX * vp.zoom + vp.offsetX + rect.left,
-        y: worldY * vp.zoom + vp.offsetY + rect.top,
+        startWorld: { x: 0, y: 0 },
+        endWorld: { x: 0, y: 0 },
+        props: {},
+        routerType: 'straight',
       };
-    },
-    [containerRef, getViewport],
-  );
+    const schema = selectedLine.schemaRef as any;
+    const props: Record<string, unknown> = schema.props ?? {};
+    const lineLayout = nodeToLayout(selectedLine as any);
 
-  useEffect(() => {
-    if (!dragState) return;
+    const resolveEndpoint = (endpoint: Endpoint): Pt => {
+      const isStart = endpoint === 'start';
+      const nodeId = isStart ? (props.sourceNodeId as string) : (props.targetNodeId as string);
+      const portId = isStart ? (props.sourcePortId as string) : (props.targetPortId as string);
+      const anchor =
+        (isStart ? (props.sourceAnchor as AnchorId) : (props.targetAnchor as AnchorId)) || 'center';
 
-    const handleMouseMove = (e: MouseEvent) => {
-      const worldPos = screenToWorld(e.clientX, e.clientY);
-      setDragState((prev) => (prev ? { ...prev, currentWorldPos: worldPos } : null));
+      if (nodeId && state.nodesById[nodeId]) {
+        const targetNode = state.nodesById[nodeId]!;
+        const targetLayout = nodeToLayout(targetNode as any);
+        if (portId) {
+          const el = document.querySelector<HTMLElement>(
+            `.thingsvis-widget-layer [data-node-id="${nodeId}"][data-port-id="${portId}"]`,
+          );
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            const containerRect = containerRef?.current?.getBoundingClientRect() ?? new DOMRect();
+            const vp = getViewport();
+            // Use the single canvas container rect as the reference.
+            // The formula matches screenRectToWorld in PortOverlay so both
+            // the hover indicator and the endpoint handle land on the same pixel.
+            const worldX = (rect.left + rect.width / 2 - containerRect.left - vp.offsetX) / vp.zoom;
+            const worldY = (rect.top + rect.height / 2 - containerRect.top - vp.offsetY) / vp.zoom;
+            return { x: worldX, y: worldY };
+          }
+        }
+        return getAnchorWorld(targetLayout, anchor);
+      }
 
-      (window as any)._thingsvisViewport = getViewport();
-      const detected = detectNodeAndAnchor(
-        worldPos,
-        { x: e.clientX, y: e.clientY },
-        state,
-        [dragState.lineId],
-        getViewport().zoom,
-        containerRef.current,
-      );
-      setHoveredAnchor(detected);
+      const rawPoints: Pt[] = Array.isArray(props.points) ? (props.points as Pt[]) : [];
+      const size = schema.size ?? { width: 100, height: 100 };
+      const isNorm = rawPoints.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1);
+      const pt = isStart
+        ? (rawPoints[0] ?? { x: 0, y: 0.5 })
+        : (rawPoints[rawPoints.length - 1] ?? { x: 1, y: 0.5 });
+      return {
+        x: lineLayout.position.x + (isNorm ? pt.x * size.width : pt.x),
+        y: lineLayout.position.y + (isNorm ? pt.y * size.height : pt.y),
+      };
     };
 
-    const handleMouseUp = () => {
+    return {
+      startWorld: resolveEndpoint('start'),
+      endWorld: resolveEndpoint('end'),
+      props,
+      routerType: (props.routerType as string) ?? 'straight',
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    selectedLine?.id,
+    (selectedLine?.schemaRef as any)?.props,
+    state.nodesById,
+    getViewport,
+    containerRef,
+  ]);
+
+  const { startWorld, endWorld, props, routerType } = endpoints;
+
+  // ── All hooks run unconditionally — early return comes AFTER hooks ─────────
+  // Mouse drag effect
+  useEffect(() => {
+    const vp = getViewport();
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragRef.current) return;
+      const world = screenToWorld(e.clientX, e.clientY);
+      dragRef.current = { ...dragRef.current!, currentWorld: world };
+
+      const detected = detectNodeAndAnchor(
+        world,
+        { x: e.clientX, y: e.clientY },
+        state,
+        [dragRef.current.lineId],
+        vp,
+        containerRef?.current ?? null,
+      );
+      hoveredAnchorRef.current = detected;
+      rerender();
+    };
+
+    const onMouseUp = () => {
+      if (!dragRef.current) return;
+      const ds = dragRef.current;
+      dragRef.current = null;
+      hoveredAnchorRef.current = null;
+      isDraggingRef.current = false;
+      rerender();
+
       const currentState = kernelStore.getState() as any;
       const updateNode = currentState.updateNode;
       if (!updateNode) return;
 
-      const lineNode = state.nodesById[dragState.lineId];
+      const lineNode = state.nodesById[ds.lineId];
       if (!lineNode) return;
-      const currentProps = (lineNode.schemaRef as any)?.props || {};
+      const currentProps: Record<string, unknown> = {
+        ...((lineNode.schemaRef as any)?.props ?? {}),
+      };
 
-      const propKey = dragState.endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
-      const anchorKey = dragState.endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
-      const portKey = dragState.endpoint === 'start' ? 'sourcePortId' : 'targetPortId';
+      const propKey = ds.endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
+      const anchorKey = ds.endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
+      const portKey = ds.endpoint === 'start' ? 'sourcePortId' : 'targetPortId';
 
-      const nextProps: any = { ...currentProps };
-
-      if (hoveredAnchor) {
-        nextProps[propKey] = hoveredAnchor.nodeId;
-        nextProps[anchorKey] = hoveredAnchor.anchor;
-        if (hoveredAnchor.portId) {
-          nextProps[portKey] = hoveredAnchor.portId;
-        } else {
-          delete nextProps[portKey];
-        }
+      if (ds.targetHover) {
+        currentProps[propKey] = ds.targetHover.nodeId;
+        currentProps[anchorKey] = ds.targetHover.anchor;
+        if (ds.targetHover.portId) currentProps[portKey] = ds.targetHover.portId;
+        else delete currentProps[portKey];
       } else {
-        delete nextProps[propKey];
-        delete nextProps[anchorKey];
-        delete nextProps[portKey];
-      }
+        delete currentProps[propKey];
+        delete currentProps[anchorKey];
+        delete currentProps[portKey];
+        const rawPoints: Pt[] = Array.isArray(currentProps.points)
+          ? (currentProps.points as Pt[])
+          : [];
+        const isNorm = rawPoints.every((p) => p.x >= 0 && p.x <= 1 && p.y <= 1);
+        const size = (lineNode.schemaRef as any)?.size ?? { width: 100, height: 40 };
+        const lp = (lineNode.schemaRef as any)?.position ?? { x: 0, y: 0 };
+        const toLocal = (w: Pt): Pt =>
+          isNorm
+            ? { x: (w.x - lp.x) / size.width, y: (w.y - lp.y) / size.height }
+            : { x: w.x - lp.x, y: w.y - lp.y };
 
-      // Update basic/line position implicitly by setting points correctly based on bounds
-      // The line component resolves its own bounds during next render tick.
-      // But we need to write the unlinked points.
-      if (!hoveredAnchor) {
-        // If unlinked, we set the manual line point
-        const points = [...(Array.isArray(currentProps.points) ? currentProps.points : [])];
-        if (dragState.endpoint === 'start') {
-          points[0] = dragState.currentWorldPos;
+        if (ds.endpoint === 'start') {
+          currentProps.points = [toLocal(ds.currentWorld), ...rawPoints.slice(1)];
         } else {
-          points[points.length - 1] = dragState.currentWorldPos;
+          currentProps.points = [...rawPoints.slice(0, -1), toLocal(ds.currentWorld)];
         }
-        nextProps.points = points;
       }
 
-      updateNode(dragState.lineId, { props: nextProps });
+      updateNode(ds.lineId, { props: currentProps });
       onUserEdit?.();
-
-      setDragState(null);
-      setHoveredAnchor(null);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [
-    dragState,
-    containerRef,
-    getViewport,
-    hoveredAnchor,
-    kernelStore,
-    onUserEdit,
-    screenToWorld,
-    state,
-  ]);
+  }, [kernelStore, getViewport, screenToWorld, state, onUserEdit, rerender]);
 
+  // Keyboard shortcut effect — null guard inside since selectedLineId is derived
   useEffect(() => {
-    (window as any)._connectionToolActive = !!dragState;
-    return () => {
-      (window as any)._connectionToolActive = false;
+    if (!selectedLineId) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      const currentState = kernelStore.getState() as any;
+      const updateNode = currentState.updateNode;
+      if (!updateNode) return;
+
+      const lineNode = state.nodesById[selectedLineId!];
+      if (!lineNode) return;
+      const nextProps: Record<string, unknown> = { ...((lineNode.schemaRef as any)?.props ?? {}) };
+      let changed = false;
+
+      for (const [propKey, anchorKey, portKey] of [
+        ['sourceNodeId', 'sourceAnchor', 'sourcePortId'],
+        ['targetNodeId', 'targetAnchor', 'targetPortId'],
+      ] as const) {
+        if (nextProps[propKey]) {
+          const rawPoints: Pt[] = Array.isArray(nextProps.points) ? (nextProps.points as Pt[]) : [];
+          const size = (lineNode.schemaRef as any)?.size ?? { width: 100, height: 40 };
+          const lp = (lineNode.schemaRef as any)?.position ?? { x: 0, y: 0 };
+          const isNorm = rawPoints.every((p) => p.x >= 0 && p.x <= 1 && p.y <= 1);
+          const toLocal = (w: Pt): Pt =>
+            isNorm
+              ? { x: (w.x - lp.x) / size.width, y: (w.y - lp.y) / size.height }
+              : { x: w.x - lp.x, y: w.y - lp.y };
+          const ep = propKey === 'sourceNodeId' ? startWorld : endWorld;
+          const pts =
+            propKey === 'sourceNodeId'
+              ? [toLocal(ep), ...rawPoints.slice(1)]
+              : [...rawPoints.slice(0, -1), toLocal(ep)];
+          nextProps.points = pts;
+          delete nextProps[propKey];
+          delete nextProps[anchorKey];
+          delete nextProps[portKey];
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        updateNode(selectedLineId!, { props: nextProps });
+        onUserEdit?.();
+      }
     };
-  }, [dragState]);
 
-  if (!selectedLineId || !selectedLine) return null;
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [kernelStore, selectedLineId, state.nodesById, startWorld, endWorld, onUserEdit]);
 
-  const schema = selectedLine.schemaRef as any;
-  const props = schema.props || {};
-  const linePos = schema.position || { x: 0, y: 0 };
-  const size = schema.size || { width: 100, height: 100 };
-  const rawPoints = Array.isArray(props.points) ? props.points : [];
+  // ── Render helpers ────────────────────────────────────────────────────────
 
-  let startWorld = { x: linePos.x, y: linePos.y + size.height / 2 };
-  let endWorld = { x: linePos.x + size.width, y: linePos.y + size.height / 2 };
-
-  if (props.sourceNodeId && state.nodesById[props.sourceNodeId]) {
-    const boundSchema = state.nodesById[props.sourceNodeId]!.schemaRef as any;
-    startWorld = getAnchorWorldPosition(boundSchema, props.sourceAnchor || 'center');
-    // If exact port exists and is known, we could map it exactly, but standard getAnchor is usually close enough for overlay
-  } else if (rawPoints.length >= 2) {
-    startWorld = rawPoints[0]; // the world position from schema if manually disconnected
-  }
-
-  if (props.targetNodeId && state.nodesById[props.targetNodeId]) {
-    const boundSchema = state.nodesById[props.targetNodeId]!.schemaRef as any;
-    endWorld = getAnchorWorldPosition(boundSchema, props.targetAnchor || 'center');
-  } else if (rawPoints.length >= 2) {
-    endWorld = rawPoints[rawPoints.length - 1];
-  }
-
-  const handleSize = 14;
-
-  const renderHandle = (worldPos: { x: number; y: number }, endpoint: 'start' | 'end') => {
-    const isDragging = dragState?.endpoint === endpoint;
-    const isConnected = endpoint === 'start' ? !!props.sourceNodeId : !!props.targetNodeId;
-    const displayWorldPos = isDragging ? dragState.currentWorldPos : worldPos;
-    const screenPos = worldToScreen(displayWorldPos.x, displayWorldPos.y);
-    const borderColor = isConnected ? 'border-green-500' : 'border-[#6965db]';
-    const hoverBg = isConnected ? 'hover:bg-green-500/20' : 'hover:bg-[#6965db]/20';
+  const renderHandle = (endpoint: Endpoint, worldPos: Pt, isConnected: boolean) => {
+    const isDragging =
+      dragRef.current?.endpoint === endpoint && dragRef.current.lineId === selectedLineId;
+    const screen = worldToScreen(worldPos.x, worldPos.y);
+    const size = 14;
 
     return (
       <div
         key={endpoint}
         className={`absolute rounded-full border-2 cursor-grab transition-all duration-75 ${
           isDragging
-            ? 'bg-blue-500 border-blue-600 scale-125 shadow-lg'
-            : `bg-white ${borderColor} ${hoverBg} hover:scale-110`
+            ? 'bg-blue-500 border-blue-600 scale-125 shadow-lg z-[1003]'
+            : isConnected
+              ? 'bg-white border-green-500 hover:scale-110 z-[1001]'
+              : 'bg-white border-[#6965db] hover:scale-110 z-[1001]'
         }`}
         style={{
-          left: screenPos.x - handleSize / 2,
-          top: screenPos.y - handleSize / 2,
-          width: handleSize,
-          height: handleSize,
-          zIndex: 1000,
+          left: screen.x - size / 2,
+          top: screen.y - size / 2,
+          width: size,
+          height: size,
+          pointerEvents: 'auto' as const,
         }}
         onMouseDown={(e) => {
+          (e.nativeEvent as MouseEvent).stopImmediatePropagation();
           e.preventDefault();
-          e.stopPropagation();
-          setDragState({
+          isDraggingRef.current = true;
+          dragRef.current = {
             lineId: selectedLineId,
             endpoint,
-            startWorldPos: displayWorldPos,
-            currentWorldPos: displayWorldPos,
-          });
+            startWorld,
+            currentWorld: worldPos,
+            targetHover: null,
+          };
+          rerender();
         }}
-        onDoubleClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          const currentState = kernelStore.getState() as any;
-          const updateNode = currentState.updateNode;
-          if (!updateNode) return;
-          const propKey = endpoint === 'start' ? 'sourceNodeId' : 'targetNodeId';
-          const anchorKey = endpoint === 'start' ? 'sourceAnchor' : 'targetAnchor';
-          const portKey = endpoint === 'start' ? 'sourcePortId' : 'targetPortId';
-          if (props[propKey]) {
-            const nextProps = { ...props };
-            delete nextProps[propKey];
-            delete nextProps[anchorKey];
-            delete nextProps[portKey];
-            // Initialize unlinked points
-            const nextPoints = [...rawPoints];
-            if (nextPoints.length === 0) {
-              nextPoints.push(startWorld);
-              nextPoints.push(endWorld);
-            }
-            if (endpoint === 'start') nextPoints[0] = startWorld;
-            else nextPoints[nextPoints.length - 1] = endWorld;
-            nextProps.points = nextPoints;
-
-            updateNode(selectedLineId, { props: nextProps });
-            onUserEdit?.();
-          }
-        }}
-        title={isConnected ? '双击断开连接' : '拖动连接到其他组件'}
+        title={
+          isConnected
+            ? `${endpoint} endpoint — drag to reconnect or Delete to detach`
+            : `${endpoint} endpoint — drag to connect`
+        }
       />
     );
   };
 
   const renderDragLine = () => {
-    if (!dragState) return null;
-    const otherEndpoint = dragState.endpoint === 'start' ? endWorld : startWorld;
-    const startScreenPos = worldToScreen(otherEndpoint.x, otherEndpoint.y);
-    const endScreenPos = worldToScreen(dragState.currentWorldPos.x, dragState.currentWorldPos.y);
+    if (!dragRef.current || dragRef.current.lineId !== selectedLineId) return null;
+    const ds = dragRef.current;
+    const otherEnd = ds.endpoint === 'start' ? endWorld : startWorld;
+    const sp = worldToScreen(otherEnd.x, otherEnd.y);
+    const ep = worldToScreen(ds.currentWorld.x, ds.currentWorld.y);
+
+    if (routerType === 'orthogonal') {
+      const routePts = buildOrthogonalRoute(
+        otherEnd,
+        ds.currentWorld,
+        ds.endpoint === 'start'
+          ? (props.sourceAnchor as AnchorId)
+          : (props.targetAnchor as AnchorId),
+        ds.endpoint === 'start'
+          ? (props.targetAnchor as AnchorId)
+          : (props.sourceAnchor as AnchorId),
+      );
+      const first = routePts[0]!;
+      let pathD = `M ${first.x} ${first.y}`;
+      for (let i = 1; i < routePts.length; i++) {
+        const p = routePts[i]!;
+        pathD += ` L ${p.x} ${p.y}`;
+      }
+      return (
+        <svg
+          className="absolute inset-0 pointer-events-none z-[999]"
+          style={{ overflow: 'visible' }}
+        >
+          <path
+            d={pathD}
+            stroke="#6965db"
+            strokeWidth={2}
+            strokeDasharray="6 4"
+            fill="none"
+            vectorEffect="non-scaling-stroke"
+            transform={`translate(${viewport.offsetX},${viewport.offsetY}) scale(${viewport.zoom})`}
+          />
+        </svg>
+      );
+    }
 
     return (
-      <svg className="fixed inset-0 pointer-events-none" style={{ zIndex: 999 }}>
+      <svg className="absolute inset-0 pointer-events-none z-[999]" style={{ overflow: 'visible' }}>
         <line
-          x1={startScreenPos.x}
-          y1={startScreenPos.y}
-          x2={endScreenPos.x}
-          y2={endScreenPos.y}
+          x1={sp.x}
+          y1={sp.y}
+          x2={ep.x}
+          y2={ep.y}
           stroke="#6965db"
           strokeWidth={2}
           strokeDasharray="6 4"
@@ -291,12 +411,19 @@ export default function LineConnectionTool({
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none" style={{ zIndex: 998 }}>
-      <PortOverlay hoveredAnchor={hoveredAnchor} worldToScreen={worldToScreen} state={state} />
-      <div className="pointer-events-auto">
-        {renderHandle(startWorld, 'start')}
-        {renderHandle(endWorld, 'end')}
+    <div className="absolute inset-0 pointer-events-none z-[998]">
+      <PortOverlay
+        hoveredAnchor={hoveredAnchorRef.current}
+        worldToScreen={worldToScreen}
+        state={state}
+        viewport={viewport}
+      />
+
+      <div className="pointer-events-none">
+        {renderHandle('start', startWorld, !!props.sourceNodeId)}
+        {renderHandle('end', endWorld, !!props.targetNodeId)}
       </div>
+
       {renderDragLine()}
     </div>
   );

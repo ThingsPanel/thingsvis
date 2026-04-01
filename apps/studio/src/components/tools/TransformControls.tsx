@@ -985,7 +985,16 @@ export default function TransformControls({
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
-    if (!enabled) return;
+    const clearConnectorMoveableClass = () => {
+      (dragContainerRef?.current || containerRef.current)?.classList.remove(
+        'connector-moveable-minimal',
+      );
+    };
+
+    if (!enabled) {
+      clearConnectorMoveableClass();
+      return;
+    }
     if (!moveableRef.current) return;
 
     // Use dragContainerRef since Moveable is mounted there, fallback to containerRef
@@ -1006,32 +1015,18 @@ export default function TransformControls({
         return !!node && !node.locked;
       });
 
-      // Generic lines remain lightweight connectors.
-      const anyLinesSelected = validSelectedIds.some((id) =>
-        isLineNodeType(state.nodesById[id]?.schemaRef?.type),
-      );
-      const anyPipesSelected = validSelectedIds.some((id) =>
-        isPipeNodeType(state.nodesById[id]?.schemaRef?.type),
-      );
-      const anyConnectedLinesSelected = validSelectedIds.some((id) => {
-        const node = state.nodesById[id];
-        if (!isLineNodeType(node?.schemaRef?.type)) return false;
-        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
-        return !!(props.sourceNodeId || props.targetNodeId);
-      });
-      const anyConnectedPipesSelected = validSelectedIds.some((id) => {
-        const node = state.nodesById[id];
-        if (!isPipeNodeType(node?.schemaRef?.type)) return false;
-        const props = (node?.schemaRef?.props ?? {}) as Record<string, unknown>;
-        return !!(props.sourceNodeId || props.targetNodeId);
-      });
+      // Connectors need Moveable as drag target (proxy hit area); resize/rotate stay off when any
+      // connector is selected. Endpoint handles still win via stopImmediatePropagation on the overlay.
+      const moveableTargetIds = validSelectedIds;
 
-      const moveableTargetIds = validSelectedIds.filter((id) => {
-        const type = state.nodesById[id]?.schemaRef?.type;
-        if (!isConnectorNodeType(type)) return true;
-        const props = (state.nodesById[id]?.schemaRef as any)?.props ?? {};
-        return !(props.sourceNodeId && props.targetNodeId);
-      });
+      const anyConnectorSelected = validSelectedIds.some((id) =>
+        isConnectorNodeType(state.nodesById[id]?.schemaRef?.type),
+      );
+      const onlyConnectorsSelected =
+        validSelectedIds.length > 0 &&
+        validSelectedIds.every((id) => isConnectorNodeType(state.nodesById[id]?.schemaRef?.type));
+
+      queryContainer.classList.toggle('connector-moveable-minimal', onlyConnectorsSelected);
 
       const targets = moveableTargetIds
         .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
@@ -1046,24 +1041,25 @@ export default function TransformControls({
         return (widget as any)?.resizable === false;
       });
 
-      // Disable transforms for locked nodes
+      // Disable transforms for locked nodes and non-resizable widgets
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
 
-      const anyFullyBoundConnector = validSelectedIds.some((id) => {
-        if (!isConnectorNodeType(state.nodesById[id]?.schemaRef?.type)) return false;
-        const props = (state.nodesById[id]?.schemaRef as any)?.props ?? {};
-        return !!(props.sourceNodeId && props.targetNodeId);
-      });
-      moveableRef.current.draggable = !hasLockedSelection && !anyFullyBoundConnector;
-
-      // Keep connector editing on the custom overlay rather than Moveable handles.
-      const anyConnector = validSelectedIds.some((id) =>
-        isConnectorNodeType(state.nodesById[id]?.schemaRef?.type),
-      );
+      moveableRef.current.draggable = !hasLockedSelection && moveableTargetIds.length > 0;
       moveableRef.current.resizable =
-        !hasLockedSelection && !anyConnector && !anyNonResizableSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyConnector;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyConnector;
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
+      moveableRef.current.rotatable =
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
+      moveableRef.current.pinchable =
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
 
       moveableRef.current.target = targets;
 
@@ -1124,7 +1120,18 @@ export default function TransformControls({
       window.clearInterval(viewportPollTimerRef.current);
       viewportPollTimerRef.current = null;
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled, getViewport]);
+
+    return () => {
+      clearConnectorMoveableClass();
+    };
+  }, [
+    state.selection.nodeIds,
+    state.nodesById,
+    containerRef,
+    dragContainerRef,
+    enabled,
+    getViewport,
+  ]);
 
   return null;
 }
