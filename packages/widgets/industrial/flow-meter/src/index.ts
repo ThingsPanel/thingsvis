@@ -8,6 +8,8 @@ import en from './locales/en.json';
 function renderFlowMeter(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'block';
+  element.style.lineHeight = '0';
 
   const range = props.max - props.min;
   const percentage = range === 0
@@ -18,7 +20,7 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
   const animationDuration = props.flowSpeed > 0 ? `${(1 / props.flowSpeed).toFixed(2)}s` : '0s';
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 120 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 120 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
     <style>
       @keyframes flow {
@@ -41,17 +43,17 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
   </defs>
 
   <!-- 左右短管 -->
-  <rect x="0" y="24" width="10" height="12" fill="#475569"/>
-  <rect x="110" y="24" width="10" height="12" fill="#475569"/>
+  <rect x="0" y="23" width="10" height="14" fill="#475569"/>
+  <rect x="110" y="23" width="10" height="14" fill="#475569"/>
 
   <!-- 流量计主体 - 撑满 -->
-  <rect x="10" y="10" width="100" height="40" rx="5" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="2"/>
+  <rect x="10" y="7" width="100" height="46" rx="5" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="2"/>
 
   <!-- 观察窗背景 -->
-  <rect x="16" y="16" width="88" height="16" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <rect x="16" y="15" width="88" height="18" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1"/>
 
   <!-- 液体填充 -->
-  <rect x="18" y="18" width="${percentage * 0.8}" height="12" rx="2" fill="url(#liquidGradient)"/>
+  <rect x="18" y="17" width="${percentage * 0.84}" height="14" rx="2" fill="url(#liquidGradient)"/>
 
   <!-- 流动效果线 -->
   ${props.flowSpeed > 0 ? `
@@ -60,20 +62,20 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
   ` : ''}
 
   <!-- 刻度线 -->
-  <line x1="24" y1="20" x2="24" y2="28" stroke="#475569" stroke-width="1"/>
-  <line x1="60" y1="20" x2="60" y2="28" stroke="#475569" stroke-width="1"/>
-  <line x1="96" y1="20" x2="96" y2="28" stroke="#475569" stroke-width="1"/>
+  <line x1="24" y1="19" x2="24" y2="29" stroke="#475569" stroke-width="1"/>
+  <line x1="60" y1="19" x2="60" y2="29" stroke="#475569" stroke-width="1"/>
+  <line x1="96" y1="19" x2="96" y2="29" stroke="#475569" stroke-width="1"/>
 
   <!-- 数值显示 -->
   ${props.showValue ? `
-  <text x="60" y="42" text-anchor="middle" fill="#e2e8f0" font-size="12" font-family="sans-serif" font-weight="bold">
+  <text x="60" y="46" text-anchor="middle" fill="#e2e8f0" font-size="12" font-family="sans-serif" font-weight="bold">
     ${Math.round(props.value)}
   </text>
   ` : ''}
 
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="10" y="10" width="100" height="40" rx="5" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
+  <rect x="10" y="7" width="100" height="46" rx="5" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}

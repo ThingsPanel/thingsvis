@@ -8,6 +8,8 @@ import en from './locales/en.json';
 function renderGauge(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'block';
+  element.style.lineHeight = '0';
 
   const range = props.max - props.min;
   const percentage = range === 0
@@ -18,9 +20,13 @@ function renderGauge(element: HTMLElement, props: Props): void {
   const dialColor = props.hasError ? '#7f1d1d' : (props.dialColor || '#334155');
   const pointerColor = props.hasError ? '#ff4d4f' : (props.pointerColor || '#0ea5e9');
   const scaleColor = props.hasError ? '#fca5a5' : '#94a3b8';
+  const connectorWidth = 15;
+  const connectorHeight = 9;
+  const connectorX = (80 - connectorWidth) / 2;
+  const connectorY = 70;
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
     <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:${lightenColor(dialColor, 10)};stop-opacity:1" />
@@ -29,30 +35,30 @@ function renderGauge(element: HTMLElement, props: Props): void {
   </defs>
 
   <!-- 表盘外圈 - 撑满 -->
-  <circle cx="40" cy="38" r="36" fill="url(#dialGradient)" stroke="${scaleColor}" stroke-width="2"/>
+  <circle cx="40" cy="36" r="34" fill="url(#dialGradient)" stroke="${scaleColor}" stroke-width="2"/>
 
   <!-- 刻度圈 -->
-  <circle cx="40" cy="38" r="30" fill="none" stroke="${scaleColor}" stroke-width="1" opacity="0.5"/>
+  <circle cx="40" cy="36" r="28" fill="none" stroke="${scaleColor}" stroke-width="1" opacity="0.5"/>
 
   <!-- 刻度线 - 0, 50, 100 -->
-  ${generateScaleTicks(scaleColor)}
+  ${generateScaleTicks(scaleColor, 40, 36)}
 
   <!-- 指针旋转组 -->
-  <g transform="rotate(${angle}, 40, 38)">
-    <path d="M 40 38 L 40 10 L 43 20 L 40 38 Z" fill="${pointerColor}" />
-    <path d="M 40 38 L 40 10 L 37 20 L 40 38 Z" fill="${darkenColor(pointerColor, 20)}" />
+  <g transform="rotate(${angle}, 40, 36)">
+    <path d="M 40 36 L 40 10 L 43 20 L 40 36 Z" fill="${pointerColor}" />
+    <path d="M 40 36 L 40 10 L 37 20 L 40 36 Z" fill="${darkenColor(pointerColor, 20)}" />
   </g>
 
   <!-- 中心圆点 -->
-  <circle cx="40" cy="38" r="5" fill="#475569" stroke="${scaleColor}" stroke-width="1"/>
-  <circle cx="40" cy="38" r="3" fill="${pointerColor}"/>
+  <circle cx="40" cy="36" r="5" fill="#475569" stroke="${scaleColor}" stroke-width="1"/>
+  <circle cx="40" cy="36" r="3" fill="${pointerColor}"/>
 
   <!-- 底部表接头 -->
-  <rect x="34" y="74" width="12" height="6" fill="#475569"/>
+  <rect x="${connectorX}" y="${connectorY}" width="${connectorWidth}" height="${connectorHeight}" fill="#475569"/>
 
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <circle cx="40" cy="38" r="36" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
+  <circle cx="40" cy="36" r="34" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </circle>
   ` : ''}
@@ -60,20 +66,18 @@ function renderGauge(element: HTMLElement, props: Props): void {
 `;
 }
 
-function generateScaleTicks(color: string): string {
+function generateScaleTicks(color: string, cx: number, cy: number): string {
   const ticks: string[] = [];
   const positions = [0, 50, 100];
-  const cx = 40;
-  const cy = 38;
 
   for (const pos of positions) {
     const angle = -135 + (pos / 100) * 270;
     const rad = (angle * Math.PI) / 180;
 
-    const x1 = cx + 26 * Math.cos(rad);
-    const y1 = cy + 26 * Math.sin(rad);
-    const x2 = cx + 30 * Math.cos(rad);
-    const y2 = cy + 30 * Math.sin(rad);
+    const x1 = cx + 24 * Math.cos(rad);
+    const y1 = cy + 24 * Math.sin(rad);
+    const x2 = cx + 28 * Math.cos(rad);
+    const y2 = cy + 28 * Math.sin(rad);
 
     ticks.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="2" stroke-linecap="round"/>`);
   }

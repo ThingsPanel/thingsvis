@@ -5,6 +5,12 @@ import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
 import { resolveCanvasDragCommit, shouldCommitCanvasDrag } from '@/lib/canvasInteraction';
+import {
+  getAspectRatioFromSize,
+  getStoredAspectRatio,
+  isAspectRatioLocked,
+  resizeDimensionWithAspectRatio,
+} from '@/lib/canvas/aspectRatio';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -16,6 +22,31 @@ function isPipeNodeType(type: string | undefined): boolean {
 
 function isConnectorNodeType(type: string | undefined): boolean {
   return isLineNodeType(type) || isPipeNodeType(type);
+}
+
+function resolveNodeAspectRatio(
+  schema:
+    | {
+        size?: { width?: number; height?: number };
+        props?: Record<string, unknown>;
+      }
+    | null
+    | undefined,
+  widgetConstraints?: { aspectRatio?: number },
+): number | undefined {
+  const fixedAspectRatio = widgetConstraints?.aspectRatio;
+  if (typeof fixedAspectRatio === 'number' && fixedAspectRatio > 0) {
+    return fixedAspectRatio;
+  }
+
+  if (!isAspectRatioLocked(schema?.props)) {
+    return undefined;
+  }
+
+  return (
+    getStoredAspectRatio(schema?.props) ??
+    getAspectRatioFromSize(schema?.size?.width, schema?.size?.height)
+  );
 }
 
 /** Grid layout handlers from useGridLayout hook */
@@ -822,7 +853,17 @@ export default function TransformControls({
           const widgetType = schema?.type as string | undefined;
           if (widgetType) {
             const widget = getResolvedWidget(widgetType);
-            nodeConstraintsRef.current[nodeId] = (widget as any)?.constraints ?? {};
+            const widgetConstraints = ((widget as any)?.constraints ?? {}) as {
+              minWidth?: number;
+              minHeight?: number;
+              maxWidth?: number;
+              maxHeight?: number;
+              aspectRatio?: number;
+            };
+            nodeConstraintsRef.current[nodeId] = {
+              ...widgetConstraints,
+              aspectRatio: resolveNodeAspectRatio(schema, widgetConstraints),
+            };
           }
         }
 
@@ -837,13 +878,20 @@ export default function TransformControls({
         const constraints = nodeId ? (nodeConstraintsRef.current[nodeId] ?? {}) : {};
         let w = width;
         let h = height;
-        if (constraints.minWidth != null) w = Math.max(w, constraints.minWidth);
-        if (constraints.minHeight != null) h = Math.max(h, constraints.minHeight);
-        if (constraints.maxWidth != null) w = Math.min(w, constraints.maxWidth);
-        if (constraints.maxHeight != null) h = Math.min(h, constraints.maxHeight);
         if (constraints.aspectRatio != null) {
-          // Lock aspect ratio: adjust height based on clamped width
-          h = Math.round(w / constraints.aspectRatio);
+          const nextSize = resizeDimensionWithAspectRatio('width', w, constraints.aspectRatio, {
+            minWidth: constraints.minWidth,
+            minHeight: constraints.minHeight,
+            maxWidth: constraints.maxWidth,
+            maxHeight: constraints.maxHeight,
+          });
+          w = nextSize.width;
+          h = nextSize.height;
+        } else {
+          if (constraints.minWidth != null) w = Math.max(w, constraints.minWidth);
+          if (constraints.minHeight != null) h = Math.max(h, constraints.minHeight);
+          if (constraints.maxWidth != null) w = Math.min(w, constraints.maxWidth);
+          if (constraints.maxHeight != null) h = Math.min(h, constraints.maxHeight);
         }
         target.style.width = `${w}px`;
         target.style.height = `${h}px`;
@@ -893,10 +941,26 @@ export default function TransformControls({
 
           // Clamp to widget constraints one final time
           const constraints = nodeConstraintsRef.current[nodeId] ?? {};
-          if (constraints.minWidth != null) width = Math.max(width, constraints.minWidth);
-          if (constraints.minHeight != null) height = Math.max(height, constraints.minHeight);
-          if (constraints.maxWidth != null) width = Math.min(width, constraints.maxWidth);
-          if (constraints.maxHeight != null) height = Math.min(height, constraints.maxHeight);
+          if (constraints.aspectRatio != null) {
+            const nextSize = resizeDimensionWithAspectRatio(
+              'width',
+              width,
+              constraints.aspectRatio,
+              {
+                minWidth: constraints.minWidth,
+                minHeight: constraints.minHeight,
+                maxWidth: constraints.maxWidth,
+                maxHeight: constraints.maxHeight,
+              },
+            );
+            width = nextSize.width;
+            height = nextSize.height;
+          } else {
+            if (constraints.minWidth != null) width = Math.max(width, constraints.minWidth);
+            if (constraints.minHeight != null) height = Math.max(height, constraints.minHeight);
+            if (constraints.maxWidth != null) width = Math.min(width, constraints.maxWidth);
+            if (constraints.maxHeight != null) height = Math.min(height, constraints.maxHeight);
+          }
 
           // Grid mode: convert pixel coords to grid coords and use grid-aware action
           if (isGridModeRef.current) {
@@ -1051,6 +1115,20 @@ export default function TransformControls({
         return (widget as any)?.resizable === false;
       });
 
+      const singleSelectedNodeId = validSelectedIds.length === 1 ? validSelectedIds[0] : null;
+      const singleSelectedNode = singleSelectedNodeId
+        ? state.nodesById[singleSelectedNodeId]
+        : null;
+      const singleWidgetType = (singleSelectedNode?.schemaRef as any)?.type as string | undefined;
+      const singleWidget = singleWidgetType ? getResolvedWidget(singleWidgetType) : null;
+      const keepRatio =
+        !anyConnectorSelected &&
+        moveableTargetIds.length === 1 &&
+        !!resolveNodeAspectRatio(
+          (singleSelectedNode?.schemaRef as any) ?? null,
+          ((singleWidget as any)?.constraints ?? {}) as { aspectRatio?: number },
+        );
+
       // Disable transforms for locked nodes and non-resizable widgets
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
 
@@ -1070,6 +1148,7 @@ export default function TransformControls({
         !anyNonResizableSelected &&
         moveableTargetIds.length > 0 &&
         !anyConnectorSelected;
+      moveableRef.current.keepRatio = keepRatio;
 
       moveableRef.current.target = targets;
 

@@ -8,6 +8,8 @@ import en from './locales/en.json';
 function renderValve(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'block';
+  element.style.lineHeight = '0';
 
   const bodyColor = props.hasError ? '#ff4d4f' : '#334155';
   const pipeColor = props.hasError ? '#ff7875' : '#475569';
@@ -17,7 +19,7 @@ function renderValve(element: HTMLElement, props: Props): void {
   const flangeColor = props.hasError ? '#ff7875' : '#64748b';
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 -8 100 76" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 -8 100 76" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
     <linearGradient id="valveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:${lightenColor(bodyColor, 15)};stop-opacity:1" />
@@ -26,16 +28,20 @@ function renderValve(element: HTMLElement, props: Props): void {
   </defs>
 
   <!-- 左短管 -->
-  <rect x="0" y="24" width="20" height="12" fill="${pipeColor}"/>
+  <rect x="0" y="23" width="10" height="14" fill="${pipeColor}"/>
   
   <!-- 右短管 -->
-  <rect x="80" y="24" width="20" height="12" fill="${pipeColor}"/>
+  <rect x="90" y="23" width="10" height="14" fill="${pipeColor}"/>
 
   <!-- 左法兰 - 紧贴阀体 -->
-  <rect x="20" y="18" width="6" height="24" fill="${flangeColor}"/>
+  <rect x="10" y="20" width="5" height="20" fill="${flangeColor}"/>
   
   <!-- 右法兰 - 紧贴阀体 -->
-  <rect x="74" y="18" width="6" height="24" fill="${flangeColor}"/>
+  <rect x="85" y="20" width="5" height="20" fill="${flangeColor}"/>
+
+  <!-- 宸﹀彸杩囨浮绠￠亾 -->
+  <rect x="15" y="24" width="11" height="12" fill="${pipeColor}"/>
+  <rect x="74" y="24" width="11" height="12" fill="${pipeColor}"/>
 
   <!-- 阀体 -->
   <circle cx="50" cy="30" r="24" fill="url(#valveGrad)" stroke="#1e293b" stroke-width="2"/>

@@ -18,7 +18,7 @@ export const PropsSchema = z.object({
   targetAnchor: z.enum(['top', 'right', 'bottom', 'left', 'center']).optional(),
 
   // === 管道外观 ===
-  pipeColor: z.string().default('#2563eb'),       // 液体/主色
+  pipeColor: z.string().default('#334155'),       // 液体/主色
   pipeBackground: z.string().default('#0f172a'),   // 管壁色
   strokeWidth: z.number().min(2).max(80).default(12),
   opacity: z.number().min(0).max(1).default(1),
@@ -28,12 +28,12 @@ export const PropsSchema = z.object({
   flowSpeed: z.number().min(0).max(1000).default(60),
   flowLength: z.number().min(1).max(200).default(16),
   flowSpacing: z.number().min(2).max(200).default(24),
-  flowColor: z.string().default('#38bdf8'),
+  flowColor: z.string().default('#0ea5e9'),
   flowDirection: z.enum(['forward', 'reverse']).default('forward'),
 
   // === 发光 ===
   glowEnabled: z.boolean().default(false),
-  glowColor: z.string().default('#38bdf8'),
+  glowColor: z.string().default('#0ea5e9'),
   glowIntensity: z.number().min(1).max(10).default(3),
 
   // =========================

@@ -25,6 +25,14 @@ import EventsTab from './EventsTab';
 
 import { getResolvedWidget, loadWidget } from '@/lib/registry/componentLoader';
 import { getWidgetControls } from '@/lib/registry/getControls';
+import {
+  ASPECT_RATIO_PROP,
+  KEEP_ASPECT_RATIO_PROP,
+  getAspectRatioFromSize,
+  getStoredAspectRatio,
+  isAspectRatioLocked,
+  resizeDimensionWithAspectRatio,
+} from '@/lib/canvas/aspectRatio';
 import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
 import { resolveControlText } from '@/lib/i18n/controlText';
 import ControlFieldRow from './ControlFieldRow';
@@ -112,7 +120,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     // eslint-disable-next-line no-console
   }, [widgetEntry, controls, controlsParse.issues]);
 
-  // Early return 必须在所有 Hook 之后（Rules of Hooks）
+  // Early return ????????Hook ?????ules of Hooks??
   if (!node) return null;
 
   function updateNode(changes: any) {
@@ -126,8 +134,8 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     kernelStore.getState().updateNode(nodeId, changes);
     onUserEdit?.();
   }
+
   const addBinding = () => {
-    // 默认绑定到 text 属性
     const newBindings = [
       ...bindings,
       { targetProp: 'text', expression: '{{ ds.<id>.data.<path> }}' },
@@ -146,8 +154,14 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     updateNode({ data: newBindings });
   };
 
-  // 判断组件是否支持调整尺寸（resizable: false 的组件不显示宽高设置）
   const isResizable = (widgetEntry as any)?.resizable !== false;
+  const widgetConstraints = ((widgetEntry as any)?.constraints ?? {}) as {
+    minWidth?: number;
+    minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    aspectRatio?: number;
+  };
 
   const renderGeometry = () => {
     // In grid mode, schema.grid is the sole position/size authority.
@@ -180,6 +194,16 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
       displayH = schema.size?.height ?? 0;
     }
 
+    const currentProps = (schema.props ?? {}) as Record<string, unknown>;
+    const widgetAspectRatio =
+      typeof widgetConstraints.aspectRatio === 'number' && widgetConstraints.aspectRatio > 0
+        ? widgetConstraints.aspectRatio
+        : undefined;
+    const storedAspectRatio = getStoredAspectRatio(currentProps);
+    const editableAspectRatio = storedAspectRatio ?? getAspectRatioFromSize(displayW, displayH);
+    const dynamicAspectRatioLocked = isAspectRatioLocked(currentProps);
+    const aspectRatioLocked = widgetAspectRatio != null || dynamicAspectRatioLocked;
+
     const handlePositionChange = (axis: 'x' | 'y', value: number) => {
       if (isGridMode && gridSettings && containerWidth > 0) {
         const newX = axis === 'x' ? value : displayX;
@@ -193,11 +217,22 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     };
 
     const handleSizeChange = (dimension: 'width' | 'height', value: number) => {
+      const nextSize =
+        aspectRatioLocked && (widgetAspectRatio ?? editableAspectRatio) != null
+          ? resizeDimensionWithAspectRatio(
+              dimension,
+              value,
+              widgetAspectRatio ?? editableAspectRatio!,
+              widgetConstraints,
+            )
+          : {
+              width: dimension === 'width' ? value : displayW,
+              height: dimension === 'height' ? value : displayH,
+            };
+
       if (isGridMode && gridSettings && containerWidth > 0) {
-        const newW = dimension === 'width' ? value : displayW;
-        const newH = dimension === 'height' ? value : displayH;
         const gridSize = pixelToGrid(
-          { x: 0, y: 0, width: newW, height: newH },
+          { x: 0, y: 0, width: nextSize.width, height: nextSize.height },
           gridSettings,
           containerWidth,
         );
@@ -207,8 +242,27 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         });
         onUserEdit?.();
       } else {
-        updateNode({ size: { [dimension]: value } });
+        updateNode({ size: nextSize });
       }
+    };
+
+    const handleAspectRatioToggle = () => {
+      if (widgetAspectRatio != null) {
+        return;
+      }
+
+      const nextAspectRatio = editableAspectRatio ?? getAspectRatioFromSize(displayW, displayH);
+      if (!nextAspectRatio) {
+        return;
+      }
+
+      updateNode({
+        props: {
+          ...currentProps,
+          [KEEP_ASPECT_RATIO_PROP]: !dynamicAspectRatioLocked,
+          [ASPECT_RATIO_PROP]: !dynamicAspectRatioLocked ? nextAspectRatio : undefined,
+        },
+      });
     };
 
     return (
@@ -242,33 +296,45 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         </div>
         {/* 只有 resizable 组件才显示宽高设置 */}
         {isResizable && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {t('propsPanel.width')}
-              </label>
-              <NumericInput
-                value={displayW}
-                onValueChange={(nextValue) => {
-                  if (nextValue === undefined) return;
-                  handleSizeChange('width', nextValue);
-                }}
-                className="h-8 text-sm"
-              />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.width')}
+                </label>
+                <NumericInput
+                  value={displayW}
+                  onValueChange={(nextValue) => {
+                    if (nextValue === undefined) return;
+                    handleSizeChange('width', nextValue);
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.height')}
+                </label>
+                <NumericInput
+                  value={displayH}
+                  onValueChange={(nextValue) => {
+                    if (nextValue === undefined) return;
+                    handleSizeChange('height', nextValue);
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {t('propsPanel.height')}
-              </label>
-              <NumericInput
-                value={displayH}
-                onValueChange={(nextValue) => {
-                  if (nextValue === undefined) return;
-                  handleSizeChange('height', nextValue);
-                }}
-                className="h-8 text-sm"
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={aspectRatioLocked}
+                onChange={handleAspectRatioToggle}
+                disabled={widgetAspectRatio != null}
+                className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0"
               />
-            </div>
+              <span>{t('propsPanel.lockAspectRatio', '\u9501\u5b9a\u6bd4\u4f8b')}</span>
+            </label>
           </div>
         )}
         {/* 旋转角度 */}
