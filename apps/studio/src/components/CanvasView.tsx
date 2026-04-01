@@ -118,31 +118,45 @@ function buildPipeProxySegments(
     const localEnd = { x: end.x - nodePosition.x, y: end.y - nodePosition.y };
     const dx = localEnd.x - localStart.x;
     const dy = localEnd.y - localStart.y;
+    const approxHorizontal = Math.abs(dy) <= 2;
+    const approxVertical = Math.abs(dx) <= 2;
 
     if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) continue;
 
-    if (Math.abs(dy) < 0.5) {
+    if (approxHorizontal) {
+      const y = (localStart.y + localEnd.y) / 2;
       const left = Math.min(localStart.x, localEnd.x) - half;
       segments.push({
         key: `h-${index}`,
         left,
-        top: localStart.y - half,
+        top: y - half,
         width: Math.abs(dx) + hitThickness,
         height: hitThickness,
       });
       continue;
     }
 
-    if (Math.abs(dx) < 0.5) {
+    if (approxVertical) {
+      const x = (localStart.x + localEnd.x) / 2;
       const top = Math.min(localStart.y, localEnd.y) - half;
       segments.push({
         key: `v-${index}`,
-        left: localStart.x - half,
+        left: x - half,
         top,
         width: hitThickness,
         height: Math.abs(dy) + hitThickness,
       });
+      continue;
     }
+
+    // Fall back to a padded bbox hit area for any legacy non-orthogonal segment.
+    segments.push({
+      key: `d-${index}`,
+      left: Math.min(localStart.x, localEnd.x) - half,
+      top: Math.min(localStart.y, localEnd.y) - half,
+      width: Math.abs(dx) + hitThickness,
+      height: Math.abs(dy) + hitThickness,
+    });
   }
 
   return segments;
@@ -1002,6 +1016,7 @@ const CanvasView = forwardRef<
                   ? pipeProxySegments.map((segment) => (
                       <div
                         key={segment.key}
+                        data-node-id={node.id}
                         className="pipe-proxy-hit"
                         style={{
                           position: 'absolute',

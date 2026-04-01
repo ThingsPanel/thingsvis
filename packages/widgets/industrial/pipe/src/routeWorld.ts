@@ -499,6 +499,100 @@ function pipeSimplifyOrthogonal(points: Pt[]): Pt[] {
   return current;
 }
 
+function pipeCollapseFreeTerminalJog(
+  points: Pt[],
+  options: {
+    collapseStart?: boolean;
+    collapseEnd?: boolean;
+    threshold?: number;
+  },
+): Pt[] {
+  const threshold = Math.max(1, options.threshold ?? 12);
+  let current = pipeSimplifyOrthogonal(points);
+
+  if (options.collapseStart && current.length === 4) {
+    const a = current[0]!;
+    const b = current[1]!;
+    const c = current[2]!;
+    const d = current[3]!;
+    const middleLength = Math.abs(c.x - b.x) + Math.abs(c.y - b.y);
+    if (middleLength <= threshold) {
+      const firstHorizontal = pipeIsHorizontal(a, b);
+      const lastHorizontal = pipeIsHorizontal(c, d);
+      const firstVertical = pipeIsVertical(a, b);
+      const lastVertical = pipeIsVertical(c, d);
+      if (firstHorizontal && lastHorizontal) {
+        current = pipeSimplifyOrthogonal([
+          { x: a.x, y: a.y },
+          { x: d.x, y: a.y },
+        ]);
+      } else if (firstVertical && lastVertical) {
+        current = pipeSimplifyOrthogonal([
+          { x: a.x, y: a.y },
+          { x: a.x, y: d.y },
+        ]);
+      }
+    }
+  }
+
+  if (options.collapseEnd && current.length === 4) {
+    const a = current[0]!;
+    const b = current[1]!;
+    const c = current[2]!;
+    const d = current[3]!;
+    const middleLength = Math.abs(c.x - b.x) + Math.abs(c.y - b.y);
+    if (middleLength <= threshold) {
+      const firstHorizontal = pipeIsHorizontal(a, b);
+      const lastHorizontal = pipeIsHorizontal(c, d);
+      const firstVertical = pipeIsVertical(a, b);
+      const lastVertical = pipeIsVertical(c, d);
+      if (firstHorizontal && lastHorizontal) {
+        current = pipeSimplifyOrthogonal([
+          { x: a.x, y: d.y },
+          { x: d.x, y: d.y },
+        ]);
+      } else if (firstVertical && lastVertical) {
+        current = pipeSimplifyOrthogonal([
+          { x: d.x, y: a.y },
+          { x: d.x, y: d.y },
+        ]);
+      }
+    }
+  }
+
+  if (options.collapseStart && current.length >= 3) {
+    const start = current[0]!;
+    const elbow = current[1]!;
+    const next = current[2]!;
+    const startLength = Math.abs(elbow.x - start.x) + Math.abs(elbow.y - start.y);
+    const elbowToNextHorizontal = pipeIsHorizontal(elbow, next);
+    const elbowToNextVertical = pipeIsVertical(elbow, next);
+    if (startLength <= threshold && (elbowToNextHorizontal || elbowToNextVertical)) {
+      current = pipeSimplifyOrthogonal([
+        elbowToNextHorizontal ? { x: start.x, y: elbow.y } : { x: elbow.x, y: start.y },
+        ...current.slice(1),
+      ]);
+    }
+  }
+
+  if (options.collapseEnd && current.length >= 3) {
+    const prev = current[current.length - 3]!;
+    const elbow = current[current.length - 2]!;
+    const end = current[current.length - 1]!;
+    const endLength = Math.abs(end.x - elbow.x) + Math.abs(end.y - elbow.y);
+    const prevToElbowHorizontal = pipeIsHorizontal(prev, elbow);
+    const prevToElbowVertical = pipeIsVertical(prev, elbow);
+    if (endLength <= threshold && (prevToElbowHorizontal || prevToElbowVertical)) {
+      current = pipeSimplifyOrthogonal([
+        ...current.slice(0, -1),
+        prevToElbowHorizontal ? { x: end.x, y: elbow.y } : { x: elbow.x, y: end.y },
+      ]);
+    }
+  }
+
+  return current;
+}
+
 function worldToLocal(worldPt: Pt, nodePosition: Pt): Pt {
   return {
     x: worldPt.x - nodePosition.x,
@@ -664,7 +758,21 @@ function worldToLocalPoints(points: Pt[], nodePosition: Pt): Pt[] {
 
 function normalizeLocalRoutePoints(points?: Pt[]): Pt[] {
   if (!Array.isArray(points) || points.length < 2) return [];
-  return pipeSimplifyOrthogonal(points.map((point) => ({ x: point.x, y: point.y })));
+  const normalized = points.map((point) => ({ x: point.x, y: point.y }));
+  if (normalized.length === 2) {
+    const start = normalized[0]!;
+    const end = normalized[1]!;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    if (Math.abs(dy) <= 2) {
+      return pipeSimplifyOrthogonal([start, { x: end.x, y: start.y }]);
+    }
+    if (Math.abs(dx) <= 2) {
+      return pipeSimplifyOrthogonal([start, { x: start.x, y: end.y }]);
+    }
+    return pipeSimplifyOrthogonal(pipeBuildSimpleElbow(start, end));
+  }
+  return pipeSimplifyOrthogonal(normalized);
 }
 
 function buildDefaultLocalEndpoints(size: { width: number; height: number }) {
@@ -810,6 +918,7 @@ export function computeIndustrialPipeLocalRoute(
   }
 
   let waypoints = props.waypoints;
+  const hasStoredWaypoints = Array.isArray(props.waypoints) && props.waypoints.length > 0;
   if (!waypoints || waypoints.length === 0) {
     waypoints = explicitWaypoints.length > 0
       ? explicitWaypoints
@@ -908,7 +1017,13 @@ export function computeIndustrialPipeLocalRoute(
     );
   }
 
-  return routePoints;
+  const collapseFreeStart = !(sourceNode || sourceDomNode || props.sourcePortId);
+  const collapseFreeEnd = !(targetNode || targetDomNode || props.targetPortId);
+  return pipeCollapseFreeTerminalJog(routePoints, {
+    collapseStart: collapseFreeStart && !hasStoredWaypoints,
+    collapseEnd: collapseFreeEnd && !hasStoredWaypoints,
+    threshold: Math.max(12, Number(props.strokeWidth ?? 12)),
+  });
 }
 
 /** World-space polyline for Studio overlays — matches widget geometry. */

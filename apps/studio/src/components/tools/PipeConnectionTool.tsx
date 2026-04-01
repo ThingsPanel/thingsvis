@@ -159,6 +159,54 @@ function resolveExpectedEndpointWorld(
   return getAnchorWorld(nodeToLayout(targetNode as any), anchor ?? 'center');
 }
 
+function routePointsChanged(a: Pt[], b: Pt[], eps = 0.5): boolean {
+  if (a.length !== b.length) return true;
+  return a.some(
+    (point, index) =>
+      Math.abs(point.x - b[index]!.x) > eps || Math.abs(point.y - b[index]!.y) > eps,
+  );
+}
+
+function collapseRenderedFreeJog(points: Pt[], props: Record<string, unknown>): Pt[] {
+  if (points.length < 3) return points;
+  const threshold = Math.max(12, Number(props.strokeWidth ?? 12));
+  const hasStoredWaypoints = Array.isArray(props.waypoints) && props.waypoints.length > 0;
+  if (hasStoredWaypoints) return points;
+
+  const collapseStart = !props.sourceNodeId && !props.sourcePortId;
+  const collapseEnd = !props.targetNodeId && !props.targetPortId;
+
+  if (collapseStart) {
+    const start = points[0]!;
+    const elbow = points[1]!;
+    const next = points[2]!;
+    const startLength = Math.abs(elbow.x - start.x) + Math.abs(elbow.y - start.y);
+    const secondHorizontal = Math.abs(next.y - elbow.y) <= 0.5;
+    const secondVertical = Math.abs(next.x - elbow.x) <= 0.5;
+    if (startLength <= threshold && (secondHorizontal || secondVertical)) {
+      return secondHorizontal
+        ? [{ x: start.x, y: elbow.y }, ...points.slice(2)]
+        : [{ x: elbow.x, y: start.y }, ...points.slice(2)];
+    }
+  }
+
+  if (collapseEnd) {
+    const prev = points[points.length - 3]!;
+    const elbow = points[points.length - 2]!;
+    const end = points[points.length - 1]!;
+    const endLength = Math.abs(end.x - elbow.x) + Math.abs(end.y - elbow.y);
+    const prevHorizontal = Math.abs(prev.y - elbow.y) <= 0.5;
+    const prevVertical = Math.abs(prev.x - elbow.x) <= 0.5;
+    if (endLength <= threshold && (prevHorizontal || prevVertical)) {
+      return prevHorizontal
+        ? [...points.slice(0, -2), { x: end.x, y: elbow.y }]
+        : [...points.slice(0, -2), { x: elbow.x, y: end.y }];
+    }
+  }
+
+  return points;
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PipeConnectionTool({
@@ -394,6 +442,39 @@ export default function PipeConnectionTool({
     });
     onUserEdit?.();
   }, [kernelStore, onUserEdit, routePoints.pipeId, state, viewport.zoom]);
+
+  useEffect(() => {
+    if (dragRef.current) return;
+    if (!routePoints.pipeId) return;
+
+    const pipeNode = state.nodesById[routePoints.pipeId];
+    if (!pipeNode) return;
+
+    const nodeProps = ((pipeNode.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
+    const renderedWorldPoints = getRenderedPipeWorldPoints(
+      routePoints.pipeId,
+      pipeNode,
+      String(nodeProps.pipeColor ?? '#2563eb'),
+      viewport,
+      containerRef?.current ?? null,
+    );
+    if (renderedWorldPoints.length < 3) return;
+
+    const collapsed = collapseRenderedFreeJog(renderedWorldPoints, nodeProps);
+    if (!routePointsChanged(renderedWorldPoints, collapsed)) return;
+
+    const fitted = fitWorldRouteToNodeBox(collapsed, nodeProps.strokeWidth);
+    kernelStore.getState().updateNode(routePoints.pipeId, {
+      position: fitted.position,
+      size: fitted.size,
+      props: {
+        ...nodeProps,
+        points: fitted.points,
+        waypoints: fitted.waypoints,
+      },
+    });
+    onUserEdit?.();
+  }, [containerRef, kernelStore, onUserEdit, routePoints.pipeId, state, viewport]);
 
   useEffect(() => {
     if (!routePoints.pipeId) return;

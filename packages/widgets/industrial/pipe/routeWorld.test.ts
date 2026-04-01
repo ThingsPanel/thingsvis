@@ -301,6 +301,70 @@ describe('industrial pipe routeWorld helpers', () => {
     ]);
   });
 
+  it('collapses a tiny jog on the free side of a one-sided bound route', () => {
+    const route = computeIndustrialPipeLocalRoute(
+      {
+        ...getDefaultProps(),
+        strokeWidth: 14,
+        targetNodeId: 'right',
+        targetAnchor: 'right',
+        points: [
+          { x: 381.7495073394965, y: 44 },
+          { x: 44, y: 44 },
+        ],
+      },
+      { width: 425.7495073394965, height: 88 },
+      { x: 223.5, y: 626.242715258805 },
+      {
+        right: {
+          id: 'right',
+          position: { x: 147.5, y: 620.875 },
+          size: { width: 120, height: 80 },
+        },
+      },
+      { viewport: { zoom: 1, offsetX: 0, offsetY: 0 }, containerEl: null },
+    );
+
+    expect(route).toHaveLength(2);
+    expect(route[0]!.x).toBeCloseTo(381.75, 2);
+    expect(route[0]!.y).toBeCloseTo(34.632, 2);
+    expect(route[1]!.x).toBe(44);
+    expect(route[1]!.y).toBeCloseTo(34.632, 2);
+  });
+
+  it('collapses a tiny bridge between two parallel runs on the free side', () => {
+    const route = computeIndustrialPipeLocalRoute(
+      {
+        ...getDefaultProps(),
+        strokeWidth: 14,
+        targetNodeId: 'right',
+        targetAnchor: 'right',
+        points: [
+          { x: 381.7495073394965, y: 53.36771525880499 },
+          { x: 212.87475366974826, y: 53.36771525880499 },
+          { x: 212.87475366974826, y: 44 },
+          { x: 44, y: 44 },
+        ],
+      },
+      { width: 425.7495073394965, height: 88 },
+      { x: 223.5, y: 616.875 },
+      {
+        right: {
+          id: 'right',
+          position: { x: 147.5, y: 620.875 },
+          size: { width: 120, height: 80 },
+        },
+      },
+      { viewport: { zoom: 1, offsetX: 0, offsetY: 0 }, containerEl: null },
+    );
+
+    expect(route).toHaveLength(2);
+    expect(route[0]!.x).toBeCloseTo(381.75, 2);
+    expect(route[0]!.y).toBeCloseTo(44, 2);
+    expect(route[1]!.x).toBe(44);
+    expect(route[1]!.y).toBeCloseTo(44, 2);
+  });
+
   it('round-trips a world route into canonical local points and waypoints', () => {
     const route = [
       { x: 320, y: 180 },
