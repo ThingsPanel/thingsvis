@@ -101,7 +101,7 @@ curl -X POST /api/v1/dashboards/dash_123/share \
 
 ```html
 <iframe 
-  src="https://thingsvis.example.com/embed/dashboard?id=dash_123&shareToken=xxx"
+  src="https://thingsvis.example.com/#/embed?id=dash_123&shareToken=xxx"
   width="100%" 
   height="600">
 </iframe>

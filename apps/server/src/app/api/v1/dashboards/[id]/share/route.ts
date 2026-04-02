@@ -42,10 +42,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     },
   });
 
-  // Get the host from request headers for building full URL
-  const host = request.headers.get('host') || 'localhost:3000';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
-  const shareUrl = `${protocol}://${host}/embed/dashboard?id=${id}&shareToken=${shareToken}`;
+  // Build embed URL with frontend origin, falling back to current request host.
+  const frontendOrigin =
+    process.env.AUTH_URL ||
+    `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${request.headers.get('host') || 'localhost:3000'}`;
+  const shareUrl = `${frontendOrigin}/#/embed?id=${id}&shareToken=${shareToken}`;
 
   return NextResponse.json({
     shareUrl,
@@ -85,13 +86,13 @@ export async function GET(request: NextRequest, { params }: Params) {
     });
   }
 
-  // Get the host from request headers for building full URL
-  const host = request.headers.get('host') || 'localhost:3000';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const frontendOrigin =
+    process.env.AUTH_URL ||
+    `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${request.headers.get('host') || 'localhost:3000'}`;
 
   // Mask the token for security (show only first 8 chars)
   const maskedToken = dashboard.shareToken.substring(0, 8) + '****';
-  const maskedUrl = `${protocol}://${host}/embed/dashboard?id=${id}&shareToken=${maskedToken}`;
+  const maskedUrl = `${frontendOrigin}/#/embed?id=${id}&shareToken=${maskedToken}`;
 
   return NextResponse.json({
     enabled: true,

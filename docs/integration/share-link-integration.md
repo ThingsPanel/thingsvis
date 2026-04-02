@@ -42,7 +42,7 @@ Content-Type: application/json
 响应：
 ```json
 {
-  "shareUrl": "https://thingsvis.example.com/embed/dashboard?id=<id>&shareToken=<token>",
+  "shareUrl": "https://thingsvis.example.com/#/embed?id=<id>&shareToken=<token>",
   "expiresAt": "2026-04-03T10:00:00Z"
 }
 ```
@@ -58,7 +58,7 @@ Authorization: Bearer <token>
 ```json
 {
   "enabled": true,
-  "url": "https://thingsvis.example.com/embed/dashboard?id=<id>&shareToken=****",
+  "url": "https://thingsvis.example.com/#/embed?id=<id>&shareToken=****",
   "expiresAt": "2026-04-03T10:00:00Z"
 }
 ```
@@ -125,14 +125,14 @@ await revokeShareLink('dash_123');
 ```html
 <!-- 分享链接嵌入（推荐） -->
 <iframe 
-  src="https://thingsvis.example.com/embed/dashboard?id=dash_123&shareToken=xxx"
+  src="https://thingsvis.example.com/#/embed?id=dash_123&shareToken=xxx"
   width="100%" 
   height="600">
 </iframe>
 
 <!-- SSO Token 嵌入（向后兼容） -->
 <iframe 
-  src="https://thingsvis.example.com/embed/dashboard?id=dash_123&token=<jwt>"
+  src="https://thingsvis.example.com/#/embed?id=dash_123&token=<jwt>"
   width="100%" 
   height="600">
 </iframe>
