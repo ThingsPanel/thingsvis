@@ -109,40 +109,15 @@ export const Main = defineWidget({
   controls,
   render: (element: HTMLElement, props: Props) => {
     let currentProps = normalizeProps(props as Partial<Props>);
-    let animHandle: number | undefined;
-
-    const stopPulse = () => {
-      if (animHandle !== undefined) {
-        window.clearInterval(animHandle);
-        animHandle = undefined;
-      }
-      element.style.opacity = '';
-    };
-
-    const startPulse = () => {
-      stopPulse();
-      let t = 0;
-      animHandle = window.setInterval(() => {
-        t += 0.12;
-        element.style.opacity = String(0.2 + 0.8 * (0.5 + 0.5 * Math.sin(t)));
-      }, 50);
-    };
 
     renderSvg(element, currentProps);
-    if (currentProps.animateEnabled) startPulse();
 
     return {
       update: (nextProps: Props) => {
         currentProps = normalizeProps(nextProps as Partial<Props>);
         renderSvg(element, currentProps);
-        if (currentProps.animateEnabled) {
-          if (animHandle === undefined) startPulse();
-        } else {
-          stopPulse();
-        }
       },
       destroy: () => {
-        stopPulse();
         element.innerHTML = '';
       },
     };

@@ -5,8 +5,8 @@ export const CENTRIFUGAL_PUMP_SVG = `<svg width="100%" height="100%" viewBox="0 
       <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="2" y="18" width="18" height="24" fill="#64748b"/>
-  <rect x="80" y="18" width="18" height="24" fill="#64748b"/>
+  <rect x="2" y="18" width="26" height="24" fill="#64748b"/>
+  <rect x="72" y="18" width="26" height="24" fill="#64748b"/>
   <circle cx="50" cy="30" r="24" fill="url(#pumpGrad)" stroke="#1e293b" stroke-width="2"/>
   <g id="tv-rotor">
     <path d="M 50 30 L 50 12 Q 61 20 50 30" fill="#0ea5e9" opacity="0.9"/>
