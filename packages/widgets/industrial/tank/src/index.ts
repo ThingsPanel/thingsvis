@@ -65,11 +65,23 @@ function renderTank(element: HTMLElement, props: Props): void {
     <clipPath id="tankClip">
       <rect x="${tankX}" y="${tankInnerY}" width="${tankWidth}" height="${tankInnerHeight}" rx="6" ry="6"/>
     </clipPath>
+    <radialGradient id="tankCapGrad" cx="38%" cy="35%" r="62%">
+      <stop offset="0%" style="stop-color:${lightenColor(tankColor, 32)};stop-opacity:1" />
+      <stop offset="55%" style="stop-color:${lightenColor(tankColor, 8)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(tankColor, 22)};stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="tankConnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${darkenColor(tankColor, 10)};stop-opacity:1" />
+      <stop offset="40%" style="stop-color:${lightenColor(tankColor, 20)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(tankColor, 10)};stop-opacity:1" />
+    </linearGradient>
   </defs>
 
-  <rect x="${connectorX}" y="${8 - connectorHeight}" width="${connectorWidth}" height="${connectorHeight}" fill="#475569"/>
+  <rect x="${connectorX}" y="${8 - connectorHeight}" width="${connectorWidth}" height="${connectorHeight}" rx="1" fill="url(#tankConnGrad)" stroke="#1e293b" stroke-width="0.8"/>
 
-  <rect x="${tankX}" y="8" width="${tankWidth}" height="84" rx="6" ry="6" fill="url(#tankGradient)" stroke="#1e293b" stroke-width="2"/>
+  <rect x="${tankX}" y="8" width="${tankWidth}" height="84" rx="6" ry="6" fill="url(#tankGradient)" stroke="#1e293b" stroke-width="1.5"/>
+  <ellipse cx="${tankX + tankWidth / 2}" cy="9" rx="${tankWidth / 2 - 1}" ry="4" fill="url(#tankCapGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="${tankX + 2}" y1="18" x2="${tankX + 2}" y2="84" stroke="${lightenColor(tankColor, 32)}" stroke-width="0.8" opacity="0.3" stroke-linecap="round"/>
   <rect x="10" y="14" width="28" height="10" rx="3" fill="#0f172a" fill-opacity="0.55" stroke="#475569" stroke-width="0.8"/>
   <text x="24" y="21" text-anchor="middle" fill="${valueColor}" font-size="6.5" font-family="sans-serif" font-weight="bold">${actualValueLabel}</text>
 
@@ -91,7 +103,7 @@ function renderTank(element: HTMLElement, props: Props): void {
   <text x="${scaleLabelX}" y="52.5" text-anchor="end" fill="${tickColor}" font-size="5.5" font-family="sans-serif" font-weight="bold">50</text>
   <text x="${scaleLabelX}" y="86.5" text-anchor="end" fill="${tickColor}" font-size="5.5" font-family="sans-serif" font-weight="bold">0</text>
 
-  <rect x="${connectorX}" y="92" width="${connectorWidth}" height="${connectorHeight}" fill="#475569"/>
+  <rect x="${connectorX}" y="92" width="${connectorWidth}" height="${connectorHeight}" rx="1" fill="url(#tankConnGrad)" stroke="#1e293b" stroke-width="0.8"/>
 
   ${props.hasError ? `
   <rect x="${tankX}" y="8" width="${tankWidth}" height="84" rx="6" ry="6" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
@@ -110,6 +122,15 @@ function lightenColor(hex: string, percent: number): string {
   const R = Math.min(255, (num >> 16) + amt);
   const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
   const B = Math.min(255, (num & 0x0000ff) + amt);
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+}
+
+function darkenColor(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, (num >> 16) - amt);
+  const G = Math.max(0, ((num >> 8) & 0x00ff) - amt);
+  const B = Math.max(0, (num & 0x0000ff) - amt);
   return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
 }
 

@@ -31,9 +31,19 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
         animation: flow ${animationDuration} linear infinite;
       }
     </style>
-    <linearGradient id="caseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 10)};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${baseColor};stop-opacity:1" />
+    <linearGradient id="fmCaseGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 28)};stop-opacity:1" />
+      <stop offset="38%" style="stop-color:${lightenColor(baseColor, 10)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(baseColor, 18)};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="fmPipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 18)};stop-opacity:1" />
+      <stop offset="42%" style="stop-color:${lightenColor(baseColor, 28)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(baseColor, 8)};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="fmFlangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 18)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(baseColor, 12)};stop-opacity:1" />
     </linearGradient>
     <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:${liquidColor};stop-opacity:0.8" />
@@ -42,29 +52,46 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
     </linearGradient>
   </defs>
 
-  <!-- 左右短管 -->
-  <rect x="0" y="23" width="10" height="14" fill="#475569"/>
-  <rect x="110" y="23" width="10" height="14" fill="#475569"/>
+  <!-- 左管道 -->
+  <rect x="0" y="24" width="10" height="12" fill="url(#fmPipeGrad)"/>
+  <line x1="0" y1="24" x2="10" y2="24" stroke="${lightenColor(baseColor, 32)}" stroke-width="1"/>
+  <line x1="0" y1="36" x2="10" y2="36" stroke="${darkenColor(baseColor, 22)}" stroke-width="1"/>
+  <!-- 左法兰 -->
+  <rect x="9" y="19" width="6" height="22" rx="1" fill="url(#fmFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="10.5" y1="22" x2="10.5" y2="38" stroke="${lightenColor(baseColor, 28)}" stroke-width="0.8" opacity="0.55"/>
 
-  <!-- 流量计主体 - 撑满 -->
-  <rect x="10" y="7" width="100" height="46" rx="5" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="2"/>
+  <!-- 右管道 -->
+  <rect x="110" y="24" width="10" height="12" fill="url(#fmPipeGrad)"/>
+  <line x1="110" y1="24" x2="120" y2="24" stroke="${lightenColor(baseColor, 32)}" stroke-width="1"/>
+  <line x1="110" y1="36" x2="120" y2="36" stroke="${darkenColor(baseColor, 22)}" stroke-width="1"/>
+  <!-- 右法兰 -->
+  <rect x="105" y="19" width="6" height="22" rx="1" fill="url(#fmFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="109.5" y1="22" x2="109.5" y2="38" stroke="${lightenColor(baseColor, 28)}" stroke-width="0.8" opacity="0.55"/>
+
+  <!-- 表壳阴影 -->
+  <rect x="15" y="8.5" width="90" height="46" rx="5" fill="${darkenColor(baseColor, 30)}" opacity="0.25"/>
+  <!-- 流量计主体 -->
+  <rect x="15" y="7" width="90" height="46" rx="5" fill="url(#fmCaseGrad)" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- 表壳高光弧 -->
+  <path d="M 17 9 L 80 9" fill="none" stroke="${lightenColor(baseColor, 38)}" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
 
   <!-- 观察窗背景 -->
-  <rect x="16" y="15" width="88" height="18" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <rect x="22" y="15" width="76" height="18" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+  <line x1="23" y1="16" x2="96" y2="16" stroke="#475569" stroke-width="0.8" opacity="0.4"/>
 
   <!-- 液体填充 -->
-  <rect x="18" y="17" width="${percentage * 0.84}" height="14" rx="2" fill="url(#liquidGradient)"/>
+  <rect x="24" y="17" width="${percentage * 0.72}" height="14" rx="2" fill="url(#liquidGradient)"/>
 
   <!-- 流动效果线 -->
   ${props.flowSpeed > 0 ? `
-  <line x1="20" y1="24" x2="100" y2="24" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2"
+  <line x1="26" y1="24" x2="96" y2="24" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2"
     stroke-dasharray="5,5" class="flow-anim" opacity="0.8"/>
   ` : ''}
 
   <!-- 刻度线 -->
-  <line x1="24" y1="19" x2="24" y2="29" stroke="#475569" stroke-width="1"/>
-  <line x1="60" y1="19" x2="60" y2="29" stroke="#475569" stroke-width="1"/>
-  <line x1="96" y1="19" x2="96" y2="29" stroke="#475569" stroke-width="1"/>
+  <line x1="30" y1="17" x2="30" y2="27" stroke="#475569" stroke-width="1"/>
+  <line x1="60" y1="17" x2="60" y2="27" stroke="#475569" stroke-width="1"/>
+  <line x1="90" y1="17" x2="90" y2="27" stroke="#475569" stroke-width="1"/>
 
   <!-- 数值显示 -->
   ${props.showValue ? `
@@ -75,7 +102,7 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
 
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="10" y="7" width="100" height="46" rx="5" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
+  <rect x="15" y="7" width="90" height="46" rx="5" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}

@@ -18,31 +18,68 @@ function renderPump(element: HTMLElement, props: Props): void {
   element.innerHTML = `
 <svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
-    <linearGradient id="pumpGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:${lightenColor(currentBaseColor, 10)};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${currentBaseColor};stop-opacity:1" />
+    <radialGradient id="pumpHousingGrad" cx="38%" cy="32%" r="62%">
+      <stop offset="0%" style="stop-color:${lightenColor(currentBaseColor, 30)};stop-opacity:1" />
+      <stop offset="50%" style="stop-color:${lightenColor(currentBaseColor, 8)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(currentBaseColor, 18)};stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="pumpPipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(currentBaseColor, 18)};stop-opacity:1" />
+      <stop offset="45%" style="stop-color:${lightenColor(currentBaseColor, 28)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(currentBaseColor, 8)};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="pumpFlangeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(currentBaseColor, 22)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(currentBaseColor, 12)};stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bladeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(impellerColor, 22)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(impellerColor, 8)};stop-opacity:0.88" />
     </linearGradient>
   </defs>
 
-  <!-- 左短管 -->
-  <rect x="0" y="23" width="10" height="14" fill="#475569"/>
+  <!-- 左管道 -->
+  <rect x="0" y="24" width="16" height="12" fill="url(#pumpPipeGrad)"/>
+  <line x1="0" y1="24" x2="16" y2="24" stroke="${lightenColor(currentBaseColor, 32)}" stroke-width="1"/>
+  <line x1="0" y1="36" x2="16" y2="36" stroke="${darkenColor(currentBaseColor, 22)}" stroke-width="1"/>
 
-  <!-- 右短管 -->
-  <rect x="90" y="23" width="10" height="14" fill="#475569"/>
+  <!-- 左法兰 -->
+  <rect x="15" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="16.5" y1="22" x2="16.5" y2="38" stroke="${lightenColor(currentBaseColor, 28)}" stroke-width="0.8" opacity="0.6"/>
 
-  <rect x="10" y="24" width="16" height="12" fill="${darkenColor(currentBaseColor, 6)}"/>
-  <rect x="74" y="24" width="16" height="12" fill="${darkenColor(currentBaseColor, 6)}"/>
+  <!-- 右管道 -->
+  <rect x="84" y="24" width="16" height="12" fill="url(#pumpPipeGrad)"/>
+  <line x1="84" y1="24" x2="100" y2="24" stroke="${lightenColor(currentBaseColor, 32)}" stroke-width="1"/>
+  <line x1="84" y1="36" x2="100" y2="36" stroke="${darkenColor(currentBaseColor, 22)}" stroke-width="1"/>
 
-  <!-- Pump housing - 主体 -->
-  <circle cx="50" cy="30" r="24" fill="url(#pumpGrad)" stroke="#1e293b" stroke-width="2"/>
+  <!-- 右法兰 -->
+  <rect x="79" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="83.5" y1="22" x2="83.5" y2="38" stroke="${lightenColor(currentBaseColor, 28)}" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- 泵壳阴影 -->
+  <circle cx="50" cy="31.5" r="24" fill="${darkenColor(currentBaseColor, 30)}" opacity="0.3"/>
+
+  <!-- 泵壳主体 -->
+  <circle cx="50" cy="30" r="24" fill="url(#pumpHousingGrad)" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- 泵壳高光弧 -->
+  <path d="M 31 19 A 24 24 0 0 1 60 8" fill="none" stroke="${lightenColor(currentBaseColor, 38)}" stroke-width="1.5" stroke-linecap="round" opacity="0.55"/>
 
   <!-- 叶轮 -->
   <g>
-    <path d="M 50 30 L 50 15 Q 61 22 50 30" fill="${impellerColor}" opacity="0.9"/>
-    <path d="M 50 30 L 65 30 Q 58 45 50 30" fill="${impellerColor}" opacity="0.8"/>
-    <path d="M 50 30 L 50 45 Q 39 38 50 30" fill="${impellerColor}" opacity="0.9"/>
-    <path d="M 50 30 L 35 30 Q 42 15 50 30" fill="${impellerColor}" opacity="0.8"/>
-    <circle cx="50" cy="30" r="4.5" fill="#1e293b" stroke="#1e293b" stroke-width="1"/>
+    <path d="M 50 30 C 49 21 53 14 50 14 Q 62 21 50 30" fill="url(#bladeGrad)" opacity="0.92"/>
+    <path d="M 50 30 C 59 29 66 33 66 30 Q 59 44 50 30" fill="url(#bladeGrad)" opacity="0.82"/>
+    <path d="M 50 30 C 51 39 47 46 50 46 Q 38 39 50 30" fill="url(#bladeGrad)" opacity="0.92"/>
+    <path d="M 50 30 C 41 31 34 27 34 30 Q 41 16 50 30" fill="url(#bladeGrad)" opacity="0.82"/>
+
+    <!-- 轮毂外环 -->
+    <circle cx="50" cy="30" r="7.5" fill="${darkenColor(currentBaseColor, 22)}" stroke="#1e293b" stroke-width="1.5"/>
+    <!-- 轮毂内环 -->
+    <circle cx="50" cy="30" r="5.5" fill="${lightenColor(currentBaseColor, 6)}" stroke="#0f172a" stroke-width="1"/>
+    <!-- 轮毂高光 -->
+    <circle cx="48.5" cy="28.5" r="1.8" fill="${lightenColor(currentBaseColor, 38)}" opacity="0.65"/>
+    <!-- 中心螺栓 -->
+    <circle cx="50" cy="30" r="2" fill="#0f172a"/>
 
     ${props.isRunning && props.rpm > 0 ? `
     <animateTransform
@@ -56,7 +93,7 @@ function renderPump(element: HTMLElement, props: Props): void {
     ` : ''}
   </g>
 
-  <!-- Fault pulse -->
+  <!-- 故障闪烁 -->
   ${props.hasError ? `
   <circle cx="50" cy="30" r="24" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>

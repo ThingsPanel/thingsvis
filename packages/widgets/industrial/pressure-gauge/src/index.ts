@@ -28,33 +28,59 @@ function renderGauge(element: HTMLElement, props: Props): void {
   element.innerHTML = `
 <svg width="100%" height="100%" viewBox="0 0 80 80" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
-    <linearGradient id="dialGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:${lightenColor(dialColor, 10)};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${dialColor};stop-opacity:1" />
+    <radialGradient id="gaugeRimGrad" cx="36%" cy="32%" r="64%">
+      <stop offset="0%" style="stop-color:${lightenColor(dialColor, 28)};stop-opacity:1" />
+      <stop offset="55%" style="stop-color:${lightenColor(dialColor, 6)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(dialColor, 22)};stop-opacity:1" />
+    </radialGradient>
+    <radialGradient id="gaugeDialGrad" cx="38%" cy="34%" r="62%">
+      <stop offset="0%" style="stop-color:${lightenColor(dialColor, 18)};stop-opacity:1" />
+      <stop offset="60%" style="stop-color:${dialColor};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(dialColor, 18)};stop-opacity:1" />
+    </radialGradient>
+    <linearGradient id="gaugeConnGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:${darkenColor(dialColor, 8)};stop-opacity:1" />
+      <stop offset="40%" style="stop-color:${lightenColor(dialColor, 18)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${darkenColor(dialColor, 8)};stop-opacity:1" />
     </linearGradient>
   </defs>
 
-  <!-- 表盘外圈 - 撑满 -->
-  <circle cx="40" cy="36" r="34" fill="url(#dialGradient)" stroke="${scaleColor}" stroke-width="2"/>
+  <!-- 表盘外圈阴影 -->
+  <circle cx="40" cy="37" r="34" fill="${darkenColor(dialColor, 30)}" opacity="0.25"/>
+  <!-- 表盘外圈（金属框架） -->
+  <circle cx="40" cy="36" r="34" fill="url(#gaugeRimGrad)" stroke="#1e293b" stroke-width="1.5"/>
+  <!-- 外圈高光弧 -->
+  <path d="M 20 21 A 34 34 0 0 1 55 8" fill="none" stroke="${lightenColor(dialColor, 40)}" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- 表盘面（白色圆） -->
+  <circle cx="40" cy="36" r="27" fill="#f1f5f9" stroke="${lightenColor(dialColor, 6)}" stroke-width="1"/>
 
   <!-- 刻度圈 -->
-  <circle cx="40" cy="36" r="28" fill="none" stroke="${scaleColor}" stroke-width="1" opacity="0.5"/>
+  <circle cx="40" cy="36" r="23" fill="none" stroke="${scaleColor}" stroke-width="0.8" opacity="0.4"/>
 
-  <!-- 刻度线 - 0, 50, 100 -->
+  <!-- 刻度线 -->
   ${generateScaleTicks(scaleColor, 40, 36)}
 
   <!-- 指针旋转组 -->
   <g transform="rotate(${angle}, 40, 36)">
-    <path d="M 40 36 L 40 10 L 43 20 L 40 36 Z" fill="${pointerColor}" />
-    <path d="M 40 36 L 40 10 L 37 20 L 40 36 Z" fill="${darkenColor(pointerColor, 20)}" />
+    <path d="M 40 36 L 40 14 L 42.5 22 L 40 36 Z" fill="${pointerColor}" />
+    <path d="M 40 36 L 40 14 L 37.5 22 L 40 36 Z" fill="${darkenColor(pointerColor, 22)}" />
   </g>
 
-  <!-- 中心圆点 -->
-  <circle cx="40" cy="36" r="5" fill="#475569" stroke="${scaleColor}" stroke-width="1"/>
-  <circle cx="40" cy="36" r="3" fill="${pointerColor}"/>
+  <!-- 中心轴斟外圈 -->
+  <circle cx="40" cy="36" r="6" fill="${darkenColor(dialColor, 12)}" stroke="${scaleColor}" stroke-width="1"/>
+  <!-- 中心轴斟内圈 -->
+  <circle cx="40" cy="36" r="4" fill="${lightenColor(dialColor, 6)}"/>
+  <!-- 中心点 -->
+  <circle cx="40" cy="36" r="2.5" fill="${pointerColor}"/>
+  <!-- 中心高光 -->
+  <circle cx="39.2" cy="35.2" r="1" fill="white" opacity="0.5"/>
 
-  <!-- 底部表接头 -->
-  <rect x="${connectorX}" y="${connectorY}" width="${connectorWidth}" height="${connectorHeight}" fill="#475569"/>
+  <!-- 表接头阴影 -->
+  <rect x="${connectorX}" y="${connectorY + 1}" width="${connectorWidth}" height="${connectorHeight}" rx="1" fill="${darkenColor(dialColor, 30)}" opacity="0.25"/>
+  <!-- 表接头 -->
+  <rect x="${connectorX}" y="${connectorY}" width="${connectorWidth}" height="${connectorHeight}" rx="1" fill="url(#gaugeConnGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="${connectorX + 1}" y1="${connectorY + 1.5}" x2="${connectorX + connectorWidth - 1}" y2="${connectorY + 1.5}" stroke="${lightenColor(dialColor, 26)}" stroke-width="0.8" opacity="0.5"/>
 
   <!-- 故障闪烁 -->
   ${props.hasError ? `

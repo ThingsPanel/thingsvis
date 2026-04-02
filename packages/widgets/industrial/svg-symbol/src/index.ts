@@ -43,15 +43,45 @@ function expandRootViewBox(svgText: string): string {
 }
 
 /**
- * Inject SVG-native blade rotation into elements wrapped with <g id="tv-rotor">.
- * Only pump impeller and fan blades use this marker.
+ * Inject SVG-native animations for all recognised animation markers:
+ *   tv-rotor     — rotary blade (pump, fan)
+ *   tv-wifi-1/2/3 — IoT WiFi arcs inner→outer sweep
+ *   tv-wifi-dot   — IoT center signal dot pulse
  */
-function injectRotation(svgText: string): string {
-  const marker = '<g id="tv-rotor">';
-  if (!svgText.includes(marker)) return svgText;
-  const anim =
-    '<animateTransform attributeName="transform" type="rotate" from="0 50 30" to="360 50 30" dur="1.2s" repeatCount="indefinite" additive="sum"/>';
-  return svgText.replace(marker, `${marker}${anim}`);
+function injectAnimations(svgText: string): string {
+  let result = svgText;
+
+  // Rotary blade
+  const rotorMarker = '<g id="tv-rotor">';
+  if (result.includes(rotorMarker)) {
+    const anim =
+      '<animateTransform attributeName="transform" type="rotate" from="0 50 30" to="360 50 30" dur="1.2s" repeatCount="indefinite" additive="sum"/>';
+    result = result.replace(rotorMarker, `${rotorMarker}${anim}`);
+  }
+
+  // WiFi signal sweep: inner arc fires first, outer last (0.4 s stagger)
+  const wifiSweep: Array<{ id: string; begin: string }> = [
+    { id: 'tv-wifi-3', begin: '0s' },
+    { id: 'tv-wifi-2', begin: '0.4s' },
+    { id: 'tv-wifi-1', begin: '0.8s' },
+  ];
+  for (const { id, begin } of wifiSweep) {
+    result = result.replace(
+      new RegExp(`(<g id="${id}"[^>]*>)`),
+      `$1<animate attributeName="opacity" values="0.1;1;0.1" dur="1.5s" begin="${begin}" repeatCount="indefinite"/>`,
+    );
+  }
+
+  // Center dot gentle breathe
+  const dotMarker = '<g id="tv-wifi-dot">';
+  if (result.includes(dotMarker)) {
+    result = result.replace(
+      dotMarker,
+      `${dotMarker}<animate attributeName="opacity" values="0.5;1;0.5" dur="0.9s" repeatCount="indefinite"/>`,
+    );
+  }
+
+  return result;
 }
 
 function injectStatusDot(svgText: string, mode: Props['stateMode']): string {
@@ -62,7 +92,7 @@ function injectStatusDot(svgText: string, mode: Props['stateMode']): string {
   const parts = rawViewBox.trim().split(/\s+/).map((p) => Number.parseFloat(p));
   if (parts.length !== 4 || parts.some((v) => Number.isNaN(v))) return svgText;
   const [minX, minY, width, height] = parts as [number, number, number, number];
-  const r = Math.min(width, height) * 0.1;
+  const r = Math.min(width, height) * 0.055;
   // Place dot inside the viewBox with full margin so expandRootViewBox won't clip it
   const cx = minX + width - r * 2;
   const cy = minY + height - r * 2;
@@ -79,7 +109,7 @@ function renderSvg(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
 
-  const fallbackSvg = INDUSTRIAL_ICONS_MAP['heat-exchanger']?.svgContent ?? '';
+  const fallbackSvg = INDUSTRIAL_ICONS_MAP['iot-device']?.svgContent ?? '';
   let finalSvg = '';
 
   const selectedIcon = props.selectedIconId ? INDUSTRIAL_ICONS_MAP[props.selectedIconId] : undefined;
@@ -91,7 +121,7 @@ function renderSvg(element: HTMLElement, props: Props): void {
   // Inject dot BEFORE expanding viewBox — expansion then adds margin around the dot too
   finalSvg = injectStatusDot(finalSvg, props.stateMode);
   finalSvg = expandRootViewBox(finalSvg);
-  if (props.animateEnabled) finalSvg = injectRotation(finalSvg);
+  if (props.animateEnabled) finalSvg = injectAnimations(finalSvg);
   element.innerHTML = finalSvg;
 }
 

@@ -3,7 +3,7 @@ import { z } from 'zod';
 const StateModeSchema = z.enum(['normal', 'running', 'warning', 'fault', 'offline']);
 
 export const PropsSchema = z.object({
-  selectedIconId: z.string().default('heat-exchanger'),
+  selectedIconId: z.string().default('iot-device'),
   svgContent: z.string().default(''),
   /** Flat top-level key — avoids SDK shallow-merge losing nested state props. */
   stateMode: StateModeSchema.optional(),

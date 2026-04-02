@@ -21,7 +21,7 @@ export const controls: WidgetControls = {
           path: 'selectedIconId',
           kind: 'select',
           label: 'controls.industrial-svg-symbol.selectedIconId',
-          default: 'heat-exchanger',
+          default: 'iot-device',
           options: buildIconOptions(),
           binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
