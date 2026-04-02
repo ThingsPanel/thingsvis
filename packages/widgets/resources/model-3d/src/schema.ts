@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+export const CameraPresetSchema = z.object({
+  id: z.string().default('preset-1').describe('Camera preset id'),
+  name: z.string().default('').describe('Camera preset name'),
+  positionX: z.number().min(-1000).max(1000).default(4).describe('Preset camera X'),
+  positionY: z.number().min(-1000).max(1000).default(2).describe('Preset camera Y'),
+  positionZ: z.number().min(-1000).max(1000).default(6).describe('Preset camera Z'),
+  targetX: z.number().min(-1000).max(1000).default(0).describe('Preset target X'),
+  targetY: z.number().min(-1000).max(1000).default(0).describe('Preset target Y'),
+  targetZ: z.number().min(-1000).max(1000).default(0).describe('Preset target Z'),
+  fov: z.number().min(10).max(120).optional().describe('Preset camera field of view'),
+  near: z.number().min(0.001).max(100).optional().describe('Preset near plane'),
+  far: z.number().min(1).max(10000).optional().describe('Preset far plane'),
+  minDistance: z.number().min(0.001).max(1000).optional().describe('Preset minimum zoom distance'),
+  maxDistance: z.number().min(0.1).max(10000).optional().describe('Preset maximum zoom distance'),
+});
+
 export const PropsSchema = z.object({
   modelUrl: z.string().default('').describe('Remote GLB/GLTF URL'),
   requestMode: z.enum(['auto', 'direct', 'proxy']).default('auto').describe('Model request mode'),
@@ -28,6 +44,8 @@ export const PropsSchema = z.object({
   cameraFar: z.number().min(1).max(10000).default(1000).describe('Manual camera far plane'),
   minZoomDistance: z.number().min(0.001).max(1000).default(0.05).describe('Minimum zoom distance'),
   maxZoomDistance: z.number().min(0.1).max(10000).default(100).describe('Maximum zoom distance'),
+  cameraPresets: z.array(CameraPresetSchema).default([]).describe('Camera presets'),
+  activeCameraPresetId: z.string().default('').describe('Active camera preset id'),
   ambientLightIntensity: z.number().min(0).max(10).default(1.2).describe('Ambient light intensity'),
   directionalLightIntensity: z.number().min(0).max(10).default(2.4).describe('Directional light intensity'),
   fillLightIntensity: z.number().min(0).max(10).default(0.8).describe('Fill light intensity'),
@@ -46,6 +64,7 @@ export const PropsSchema = z.object({
 });
 
 export type Props = z.infer<typeof PropsSchema>;
+export type CameraPreset = z.infer<typeof CameraPresetSchema>;
 
 export function getDefaultProps(): Props {
   return PropsSchema.parse({});

@@ -4,16 +4,26 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 import { controls } from './controls';
 import { metadata } from './metadata';
-import { PropsSchema, type Props } from './schema';
+import { PropsSchema, type CameraPreset, type Props } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 import { resolveWidgetApiBaseUrl } from './api-base';
 
 type RuntimeMessages = (typeof zh)['runtime'];
 type RequestMode = Props['requestMode'];
+type CameraPose = {
+  position: THREE.Vector3;
+  target: THREE.Vector3;
+  fov: number;
+  near: number;
+  far: number;
+  minDistance: number;
+  maxDistance: number;
+};
 
 const localeCatalog = { zh, en } as const;
 const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
+const POINTER_CLICK_THRESHOLD_PX = 6;
 
 type HelperState = {
   axes: THREE.AxesHelper | null;
@@ -211,6 +221,17 @@ function disposeHelper(helper: THREE.Object3D | null) {
   }
 }
 
+function applyObjectTransform(object: THREE.Object3D, props: Props) {
+  object.position.set(props.positionX, props.positionY, props.positionZ);
+  object.rotation.set(
+    THREE.MathUtils.degToRad(props.rotationX),
+    THREE.MathUtils.degToRad(props.rotationY),
+    THREE.MathUtils.degToRad(props.rotationZ),
+  );
+  object.scale.setScalar(props.modelScale);
+  object.updateMatrixWorld(true);
+}
+
 function applyMaterialOptions(root: THREE.Object3D, props: Props) {
   root.traverse((child) => {
     const mesh = child as THREE.Mesh;
@@ -241,15 +262,6 @@ function fitCameraToObject(
   mainLight: THREE.DirectionalLight,
   fillLight: THREE.DirectionalLight,
 ) {
-  object.position.set(props.positionX, props.positionY, props.positionZ);
-  object.rotation.set(
-    THREE.MathUtils.degToRad(props.rotationX),
-    THREE.MathUtils.degToRad(props.rotationY),
-    THREE.MathUtils.degToRad(props.rotationZ),
-  );
-  object.scale.setScalar(props.modelScale);
-  object.updateMatrixWorld(true);
-
   const box = new THREE.Box3().setFromObject(object);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
@@ -258,59 +270,154 @@ function fitCameraToObject(
     new THREE.Vector3(props.cameraTargetX, props.cameraTargetY, props.cameraTargetZ),
   );
 
-  camera.fov = props.cameraFov;
-
+  let pose: CameraPose;
   if (props.autoFitCamera) {
-    const fov = THREE.MathUtils.degToRad(camera.fov);
+    const fov = THREE.MathUtils.degToRad(props.cameraFov);
     const baseDistance = (maxDim / 2) / Math.tan(fov / 2);
     const distance = Math.max(baseDistance * props.cameraDistanceMultiplier, 0.01);
     const azimuth = THREE.MathUtils.degToRad(props.cameraAzimuth);
     const elevation = THREE.MathUtils.degToRad(props.cameraElevation);
     const planar = Math.cos(elevation);
 
-    camera.position.set(
-      target.x + distance * Math.sin(azimuth) * planar,
-      target.y + distance * Math.sin(elevation),
-      target.z + distance * Math.cos(azimuth) * planar,
-    );
-    camera.near = Math.max(distance / 500, 0.001);
-    camera.far = Math.max(distance * 100, 100);
-    controls.minDistance = Math.max(distance * 0.1, 0.01);
-    controls.maxDistance = Math.max(distance * 20, 0.5);
-
-    mainLight.position.set(
-      target.x + distance * 0.8,
-      target.y + distance * 1.2,
-      target.z + distance,
-    );
-    fillLight.position.set(
-      target.x - distance * 0.7,
-      target.y + distance * 0.5,
-      target.z - distance * 0.8,
-    );
+    pose = {
+      position: new THREE.Vector3(
+        target.x + distance * Math.sin(azimuth) * planar,
+        target.y + distance * Math.sin(elevation),
+        target.z + distance * Math.cos(azimuth) * planar,
+      ),
+      target,
+      fov: props.cameraFov,
+      near: Math.max(distance / 500, 0.001),
+      far: Math.max(distance * 100, 100),
+      minDistance: Math.max(distance * 0.1, 0.01),
+      maxDistance: Math.max(distance * 20, 0.5),
+    };
   } else {
-    camera.position.set(props.cameraPositionX, props.cameraPositionY, props.cameraPositionZ);
-    camera.near = props.cameraNear;
-    camera.far = props.cameraFar;
-    controls.minDistance = Math.max(props.minZoomDistance, 0.001);
-    controls.maxDistance = Math.max(props.maxZoomDistance, props.minZoomDistance + 0.01);
-
-    const manualDistance = camera.position.distanceTo(target);
-    mainLight.position.set(
-      target.x + manualDistance * 0.8,
-      target.y + manualDistance * 1.2,
-      target.z + manualDistance,
-    );
-    fillLight.position.set(
-      target.x - manualDistance * 0.7,
-      target.y + manualDistance * 0.5,
-      target.z - manualDistance * 0.8,
-    );
+    pose = {
+      position: new THREE.Vector3(
+        props.cameraPositionX,
+        props.cameraPositionY,
+        props.cameraPositionZ,
+      ),
+      target,
+      fov: props.cameraFov,
+      near: props.cameraNear,
+      far: props.cameraFar,
+      minDistance: Math.max(props.minZoomDistance, 0.001),
+      maxDistance: Math.max(props.maxZoomDistance, props.minZoomDistance + 0.01),
+    };
   }
 
+  applyCameraPose(camera, controls, pose, mainLight, fillLight);
+}
+
+function applyCameraPose(
+  camera: THREE.PerspectiveCamera,
+  controls: OrbitControls,
+  pose: CameraPose,
+  mainLight: THREE.DirectionalLight,
+  fillLight: THREE.DirectionalLight,
+) {
+  camera.fov = pose.fov;
+  camera.position.copy(pose.position);
+  camera.near = pose.near;
+  camera.far = pose.far;
   camera.updateProjectionMatrix();
-  controls.target.copy(target);
+
+  controls.target.copy(pose.target);
+  controls.minDistance = Math.max(pose.minDistance, 0.001);
+  controls.maxDistance = Math.max(pose.maxDistance, controls.minDistance + 0.01);
   controls.update();
+
+  const lightDistance = Math.max(camera.position.distanceTo(pose.target), 0.01);
+  mainLight.position.set(
+    pose.target.x + lightDistance * 0.8,
+    pose.target.y + lightDistance * 1.2,
+    pose.target.z + lightDistance,
+  );
+  fillLight.position.set(
+    pose.target.x - lightDistance * 0.7,
+    pose.target.y + lightDistance * 0.5,
+    pose.target.z - lightDistance * 0.8,
+  );
+}
+
+function resolveActiveCameraPreset(props: Props): CameraPreset | null {
+  if (!props.activeCameraPresetId) {
+    return null;
+  }
+
+  return props.cameraPresets.find((preset) => preset.id === props.activeCameraPresetId) ?? null;
+}
+
+function toCameraPose(props: Props, preset: CameraPreset): CameraPose {
+  return {
+    position: new THREE.Vector3(preset.positionX, preset.positionY, preset.positionZ),
+    target: new THREE.Vector3(preset.targetX, preset.targetY, preset.targetZ),
+    fov: preset.fov ?? props.cameraFov,
+    near: preset.near ?? props.cameraNear,
+    far: preset.far ?? props.cameraFar,
+    minDistance: Math.max(preset.minDistance ?? props.minZoomDistance, 0.001),
+    maxDistance: Math.max(
+      preset.maxDistance ?? props.maxZoomDistance,
+      (preset.minDistance ?? props.minZoomDistance) + 0.01,
+    ),
+  };
+}
+
+function emitWidgetEvent(
+  element: HTMLElement,
+  event: string,
+  data: Record<string, unknown>,
+) {
+  element.dispatchEvent(
+    new CustomEvent('widget:emit', {
+      detail: { event, data },
+      bubbles: true,
+    }),
+  );
+}
+
+function resolveSceneNodeId(object: THREE.Object3D): string {
+  let current: THREE.Object3D | null = object;
+  while (current) {
+    if (current.name?.trim()) {
+      return current.name.trim();
+    }
+    current = current.parent;
+  }
+
+  return object.uuid;
+}
+
+function createManualCameraPose(props: Props): CameraPose {
+  return {
+    position: new THREE.Vector3(
+      props.cameraPositionX,
+      props.cameraPositionY,
+      props.cameraPositionZ,
+    ),
+    target: new THREE.Vector3(props.cameraTargetX, props.cameraTargetY, props.cameraTargetZ),
+    fov: props.cameraFov,
+    near: props.cameraNear,
+    far: props.cameraFar,
+    minDistance: Math.max(props.minZoomDistance, 0.001),
+    maxDistance: Math.max(props.maxZoomDistance, props.minZoomDistance + 0.01),
+  };
+}
+
+function createObjectClickPayload(object: THREE.Object3D, assetId: string) {
+  return {
+    sceneNodeId: resolveSceneNodeId(object),
+    objectId: object.uuid,
+    objectName: object.name || '',
+    objectType: object.type,
+    assetId,
+  };
+}
+
+function isPointerClick(startX: number, startY: number, endX: number, endY: number) {
+  return Math.hypot(endX - startX, endY - startY) <= POINTER_CLICK_THRESHOLD_PX;
 }
 
 function syncHelpers(
@@ -470,6 +577,11 @@ export const Main = defineWidget({
     controls3d.dampingFactor = 0.08;
     controls3d.rotateSpeed = 0.7;
 
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    let pointerDownX = 0;
+    let pointerDownY = 0;
+
     const stopAnimations = () => {
       currentMixer?.stopAllAction();
       currentMixer = null;
@@ -535,21 +647,23 @@ export const Main = defineWidget({
       controls3d.autoRotate = currentProps.autoRotate && currentMode !== 'edit';
       controls3d.autoRotateSpeed = currentProps.rotationSpeed;
       controls3d.enabled = currentProps.enableInteraction && currentMode !== 'edit';
-      renderer.domElement.style.pointerEvents = controls3d.enabled ? 'auto' : 'none';
+      renderer.domElement.style.pointerEvents = currentMode === 'edit' ? 'none' : 'auto';
 
       if (currentModel) {
+        applyObjectTransform(currentModel, currentProps);
         applyMaterialOptions(currentModel, currentProps);
-        fitCameraToObject(camera, controls3d, currentModel, currentProps, mainLight, fillLight);
+        const activePreset = resolveActiveCameraPreset(currentProps);
+        if (activePreset) {
+          applyCameraPose(camera, controls3d, toCameraPose(currentProps, activePreset), mainLight, fillLight);
+        } else {
+          fitCameraToObject(camera, controls3d, currentModel, currentProps, mainLight, fillLight);
+        }
       } else {
-        camera.fov = currentProps.cameraFov;
-        camera.position.set(currentProps.cameraPositionX, currentProps.cameraPositionY, currentProps.cameraPositionZ);
-        camera.near = currentProps.cameraNear;
-        camera.far = currentProps.cameraFar;
-        camera.updateProjectionMatrix();
-        controls3d.target.set(currentProps.cameraTargetX, currentProps.cameraTargetY, currentProps.cameraTargetZ);
-        controls3d.minDistance = Math.max(currentProps.minZoomDistance, 0.001);
-        controls3d.maxDistance = Math.max(currentProps.maxZoomDistance, currentProps.minZoomDistance + 0.01);
-        controls3d.update();
+        const activePreset = resolveActiveCameraPreset(currentProps);
+        const pose = activePreset
+          ? toCameraPose(currentProps, activePreset)
+          : createManualCameraPose(currentProps);
+        applyCameraPose(camera, controls3d, pose, mainLight, fillLight);
       }
 
       if (currentMixer) {
@@ -565,6 +679,45 @@ export const Main = defineWidget({
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
       renderer.render(scene, camera);
+    };
+
+    const pickObjectAt = (clientX: number, clientY: number) => {
+      if (!currentModel) {
+        return null;
+      }
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) {
+        return null;
+      }
+
+      pointer.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+
+      return raycaster.intersectObject(currentModel, true)[0] ?? null;
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      pointerDownX = event.clientX;
+      pointerDownY = event.clientY;
+    };
+
+    const handlePointerUp = (event: PointerEvent) => {
+      if (currentMode === 'edit' || !currentModel) {
+        return;
+      }
+
+      if (!isPointerClick(pointerDownX, pointerDownY, event.clientX, event.clientY)) {
+        return;
+      }
+
+      const hit = pickObjectAt(event.clientX, event.clientY);
+      if (!hit?.object) {
+        return;
+      }
+
+      emitWidgetEvent(element, 'objectClick', createObjectClickPayload(hit.object, currentUrl));
     };
 
     const animate = () => {
@@ -649,6 +802,9 @@ export const Main = defineWidget({
         });
     };
 
+    renderer.domElement.addEventListener('pointerdown', handlePointerDown);
+    renderer.domElement.addEventListener('pointerup', handlePointerUp);
+
     resizeRenderer();
     animate();
     updatePlaceholder('empty');
@@ -691,6 +847,8 @@ export const Main = defineWidget({
         loadRequestId += 1;
         window.cancelAnimationFrame(frameId);
         resizeObserver?.disconnect();
+        renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
+        renderer.domElement.removeEventListener('pointerup', handlePointerUp);
         clearModel();
         if (helperState.axes) {
           scene.remove(helperState.axes);

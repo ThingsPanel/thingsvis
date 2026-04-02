@@ -195,6 +195,15 @@ export const controls = createControlPanel()
           max: 10000,
           step: 0.1,
           default: 100,
+        })
+        .addTextInput('activeCameraPresetId', {
+          label: 'Preset ID',
+          placeholder: 'overview',
+          binding: true,
+        })
+        .addJsonEditor('cameraPresets', {
+          label: 'Camera Presets',
+          default: [],
         });
     },
     { label: { zh: '镜头', en: 'Camera' } },
