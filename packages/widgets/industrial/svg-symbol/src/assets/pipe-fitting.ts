@@ -14,12 +14,12 @@ export const ELBOW_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 60 6
     </linearGradient>
   </defs>
 
-  <!-- Horizontal arm: outer bend arc r=12 rounds the top-right corner -->
-  <path d="M 0 0 L 48 0 A 12 12 0 0 1 60 12 L 48 12 L 0 12 Z"
+  <!-- Horizontal arm: full rect from left edge to the inner corner, outer bend arc r=12 -->
+  <path d="M 0 0 L 48 0 A 12 12 0 0 1 60 12 L 60 20 A 8 8 0 0 1 48 12 L 0 12 Z"
         fill="url(#epHorizGrad)"/>
 
-  <!-- Vertical arm: inner bend arc r=8 smoothly rounds the inner junction corner -->
-  <path d="M 48 20 A 8 8 0 0 1 56 12 L 60 12 L 60 60 L 48 60 Z"
+  <!-- Vertical arm: starts at inner corner, concave arc r=8 for smooth inner junction -->
+  <path d="M 48 12 A 8 8 0 0 0 60 20 L 60 60 L 48 60 Z"
         fill="url(#epVertGrad)"/>
 </svg>`;
 
