@@ -2,37 +2,30 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-basic-line": {
-                "name": "Connector",
-                "label_1": "Color",
-                "label_2": "Pipe Background",
-                "label_3": "Flow Color",
-                "label_4": "Source Node",
-                "label_5": "Target Node",
-                "label_6": "Render Mode",
-                "label_7": "Line",
-                "label_8": "Pipe",
-                "label_9": "Route Type",
-                "label_10": "Straight",
-                "label_11": "Polyline",
-                "label_12": "Curved",
-                "label_13": "Mind Map",
-                "label_14": "Line Style",
-                "label_15": "Solid",
-                "label_16": "Dashed",
-                "label_17": "Dotted",
-                "label_18": "Thickness",
-                "label_19": "Opacity",
-                "label_20": "Start Arrow",
-                "label_21": "None",
-                "label_22": "Arrow",
-                "label_23": "End Arrow",
-                "label_24": "None",
-                "label_25": "Arrow",
-                "label_26": "Arrow Size",
-                "label_27": "Flow Animation",
-                "label_28": "Flow Speed",
-                "label_29": "Flow Spacing",
-                "label_30": "Flow Length"
+                "name": "Connector"
+            }
+        },
+        "controls": {
+            "basic-line": {
+                "routerType": "Route Type",
+                "straight": "Straight",
+                "orthogonal": "Orthogonal",
+                "curved": "Curved",
+                "stroke": "Color",
+                "strokeWidth": "Thickness",
+                "strokeStyle": "Line Style",
+                "solid": "Solid",
+                "dashed": "Dashed",
+                "dotted": "Dotted",
+                "opacity": "Opacity",
+                "arrowStart": "Start Arrow",
+                "arrowEnd": "End Arrow",
+                "none": "None",
+                "arrow": "Arrow",
+                "open-arrow": "Open Arrow",
+                "arrowSize": "Arrow Size",
+                "sourceNodeId": "Source Node",
+                "targetNodeId": "Target Node"
             }
         }
     }

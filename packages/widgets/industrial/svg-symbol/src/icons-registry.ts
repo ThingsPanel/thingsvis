@@ -4,6 +4,24 @@
  * Add new symbols here to expand the industrial icon library.
  */
 
+import { IOT_DEVICE_SVG, CONTROL_CABINET_SVG } from './assets/general';
+import { CENTRIFUGAL_PUMP_SVG, INLINE_PUMP_SVG } from './assets/pump';
+import {
+  BALL_VALVE_SVG,
+  GATE_VALVE_SVG,
+  GLOBE_VALVE_SVG,
+  CHECK_VALVE_SVG,
+  BUTTERFLY_VALVE_SVG,
+} from './assets/valve';
+import { Y_FILTER_SVG } from './assets/filter';
+import { HEAT_EXCHANGER_SVG, BOILER_SVG } from './assets/heat-transfer';
+import { HORIZONTAL_TANK_SVG, VERTICAL_TANK_SVG, PRESSURE_VESSEL_SVG } from './assets/tank';
+import { THERMOMETER_SVG, LEVEL_GAUGE_SVG } from './assets/instrument';
+import { FAN_SVG, AIR_COMPRESSOR_SVG } from './assets/compressor';
+import { COOLING_TOWER_SVG } from './assets/cooling-tower';
+import { PLC_CABINET_SVG, DISTRIBUTION_BOX_SVG } from './assets/electrical';
+import { ELBOW_PIPE_SVG, TEE_PIPE_SVG } from './assets/pipe-fitting';
+
 export interface IconEntry {
   /** Unique identifier, used as the value stored in Props.selectedIconId */
   id: string;
@@ -13,109 +31,203 @@ export interface IconEntry {
   categoryLabel: { zh: string; en: string };
   /** Complete inline SVG markup */
   svgContent: string;
+  /** Recommended default size so the canvas selection box fits tightly */
+  defaultSize: { width: number; height: number };
 }
-
-// ---------------------------------------------------------------------------
-// General / Control
-// ---------------------------------------------------------------------------
-
-const CONTROL_CABINET_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="cabinetGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#475569;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <!-- 柜体 -->
-  <rect x="20" y="15" width="60" height="70" rx="4" fill="url(#cabinetGrad)" stroke="#1e293b" stroke-width="2"/>
-  <!-- 柜门缝 -->
-  <line x1="50" y1="20" x2="50" y2="80" stroke="#334155" stroke-width="1.5"/>
-  <!-- 左门把手 -->
-  <circle cx="45" cy="50" r="2" fill="#94a3b8"/>
-  <!-- 右门把手 -->
-  <circle cx="55" cy="50" r="2" fill="#94a3b8"/>
-  <!-- 指示灯 - 绿 -->
-  <circle cx="35" cy="25" r="3" fill="#22c55e" stroke="#1e293b" stroke-width="1"/>
-  <!-- 指示灯 - 红 -->
-  <circle cx="50" cy="25" r="3" fill="#ef4444" stroke="#1e293b" stroke-width="1"/>
-  <!-- 指示灯 - 黄 -->
-  <circle cx="65" cy="25" r="3" fill="#eab308" stroke="#1e293b" stroke-width="1"/>
-  <!-- 底部通风口 -->
-  <line x1="30" y1="85" x2="70" y2="85" stroke="#334155" stroke-width="2" stroke-dasharray="4,2"/>
-</svg>`;
-
-// ---------------------------------------------------------------------------
-// Pump category
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// Heat Exchanger category
-// ---------------------------------------------------------------------------
-
-const HEAT_EXCHANGER_SVG = `<svg width="100%" height="100%" viewBox="0 0 80 120" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="hxBody" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#334155;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#475569;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="hxHot" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#f97316;stop-opacity:0.9" />
-      <stop offset="100%" style="stop-color:#ea580c;stop-opacity:0.6" />
-    </linearGradient>
-    <linearGradient id="hxCold" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#06b6d4;stop-opacity:0.6" />
-      <stop offset="100%" style="stop-color:#0891b2;stop-opacity:0.9" />
-    </linearGradient>
-  </defs>
-  
-  <!-- 上左接口 -->
-  <rect x="2" y="12" width="10" height="6" fill="#64748b" rx="1"/>
-  
-  <!-- 上右接口 -->
-  <rect x="68" y="12" width="10" height="6" fill="#64748b" rx="1"/>
-  
-  <!-- 主体 - 竖直胶囊形状 -->
-  <rect x="15" y="8" width="50" height="104" rx="25" ry="25" fill="url(#hxBody)" stroke="#1e293b" stroke-width="2"/>
-  
-  <!-- 顶部椭圆 -->
-  <ellipse cx="40" cy="8" rx="25" ry="6" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 内部简化盘管 - 高温侧(上) -->
-  <path d="M 25 25 Q 40 32 55 25" fill="none" stroke="url(#hxHot)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 25 38 Q 40 45 55 38" fill="none" stroke="url(#hxHot)" stroke-width="3" stroke-linecap="round"/>
-  
-  <!-- 内部简化盘管 - 低温侧(下) -->
-  <path d="M 25 75 Q 40 82 55 75" fill="none" stroke="url(#hxCold)" stroke-width="3" stroke-linecap="round"/>
-  <path d="M 25 88 Q 40 95 55 88" fill="none" stroke="url(#hxCold)" stroke-width="3" stroke-linecap="round"/>
-  
-  <!-- 下左接口 -->
-  <rect x="2" y="102" width="10" height="6" fill="#64748b" rx="1"/>
-  
-  <!-- 下右接口 -->
-  <rect x="68" y="102" width="10" height="6" fill="#64748b" rx="1"/>
-  
-  <!-- 底部椭圆 -->
-  <ellipse cx="40" cy="112" rx="25" ry="6" fill="#334155" stroke="#1e293b" stroke-width="1"/>
-</svg>`;
 
 // ---------------------------------------------------------------------------
 // Registry export
 // ---------------------------------------------------------------------------
 
 export const INDUSTRIAL_ICONS: IconEntry[] = [
+  // General / IoT
+  {
+    id: 'iot-device',
+    label: { zh: 'IoT 设备', en: 'IoT Device' },
+    categoryLabel: { zh: '通用设备', en: 'General' },
+    svgContent: IOT_DEVICE_SVG,
+    defaultSize: { width: 80, height: 80 },
+  },
   {
     id: 'control-cabinet',
     label: { zh: '控制柜', en: 'Control Cabinet' },
     categoryLabel: { zh: '通用设备', en: 'General' },
     svgContent: CONTROL_CABINET_SVG,
+    defaultSize: { width: 80, height: 80 },
   },
+
+  // Electrical / Control
+  {
+    id: 'plc-cabinet',
+    label: { zh: 'PLC 柜', en: 'PLC Cabinet' },
+    categoryLabel: { zh: '电气控制', en: 'Electrical' },
+    svgContent: PLC_CABINET_SVG,
+    defaultSize: { width: 80, height: 80 },
+  },
+  {
+    id: 'distribution-box',
+    label: { zh: '配电箱', en: 'Distribution Box' },
+    categoryLabel: { zh: '电气控制', en: 'Electrical' },
+    svgContent: DISTRIBUTION_BOX_SVG,
+    defaultSize: { width: 80, height: 80 },
+  },
+
+  // Pump category
+  {
+    id: 'centrifugal-pump',
+    label: { zh: '离心泵', en: 'Centrifugal Pump' },
+    categoryLabel: { zh: '泵类', en: 'Pump' },
+    svgContent: CENTRIFUGAL_PUMP_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'inline-pump',
+    label: { zh: '管道泵', en: 'Inline Pump' },
+    categoryLabel: { zh: '泵类', en: 'Pump' },
+    svgContent: INLINE_PUMP_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+
+  // Valve category
+  {
+    id: 'ball-valve',
+    label: { zh: '球阀', en: 'Ball Valve' },
+    categoryLabel: { zh: '阀门', en: 'Valve' },
+    svgContent: BALL_VALVE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'gate-valve',
+    label: { zh: '闸阀', en: 'Gate Valve' },
+    categoryLabel: { zh: '阀门', en: 'Valve' },
+    svgContent: GATE_VALVE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'globe-valve',
+    label: { zh: '截止阀', en: 'Globe Valve' },
+    categoryLabel: { zh: '阀门', en: 'Valve' },
+    svgContent: GLOBE_VALVE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'check-valve',
+    label: { zh: '止回阀', en: 'Check Valve' },
+    categoryLabel: { zh: '阀门', en: 'Valve' },
+    svgContent: CHECK_VALVE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'butterfly-valve',
+    label: { zh: '蝶阀', en: 'Butterfly Valve' },
+    categoryLabel: { zh: '阀门', en: 'Valve' },
+    svgContent: BUTTERFLY_VALVE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+
+  // Filter category
+  {
+    id: 'y-filter',
+    label: { zh: 'Y 型过滤器', en: 'Y-Strainer' },
+    categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
+    svgContent: Y_FILTER_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+
+  // Pipe fittings
+  {
+    id: 'elbow-pipe',
+    label: { zh: '弯头', en: 'Elbow' },
+    categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
+    svgContent: ELBOW_PIPE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'tee-pipe',
+    label: { zh: '三通', en: 'Tee' },
+    categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
+    svgContent: TEE_PIPE_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+
+  // Heat transfer category
   {
     id: 'heat-exchanger',
     label: { zh: '换热器', en: 'Heat Exchanger' },
     categoryLabel: { zh: '换热设备', en: 'Heat Transfer' },
     svgContent: HEAT_EXCHANGER_SVG,
+    defaultSize: { width: 48, height: 80 },
+  },
+  {
+    id: 'boiler',
+    label: { zh: '锅炉', en: 'Boiler' },
+    categoryLabel: { zh: '换热设备', en: 'Heat Transfer' },
+    svgContent: BOILER_SVG,
+    defaultSize: { width: 48, height: 80 },
+  },
+
+  // Cooling
+  {
+    id: 'cooling-tower',
+    label: { zh: '冷却塔', en: 'Cooling Tower' },
+    categoryLabel: { zh: '冷却设备', en: 'Cooling' },
+    svgContent: COOLING_TOWER_SVG,
+    defaultSize: { width: 48, height: 80 },
+  },
+
+  // Tank category
+  {
+    id: 'horizontal-tank',
+    label: { zh: '卧式储罐', en: 'Horizontal Tank' },
+    categoryLabel: { zh: '储罐容器', en: 'Tank' },
+    svgContent: HORIZONTAL_TANK_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'vertical-tank',
+    label: { zh: '立式储罐', en: 'Vertical Tank' },
+    categoryLabel: { zh: '储罐容器', en: 'Tank' },
+    svgContent: VERTICAL_TANK_SVG,
+    defaultSize: { width: 48, height: 80 },
+  },
+  {
+    id: 'pressure-vessel',
+    label: { zh: '压力容器', en: 'Pressure Vessel' },
+    categoryLabel: { zh: '储罐容器', en: 'Tank' },
+    svgContent: PRESSURE_VESSEL_SVG,
+    defaultSize: { width: 48, height: 80 },
+  },
+
+  // Compressor / Fan
+  {
+    id: 'fan',
+    label: { zh: '风机', en: 'Fan' },
+    categoryLabel: { zh: '风机压缩机', en: 'Blower / Compressor' },
+    svgContent: FAN_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+  {
+    id: 'air-compressor',
+    label: { zh: '空压机', en: 'Air Compressor' },
+    categoryLabel: { zh: '风机压缩机', en: 'Blower / Compressor' },
+    svgContent: AIR_COMPRESSOR_SVG,
+    defaultSize: { width: 80, height: 48 },
+  },
+
+  // Instrument category
+  {
+    id: 'thermometer',
+    label: { zh: '温度计', en: 'Thermometer' },
+    categoryLabel: { zh: '仪表', en: 'Instrument' },
+    svgContent: THERMOMETER_SVG,
+    defaultSize: { width: 48, height: 48 },
+  },
+  {
+    id: 'level-gauge',
+    label: { zh: '液位计', en: 'Level Gauge' },
+    categoryLabel: { zh: '仪表', en: 'Instrument' },
+    svgContent: LEVEL_GAUGE_SVG,
+    defaultSize: { width: 48, height: 48 },
   },
 ];
 

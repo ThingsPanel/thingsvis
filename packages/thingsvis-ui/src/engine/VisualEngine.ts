@@ -279,15 +279,24 @@ export class VisualEngine {
     const padding = getConnectorPadding(props.strokeWidth);
     let worldPoints: Array<{ x: number; y: number }>;
     if (isPipeNodeType(node.schemaRef.type)) {
-      if (pts && pts.length >= 3) {
+      const explicitWaypoints = Array.isArray((props as any).waypoints) && (props as any).waypoints.length > 0
+        ? ((props as any).waypoints as Array<any>)
+        : pts && pts.length >= 3
+          ? pts.slice(1, -1)
+          : [];
+
+      if (explicitWaypoints.length > 0) {
         worldPoints = orthogonalizePipePoints(
-          pts
-            .filter((p) => typeof p?.x === 'number' && typeof p?.y === 'number')
-            .map((p, index) => {
-              if (index === 0) return startWorld;
-              if (index === pts.length - 1) return endWorld;
-              return localToWorld(p, startWorld);
-            }),
+          [
+            startWorld,
+            ...explicitWaypoints
+              .filter((point) => typeof point?.x === 'number' && typeof point?.y === 'number')
+              .map((point) => ({
+                x: lp.x + point.x,
+                y: lp.y + point.y,
+              })),
+            endWorld,
+          ],
           props.sourceAnchor,
           props.targetAnchor,
         );
@@ -336,11 +345,12 @@ export class VisualEngine {
       // Keep other props; just overwrite points.
       const curProps = (freshSchema.props || {}) as Record<string, unknown>;
       const curPts = (curProps as any).points;
-      const ptsChanged = !Array.isArray(curPts) || curPts.length < 2 ||
-        curPts[0]?.x !== nextPoints[0]!.x || curPts[0]?.y !== nextPoints[0]!.y ||
-        curPts[curPts.length - 1]?.x !== nextPoints[1]!.x || curPts[curPts.length - 1]?.y !== nextPoints[1]!.y;
+      const samePoints =
+        Array.isArray(curPts) &&
+        curPts.length === nextPoints.length &&
+        curPts.every((point: any, index: number) => point?.x === nextPoints[index]?.x && point?.y === nextPoints[index]?.y);
 
-      if (!posChanged && !sizeChanged && !ptsChanged) return;
+      if (!posChanged && !sizeChanged && samePoints) return;
 
       updateNode(node.id, {
         position: nextPosition,
@@ -356,6 +366,7 @@ export class VisualEngine {
       resolveWidget?: (type: string) => Promise<WidgetMainModule>;
       editable?: boolean;
       actionRuntime?: ActionRuntime;
+      locale?: string;
     }
   ) { }
 
@@ -533,6 +544,7 @@ export class VisualEngine {
     this.containerEl = container;
     // DOM overlay 根节点（用于 ECharts/HTML 叠加）
     const overlayRoot = document.createElement('div');
+    overlayRoot.className = 'thingsvis-widget-layer';
     overlayRoot.style.position = 'absolute';
     overlayRoot.style.inset = '0';
     overlayRoot.style.pointerEvents = 'none';
@@ -844,7 +856,7 @@ export class VisualEngine {
             linkedNodes,
             theme: (this.store.getState().page as any)?.config?.theme || 'dawn',
             mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
-            locale: (typeof navigator !== 'undefined' ? navigator.language.split('-')[0] : 'en'),
+            locale: this.opts?.locale ?? 'en',
             visible: true,
             emit: buildEmit(
               () => (this.store.getState() as KernelState).nodesById[node.id]?.schemaRef,
@@ -1235,7 +1247,11 @@ export class VisualEngine {
             createWidgetRenderer(
               widget,
               this.store,
-              { editable: this.opts?.editable, actionRuntime: this.opts?.actionRuntime },
+              {
+                editable: this.opts?.editable,
+                actionRuntime: this.opts?.actionRuntime,
+                locale: this.opts?.locale,
+              },
               this.eventBus,
             ),
           );

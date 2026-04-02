@@ -1,6 +1,7 @@
 import {
   defineWidget,
   resolveLayeredColor,
+  resolveLocaleRecord,
   resolveWidgetColors,
   type WidgetColors,
   type WidgetOverlayContext,
@@ -10,6 +11,8 @@ import { PropsSchema, THINGSVIS_SANS_STACK, type Props } from './schema';
 import { controls } from './controls';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+
+const localeCatalog = { zh, en } as const;
 
 const DEFAULT_TEXT_FILL = '#333333';
 const LEGACY_SANS_FONT_FAMILIES = new Set([
@@ -36,7 +39,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale?: string): RuntimeMessages {
-  return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+  return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 function resolveDisplayText(props: Props, ctx: WidgetOverlayContext) {

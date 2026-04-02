@@ -9,6 +9,7 @@ interface PreviewCanvasProps {
     store: KernelStore;
     /** Async widget loader */
     resolveWidget?: (type: string) => Promise<unknown>;
+    locale?: string;
     /**
      * Rendering zoom factor applied to VisualEngine.
      * 1 = natural (CSS transform handles scaling externally).
@@ -30,6 +31,7 @@ interface PreviewCanvasProps {
 export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     store,
     resolveWidget,
+    locale,
     zoom = 1,
     actionRuntime,
 }) => {
@@ -44,6 +46,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             resolveWidget: resolveWidget as any,
             editable: false,
             actionRuntime,
+            locale,
         });
         engineRef.current = engine;
         engine.mount(containerRef.current);
@@ -56,7 +59,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         };
         // Re-mount only if store or resolveWidget reference changes
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actionRuntime, store, resolveWidget]);
+    }, [actionRuntime, locale, store, resolveWidget]);
 
     // Update VisualEngine viewport when zoom changes (scroll modes)
     useEffect(() => {

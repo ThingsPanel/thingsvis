@@ -1,9 +1,18 @@
 {
-  "name": "Pipe Valve",
-  "props": {
-    "openColor": "Open Color",
-    "closedColor": "Closed Color",
-    "isOpen": "Is Open",
-    "hasError": "Has Error"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-valve": {
+        "name": "Pipe Valve"
+      }
+    },
+    "controls": {
+      "industrial-valve": {
+        "group": "Valve Config",
+        "openColor": "Open Color",
+        "closedColor": "Closed Color",
+        "isOpen": "Is Open",
+        "hasError": "Has Error"
+      }
+    }
   }
 }

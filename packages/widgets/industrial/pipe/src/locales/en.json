@@ -4,6 +4,29 @@
       "thingsvis-widget-industrial-pipe": {
         "name": "Industrial Pipe"
       }
+    },
+    "controls": {
+      "industrial-pipe": {
+        "groupStyle": "Style",
+        "groupFlow": "Flow",
+        "groupData": "Data",
+        "pipeColor": "Pipe Color",
+        "pipeBackground": "Pipe Wall",
+        "strokeWidth": "Thickness",
+        "flowEnabled": "Flow Effect",
+        "flowSpeed": "Flow Speed",
+        "flowLength": "Flow Length",
+        "flowSpacing": "Flow Spacing",
+        "flowColor": "Flow Color",
+        "glowEnabled": "Glow Effect",
+        "glowColor": "Glow Color",
+        "glowIntensity": "Glow Intensity",
+        "flowDirection": "Flow Direction",
+        "forward": "Forward",
+        "reverse": "Reverse",
+        "sourceNode": "Source Node",
+        "targetNode": "Target Node"
+      }
     }
   }
 }

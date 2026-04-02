@@ -25,7 +25,7 @@
     "typescript": "^5.3.3"
   },
   "thingsvis": {
-    "displayName": "Industrial Pipe",
+    "displayName": "工业管道",
     "icon": "Minus",
     "i18n": {
       "zh": "工业管道",

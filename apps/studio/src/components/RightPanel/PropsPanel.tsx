@@ -25,21 +25,18 @@ import EventsTab from './EventsTab';
 
 import { getResolvedWidget, loadWidget } from '@/lib/registry/componentLoader';
 import { getWidgetControls } from '@/lib/registry/getControls';
+import {
+  ASPECT_RATIO_PROP,
+  KEEP_ASPECT_RATIO_PROP,
+  getAspectRatioFromSize,
+  getStoredAspectRatio,
+  isAspectRatioLocked,
+  resizeDimensionWithAspectRatio,
+} from '@/lib/canvas/aspectRatio';
 import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
+import { resolveControlText } from '@/lib/i18n/controlText';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
-import type { I18nLabel } from '@thingsvis/schema';
-
-/**
- * 解析 I18nLabel——支持字符串和多语言 map
- * 字符串: PropsPanel 层优先尝试作为 i18n key，外层由 ControlFieldRow 的 t() 处理
- * Map: 按当前语言取对应字段，找不到则 fallback 到 en，再找不到则取第一个值
- */
-export function resolveLabel(label: I18nLabel | undefined, lang: string): string {
-  if (!label) return '';
-  if (typeof label === 'string') return label;
-  return label[lang] ?? label['en'] ?? Object.values(label)[0] ?? '';
-}
 
 function isHostDataSourceId(id: string): boolean {
   return id === '__platform__' || /^__platform_.+__$/.test(id);
@@ -53,6 +50,7 @@ type Props = {
 
 export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const { t, i18n } = useTranslation('editor');
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
   const showEmbeddedHostUi = serviceConfig.mode === 'embedded';
 
@@ -122,7 +120,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     // eslint-disable-next-line no-console
   }, [widgetEntry, controls, controlsParse.issues]);
 
-  // Early return 必须在所有 Hook 之后（Rules of Hooks）
+  // Early return ????????Hook ?????ules of Hooks??
   if (!node) return null;
 
   function updateNode(changes: any) {
@@ -133,11 +131,58 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         (schema?.props ?? {}) as Record<string, unknown>,
       );
     }
+
+    // Auto-resize svg-symbol to fit the selected icon tightly
+    if (
+      componentType === 'industrial/svg-symbol' &&
+      changes.props?.selectedIconId &&
+      changes.props?.selectedIconId !== schema?.props?.selectedIconId
+    ) {
+      const registry = (widgetEntry as any)?.iconsRegistry as
+        | Record<string, { defaultSize: { width: number; height: number } }>
+        | undefined;
+      const iconEntry = registry?.[changes.props.selectedIconId];
+      if (iconEntry?.defaultSize) {
+        const { width, height } = iconEntry.defaultSize;
+        const currentSize = schema?.size ?? { width: 100, height: 60 };
+        const currentPos = schema?.position ?? { x: 0, y: 0 };
+        const nextSize = { width, height };
+        const nextPos = {
+          x: currentPos.x + (currentSize.width - width) / 2,
+          y: currentPos.y + (currentSize.height - height) / 2,
+        };
+
+        const isGridMode = state.canvas.mode === 'grid';
+        const gridSettings = state.gridState.settings;
+        const containerWidth = state.gridState.containerWidth;
+
+        if (isGridMode && gridSettings && containerWidth > 0) {
+          const gridSize = pixelToGrid(
+            { x: 0, y: 0, width: nextSize.width, height: nextSize.height },
+            gridSettings,
+            containerWidth,
+          );
+          const gridPos = pixelToGrid({ x: nextPos.x, y: nextPos.y }, gridSettings, containerWidth);
+          kernelStore.getState().resizeGridItem(nodeId, {
+            w: gridSize.w ?? 1,
+            h: gridSize.h ?? 1,
+          });
+          kernelStore.getState().moveGridItem(nodeId, {
+            x: gridPos.x,
+            y: gridPos.y,
+          });
+        } else {
+          changes.size = nextSize;
+          changes.position = nextPos;
+        }
+      }
+    }
+
     kernelStore.getState().updateNode(nodeId, changes);
     onUserEdit?.();
   }
+
   const addBinding = () => {
-    // 默认绑定到 text 属性
     const newBindings = [
       ...bindings,
       { targetProp: 'text', expression: '{{ ds.<id>.data.<path> }}' },
@@ -156,8 +201,14 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     updateNode({ data: newBindings });
   };
 
-  // 判断组件是否支持调整尺寸（resizable: false 的组件不显示宽高设置）
   const isResizable = (widgetEntry as any)?.resizable !== false;
+  const widgetConstraints = ((widgetEntry as any)?.constraints ?? {}) as {
+    minWidth?: number;
+    minHeight?: number;
+    maxWidth?: number;
+    maxHeight?: number;
+    aspectRatio?: number;
+  };
 
   const renderGeometry = () => {
     // In grid mode, schema.grid is the sole position/size authority.
@@ -190,6 +241,16 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
       displayH = schema.size?.height ?? 0;
     }
 
+    const currentProps = (schema.props ?? {}) as Record<string, unknown>;
+    const widgetAspectRatio =
+      typeof widgetConstraints.aspectRatio === 'number' && widgetConstraints.aspectRatio > 0
+        ? widgetConstraints.aspectRatio
+        : undefined;
+    const storedAspectRatio = getStoredAspectRatio(currentProps);
+    const editableAspectRatio = storedAspectRatio ?? getAspectRatioFromSize(displayW, displayH);
+    const dynamicAspectRatioLocked = isAspectRatioLocked(currentProps);
+    const aspectRatioLocked = widgetAspectRatio != null || dynamicAspectRatioLocked;
+
     const handlePositionChange = (axis: 'x' | 'y', value: number) => {
       if (isGridMode && gridSettings && containerWidth > 0) {
         const newX = axis === 'x' ? value : displayX;
@@ -203,11 +264,22 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     };
 
     const handleSizeChange = (dimension: 'width' | 'height', value: number) => {
+      const nextSize =
+        aspectRatioLocked && (widgetAspectRatio ?? editableAspectRatio) != null
+          ? resizeDimensionWithAspectRatio(
+              dimension,
+              value,
+              widgetAspectRatio ?? editableAspectRatio!,
+              widgetConstraints,
+            )
+          : {
+              width: dimension === 'width' ? value : displayW,
+              height: dimension === 'height' ? value : displayH,
+            };
+
       if (isGridMode && gridSettings && containerWidth > 0) {
-        const newW = dimension === 'width' ? value : displayW;
-        const newH = dimension === 'height' ? value : displayH;
         const gridSize = pixelToGrid(
-          { x: 0, y: 0, width: newW, height: newH },
+          { x: 0, y: 0, width: nextSize.width, height: nextSize.height },
           gridSettings,
           containerWidth,
         );
@@ -217,8 +289,27 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         });
         onUserEdit?.();
       } else {
-        updateNode({ size: { [dimension]: value } });
+        updateNode({ size: nextSize });
       }
+    };
+
+    const handleAspectRatioToggle = () => {
+      if (widgetAspectRatio != null) {
+        return;
+      }
+
+      const nextAspectRatio = editableAspectRatio ?? getAspectRatioFromSize(displayW, displayH);
+      if (!nextAspectRatio) {
+        return;
+      }
+
+      updateNode({
+        props: {
+          ...currentProps,
+          [KEEP_ASPECT_RATIO_PROP]: !dynamicAspectRatioLocked,
+          [ASPECT_RATIO_PROP]: !dynamicAspectRatioLocked ? nextAspectRatio : undefined,
+        },
+      });
     };
 
     return (
@@ -252,33 +343,45 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         </div>
         {/* 只有 resizable 组件才显示宽高设置 */}
         {isResizable && (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {t('propsPanel.width')}
-              </label>
-              <NumericInput
-                value={displayW}
-                onValueChange={(nextValue) => {
-                  if (nextValue === undefined) return;
-                  handleSizeChange('width', nextValue);
-                }}
-                className="h-8 text-sm"
-              />
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.width')}
+                </label>
+                <NumericInput
+                  value={displayW}
+                  onValueChange={(nextValue) => {
+                    if (nextValue === undefined) return;
+                    handleSizeChange('width', nextValue);
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.height')}
+                </label>
+                <NumericInput
+                  value={displayH}
+                  onValueChange={(nextValue) => {
+                    if (nextValue === undefined) return;
+                    handleSizeChange('height', nextValue);
+                  }}
+                  className="h-8 text-sm"
+                />
+              </div>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {t('propsPanel.height')}
-              </label>
-              <NumericInput
-                value={displayH}
-                onValueChange={(nextValue) => {
-                  if (nextValue === undefined) return;
-                  handleSizeChange('height', nextValue);
-                }}
-                className="h-8 text-sm"
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={aspectRatioLocked}
+                onChange={handleAspectRatioToggle}
+                disabled={widgetAspectRatio != null}
+                className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0"
               />
-            </div>
+              <span>{t('propsPanel.lockAspectRatio', '\u9501\u5b9a\u6bd4\u4f8b')}</span>
+            </label>
           </div>
         )}
         {/* 旋转角度 */}
@@ -356,9 +459,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               return (
                 <AccordionItem key={group.id} value={group.id} className="border-b px-1">
                   <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
-                    {typeof group.label === 'object'
-                      ? resolveLabel(group.label, i18n.language)
-                      : t(group.label || group.id)}
+                    {resolveControlText(group.label ?? group.id, locale, t)}
                   </AccordionTrigger>
                   <AccordionContent className="space-y-3 pb-4 pt-1">
                     {visibleFields.map((field) => (

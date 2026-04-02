@@ -1,24 +1,15 @@
 import { z } from 'zod';
 
+const StateModeSchema = z.enum(['normal', 'running', 'warning', 'fault', 'offline']);
+
 export const PropsSchema = z.object({
-  /**
-   * ID of the selected industrial symbol from the built-in registry.
-   * Defaults to control cabinet as a generic industrial equipment symbol.
-   */
-  selectedIconId: z.string().default('heat-exchanger'),
-
-  /**
-   * Raw SVG fallback / custom paste.
-   * Used only when selectedIconId is empty.
-   */
+  selectedIconId: z.string().default('iot-device'),
   svgContent: z.string().default(''),
-
-  /**
-   * Optional accent color override.
-   * If set, replaces the primary fill color in the rendered SVG.
-   * Leave empty to preserve original SVG colors.
-   */
-  iconColor: z.string().default(''),
+  /** Flat top-level key — avoids SDK shallow-merge losing nested state props. */
+  stateMode: StateModeSchema.optional(),
+  /** Flat top-level key — avoids SDK shallow-merge losing nested state props. */
+  animateEnabled: z.boolean().default(false),
 });
 
 export type Props = z.infer<typeof PropsSchema>;
+export type StateMode = z.infer<typeof StateModeSchema>;

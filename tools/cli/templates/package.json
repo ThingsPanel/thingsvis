@@ -29,7 +29,7 @@
         "icon": "Box",
         "i18n": {
             "zh": "{{DISPLAY_NAME}}",
-            "en": "{{COMPONENT_ID}}"
+            "en": "{{DISPLAY_NAME}}"
         }
     }
 }

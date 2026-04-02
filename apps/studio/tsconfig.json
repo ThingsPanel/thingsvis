@@ -10,6 +10,7 @@
       "@thingsvis/utils": ["../../packages/thingsvis-utils/src"]
     }
   },
-  "include": ["src/**/*", "rsbuild.config.ts", "tailwind.config.ts"]
+  "include": ["src/**/*", "rsbuild.config.ts", "tailwind.config.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts"]
 }
 

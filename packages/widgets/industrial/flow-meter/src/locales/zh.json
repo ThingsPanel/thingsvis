@@ -1,5 +1,22 @@
 {
-  "widget": {
-    "name": "流量计"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-flow-meter": {
+        "name": "流量计"
+      }
+    },
+    "controls": {
+      "industrial-flow-meter": {
+        "group": "流量配置",
+        "value": "当前流量",
+        "min": "最小值",
+        "max": "最大值",
+        "baseColor": "外壳颜色",
+        "liquidColor": "液体颜色",
+        "flowSpeed": "流动速度",
+        "hasError": "故障告警",
+        "showValue": "显示数值"
+      }
+    }
   }
 }

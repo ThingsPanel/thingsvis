@@ -59,6 +59,8 @@ export interface GridCanvasProps {
     centerPadding?: { left?: number; right?: number };
     /** Widget runtime mode forwarded to DOM overlays */
     widgetMode?: WidgetOverlayContext['mode'];
+    /** Explicit locale forwarded to widget overlay contexts */
+    locale?: string;
     actionRuntime?: ActionRuntime;
 }
 
@@ -104,6 +106,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     theme,
     centerPadding,
     widgetMode = 'view',
+    locale,
     actionRuntime,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -487,6 +490,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                         isSelected={selectedIds.includes(node.id)}
                         theme={normalizedTheme}
                         widgetMode={widgetMode}
+                        locale={locale}
                         actionRuntime={actionRuntime}
                         zoom={zoom}
                         onDragStart={onDragStart}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/db';
 import { EMBED_SSO_LOGIN_SOURCE, SSO_AUTH_TYPE, SSOExchangeSchema } from '@/lib/validators/auth';
+import { ensureDefaultDashboardForUser } from '@/lib/dashboard-helpers';
 
 const ACCESS_TOKEN_EXPIRY = 2 * 60 * 60;
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { platform, userInfo } = result.data;
+    const { platform, userInfo, role } = result.data;
 
     let tenant = await prisma.tenant.findUnique({
       where: { slug: `${platform}-${userInfo.tenantId}` },
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
           ssoProvider: platform,
           ssoSubject: userInfo.id,
           tenantId: tenant.id,
-          role: 'EDITOR',
+          role: role || 'EDITOR',
           authType: SSO_AUTH_TYPE,
           lastLoginAt: new Date(),
         },
@@ -110,6 +111,11 @@ export async function POST(request: NextRequest) {
           tenant: true,
         },
       });
+    }
+
+    // Initialize default dashboard for SUPER_ADMIN or TENANT_ADMIN
+    if (role === 'SUPER_ADMIN' || role === 'TENANT_ADMIN') {
+      await ensureDefaultDashboardForUser(user.id, tenant.id, role);
     }
 
     const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');

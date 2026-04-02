@@ -15,6 +15,7 @@ export type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'image'
 
 export interface WorkspaceEngineProps {
   canvasConfig: CanvasConfigSchema;
+  locale: string;
   activeTool: Tool;
   setActiveTool: (tool: Tool) => void;
   zoom: number;
@@ -29,6 +30,7 @@ export interface WorkspaceEngineProps {
 
 export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
   canvasConfig,
+  locale,
   activeTool,
   setActiveTool,
   zoom,
@@ -104,6 +106,7 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
           <CanvasView
             pageId={canvasConfig.id}
             store={store as any}
+            locale={locale}
             activeTool={activeTool}
             resolveWidget={resolveWidget as any}
             zoom={zoom / 100}

@@ -12,6 +12,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
 import type { KernelState } from '@thingsvis/kernel';
 import type { PageSchemaType, DataSource } from '@thingsvis/schema';
@@ -115,6 +116,8 @@ function normalizePreviewScaleMode(value: unknown): PreviewScaleMode {
 }
 
 export default function EmbedPage() {
+  const { i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<EmbedState>({
     isLoading: true,
@@ -1015,6 +1018,7 @@ export default function EmbedPage() {
             <GridCanvas
               store={store as any}
               resolveWidget={resolveWidget as any}
+              locale={locale}
               settings={{ ...gridSettings, showGridLines: false }}
               interactive={false}
               fullWidth={true}
@@ -1032,6 +1036,7 @@ export default function EmbedPage() {
               <PreviewCanvas
                 store={store as any}
                 resolveWidget={resolveWidget as any}
+                locale={locale}
                 zoom={engineZoom}
                 actionRuntime={actionRuntime}
               />

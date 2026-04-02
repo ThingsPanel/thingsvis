@@ -4,6 +4,7 @@ import { mountWidget } from '../../test-utils/widgetLifecycle';
 class UPlotMock {
   static paths = {
     spline: () => undefined,
+    linear: () => undefined,
   };
 
   root: HTMLDivElement;

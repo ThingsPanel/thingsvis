@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
+  // 定位来源: manual(手动), device(ThingsPanel 设备数据)
+  positionSource: z.enum(['manual', 'device']).default('manual').describe('positionSource'),
   // 定位坐标
   lat: z.number().min(-90).max(90).default(39.9042).describe('lat'),
   lng: z.number().min(-180).max(180).default(116.4074).describe('lng'),

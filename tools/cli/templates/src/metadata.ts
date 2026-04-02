@@ -1,6 +1,6 @@
 export const metadata = {
   id: '{{COMPONENT_ID}}',
-  name: '{{DISPLAY_NAME}}',
+  name: 'widgets.{{COMPONENT_ID}}.name',
   category: '{{CATEGORY}}',
   icon: 'Box',
   version: '1.0.0',

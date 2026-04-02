@@ -1,5 +1,22 @@
 {
-  "widget": {
-    "name": "Flow Meter"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-flow-meter": {
+        "name": "Flow Meter"
+      }
+    },
+    "controls": {
+      "industrial-flow-meter": {
+        "group": "Flow Config",
+        "value": "Flow Value",
+        "min": "Min Value",
+        "max": "Max Value",
+        "baseColor": "Case Color",
+        "liquidColor": "Liquid Color",
+        "flowSpeed": "Flow Speed",
+        "hasError": "Has Error",
+        "showValue": "Show Value"
+      }
+    }
   }
 }

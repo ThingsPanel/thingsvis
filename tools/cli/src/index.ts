@@ -58,6 +58,30 @@ function checkLocaleKeysEqual(base: unknown, target: unknown): { ok: boolean; de
   return { ok: false, details };
 }
 
+async function readLocaleBundles(localesDir: string): Promise<Array<{ locale: string; path: string; value: unknown }>> {
+  if (!(await fs.pathExists(localesDir))) {
+    return [];
+  }
+
+  const entries = await fs.readdir(localesDir, { withFileTypes: true });
+  const localeFiles = entries
+    .filter((entry) => entry.isFile() && path.extname(entry.name) === '.json')
+    .map((entry) => ({
+      locale: path.basename(entry.name, '.json'),
+      path: path.join(localesDir, entry.name),
+    }));
+
+  const bundles = await Promise.all(
+    localeFiles.map(async (file) => ({
+      locale: file.locale,
+      path: file.path,
+      value: await fs.readJson(file.path),
+    })),
+  );
+
+  return bundles.sort((a, b) => a.locale.localeCompare(b.locale));
+}
+
 function resolveWidgetDir(repoRoot: string, widgetPathOrId: string): string {
   const raw = widgetPathOrId.trim();
 
@@ -193,18 +217,30 @@ async function validateWidget(widgetDir: string): Promise<ValidationCheck[]> {
     checks.push({ name: 'controls config detected', ok: hasControlsBuilder, details: hasControlsBuilder ? undefined : 'expected generateControls(...) or createControlPanel(...)' });
   }
 
-  const zhPath = path.join(localesDir, 'zh.json');
-  const enPath = path.join(localesDir, 'en.json');
   if (!(await fs.pathExists(localesDir))) {
     checks.push({ name: 'src/locales exists', ok: false, details: 'missing src/locales directory' });
-  } else if (!(await fs.pathExists(zhPath)) || !(await fs.pathExists(enPath))) {
-    checks.push({ name: 'locales presence', ok: false, details: 'expected both src/locales/zh.json and src/locales/en.json' });
   } else {
     try {
-      const zh = await fs.readJson(zhPath);
-      const en = await fs.readJson(enPath);
-      const keyCheck = checkLocaleKeysEqual(zh, en);
-      checks.push({ name: 'locale key parity (zh/en)', ok: keyCheck.ok, details: keyCheck.details });
+      const localeBundles = await readLocaleBundles(localesDir);
+      if (localeBundles.length === 0) {
+        checks.push({ name: 'locales presence', ok: false, details: 'expected at least one locale JSON under src/locales' });
+      } else {
+        checks.push({
+          name: 'locales presence',
+          ok: true,
+          details: `found: ${localeBundles.map((bundle) => bundle.locale).join(', ')}`,
+        });
+
+        const [baseBundle, ...otherBundles] = localeBundles;
+        for (const bundle of otherBundles) {
+          const keyCheck = checkLocaleKeysEqual(baseBundle!.value, bundle.value);
+          checks.push({
+            name: `locale key parity (${baseBundle!.locale}/${bundle.locale})`,
+            ok: keyCheck.ok,
+            details: keyCheck.details,
+          });
+        }
+      }
     } catch (error) {
       checks.push({ name: 'locale json parse', ok: false, details: error instanceof Error ? error.message : String(error) });
     }

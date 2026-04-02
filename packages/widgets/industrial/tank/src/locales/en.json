@@ -1,5 +1,22 @@
 {
-  "widget": {
-    "name": "Liquid Tank"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-tank": {
+        "name": "Liquid Tank"
+      }
+    },
+    "controls": {
+      "industrial-tank": {
+        "group": "Tank Config",
+        "level": "Level (%)",
+        "tankColor": "Tank Color",
+        "liquidColor": "Liquid Color",
+        "lowColor": "Low Level Color",
+        "highColor": "High Level Color",
+        "lowThreshold": "Low Threshold",
+        "highThreshold": "High Threshold",
+        "hasError": "Has Error"
+      }
+    }
   }
 }

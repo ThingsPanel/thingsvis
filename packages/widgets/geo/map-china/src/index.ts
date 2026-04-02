@@ -64,18 +64,61 @@ function buildOption(props: Props, colors: WidgetColors): echarts.EChartsOption 
   };
 }
 
-function renderMap(element: HTMLElement, props: Props, _ctx: WidgetOverlayContext) {
+function applyHostSize(host: HTMLElement, ctx: WidgetOverlayContext) {
+  const widthSource = ctx.size?.width ?? host.clientWidth ?? 320;
+  const heightSource = ctx.size?.height ?? host.clientHeight ?? 240;
+  const width = Math.max(1, Math.round(Number(widthSource || 320)));
+  const height = Math.max(1, Math.round(Number(heightSource || 240)));
+
+  host.style.width = `${width}px`;
+  host.style.height = `${height}px`;
+
+  Object.defineProperties(host, {
+    clientWidth: {
+      configurable: true,
+      get: () => width,
+    },
+    clientHeight: {
+      configurable: true,
+      get: () => height,
+    },
+  });
+
+  host.getBoundingClientRect = () =>
+    ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      width,
+      height,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
+function renderMap(element: HTMLElement, props: Props, ctx: WidgetOverlayContext) {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'flex';
+
+  const chartHost = document.createElement('div');
+  chartHost.style.width = '100%';
+  chartHost.style.height = '100%';
+  applyHostSize(chartHost, ctx);
+  element.appendChild(chartHost);
 
   let currentProps = props;
   let colors: WidgetColors = resolveWidgetColors(element);
+  let currentCtx = ctx;
 
-  const chart = echarts.init(element, null, { renderer: 'canvas' });
+  const chart = echarts.init(chartHost, null, { renderer: 'canvas' });
 
   const scheduleRender = () => {
     requestAnimationFrame(() => {
       if (!chart.isDisposed()) {
+        applyHostSize(chartHost, currentCtx);
         colors = resolveWidgetColors(element);
         chart.setOption(buildOption(currentProps, colors), true);
         chart.resize();
@@ -103,9 +146,10 @@ function renderMap(element: HTMLElement, props: Props, _ctx: WidgetOverlayContex
     });
   }
 
-  return {
-    update: (newProps: Props, _newCtx: WidgetOverlayContext) => {
+    return {
+    update: (newProps: Props, newCtx: WidgetOverlayContext) => {
       currentProps = newProps;
+      currentCtx = newCtx;
       scheduleRender();
     },
     destroy: () => {

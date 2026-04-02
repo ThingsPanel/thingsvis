@@ -5,7 +5,7 @@ export const metadata = {
   icon: "AppWindow",
   version: "1.0.0",
   order: 7,
-  defaultSize: { width: 360, height: 220 },
+  defaultSize: { width: 320, height: 200 },
   resizable: true,
   constraints: { minWidth: 120, minHeight: 80 },
 } as const;

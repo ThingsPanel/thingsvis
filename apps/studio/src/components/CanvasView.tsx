@@ -17,6 +17,7 @@ import { actionRuntime, dataSourceManager } from '../lib/store';
 import TransformControls from './tools/TransformControls';
 import CreateToolLayer from './tools/CreateToolLayer';
 import LineConnectionTool from './tools/LineConnectionTool';
+import PipeConnectionTool from './tools/PipeConnectionTool';
 import { isCreationTool } from './tools/types';
 import { orderNodeStatesByLayerOrder } from '../lib/layerOrder';
 import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetProps';
@@ -24,6 +25,7 @@ import {
   isPlatformFieldDataSource,
   normalizePlatformBufferSize,
 } from '../embed/platformDeviceCompat';
+import { PipeProxyHits, buildPipeProxySegmentsForNode } from './CanvasView.pipeProxy';
 
 function generateId(prefix = 'node') {
   try {
@@ -194,6 +196,7 @@ const CanvasView = forwardRef<
   {
     pageId: string;
     store: any;
+    locale?: string;
     resolveWidget?: (t: string) => Promise<any>;
     activeTool: string;
     lineToolProps?: Record<string, unknown>;
@@ -214,6 +217,7 @@ const CanvasView = forwardRef<
   {
     pageId,
     store,
+    locale,
     activeTool,
     resolveWidget,
     lineToolProps,
@@ -772,6 +776,7 @@ const CanvasView = forwardRef<
         <GridCanvas
           store={store}
           resolveWidget={resolveWidget}
+          locale={locale}
           width={state.canvas.width}
           height={state.canvas.height}
           interactive={activeTool !== 'pan'}
@@ -816,6 +821,7 @@ const CanvasView = forwardRef<
       <UI_CanvasView
         store={store}
         resolveWidget={resolveWidget}
+        locale={locale}
         mode={state.canvas.mode}
         width={state.canvas.width}
         height={state.canvas.height}
@@ -885,7 +891,17 @@ const CanvasView = forwardRef<
             // Read rotation from props._rotation (fallback to schema.rotation for compatibility)
             const rotation = schema.props?._rotation ?? schema.rotation ?? 0;
             const isLine = isConnectorNodeType(schema.type);
+            const isPipe = schema.type === 'industrial/pipe';
             const isSelected = state.selection.nodeIds.includes(node.id);
+            const pipeProxySegments =
+              isPipe && width > 0 && height > 0
+                ? buildPipeProxySegmentsForNode(
+                    schema,
+                    state.nodesById,
+                    getViewport,
+                    containerRef.current,
+                  )
+                : [];
             // Line components use LineConnectionTool for selection UI, don't show border
             const showBorder = isSelected && !isLine && inlineTextEditor?.nodeId !== node.id;
             return (
@@ -901,11 +917,28 @@ const CanvasView = forwardRef<
                   height,
                   transform: rotation !== 0 ? `rotate(${rotation}deg)` : undefined,
                   transformOrigin: 'center center',
-                  pointerEvents: isPanTool ? 'none' : 'auto',
-                  cursor: formatBrushActive ? 'copy' : isPanTool ? canvasCursor : 'pointer',
+                  pointerEvents: isPanTool ? 'none' : isPipe ? 'none' : 'auto',
+                  cursor: formatBrushActive
+                    ? 'copy'
+                    : isPanTool
+                      ? canvasCursor
+                      : isPipe
+                        ? 'default'
+                        : 'pointer',
                   border: showBorder ? '1px solid #0066ff' : 'none',
+                  overflow: 'visible',
                 }}
-              />
+              >
+                {isPipe ? (
+                  <PipeProxyHits
+                    nodeId={node.id}
+                    segments={pipeProxySegments}
+                    isPanTool={isPanTool}
+                    formatBrushActive={formatBrushActive}
+                    canvasCursor={canvasCursor}
+                  />
+                ) : null}
+              </div>
             );
           })}
 
@@ -1006,12 +1039,20 @@ const CanvasView = forwardRef<
 
       {/* Line Connection Tool - shows handles when a line is selected */}
       {activeTool !== 'pan' && !formatBrushActive && !isCreationTool(activeTool) && (
-        <LineConnectionTool
-          kernelStore={store}
-          containerRef={proxyLayerRef}
-          getViewport={getViewport}
-          onUserEdit={onUserEdit}
-        />
+        <>
+          <LineConnectionTool
+            kernelStore={store}
+            getViewport={getViewport}
+            onUserEdit={onUserEdit}
+            containerRef={containerRef}
+          />
+          <PipeConnectionTool
+            kernelStore={store}
+            getViewport={getViewport}
+            onUserEdit={onUserEdit}
+            containerRef={containerRef}
+          />
+        </>
       )}
 
       {/* Creation Tool Layer for rectangle, circle, text, image tools */}

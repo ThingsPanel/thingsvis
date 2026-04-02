@@ -15,6 +15,7 @@ export const RegisterSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
   name: z.string().min(1).max(100).optional(),
   tenantId: z.string().cuid().optional(),
+  role: z.enum(['SUPER_ADMIN', 'TENANT_ADMIN']).optional(),
 });
 
 export type RegisterInput = z.infer<typeof RegisterSchema>;
@@ -32,6 +33,7 @@ export const SSOExchangeSchema = z.object({
     name: z.string().optional(),
     tenantId: z.string().min(1),
   }),
+  role: z.enum(['SUPER_ADMIN', 'TENANT_ADMIN']).optional(),
 });
 
 export type SSOExchangeInput = z.infer<typeof SSOExchangeSchema>;

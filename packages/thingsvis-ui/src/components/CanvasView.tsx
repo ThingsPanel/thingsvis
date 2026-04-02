@@ -14,6 +14,7 @@ type Mode = 'fixed' | 'infinite' | 'grid';
 type Props = {
   store: KernelStore;
   resolveWidget?: (type: string) => Promise<any>;
+  locale?: string;
   mode?: Mode;
   width?: number;
   height?: number;
@@ -38,6 +39,7 @@ type Props = {
 export const CanvasView: React.FC<Props> = ({
   store,
   resolveWidget,
+  locale,
   mode: propsMode,
   width: propsWidth,
   height: propsHeight,
@@ -244,6 +246,7 @@ export const CanvasView: React.FC<Props> = ({
       resolveWidget,
       editable: interactive,
       actionRuntime,
+      locale,
     });
     engineRef.current = engine;
     engine.mount(mountEl ?? containerRef.current);
@@ -251,7 +254,7 @@ export const CanvasView: React.FC<Props> = ({
       engine.unmount();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionRuntime, store, resolveWidget]);
+  }, [actionRuntime, locale, store, resolveWidget]);
 
   // Update interactivity dynamically without fully remixing the engine
   useEffect(() => {
@@ -344,6 +347,16 @@ export const CanvasView: React.FC<Props> = ({
       offsetY: vOffset.y
     });
   }, [viewportInfo, onViewportChange, width, height]);
+
+  // Expose viewport for DOM-based port math in widgets (industrial/pipe, basic/line routeWorld).
+  useEffect(() => {
+    const { zoom: vZoom, offset: vOffset } = viewportInfo;
+    (window as unknown as { _thingsvisViewport?: { offsetX: number; offsetY: number; zoom: number } })._thingsvisViewport = {
+      offsetX: vOffset.x,
+      offsetY: vOffset.y,
+      zoom: vZoom,
+    };
+  }, [viewportInfo]);
 
   // helper to convert screen -> world (used by parent if needed)
   function screenToWorld(screenPoint: Point): Point {
