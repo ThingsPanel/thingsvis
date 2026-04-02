@@ -131,7 +131,7 @@ export const INDUSTRIAL_ICONS: IconEntry[] = [
     label: { zh: 'Y 型过滤器', en: 'Y-Strainer' },
     categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
     svgContent: Y_FILTER_SVG,
-    defaultSize: { width: 100, height: 80 },
+    defaultSize: { width: 80, height: 46 },
   },
 
   // Pipe fittings
@@ -140,14 +140,14 @@ export const INDUSTRIAL_ICONS: IconEntry[] = [
     label: { zh: '弯头', en: 'Elbow' },
     categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
     svgContent: ELBOW_PIPE_SVG,
-    defaultSize: { width: 100, height: 100 },
+    defaultSize: { width: 60, height: 60 },
   },
   {
     id: 'tee-pipe',
     label: { zh: '三通', en: 'Tee' },
     categoryLabel: { zh: '管路附件', en: 'Pipe Fitting' },
     svgContent: TEE_PIPE_SVG,
-    defaultSize: { width: 100, height: 80 },
+    defaultSize: { width: 64, height: 40 },
   },
 
   // Heat transfer category

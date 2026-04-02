@@ -1,4 +1,4 @@
-export const BALL_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 70" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const BALL_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 66" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="ballValveGrad" cx="36%" cy="30%" r="64%">
       <stop offset="0%" style="stop-color:#7a94b0;stop-opacity:1" />
@@ -46,7 +46,7 @@ export const BALL_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 10
   <circle cx="60" cy="-6.5" r="1" fill="#475569" opacity="0.55"/>
 </svg>`;
 
-export const GATE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 70" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const GATE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -13 100 71" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="gateValveGrad" cx="36%" cy="32%" r="64%">
       <stop offset="0%" style="stop-color:#7a94b0;stop-opacity:1" />
@@ -88,7 +88,7 @@ export const GATE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 10
   <circle cx="50" cy="-5" r="2" fill="#64748b"/>
 </svg>`;
 
-export const GLOBE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 70" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const GLOBE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 66" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="globeValveGrad" cx="36%" cy="30%" r="64%">
       <stop offset="0%" style="stop-color:#7a94b0;stop-opacity:1" />
@@ -131,7 +131,7 @@ export const GLOBE_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 1
   <circle cx="60" cy="-6.5" r="1" fill="#475569" opacity="0.55"/>
 </svg>`;
 
-export const CHECK_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const CHECK_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 15 100 30" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="checkValveBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" style="stop-color:#5e728a;stop-opacity:1" />
@@ -167,7 +167,7 @@ export const CHECK_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100
   <circle cx="50" cy="30" r="1.5" fill="#64748b"/>
 </svg>`;
 
-export const BUTTERFLY_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 70" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const BUTTERFLY_VALVE_SVG = `<svg width="100%" height="100%" viewBox="0 -10 100 66" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <radialGradient id="butterflyValveGrad" cx="36%" cy="30%" r="64%">
       <stop offset="0%" style="stop-color:#7a94b0;stop-opacity:1" />
