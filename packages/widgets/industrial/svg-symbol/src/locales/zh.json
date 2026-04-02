@@ -1,8 +1,19 @@
 {
-  "name": "图形符号",
-  "props": {
-    "selectedIconId": "工业符号",
-    "iconColor": "图标颜色（覆盖）",
-    "svgContent": "自定义 SVG 源码"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-svg-symbol": {
+        "name": "图形符号"
+      }
+    },
+    "controls": {
+      "industrial-svg-symbol": {
+        "group": "SVG 配置",
+        "selectedIconId": "工业符号",
+        "iconColor": "图标颜色（覆盖）",
+        "iconColorDescription": "留空时保留原始 SVG 颜色",
+        "svgContent": "自定义 SVG 源码",
+        "svgContentDescription": "未选择内置符号时使用自定义 SVG"
+      }
+    }
   }
 }

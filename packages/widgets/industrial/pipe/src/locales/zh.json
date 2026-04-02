@@ -4,6 +4,29 @@
       "thingsvis-widget-industrial-pipe": {
         "name": "工业管道"
       }
+    },
+    "controls": {
+      "industrial-pipe": {
+        "groupStyle": "样式",
+        "groupFlow": "流动",
+        "groupData": "数据",
+        "pipeColor": "管道颜色",
+        "pipeBackground": "管壁颜色",
+        "strokeWidth": "粗细",
+        "flowEnabled": "流动效果",
+        "flowSpeed": "流动速度",
+        "flowLength": "流动长度",
+        "flowSpacing": "流动间距",
+        "flowColor": "流动颜色",
+        "glowEnabled": "发光效果",
+        "glowColor": "发光颜色",
+        "glowIntensity": "发光强度",
+        "flowDirection": "流动方向",
+        "forward": "正向",
+        "reverse": "反向",
+        "sourceNode": "起点节点",
+        "targetNode": "终点节点"
+      }
     }
   }
 }

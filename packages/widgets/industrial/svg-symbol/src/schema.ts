@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const PropsSchema = z.object({
   /**
    * ID of the selected industrial symbol from the built-in registry.
-   * Defaults to control cabinet as a generic industrial equipment symbol.
+   * Defaults to heat exchanger as a representative industrial symbol.
    */
   selectedIconId: z.string().default('heat-exchanger'),
 

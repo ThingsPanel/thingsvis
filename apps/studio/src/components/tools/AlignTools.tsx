@@ -6,12 +6,12 @@ import {
   AlignLeft,
   AlignRight,
   AlignCenterHorizontal,
-  AlignVerticalJustifyCenter,
-  AlignHorizontalJustifyCenter,
   AlignCenterVertical,
   AlignCenter,
   AlignHorizontalSpaceAround,
   AlignVerticalSpaceAround,
+  AlignStartHorizontal,
+  AlignEndHorizontal,
 } from 'lucide-react';
 import type { KernelStore } from '@thingsvis/kernel';
 
@@ -36,10 +36,11 @@ interface AlignToolsProps {
  * AlignTools Component
  *
  * Provides alignment tools for selected nodes in the canvas.
- * Supports 7 types of alignment:
+ * Supports 9 types of alignment:
  * - Left, Right, Top, Bottom alignment (based on selection bounding box)
  * - Horizontal center, Vertical center (within selection)
  * - Canvas center (align to canvas center)
+ * - Horizontal and vertical distribution
  */
 export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignToolsProps) {
   const { t } = useTranslation('editor');
@@ -220,7 +221,7 @@ export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignT
     },
     {
       type: 'center-h' as AlignType,
-      icon: AlignCenterHorizontal,
+      icon: AlignCenterVertical,
       label: t('toolbar.align.center-h'),
       shortcut: 'Ctrl+Shift+H',
     },
@@ -238,19 +239,19 @@ export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignT
     },
     {
       type: 'top' as AlignType,
-      icon: AlignVerticalJustifyCenter,
+      icon: AlignStartHorizontal,
       label: t('toolbar.align.top'),
       shortcut: 'Ctrl+Shift+T',
     },
     {
       type: 'center-v' as AlignType,
-      icon: AlignCenterVertical,
+      icon: AlignCenterHorizontal,
       label: t('toolbar.align.center-v'),
       shortcut: 'Ctrl+Shift+M',
     },
     {
       type: 'bottom' as AlignType,
-      icon: AlignHorizontalJustifyCenter,
+      icon: AlignEndHorizontal,
       label: t('toolbar.align.bottom'),
       shortcut: 'Ctrl+Shift+B',
     },

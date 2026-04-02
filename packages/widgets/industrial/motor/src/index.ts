@@ -8,61 +8,66 @@ import en from './locales/en.json';
 function renderMotor(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'block';
+  element.style.lineHeight = '0';
 
-  const baseColor = props.hasError ? '#ff4d4f' : props.baseColor;
-  const animationDuration = props.isRunning && props.rpm > 0 ? `${(0.5 / props.rpm).toFixed(2)}s` : '0s';
+  const baseColor = props.hasError ? '#ff4d4f' : (props.baseColor || '#334155');
+  const runColor = props.hasError ? '#ff7875' : '#0ea5e9';
+  const fanDuration = props.rpm > 0 ? `${Math.max(1 / props.rpm, 0.2).toFixed(2)}s` : '0s';
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 80 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 120 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
-    <style>
-      @keyframes spin { 
-        100% { transform: rotate(360deg); } 
-      }
-      .fan-blade {
-        transform-origin: 0 0;
-        animation: spin ${animationDuration} linear infinite;
-      }
-    </style>
-    <linearGradient id="bodyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:${baseColor};stop-opacity:1" />
-      <stop offset="50%" style="stop-color:${lightenColor(baseColor, 20)};stop-opacity:1" />
+    <linearGradient id="motorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 10)};stop-opacity:1" />
       <stop offset="100%" style="stop-color:${baseColor};stop-opacity:1" />
     </linearGradient>
   </defs>
+
+  <!-- 左短管接口 -->
+  <rect x="0" y="23" width="10" height="14" fill="#475569"/>
+
+  <!-- 电机主体 - 撑满 -->
+  <rect x="10" y="7" width="94" height="46" rx="3" fill="url(#motorGrad)" stroke="#1e293b" stroke-width="2"/>
   
-  <!-- 电机主体 - 圆柱形 -->
-  <ellipse cx="35" cy="20" rx="25" ry="6" fill="${lightenColor(baseColor, 30)}" stroke="#1e293b" stroke-width="1"/>
-  <rect x="10" y="20" width="50" height="40" fill="url(#bodyGradient)" stroke="#1e293b" stroke-width="1"/>
-  <ellipse cx="35" cy="60" rx="25" ry="6" fill="${darkenColor(baseColor, 10)}" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 电机接线盒 -->
-  <rect x="15" y="25" width="15" height="12" rx="2" fill="${darkenColor(baseColor, 10)}" stroke="#1e293b" stroke-width="1"/>
-  
+  <!-- 前端盖 -->
+  <rect x="6" y="10" width="4" height="40" rx="1" fill="${darkenColor(baseColor, 10)}" stroke="#1e293b" stroke-width="1.5"/>
+
+  <!-- 接线盒 -->
+  <rect x="20" y="11" width="20" height="12" rx="1" fill="${darkenColor(baseColor, 10)}" stroke="#1e293b" stroke-width="1.5"/>
+
   <!-- 后端风扇罩 -->
-  <path d="M 10 25 L 5 20 L 5 60 L 10 55 Z" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 风扇叶片 - 使用 transform 移动坐标系 -->
-  <g transform="translate(55, 40)" class="${props.isRunning ? 'fan-blade' : ''}">
-    <ellipse cx="0" cy="0" rx="2" ry="12" fill="#94a3b8" opacity="0.8"/>
-    <ellipse cx="0" cy="0" rx="12" ry="2" fill="#94a3b8" opacity="0.8"/>
+  <path d="M 104 10 Q 116 30 104 50" fill="none" stroke="#475569" stroke-width="2"/>
+  <g transform="translate(86 30)">
+    <g>
+      <circle cx="0" cy="0" r="7" fill="#0f172a" stroke="#475569" stroke-width="1.5"/>
+      <path d="M 0 -6 C 4 -6 6 -2 2 0 C 0 -1 -1 -3 0 -6" fill="${props.isRunning ? runColor : '#64748b'}" opacity="0.9"/>
+      <path d="M 6 0 C 6 4 2 6 0 2 C 1 0 3 -1 6 0" fill="${props.isRunning ? runColor : '#64748b'}" opacity="0.8"/>
+      <path d="M 0 6 C -4 6 -6 2 -2 0 C 0 1 1 3 0 6" fill="${props.isRunning ? runColor : '#64748b'}" opacity="0.9"/>
+      <path d="M -6 0 C -6 -4 -2 -6 0 -2 C -1 0 -3 1 -6 0" fill="${props.isRunning ? runColor : '#64748b'}" opacity="0.8"/>
+      <circle cx="0" cy="0" r="1.5" fill="#94a3b8"/>
+      ${props.isRunning && props.rpm > 0 ? `
+      <animateTransform
+        attributeName="transform"
+        type="rotate"
+        from="0 0 0"
+        to="360 0 0"
+        dur="${fanDuration}"
+        repeatCount="indefinite"
+      />
+      ` : ''}
+    </g>
   </g>
-  
-  <!-- 风扇罩网格 -->
-  <circle cx="55" cy="40" r="16" fill="none" stroke="#64748b" stroke-width="1.5"/>
-  <line x1="55" y1="24" x2="55" y2="56" stroke="#64748b" stroke-width="1"/>
-  <line x1="39" y1="40" x2="71" y2="40" stroke="#64748b" stroke-width="1"/>
-  
+
+  <!-- 运行指示灯 -->
+  <circle cx="96" cy="19" r="3" fill="${props.isRunning ? runColor : '#475569'}" stroke="#1e293b" stroke-width="1"/>
+
   <!-- 底座 -->
-  <rect x="20" y="65" width="30" height="6" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  <rect x="15" y="71" width="40" height="4" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 轴端 -->
-  <rect x="58" y="36" width="6" height="8" fill="#94a3b8" stroke="#1e293b" stroke-width="1"/>
-  
+  <rect x="16" y="53" width="80" height="5" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1.5"/>
+
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="10" y="20" width="50" height="40" fill="none" stroke="#ff4d4f" stroke-width="2" opacity="0.6">
+  <rect x="10" y="7" width="94" height="46" rx="3" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}
@@ -89,14 +94,7 @@ function darkenColor(hex: string, percent: number): string {
 }
 
 export const Main = defineWidget({
-  id: metadata.id,
-  name: metadata.name,
-  category: metadata.category,
-  icon: metadata.icon,
-  version: metadata.version,
-  defaultSize: metadata.defaultSize,
-  constraints: metadata.constraints,
-  resizable: metadata.resizable,
+  ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
   controls,

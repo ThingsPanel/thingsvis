@@ -6,14 +6,28 @@ import { INDUSTRIAL_ICONS_MAP } from './icons-registry';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+function lightenColor(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
+  const B = Math.min(255, (num & 0x0000ff) + amt);
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+}
+
 /**
- * Optionally re-color an SVG string by replacing the first significant fill value.
- * Only replaces fill attributes that contain hex colors to avoid clobbering "none" or "transparent".
+ * Re-color an SVG string by replacing the primary industrial base colors.
+ * Only replaces the design-system keys (#334155 base, #475569 highlight)
+ * so that pipe flanges, strokes and indicator lights stay intact.
  */
 function applyIconColor(svgText: string, color: string): string {
   if (!color) return svgText;
-  // Replace fill="#XXXXXX" patterns (preserving structural fills like stroke/marker)
-  return svgText.replace(/fill="(#[0-9a-fA-F]{3,6}|rgb[^"]+)"/g, `fill="${color}"`);
+  const lightColor = lightenColor(color, 10);
+  return svgText
+    .replace(/fill="#334155"/g, `fill="${color}"`)
+    .replace(/stop-color="#334155"/g, `stop-color="${color}"`)
+    .replace(/fill="#475569"/g, `fill="${lightColor}"`)
+    .replace(/stop-color="#475569"/g, `stop-color="${lightColor}"`);
 }
 
 function renderSvg(element: HTMLElement, props: Props): void {

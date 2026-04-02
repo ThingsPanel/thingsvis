@@ -1,9 +1,18 @@
 {
-  "name": "Centrifugal Pump",
-  "props": {
-    "baseColor": "Base Color",
-    "isRunning": "Is Running",
-    "hasError": "Has Error",
-    "rpm": "RPM Factor"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-pump": {
+        "name": "Centrifugal Pump"
+      }
+    },
+    "controls": {
+      "industrial-pump": {
+        "group": "Pump Config",
+        "baseColor": "Base Color",
+        "isRunning": "Is Running",
+        "hasError": "Has Error",
+        "rpm": "Rotational Speed (RPM)"
+      }
+    }
   }
 }

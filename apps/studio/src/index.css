@@ -632,6 +632,14 @@
   will-change: transform;
 }
 
+/* Connector-only selection: Moveable is used for drag only; hide dashed frame and handles */
+.connector-moveable-minimal .moveable-line,
+.connector-moveable-minimal .moveable-control,
+.connector-moveable-minimal .moveable-rotation,
+.connector-moveable-minimal .moveable-origin {
+  display: none !important;
+}
+
 /* Add a very subtle glow to make the 1px line more visible on dark backgrounds */
 .moveable-guideline.moveable-horizontal,
 .moveable-guideline.moveable-vertical {

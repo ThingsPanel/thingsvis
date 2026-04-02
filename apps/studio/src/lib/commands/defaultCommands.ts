@@ -84,6 +84,8 @@ export interface DefaultCommandsDependencies {
   bringSelectionForward?: () => void;
   /** Move the current selection one layer backward */
   sendSelectionBackward?: () => void;
+  /** Move the current selection by a small delta */
+  nudgeSelectionBy?: (delta: { x: number; y: number }) => void;
 
   /**
    * Atomic operation: insert new nodes AND update selection in a single state change.
@@ -97,6 +99,13 @@ export interface DefaultCommandsDependencies {
  */
 export function createDefaultCommands(deps: DefaultCommandsDependencies): Command[] {
   const commands: Command[] = [];
+  const hasUnlockedSelection = () => {
+    const state = deps.getKernelState!();
+    return state.selection.nodeIds.some((id) => {
+      const node = state.nodesById[id];
+      return !!node && !node.locked;
+    });
+  };
 
   // ==========================================================================
   // Project Commands
@@ -336,6 +345,35 @@ export function createDefaultCommands(deps: DefaultCommandsDependencies): Comman
         },
       ),
     );
+  }
+
+  if (deps.getKernelState && deps.nudgeSelectionBy) {
+    commands.push(
+      createCommand(COMMAND_IDS.EDIT_NUDGE_LEFT, 'Nudge Left', 'edit', () =>
+        deps.nudgeSelectionBy!({ x: -1, y: 0 }),
+      ),
+      createCommand(COMMAND_IDS.EDIT_NUDGE_RIGHT, 'Nudge Right', 'edit', () =>
+        deps.nudgeSelectionBy!({ x: 1, y: 0 }),
+      ),
+      createCommand(COMMAND_IDS.EDIT_NUDGE_UP, 'Nudge Up', 'edit', () =>
+        deps.nudgeSelectionBy!({ x: 0, y: -1 }),
+      ),
+      createCommand(COMMAND_IDS.EDIT_NUDGE_DOWN, 'Nudge Down', 'edit', () =>
+        deps.nudgeSelectionBy!({ x: 0, y: 1 }),
+      ),
+    );
+
+    for (const commandId of [
+      COMMAND_IDS.EDIT_NUDGE_LEFT,
+      COMMAND_IDS.EDIT_NUDGE_RIGHT,
+      COMMAND_IDS.EDIT_NUDGE_UP,
+      COMMAND_IDS.EDIT_NUDGE_DOWN,
+    ]) {
+      const command = commands.find((item) => item.id === commandId);
+      if (command) {
+        command.when = hasUnlockedSelection;
+      }
+    }
   }
 
   // ==========================================================================

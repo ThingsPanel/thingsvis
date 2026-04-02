@@ -10,50 +10,24 @@ import {
 } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+import { computeIndustrialPipeLocalRoute, getPipeNodeWorldBoundsFromDom, type Pt } from './routeWorld';
 
-type Pt = { x: number; y: number };
-type AnchorType = 'top' | 'right' | 'bottom' | 'left' | 'center';
 type LinkedNodeInfo = {
   id: string;
   position: { x: number; y: number };
   size: { width: number; height: number };
 };
 
-function getAnchorPoint(node: LinkedNodeInfo, anchor: AnchorType = 'center'): Pt {
-  const { position, size } = node;
-  const cx = position.x + size.width / 2;
-  const cy = position.y + size.height / 2;
+type PipePt = Pt;
 
-  switch (anchor) {
-    case 'top':
-      return { x: cx, y: position.y };
-    case 'right':
-      return { x: position.x + size.width, y: cy };
-    case 'bottom':
-      return { x: cx, y: position.y + size.height };
-    case 'left':
-      return { x: position.x, y: cy };
-    case 'center':
-    default:
-      return { x: cx, y: cy };
+function pipePointsToPathD(points: PipePt[]): string {
+  if (!points || points.length === 0) return '';
+  const first = points[0]!;
+  let d = `M ${first.x} ${first.y}`;
+  for (let i = 1; i < points.length; i++) {
+    d += ` L ${points[i]!.x} ${points[i]!.y}`;
   }
-}
-
-function worldToLocal(worldPt: Pt, nodePosition: Pt): Pt {
-  return {
-    x: worldPt.x - nodePosition.x,
-    y: worldPt.y - nodePosition.y,
-  };
-}
-
-function isNormalizedPoints(points: Pt[]): boolean {
-  return points.every((p) => p.x >= 0 && p.x <= 1 && p.y >= 0 && p.y <= 1);
-}
-
-function toPxPoints(points: Pt[], size: { width: number; height: number }): Pt[] {
-  if (!points.length || !size.width || !size.height) return points;
-  if (!isNormalizedPoints(points)) return points;
-  return points.map((p) => ({ x: p.x * size.width, y: p.y * size.height }));
+  return d;
 }
 
 function clampMinSize(size?: { width: number; height: number }) {
@@ -61,163 +35,6 @@ function clampMinSize(size?: { width: number; height: number }) {
     width: Math.max(1, Number(size?.width ?? 0)),
     height: Math.max(1, Number(size?.height ?? 0)),
   };
-}
-
-function buildPolylinePointsAttr(points: Pt[]): string {
-  return points.map((p) => `${p.x},${p.y}`).join(' ');
-}
-
-function buildLinePathD(points: Pt[]): string {
-  if (points.length < 2) return '';
-  const first = points[0]!;
-  let d = `M ${first.x} ${first.y}`;
-  for (let i = 1; i < points.length; i++) {
-    const p = points[i]!;
-    d += ` L ${p.x} ${p.y}`;
-  }
-  return d;
-}
-
-function buildElbowRoutePoints(a: Pt, b: Pt, sourceAnchor?: AnchorType, targetAnchor?: AnchorType): Pt[] {
-  const sourceHorizontal = sourceAnchor === 'left' || sourceAnchor === 'right';
-  const sourceVertical = sourceAnchor === 'top' || sourceAnchor === 'bottom';
-  const targetHorizontal = targetAnchor === 'left' || targetAnchor === 'right';
-  const targetVertical = targetAnchor === 'top' || targetAnchor === 'bottom';
-
-  if (sourceVertical && targetVertical) {
-    const midY = (a.y + b.y) / 2;
-    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
-  }
-  if (sourceHorizontal && targetHorizontal) {
-    const midX = (a.x + b.x) / 2;
-    return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
-  }
-  if (sourceVertical && targetHorizontal) {
-    return [a, { x: a.x, y: b.y }, b];
-  }
-  if (sourceHorizontal && targetVertical) {
-    return [a, { x: b.x, y: a.y }, b];
-  }
-  const midX = (a.x + b.x) / 2;
-  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
-}
-
-function isHorizontalSegment(a: Pt, b: Pt, eps = 1) {
-  return Math.abs(a.y - b.y) < eps;
-}
-
-function isVerticalSegment(a: Pt, b: Pt, eps = 1) {
-  return Math.abs(a.x - b.x) < eps;
-}
-
-const PIPE_STRAIGHT_SNAP_THRESHOLD = 20;
-
-function orthogonalizePipePoints(points: Pt[], sourceAnchor?: AnchorType, targetAnchor?: AnchorType): Pt[] {
-  if (points.length < 2) return points;
-
-  const result: Pt[] = [points[0]!];
-
-  const chooseElbow = (
-    a: Pt,
-    b: Pt,
-    prev?: Pt,
-    next?: Pt,
-    isFirst?: boolean,
-    isLast?: boolean,
-  ): Pt => {
-    let firstLeg: 'horizontal' | 'vertical' | null = null;
-
-    if (isFirst) {
-      if (sourceAnchor === 'left' || sourceAnchor === 'right') firstLeg = 'horizontal';
-      if (sourceAnchor === 'top' || sourceAnchor === 'bottom') firstLeg = 'vertical';
-    }
-
-    if (!firstLeg && prev) {
-      if (isHorizontalSegment(prev, a)) firstLeg = 'vertical';
-      else if (isVerticalSegment(prev, a)) firstLeg = 'horizontal';
-    }
-
-    if (!firstLeg && next) {
-      if (isHorizontalSegment(b, next)) firstLeg = 'horizontal';
-      else if (isVerticalSegment(b, next)) firstLeg = 'vertical';
-    }
-
-    if (!firstLeg && isLast) {
-      if (targetAnchor === 'left' || targetAnchor === 'right') firstLeg = 'vertical';
-      if (targetAnchor === 'top' || targetAnchor === 'bottom') firstLeg = 'horizontal';
-    }
-
-    if (!firstLeg) {
-      firstLeg = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y) ? 'horizontal' : 'vertical';
-    }
-
-    return firstLeg === 'horizontal' ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
-  };
-
-  for (let i = 1; i < points.length; i++) {
-    const a = result[result.length - 1]!;
-    const b = points[i]!;
-
-    if (isHorizontalSegment(a, b) || isVerticalSegment(a, b)) {
-      result.push(b);
-      continue;
-    }
-
-    const prev = result.length >= 2 ? result[result.length - 2] : undefined;
-    const next = i < points.length - 1 ? points[i + 1] : undefined;
-    const elbow = chooseElbow(a, b, prev, next, i === 1, i === points.length - 1);
-
-    if (Math.abs(elbow.x - a.x) >= 1 || Math.abs(elbow.y - a.y) >= 1) {
-      result.push(elbow);
-    }
-    result.push(b);
-  }
-
-  const compacted: Pt[] = [result[0]!];
-  for (let i = 1; i < result.length - 1; i++) {
-    const prev = compacted[compacted.length - 1]!;
-    const curr = result[i]!;
-    const next = result[i + 1]!;
-    const collinearX = isVerticalSegment(prev, curr) && isVerticalSegment(curr, next);
-    const collinearY = isHorizontalSegment(prev, curr) && isHorizontalSegment(curr, next);
-    if (collinearX || collinearY) continue;
-    compacted.push(curr);
-  }
-  compacted.push(result[result.length - 1]!);
-
-  if (compacted.length >= 2) {
-    const start = compacted[0]!;
-    const end = compacted[compacted.length - 1]!;
-    if (Math.abs(start.y - end.y) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
-      return [start, { x: end.x, y: start.y }];
-    }
-    if (Math.abs(start.x - end.x) <= PIPE_STRAIGHT_SNAP_THRESHOLD) {
-      return [start, { x: start.x, y: end.y }];
-    }
-  }
-
-  if (compacted.length > 4) {
-    return buildCanonicalPipeRoute(
-      compacted[0]!,
-      compacted[compacted.length - 1]!,
-      sourceAnchor,
-      targetAnchor,
-    );
-  }
-
-  return compacted;
-}
-
-function buildCanonicalPipeRoute(
-  start: Pt,
-  end: Pt,
-  sourceAnchor?: AnchorType,
-  targetAnchor?: AnchorType,
-): Pt[] {
-  if (isHorizontalSegment(start, end) || isVerticalSegment(start, end)) {
-    return [start, end];
-  }
-  return buildElbowRoutePoints(start, end, sourceAnchor, targetAnchor);
 }
 
 function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: WidgetOverlayContext) {
@@ -254,48 +71,31 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
   svg.style.overflow = 'visible';
   svg.style.pointerEvents = 'none';
 
-  const borderPolyline = document.createElementNS(svgNS, 'polyline');
-  borderPolyline.setAttribute('fill', 'none');
-  borderPolyline.setAttribute('vector-effect', 'non-scaling-stroke');
-
   const borderPath = document.createElementNS(svgNS, 'path');
   borderPath.setAttribute('fill', 'none');
   borderPath.setAttribute('vector-effect', 'non-scaling-stroke');
 
-  const pipePolyline = document.createElementNS(svgNS, 'polyline');
-  pipePolyline.setAttribute('fill', 'none');
-  pipePolyline.setAttribute('vector-effect', 'non-scaling-stroke');
-
   const pipePath = document.createElementNS(svgNS, 'path');
   pipePath.setAttribute('fill', 'none');
   pipePath.setAttribute('vector-effect', 'non-scaling-stroke');
-
-  const flowPolyline = document.createElementNS(svgNS, 'polyline');
-  flowPolyline.setAttribute('fill', 'none');
-  flowPolyline.setAttribute('vector-effect', 'non-scaling-stroke');
-  flowPolyline.style.pointerEvents = 'none';
 
   const flowPath = document.createElementNS(svgNS, 'path');
   flowPath.setAttribute('fill', 'none');
   flowPath.setAttribute('vector-effect', 'non-scaling-stroke');
   flowPath.style.pointerEvents = 'none';
 
-  svg.appendChild(borderPolyline);
   svg.appendChild(borderPath);
-  svg.appendChild(pipePolyline);
   svg.appendChild(pipePath);
-  svg.appendChild(flowPolyline);
   svg.appendChild(flowPath);
   element.appendChild(svg);
 
   let rafId: number | null = null;
   let lastTs = 0;
   let dashOffset = 0;
-  let flowTargets: Array<SVGElement & { style: CSSStyleDeclaration }> = [];
+  let flowTarget: SVGElement | null = null;
   let flowSpeedPx = 0;
   let flowSpacingPx = 0;
   let flowDirection = 1;
-  const defaults = getDefaultProps();
 
   function stopFlow() {
     if (rafId != null) {
@@ -314,8 +114,8 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       const spacing = Math.max(1, flowSpacingPx);
       dashOffset = dashOffset + flowDirection * flowSpeedPx * dt;
       dashOffset = ((dashOffset % spacing) + spacing) % spacing;
-      for (const target of flowTargets) {
-        target.style.strokeDashoffset = String(dashOffset);
+      if (flowTarget) {
+        flowTarget.style.strokeDashoffset = String(dashOffset);
       }
 
       tick();
@@ -324,24 +124,16 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
 
   function applyPipeAttrs(el: SVGElement, props: Props) {
     const strokeWidth = getStrokeWidthPx(props.strokeWidth);
-    const dashArray = props.flowEnabled ? '' : getStrokeDasharray(props.strokeStyle, strokeWidth);
-    el.setAttribute('stroke', props.pipeInnerColor || props.stroke);
+    el.setAttribute('stroke', props.pipeColor);
     el.setAttribute('stroke-width', String(strokeWidth));
     el.setAttribute('opacity', String(props.opacity));
     el.setAttribute('stroke-linecap', 'square');
     el.setAttribute('stroke-linejoin', 'miter');
-
-    if (dashArray) {
-      el.setAttribute('stroke-dasharray', dashArray);
-    } else {
-      el.removeAttribute('stroke-dasharray');
-    }
   }
 
   function applyBorderAttrs(el: SVGElement, props: Props) {
     const strokeWidth = getStrokeWidthPx(props.strokeWidth);
     const outlineWidth = Math.max(1, Math.round(strokeWidth * 0.25));
-    const dashArray = props.flowEnabled ? '' : getStrokeDasharray(props.strokeStyle, strokeWidth);
 
     el.setAttribute('stroke', props.pipeBackground);
     el.setAttribute('stroke-width', String(strokeWidth + outlineWidth * 2));
@@ -349,12 +141,6 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     el.setAttribute('stroke-linecap', 'square');
     el.setAttribute('stroke-linejoin', 'miter');
     el.setAttribute('stroke-miterlimit', '10');
-
-    if (dashArray) {
-      el.setAttribute('stroke-dasharray', dashArray);
-    } else {
-      el.removeAttribute('stroke-dasharray');
-    }
   }
 
   function applyFlowAttrs(el: SVGElement, props: Props) {
@@ -367,13 +153,18 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     const flowWidth = Math.max(2, Math.min(strokeWidth - 2, Math.round(strokeWidth * 0.5) || 2));
     el.style.display = '';
     
-    if (props.glowEffect) {
+    if (props.glowEnabled) {
        el.setAttribute('filter', `url(#${glowId})`);
-       el.setAttribute('stroke', props.glowColor || props.flowColor || props.stroke);
+       el.setAttribute('stroke', props.glowColor || props.flowColor);
        el.style.transition = 'stroke 0.2s';
+       
+       const filter = defs.querySelector(`#${glowId} feGaussianBlur`);
+       if (filter) {
+         filter.setAttribute('stdDeviation', String(props.glowIntensity));
+       }
     } else {
        el.removeAttribute('filter');
-       el.setAttribute('stroke', props.flowColor || props.stroke);
+       el.setAttribute('stroke', props.flowColor);
     }
     
     el.setAttribute('stroke-width', String(flowWidth));
@@ -389,46 +180,25 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     const linkedNodes = (nextCtx as any).linkedNodes as Record<string, LinkedNodeInfo> | undefined;
     const sourceNode = nextProps.sourceNodeId ? linkedNodes?.[nextProps.sourceNodeId] : undefined;
     const targetNode = nextProps.targetNodeId ? linkedNodes?.[nextProps.targetNodeId] : undefined;
-    const hasNodeBinding = !!(sourceNode || targetNode);
 
-    let points: Pt[];
-    if (hasNodeBinding) {
-      const startPt = sourceNode
-        ? worldToLocal(getAnchorPoint(sourceNode, nextProps.sourceAnchor), widgetPosition)
-        : { x: 0, y: size.height / 2 };
-      const endPt = targetNode
-        ? worldToLocal(getAnchorPoint(targetNode, nextProps.targetAnchor), widgetPosition)
-        : { x: size.width, y: size.height / 2 };
-      const rawPoints = Array.isArray(nextProps.points) ? nextProps.points : defaults.points;
-      const pxPoints = toPxPoints(rawPoints as Pt[], size);
-      if (pxPoints.length >= 3) {
-        points = orthogonalizePipePoints(
-          pxPoints.map((point, index) => {
-            if (index === 0) return startPt;
-            if (index === pxPoints.length - 1) return endPt;
-            return point;
-          }),
-          nextProps.sourceAnchor,
-          nextProps.targetAnchor,
-        );
-      } else {
-        points = buildElbowRoutePoints(startPt, endPt, nextProps.sourceAnchor, nextProps.targetAnchor);
-      }
-    } else {
-      const rawPoints = Array.isArray(nextProps.points) ? nextProps.points : defaults.points;
-      const pxPoints = toPxPoints(rawPoints as Pt[], size);
-      points =
-        pxPoints.length >= 3
-          ? orthogonalizePipePoints(pxPoints, nextProps.sourceAnchor, nextProps.targetAnchor)
-          : buildElbowRoutePoints(
-              pxPoints[0] ?? { x: 0, y: size.height / 2 },
-              pxPoints[pxPoints.length - 1] ?? { x: size.width, y: size.height / 2 },
-              nextProps.sourceAnchor,
-              nextProps.targetAnchor,
-            );
-    }
+    const sourceDomNode =
+      nextProps.sourceNodeId && !sourceNode ? getPipeNodeWorldBoundsFromDom(nextProps.sourceNodeId) : undefined;
+    const targetDomNode =
+      nextProps.targetNodeId && !targetNode ? getPipeNodeWorldBoundsFromDom(nextProps.targetNodeId) : undefined;
 
-    if (hasNodeBinding && points.length) {
+    const hasNodeBinding = !!(sourceNode || targetNode || sourceDomNode || targetDomNode);
+
+    const wv = (window as any)._thingsvisViewport as { offsetX: number; offsetY: number; zoom: number } | undefined;
+    let routePoints = computeIndustrialPipeLocalRoute(nextProps, size, widgetPosition, linkedNodes, {
+      viewport: {
+        zoom: (nextCtx as any).zoom ?? wv?.zoom ?? 1,
+        offsetX: wv?.offsetX ?? 0,
+        offsetY: wv?.offsetY ?? 0,
+      },
+      containerEl: null,
+    });
+
+    if (hasNodeBinding && routePoints.length) {
       const strokeWidth = getStrokeWidthPx(nextProps.strokeWidth);
       const pad = Math.max(20, strokeWidth * 2 + 12);
       let minX = Infinity;
@@ -436,7 +206,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       let maxX = -Infinity;
       let maxY = -Infinity;
 
-      for (const point of points) {
+      for (const point of routePoints) {
         minX = Math.min(minX, point.x);
         minY = Math.min(minY, point.y);
         maxX = Math.max(maxX, point.x);
@@ -450,6 +220,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
 
       const width = Math.max(1, maxX - minX);
       const height = Math.max(1, maxY - minY);
+      
       svg.style.position = 'absolute';
       svg.style.left = `${minX}px`;
       svg.style.top = `${minY}px`;
@@ -458,7 +229,8 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       svg.setAttribute('width', String(width));
       svg.setAttribute('height', String(height));
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-      points = points.map((point) => ({ x: point.x - minX, y: point.y - minY }));
+      
+      routePoints = routePoints.map((point) => ({ x: point.x - minX, y: point.y - minY }));
     } else {
       svg.style.position = '';
       svg.style.left = '';
@@ -470,41 +242,25 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
     }
 
-    const usePath = points.length >= 3;
-    borderPolyline.style.display = usePath ? 'none' : '';
-    pipePolyline.style.display = usePath ? 'none' : '';
-    flowPolyline.style.display = usePath ? 'none' : '';
-    borderPath.style.display = usePath ? '' : 'none';
-    pipePath.style.display = usePath ? '' : 'none';
-    flowPath.style.display = usePath ? '' : 'none';
+    const d = pipePointsToPathD(routePoints);
+    borderPath.setAttribute('d', d);
+    pipePath.setAttribute('d', d);
+    flowPath.setAttribute('d', d);
 
-    if (usePath) {
-      const d = buildLinePathD(points);
-      borderPath.setAttribute('d', d);
-      pipePath.setAttribute('d', d);
-      flowPath.setAttribute('d', d);
-    } else {
-      const polyline = buildPolylinePointsAttr(points);
-      borderPolyline.setAttribute('points', polyline);
-      pipePolyline.setAttribute('points', polyline);
-      flowPolyline.setAttribute('points', polyline);
-    }
-
-    applyBorderAttrs(usePath ? borderPath : borderPolyline, nextProps);
-    applyPipeAttrs(usePath ? pipePath : pipePolyline, nextProps);
-    applyFlowAttrs(usePath ? flowPath : flowPolyline, nextProps);
+    applyBorderAttrs(borderPath, nextProps);
+    applyPipeAttrs(pipePath, nextProps);
+    applyFlowAttrs(flowPath, nextProps);
 
     if (nextProps.flowEnabled && nextProps.flowSpeed > 0) {
       flowSpeedPx = nextProps.flowSpeed;
       flowSpacingPx = nextProps.flowLength + nextProps.flowSpacing;
       flowDirection = nextProps.flowDirection === 'reverse' ? 1 : -1;
-      flowTargets = [(usePath ? flowPath : flowPolyline) as SVGElement & { style: CSSStyleDeclaration }];
+      flowTarget = flowPath as SVGElement & { style: CSSStyleDeclaration };
       if (!rafId) tick();
     } else {
       stopFlow();
-      flowTargets = [];
+      flowTarget = null;
       dashOffset = 0;
-      flowPolyline.style.strokeDashoffset = '0';
       flowPath.style.strokeDashoffset = '0';
     }
   }

@@ -150,6 +150,7 @@ export function ControlFieldRow({
   const showOverriddenHint = Boolean(binding) && propsValue !== undefined;
   const fieldLabel = resolveControlText(field.label, locale, t);
   const fieldDescription = resolveControlText(field.description, locale, t);
+  const labelHoverTitle = fieldDescription ? `${fieldLabel}\n${fieldDescription}` : fieldLabel;
   const numberFieldUsesFloat =
     [propsValue, field.default, field.min, field.max, field.step].some(
       (candidate) => typeof candidate === 'number' && !Number.isInteger(candidate),
@@ -173,8 +174,8 @@ export function ControlFieldRow({
     <div className="space-y-1.5 relative group/field">
       <div className="flex items-center justify-between gap-2">
         <label
-          className="text-sm font-medium text-muted-foreground truncate flex-1"
-          title={fieldLabel}
+          className={`text-sm font-medium text-muted-foreground truncate flex-1${fieldDescription ? ' cursor-help' : ''}`}
+          title={labelHoverTitle}
         >
           {fieldLabel}
         </label>

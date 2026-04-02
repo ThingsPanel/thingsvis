@@ -59,4 +59,71 @@ describe('createDefaultCommands', () => {
     expect(bringForward?.when?.()).toBe(false);
     expect(sendBackward?.when?.()).toBe(false);
   });
+
+  it('registers nudge commands with arrow key shortcuts', () => {
+    const commands = createDefaultCommands({
+      saveProject: async () => undefined,
+      getKernelState: () => createKernelState(['node-1']),
+      nudgeSelectionBy: vi.fn(),
+    });
+
+    expect(
+      commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_LEFT)?.shortcut,
+    ).toEqual(DEFAULT_SHORTCUTS[COMMAND_IDS.EDIT_NUDGE_LEFT]);
+    expect(
+      commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_RIGHT)?.shortcut,
+    ).toEqual(DEFAULT_SHORTCUTS[COMMAND_IDS.EDIT_NUDGE_RIGHT]);
+    expect(commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_UP)?.shortcut).toEqual(
+      DEFAULT_SHORTCUTS[COMMAND_IDS.EDIT_NUDGE_UP],
+    );
+    expect(
+      commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_DOWN)?.shortcut,
+    ).toEqual(DEFAULT_SHORTCUTS[COMMAND_IDS.EDIT_NUDGE_DOWN]);
+  });
+
+  it('executes nudge commands with the expected delta', async () => {
+    const nudgeSelectionBy = vi.fn();
+    const commands = createDefaultCommands({
+      saveProject: async () => undefined,
+      getKernelState: () => createKernelState(['node-1']),
+      nudgeSelectionBy,
+    });
+
+    await commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_LEFT)?.execute();
+    await commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_RIGHT)?.execute();
+    await commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_UP)?.execute();
+    await commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_DOWN)?.execute();
+
+    expect(nudgeSelectionBy).toHaveBeenNthCalledWith(1, { x: -1, y: 0 });
+    expect(nudgeSelectionBy).toHaveBeenNthCalledWith(2, { x: 1, y: 0 });
+    expect(nudgeSelectionBy).toHaveBeenNthCalledWith(3, { x: 0, y: -1 });
+    expect(nudgeSelectionBy).toHaveBeenNthCalledWith(4, { x: 0, y: 1 });
+  });
+
+  it('disables nudge commands when no unlocked nodes are selected', () => {
+    const commands = createDefaultCommands({
+      saveProject: async () => undefined,
+      getKernelState: () =>
+        ({
+          selection: { nodeIds: ['node-1'] },
+          nodesById: {
+            'node-1': { id: 'node-1', locked: true },
+          },
+        }) as any,
+      nudgeSelectionBy: vi.fn(),
+    });
+
+    expect(commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_LEFT)?.when?.()).toBe(
+      false,
+    );
+    expect(commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_RIGHT)?.when?.()).toBe(
+      false,
+    );
+    expect(commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_UP)?.when?.()).toBe(
+      false,
+    );
+    expect(commands.find((command) => command.id === COMMAND_IDS.EDIT_NUDGE_DOWN)?.when?.()).toBe(
+      false,
+    );
+  });
 });

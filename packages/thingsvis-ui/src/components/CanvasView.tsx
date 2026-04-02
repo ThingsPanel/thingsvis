@@ -348,6 +348,16 @@ export const CanvasView: React.FC<Props> = ({
     });
   }, [viewportInfo, onViewportChange, width, height]);
 
+  // Expose viewport for DOM-based port math in widgets (industrial/pipe, basic/line routeWorld).
+  useEffect(() => {
+    const { zoom: vZoom, offset: vOffset } = viewportInfo;
+    (window as unknown as { _thingsvisViewport?: { offsetX: number; offsetY: number; zoom: number } })._thingsvisViewport = {
+      offsetX: vOffset.x,
+      offsetY: vOffset.y,
+      zoom: vZoom,
+    };
+  }, [viewportInfo]);
+
   // helper to convert screen -> world (used by parent if needed)
   function screenToWorld(screenPoint: Point): Point {
     const { zoom: vZoom, offset: vOffset } = viewportInfo;

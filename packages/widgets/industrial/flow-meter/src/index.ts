@@ -8,14 +8,19 @@ import en from './locales/en.json';
 function renderFlowMeter(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'block';
+  element.style.lineHeight = '0';
 
-  const percentage = Math.min(100, Math.max(0, ((props.value - props.min) / (props.max - props.min)) * 100));
-  const baseColor = props.hasError ? '#ff4d4f' : props.baseColor;
-  const liquidColor = props.hasError ? '#ff7875' : props.liquidColor;
+  const range = props.max - props.min;
+  const percentage = range === 0
+    ? 0
+    : Math.min(100, Math.max(0, ((props.value - props.min) / range) * 100));
+  const baseColor = props.hasError ? '#ff4d4f' : (props.baseColor || '#334155');
+  const liquidColor = props.hasError ? '#ff7875' : (props.liquidColor || '#0ea5e9');
   const animationDuration = props.flowSpeed > 0 ? `${(1 / props.flowSpeed).toFixed(2)}s` : '0s';
 
   element.innerHTML = `
-<svg width="100%" height="100%" viewBox="0 0 120 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" height="100%" viewBox="0 0 120 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg" style="display:block">
   <defs>
     <style>
       @keyframes flow {
@@ -27,9 +32,8 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
       }
     </style>
     <linearGradient id="caseGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 20)};stop-opacity:1" />
-      <stop offset="50%" style="stop-color:${baseColor};stop-opacity:1" />
-      <stop offset="100%" style="stop-color:${darkenColor(baseColor, 20)};stop-opacity:1" />
+      <stop offset="0%" style="stop-color:${lightenColor(baseColor, 10)};stop-opacity:1" />
+      <stop offset="100%" style="stop-color:${baseColor};stop-opacity:1" />
     </linearGradient>
     <linearGradient id="liquidGradient" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:${liquidColor};stop-opacity:0.8" />
@@ -37,47 +41,41 @@ function renderFlowMeter(element: HTMLElement, props: Props): void {
       <stop offset="100%" style="stop-color:${liquidColor};stop-opacity:0.8" />
     </linearGradient>
   </defs>
-  
-  <!-- 左管道 -->
-  <rect x="0" y="22" width="25" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 流量计主体 -->
-  <rect x="25" y="12" width="70" height="36" rx="6" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="1"/>
-  
+
+  <!-- 左右短管 -->
+  <rect x="0" y="23" width="10" height="14" fill="#475569"/>
+  <rect x="110" y="23" width="10" height="14" fill="#475569"/>
+
+  <!-- 流量计主体 - 撑满 -->
+  <rect x="10" y="7" width="100" height="46" rx="5" fill="url(#caseGradient)" stroke="#1e293b" stroke-width="2"/>
+
   <!-- 观察窗背景 -->
-  <rect x="30" y="17" width="60" height="18" rx="3" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-  
+  <rect x="16" y="15" width="88" height="18" rx="3" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+
   <!-- 液体填充 -->
-  <rect x="32" y="19" width="${percentage * 0.56}" height="14" rx="2" fill="url(#liquidGradient)"/>
-  
+  <rect x="18" y="17" width="${percentage * 0.84}" height="14" rx="2" fill="url(#liquidGradient)"/>
+
   <!-- 流动效果线 -->
   ${props.flowSpeed > 0 ? `
-  <line x1="35" y1="26" x2="85" y2="26" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2" 
+  <line x1="20" y1="24" x2="100" y2="24" stroke="${lightenColor(liquidColor, 40)}" stroke-width="2"
     stroke-dasharray="5,5" class="flow-anim" opacity="0.8"/>
   ` : ''}
-  
+
   <!-- 刻度线 -->
-  <line x1="35" y1="22" x2="35" y2="30" stroke="#475569" stroke-width="1"/>
-  <line x1="60" y1="22" x2="60" y2="30" stroke="#475569" stroke-width="1"/>
-  <line x1="85" y1="22" x2="85" y2="30" stroke="#475569" stroke-width="1"/>
-  
-  <!-- 右管道 -->
-  <rect x="95" y="22" width="25" height="16" fill="#64748b" stroke="#1e293b" stroke-width="1"/>
-  
-  <!-- 法兰盘 -->
-  <rect x="22" y="18" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <rect x="92" y="18" width="6" height="24" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  
+  <line x1="24" y1="19" x2="24" y2="29" stroke="#475569" stroke-width="1"/>
+  <line x1="60" y1="19" x2="60" y2="29" stroke="#475569" stroke-width="1"/>
+  <line x1="96" y1="19" x2="96" y2="29" stroke="#475569" stroke-width="1"/>
+
   <!-- 数值显示 -->
   ${props.showValue ? `
-  <text x="60" y="42" text-anchor="middle" fill="#e2e8f0" font-size="8" font-family="sans-serif" font-weight="bold">
+  <text x="60" y="46" text-anchor="middle" fill="#e2e8f0" font-size="12" font-family="sans-serif" font-weight="bold">
     ${Math.round(props.value)}
   </text>
   ` : ''}
-  
+
   <!-- 故障闪烁 -->
   ${props.hasError ? `
-  <rect x="25" y="12" width="70" height="36" rx="6" fill="none" stroke="#ff4d4f" stroke-width="2" opacity="0.6">
+  <rect x="10" y="7" width="100" height="46" rx="5" fill="none" stroke="#ff4d4f" stroke-width="2.5" opacity="0.6">
     <animate attributeName="opacity" values="0.6;0.2;0.6" dur="1s" repeatCount="indefinite"/>
   </rect>
   ` : ''}
@@ -104,14 +102,7 @@ function darkenColor(hex: string, percent: number): string {
 }
 
 export const Main = defineWidget({
-  id: metadata.id,
-  name: metadata.name,
-  category: metadata.category,
-  icon: metadata.icon,
-  version: metadata.version,
-  defaultSize: metadata.defaultSize,
-  constraints: metadata.constraints,
-  resizable: metadata.resizable,
+  ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
   controls,

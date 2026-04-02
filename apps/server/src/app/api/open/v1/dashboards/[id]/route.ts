@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { verifyApiKey, hasPermission } from '@/lib/auth/api-key-auth';
 import { UpdateDashboardSchema } from '@/lib/validators/dashboard';
@@ -79,9 +78,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
   }
 
-  try {
-    await prisma.dashboardVersion.create({
-      data: {
+  await prisma.dashboardVersion.createMany({
+    data: [
+      {
         dashboardId: existing.id,
         version: existing.version,
         canvasConfig: existing.canvasConfig,
@@ -89,12 +88,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
         dataSources: existing.dataSources,
         variables: existing.variables,
       },
-    });
-  } catch (error) {
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) {
-      throw error;
-    }
-  }
+    ],
+    skipDuplicates: true,
+  });
 
   const updateData: Record<string, unknown> = {
     version: { increment: 1 },

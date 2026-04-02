@@ -4,7 +4,7 @@ export const metadata = {
   category: 'industrial',
   icon: 'Cylinder',
   version: '1.0.0',
-  defaultSize: { width: 100, height: 120 },
-  constraints: { minWidth: 50, minHeight: 60 },
+  defaultSize: { width: 60, height: 100 },
+  constraints: { minWidth: 30, minHeight: 50 },
   resizable: true,
 } as const;

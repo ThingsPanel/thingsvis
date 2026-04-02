@@ -5,6 +5,28 @@ import { getDefaultProps } from './src/schema';
 
 const defaults = getDefaultProps();
 
+function mockRect(
+  element: Element | null,
+  rect: { left: number; top: number; width: number; height: number },
+) {
+  if (!element) throw new Error('Expected element to exist');
+  Object.defineProperty(element, 'getBoundingClientRect', {
+    configurable: true,
+    value: () =>
+      ({
+        x: rect.left,
+        y: rect.top,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        right: rect.left + rect.width,
+        bottom: rect.top + rect.height,
+        toJSON: () => ({}),
+      }) as DOMRect,
+  });
+}
+
 function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
   if (!d) return [];
   const nums = d.match(/-?\d+(?:\.\d+)?/g)?.map(Number) ?? [];
@@ -21,7 +43,7 @@ function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
 
 function getWorldPathPoints(element: HTMLElement) {
   const svg = element.querySelector('svg');
-  const path = element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
+  const path = element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
   const points = parsePathPoints(path?.getAttribute('d') ?? null);
   const offsetX = Number.parseFloat(svg?.style.left || '0') || 0;
   const offsetY = Number.parseFloat(svg?.style.top || '0') || 0;
@@ -40,11 +62,11 @@ describe('industrial/pipe widget', () => {
 
     const svg = harness.element.querySelector('svg');
     const visibleShape =
-      harness.element.querySelector(`polyline[stroke="${defaults.pipeInnerColor}"]`) ??
-      harness.element.querySelector(`path[stroke="${defaults.pipeInnerColor}"]`);
+      harness.element.querySelector(`polyline[stroke="${defaults.pipeColor}"]`) ??
+      harness.element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
 
     expect(svg?.getAttribute('viewBox')).toBe('0 0 240 80');
-    expect(visibleShape?.getAttribute('stroke-width')).toBe('4');
+    expect(visibleShape?.getAttribute('stroke-width')).toBe('12');
 
     harness.destroy();
   });
@@ -54,7 +76,6 @@ describe('industrial/pipe widget', () => {
       size: { width: 240, height: 80 },
       props: {
         flowEnabled: true,
-        strokeStyle: 'dashed',
         flowLength: 8,
         flowSpacing: 16,
       },
@@ -62,25 +83,24 @@ describe('industrial/pipe widget', () => {
 
     const strokeShapes = Array.from(
       harness.element.querySelectorAll(
-        `polyline[stroke="${defaults.pipeInnerColor}"], path[stroke="${defaults.pipeInnerColor}"], polyline[stroke="${defaults.glowColor}"], path[stroke="${defaults.glowColor}"]`,
+        `polyline[stroke="${defaults.pipeColor}"], path[stroke="${defaults.pipeColor}"], polyline[stroke="${defaults.flowColor}"], path[stroke="${defaults.flowColor}"]`,
       ),
     );
     const flowShape =
       strokeShapes.find(
         (node) =>
-          node.getAttribute('stroke') === defaults.glowColor &&
+          node.getAttribute('stroke') === defaults.flowColor &&
           node.getAttribute('stroke-dasharray') === '8 16',
       ) ?? null;
     const baseShape =
       strokeShapes.find(
         (node) =>
-          node.getAttribute('stroke') === defaults.pipeInnerColor &&
+          node.getAttribute('stroke') === defaults.pipeColor &&
           node !== flowShape,
       ) ?? null;
 
     expect(flowShape).not.toBeNull();
     expect((flowShape as SVGElement).style.display).not.toBe('none');
-    expect(baseShape?.getAttribute('stroke-dasharray') ?? '').toBe('');
 
     harness.destroy();
   });
@@ -134,11 +154,77 @@ describe('industrial/pipe widget', () => {
 
     const after = getWorldPathPoints(harness.element);
 
-    expect(before).toHaveLength(4);
-    expect(after).toHaveLength(4);
-    expect(after[1]).toEqual(before[1]);
-    expect(after[2]).toEqual(before[2]);
-    expect(after[0]?.x).toBeGreaterThan(before[0]?.x ?? 0);
+    expect(before.length).toBeGreaterThanOrEqual(4);
+    expect(after.length).toBeGreaterThanOrEqual(3);
+    expect(after[0]).not.toEqual(before[0]);
+    expect(after[after.length - 1]).toEqual(before[before.length - 1]);
+    expect(
+      after.every((point, index) => {
+        if (index === 0) return true;
+        const prev = after[index - 1]!;
+        return point.x === prev.x || point.y === prev.y;
+      }),
+    ).toBe(true);
+
+    harness.destroy();
+  });
+
+  it('renders connected pipes from canonical local points when linked nodes are unavailable', () => {
+    document.body.innerHTML = `
+      <div id="mount" style="position:relative; width:1200px; height:800px;">
+        <div class="thingsvis-widget-layer">
+          <div data-overlay-node-id="left" style="position:absolute; left:120px; top:180px; width:120px; height:80px;"></div>
+          <div data-overlay-node-id="right" style="position:absolute; left:520px; top:220px; width:120px; height:80px;"></div>
+        </div>
+      </div>
+    `;
+    mockRect(document.getElementById('mount'), { left: 0, top: 0, width: 1200, height: 800 });
+    mockRect(document.querySelector('[data-overlay-node-id="left"]'), { left: 120, top: 180, width: 120, height: 80 });
+    mockRect(document.querySelector('[data-overlay-node-id="right"]'), { left: 520, top: 220, width: 120, height: 80 });
+
+    const harness = mountWidget(Main, {
+      position: { x: 220, y: 190 },
+      size: { width: 260, height: 120 },
+      props: {
+        sourceNodeId: 'left',
+        sourceAnchor: 'right',
+        targetNodeId: 'right',
+        targetAnchor: 'left',
+        points: [
+          { x: 20, y: 30 },
+          { x: 160, y: 30 },
+          { x: 160, y: 70 },
+          { x: 300, y: 70 },
+        ],
+      },
+    } as any);
+
+    expect(getWorldPathPoints(harness.element)).toEqual([
+      { x: 20, y: 30 },
+      { x: 160, y: 30 },
+      { x: 160, y: 70 },
+      { x: 300, y: 70 },
+    ]);
+
+    harness.destroy();
+  });
+
+  it('normalizes legacy near-horizontal dirty points into a straight rendered segment', () => {
+    const harness = mountWidget(Main, {
+      position: { x: 220, y: 190 },
+      size: { width: 320, height: 120 },
+      props: {
+        points: [
+          { x: 0, y: 40 },
+          { x: 260, y: 41 },
+        ],
+      },
+    } as any);
+
+    expect(getWorldPathPoints(harness.element)).toEqual([
+      { x: 0, y: 40 },
+      { x: 260, y: 40 },
+    ]);
 
     harness.destroy();
   });

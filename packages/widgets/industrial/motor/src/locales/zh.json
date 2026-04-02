@@ -1,5 +1,18 @@
 {
-  "widget": {
-    "name": "电动机"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-motor": {
+        "name": "电动机"
+      }
+    },
+    "controls": {
+      "industrial-motor": {
+        "group": "电机配置",
+        "baseColor": "基础颜色",
+        "isRunning": "运行状态",
+        "hasError": "故障告警",
+        "rpm": "转速系数"
+      }
+    }
   }
 }

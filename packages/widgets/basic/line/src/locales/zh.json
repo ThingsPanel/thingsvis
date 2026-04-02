@@ -2,37 +2,30 @@
     "editor": {
         "widgets": {
             "thingsvis-widget-basic-line": {
-                "name": "连接线",
-                "label_1": "颜色",
-                "label_2": "管道背景",
-                "label_3": "流动颜色",
-                "label_4": "起点节点",
-                "label_5": "终点节点",
-                "label_6": "渲染方式",
-                "label_7": "线条",
-                "label_8": "管道",
-                "label_9": "路径类型",
-                "label_10": "直线",
-                "label_11": "折线",
-                "label_12": "曲线",
-                "label_13": "脑图连接",
-                "label_14": "线型",
-                "label_15": "实线",
-                "label_16": "虚线",
-                "label_17": "点线",
-                "label_18": "粗细",
-                "label_19": "透明度",
-                "label_20": "起点箭头",
-                "label_21": "无",
-                "label_22": "箭头",
-                "label_23": "终点箭头",
-                "label_24": "无",
-                "label_25": "箭头",
-                "label_26": "箭头大小",
-                "label_27": "流动动画",
-                "label_28": "流动速度",
-                "label_29": "流动间距",
-                "label_30": "流动长度"
+                "name": "连接线"
+            }
+        },
+        "controls": {
+            "basic-line": {
+                "routerType": "路径类型",
+                "straight": "直线",
+                "orthogonal": "折线",
+                "curved": "曲线",
+                "stroke": "颜色",
+                "strokeWidth": "粗细",
+                "strokeStyle": "线型",
+                "solid": "实线",
+                "dashed": "虚线",
+                "dotted": "点线",
+                "opacity": "透明度",
+                "arrowStart": "起点箭头",
+                "arrowEnd": "终点箭头",
+                "none": "无",
+                "arrow": "箭头",
+                "open-arrow": "开放箭头",
+                "arrowSize": "箭头大小",
+                "sourceNodeId": "起点节点",
+                "targetNodeId": "终点节点"
             }
         }
     }
