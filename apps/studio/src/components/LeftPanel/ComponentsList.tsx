@@ -6,7 +6,6 @@ import {
   Folder,
   Globe,
   Map,
-  Columns3,
   Type,
   Repeat,
   Activity,
@@ -65,7 +64,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Folder,
   Globe,
   Map,
-  Columns3,
   Type,
   Repeat,
   Activity,
@@ -105,7 +103,6 @@ const ICON_MAP: Record<string, LucideIcon> = {
 const CATEGORY_DEFS = [
   { key: 'basic', Icon: Box },
   { key: 'controls', Icon: MousePointerClick },
-  { key: 'display', Icon: Columns3 },
   { key: 'charts', Icon: BarChart3 },
   { key: 'media', Icon: Film },
   { key: 'decoration', Icon: Shapes },
@@ -168,7 +165,7 @@ export default function ComponentsList({
     const prefixMap: Record<string, string> = {
       basic: 'basic',
       controls: 'controls',
-      display: 'display',
+      display: 'basic',
       chart: 'charts',
       charts: 'charts',
       media: 'media',
@@ -182,10 +179,10 @@ export default function ComponentsList({
 
     entries.forEach((entry) => {
       // 优先从注册表读取直接定义好的 category，如果不存在再 fallback 到路径前缀解析
-      const category =
-        (entry as any).category ||
-        prefixMap[(entry.componentId.split('/')[0] || 'basic').toLowerCase()] ||
-        'basic';
+      const rawCategory =
+        ((entry as any).category as string | undefined)?.toLowerCase() ||
+        (entry.componentId.split('/')[0] || 'basic').toLowerCase();
+      const category = prefixMap[rawCategory] || rawCategory || 'basic';
       map[category] = map[category] ?? [];
       map[category].push(entry);
     });

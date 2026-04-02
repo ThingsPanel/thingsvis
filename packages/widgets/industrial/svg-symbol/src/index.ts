@@ -82,4 +82,7 @@ export const Main = defineWidget({
   },
 });
 
+// Expose registry so the Studio editor can auto-resize to fit each symbol
+(Main as any).iconsRegistry = INDUSTRIAL_ICONS_MAP;
+
 export default Main;

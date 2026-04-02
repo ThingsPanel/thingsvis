@@ -5,10 +5,9 @@ export const ELBOW_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 
       <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="0" y="22" width="16" height="16" fill="#475569"/>
-  <rect x="42" y="44" width="16" height="16" fill="#475569"/>
-  <path d="M 16 22 L 42 22 Q 58 22 58 38 L 58 44" fill="none" stroke="url(#elbowGrad)" stroke-width="16" stroke-linecap="butt"/>
-  <path d="M 16 22 L 42 22 Q 58 22 58 38 L 58 44" fill="none" stroke="#1e293b" stroke-width="2" stroke-linecap="round" opacity="0.8"/>
+  <rect x="0" y="18" width="20" height="24" fill="#64748b"/>
+  <rect x="72" y="42" width="24" height="18" fill="#64748b"/>
+  <path d="M 20 18 L 48 18 A 24 24 0 0 1 72 42 L 72 42 L 20 42 Z" fill="url(#elbowGrad)" stroke="#1e293b" stroke-width="2"/>
 </svg>`;
 
 export const TEE_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
@@ -19,9 +18,8 @@ export const TEE_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 60
       <stop offset="100%" style="stop-color:#475569;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="0" y="22" width="16" height="16" fill="#475569"/>
-  <rect x="84" y="22" width="16" height="16" fill="#475569"/>
-  <rect x="42" y="0" width="16" height="16" fill="#475569"/>
-  <rect x="16" y="22" width="68" height="16" fill="url(#teeGrad)" stroke="#1e293b" stroke-width="2"/>
-  <rect x="42" y="16" width="16" height="22" fill="url(#teeGrad)" stroke="#1e293b" stroke-width="2"/>
+  <rect x="0" y="18" width="20" height="24" fill="#64748b"/>
+  <rect x="80" y="18" width="20" height="24" fill="#64748b"/>
+  <rect x="38" y="42" width="24" height="18" fill="#64748b"/>
+  <path d="M 20 18 L 80 18 L 80 42 L 62 42 Q 50 46 38 42 L 20 42 Z" fill="url(#teeGrad)" stroke="#1e293b" stroke-width="2"/>
 </svg>`;

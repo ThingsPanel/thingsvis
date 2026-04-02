@@ -131,6 +131,53 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         (schema?.props ?? {}) as Record<string, unknown>,
       );
     }
+
+    // Auto-resize svg-symbol to fit the selected icon tightly
+    if (
+      componentType === 'industrial/svg-symbol' &&
+      changes.props?.selectedIconId &&
+      changes.props?.selectedIconId !== schema?.props?.selectedIconId
+    ) {
+      const registry = (widgetEntry as any)?.iconsRegistry as
+        | Record<string, { defaultSize: { width: number; height: number } }>
+        | undefined;
+      const iconEntry = registry?.[changes.props.selectedIconId];
+      if (iconEntry?.defaultSize) {
+        const { width, height } = iconEntry.defaultSize;
+        const currentSize = schema?.size ?? { width: 100, height: 60 };
+        const currentPos = schema?.position ?? { x: 0, y: 0 };
+        const nextSize = { width, height };
+        const nextPos = {
+          x: currentPos.x + (currentSize.width - width) / 2,
+          y: currentPos.y + (currentSize.height - height) / 2,
+        };
+
+        const isGridMode = state.canvas.mode === 'grid';
+        const gridSettings = state.gridState.settings;
+        const containerWidth = state.gridState.containerWidth;
+
+        if (isGridMode && gridSettings && containerWidth > 0) {
+          const gridSize = pixelToGrid(
+            { x: 0, y: 0, width: nextSize.width, height: nextSize.height },
+            gridSettings,
+            containerWidth,
+          );
+          const gridPos = pixelToGrid({ x: nextPos.x, y: nextPos.y }, gridSettings, containerWidth);
+          kernelStore.getState().resizeGridItem(nodeId, {
+            w: gridSize.w ?? 1,
+            h: gridSize.h ?? 1,
+          });
+          kernelStore.getState().moveGridItem(nodeId, {
+            x: gridPos.x,
+            y: gridPos.y,
+          });
+        } else {
+          changes.size = nextSize;
+          changes.position = nextPos;
+        }
+      }
+    }
+
     kernelStore.getState().updateNode(nodeId, changes);
     onUserEdit?.();
   }

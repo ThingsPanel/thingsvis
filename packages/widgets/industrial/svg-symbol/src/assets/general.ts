@@ -6,12 +6,12 @@ export const CONTROL_CABINET_SVG = `<svg width="100%" height="100%" viewBox="0 0
       <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="20" y="15" width="60" height="70" rx="4" fill="url(#cabinetGrad)" stroke="#1e293b" stroke-width="2"/>
-  <line x1="50" y1="20" x2="50" y2="80" stroke="#1e293b" stroke-width="1.5" opacity="0.6"/>
-  <circle cx="45" cy="50" r="2" fill="#94a3b8"/>
-  <circle cx="55" cy="50" r="2" fill="#94a3b8"/>
-  <circle cx="35" cy="25" r="3" fill="#22c55e" stroke="#1e293b" stroke-width="1"/>
-  <circle cx="50" cy="25" r="3" fill="#ef4444" stroke="#1e293b" stroke-width="1"/>
-  <circle cx="65" cy="25" r="3" fill="#eab308" stroke="#1e293b" stroke-width="1"/>
-  <line x1="30" y1="85" x2="70" y2="85" stroke="#1e293b" stroke-width="2" stroke-dasharray="4,2" opacity="0.6"/>
+  <rect x="2" y="2" width="96" height="96" rx="4" fill="url(#cabinetGrad)" stroke="#1e293b" stroke-width="2"/>
+  <line x1="50" y1="10" x2="50" y2="90" stroke="#1e293b" stroke-width="1.5" opacity="0.6"/>
+  <circle cx="40" cy="50" r="3" fill="#94a3b8"/>
+  <circle cx="60" cy="50" r="3" fill="#94a3b8"/>
+  <circle cx="28" cy="12" r="3" fill="#22c55e" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="40" cy="12" r="3" fill="#ef4444" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="52" cy="12" r="3" fill="#eab308" stroke="#1e293b" stroke-width="1"/>
+  <line x1="20" y1="92" x2="80" y2="92" stroke="#1e293b" stroke-width="2" stroke-dasharray="6,3" opacity="0.6"/>
 </svg>`;

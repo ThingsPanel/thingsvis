@@ -5,7 +5,7 @@ export const metadata = {
   icon: 'Shapes',
   version: '1.0.0',
   // Reasonable default size for a single industrial symbol
-  defaultSize: { width: 100, height: 100 },
+  defaultSize: { width: 100, height: 60 },
   constraints: { minWidth: 40, minHeight: 40 },
   resizable: true,
 } as const;

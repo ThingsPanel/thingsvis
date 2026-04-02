@@ -6,17 +6,17 @@ export const PLC_CABINET_SVG = `<svg width="100%" height="100%" viewBox="0 0 100
       <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="20" y="15" width="60" height="70" rx="4" fill="url(#plcGrad)" stroke="#1e293b" stroke-width="2"/>
-  <rect x="26" y="22" width="48" height="8" rx="1" fill="#0f172a" fill-opacity="0.5" stroke="#475569" stroke-width="1"/>
-  <rect x="26" y="34" width="48" height="8" rx="1" fill="#0f172a" fill-opacity="0.5" stroke="#475569" stroke-width="1"/>
-  <rect x="26" y="46" width="48" height="8" rx="1" fill="#0f172a" fill-opacity="0.5" stroke="#475569" stroke-width="1"/>
-  <rect x="26" y="58" width="48" height="8" rx="1" fill="#0f172a" fill-opacity="0.5" stroke="#475569" stroke-width="1"/>
-  <circle cx="32" cy="26" r="2" fill="#22c55e"/>
-  <circle cx="40" cy="26" r="2" fill="#ef4444"/>
-  <circle cx="48" cy="26" r="2" fill="#eab308"/>
-  <circle cx="56" cy="26" r="2" fill="#0ea5e9"/>
-  <text x="34" y="74" fill="#e2e8f0" font-size="6" font-family="sans-serif" font-weight="bold">PLC</text>
-  <line x1="30" y1="85" x2="70" y2="85" stroke="#1e293b" stroke-width="2" stroke-dasharray="4,2" opacity="0.6"/>
+  <rect x="2" y="2" width="96" height="96" rx="4" fill="url(#plcGrad)" stroke="#1e293b" stroke-width="2"/>
+  <rect x="10" y="10" width="80" height="10" rx="1" fill="#0f172a" fill-opacity="0.5" stroke="#475569" stroke-width="1"/>
+  <circle cx="18" cy="15" r="2.5" fill="#22c55e"/>
+  <circle cx="30" cy="15" r="2.5" fill="#ef4444"/>
+  <circle cx="42" cy="15" r="2.5" fill="#eab308"/>
+  <circle cx="54" cy="15" r="2.5" fill="#0ea5e9"/>
+  <rect x="10" y="26" width="80" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="0.8"/>
+  <rect x="10" y="38" width="80" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="0.8"/>
+  <rect x="10" y="50" width="80" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="0.8"/>
+  <rect x="10" y="62" width="80" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="0.8"/>
+  <line x1="20" y1="92" x2="80" y2="92" stroke="#1e293b" stroke-width="2" stroke-dasharray="6,3" opacity="0.6"/>
 </svg>`;
 
 export const DISTRIBUTION_BOX_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
@@ -27,14 +27,14 @@ export const DISTRIBUTION_BOX_SVG = `<svg width="100%" height="100%" viewBox="0 
       <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="20" y="20" width="60" height="60" rx="4" fill="url(#dbGrad)" stroke="#1e293b" stroke-width="2"/>
-  <circle cx="35" cy="35" r="6" fill="none" stroke="#eab308" stroke-width="2"/>
-  <path d="M 35 29 L 35 33 M 35 37 L 35 41 M 29 35 L 33 35 M 37 35 L 41 35" stroke="#eab308" stroke-width="2" stroke-linecap="round"/>
-  <line x1="50" y1="30" x2="50" y2="70" stroke="#1e293b" stroke-width="1.5" opacity="0.5"/>
-  <rect x="56" y="32" width="16" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
-  <rect x="56" y="46" width="16" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
-  <rect x="56" y="60" width="16" height="8" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
-  <circle cx="60" cy="36" r="1.5" fill="#ef4444"/>
-  <circle cx="60" cy="50" r="1.5" fill="#22c55e"/>
-  <circle cx="60" cy="64" r="1.5" fill="#0ea5e9"/>
+  <rect x="2" y="2" width="96" height="96" rx="4" fill="url(#dbGrad)" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="26" cy="26" r="10" fill="none" stroke="#eab308" stroke-width="2.5"/>
+  <path d="M 26 16 L 26 22 M 26 30 L 26 36 M 16 26 L 22 26 M 30 26 L 36 26" stroke="#eab308" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="50" y1="10" x2="50" y2="90" stroke="#1e293b" stroke-width="1.5" opacity="0.5"/>
+  <rect x="58" y="14" width="30" height="10" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
+  <rect x="58" y="30" width="30" height="10" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
+  <rect x="58" y="46" width="30" height="10" rx="1" fill="#0f172a" fill-opacity="0.4" stroke="#475569" stroke-width="1"/>
+  <circle cx="64" cy="19" r="2" fill="#ef4444"/>
+  <circle cx="64" cy="35" r="2" fill="#22c55e"/>
+  <circle cx="64" cy="51" r="2" fill="#0ea5e9"/>
 </svg>`;
