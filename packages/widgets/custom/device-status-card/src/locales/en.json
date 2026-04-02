@@ -1,0 +1,25 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-device-status-card": {
+        "name": "Device Status Card",
+        "title": "Title",
+        "zone": "Zone",
+        "status": "Status",
+        "statusLabel": "Status Label",
+        "primaryLabel": "Primary Label",
+        "primaryValue": "Primary Value",
+        "primaryUnit": "Primary Unit",
+        "secondaryLabel": "Secondary Label",
+        "secondaryValue": "Secondary Value",
+        "secondaryUnit": "Secondary Unit",
+        "progress": "Utilization",
+        "compact": "Compact Mode",
+        "progressColor": "Progress Color",
+        "titleFontSize": "Title Font Size",
+        "metaFontSize": "Meta Font Size",
+        "valueFontSize": "Value Font Size"
+      }
+    }
+  }
+}

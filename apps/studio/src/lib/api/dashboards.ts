@@ -149,3 +149,67 @@ export async function publishDashboard(id: string): Promise<ApiResponse<Dashboar
 export async function duplicateDashboard(id: string): Promise<ApiResponse<Dashboard>> {
   return apiClient.post<Dashboard>(`/dashboards/${id}/duplicate`);
 }
+
+// ========================================================================
+// Share Link APIs
+// ========================================================================
+
+export interface CreateShareLinkData {
+  expiresIn?: number | null; // Expiration time in seconds, null = never expires
+}
+
+export interface CreateShareLinkResponse {
+  shareUrl: string;
+  expiresAt: string | null;
+}
+
+export interface ShareLinkInfo {
+  enabled: boolean;
+  url: string | null;
+  expiresAt: string | null;
+}
+
+export interface ValidateShareLinkResponse {
+  valid: boolean;
+  dashboard?: Dashboard;
+  error?: string;
+}
+
+/**
+ * Create a share link for a dashboard
+ */
+export async function createShareLink(
+  dashboardId: string,
+  data?: CreateShareLinkData,
+): Promise<ApiResponse<CreateShareLinkResponse>> {
+  return apiClient.post<CreateShareLinkResponse>(`/dashboards/${dashboardId}/share`, data || {});
+}
+
+/**
+ * Get share link information (with masked token)
+ */
+export async function getShareInfo(dashboardId: string): Promise<ApiResponse<ShareLinkInfo>> {
+  return apiClient.get<ShareLinkInfo>(`/dashboards/${dashboardId}/share`);
+}
+
+/**
+ * Revoke a share link
+ */
+export async function revokeShareLink(
+  dashboardId: string,
+): Promise<ApiResponse<{ success: boolean }>> {
+  return apiClient.delete<{ success: boolean }>(`/dashboards/${dashboardId}/share`);
+}
+
+/**
+ * Validate a share link (no authentication required)
+ */
+export async function validateShareLink(
+  dashboardId: string,
+  shareToken: string,
+): Promise<ApiResponse<ValidateShareLinkResponse>> {
+  return apiClient.get<ValidateShareLinkResponse>(
+    `/dashboards/${dashboardId}/validate-share?shareToken=${encodeURIComponent(shareToken)}`,
+    { skipAuth: true }, // This endpoint doesn't require authentication
+  );
+}
