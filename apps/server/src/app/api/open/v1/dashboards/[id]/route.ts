@@ -11,7 +11,6 @@ function parseDashboard(dashboard: {
   nodes: string;
   dataSources: string;
   variables?: unknown;
-  shareConfig?: string | null;
   [key: string]: unknown;
 }) {
   return {
@@ -20,7 +19,6 @@ function parseDashboard(dashboard: {
     nodes: JSON.parse(dashboard.nodes || '[]'),
     dataSources: JSON.parse(dashboard.dataSources || '[]'),
     variables: JSON.parse((dashboard.variables as string) || '[]'),
-    shareConfig: dashboard.shareConfig ? JSON.parse(dashboard.shareConfig) : null,
   };
 }
 

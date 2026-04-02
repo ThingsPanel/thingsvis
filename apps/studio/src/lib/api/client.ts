@@ -169,10 +169,10 @@ class ApiClient {
     method: string,
     path: string,
     body?: unknown,
-    options: RequestInit = {},
+    options: RequestInit & { skipAuth?: boolean } = {},
   ): Promise<ApiResponse<T>> {
     const url = this.getRequestUrl(path);
-    const token = this.getToken();
+    const token = options.skipAuth ? null : this.getToken();
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -214,20 +214,20 @@ class ApiClient {
   }
 
   // Generic methods
-  get<T>(path: string) {
-    return this.request<T>('GET', path);
+  get<T>(path: string, options?: RequestInit & { skipAuth?: boolean }) {
+    return this.request<T>('GET', path, undefined, options);
   }
 
-  post<T>(path: string, body?: unknown) {
-    return this.request<T>('POST', path, body);
+  post<T>(path: string, body?: unknown, options?: RequestInit & { skipAuth?: boolean }) {
+    return this.request<T>('POST', path, body, options);
   }
 
-  put<T>(path: string, body?: unknown) {
-    return this.request<T>('PUT', path, body);
+  put<T>(path: string, body?: unknown, options?: RequestInit & { skipAuth?: boolean }) {
+    return this.request<T>('PUT', path, body, options);
   }
 
-  delete<T>(path: string) {
-    return this.request<T>('DELETE', path);
+  delete<T>(path: string, options?: RequestInit & { skipAuth?: boolean }) {
+    return this.request<T>('DELETE', path, undefined, options);
   }
 
   // File upload

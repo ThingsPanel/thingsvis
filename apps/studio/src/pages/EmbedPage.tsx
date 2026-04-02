@@ -242,6 +242,83 @@ export default function EmbedPage() {
     return entry;
   }, []);
 
+  // Load dashboard from API by ID with optional share token
+  const loadFromApiWithShareToken = useCallback(
+    async (id: string, shareToken: string) => {
+      setState((s) => ({ ...s, isLoading: true, error: null }));
+
+      try {
+        // Import validateShareLink here to avoid circular dependency
+        const { validateShareLink } = await import('@/lib/api/dashboards');
+
+        const response = await validateShareLink(id, shareToken);
+
+        if (response.error || !response.data?.valid || !response.data?.dashboard) {
+          const errorMsg = response.data?.error || response.error || 'Share link invalid';
+          throw new Error(errorMsg);
+        }
+
+        const dashboard = response.data.dashboard;
+
+        // Load page into kernel
+        const page: PageSchemaType = {
+          id: dashboard.id,
+          type: 'page',
+          version: '1.0.0',
+          nodes: (dashboard.nodes as any[]) || [],
+        };
+        (page as any).config = {
+          background: normalizeCanvasBackground((dashboard.canvasConfig as any)?.background),
+          theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
+          previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
+        };
+
+        store.getState().loadPage(page);
+
+        if (dashboard.canvasConfig) {
+          store.getState().updateCanvas({
+            mode:
+              (dashboard.canvasConfig.mode as any) ||
+              (dashboard.canvasConfig.gridEnabled ? 'grid' : 'infinite'),
+            width: dashboard.canvasConfig.width || 1920,
+            height: dashboard.canvasConfig.height || 1080,
+          });
+        }
+
+        const variables = (dashboard.variables as any[]) || [];
+        if (Array.isArray(variables)) {
+          store.getState().setVariableDefinitions(variables as any);
+          store.getState().initVariablesFromDefinitions(variables as any);
+        }
+
+        setState({
+          isLoading: false,
+          error: null,
+          schema: dashboard as unknown,
+          variables: {},
+        });
+
+        // Register dashboard data sources
+        const dataSources = (dashboard.dataSources as any[]) || [];
+        if (dataSources.length > 0) {
+          dataSources.forEach((ds: any) => {
+            dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
+              console.error('[EmbedPage] Failed to register data source:', ds.id, err);
+            });
+          });
+        }
+
+        postToParent({ type: 'LOADED', payload: { id: dashboard.id, name: dashboard.name } });
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to load dashboard';
+        setState((s) => ({ ...s, isLoading: false, error: errorMessage }));
+        postToParent({ type: 'ERROR', payload: errorMessage });
+      }
+    },
+    [postToParent],
+  );
+
   // Load dashboard from API by ID
   const loadFromApi = useCallback(
     async (id: string, token?: string) => {
@@ -817,17 +894,25 @@ export default function EmbedPage() {
   useEffect(() => {
     const dashboardId = searchParams.get('id');
     const token = searchParams.get('token');
+    const shareToken = searchParams.get('shareToken');
 
-    setEmbedApiToken(token);
-
-    if (dashboardId) {
-      loadFromApi(dashboardId, token || undefined);
+    // Priority: shareToken > regular token
+    if (dashboardId && shareToken) {
+      // Share link mode - no authentication required
+      loadFromApiWithShareToken(dashboardId, shareToken);
+    } else if (dashboardId && token) {
+      // SSO token mode - backward compatible
+      setEmbedApiToken(token);
+      loadFromApi(dashboardId, token);
+    } else if (dashboardId) {
+      // Try loading with current token (if any)
+      loadFromApi(dashboardId);
     } else {
       // No ID provided - waiting for postMessage
       setState((s) => ({ ...s, isLoading: false }));
       postToParent({ type: 'READY' });
     }
-  }, [searchParams, loadFromApi, postToParent, setEmbedApiToken]);
+  }, [searchParams, loadFromApi, loadFromApiWithShareToken, postToParent, setEmbedApiToken]);
 
   // Render
   if (state.isLoading) {

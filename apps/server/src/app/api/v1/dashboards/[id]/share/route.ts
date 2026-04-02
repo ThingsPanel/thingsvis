@@ -1,142 +1,130 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { nanoid } from 'nanoid'
-import bcrypt from 'bcryptjs'
-import { prisma } from '@/lib/db'
-import { getSessionUser } from '@/lib/auth-helpers'
-import { ShareOptionsSchema, ShareConfig } from '@/lib/validators/share'
+import { NextRequest, NextResponse } from 'next/server';
+import { randomUUID } from 'crypto';
+import { prisma } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth-helpers';
 
-type Params = { params: Promise<{ id: string }> }
+type Params = { params: Promise<{ id: string }> };
 
 // POST /api/v1/dashboards/:id/share - Generate a share link
 export async function POST(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser(request)
+  const user = await getSessionUser(request);
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await params
-  const body = await request.json().catch(() => ({}))
-
-  // Validate request body
-  const parseResult = ShareOptionsSchema.safeParse(body)
-  if (!parseResult.success) {
-    return NextResponse.json(
-      { error: 'Validation failed', details: parseResult.error.flatten() },
-      { status: 400 }
-    )
-  }
-  const options = parseResult.data
+  const { id } = await params;
+  const body = await request.json().catch(() => ({}));
 
   const dashboard = await prisma.dashboard.findFirst({
     where: { id, project: { tenantId: user.tenantId } },
-  })
+  });
 
   if (!dashboard) {
-    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
   }
 
-  if (!dashboard.isPublished) {
-    return NextResponse.json(
-      { error: 'Dashboard must be published before sharing' },
-      { status: 400 }
-    )
+  // Generate new UUID v4 share token
+  const shareToken = randomUUID();
+
+  // Calculate expiry time if expiresIn is provided (in seconds)
+  let shareExpiry: Date | null = null;
+  if (body.expiresIn && typeof body.expiresIn === 'number' && body.expiresIn > 0) {
+    shareExpiry = new Date(Date.now() + body.expiresIn * 1000);
   }
 
-  // Generate or reuse existing share token
-  const shareToken = dashboard.shareToken || `share_${nanoid(16)}`
-
-  // Build share config
-  const shareConfig: ShareConfig = {}
-  if (options.password) {
-    shareConfig.password = await bcrypt.hash(options.password, 10)
-  }
-  if (options.expiresIn) {
-    shareConfig.expiresAt = new Date(Date.now() + options.expiresIn * 1000).toISOString()
-  }
-
+  // Update dashboard with share settings
   await prisma.dashboard.update({
     where: { id },
     data: {
       shareToken,
-      shareConfig: Object.keys(shareConfig).length > 0 ? JSON.stringify(shareConfig) : null,
+      shareExpiry,
+      shareEnabled: true,
     },
-  })
+  });
+
+  // Get the host from request headers for building full URL
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const shareUrl = `${protocol}://${host}/embed/dashboard?id=${id}&shareToken=${shareToken}`;
 
   return NextResponse.json({
-    shareToken,
-    shareUrl: `/preview/${shareToken}`,
-  })
+    shareUrl,
+    expiresAt: shareExpiry?.toISOString() || null,
+  });
 }
 
-// GET /api/v1/dashboards/:id/share - Get share link info
+// GET /api/v1/dashboards/:id/share - Get share link info (with masked token)
 export async function GET(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser(request)
+  const user = await getSessionUser(request);
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await params
+  const { id } = await params;
 
   const dashboard = await prisma.dashboard.findFirst({
     where: { id, project: { tenantId: user.tenantId } },
     select: {
       id: true,
       shareToken: true,
-      shareConfig: true,
+      shareExpiry: true,
+      shareEnabled: true,
       updatedAt: true,
     },
-  })
+  });
 
   if (!dashboard) {
-    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
   }
 
-  if (!dashboard.shareToken) {
+  if (!dashboard.shareEnabled || !dashboard.shareToken) {
     return NextResponse.json({
-      shareToken: null,
-      shareUrl: null,
-      hasPassword: false,
+      enabled: false,
+      url: null,
       expiresAt: null,
-    })
+    });
   }
 
-  const shareConfig: ShareConfig | null = dashboard.shareConfig
-    ? JSON.parse(dashboard.shareConfig)
-    : null
+  // Get the host from request headers for building full URL
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+
+  // Mask the token for security (show only first 8 chars)
+  const maskedToken = dashboard.shareToken.substring(0, 8) + '****';
+  const maskedUrl = `${protocol}://${host}/embed/dashboard?id=${id}&shareToken=${maskedToken}`;
 
   return NextResponse.json({
-    shareToken: dashboard.shareToken,
-    shareUrl: `/preview/${dashboard.shareToken}`,
-    hasPassword: !!shareConfig?.password,
-    expiresAt: shareConfig?.expiresAt || null,
-    createdAt: dashboard.updatedAt,
-  })
+    enabled: true,
+    url: maskedUrl,
+    expiresAt: dashboard.shareExpiry?.toISOString() || null,
+  });
 }
 
 // DELETE /api/v1/dashboards/:id/share - Revoke share link
 export async function DELETE(request: NextRequest, { params }: Params) {
-  const user = await getSessionUser(request)
+  const user = await getSessionUser(request);
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = await params
+  const { id } = await params;
 
   const dashboard = await prisma.dashboard.findFirst({
     where: { id, project: { tenantId: user.tenantId } },
-  })
+  });
 
   if (!dashboard) {
-    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
   }
 
   await prisma.dashboard.update({
     where: { id },
     data: {
       shareToken: null,
-      shareConfig: null,
+      shareExpiry: null,
+      shareEnabled: false,
     },
-  })
+  });
 
-  return NextResponse.json({ success: true })
+  return NextResponse.json({ success: true }, { status: 204 });
 }

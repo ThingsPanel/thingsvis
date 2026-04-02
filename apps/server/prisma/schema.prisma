@@ -101,8 +101,11 @@ model Dashboard {
 
   isPublished Boolean   @default(false)
   publishedAt DateTime?
-  shareToken  String?   @unique
-  shareConfig String? // JSON: { password?, expiresAt? }
+  
+  // Share link fields for stateless embedding
+  shareToken   String?   @unique // UUID v4 for share link access
+  shareExpiry  DateTime? // Expiration timestamp, null = never expires
+  shareEnabled Boolean   @default(false) // Whether sharing is enabled
   
   homeFlag    Boolean   @default(false) // 是否设为首页
 
