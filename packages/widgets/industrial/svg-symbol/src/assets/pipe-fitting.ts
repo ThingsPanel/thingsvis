@@ -1,63 +1,95 @@
-export const ELBOW_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const ELBOW_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="elbowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="45%" style="stop-color:#7a94b0;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    <!-- Main pipe body gradient (top-lit) -->
+    <linearGradient id="epBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   style="stop-color:#64748b;stop-opacity:1"/>
+      <stop offset="30%"  style="stop-color:#94a3b8;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1"/>
     </linearGradient>
-    <linearGradient id="elbowHPipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="42%" style="stop-color:#94a3b8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="elbowVPipeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#334155;stop-opacity:1" />
-      <stop offset="42%" style="stop-color:#94a3b8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
-    </linearGradient>
+    <!-- Pipe-mouth ellipse fill (inner dark hole) -->
+    <radialGradient id="epHoleGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%"   style="stop-color:#334155;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1"/>
+    </radialGradient>
   </defs>
-  <rect x="0" y="24" width="16" height="12" fill="url(#elbowHPipeGrad)"/>
-  <line x1="0" y1="24" x2="16" y2="24" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="0" y1="36" x2="16" y2="36" stroke="#1e293b" stroke-width="1"/>
-  <rect x="15" y="19" width="6" height="22" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <rect x="48" y="42" width="12" height="18" fill="url(#elbowVPipeGrad)"/>
-  <line x1="48" y1="42" x2="48" y2="60" stroke="#334155" stroke-width="1"/>
-  <line x1="60" y1="42" x2="60" y2="60" stroke="#94a3b8" stroke-width="1"/>
-  <rect x="44" y="41" width="20" height="6" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <path d="M 21 18 L 54 18 A 30 30 0 0 1 72 42 L 72 42 L 21 42 Z" fill="url(#elbowGrad)" stroke="#1e293b" stroke-width="1.5"/>
-  <path d="M 22 20 L 48 20" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.45" stroke-linecap="round"/>
+
+  <!-- ─── Elbow bend body ───
+       Arc from horizontal (left) to vertical (down).
+       Outer wall: arc centre (18, 82), R_out=62 �?sweeps from (18,20) to (80,82)
+       Inner wall: arc centre (18, 82), R_in=42  �?sweeps from (18,40) to (60,82)
+  -->
+  <path d="
+    M 18 20
+    L 80 20
+    A 62 62 0 0 1 80 82
+    L 60 82
+    A 42 42 0 0 0 60 40
+    L 18 40
+    Z
+  " fill="url(#epBodyGrad)" stroke="#1e293b" stroke-width="1.5" stroke-linejoin="round"/>
+
+  <!-- Top highlight line along outer arc top-edge -->
+  <path d="M 19 22 L 79 22" stroke="#94a3b8" stroke-width="1" stroke-linecap="round" opacity="0.5"/>
+
+  <!-- ─── Left pipe mouth ───
+       Ellipse representing the circular opening, centred at x=18, mid-height of pipe bore y=30 -->
+  <ellipse cx="18" cy="30" rx="4" ry="10" fill="url(#epBodyGrad)" stroke="#1e293b" stroke-width="1.2"/>
+  <ellipse cx="18" cy="30" rx="2" ry="6.5" fill="url(#epHoleGrad)"/>
+  <line x1="18" y1="23.5" x2="18" y2="25" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- ─── Bottom pipe mouth ───
+       Ellipse at the bottom opening, centred at x=70, bottom of bore y=82 -->
+  <ellipse cx="70" cy="82" rx="10" ry="4" fill="url(#epBodyGrad)" stroke="#1e293b" stroke-width="1.2"/>
+  <ellipse cx="70" cy="82" rx="6.5" ry="2" fill="url(#epHoleGrad)"/>
+  <line x1="63.5" y1="82" x2="65" y2="82" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
 </svg>`;
 
-export const TEE_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+export const TEE_PIPE_SVG = `<svg width="100%" height="100%" viewBox="0 0 100 80" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="teeBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="45%" style="stop-color:#7a94b0;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1" />
+    <linearGradient id="tpBodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%"   style="stop-color:#64748b;stop-opacity:1"/>
+      <stop offset="30%"  style="stop-color:#94a3b8;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#1e293b;stop-opacity:1"/>
     </linearGradient>
-    <linearGradient id="teePipeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#64748b;stop-opacity:1" />
-      <stop offset="42%" style="stop-color:#94a3b8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#334155;stop-opacity:1" />
+    <linearGradient id="tpBranchGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#334155;stop-opacity:1"/>
+      <stop offset="35%"  style="stop-color:#94a3b8;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#475569;stop-opacity:1"/>
     </linearGradient>
-    <linearGradient id="teeVPipeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#334155;stop-opacity:1" />
-      <stop offset="42%" style="stop-color:#94a3b8;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#64748b;stop-opacity:1" />
-    </linearGradient>
+    <radialGradient id="tpHoleGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%"   style="stop-color:#334155;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1"/>
+    </radialGradient>
   </defs>
-  <rect x="0" y="24" width="16" height="12" fill="url(#teePipeGrad)"/>
-  <line x1="0" y1="24" x2="16" y2="24" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="0" y1="36" x2="16" y2="36" stroke="#1e293b" stroke-width="1"/>
-  <rect x="15" y="19" width="6" height="22" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <rect x="84" y="24" width="16" height="12" fill="url(#teePipeGrad)"/>
-  <line x1="84" y1="24" x2="100" y2="24" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="84" y1="36" x2="100" y2="36" stroke="#1e293b" stroke-width="1"/>
-  <rect x="79" y="19" width="6" height="22" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <rect x="38" y="44" width="24" height="16" fill="url(#teeVPipeGrad)"/>
-  <line x1="38" y1="44" x2="38" y2="60" stroke="#334155" stroke-width="1"/>
-  <line x1="62" y1="44" x2="62" y2="60" stroke="#94a3b8" stroke-width="1"/>
-  <rect x="34" y="43" width="32" height="6" rx="1" fill="#475569" stroke="#1e293b" stroke-width="1"/>
-  <path d="M 21 18 L 79 18 L 79 42 L 62 42 Q 50 47 38 42 L 21 42 Z" fill="url(#teeBodyGrad)" stroke="#1e293b" stroke-width="1.5"/>
-  <line x1="22" y1="20" x2="78" y2="20" stroke="#94a3b8" stroke-width="1" opacity="0.4"/>
+
+  <!-- ─── Main horizontal run (top wall + bottom wall, pipe bore in between) -->
+  <!-- Top wall -->
+  <rect x="14" y="18" width="72" height="18" rx="0"
+        fill="url(#tpBodyGrad)" stroke="#1e293b" stroke-width="0"/>
+  <!-- Bottom wall -->
+  <rect x="14" y="18" width="72" height="22"
+        fill="url(#tpBodyGrad)" stroke="#1e293b" stroke-width="1.5" rx="2"/>
+  <!-- Inner bore (dark channel) -->
+  <rect x="14" y="23" width="72" height="12" fill="#0f172a" opacity="0.5"/>
+  <!-- Top highlight -->
+  <line x1="15" y1="20" x2="85" y2="20" stroke="#94a3b8" stroke-width="1" opacity="0.5"/>
+
+  <!-- ─── Down branch -->
+  <rect x="43" y="40" width="14" height="24" fill="url(#tpBranchGrad)" stroke="#1e293b" stroke-width="1.5" rx="1"/>
+  <!-- Branch bore -->
+  <rect x="47" y="40" width="6" height="24" fill="#0f172a" opacity="0.5"/>
+  <!-- Branch left edge highlight -->
+  <line x1="44.5" y1="41" x2="44.5" y2="63" stroke="#94a3b8" stroke-width="0.8" opacity="0.4"/>
+
+  <!-- ─── Left pipe mouth -->
+  <ellipse cx="14" cy="29" rx="4" ry="11" fill="url(#tpBodyGrad)" stroke="#1e293b" stroke-width="1.2"/>
+  <ellipse cx="14" cy="29" rx="2.2" ry="7" fill="url(#tpHoleGrad)"/>
+
+  <!-- ─── Right pipe mouth -->
+  <ellipse cx="86" cy="29" rx="4" ry="11" fill="url(#tpBodyGrad)" stroke="#1e293b" stroke-width="1.2"/>
+  <ellipse cx="86" cy="29" rx="2.2" ry="7" fill="url(#tpHoleGrad)"/>
+
+  <!-- ─── Bottom pipe mouth -->
+  <ellipse cx="50" cy="64" rx="9" ry="3.5" fill="url(#tpBodyGrad)" stroke="#1e293b" stroke-width="1.2"/>
+  <ellipse cx="50" cy="64" rx="5.5" ry="2" fill="url(#tpHoleGrad)"/>
 </svg>`;

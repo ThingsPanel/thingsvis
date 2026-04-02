@@ -4,8 +4,9 @@ export const metadata = {
   category: 'industrial',
   icon: 'Shapes',
   version: '1.0.0',
-  // Match default icon (iot-device) 1:1 aspect ratio.
-  defaultSize: { width: 80, height: 80 },
+  // Default matches the most common horizontal symbol (100×60).
+  // The canvas overrides this with IconEntry.defaultSize when a symbol is dropped.
+  defaultSize: { width: 100, height: 60 },
   constraints: { minWidth: 40, minHeight: 40 },
   resizable: true,
 } as const;
