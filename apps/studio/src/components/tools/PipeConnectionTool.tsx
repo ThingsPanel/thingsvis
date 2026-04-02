@@ -524,6 +524,18 @@ export default function PipeConnectionTool({
   }, [rerender, routePoints.pipeId, routePoints.props.pipeColor]);
 
   // ── Conditional return AFTER all hooks ───────────────────────────────────
+  useEffect(() => {
+    const activeDrag = dragRef.current;
+    const shouldReset =
+      (!routePoints.pipeId && (!!activeDrag || !!hoveredAnchorRef.current)) ||
+      (!!activeDrag && activeDrag.pipeId !== routePoints.pipeId);
+    if (!shouldReset) return;
+
+    dragRef.current = null;
+    hoveredAnchorRef.current = null;
+    rerender();
+  }, [routePoints.pipeId, rerender]);
+
   if (!routePoints.pipeId || routePoints.points.length < 2) return null;
 
   const { props } = routePoints;

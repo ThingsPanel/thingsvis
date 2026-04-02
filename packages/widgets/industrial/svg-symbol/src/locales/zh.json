@@ -8,9 +8,17 @@
     "controls": {
       "industrial-svg-symbol": {
         "group": "SVG 配置",
+        "displayBasic": "基础展示",
+        "advanced": "高级",
         "selectedIconId": "工业符号",
-        "iconColor": "图标颜色（覆盖）",
-        "iconColorDescription": "留空时保留原始 SVG 颜色",
+        "stateMode": "设备状态",
+        "stateModeNone": "（无）",
+        "stateModeNormal": "正常",
+        "stateModeRunning": "运行中",
+        "stateModeWarning": "告警",
+        "stateModeFault": "故障",
+        "stateModeOffline": "离线",
+        "animateEnabled": "启用动画",
         "svgContent": "自定义 SVG 源码",
         "svgContentDescription": "未选择内置符号时使用自定义 SVG"
       }

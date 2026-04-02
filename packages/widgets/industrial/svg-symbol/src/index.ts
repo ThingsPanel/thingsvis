@@ -6,53 +6,92 @@ import { INDUSTRIAL_ICONS_MAP } from './icons-registry';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-function lightenColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace('#', ''), 16);
-  const amt = Math.round(2.55 * percent);
-  const R = Math.min(255, (num >> 16) + amt);
-  const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
-  const B = Math.min(255, (num & 0x0000ff) + amt);
-  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+const DEFAULT_PROPS = PropsSchema.parse({});
+
+const STATUS_COLORS: Record<string, string> = {
+  normal: '#64748b',
+  running: '#22c55e',
+  warning: '#eab308',
+  fault: '#ef4444',
+  offline: '#94a3b8',
+};
+
+function normalizeProps(input: Partial<Props> | undefined): Props {
+  const source = input ?? {};
+  const rawMode = source.stateMode;
+  const validModes = ['normal', 'running', 'warning', 'fault', 'offline'];
+  return {
+    selectedIconId: source.selectedIconId || DEFAULT_PROPS.selectedIconId,
+    svgContent: source.svgContent ?? DEFAULT_PROPS.svgContent,
+    stateMode: rawMode && validModes.includes(rawMode) ? rawMode : undefined,
+    animateEnabled: source.animateEnabled ?? DEFAULT_PROPS.animateEnabled,
+  };
+}
+
+function expandRootViewBox(svgText: string): string {
+  const match = svgText.match(/viewBox="([^"]+)"/i);
+  const rawViewBox = match?.[1];
+  if (!rawViewBox) return svgText;
+  const parts = rawViewBox.trim().split(/\s+/).map((p) => Number.parseFloat(p));
+  if (parts.length !== 4 || parts.some((v) => Number.isNaN(v))) return svgText;
+  const [minX, minY, width, height] = parts as [number, number, number, number];
+  const padding = Math.max(1.5, Math.min(width, height) * 0.04);
+  return svgText.replace(
+    /viewBox="([^"]+)"/i,
+    `viewBox="${minX - padding} ${minY - padding} ${width + padding * 2} ${height + padding * 2}"`,
+  );
 }
 
 /**
- * Re-color an SVG string by replacing the primary industrial base colors.
- * Only replaces the design-system keys (#334155 base, #475569 highlight)
- * so that pipe flanges, strokes and indicator lights stay intact.
+ * Inject SVG-native blade rotation into elements wrapped with <g id="tv-rotor">.
+ * Only pump impeller and fan blades use this marker.
  */
-function applyIconColor(svgText: string, color: string): string {
-  if (!color) return svgText;
-  const lightColor = lightenColor(color, 10);
-  return svgText
-    .replace(/fill="#334155"/g, `fill="${color}"`)
-    .replace(/stop-color="#334155"/g, `stop-color="${color}"`)
-    .replace(/fill="#475569"/g, `fill="${lightColor}"`)
-    .replace(/stop-color="#475569"/g, `stop-color="${lightColor}"`);
+function injectRotation(svgText: string): string {
+  const marker = '<g id="tv-rotor">';
+  if (!svgText.includes(marker)) return svgText;
+  const anim =
+    '<animateTransform attributeName="transform" type="rotate" from="0 50 30" to="360 50 30" dur="1.2s" repeatCount="indefinite" additive="sum"/>';
+  return svgText.replace(marker, `${marker}${anim}`);
+}
+
+function injectStatusDot(svgText: string, mode: Props['stateMode']): string {
+  if (!mode || mode === 'normal') return svgText;
+  const match = svgText.match(/viewBox="([^"]+)"/i);
+  const rawViewBox = match?.[1];
+  if (!rawViewBox) return svgText;
+  const parts = rawViewBox.trim().split(/\s+/).map((p) => Number.parseFloat(p));
+  if (parts.length !== 4 || parts.some((v) => Number.isNaN(v))) return svgText;
+  const [minX, minY, width, height] = parts as [number, number, number, number];
+  const r = Math.min(width, height) * 0.1;
+  // Place dot inside the viewBox with full margin so expandRootViewBox won't clip it
+  const cx = minX + width - r * 2;
+  const cy = minY + height - r * 2;
+  const color = STATUS_COLORS[mode] ?? '#64748b';
+  const blink =
+    mode === 'fault' || mode === 'warning'
+      ? `<animate attributeName="opacity" values="1;0.15;1" dur="1.1s" repeatCount="indefinite"/>`
+      : '';
+  const dot = `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${r.toFixed(2)}" fill="${color}" stroke="#fff" stroke-width="${(r * 0.35).toFixed(2)}">${blink}</circle>`;
+  return svgText.replace('</svg>', `${dot}</svg>`);
 }
 
 function renderSvg(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
 
-  let finalSvg: string;
+  const fallbackSvg = INDUSTRIAL_ICONS_MAP['heat-exchanger']?.svgContent ?? '';
+  let finalSvg = '';
 
-  // Priority 1: use selected icon from registry
-  const selectedIcon = props.selectedIconId
-    ? INDUSTRIAL_ICONS_MAP[props.selectedIconId]
-    : undefined;
+  const selectedIcon = props.selectedIconId ? INDUSTRIAL_ICONS_MAP[props.selectedIconId] : undefined;
+  if (selectedIcon) finalSvg = selectedIcon.svgContent;
+  if (!finalSvg && typeof props.svgContent === 'string') finalSvg = props.svgContent.trim();
+  if (!finalSvg || !finalSvg.includes('<svg')) finalSvg = fallbackSvg;
+  if (!finalSvg) { element.innerHTML = ''; return; }
 
-  if (selectedIcon) {
-    finalSvg = selectedIcon.svgContent;
-  } else {
-    // Priority 2: fall back to custom raw SVG content
-    finalSvg = props.svgContent;
-  }
-
-  // Apply optional color override
-  if (props.iconColor) {
-    finalSvg = applyIconColor(finalSvg, props.iconColor);
-  }
-
+  // Inject dot BEFORE expanding viewBox — expansion then adds margin around the dot too
+  finalSvg = injectStatusDot(finalSvg, props.stateMode);
+  finalSvg = expandRootViewBox(finalSvg);
+  if (props.animateEnabled) finalSvg = injectRotation(finalSvg);
   element.innerHTML = finalSvg;
 }
 
@@ -69,13 +108,41 @@ export const Main = defineWidget({
   schema: PropsSchema,
   controls,
   render: (element: HTMLElement, props: Props) => {
-    renderSvg(element, props);
+    let currentProps = normalizeProps(props as Partial<Props>);
+    let animHandle: number | undefined;
+
+    const stopPulse = () => {
+      if (animHandle !== undefined) {
+        window.clearInterval(animHandle);
+        animHandle = undefined;
+      }
+      element.style.opacity = '';
+    };
+
+    const startPulse = () => {
+      stopPulse();
+      let t = 0;
+      animHandle = window.setInterval(() => {
+        t += 0.12;
+        element.style.opacity = String(0.2 + 0.8 * (0.5 + 0.5 * Math.sin(t)));
+      }, 50);
+    };
+
+    renderSvg(element, currentProps);
+    if (currentProps.animateEnabled) startPulse();
 
     return {
       update: (nextProps: Props) => {
-        renderSvg(element, nextProps);
+        currentProps = normalizeProps(nextProps as Partial<Props>);
+        renderSvg(element, currentProps);
+        if (currentProps.animateEnabled) {
+          if (animHandle === undefined) startPulse();
+        } else {
+          stopPulse();
+        }
       },
       destroy: () => {
+        stopPulse();
         element.innerHTML = '';
       },
     };

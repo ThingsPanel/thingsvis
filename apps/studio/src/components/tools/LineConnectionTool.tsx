@@ -306,6 +306,22 @@ export default function LineConnectionTool({
     return () => window.removeEventListener('keydown', onKey);
   }, [kernelStore, selectedLineId, state.nodesById, startWorld, endWorld, onUserEdit]);
 
+  useEffect(() => {
+    const activeDrag = dragRef.current;
+    const shouldReset =
+      (!selectedLineId && (!!activeDrag || !!hoveredAnchorRef.current)) ||
+      (!!activeDrag && activeDrag.lineId !== selectedLineId);
+    if (!shouldReset) return;
+
+    dragRef.current = null;
+    hoveredAnchorRef.current = null;
+    isDraggingRef.current = false;
+    rerender();
+  }, [selectedLineId, rerender]);
+
+  // ── Conditional return AFTER all hooks ────────────────────────────────────
+  if (!selectedLineId || !selectedLine) return null;
+
   // ── Render helpers ────────────────────────────────────────────────────────
 
   const renderHandle = (endpoint: Endpoint, worldPos: Pt, isConnected: boolean) => {

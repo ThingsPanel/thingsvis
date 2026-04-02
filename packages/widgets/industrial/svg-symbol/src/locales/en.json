@@ -8,9 +8,17 @@
     "controls": {
       "industrial-svg-symbol": {
         "group": "SVG Configuration",
+        "displayBasic": "Basic Display",
+        "advanced": "Advanced",
         "selectedIconId": "Industrial Symbol",
-        "iconColor": "Icon Color (Override)",
-        "iconColorDescription": "Leave empty to keep original SVG colors",
+        "stateMode": "Device State",
+        "stateModeNone": "(None)",
+        "stateModeNormal": "Normal",
+        "stateModeRunning": "Running",
+        "stateModeWarning": "Warning",
+        "stateModeFault": "Fault",
+        "stateModeOffline": "Offline",
+        "animateEnabled": "Enable Animation",
         "svgContent": "Custom SVG Source",
         "svgContentDescription": "Used when no symbol is selected above"
       }
