@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 import { controls } from './controls';
@@ -156,6 +157,20 @@ function buildProxyUrl(source: string): string {
 
   const apiBaseUrl = resolveWidgetApiBaseUrl().replace(/\/$/, '');
   return `${apiBaseUrl}/public/assets/proxy?url=${encodeURIComponent(source)}`;
+}
+
+function resolveWidgetStaticBaseUrl(): string {
+  if (typeof window === 'undefined') {
+    return '/';
+  }
+
+  try {
+    const apiBaseUrl = new URL(resolveWidgetApiBaseUrl(), window.location.origin);
+    apiBaseUrl.pathname = apiBaseUrl.pathname.replace(/\/api\/v1\/?$/, '/');
+    return apiBaseUrl.toString();
+  } catch {
+    return `${window.location.origin}/`;
+  }
 }
 
 function getRequestUrl(source: string, requestMode: RequestMode): string {
@@ -497,6 +512,9 @@ export const Main = defineWidget({
     });
 
     const loader = new GLTFLoader(loadingManager);
+    const dracoLoader = new DRACOLoader(loadingManager);
+    dracoLoader.setDecoderPath(`${resolveWidgetStaticBaseUrl()}draco/`);
+    loader.setDRACOLoader(dracoLoader);
     loader.setCrossOrigin('anonymous');
 
     const messages = () => resolveMessages(currentLocale);
@@ -862,6 +880,7 @@ export const Main = defineWidget({
           scene.remove(helperState.box);
           disposeHelper(helperState.box);
         }
+        dracoLoader.dispose();
         controls3d.dispose();
         renderer.dispose();
         element.innerHTML = '';

@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DownloadCloud, HardDrive, Link2, Loader2 } from 'lucide-react';
+import { DownloadCloud, HardDrive, Link2, Loader2, Upload, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { importRemoteAsset } from '@/lib/api/uploads';
+import { importRemoteAsset, uploadFile } from '@/lib/api/uploads';
 
 type ModelSourceInputProps = {
   value: string;
@@ -28,8 +28,10 @@ export default function ModelSourceInput({ value, onChange }: ModelSourceInputPr
   const { t } = useTranslation('editor');
   const [urlInput, setUrlInput] = useState(value);
   const [isImporting, setIsImporting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastImportedFrom, setLastImportedFrom] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setUrlInput(value);
@@ -73,6 +75,55 @@ export default function ModelSourceInput({ value, onChange }: ModelSourceInputPr
     }
   };
 
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+    if (!['glb', 'gltf'].includes(ext)) {
+      setError(t('upload.onlyModels', 'Only GLB or GLTF model files are supported'));
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 100 * 1024 * 1024) {
+      setError(t('upload.modelSizeLimit', 'Model size cannot exceed 100MB'));
+      event.target.value = '';
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const result = await uploadFile(file);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      if (result.data) {
+        setLastImportedFrom(null);
+        setUrlInput(result.data.url);
+        onChange(result.data.url);
+      }
+    } catch (uploadError) {
+      setError(uploadError instanceof Error ? uploadError.message : 'Upload failed');
+    } finally {
+      setIsUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleClear = () => {
+    setUrlInput('');
+    setLastImportedFrom(null);
+    setError(null);
+    onChange('');
+  };
+
   const SourceIcon = sourceBadge.icon;
 
   return (
@@ -100,27 +151,73 @@ export default function ModelSourceInput({ value, onChange }: ModelSourceInputPr
           </div>
         </div>
 
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          className="h-7 shrink-0 px-2 text-[11px]"
-          disabled={!canImport || isImporting}
-          onClick={handleImport}
-          title={t('upload.importToLocal', 'Import to local')}
-        >
-          {isImporting ? (
-            <>
-              <Loader2 className="mr-1 h-3 w-3 animate-spin" />
-              {t('upload.importing', 'Importing')}
-            </>
-          ) : (
-            <>
-              <DownloadCloud className="mr-1 h-3 w-3" />
-              {t('upload.importToLocal', 'Import to local')}
-            </>
-          )}
-        </Button>
+        <div className="flex shrink-0 items-center gap-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            className="hidden"
+            accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+            onChange={handleFileSelect}
+            disabled={isUploading}
+          />
+
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 shrink-0 px-2 text-[11px]"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            title={t('upload.uploadLocalModel', 'Upload local model')}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                {t('upload.uploading', 'Uploading')}
+              </>
+            ) : (
+              <>
+                <Upload className="mr-1 h-3 w-3" />
+                {t('upload.uploadLocal', 'Upload')}
+              </>
+            )}
+          </Button>
+
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="h-7 shrink-0 px-2 text-[11px]"
+            disabled={!canImport || isImporting}
+            onClick={handleImport}
+            title={t('upload.importToLocal', 'Import to local')}
+          >
+            {isImporting ? (
+              <>
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                {t('upload.importing', 'Importing')}
+              </>
+            ) : (
+              <>
+                <DownloadCloud className="mr-1 h-3 w-3" />
+                {t('upload.importToLocal', 'Import to local')}
+              </>
+            )}
+          </Button>
+
+          {trimmedValue ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 shrink-0"
+              onClick={handleClear}
+              title={t('common.clear', 'Clear')}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {lastImportedFrom ? (

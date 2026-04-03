@@ -1,18 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { extname, join } from 'path';
 import { jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
-// Maximum file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
-// Allowed file types
+const IMAGE_MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MODEL_MAX_FILE_SIZE = 100 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
+const ALLOWED_MODEL_TYPES = [
+  'model/gltf-binary',
+  'model/gltf+json',
+  'application/octet-stream',
+  'application/json',
+];
+const ALLOWED_MODEL_EXTENSIONS = new Set(['.glb', '.gltf']);
 
 // Upload directory (relative to project root)
 const UPLOAD_DIR = 'uploads';
+const MODEL_UPLOAD_SUBDIR = 'models';
+
+function resolveUploadTarget(file: File) {
+  const extension = extname(file.name).toLowerCase();
+  const isModelFile =
+    ALLOWED_MODEL_EXTENSIONS.has(extension) &&
+    (!file.type || ALLOWED_MODEL_TYPES.includes(file.type));
+
+  if (isModelFile) {
+    return {
+      maxFileSize: MODEL_MAX_FILE_SIZE,
+      uploadPath: join(process.cwd(), 'public', UPLOAD_DIR, MODEL_UPLOAD_SUBDIR),
+      url: `/${UPLOAD_DIR}/${MODEL_UPLOAD_SUBDIR}`,
+    };
+  }
+
+  if (ALLOWED_TYPES.includes(file.type)) {
+    return {
+      maxFileSize: IMAGE_MAX_FILE_SIZE,
+      uploadPath: join(process.cwd(), 'public', UPLOAD_DIR),
+      url: `/${UPLOAD_DIR}`,
+    };
+  }
+
+  return null;
+}
 
 async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
   const authHeader = request.headers.get('Authorization');
@@ -43,36 +74,39 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    const target = resolveUploadTarget(file);
+    if (!target) {
       return NextResponse.json(
-        { error: 'Invalid file type. Allowed types: JPEG, PNG, GIF, WebP, SVG' },
+        { error: 'Invalid file type. Allowed types: JPEG, PNG, GIF, WebP, SVG, GLB, GLTF' },
         { status: 400 },
       );
     }
 
     // Validate file size
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File too large. Maximum size is 10MB' }, { status: 400 });
+    if (file.size > target.maxFileSize) {
+      const maxSizeMb = Math.round(target.maxFileSize / 1024 / 1024);
+      return NextResponse.json(
+        { error: `File too large. Maximum size is ${maxSizeMb}MB` },
+        { status: 400 },
+      );
     }
 
     // Create upload directory if it doesn't exist
-    const uploadPath = join(process.cwd(), 'public', UPLOAD_DIR);
-    if (!existsSync(uploadPath)) {
-      await mkdir(uploadPath, { recursive: true });
+    if (!existsSync(target.uploadPath)) {
+      await mkdir(target.uploadPath, { recursive: true });
     }
 
     // Generate unique filename
     const ext = file.name.split('.').pop() || 'png';
     const filename = `${nanoid()}.${ext}`;
-    const filePath = join(uploadPath, filename);
+    const filePath = join(target.uploadPath, filename);
 
     // Write file
     const bytes = await file.arrayBuffer();
     await writeFile(filePath, Buffer.from(bytes));
 
     // Return URL
-    const url = `/${UPLOAD_DIR}/${filename}`;
+    const url = `${target.url}/${filename}`;
 
     return NextResponse.json({
       url,
