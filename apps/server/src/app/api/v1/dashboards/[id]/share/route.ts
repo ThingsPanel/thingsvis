@@ -124,8 +124,27 @@ export async function GET(request: NextRequest, { params }: Params) {
 
 // DELETE /api/v1/dashboards/:id/share - Revoke share link
 export async function DELETE(request: NextRequest, { params }: Params) {
+  if (AUTH_DEBUG) {
+    const authHeader = request.headers.get('authorization');
+    logger.info({
+      msg: 'Share DELETE auth diagnostics',
+      path: request.nextUrl.pathname,
+      hasAuthorizationHeader: Boolean(authHeader),
+      authHeaderPrefix: authHeader?.split(' ')[0] || null,
+      authHeaderLength: authHeader?.length || 0,
+      hasCookieHeader: Boolean(request.headers.get('cookie')),
+    });
+  }
+
   const user = await getSessionUser(request);
   if (!user) {
+    if (AUTH_DEBUG) {
+      logger.warn({
+        msg: 'Share DELETE unauthorized',
+        path: request.nextUrl.pathname,
+        reason: 'getSessionUser returned null',
+      });
+    }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -148,5 +167,6 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     },
   });
 
-  return NextResponse.json({ success: true }, { status: 204 });
+  // 200 + JSON body is safer across all clients than 204 with body.
+  return NextResponse.json({ success: true }, { status: 200 });
 }

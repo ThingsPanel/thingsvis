@@ -239,7 +239,23 @@ class ApiClient {
         ...options,
       });
       const rawText = await response.text();
-      const data = rawText ? JSON.parse(rawText) : {};
+      let data: Record<string, unknown> = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+          data = { error: rawText };
+        }
+      }
+      debugAuthLog('apiClient.response', {
+        method,
+        path,
+        status: response.status,
+        ok: response.ok,
+        hasBody: Boolean(rawText),
+        responseError: data.error ?? null,
+        rawText: rawText || null,
+      });
 
       if (response.status === 401) {
         debugAuthLog('apiClient.401', {
@@ -247,16 +263,19 @@ class ApiClient {
           path,
           hasToken: Boolean(token),
           tokenSource,
-          responseError: data?.error,
+          responseError: data.error,
         });
         if (token) {
           this.onUnauthorized();
         }
-        return { error: data.error || 'Unauthorized' };
+        return { error: (data.error as string) || 'Unauthorized' };
       }
 
       if (!response.ok) {
-        return { error: data.error || 'Request failed', details: data.details };
+        return {
+          error: (data.error as string) || `Request failed (${response.status})`,
+          details: data.details,
+        };
       }
 
       if ('data' in data) {
