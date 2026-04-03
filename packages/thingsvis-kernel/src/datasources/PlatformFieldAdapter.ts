@@ -158,6 +158,48 @@ export class PlatformFieldAdapter extends BaseAdapter {
     }
   }
 
+  private resolveSingleWriteFieldId(): string | null {
+    const platformConfig = this.config?.config as PlatformFieldConfig | undefined;
+    const fieldCandidates = new Set<string>();
+
+    Object.values(this.fieldMappings ?? {}).forEach((fieldId) => {
+      if (typeof fieldId === 'string' && fieldId.trim()) {
+        fieldCandidates.add(fieldId.trim());
+      }
+    });
+
+    (platformConfig?.requestedFields ?? []).forEach((fieldId) => {
+      if (typeof fieldId === 'string' && fieldId.trim()) {
+        fieldCandidates.add(fieldId.trim());
+      }
+    });
+
+    if (fieldCandidates.size === 1) {
+      return Array.from(fieldCandidates)[0] ?? null;
+    }
+
+    if (fieldCandidates.size === 0 && this.platformDataCache.size === 1) {
+      return Array.from(this.platformDataCache.keys())[0] ?? null;
+    }
+
+    return null;
+  }
+
+  private normalizeWritePayload(payload: unknown): unknown {
+    if (!this.config) return payload;
+
+    const singleFieldId = this.resolveSingleWriteFieldId();
+    if (!singleFieldId) return payload;
+
+    if (payload !== null && typeof payload === 'object') {
+      return payload;
+    }
+
+    return {
+      [singleFieldId]: payload,
+    };
+  }
+
   /**
    * Write a value back to the host platform via the standard protocol message.
    * The host platform maps dataSourceId to the concrete device and API.
@@ -168,13 +210,14 @@ export class PlatformFieldAdapter extends BaseAdapter {
     }
     try {
       const platformConfig = this.config.config as PlatformFieldConfig | undefined;
+      const normalizedPayload = this.normalizeWritePayload(payload);
       window.parent.postMessage(
         {
           type: 'tv:platform-write',
           payload: {
             dataSourceId: this.config.id,
             deviceId: platformConfig?.deviceId,
-            data: payload,
+            data: normalizedPayload,
           },
         },
         '*',

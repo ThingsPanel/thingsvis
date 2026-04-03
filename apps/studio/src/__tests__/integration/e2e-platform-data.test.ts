@@ -251,4 +251,39 @@ describe('E2E-04: 反向写回 (tv:platform-write)', () => {
     spy.mockRestore();
     await adapter.disconnect();
   });
+
+  it('E2E-04b: single requested field wraps primitive payload into a keyed object', async () => {
+    const adapter = new PlatformFieldAdapter();
+    await adapter.connect({
+      id: '__platform_device-1__',
+      type: 'PLATFORM_FIELD',
+      name: 'Platform Device 1',
+      config: {
+        source: 'platform',
+        fieldMappings: {},
+        bufferSize: 0,
+        requestedFields: ['switch'],
+        deviceId: 'device-1',
+      },
+    });
+
+    const capturedMessages: unknown[] = [];
+    const spy = vi.spyOn(window, 'postMessage').mockImplementation((msg) => {
+      capturedMessages.push(msg);
+    });
+
+    await adapter.write(false);
+
+    expect(capturedMessages).toHaveLength(1);
+    const msg = capturedMessages[0] as PlatformWriteMessage & {
+      payload: PlatformWriteMessage['payload'] & { deviceId?: string };
+    };
+    expect(msg.type).toBe('tv:platform-write');
+    expect(msg.payload.dataSourceId).toBe('__platform_device-1__');
+    expect(msg.payload.deviceId).toBe('device-1');
+    expect(msg.payload.data).toEqual({ switch: false });
+
+    spy.mockRestore();
+    await adapter.disconnect();
+  });
 });
