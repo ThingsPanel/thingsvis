@@ -44,6 +44,26 @@ function resolveDefaultApiBaseUrl(): string {
 
 const DEFAULT_API_BASE_URL = resolveDefaultApiBaseUrl();
 const BROWSER_TOKEN_KEY = 'thingsvis_browser_token';
+const AUTH_DEBUG_KEY = 'thingsvis_debug_auth';
+
+function debugAuthLog(message: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem(AUTH_DEBUG_KEY) !== '1') return;
+  const logs = (window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] })
+    .__THINGSVIS_AUTH_DEBUG_LOGS__;
+  const nextEntry = {
+    ts: new Date().toISOString(),
+    message,
+    ...payload,
+  };
+  if (Array.isArray(logs)) {
+    logs.push(nextEntry);
+  } else {
+    (
+      window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] }
+    ).__THINGSVIS_AUTH_DEBUG_LOGS__ = [nextEntry];
+  }
+}
 
 function toAbsoluteBaseUrl(baseUrl: string): string {
   if (/^https?:\/\//i.test(baseUrl)) return baseUrl;
@@ -172,7 +192,27 @@ class ApiClient {
     options: RequestInit & { skipAuth?: boolean } = {},
   ): Promise<ApiResponse<T>> {
     const url = this.getRequestUrl(path);
-    const token = options.skipAuth ? null : this.getToken();
+    const inEmbedContext =
+      typeof window !== 'undefined' &&
+      (() => {
+        try {
+          return window.self !== window.top;
+        } catch {
+          return true;
+        }
+      })();
+    const persistedBrowserToken =
+      typeof window !== 'undefined' && !inEmbedContext
+        ? localStorage.getItem(BROWSER_TOKEN_KEY)
+        : null;
+    const token = options.skipAuth ? null : this.getToken() || persistedBrowserToken;
+    const tokenSource = options.skipAuth
+      ? 'skip-auth'
+      : this.getToken()
+        ? 'provider'
+        : persistedBrowserToken
+          ? 'localStorage'
+          : 'none';
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -184,24 +224,58 @@ class ApiClient {
     }
 
     try {
+      debugAuthLog('apiClient.request', {
+        method,
+        path,
+        url,
+        inEmbedContext,
+        hasToken: Boolean(token),
+        tokenSource,
+      });
       const response = await fetch(url, {
         method,
         headers,
         body: body ? JSON.stringify(body) : undefined,
         ...options,
       });
-
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: Record<string, unknown> = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+          data = { error: rawText };
+        }
+      }
+      debugAuthLog('apiClient.response', {
+        method,
+        path,
+        status: response.status,
+        ok: response.ok,
+        hasBody: Boolean(rawText),
+        responseError: data.error ?? null,
+        rawText: rawText || null,
+      });
 
       if (response.status === 401) {
+        debugAuthLog('apiClient.401', {
+          method,
+          path,
+          hasToken: Boolean(token),
+          tokenSource,
+          responseError: data.error,
+        });
         if (token) {
           this.onUnauthorized();
         }
-        return { error: data.error || 'Unauthorized' };
+        return { error: (data.error as string) || 'Unauthorized' };
       }
 
       if (!response.ok) {
-        return { error: data.error || 'Request failed', details: data.details };
+        return {
+          error: (data.error as string) || `Request failed (${response.status})`,
+          details: data.details,
+        };
       }
 
       if ('data' in data) {

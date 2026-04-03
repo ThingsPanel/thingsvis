@@ -20,6 +20,7 @@ import { EditorBottomBar } from './EditorBottomBar';
 import { ShortcutHelpPanel } from './ShortcutHelpPanel';
 import { ProjectDialog } from './ProjectDialog';
 import { VariablesPanel } from './Modals/VariablesPanel';
+import { ShareDashboardDialog } from './dashboard/ShareDashboardDialog';
 import {
   Dialog,
   DialogContent,
@@ -139,6 +140,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const [showProjectDialog, setShowProjectDialog] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
   const [showVariablesPanel, setShowVariablesPanel] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [formatBrush, setFormatBrush] = useState<FormatBrushState>({
     active: false,
     snapshot: null,
@@ -612,6 +614,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           window.location.hash = '#/';
         }}
         onLogin={() => (window.location.hash = '#/login')}
+        onShare={() => setShowShareDialog(true)}
       />
 
       {embedVisibility.showLibrary && showLeftPanel && (
@@ -895,6 +898,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         }}
       />
       <HelpDialog open={showHelpDialog} onOpenChange={setShowHelpDialog} />
+
+      {projectId && (
+        <ShareDashboardDialog
+          dashboardId={projectId}
+          open={showShareDialog}
+          onOpenChange={setShowShareDialog}
+        />
+      )}
     </div>
   );
 });
