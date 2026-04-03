@@ -172,7 +172,13 @@ class ApiClient {
     options: RequestInit & { skipAuth?: boolean } = {},
   ): Promise<ApiResponse<T>> {
     const url = this.getRequestUrl(path);
-    const token = options.skipAuth ? null : this.getToken();
+    const inEmbedContext =
+      typeof window !== 'undefined' && window.location.hash.includes('mode=embedded');
+    const persistedBrowserToken =
+      typeof window !== 'undefined' && !inEmbedContext
+        ? localStorage.getItem(BROWSER_TOKEN_KEY)
+        : null;
+    const token = options.skipAuth ? null : this.getToken() || persistedBrowserToken;
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
