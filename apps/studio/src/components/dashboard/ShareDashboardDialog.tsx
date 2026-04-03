@@ -80,6 +80,13 @@ export function ShareDashboardDialog({
           dashboardId,
           responseError: response.error,
         });
+        if (response.error.toLowerCase() === 'unauthorized') {
+          alert(t('shareDialog.errors.unauthorizedHint'));
+          if (typeof window !== 'undefined') {
+            window.location.hash = '#/login';
+          }
+          return;
+        }
         const hint = response.error.toLowerCase().includes('not found')
           ? `\n${t('shareDialog.errors.unsavedHint')}`
           : '';

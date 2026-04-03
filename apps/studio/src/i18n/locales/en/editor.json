@@ -86,7 +86,8 @@
             "createFailed": "Failed to create share link",
             "copyFailed": "Failed to copy share link",
             "revokeFailed": "Failed to revoke share link",
-            "unsavedHint": "Please save this dashboard first, then create a share link."
+            "unsavedHint": "Please save this dashboard first, then create a share link.",
+            "unauthorizedHint": "Your login session has expired. Please sign in again before creating a share link."
         }
     },
     "saveIndicator": {

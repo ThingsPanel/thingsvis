@@ -86,7 +86,8 @@
             "createFailed": "创建分享链接失败",
             "copyFailed": "复制分享链接失败",
             "revokeFailed": "吊销分享链接失败",
-            "unsavedHint": "请先保存当前仪表板，再创建分享链接。"
+            "unsavedHint": "请先保存当前仪表板，再创建分享链接。",
+            "unauthorizedHint": "登录状态已失效，请重新登录后再创建分享链接。"
         }
     },
     "saveIndicator": {
