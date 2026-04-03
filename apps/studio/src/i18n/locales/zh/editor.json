@@ -52,6 +52,7 @@
     },
     "topNav": {
         "save": "保存",
+        "share": "分享",
         "preview": "预览",
         "publish": "发布",
         "showProps": "显示属性面板",

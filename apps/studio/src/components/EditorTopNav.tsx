@@ -352,7 +352,7 @@ export function EditorTopNav({
             onClick={onShare}
           >
             <Share2 className="h-4 w-4" />
-            <span className="text-sm font-medium">{t('topNav.share', '分享')}</span>
+            <span className="text-sm font-medium">{t('topNav.share')}</span>
           </Button>
         )}
 

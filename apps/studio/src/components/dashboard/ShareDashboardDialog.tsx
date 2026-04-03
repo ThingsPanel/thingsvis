@@ -14,21 +14,25 @@ import {
 
 interface ShareDashboardDialogProps {
   dashboardId: string;
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function ShareDashboardDialog({ dashboardId, isOpen, onClose }: ShareDashboardDialogProps) {
+export function ShareDashboardDialog({
+  dashboardId,
+  open,
+  onOpenChange,
+}: ShareDashboardDialogProps) {
   const [loading, setLoading] = useState(false);
   const [shareInfo, setShareInfo] = useState<ShareLinkInfo | null>(null);
   const [expirationDays, setExpirationDays] = useState<number>(7);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
       loadShareInfo();
     }
-  }, [isOpen, dashboardId]);
+  }, [open, dashboardId]);
 
   const loadShareInfo = async () => {
     setLoading(true);
@@ -87,7 +91,7 @@ export function ShareDashboardDialog({ dashboardId, isOpen, onClose }: ShareDash
     }
   };
 
-  if (!isOpen) return null;
+  if (!open) return null;
 
   const isExpired = shareInfo?.expiresAt && new Date(shareInfo.expiresAt) < new Date();
 
@@ -96,7 +100,7 @@ export function ShareDashboardDialog({ dashboardId, isOpen, onClose }: ShareDash
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">分享仪表板</h2>
-          <button onClick={onClose}>×</button>
+          <button onClick={() => onOpenChange(false)}>×</button>
         </div>
 
         {loading ? (
@@ -141,7 +145,10 @@ export function ShareDashboardDialog({ dashboardId, isOpen, onClose }: ShareDash
               >
                 吊销分享
               </button>
-              <button onClick={onClose} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">
+              <button
+                onClick={() => onOpenChange(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 rounded-md"
+              >
                 关闭
               </button>
             </div>
@@ -171,7 +178,10 @@ export function ShareDashboardDialog({ dashboardId, isOpen, onClose }: ShareDash
               >
                 创建分享链接
               </button>
-              <button onClick={onClose} className="flex-1 px-4 py-2 bg-gray-200 rounded-md">
+              <button
+                onClick={() => onOpenChange(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 rounded-md"
+              >
                 取消
               </button>
             </div>
