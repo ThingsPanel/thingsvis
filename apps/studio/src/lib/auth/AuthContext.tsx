@@ -158,7 +158,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     apiClient.configure({
-      getToken: () => tokenRef.current,
+      getToken: () => tokenRef.current || localStorage.getItem(BROWSER_TOKEN_KEY),
       onUnauthorized: () => {
         if (authChannelRef.current === 'embed') {
           clearEmbedAuth();
