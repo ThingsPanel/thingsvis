@@ -35,6 +35,7 @@ import {
   Braces,
   Grid3x3,
   Paintbrush,
+  Share2,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -92,6 +93,7 @@ interface EditorTopNavProps {
   onOpenHelp?: () => void;
   onLogout: () => void;
   onLogin: () => void;
+  onShare?: () => void;
 }
 
 export function EditorTopNav({
@@ -136,6 +138,7 @@ export function EditorTopNav({
   onOpenHelp,
   onLogout,
   onLogin,
+  onShare,
 }: EditorTopNavProps) {
   const { t, i18n } = useTranslation('editor');
   return (
@@ -340,6 +343,18 @@ export function EditorTopNav({
           <Save className="h-4 w-4" />
           <span className="text-sm font-medium">{t('topNav.save')}</span>
         </Button>
+
+        {onShare && projectId && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 gap-2 rounded-lg px-4 hover:bg-accent/80 focus:ring-0 focus:outline-none"
+            onClick={onShare}
+          >
+            <Share2 className="h-4 w-4" />
+            <span className="text-sm font-medium">{t('topNav.share', '分享')}</span>
+          </Button>
+        )}
 
         <Button
           variant="ghost"
