@@ -233,6 +233,30 @@ export function getLegacyLoader(): Loader {
   return Loader.instance;
 }
 
+function shouldBypassLegacyProxyAccess(prop: PropertyKey) {
+  if (typeof prop === 'symbol') {
+    return true;
+  }
+
+  const propName = String(prop);
+
+  return [
+    '$$typeof',
+    '__esModule',
+    'compare',
+    'defaultProps',
+    'displayName',
+    'length',
+    'name',
+    'propTypes',
+    'prototype',
+    'render',
+    'then',
+    'toJSON',
+    'type',
+  ].includes(propName);
+}
+
 /**
  * Legacy singleton export kept for direct subpath consumers.
  * Do not re-export this from the package root; React Refresh inspects root
@@ -240,6 +264,10 @@ export function getLegacyLoader(): Loader {
  */
 export const UniversalLoader = new Proxy({} as Loader, {
   get(_target, prop, receiver) {
+    if (shouldBypassLegacyProxyAccess(prop)) {
+      return undefined;
+    }
+
     const instance = getLegacyLoader();
     const value = Reflect.get(instance as object, prop, receiver);
     return typeof value === 'function' ? value.bind(instance) : value;

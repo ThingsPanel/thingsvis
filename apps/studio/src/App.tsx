@@ -29,7 +29,7 @@ import './index.css';
 export default function App() {
   return (
     <ErrorBoundary>
-      <HashRouter>
+      <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Embed routes stay outside editor providers to avoid cloud/editor bootstrap. */}
           <Route path="/embed" element={<EmbedPage />} />

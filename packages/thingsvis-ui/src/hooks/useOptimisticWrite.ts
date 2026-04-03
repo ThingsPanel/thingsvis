@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
 import type { DataSourceManager } from '@thingsvis/kernel';
-import { getLegacyDataSourceManager } from '@thingsvis/kernel';
 
 interface UseOptimisticWriteOptions<T> {
   /**
@@ -97,7 +96,14 @@ export function useOptimisticWrite<T = unknown>(
       }, timeout);
 
       // Fire the actual write
-      const manager = dataSourceManager ?? getLegacyDataSourceManager();
+      const manager = dataSourceManager;
+      if (!manager) {
+        clearPendingTimeout();
+        if (onRollback) onRollback(lastPayloadRef.current);
+        setState({ isPending: false, error: 'No runtime-scoped dataSourceManager provided' });
+        return;
+      }
+
       manager
         .writeDataSource(dataSourceId, payload)
         .then((result) => {

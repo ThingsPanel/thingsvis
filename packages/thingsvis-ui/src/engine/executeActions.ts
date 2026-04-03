@@ -6,7 +6,7 @@
  */
 import type { DataSourceManager } from '@thingsvis/kernel';
 import type { EventBus } from './EventBus';
-import { getLegacyDataSourceManager, SafeExecutor } from '@thingsvis/kernel';
+import { SafeExecutor } from '@thingsvis/kernel';
 
 export type ActionRuntime = {
   dataSourceManager?: Pick<DataSourceManager, 'writeDataSource'>;
@@ -178,8 +178,6 @@ export function executeAction(
   payload?: unknown,
   runtime: ActionRuntime = {},
 ): void {
-  const dataSourceManager = runtime.dataSourceManager ?? getLegacyDataSourceManager();
-
   switch (action.type) {
     case 'setVariable': {
       const name = action.variableName;
@@ -206,6 +204,14 @@ export function executeAction(
     case 'callWrite': {
       const dsId = action.dataSourceId;
       if (!dsId) break;
+
+      const dataSourceManager = runtime.dataSourceManager;
+      if (!dataSourceManager) {
+        console.warn('[ThingsVis] callWrite skipped: no runtime-scoped dataSourceManager provided', {
+          dataSourceId: dsId,
+        });
+        break;
+      }
 
       // Use configured payload if set, otherwise fall back to event payload
       const rawPayload = action.payload ?? payload;
