@@ -47,12 +47,8 @@ async function hasValidBearerToken(req: NextRequest): Promise<boolean> {
   if (!authHeader?.startsWith('Bearer ')) return false;
 
   const token = authHeader.substring(7);
-  const secret = process.env.AUTH_SECRET;
-
-  if (!secret) {
-    console.error('[Auth] ERROR: AUTH_SECRET is not set. Environment must provide a valid secret.');
-    return false;
-  }
+  // Keep JWT verification behavior consistent with login route and auth helpers.
+  const secret = process.env.AUTH_SECRET || 'thingsvis-dev-secret-key';
 
   const encodedSecret = new TextEncoder().encode(secret);
 
