@@ -173,7 +173,14 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = this.getRequestUrl(path);
     const inEmbedContext =
-      typeof window !== 'undefined' && window.location.hash.includes('mode=embedded');
+      typeof window !== 'undefined' &&
+      (() => {
+        try {
+          return window.self !== window.top;
+        } catch {
+          return true;
+        }
+      })();
     const persistedBrowserToken =
       typeof window !== 'undefined' && !inEmbedContext
         ? localStorage.getItem(BROWSER_TOKEN_KEY)
