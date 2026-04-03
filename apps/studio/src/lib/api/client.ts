@@ -44,6 +44,26 @@ function resolveDefaultApiBaseUrl(): string {
 
 const DEFAULT_API_BASE_URL = resolveDefaultApiBaseUrl();
 const BROWSER_TOKEN_KEY = 'thingsvis_browser_token';
+const AUTH_DEBUG_KEY = 'thingsvis_debug_auth';
+
+function debugAuthLog(message: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem(AUTH_DEBUG_KEY) !== '1') return;
+  const logs = (window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] })
+    .__THINGSVIS_AUTH_DEBUG_LOGS__;
+  const nextEntry = {
+    ts: new Date().toISOString(),
+    message,
+    ...payload,
+  };
+  if (Array.isArray(logs)) {
+    logs.push(nextEntry);
+  } else {
+    (
+      window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] }
+    ).__THINGSVIS_AUTH_DEBUG_LOGS__ = [nextEntry];
+  }
+}
 
 function toAbsoluteBaseUrl(baseUrl: string): string {
   if (/^https?:\/\//i.test(baseUrl)) return baseUrl;
@@ -186,6 +206,13 @@ class ApiClient {
         ? localStorage.getItem(BROWSER_TOKEN_KEY)
         : null;
     const token = options.skipAuth ? null : this.getToken() || persistedBrowserToken;
+    const tokenSource = options.skipAuth
+      ? 'skip-auth'
+      : this.getToken()
+        ? 'provider'
+        : persistedBrowserToken
+          ? 'localStorage'
+          : 'none';
 
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
@@ -197,6 +224,14 @@ class ApiClient {
     }
 
     try {
+      debugAuthLog('apiClient.request', {
+        method,
+        path,
+        url,
+        inEmbedContext,
+        hasToken: Boolean(token),
+        tokenSource,
+      });
       const response = await fetch(url, {
         method,
         headers,
@@ -207,6 +242,13 @@ class ApiClient {
       const data = await response.json();
 
       if (response.status === 401) {
+        debugAuthLog('apiClient.401', {
+          method,
+          path,
+          hasToken: Boolean(token),
+          tokenSource,
+          responseError: data?.error,
+        });
         if (token) {
           this.onUnauthorized();
         }

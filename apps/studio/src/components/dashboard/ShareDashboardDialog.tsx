@@ -13,6 +13,25 @@ import {
   type ShareLinkInfo,
 } from '@/lib/api/dashboards';
 
+function debugShareLog(message: string, payload: Record<string, unknown>) {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem('thingsvis_debug_auth') !== '1') return;
+  const logs = (window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] })
+    .__THINGSVIS_AUTH_DEBUG_LOGS__;
+  const nextEntry = {
+    ts: new Date().toISOString(),
+    message,
+    ...payload,
+  };
+  if (Array.isArray(logs)) {
+    logs.push(nextEntry);
+  } else {
+    (
+      window as unknown as { __THINGSVIS_AUTH_DEBUG_LOGS__?: unknown[] }
+    ).__THINGSVIS_AUTH_DEBUG_LOGS__ = [nextEntry];
+  }
+}
+
 interface ShareDashboardDialogProps {
   dashboardId: string;
   open: boolean;
@@ -57,6 +76,10 @@ export function ShareDashboardDialog({
       const expiresIn = expirationDays > 0 ? expirationDays * 24 * 3600 : undefined;
       const response = await createShareLink(dashboardId, { expiresIn });
       if (response.error) {
+        debugShareLog('shareDialog.createShareLink.error', {
+          dashboardId,
+          responseError: response.error,
+        });
         const hint = response.error.toLowerCase().includes('not found')
           ? `\n${t('shareDialog.errors.unsavedHint')}`
           : '';

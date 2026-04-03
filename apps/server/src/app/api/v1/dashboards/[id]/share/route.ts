@@ -2,13 +2,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth-helpers';
+import { logger } from '@/lib/logger';
 
 type Params = { params: Promise<{ id: string }> };
+const AUTH_DEBUG = process.env.DEBUG_SHARE_AUTH === '1';
 
 // POST /api/v1/dashboards/:id/share - Generate a share link
 export async function POST(request: NextRequest, { params }: Params) {
+  const authHeader = request.headers.get('authorization');
+  if (AUTH_DEBUG) {
+    logger.info({
+      msg: 'Share POST auth diagnostics',
+      path: request.nextUrl.pathname,
+      hasAuthorizationHeader: Boolean(authHeader),
+      authHeaderPrefix: authHeader?.split(' ')[0] || null,
+      authHeaderLength: authHeader?.length || 0,
+      hasCookieHeader: Boolean(request.headers.get('cookie')),
+    });
+  }
+
   const user = await getSessionUser(request);
   if (!user) {
+    if (AUTH_DEBUG) {
+      logger.warn({
+        msg: 'Share POST unauthorized',
+        path: request.nextUrl.pathname,
+        reason: 'getSessionUser returned null',
+      });
+    }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
