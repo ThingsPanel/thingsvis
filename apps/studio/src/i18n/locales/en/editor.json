@@ -62,6 +62,33 @@
         "untitledProject": "Untitled Project",
         "variables": "Variables"
     },
+    "shareDialog": {
+        "title": "Share Dashboard",
+        "description": "After creating a share link, anyone with the link can access this dashboard.",
+        "linkLabel": "Share Link",
+        "copy": "Copy",
+        "copied": "Copied",
+        "expiresAt": "Expires At",
+        "expired": "Expired",
+        "expirationLabel": "Expiration",
+        "expiration": {
+            "1d": "1 day",
+            "7d": "7 days",
+            "30d": "30 days",
+            "never": "Never expires"
+        },
+        "create": "Create Share Link",
+        "revoke": "Revoke Share",
+        "close": "Close",
+        "cancel": "Cancel",
+        "confirmRevoke": "Are you sure you want to revoke this share link?",
+        "errors": {
+            "createFailed": "Failed to create share link",
+            "copyFailed": "Failed to copy share link",
+            "revokeFailed": "Failed to revoke share link",
+            "unsavedHint": "Please save this dashboard first, then create a share link."
+        }
+    },
     "saveIndicator": {
         "saving": "Saving...",
         "saved": "All changes saved",

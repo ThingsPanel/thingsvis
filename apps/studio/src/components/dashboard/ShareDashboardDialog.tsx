@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   createShareLink,
   getShareInfo,
@@ -23,8 +24,10 @@ export function ShareDashboardDialog({
   open,
   onOpenChange,
 }: ShareDashboardDialogProps) {
+  const { t, i18n } = useTranslation('editor');
   const [loading, setLoading] = useState(false);
   const [shareInfo, setShareInfo] = useState<ShareLinkInfo | null>(null);
+  const [latestShareUrl, setLatestShareUrl] = useState<string | null>(null);
   const [expirationDays, setExpirationDays] = useState<number>(7);
   const [copied, setCopied] = useState(false);
 
@@ -40,6 +43,8 @@ export function ShareDashboardDialog({
       const response = await getShareInfo(dashboardId);
       if (response.data) {
         setShareInfo(response.data);
+      } else if (response.error) {
+        setShareInfo(null);
       }
     } finally {
       setLoading(false);
@@ -50,42 +55,60 @@ export function ShareDashboardDialog({
     setLoading(true);
     try {
       const expiresIn = expirationDays > 0 ? expirationDays * 24 * 3600 : undefined;
-      await createShareLink(dashboardId, { expiresIn });
-      await loadShareInfo();
+      const response = await createShareLink(dashboardId, { expiresIn });
+      if (response.error) {
+        const hint = response.error.toLowerCase().includes('not found')
+          ? `\n${t('shareDialog.errors.unsavedHint')}`
+          : '';
+        alert(`${t('shareDialog.errors.createFailed')}: ${response.error}${hint}`);
+        return;
+      }
+      const createdUrl = response.data?.shareUrl || null;
+      const createdExpiresAt = response.data?.expiresAt || null;
+      if (!createdUrl) {
+        alert(t('shareDialog.errors.createFailed'));
+        return;
+      }
+      setLatestShareUrl(createdUrl);
+      setShareInfo({
+        enabled: true,
+        url: createdUrl,
+        expiresAt: createdExpiresAt,
+      });
     } catch (error) {
-      alert('创建分享链接失败');
+      alert(t('shareDialog.errors.createFailed'));
     } finally {
       setLoading(false);
     }
   };
 
   const handleCopy = async () => {
-    if (shareInfo?.url) {
+    const urlToCopy = latestShareUrl || shareInfo?.url;
+    if (urlToCopy) {
       try {
-        const response = await createShareLink(dashboardId, {
-          expiresIn: expirationDays > 0 ? expirationDays * 24 * 3600 : undefined,
-        });
-
-        if (response.data?.shareUrl) {
-          await navigator.clipboard.writeText(response.data.shareUrl);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        }
+        await navigator.clipboard.writeText(urlToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
       } catch (error) {
-        console.error('Failed to copy:', error);
+        alert(t('shareDialog.errors.copyFailed'));
       }
     }
   };
 
   const handleRevoke = async () => {
-    if (!confirm('确定要吊销分享链接吗？')) return;
+    if (!confirm(t('shareDialog.confirmRevoke'))) return;
 
     setLoading(true);
     try {
-      await revokeShareLink(dashboardId);
+      const response = await revokeShareLink(dashboardId);
+      if (response.error) {
+        alert(`${t('shareDialog.errors.revokeFailed')}: ${response.error}`);
+        return;
+      }
       setShareInfo(null);
+      setLatestShareUrl(null);
     } catch (error) {
-      alert('吊销分享链接失败');
+      alert(t('shareDialog.errors.revokeFailed'));
     } finally {
       setLoading(false);
     }
@@ -99,7 +122,7 @@ export function ShareDashboardDialog({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">分享仪表板</h2>
+          <h2 className="text-xl font-semibold">{t('shareDialog.title')}</h2>
           <button onClick={() => onOpenChange(false)}>×</button>
         </div>
 
@@ -110,7 +133,7 @@ export function ShareDashboardDialog({
         ) : shareInfo?.enabled ? (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">分享链接</label>
+              <label className="block text-sm font-medium mb-2">{t('shareDialog.linkLabel')}</label>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -122,7 +145,7 @@ export function ShareDashboardDialog({
                   onClick={handleCopy}
                   className="px-4 py-2 bg-blue-500 text-white rounded-md"
                 >
-                  {copied ? '已复制' : '复制'}
+                  {copied ? t('shareDialog.copied') : t('shareDialog.copy')}
                 </button>
               </div>
             </div>
@@ -130,10 +153,12 @@ export function ShareDashboardDialog({
             {shareInfo.expiresAt && (
               <div className="text-sm">
                 <span className={isExpired ? 'text-red-600' : ''}>
-                  {isExpired ? '已过期' : '过期时间'}:
+                  {isExpired ? t('shareDialog.expired') : t('shareDialog.expiresAt')}:
                 </span>
                 <span className="ml-2">
-                  {new Date(shareInfo.expiresAt).toLocaleString('zh-CN')}
+                  {new Date(shareInfo.expiresAt).toLocaleString(
+                    i18n.language === 'zh' ? 'zh-CN' : 'en-US',
+                  )}
                 </span>
               </div>
             )}
@@ -143,31 +168,33 @@ export function ShareDashboardDialog({
                 onClick={handleRevoke}
                 className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                吊销分享
+                {t('shareDialog.revoke')}
               </button>
               <button
                 onClick={() => onOpenChange(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 rounded-md"
               >
-                关闭
+                {t('shareDialog.close')}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm">创建分享链接后，任何人都可以通过链接访问此仪表板。</p>
+            <p className="text-sm">{t('shareDialog.description')}</p>
 
             <div>
-              <label className="block text-sm font-medium mb-2">有效期</label>
+              <label className="block text-sm font-medium mb-2">
+                {t('shareDialog.expirationLabel')}
+              </label>
               <select
                 value={expirationDays}
                 onChange={(e) => setExpirationDays(Number(e.target.value))}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value={1}>1 天</option>
-                <option value={7}>7 天</option>
-                <option value={30}>30 天</option>
-                <option value={0}>永不过期</option>
+                <option value={1}>{t('shareDialog.expiration.1d')}</option>
+                <option value={7}>{t('shareDialog.expiration.7d')}</option>
+                <option value={30}>{t('shareDialog.expiration.30d')}</option>
+                <option value={0}>{t('shareDialog.expiration.never')}</option>
               </select>
             </div>
 
@@ -176,13 +203,13 @@ export function ShareDashboardDialog({
                 onClick={handleCreateShare}
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md"
               >
-                创建分享链接
+                {t('shareDialog.create')}
               </button>
               <button
                 onClick={() => onOpenChange(false)}
                 className="flex-1 px-4 py-2 bg-gray-200 rounded-md"
               >
-                取消
+                {t('shareDialog.cancel')}
               </button>
             </div>
           </div>
