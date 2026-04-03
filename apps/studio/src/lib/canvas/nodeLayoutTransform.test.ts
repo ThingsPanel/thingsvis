@@ -99,11 +99,11 @@ describe('nodeLayoutTransform', () => {
     });
     it('90-degree rotated: top anchor moves to right side', () => {
       const w = getAnchorWorld(layout90, 'top');
-      // top: (50, 0) local → rotated 90° around center (50, 20)
-      //  dx=0, dy=-20 → dx'=0, dy'=-(-20)=20
-      //  world: (50+0, 20+20) = (50, 40)
-      expect(w.x).toBeCloseTo(50);
-      expect(w.y).toBeCloseTo(40);
+      // top: (50, 0) local → rotated 90° counterclockwise around center (50, 20)
+      //  dx=0, dy=-20 → dx'=20, dy'=0
+      //  world: (50+20, 20+0) = (70, 20)
+      expect(w.x).toBeCloseTo(70);
+      expect(w.y).toBeCloseTo(20);
     });
     it('90-degree rotated: center stays at center', () => {
       const w = getAnchorWorld(layout90, 'center');
