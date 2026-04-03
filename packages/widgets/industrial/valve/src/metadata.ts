@@ -4,7 +4,7 @@ export const metadata = {
   category: 'industrial',
   icon: 'Filter',
   version: '1.0.0',
-  defaultSize: { width: 80, height: 80 },
-  constraints: { minWidth: 30, minHeight: 30 },
+  defaultSize: { width: 100, height: 76 },
+  constraints: { minWidth: 50, minHeight: 38 },
   resizable: true,
 } as const;

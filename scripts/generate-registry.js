@@ -155,7 +155,7 @@ function generateRegistryData() {
 
             // name: metadata.ts (if not i18n key) > package.json thingsvis.displayName > widget name
             let displayName;
-            if (metadata.name && !metadata.name.startsWith('widget.')) {
+            if (metadata.name && !/^(widget|widgets)\./.test(metadata.name)) {
                 displayName = metadata.name;
             } else if (meta.displayName) {
                 displayName = meta.displayName;
@@ -176,7 +176,16 @@ function generateRegistryData() {
                 name: displayName,
                 ...(meta.i18n && { i18n: meta.i18n }),
                 // Enhanced metadata (Phase 0)
-                category: category.name,
+                category: (function() {
+                    const id = componentId;
+                    if (['basic/analog-clock', 'basic/digital-clock', 'basic/luxury-clock', 'basic/table', 'interaction/value-card', 'interaction/value-card-simple', 'custom/alert-list'].includes(id)) return 'basic';
+                    if (['basic/glass-panel'].includes(id)) return 'decoration';
+                    if (['geo/map', 'geo/map-china'].includes(id)) return 'charts';
+                    if (['resources/model-3d'].includes(id)) return 'media';
+                    if (category.name === 'interaction') return 'controls';
+                    if (category.name === 'chart') return 'charts';
+                    return category.name;
+                })(),
                 ...(meta.description || metadata.description ? { description: metadata.description || meta.description } : {}),
                 ...(meta.author || pkg.author ? { author: meta.author || pkg.author } : {}),
                 ...(metadata.tags || meta.tags ? { tags: metadata.tags || meta.tags } : {}),

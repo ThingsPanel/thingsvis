@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>换热站连线逻辑示意</title>
+  <style>
+    :root {
+      --bg: #071426;
+      --panel: #0d1d33;
+      --line: #1ec9ff;
+      --line-soft: rgba(30, 201, 255, 0.32);
+      --node: #122843;
+      --node-strong: #163457;
+      --text: #e6f4ff;
+      --muted: #8fb5d3;
+      --accent: #ff2d7a;
+      --warn: #ffb84d;
+      --grid: rgba(42, 135, 197, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        var(--bg);
+      background-size: auto, 32px 32px, 32px 32px, auto;
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1500px;
+      margin: 24px auto;
+      padding: 20px;
+    }
+
+    .header {
+      margin-bottom: 16px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      color: #46d7ff;
+      letter-spacing: 1px;
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .board {
+      position: relative;
+      width: 1400px;
+      height: 820px;
+      border: 1px solid rgba(75, 216, 255, 0.35);
+      background: linear-gradient(180deg, rgba(19, 43, 74, 0.45), rgba(7, 20, 38, 0.7));
+      box-shadow: 0 0 0 1px rgba(52, 181, 255, 0.08) inset, 0 28px 80px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      border: 1px solid rgba(54, 185, 255, 0.18);
+      pointer-events: none;
+    }
+
+    svg.lines {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .pipe {
+      fill: none;
+      stroke: var(--line);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 0 6px rgba(30, 201, 255, 0.38));
+    }
+
+    .pipe.soft {
+      stroke: var(--line-soft);
+      stroke-width: 18;
+      filter: none;
+    }
+
+    .guide {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.16);
+      stroke-width: 1.5;
+      stroke-dasharray: 6 6;
+    }
+
+    .node {
+      position: absolute;
+      background: linear-gradient(180deg, var(--node-strong), var(--node));
+      border: 1px solid rgba(62, 192, 255, 0.45);
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8px 10px;
+    }
+
+    .node small {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .node.tag {
+      background: linear-gradient(180deg, rgba(114, 25, 67, 0.95), rgba(89, 29, 74, 0.92));
+      border-color: rgba(255, 75, 148, 0.4);
+      border-radius: 10px;
+      font-size: 12px;
+      color: #ffd7ea;
+    }
+
+    .node.round {
+      border-radius: 999px;
+    }
+
+    .node.tall {
+      border-radius: 28px;
+    }
+
+    .node.tank {
+      border-radius: 18px;
+      background: linear-gradient(180deg, #193a61, #13304f);
+    }
+
+    .node.label {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      color: #7ee7ff;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .legend {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(13, 29, 51, 0.9);
+      border: 1px solid rgba(62, 192, 255, 0.16);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dot.pipe {
+      background: var(--line);
+    }
+
+    .dot.node {
+      background: #46d7ff;
+    }
+
+    .dot.tag {
+      background: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>换热站连线逻辑示意</h1>
+      <p>这是一份“给你在 Studio 里手动画管道用”的简化示意，不追求工艺严谨，重点是把主干、支路和设备挂接关系讲清楚。</p>
+    </div>
+
+    <div class="board">
+      <svg class="lines" viewBox="0 0 1400 820" aria-hidden="true">
+        <path class="pipe soft" d="M 250 160 H 1180" />
+        <path class="pipe" d="M 250 160 H 1180" />
+
+        <path class="pipe soft" d="M 290 670 H 390 V 160" />
+        <path class="pipe" d="M 290 670 H 390 V 160" />
+
+        <path class="pipe soft" d="M 650 160 V 630" />
+        <path class="pipe" d="M 650 160 V 630" />
+
+        <path class="pipe soft" d="M 1030 160 V 690" />
+        <path class="pipe" d="M 1030 160 V 690" />
+
+        <path class="pipe soft" d="M 705 280 H 980" />
+        <path class="pipe" d="M 705 280 H 980" />
+
+        <path class="pipe soft" d="M 705 410 H 980" />
+        <path class="pipe" d="M 705 410 H 980" />
+
+        <path class="pipe soft" d="M 705 620 H 880 V 710" />
+        <path class="pipe" d="M 705 620 H 880 V 710" />
+
+        <path class="pipe soft" d="M 880 710 H 980 V 160" />
+        <path class="pipe" d="M 880 710 H 980 V 160" />
+
+        <path class="pipe soft" d="M 1030 690 H 1180" />
+        <path class="pipe" d="M 1030 690 H 1180" />
+
+        <path class="guide" d="M 650 160 L 650 630" />
+        <path class="guide" d="M 1030 160 L 1030 690" />
+      </svg>
+
+      <div class="node label" style="left: 170px; top: 56px; width: 180px; height: 28px;">左下补水源</div>
+      <div class="node label" style="left: 566px; top: 56px; width: 220px; height: 28px;">中部换热器立管</div>
+      <div class="node label" style="left: 1060px; top: 56px; width: 180px; height: 28px;">右侧回水立管</div>
+
+      <div class="node" style="left: 192px; top: 126px; width: 100px; height: 54px;">flow-1<small>左侧流量计</small></div>
+      <div class="node round" style="left: 418px; top: 130px; width: 42px; height: 42px;">valve-1</div>
+      <div class="node round" style="left: 472px; top: 130px; width: 42px; height: 42px;">gauge-1</div>
+      <div class="node round" style="left: 692px; top: 130px; width: 42px; height: 42px;">valve-2</div>
+      <div class="node round" style="left: 746px; top: 130px; width: 42px; height: 42px;">gauge-2</div>
+      <div class="node tag" style="left: 822px; top: 124px; width: 112px; height: 48px;">tag-supply-p<small>供水压力</small></div>
+      <div class="node tag" style="left: 946px; top: 124px; width: 112px; height: 48px;">tag-supply-t<small>供水温度</small></div>
+      <div class="node" style="left: 1118px; top: 126px; width: 100px; height: 54px;">flow-2<small>右侧流量计</small></div>
+
+      <div class="node tag" style="left: 152px; top: 198px; width: 110px; height: 48px;">tag-top-heat<small>瞬时热量</small></div>
+      <div class="node tag" style="left: 392px; top: 214px; width: 110px; height: 48px;">tag-left-p<small>回水压力</small></div>
+      <div class="node tag" style="left: 392px; top: 270px; width: 110px; height: 48px;">tag-left-t<small>回水温度</small></div>
+
+      <div class="node tall" style="left: 628px; top: 172px; width: 46px; height: 108px;">hx-1</div>
+      <div class="node label" style="left: 690px; top: 206px; width: 120px; height: 24px;">hx-label-1 / 1线换热器</div>
+
+      <div class="node tall" style="left: 628px; top: 302px; width: 46px; height: 108px;">hx-2</div>
+      <div class="node label" style="left: 690px; top: 336px; width: 120px; height: 24px;">hx-label-2 / 2线换热器</div>
+
+      <div class="node tag" style="left: 734px; top: 234px; width: 140px; height: 48px;">tag-loop1<small>NO.1循环泵频率</small></div>
+      <div class="node round" style="left: 910px; top: 230px; width: 56px; height: 56px;">pump-1</div>
+      <div class="node tag" style="left: 1010px; top: 234px; width: 110px; height: 48px;">tag-right-1<small>回水压力</small></div>
+      <div class="node tag" style="left: 1130px; top: 234px; width: 110px; height: 48px;">tag-right-2<small>回水温度</small></div>
+
+      <div class="node tag" style="left: 734px; top: 364px; width: 140px; height: 48px;">tag-loop2<small>NO.2循环泵频率</small></div>
+      <div class="node round" style="left: 910px; top: 360px; width: 56px; height: 56px;">pump-2</div>
+      <div class="node tag" style="left: 1010px; top: 364px; width: 110px; height: 48px;">tag-right-3<small>回水压力</small></div>
+      <div class="node tag" style="left: 1130px; top: 364px; width: 110px; height: 48px;">tag-right-4<small>回水温度</small></div>
+
+      <div class="node tag" style="left: 126px; top: 504px; width: 112px; height: 48px;">tag-source-flow<small>瞬时流量</small></div>
+      <div class="node tag" style="left: 250px; top: 504px; width: 112px; height: 48px;">tag-valve<small>电动阀开度</small></div>
+      <div class="node label" style="left: 128px; top: 612px; width: 170px; height: 24px;">source-label / 自来水 / 自流井</div>
+      <div class="node tank" style="left: 160px; top: 634px; width: 112px; height: 116px;">source-tank<small>补水源</small></div>
+      <div class="node round" style="left: 268px; top: 724px; width: 56px; height: 56px;">pump-5</div>
+      <div class="node label" style="left: 254px; top: 778px; width: 96px; height: 24px;">pump5-label / 深井泵</div>
+      <div class="node" style="left: 192px; top: 560px; width: 100px; height: 54px;">flow-3<small>补水流量计</small></div>
+
+      <div class="node tag" style="left: 574px; top: 566px; width: 112px; height: 48px;">tag-waterbox<small>水箱液位</small></div>
+      <div class="node tank" style="left: 626px; top: 642px; width: 108px; height: 132px;">water-box<small>水箱</small></div>
+
+      <div class="node tag" style="left: 810px; top: 548px; width: 148px; height: 48px;">tag-supp1<small>NO.1补水泵频率</small></div>
+      <div class="node round" style="left: 972px; top: 544px; width: 56px; height: 56px;">pump-3</div>
+
+      <div class="node tag" style="left: 810px; top: 636px; width: 148px; height: 48px;">tag-supp2<small>NO.2补水泵频率</small></div>
+      <div class="node round" style="left: 972px; top: 632px; width: 56px; height: 56px;">pump-4</div>
+
+      <div class="node tag" style="left: 1080px; top: 708px; width: 112px; height: 48px;">tag-pool<small>集水池液位</small></div>
+      <div class="node tank" style="left: 1140px; top: 748px; width: 112px; height: 120px;">water-pool<small>集水池</small></div>
+    </div>
+
+    <div class="legend">
+      <span><i class="dot pipe"></i>蓝色实线：建议你在 Studio 里画的主管道</span>
+      <span><i class="dot node"></i>蓝色节点：设备或仪表节点</span>
+      <span><i class="dot tag"></i>粉色节点：数据标签，只贴在线旁，不参与串联</span>
+    </div>
+  </div>
+</body>
+</html>

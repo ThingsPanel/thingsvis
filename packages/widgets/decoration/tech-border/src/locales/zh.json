@@ -1,9 +1,10 @@
 {
   "metadata": {
     "name": "科技边框",
-    "description": "科技风格边框装饰，支持发光、动画效果"
+    "description": "科技风格边框装饰，支持发光、渐变和动画效果"
   },
   "props": {
+    "useThemeColor": "跟随主题色",
     "variant": "边框变体",
     "borderColor": "边框颜色",
     "borderWidth": "边框宽度",
@@ -50,5 +51,6 @@
   "widgets.thingsvis-widget-decoration-tech-border.label_23": "启用渐变",
   "widgets.thingsvis-widget-decoration-tech-border.label_24": "渐变开始色",
   "widgets.thingsvis-widget-decoration-tech-border.label_25": "渐变结束色",
-  "widgets.thingsvis-widget-decoration-tech-border.label_26": "渐变角度"
+  "widgets.thingsvis-widget-decoration-tech-border.label_26": "渐变角度",
+  "widgets.thingsvis-widget-decoration-tech-border.label_27": "跟随主题色"
 }

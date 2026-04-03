@@ -1,10 +1,12 @@
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
+
+const localeCatalog = { zh, en } as const;
 
 export const STANDALONE_DEFAULT_SRC = 'https://www.thingspanel.cn/';
 
@@ -24,7 +26,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
-    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+    return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 export const Main = defineWidget({

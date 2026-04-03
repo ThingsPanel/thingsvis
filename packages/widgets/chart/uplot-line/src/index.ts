@@ -6,6 +6,7 @@ import { controls } from './controls';
 import {
     defineWidget,
     resolveLayeredColor,
+    resolveLocaleRecord,
     type WidgetOverlayContext,
     resolveWidgetColors,
     type WidgetColors,
@@ -14,8 +15,38 @@ import {
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const localeCatalog = { zh, en } as const;
+
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 16;
+/** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT` / `LEGEND_FONT_SIZE`. */
+const LEGEND_BLOCK_HEIGHT = 20;
+const LEGEND_FONT_SIZE = 12;
+/** Gap between X-axis band (canvas bottom) and legend — half widget padding, same rhythm as echarts-bar spacing. */
+const LEGEND_AXIS_GAP_BASE = WIDGET_PADDING / 2;
+
+/**
+ * uPlot `opts.height` is only `.u-wrap` (canvas + axes). HTML legend stacks below — reserve bar-aligned
+ * `legendSpace` plus axis→legend gap so margin does not get clipped by overflow:hidden.
+ */
+function computeUplotInnerSize(
+    containerW: number,
+    containerH: number,
+    showLegend: boolean,
+    scale: number,
+): { width: number; height: number } {
+    const legendAxisGap = Math.round(LEGEND_AXIS_GAP_BASE * scale);
+    const reserve = showLegend
+        ? Math.round(LEGEND_BLOCK_HEIGHT * scale)
+            + Math.round(WIDGET_PADDING * scale)
+            + legendAxisGap
+        : 0;
+    return {
+        width: Math.max(0, Math.floor(containerW)),
+        height: Math.max(48, Math.floor(containerH - reserve)),
+    };
+}
+
 const TIME_RANGE_SEC: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
     '1h': 60 * 60,
     '6h': 6 * 60 * 60,
@@ -40,7 +71,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
-    return locale?.toLowerCase().startsWith('zh') ? (zh as RuntimeMessages) : (en as RuntimeMessages);
+    return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 function withAlpha(color: string, alpha: number): string {
@@ -213,6 +244,95 @@ function getTitleAlignment(align: Props['titleAlign']): 'left' | 'center' | 'rig
     return 'left';
 }
 
+function escapeHtml(s: string): string {
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+type HoverTooltipCtx = {
+    spanSec: number;
+    seriesLabel: string;
+    fg: string;
+    tooltipBg: string;
+    tooltipBorder: string;
+};
+
+/**
+ * uPlot 没有 ECharts 那种内置悬浮框；官方在 demos/tooltips.html 里用 hooks.init + hooks.setCursor
+ * 把 DOM 挂在 u.over 上更新 — https://leeoniya.github.io/uPlot/demos/tooltips.html
+ */
+function createHoverTooltipPlugin(ctx: HoverTooltipCtx) {
+    let tt: HTMLDivElement | null = null;
+
+    return {
+        hooks: {
+            init(u: uPlot) {
+                tt = document.createElement('div');
+                tt.className = 'thingsvis-uplot-tooltip';
+                tt.style.cssText = [
+                    'position:absolute',
+                    'display:none',
+                    'pointer-events:none',
+                    'z-index:20',
+                    'max-width:260px',
+                    'padding:6px 10px',
+                    'border-radius:6px',
+                    'font-size:12px',
+                    'line-height:1.45',
+                    'font-family:Inter,system-ui,Noto Sans SC,Noto Sans,sans-serif',
+                    'font-weight:500',
+                    `color:${ctx.fg}`,
+                    `background:${ctx.tooltipBg}`,
+                    `border:1px solid ${ctx.tooltipBorder}`,
+                    'box-shadow:0 4px 14px rgba(0,0,0,0.1)',
+                ].join(';');
+                u.over.appendChild(tt);
+            },
+            setCursor(u: uPlot) {
+                if (!tt) return;
+                const { idx } = u.cursor;
+                const left = u.cursor.left ?? -1;
+                const top = u.cursor.top ?? -1;
+                if (idx == null || left < 0 || top < 0) {
+                    tt.style.display = 'none';
+                    return;
+                }
+                const xRaw = u.data[0][idx];
+                const yRaw = u.data[1]?.[idx];
+                if (yRaw == null || (typeof yRaw === 'number' && Number.isNaN(yRaw))) {
+                    tt.style.display = 'none';
+                    return;
+                }
+                const timeStr = formatTick(Number(xRaw), ctx.spanSec);
+                const yStr = typeof yRaw === 'number' ? String(yRaw) : String(yRaw);
+                tt.innerHTML = `<span style="opacity:0.78;font-size:11px;font-weight:400">${escapeHtml(ctx.seriesLabel)}</span><br/><span style="font-weight:600">${escapeHtml(timeStr)}</span> <span style="opacity:0.55">·</span> <span>${escapeHtml(yStr)}</span>`;
+                tt.style.display = 'block';
+
+                const pad = 12;
+                let lx = left + pad;
+                let ty = top + pad;
+                const ow = u.over.clientWidth;
+                const oh = u.over.clientHeight;
+                tt.style.left = `${lx}px`;
+                tt.style.top = `${ty}px`;
+                const tw = tt.offsetWidth;
+                const th = tt.offsetHeight;
+                if (lx + tw > ow - 6) lx = Math.max(6, left - tw - pad);
+                if (ty + th > oh - 6) ty = Math.max(6, top - th - pad);
+                tt.style.left = `${lx}px`;
+                tt.style.top = `${ty}px`;
+            },
+            destroy() {
+                tt?.remove();
+                tt = null;
+            },
+        },
+    };
+}
+
 export const Main = defineWidget({
     id: metadata.id,
     name: metadata.name,
@@ -241,6 +361,46 @@ export const Main = defineWidget({
         element.style.height = '100%';
         element.style.boxSizing = 'border-box';
         element.style.overflow = 'hidden';
+        element.setAttribute('data-thingsvis-uplot-line', '');
+
+        // Descendant selectors: `.uplot` lives inside chartContainer, not as a sibling of this <style>.
+        const styleId = `uplot-override-${Math.random().toString(36).slice(2)}`;
+        const styleEl = document.createElement('style');
+        styleEl.id = styleId;
+        styleEl.textContent = `
+            [data-thingsvis-uplot-line] .uplot {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+            [data-thingsvis-uplot-line] .u-legend {
+                margin: var(--uplot-legend-axis-gap, 8px) 0 0 !important;
+                padding: 0 !important;
+                width: 100%;
+                box-sizing: border-box;
+                text-align: center;
+                font-family: Inter, "Noto Sans SC", "Noto Sans", sans-serif !important;
+                font-size: var(--uplot-legend-font-size, 12px) !important;
+                font-weight: 400 !important;
+                color: var(--uplot-legend-color, inherit) !important;
+                line-height: var(--uplot-legend-line-height, 1.33) !important;
+            }
+            [data-thingsvis-uplot-line] .u-legend th,
+            [data-thingsvis-uplot-line] .u-legend td {
+                font-weight: 400 !important;
+                font-family: inherit !important;
+                font-size: inherit !important;
+            }
+            [data-thingsvis-uplot-line] .u-legend .u-series > * {
+                padding: 2px 4px !important;
+            }
+            [data-thingsvis-uplot-line] .u-legend .u-label {
+                font-size: inherit !important;
+                font-weight: 400 !important;
+            }
+        `;
+        element.prepend(styleEl);
 
         const headerEl = document.createElement('div');
         headerEl.style.display = 'flex';
@@ -324,6 +484,11 @@ export const Main = defineWidget({
             const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
             lastScale = scale;
 
+            const showX = currentProps.showXAxis !== false;
+            const showY = currentProps.showYAxis !== false;
+            const showLegend = currentProps.showLegend;
+            const { width: plotW, height: plotH } = computeUplotInnerSize(cw, ch, showLegend, scale);
+
             const currentColors = resolveWidgetColors(element);
             const currentAxisLabelColor = resolveLayeredColor({
                 instance: currentProps.axisLabelColor,
@@ -334,6 +499,20 @@ export const Main = defineWidget({
             const lineColor = pickLineColor(currentProps, currentColors);
             const spanSec = finalTimes.length > 1 ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!) : fallbackRangeSec;
             const runtimeMessages = getRuntimeMessages(currentLocale);
+            const seriesLabel = currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value';
+            const tooltipBg =
+                currentColors.bg && currentColors.bg !== 'transparent'
+                    ? withAlpha(currentColors.bg, 0.98)
+                    : 'rgba(250,250,252,0.97)';
+            const tooltipBorder = withAlpha(currentAxisLabelColor, 0.22);
+
+            const legendFontPx = Math.round(LEGEND_FONT_SIZE * scale);
+            const legendAxisGapPx = Math.round(LEGEND_AXIS_GAP_BASE * scale);
+            element.style.setProperty('--uplot-legend-font-size', `${legendFontPx}px`);
+            element.style.setProperty('--uplot-legend-line-height', `${Math.round(16 * scale)}px`);
+            element.style.setProperty('--uplot-legend-color', currentAxisLabelColor);
+            element.style.setProperty('--uplot-legend-axis-gap', `${legendAxisGapPx}px`);
+
             applyHeader(scale);
             emptyStateEl.style.color = withAlpha(currentAxisLabelColor, 0.65);
             emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
@@ -343,40 +522,95 @@ export const Main = defineWidget({
             emptyStateEl.textContent = hasData ? '' : (runtimeMessages.runtime?.previewState || 'Preview style - data appears after binding');
             emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
-            const axisFontSize = Math.round(12 * scale);
-            const axisFont = `${axisFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
+            // Independent axis font sizes with scale
+            const xFontSize = Math.round((currentProps.xAxisFontSize ?? 12) * scale);
+            const yFontSize = Math.round((currentProps.yAxisFontSize ?? 12) * scale);
+            const xAxisFont = `${xFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
+            const yAxisFont = `${yFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
+
+            const padSide = Math.round(WIDGET_PADDING * scale);
+            // Extra right inset so the last X tick label (e.g. "11:00") is not clipped by the canvas edge.
+            const padRight = padSide + Math.round(20 * scale);
+            // uPlot `padding[2]` is inset between the series area and the X-axis band — large values create a visible
+            // "dead strip" above tick labels. Keep it minimal; the axis `size` holds the tick labels.
+            const effectivePaddingBottom = Math.max(2, Math.round(4 * scale));
+
+            // Tight X band (bar chart has no extra strip): ticks + one line of labels, capped like ECharts density.
+            const xAxisBand = Math.max(22, Math.min(34, Math.round(xFontSize + 10 + 6 * scale)));
 
             const opts: uPlot.Options = {
-                width: cw,
-                height: ch,
-                padding: [8, WIDGET_PADDING, WIDGET_PADDING, WIDGET_PADDING],
+                width: plotW,
+                height: plotH,
+                padding: [
+                    Math.round(8 * scale),
+                    padRight,
+                    effectivePaddingBottom,
+                    padSide,
+                ],
+                plugins: [
+                    createHoverTooltipPlugin({
+                        spanSec,
+                        seriesLabel,
+                        fg: currentAxisLabelColor,
+                        tooltipBg,
+                        tooltipBorder,
+                    }),
+                ],
                 legend: {
-                    show: !!currentProps.showLegend,
+                    show: showLegend,
+                    // Static series name in legend (dashboard parity with ECharts widgets); hover values in floating tooltip plugin.
+                    live: false,
+                    markers: {
+                        show: true,
+                        width: 1,
+                        stroke: lineColor,
+                        fill: withAlpha(lineColor, 0.25),
+                    },
                 },
                 axes: [
                     {
+                        show: showX,
                         stroke: currentAxisLabelColor,
-                        font: axisFont,
-                        space: Math.max(72, Math.round(96 * scale)),
+                        font: xAxisFont,
+                        size: xAxisBand,
+                        space: Math.max(40, Math.round(50 * scale)),
                         values: (_u: uPlot, vals: number[]) => vals.map((v) => formatTick(Number(v), spanSec)),
-                        grid: { stroke: currentGridColor, width: 1 },
-                        ticks: { stroke: currentGridColor, width: 1 },
+                        grid: showX ? { stroke: currentGridColor, width: 1 } : undefined,
+                        ticks: showX ? { stroke: currentGridColor, width: 1 } : undefined,
                     },
                     {
+                        show: showY,
                         stroke: currentAxisLabelColor,
-                        font: axisFont,
-                        grid: { stroke: currentGridColor, width: 1, dash: [5, 5] },
-                        ticks: { stroke: currentGridColor, width: 0 },
+                        font: yAxisFont,
+                        grid: showY ? { stroke: currentGridColor, width: 1, dash: [5, 5] } : undefined,
+                        ticks: showY ? { stroke: currentGridColor, width: 0 } : undefined,
                     },
                 ],
+                scales: {
+                    y: {
+                        auto: (): boolean =>
+                            currentProps.yAxisMin == null && currentProps.yAxisMax == null,
+                        range: (_self: uPlot, min: number, max: number): [number, number] => {
+                            if (currentProps.yAxisMin != null && currentProps.yAxisMax != null)
+                                return [currentProps.yAxisMin, currentProps.yAxisMax];
+                            if (currentProps.yAxisMin != null) return [currentProps.yAxisMin, max];
+                            if (currentProps.yAxisMax != null) return [min, currentProps.yAxisMax];
+                            return [min, max];
+                        },
+                    },
+                },
                 series: [
                     {},
                     {
-                        label: currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value',
+                        label: seriesLabel,
                         stroke: lineColor,
-                        fill: withAlpha(lineColor, 0.18),
-                        width: 2,
-                        paths: uPlot.paths.spline ? uPlot.paths.spline() : undefined,
+                        fill: currentProps.showArea
+                            ? withAlpha(lineColor, currentProps.areaFillAlpha ?? 0.18)
+                            : undefined,
+                        width: currentProps.lineWidth ?? 2,
+                        paths: currentProps.smooth && uPlot.paths.spline
+                            ? uPlot.paths.spline()
+                            : uPlot.paths.linear?.(),
                         points: {
                             show: false,
                         },
@@ -406,7 +640,13 @@ export const Main = defineWidget({
                 if (Math.abs(newScale - lastScale) > 0.05 && lastScale !== -1) {
                     initChart();
                 } else {
-                    chart.setSize({ width: cw, height: ch });
+                    const { width: pw, height: ph } = computeUplotInnerSize(
+                        cw,
+                        ch,
+                        currentProps.showLegend,
+                        newScale,
+                    );
+                    chart.setSize({ width: pw, height: ph });
                 }
             });
             ro.observe(element);
@@ -444,6 +684,8 @@ export const Main = defineWidget({
                 if (chart) {
                     chart.destroy();
                 }
+                const injectedStyle = document.getElementById(styleId);
+                injectedStyle?.remove();
             },
         };
     },

@@ -3,6 +3,7 @@ import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { LOCAL_AUTH_TYPE, RegisterSchema } from '@/lib/validators/auth';
+import { ensureDefaultDashboardForUser } from '@/lib/dashboard-helpers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, password, name, tenantId } = result.data;
+    const { email, password, name, tenantId, role } = result.data;
 
     // Check duplicate email
     const existing = await prisma.user.findUnique({ where: { email } });
@@ -47,11 +48,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine role: first user in tenant is OWNER
+    // Determine role: if SUPER_ADMIN or TENANT_ADMIN is provided, use it; otherwise first user is OWNER, rest are VIEWER
     const existingUsers = await prisma.user.count({
       where: { tenantId: finalTenantId },
     });
-    const role = existingUsers === 0 ? 'OWNER' : 'VIEWER';
+    const finalRole = role || (existingUsers === 0 ? 'OWNER' : 'VIEWER');
 
     const user = await prisma.user.create({
       data: {
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
         displayEmail: email,
         passwordHash,
         name,
-        role,
+        role: finalRole,
         authType: LOCAL_AUTH_TYPE,
         tenantId: finalTenantId,
       },
@@ -72,6 +73,11 @@ export async function POST(request: NextRequest) {
         createdAt: true,
       },
     });
+
+    // Initialize default dashboard for SUPER_ADMIN or TENANT_ADMIN
+    if (role === 'SUPER_ADMIN' || role === 'TENANT_ADMIN') {
+      await ensureDefaultDashboardForUser(user.id, finalTenantId, role);
+    }
 
     return NextResponse.json(user, { status: 201 });
   } catch (error) {

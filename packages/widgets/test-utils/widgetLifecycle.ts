@@ -8,6 +8,46 @@ export type WidgetHarness = {
   destroy: () => void;
 };
 
+function syncElementSize(element: HTMLElement, size?: { width?: number; height?: number }) {
+  const width = Math.max(1, Math.round(Number(size?.width ?? 320)));
+  const height = Math.max(1, Math.round(Number(size?.height ?? 180)));
+
+  element.style.width = `${width}px`;
+  element.style.height = `${height}px`;
+
+  Object.defineProperties(element, {
+    clientWidth: {
+      configurable: true,
+      get: () => width,
+    },
+    clientHeight: {
+      configurable: true,
+      get: () => height,
+    },
+    offsetWidth: {
+      configurable: true,
+      get: () => width,
+    },
+    offsetHeight: {
+      configurable: true,
+      get: () => height,
+    },
+  });
+
+  element.getBoundingClientRect = () =>
+    ({
+      x: 0,
+      y: 0,
+      top: 0,
+      left: 0,
+      right: width,
+      bottom: height,
+      width,
+      height,
+      toJSON: () => ({}),
+    }) as DOMRect;
+}
+
 export function mountWidget(
   widget: WidgetMainModule,
   overrides: Partial<WidgetOverlayContext> = {},
@@ -27,6 +67,7 @@ export function mountWidget(
   };
 
   const instance = widget.createOverlay(ctx);
+  syncElementSize(instance.element, ctx.size);
   document.body.appendChild(instance.element);
 
   return {
@@ -42,6 +83,7 @@ export function mountWidget(
           ...(next.props ?? {}),
         },
       };
+      syncElementSize(instance.element, merged.size);
       instance.update?.(merged);
       Object.assign(ctx, merged);
     },

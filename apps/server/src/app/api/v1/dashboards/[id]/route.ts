@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth-helpers';
 import { UpdateDashboardSchema } from '@/lib/validators/dashboard';
@@ -74,11 +73,11 @@ export async function PUT(request: NextRequest, { params }: Params) {
   }
 
   // Save version history before updating.
-  // Under rapid auto-save, concurrent requests may try to snapshot the same old version.
-  // Treat duplicate snapshot creation as harmless and continue.
-  try {
-    await prisma.dashboardVersion.create({
-      data: {
+  // Under rapid auto-save, concurrent requests may snapshot the same old version.
+  // Use skipDuplicates to avoid expected unique-constraint noise in Prisma logs.
+  await prisma.dashboardVersion.createMany({
+    data: [
+      {
         dashboardId: existing.id,
         version: existing.version,
         canvasConfig: existing.canvasConfig,
@@ -86,12 +85,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
         dataSources: existing.dataSources,
         variables: existing.variables,
       },
-    });
-  } catch (error) {
-    if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002')) {
-      throw error;
-    }
-  }
+    ],
+    skipDuplicates: true,
+  });
 
   // Prepare update data - only include fields that are provided
   const updateData: Record<string, unknown> = {

@@ -4,7 +4,7 @@ export const metadata = {
   category: 'industrial',
   icon: 'Zap',
   version: '1.0.0',
-  defaultSize: { width: 80, height: 100 },
-  constraints: { minWidth: 40, minHeight: 50 },
+  defaultSize: { width: 120, height: 60 },
+  constraints: { minWidth: 60, minHeight: 30 },
   resizable: true,
 } as const;

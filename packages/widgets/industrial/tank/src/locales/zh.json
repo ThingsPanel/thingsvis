@@ -1,5 +1,22 @@
 {
-  "widget": {
-    "name": "液位罐"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-industrial-tank": {
+        "name": "液位罐"
+      }
+    },
+    "controls": {
+      "industrial-tank": {
+        "group": "液位罐配置",
+        "level": "液位 (%)",
+        "tankColor": "罐体颜色",
+        "liquidColor": "液体颜色",
+        "lowColor": "低液位颜色",
+        "highColor": "高液位颜色",
+        "lowThreshold": "低液位阈值",
+        "highThreshold": "高液位阈值",
+        "hasError": "故障告警"
+      }
+    }
   }
 }

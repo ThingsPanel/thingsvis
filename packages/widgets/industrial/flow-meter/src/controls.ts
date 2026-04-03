@@ -4,42 +4,43 @@ export const controls: WidgetControls = {
   groups: [
     {
       id: 'flow-config',
-      label: { zh: '流量配置', en: 'Flow Config' },
+      label: 'controls.industrial-flow-meter.group',
       fields: [
         {
           path: 'value',
           kind: 'number',
-          label: { zh: '当前流量', en: 'Flow Value' },
+          label: 'controls.industrial-flow-meter.value',
           default: 50,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'min',
           kind: 'number',
-          label: { zh: '最小值', en: 'Min Value' },
+          label: 'controls.industrial-flow-meter.min',
           default: 0,
         },
         {
           path: 'max',
           kind: 'number',
-          label: { zh: '最大值', en: 'Max Value' },
+          label: 'controls.industrial-flow-meter.max',
           default: 100,
         },
         {
           path: 'baseColor',
           kind: 'color',
-          label: { zh: '外壳颜色', en: 'Case Color' },
+          label: 'controls.industrial-flow-meter.baseColor',
           default: '#475569',
         },
         {
           path: 'liquidColor',
           kind: 'color',
-          label: { zh: '液体颜色', en: 'Liquid Color' },
+          label: 'controls.industrial-flow-meter.liquidColor',
           default: '#0ea5e9',
         },
         {
           path: 'flowSpeed',
           kind: 'number',
-          label: { zh: '流动速度', en: 'Flow Speed' },
+          label: 'controls.industrial-flow-meter.flowSpeed',
           default: 1,
           min: 0,
           max: 5,
@@ -48,13 +49,14 @@ export const controls: WidgetControls = {
         {
           path: 'hasError',
           kind: 'boolean',
-          label: { zh: '故障告警', en: 'Has Error' },
+          label: 'controls.industrial-flow-meter.hasError',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'showValue',
           kind: 'boolean',
-          label: { zh: '显示数值', en: 'Show Value' },
+          label: 'controls.industrial-flow-meter.showValue',
           default: true,
         },
       ],

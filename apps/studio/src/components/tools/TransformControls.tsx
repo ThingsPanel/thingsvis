@@ -4,6 +4,13 @@ import Moveable from 'moveable';
 import Selecto from 'selecto';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
 import { getResolvedWidget } from '@/lib/registry/componentLoader';
+import { resolveCanvasDragCommit, shouldCommitCanvasDrag } from '@/lib/canvasInteraction';
+import {
+  getAspectRatioFromSize,
+  getStoredAspectRatio,
+  isAspectRatioLocked,
+  resizeDimensionWithAspectRatio,
+} from '@/lib/canvas/aspectRatio';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -15,6 +22,31 @@ function isPipeNodeType(type: string | undefined): boolean {
 
 function isConnectorNodeType(type: string | undefined): boolean {
   return isLineNodeType(type) || isPipeNodeType(type);
+}
+
+function resolveNodeAspectRatio(
+  schema:
+    | {
+        size?: { width?: number; height?: number };
+        props?: Record<string, unknown>;
+      }
+    | null
+    | undefined,
+  widgetConstraints?: { aspectRatio?: number },
+): number | undefined {
+  const fixedAspectRatio = widgetConstraints?.aspectRatio;
+  if (typeof fixedAspectRatio === 'number' && fixedAspectRatio > 0) {
+    return fixedAspectRatio;
+  }
+
+  if (!isAspectRatioLocked(schema?.props)) {
+    return undefined;
+  }
+
+  return (
+    getStoredAspectRatio(schema?.props) ??
+    getAspectRatioFromSize(schema?.size?.width, schema?.size?.height)
+  );
 }
 
 /** Grid layout handlers from useGridLayout hook */
@@ -245,7 +277,7 @@ export default function TransformControls({
       selectoRef.current = new Selecto({
         container: dragContainer,
         dragContainer,
-        selectableTargets: ['.node-proxy-target'],
+        selectableTargets: ['.node-proxy-target', '.pipe-proxy-hit'],
         hitRate: 0,
         selectByClick: true,
         selectFromInside: false,
@@ -257,6 +289,11 @@ export default function TransformControls({
 
       // Selecto dragStart - stop if clicking on Moveable element or selected target
       selectoRef.current.on('dragStart', (e) => {
+        if ((window as any)._connectionToolActive) {
+          e.stop();
+          return;
+        }
+
         const inputEvent = e.inputEvent;
         const target = inputEvent.target as HTMLElement;
 
@@ -268,7 +305,7 @@ export default function TransformControls({
 
         // Check if clicking on an already selected target
         const selectedTargets = (kernelStore.getState() as KernelState).selection.nodeIds
-          .map((id) => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .map((id) => dragContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
 
         if (selectedTargets.some((t) => t === target || t.contains(target))) {
@@ -305,7 +342,11 @@ export default function TransformControls({
         });
 
         const getId = (el: Element | null | undefined) =>
-          el?.getAttribute?.('data-node-id') || null;
+          el?.getAttribute?.('data-node-id') ||
+          (el instanceof HTMLElement
+            ? el.closest('.node-proxy-target')?.getAttribute('data-node-id')
+            : null) ||
+          null;
         const selectedIds = e.selected.map(getId).filter((id): id is string => id !== null);
         const inputEvent = e.inputEvent as MouseEvent | undefined;
         const isAdditive = inputEvent?.ctrlKey || inputEvent?.metaKey || inputEvent?.shiftKey;
@@ -385,7 +426,9 @@ export default function TransformControls({
           dragTranslateByIdRef.current[id] = { x: 0, y: 0 };
 
           // Reset transforms for all participating targets
-          const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+          const el = dragContainer.querySelector(
+            `.node-proxy-target[data-node-id="${id}"]`,
+          ) as HTMLElement | null;
           if (el) {
             el.style.willChange = 'transform';
             el.style.transform = '';
@@ -459,7 +502,9 @@ export default function TransformControls({
             dragTranslateByIdRef.current[id] = { x: tx, y: ty };
             emitNodeDragPreview(id, tx, ty, true);
             // Use dragContainer to find elements since that's where Moveable is mounted
-            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            const el = dragContainer.querySelector(
+              `.node-proxy-target[data-node-id="${id}"]`,
+            ) as HTMLElement | null;
             if (el && el !== target) {
               el.style.transform = `translate(${tx}px, ${ty}px)`;
             }
@@ -497,7 +542,7 @@ export default function TransformControls({
             for (const id of selectedIds) {
               emitNodeDragPreview(id, 0, 0, false);
               const el = dragContainer.querySelector(
-                `[data-node-id="${id}"]`,
+                `.node-proxy-target[data-node-id="${id}"]`,
               ) as HTMLElement | null;
               if (el) {
                 el.style.willChange = '';
@@ -534,17 +579,38 @@ export default function TransformControls({
 
         if (isMultiDrag) {
           // Commit all selected nodes using the same delta
+          let didCommit = false;
           for (const id of selectedIds) {
-            const el = dragContainer.querySelector(`[data-node-id="${id}"]`) as HTMLElement | null;
+            const el = dragContainer.querySelector(
+              `.node-proxy-target[data-node-id="${id}"]`,
+            ) as HTMLElement | null;
             if (el) el.style.willChange = '';
 
             const delta = dragTranslateByIdRef.current[id] ?? {
               x: (lastEvent as any)?.beforeTranslate?.[0] ?? 0,
               y: (lastEvent as any)?.beforeTranslate?.[1] ?? 0,
             };
-            const baseWorld = baseWorldPositionByIdRef.current[id];
-            const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-            const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+            if (!shouldCommitCanvasDrag(delta)) {
+              emitNodeDragPreview(id, 0, 0, false);
+              if (el) {
+                el.style.transform = '';
+              }
+              const overlayEl = findOverlayElement(id);
+              if (overlayEl) {
+                const rotation = overlayRotationRef[id] || '';
+                overlayEl.style.transform = rotation;
+                overlayEl.style.zIndex = originalOverlayZIndexRef[id] || '';
+                delete originalOverlayZIndexRef[id];
+                delete overlayRotationRef[id];
+              }
+              continue;
+            }
+            const baseWorld = baseWorldPositionByIdRef.current[id] ?? { x: 0, y: 0 };
+            const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+            if (!committedPosition) {
+              continue;
+            }
+            const { x, y } = committedPosition;
 
             if (el) {
               // Write the final committed position immediately so React reconciler
@@ -567,8 +633,9 @@ export default function TransformControls({
               delete overlayRotationRef[id];
             }
             kernelStore.getState().updateNode(id, { position: { x, y } });
+            didCommit = true;
           }
-          onUserEdit?.();
+          if (didCommit) onUserEdit?.();
           return;
         }
 
@@ -583,11 +650,35 @@ export default function TransformControls({
           dragTranslateByIdRef.current[nodeId || '']?.y ??
           (lastEvent as any)?.beforeTranslate?.[1] ??
           0;
+        if (!shouldCommitCanvasDrag({ x: dx, y: dy })) {
+          emitNodeDragPreview(nodeId, 0, 0, false);
+          target.style.transform = '';
+          if (nodeId) {
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              const rotation = overlayRotationRef[nodeId] || '';
+              overlayEl.style.transform = rotation;
+              overlayEl.style.zIndex = originalOverlayZIndexRef[nodeId] || '';
+              delete originalOverlayZIndexRef[nodeId];
+              delete overlayRotationRef[nodeId];
+            }
+          }
+          return;
+        }
 
+        const fallbackPosition = {
+          x: parseFloat(target.style.left || '0') || 0,
+          y: parseFloat(target.style.top || '0') || 0,
+        };
         const baseWorld = nodeId ? baseWorldPositionByIdRef.current[nodeId] : null;
-
-        const x = (baseWorld?.x ?? (parseFloat(target.style.left || '0') || 0)) + dx;
-        const y = (baseWorld?.y ?? (parseFloat(target.style.top || '0') || 0)) + dy;
+        const committedPosition = resolveCanvasDragCommit(baseWorld ?? fallbackPosition, {
+          x: dx,
+          y: dy,
+        });
+        if (!committedPosition) {
+          return;
+        }
+        const { x, y } = committedPosition;
 
         // Write the committed position BEFORE clearing transform.
         // React reconciler will find left/top already at the correct value
@@ -676,6 +767,7 @@ export default function TransformControls({
       });
 
       moveableRef.current.on('dragGroupEnd', ({ targets, isDrag }) => {
+        let didCommit = false;
         for (const t of targets) {
           t.style.willChange = '';
           const nodeId = t.getAttribute('data-node-id');
@@ -699,9 +791,21 @@ export default function TransformControls({
           }
 
           const delta = dragTranslateByIdRef.current[nodeId] ?? { x: 0, y: 0 };
-          const baseWorld = baseWorldPositionByIdRef.current[nodeId];
-          const x = (baseWorld?.x ?? 0) + (delta.x ?? 0);
-          const y = (baseWorld?.y ?? 0) + (delta.y ?? 0);
+          if (!shouldCommitCanvasDrag(delta)) {
+            t.style.transform = '';
+            emitNodeDragPreview(nodeId, 0, 0, false);
+            const overlayEl = findOverlayElement(nodeId);
+            if (overlayEl) {
+              overlayEl.style.transform = '';
+            }
+            continue;
+          }
+          const baseWorld = baseWorldPositionByIdRef.current[nodeId] ?? { x: 0, y: 0 };
+          const committedPosition = resolveCanvasDragCommit(baseWorld, delta);
+          if (!committedPosition) {
+            continue;
+          }
+          const { x, y } = committedPosition;
 
           // Write the committed position BEFORE clearing transform to prevent flash.
           if (isGridModeRef.current && baseWorld) {
@@ -720,8 +824,9 @@ export default function TransformControls({
           }
 
           kernelStore.getState().updateNode(nodeId, { position: { x, y } });
+          didCommit = true;
         }
-        if (isDrag) onUserEdit?.();
+        if (didCommit) onUserEdit?.();
       });
 
       // Resize handling (use transform during resize drag)
@@ -748,7 +853,17 @@ export default function TransformControls({
           const widgetType = schema?.type as string | undefined;
           if (widgetType) {
             const widget = getResolvedWidget(widgetType);
-            nodeConstraintsRef.current[nodeId] = (widget as any)?.constraints ?? {};
+            const widgetConstraints = ((widget as any)?.constraints ?? {}) as {
+              minWidth?: number;
+              minHeight?: number;
+              maxWidth?: number;
+              maxHeight?: number;
+              aspectRatio?: number;
+            };
+            nodeConstraintsRef.current[nodeId] = {
+              ...widgetConstraints,
+              aspectRatio: resolveNodeAspectRatio(schema, widgetConstraints),
+            };
           }
         }
 
@@ -763,13 +878,20 @@ export default function TransformControls({
         const constraints = nodeId ? (nodeConstraintsRef.current[nodeId] ?? {}) : {};
         let w = width;
         let h = height;
-        if (constraints.minWidth != null) w = Math.max(w, constraints.minWidth);
-        if (constraints.minHeight != null) h = Math.max(h, constraints.minHeight);
-        if (constraints.maxWidth != null) w = Math.min(w, constraints.maxWidth);
-        if (constraints.maxHeight != null) h = Math.min(h, constraints.maxHeight);
         if (constraints.aspectRatio != null) {
-          // Lock aspect ratio: adjust height based on clamped width
-          h = Math.round(w / constraints.aspectRatio);
+          const nextSize = resizeDimensionWithAspectRatio('width', w, constraints.aspectRatio, {
+            minWidth: constraints.minWidth,
+            minHeight: constraints.minHeight,
+            maxWidth: constraints.maxWidth,
+            maxHeight: constraints.maxHeight,
+          });
+          w = nextSize.width;
+          h = nextSize.height;
+        } else {
+          if (constraints.minWidth != null) w = Math.max(w, constraints.minWidth);
+          if (constraints.minHeight != null) h = Math.max(h, constraints.minHeight);
+          if (constraints.maxWidth != null) w = Math.min(w, constraints.maxWidth);
+          if (constraints.maxHeight != null) h = Math.min(h, constraints.maxHeight);
         }
         target.style.width = `${w}px`;
         target.style.height = `${h}px`;
@@ -819,10 +941,26 @@ export default function TransformControls({
 
           // Clamp to widget constraints one final time
           const constraints = nodeConstraintsRef.current[nodeId] ?? {};
-          if (constraints.minWidth != null) width = Math.max(width, constraints.minWidth);
-          if (constraints.minHeight != null) height = Math.max(height, constraints.minHeight);
-          if (constraints.maxWidth != null) width = Math.min(width, constraints.maxWidth);
-          if (constraints.maxHeight != null) height = Math.min(height, constraints.maxHeight);
+          if (constraints.aspectRatio != null) {
+            const nextSize = resizeDimensionWithAspectRatio(
+              'width',
+              width,
+              constraints.aspectRatio,
+              {
+                minWidth: constraints.minWidth,
+                minHeight: constraints.minHeight,
+                maxWidth: constraints.maxWidth,
+                maxHeight: constraints.maxHeight,
+              },
+            );
+            width = nextSize.width;
+            height = nextSize.height;
+          } else {
+            if (constraints.minWidth != null) width = Math.max(width, constraints.minWidth);
+            if (constraints.minHeight != null) height = Math.max(height, constraints.minHeight);
+            if (constraints.maxWidth != null) width = Math.min(width, constraints.maxWidth);
+            if (constraints.maxHeight != null) height = Math.min(height, constraints.maxHeight);
+          }
 
           // Grid mode: convert pixel coords to grid coords and use grid-aware action
           if (isGridModeRef.current) {
@@ -888,7 +1026,7 @@ export default function TransformControls({
       const currentSelectedIds = (kernelStore.getState() as KernelState).selection.nodeIds;
       if (currentSelectedIds.length > 0) {
         const initialTargets = currentSelectedIds
-          .map((id) => dragContainer.querySelector(`[data-node-id="${id}"]`))
+          .map((id) => dragContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
           .filter(Boolean) as HTMLElement[];
         if (initialTargets.length > 0) {
           moveableRef.current.target = initialTargets;
@@ -921,7 +1059,16 @@ export default function TransformControls({
 
   // Update Moveable target when selection changes or nodes change (e.g. via undo/redo)
   useEffect(() => {
-    if (!enabled) return;
+    const clearConnectorMoveableClass = () => {
+      (dragContainerRef?.current || containerRef.current)?.classList.remove(
+        'connector-moveable-minimal',
+      );
+    };
+
+    if (!enabled) {
+      clearConnectorMoveableClass();
+      return;
+    }
     if (!moveableRef.current) return;
 
     // Use dragContainerRef since Moveable is mounted there, fallback to containerRef
@@ -942,37 +1089,21 @@ export default function TransformControls({
         return !!node && !node.locked;
       });
 
-      // Generic lines remain lightweight connectors.
-      const anyLinesSelected = validSelectedIds.some((id) =>
-        isLineNodeType(state.nodesById[id]?.schemaRef?.type),
-      );
-      const anyPipesSelected = validSelectedIds.some((id) =>
-        isPipeNodeType(state.nodesById[id]?.schemaRef?.type),
-      );
-      const anyConnectedLinesSelected = validSelectedIds.some((id) => {
-        const node = state.nodesById[id];
-        if (!isLineNodeType(node?.schemaRef?.type)) return false;
-        const props = (node.schemaRef as any)?.props || {};
-        return !!(props.sourceNodeId || props.targetNodeId);
-      });
-      const anyConnectedPipesSelected = validSelectedIds.some((id) => {
-        const node = state.nodesById[id];
-        if (!isPipeNodeType(node?.schemaRef?.type)) return false;
-        const props = (node.schemaRef as any)?.props || {};
-        return !!(props.sourceNodeId || props.targetNodeId);
-      });
+      // Connectors need Moveable as drag target (proxy hit area); resize/rotate stay off when any
+      // connector is selected. Endpoint handles still win via stopImmediatePropagation on the overlay.
+      const moveableTargetIds = validSelectedIds;
 
-      const moveableTargetIds = validSelectedIds.filter((id) => {
-        const node = state.nodesById[id];
-        const type = node?.schemaRef?.type;
-        if (!isConnectorNodeType(type)) return true;
-        if (!isPipeNodeType(type)) return false;
-        const props = (node?.schemaRef as any)?.props || {};
-        return !(props.sourceNodeId || props.targetNodeId);
-      });
+      const anyConnectorSelected = validSelectedIds.some((id) =>
+        isConnectorNodeType(state.nodesById[id]?.schemaRef?.type),
+      );
+      const onlyConnectorsSelected =
+        validSelectedIds.length > 0 &&
+        validSelectedIds.every((id) => isConnectorNodeType(state.nodesById[id]?.schemaRef?.type));
+
+      queryContainer.classList.toggle('connector-moveable-minimal', onlyConnectorsSelected);
 
       const targets = moveableTargetIds
-        .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
+        .map((id) => queryContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
       const anyNonResizableSelected = validSelectedIds.some((id) => {
@@ -984,15 +1115,40 @@ export default function TransformControls({
         return (widget as any)?.resizable === false;
       });
 
-      // Disable transforms for locked nodes
+      const singleSelectedNodeId = validSelectedIds.length === 1 ? validSelectedIds[0] : null;
+      const singleSelectedNode = singleSelectedNodeId
+        ? state.nodesById[singleSelectedNodeId]
+        : null;
+      const singleWidgetType = (singleSelectedNode?.schemaRef as any)?.type as string | undefined;
+      const singleWidget = singleWidgetType ? getResolvedWidget(singleWidgetType) : null;
+      const keepRatio =
+        !anyConnectorSelected &&
+        moveableTargetIds.length === 1 &&
+        !!resolveNodeAspectRatio(
+          (singleSelectedNode?.schemaRef as any) ?? null,
+          ((singleWidget as any)?.constraints ?? {}) as { aspectRatio?: number },
+        );
+
+      // Disable transforms for locked nodes and non-resizable widgets
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
-      moveableRef.current.draggable =
-        !hasLockedSelection && !anyConnectedLinesSelected && !anyConnectedPipesSelected;
-      // Keep connector editing on the custom overlay rather than Moveable handles.
+
+      moveableRef.current.draggable = !hasLockedSelection && moveableTargetIds.length > 0;
       moveableRef.current.resizable =
-        !hasLockedSelection && !anyLinesSelected && !anyPipesSelected && !anyNonResizableSelected;
-      moveableRef.current.rotatable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
-      moveableRef.current.pinchable = !hasLockedSelection && !anyLinesSelected && !anyPipesSelected;
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
+      moveableRef.current.rotatable =
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
+      moveableRef.current.pinchable =
+        !hasLockedSelection &&
+        !anyNonResizableSelected &&
+        moveableTargetIds.length > 0 &&
+        !anyConnectorSelected;
+      moveableRef.current.keepRatio = keepRatio;
 
       moveableRef.current.target = targets;
 
@@ -1007,7 +1163,7 @@ export default function TransformControls({
         requestAnimationFrame(() => {
           if (!moveableRef.current) return;
           const retryTargets = moveableTargetIds
-            .map((id) => queryContainer.querySelector(`[data-node-id="${id}"]`))
+            .map((id) => queryContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
             .filter(Boolean) as HTMLElement[];
           if (retryTargets.length > 0) {
             moveableRef.current.target = retryTargets;
@@ -1053,7 +1209,18 @@ export default function TransformControls({
       window.clearInterval(viewportPollTimerRef.current);
       viewportPollTimerRef.current = null;
     }
-  }, [state.selection.nodeIds, state.nodesById, containerRef, enabled, getViewport]);
+
+    return () => {
+      clearConnectorMoveableClass();
+    };
+  }, [
+    state.selection.nodeIds,
+    state.nodesById,
+    containerRef,
+    dragContainerRef,
+    enabled,
+    getViewport,
+  ]);
 
   return null;
 }

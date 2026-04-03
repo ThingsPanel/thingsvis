@@ -96,8 +96,14 @@ export const Main = defineWidget({
       const el = document.createElement('div');
       el.textContent = String(index + 1);
       el.style.position = 'absolute';
+      el.style.display = 'flex';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
       el.style.transform = 'translate(-50%, -50%)';
       el.style.fontWeight = '600';
+      el.style.lineHeight = '1';
+      el.style.textAlign = 'center';
+      el.style.whiteSpace = 'nowrap';
       numbersEl.appendChild(el);
       return el;
     });
@@ -113,30 +119,45 @@ export const Main = defineWidget({
     });
 
     const updateLayout = () => {
-      const dimension = Math.max(120, Math.min(element.clientWidth || 260, element.clientHeight || 260));
-      const radius = dimension / 2;
-      const markerRadius = radius * 0.78;
+      const dimension = Math.max(100, Math.min(element.clientWidth || 260, element.clientHeight || 260));
+      const bezelWidth = Math.min(currentProps.bezelWidth, Math.max(4, dimension * 0.14));
+      const dialDimension = Math.max(0, dimension - bezelWidth * 2);
+      const dialRadius = dialDimension / 2;
+      const numberFontSize = Math.max(14, Math.round(dimension * 0.075));
+      const numberBoxSize = Math.max(numberFontSize * 1.4, 26);
+      const numberMargin = Math.max(bezelWidth * 0.35, numberFontSize * 0.35, 6);
+      const markerRadius = Math.max(dialRadius * 0.48, dialRadius - numberBoxSize / 2 - numberMargin);
 
       faceEl.style.width = `${dimension}px`;
       faceEl.style.height = `${dimension}px`;
-      faceEl.style.border = `${currentProps.bezelWidth}px solid ${resolveLayeredColor({
+      faceEl.style.border = `${bezelWidth}px solid ${resolveLayeredColor({
         instance: currentProps.bezelColor,
         component: 'rgba(255,255,255,0.08)',
         fallback: 'rgba(255,255,255,0.08)',
       })}`;
       faceEl.style.boxShadow = 'none';
+      ticksEl.style.inset = '0';
+      numbersEl.style.inset = '0';
 
       numberEls.forEach((numberEl, index) => {
         const angle = ((index + 1) / 12) * Math.PI * 2 - Math.PI / 2;
-        numberEl.style.display = currentProps.showNumbers ? 'block' : 'none';
-        numberEl.style.left = `${radius + Math.cos(angle) * markerRadius}px`;
-        numberEl.style.top = `${radius + Math.sin(angle) * markerRadius}px`;
-        numberEl.style.fontSize = `${Math.max(16, Math.round(dimension * 0.085))}px`;
+        numberEl.style.display = currentProps.showNumbers ? 'flex' : 'none';
+        numberEl.style.left = `${dialRadius + Math.cos(angle) * markerRadius}px`;
+        numberEl.style.top = `${dialRadius + Math.sin(angle) * markerRadius}px`;
+        numberEl.style.fontSize = `${numberFontSize}px`;
+        numberEl.style.width = `${numberBoxSize}px`;
+        numberEl.style.height = `${numberBoxSize}px`;
       });
 
+      hourHand.style.width = `${Math.max(8, Math.round(dimension * 0.067))}px`;
+      minuteHand.style.width = `${Math.max(6, Math.round(dimension * 0.053))}px`;
+      secondHand.style.width = `${Math.max(2, Math.round(dimension * 0.02))}px`;
       hourHand.style.height = `${dimension * 0.24}px`;
       minuteHand.style.height = `${dimension * 0.34}px`;
       secondHand.style.height = `${dimension * 0.38}px`;
+      hubEl.style.width = `${Math.max(14, Math.round(dimension * 0.12))}px`;
+      hubEl.style.height = `${Math.max(14, Math.round(dimension * 0.12))}px`;
+      hubEl.style.borderWidth = `${Math.max(3, Math.round(dimension * 0.027))}px`;
     };
 
     const renderClock = () => {

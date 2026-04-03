@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 import { controls } from './controls';
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
@@ -22,11 +22,14 @@ type HelperState = {
 };
 
 function resolveMessages(locale: string | undefined): RuntimeMessages {
-  const normalized = locale?.toLowerCase() ?? 'zh';
-  if (normalized.startsWith('en')) {
-    return en.runtime;
-  }
-  return zh.runtime;
+  return resolveLocaleRecord(
+    {
+      zh: zh.runtime,
+      en: en.runtime,
+    },
+    locale,
+    'zh',
+  );
 }
 
 function getCanvasBackgroundColor(value: Props): string {

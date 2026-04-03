@@ -4,34 +4,37 @@ export const controls: WidgetControls = {
   groups: [
     {
       id: 'motor-config',
-      label: { zh: '电机配置', en: 'Motor Config' },
+      label: 'controls.industrial-motor.group',
       fields: [
         {
           path: 'baseColor',
           kind: 'color',
-          label: { zh: '基础颜色', en: 'Base Color' },
+          label: 'controls.industrial-motor.baseColor',
           default: '#475569',
         },
         {
           path: 'isRunning',
           kind: 'boolean',
-          label: { zh: '运行状态', en: 'Is Running' },
+          label: 'controls.industrial-motor.isRunning',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'hasError',
           kind: 'boolean',
-          label: { zh: '故障告警', en: 'Has Error' },
+          label: 'controls.industrial-motor.hasError',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'rpm',
           kind: 'number',
-          label: { zh: '转速系数', en: 'RPM Factor' },
+          label: 'controls.industrial-motor.rpm',
           default: 1,
           min: 0,
           max: 5,
           step: 0.1,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
       ],
     },

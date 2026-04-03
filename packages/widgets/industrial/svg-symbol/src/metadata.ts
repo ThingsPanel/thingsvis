@@ -4,8 +4,8 @@ export const metadata = {
   category: 'industrial',
   icon: 'Shapes',
   version: '1.0.0',
-  // Reasonable default size for a single industrial symbol
-  defaultSize: { width: 100, height: 100 },
+  // Match default icon (iot-device) 1:1 aspect ratio.
+  defaultSize: { width: 80, height: 80 },
   constraints: { minWidth: 40, minHeight: 40 },
   resizable: true,
 } as const;

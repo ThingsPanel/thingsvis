@@ -1,0 +1,1975 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "id": "heat-exchange-station-demo-20260325",
+    "name": "\u6362\u70ed\u7ad9\u8fdc\u7a0b\u76d1\u63a7\u7cfb\u7edf Demo",
+    "createdAt": 1774396800000,
+    "updatedAt": 1774457126386
+  },
+  "canvas": {
+    "mode": "fixed",
+    "width": 1920,
+    "height": 1080,
+    "theme": "midnight",
+    "background": {
+      "color": "#061126",
+      "image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D\u0027http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg\u0027%20width%3D\u00271920\u0027%20height%3D\u00271080\u0027%20viewBox%3D\u00270%200%201920%201080\u0027%3E%0A%20%20%3Crect%20width%3D\u00271920\u0027%20height%3D\u00271080\u0027%20fill%3D\u0027%23061126\u0027%2F%3E%0A%20%20%3Cg%20stroke%3D\u0027%230f5fa9\u0027%20stroke-opacity%3D\u00270.28\u0027%20stroke-width%3D\u00271\u0027%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%200H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%2068H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20136H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20204H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20272H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20340H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20408H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20476H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20544H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20612H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20680H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20748H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20816H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20884H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%20952H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%201020H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%201080H1920\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M0%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M68%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M136%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M204%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M272%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M340%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M408%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M476%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M544%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M612%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M680%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M748%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M816%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M884%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M952%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1020%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1088%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1156%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1224%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1292%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1360%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1428%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1496%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1564%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1632%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1700%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1768%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1836%200V1080\u0027%2F%3E%0A%20%20%20%20%3Cpath%20d%3D\u0027M1904%200V1080\u0027%2F%3E%0A%20%20%3C%2Fg%3E%0A%20%20%3Cg%20fill%3D\u0027%2339d0ff\u0027%20fill-opacity%3D\u00270.18\u0027%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u0027136\u0027%20cy%3D\u0027136\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u0027408\u0027%20cy%3D\u0027272\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u0027748\u0027%20cy%3D\u0027204\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u00271020\u0027%20cy%3D\u0027408\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u00271496\u0027%20cy%3D\u0027340\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%20%20%3Ccircle%20cx%3D\u00271700\u0027%20cy%3D\u0027816\u0027%20r%3D\u00273\u0027%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E",
+      "size": "cover",
+      "repeat": "no-repeat",
+      "attachment": "scroll"
+    }
+  },
+  "nodes": [
+    {
+      "id": "screen-border",
+      "name": "Screen Border",
+      "type": "decoration/tech-border",
+      "position": {
+        "x": 34,
+        "y": 14
+      },
+      "size": {
+        "width": 1852,
+        "height": 1046
+      },
+      "props": {
+        "variant": "corner-cut",
+        "borderColor": "#2acbff",
+        "borderWidth": 2,
+        "contentPadding": 8,
+        "backgroundColor": "transparent",
+        "glowEnabled": true,
+        "glowColor": "#1ba5d8",
+        "glowBlur": 10,
+        "glowSpread": 3,
+        "cornerSize": 16,
+        "showCornerDecoration": true,
+        "decorationLength": 36,
+        "decorationWidth": 3,
+        "animated": false,
+        "animationSpeed": 3,
+        "animationDirection": "clockwise",
+        "gradientEnabled": true,
+        "gradientStart": "#57e8ff",
+        "gradientEnd": "#0f72c9",
+        "gradientAngle": 0
+      }
+    },
+    {
+      "id": "time-bg",
+      "name": "Time Background",
+      "type": "basic/rectangle",
+      "position": {
+        "x": 82,
+        "y": 74
+      },
+      "size": {
+        "width": 430,
+        "height": 46
+      },
+      "props": {
+        "fill": "rgba(38,52,84,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "time-dot",
+      "name": "Time Dot",
+      "type": "basic/text",
+      "position": {
+        "x": 96,
+        "y": 81
+      },
+      "size": {
+        "width": 30,
+        "height": 30
+      },
+      "props": {
+        "text": "\u25c9",
+        "fontSize": 20,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#7fe9ff",
+        "opacity": 1,
+        "textShadowEnabled": true,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "time-text",
+      "name": "Time Text",
+      "type": "basic/text",
+      "position": {
+        "x": 130,
+        "y": 79
+      },
+      "size": {
+        "width": 150,
+        "height": 30
+      },
+      "props": {
+        "text": "23:03:39",
+        "fontSize": 28,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#f5f7ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "date-text",
+      "name": "Date Text",
+      "type": "basic/text",
+      "position": {
+        "x": 274,
+        "y": 82
+      },
+      "size": {
+        "width": 220,
+        "height": 28
+      },
+      "props": {
+        "text": "2026\u5e7403\u670825\u65e5",
+        "fontSize": 18,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "500",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#cfdcff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "weather-icon",
+      "name": "Weather Icon",
+      "type": "basic/text",
+      "position": {
+        "x": 1818,
+        "y": 22
+      },
+      "size": {
+        "width": 50,
+        "height": 34
+      },
+      "props": {
+        "text": "\u2601",
+        "fontSize": 32,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "500",
+        "fontStyle": "normal",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#d8e8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "left-panel-1",
+      "name": "History Panel Background",
+      "type": "basic/rectangle",
+      "position": {
+        "x": 82,
+        "y": 148
+      },
+      "size": {
+        "width": 470,
+        "height": 160
+      },
+      "props": {
+        "fill": "rgba(11,23,53,0.58)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "left-panel-2",
+      "name": "Ranking Panel Background",
+      "type": "basic/rectangle",
+      "position": {
+        "x": 82,
+        "y": 368
+      },
+      "size": {
+        "width": 470,
+        "height": 178
+      },
+      "props": {
+        "fill": "rgba(11,23,53,0.58)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "left-panel-3",
+      "name": "Fault Panel Background",
+      "type": "basic/rectangle",
+      "position": {
+        "x": 82,
+        "y": 586
+      },
+      "size": {
+        "width": 470,
+        "height": 208
+      },
+      "props": {
+        "fill": "rgba(11,23,53,0.58)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "left-panel-4",
+      "name": "Report Panel Background",
+      "type": "basic/rectangle",
+      "position": {
+        "x": 82,
+        "y": 844
+      },
+      "size": {
+        "width": 470,
+        "height": 188
+      },
+      "props": {
+        "fill": "rgba(11,23,53,0.58)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "history-chart",
+      "name": "History Chart",
+      "type": "chart/echarts-line",
+      "position": {
+        "x": 100,
+        "y": 182
+      },
+      "size": {
+        "width": 430,
+        "height": 114
+      },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#5fe1ff",
+        "titleColor": "#d9f2ff",
+        "axisLabelColor": "#8eb9df",
+        "showLegend": false,
+        "showXAxis": true,
+        "showYAxis": true,
+        "smooth": true,
+        "showArea": true,
+        "timeRangePreset": "all",
+        "data": [
+          {
+            "time": "2026-03-19T09:00:00.000Z",
+            "value": 120
+          },
+          {
+            "time": "2026-03-20T09:00:00.000Z",
+            "value": 223
+          },
+          {
+            "time": "2026-03-21T09:00:00.000Z",
+            "value": 88
+          },
+          {
+            "time": "2026-03-22T09:00:00.000Z",
+            "value": 170
+          },
+          {
+            "time": "2026-03-23T09:00:00.000Z",
+            "value": 335
+          },
+          {
+            "time": "2026-03-24T09:00:00.000Z",
+            "value": 440
+          },
+          {
+            "time": "2026-03-25T09:00:00.000Z",
+            "value": 178
+          }
+        ]
+      }
+    },
+    {
+      "id": "ranking-chart",
+      "name": "Energy Ranking",
+      "type": "industrial/capsule-ranking",
+      "position": {
+        "x": 98,
+        "y": 408
+      },
+      "size": {
+        "width": 432,
+        "height": 118
+      },
+      "props": {
+        "data": [
+          {
+            "unit": "m\u00b3",
+            "name": "\u8865\u6c34\u91cf",
+            "value": 176.1
+          },
+          {
+            "unit": "kWh",
+            "name": "\u8017\u7535",
+            "value": 582.5
+          },
+          {
+            "unit": "m\u00b3",
+            "name": "\u70ed\u8f93\u91cf",
+            "value": 426.7
+          }
+        ],
+        "title": "",
+        "sortBy": "none",
+        "sortOrder": "desc",
+        "maxValue": 600,
+        "capsuleHeight": 10,
+        "capsuleRadius": 5,
+        "capsuleColors": [
+          "#ff2f7f",
+          "#ff2f7f",
+          "#ff2f7f"
+        ],
+        "gradientEnabled": true,
+        "showRank": false,
+        "showName": true,
+        "showValue": true,
+        "showUnit": true,
+        "labelWidth": 70,
+        "top1Color": "#ff2f7f",
+        "top2Color": "#ff2f7f",
+        "top3Color": "#ff2f7f",
+        "otherRankColor": "#ff2f7f",
+        "rowHeight": 30,
+        "rowGap": 10,
+        "fontSize": 13,
+        "animated": false,
+        "animationDuration": 0.8,
+        "trackColor": "rgba(255,255,255,0.12)",
+        "textColor": "#d9f4ff",
+        "valueColor": "#d9f4ff"
+      }
+    },
+    {
+      "id": "fault-chart",
+      "name": "Fault Chart",
+      "type": "chart/echarts-bar",
+      "position": {
+        "x": 100,
+        "y": 620
+      },
+      "size": {
+        "width": 430,
+        "height": 158
+      },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#72cbff",
+        "titleColor": "#d9f2ff",
+        "axisLabelColor": "#8eb9df",
+        "showLegend": false,
+        "showXAxis": true,
+        "showYAxis": true,
+        "data": [
+          {
+            "value": 6,
+            "name": "\u8bbe\u59071"
+          },
+          {
+            "value": 11,
+            "name": "\u8bbe\u59072"
+          },
+          {
+            "value": 9,
+            "name": "\u8bbe\u59073"
+          },
+          {
+            "value": 13,
+            "name": "\u8bbe\u59074"
+          },
+          {
+            "value": 10,
+            "name": "\u8bbe\u59075"
+          },
+          {
+            "value": 12,
+            "name": "\u8bbe\u59076"
+          },
+          {
+            "value": 8,
+            "name": "\u8bbe\u59077"
+          },
+          {
+            "value": 11,
+            "name": "\u8bbe\u59078"
+          },
+          {
+            "value": 14,
+            "name": "\u8bbe\u59079"
+          },
+          {
+            "value": 10,
+            "name": "\u8bbe\u590710"
+          }
+        ]
+      }
+    },
+    {
+      "id": "report-chart",
+      "name": "Report Chart",
+      "type": "chart/uplot-line",
+      "position": {
+        "x": 96,
+        "y": 884
+      },
+      "size": {
+        "width": 438,
+        "height": 132
+      },
+      "props": {
+        "title": "",
+        "titleAlign": "left",
+        "primaryColor": "#ff2f7f",
+        "titleColor": "#d9f2ff",
+        "axisLabelColor": "#8eb9df",
+        "showLegend": false,
+        "timeRangePreset": "all",
+        "data": [
+          {
+            "timestamp": "2026-03-25T00:00:00.000Z",
+            "value": 420
+          },
+          {
+            "timestamp": "2026-03-25T02:00:00.000Z",
+            "value": 560
+          },
+          {
+            "timestamp": "2026-03-25T04:00:00.000Z",
+            "value": 690
+          },
+          {
+            "timestamp": "2026-03-25T06:00:00.000Z",
+            "value": 840
+          },
+          {
+            "timestamp": "2026-03-25T08:00:00.000Z",
+            "value": 1020
+          },
+          {
+            "timestamp": "2026-03-25T10:00:00.000Z",
+            "value": 1180
+          },
+          {
+            "timestamp": "2026-03-25T12:00:00.000Z",
+            "value": 980
+          }
+        ]
+      }
+    },
+    {
+      "id": "mode-card",
+      "name": "Mode Card",
+      "type": "industrial/status-panel",
+      "position": {
+        "x": 620,
+        "y": 150
+      },
+      "size": {
+        "width": 126,
+        "height": 130
+      },
+      "props": {
+        "type": "control",
+        "title": "\u6a21\u5f0f\u5207\u6362",
+        "mode": "manual",
+        "switchState": "off",
+        "showModeSwitch": true,
+        "showSwitch": false,
+        "primaryColor": "#18dcff",
+        "backgroundColor": "rgba(10,19,48,0.55)",
+        "borderColor": "rgba(24,220,255,0.35)",
+        "borderRadius": 6,
+        "padding": 10,
+        "fontSize": 15,
+        "layout": "vertical",
+        "align": "center"
+      }
+    },
+    {
+      "id": "pump-card-1",
+      "name": "NO.1\u8865\u6c34\u6cf5",
+      "type": "custom/device-control-card",
+      "position": {
+        "x": 770,
+        "y": 150
+      },
+      "size": {
+        "width": 170,
+        "height": 130
+      },
+      "props": {
+        "title": "NO.1\u8865\u6c34\u6cf5",
+        "statusText": "\u8fd0\u884c",
+        "activeButton": "on",
+        "statusTone": "normal",
+        "onLabel": "\u5f00",
+        "offLabel": "\u5173",
+        "showStatus": false,
+        "disabled": false,
+        "accentColor": "#19dcff",
+        "titleColor": "#eef7ff",
+        "backgroundColor": "rgba(10,19,48,0.62)",
+        "borderColor": "rgba(24,220,255,0.35)",
+        "inactiveColor": "rgba(109,127,152,0.42)",
+        "fontSize": 16,
+        "buttonFontSize": 15,
+        "padding": 12,
+        "borderRadius": 6,
+        "glow": true
+      }
+    },
+    {
+      "id": "pump-card-2",
+      "name": "NO.2\u8865\u6c34\u6cf5",
+      "type": "custom/device-control-card",
+      "position": {
+        "x": 960,
+        "y": 150
+      },
+      "size": {
+        "width": 170,
+        "height": 130
+      },
+      "props": {
+        "title": "NO.2\u8865\u6c34\u6cf5",
+        "statusText": "\u5f85\u673a",
+        "activeButton": "off",
+        "statusTone": "offline",
+        "onLabel": "\u5f00",
+        "offLabel": "\u5173",
+        "showStatus": false,
+        "disabled": false,
+        "accentColor": "#19dcff",
+        "titleColor": "#eef7ff",
+        "backgroundColor": "rgba(10,19,48,0.62)",
+        "borderColor": "rgba(24,220,255,0.26)",
+        "inactiveColor": "rgba(109,127,152,0.42)",
+        "fontSize": 16,
+        "buttonFontSize": 15,
+        "padding": 12,
+        "borderRadius": 6,
+        "glow": true
+      }
+    },
+    {
+      "id": "pump-card-3",
+      "name": "NO.1\u5faa\u73af\u6cf5",
+      "type": "custom/device-control-card",
+      "position": {
+        "x": 1150,
+        "y": 150
+      },
+      "size": {
+        "width": 170,
+        "height": 130
+      },
+      "props": {
+        "title": "NO.1\u5faa\u73af\u6cf5",
+        "statusText": "\u8fd0\u884c",
+        "activeButton": "on",
+        "statusTone": "normal",
+        "onLabel": "\u5f00",
+        "offLabel": "\u5173",
+        "showStatus": false,
+        "disabled": false,
+        "accentColor": "#19dcff",
+        "titleColor": "#eef7ff",
+        "backgroundColor": "rgba(10,19,48,0.62)",
+        "borderColor": "rgba(24,220,255,0.35)",
+        "inactiveColor": "rgba(109,127,152,0.42)",
+        "fontSize": 16,
+        "buttonFontSize": 15,
+        "padding": 12,
+        "borderRadius": 6,
+        "glow": true
+      }
+    },
+    {
+      "id": "pump-card-4",
+      "name": "NO.2\u5faa\u73af\u6cf5",
+      "type": "custom/device-control-card",
+      "position": {
+        "x": 1340,
+        "y": 150
+      },
+      "size": {
+        "width": 170,
+        "height": 130
+      },
+      "props": {
+        "title": "NO.2\u5faa\u73af\u6cf5",
+        "statusText": "\u5f85\u673a",
+        "activeButton": "off",
+        "statusTone": "offline",
+        "onLabel": "\u5f00",
+        "offLabel": "\u5173",
+        "showStatus": false,
+        "disabled": false,
+        "accentColor": "#19dcff",
+        "titleColor": "#eef7ff",
+        "backgroundColor": "rgba(10,19,48,0.62)",
+        "borderColor": "rgba(24,220,255,0.26)",
+        "inactiveColor": "rgba(109,127,152,0.42)",
+        "fontSize": 16,
+        "buttonFontSize": 15,
+        "padding": 12,
+        "borderRadius": 6,
+        "glow": true
+      }
+    },
+    {
+      "id": "alarm-card-1",
+      "name": "Alarm Card 1",
+      "type": "industrial/status-panel",
+      "position": {
+        "x": 1600,
+        "y": 150
+      },
+      "size": {
+        "width": 230,
+        "height": 58
+      },
+      "props": {
+        "type": "alarm",
+        "title": "\u5faa\u73af\u544a\u8b66",
+        "alarmText": "\u5faa\u73af\u53d8\u9891\u6545\u969c",
+        "alarmLevel": "critical",
+        "flashing": true,
+        "flashSpeed": 1,
+        "primaryColor": "#ff2b7a",
+        "backgroundColor": "rgba(46,7,27,0.7)",
+        "borderColor": "#ff2b7a",
+        "borderRadius": 4,
+        "padding": 8,
+        "fontSize": 17,
+        "layout": "horizontal",
+        "align": "center"
+      }
+    },
+    {
+      "id": "alarm-card-2",
+      "name": "Alarm Card 2",
+      "type": "industrial/status-panel",
+      "position": {
+        "x": 1600,
+        "y": 220
+      },
+      "size": {
+        "width": 230,
+        "height": 58
+      },
+      "props": {
+        "type": "alarm",
+        "title": "\u8865\u6c34\u544a\u8b66",
+        "alarmText": "\u8865\u6c34\u53d8\u9891\u6545\u969c",
+        "alarmLevel": "warning",
+        "flashing": false,
+        "flashSpeed": 1,
+        "primaryColor": "#f04d96",
+        "backgroundColor": "rgba(46,7,27,0.55)",
+        "borderColor": "#f04d96",
+        "borderRadius": 4,
+        "padding": 8,
+        "fontSize": 17,
+        "layout": "horizontal",
+        "align": "center"
+      }
+    },
+    {
+      "id": "screen-title",
+      "name": "Screen Title",
+      "type": "custom/section-header",
+      "position": {
+        "x": 714,
+        "y": 18
+      },
+      "size": {
+        "width": 500,
+        "height": 48
+      },
+      "props": {
+        "title": "\u6362\u70ed\u7ad9\u8fdc\u7a0b\u76d1\u63a7\u7cfb\u7edf",
+        "subtitle": "",
+        "variant": "ribbon",
+        "align": "center",
+        "accentColor": "#ff2b7a",
+        "lineColor": "#58e5ff",
+        "backgroundColor": "rgba(58,66,102,0.52)",
+        "titleColor": "#ff2b7a",
+        "subtitleColor": "rgba(238,247,255,0.68)",
+        "fontSize": 30,
+        "subtitleFontSize": 12,
+        "paddingX": 18,
+        "paddingY": 6,
+        "stripeWidth": 36,
+        "borderRadius": 4,
+        "showStripe": false,
+        "showTail": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "left-title-1",
+      "name": "History Header",
+      "type": "custom/section-header",
+      "position": {
+        "x": 92,
+        "y": 154
+      },
+      "size": {
+        "width": 456,
+        "height": 26
+      },
+      "props": {
+        "title": "\u5386\u53f2\u66f2\u7ebf",
+        "subtitle": "",
+        "variant": "panel",
+        "align": "left",
+        "accentColor": "#ff2b7a",
+        "lineColor": "#4ce7ff",
+        "backgroundColor": "rgba(8,24,56,0.68)",
+        "titleColor": "#ecf7ff",
+        "subtitleColor": "rgba(238,247,255,0.68)",
+        "fontSize": 16,
+        "subtitleFontSize": 12,
+        "paddingX": 10,
+        "paddingY": 3,
+        "stripeWidth": 34,
+        "borderRadius": 4,
+        "showStripe": true,
+        "showTail": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "left-title-2",
+      "name": "Ranking Header",
+      "type": "custom/section-header",
+      "position": {
+        "x": 92,
+        "y": 374
+      },
+      "size": {
+        "width": 456,
+        "height": 26
+      },
+      "props": {
+        "title": "\u8017\u80fd\u6392\u540d",
+        "subtitle": "",
+        "variant": "panel",
+        "align": "left",
+        "accentColor": "#ff2b7a",
+        "lineColor": "#4ce7ff",
+        "backgroundColor": "rgba(8,24,56,0.68)",
+        "titleColor": "#ecf7ff",
+        "subtitleColor": "rgba(238,247,255,0.68)",
+        "fontSize": 16,
+        "subtitleFontSize": 12,
+        "paddingX": 10,
+        "paddingY": 3,
+        "stripeWidth": 34,
+        "borderRadius": 4,
+        "showStripe": true,
+        "showTail": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "left-title-3",
+      "name": "Fault Header",
+      "type": "custom/section-header",
+      "position": {
+        "x": 92,
+        "y": 592
+      },
+      "size": {
+        "width": 456,
+        "height": 26
+      },
+      "props": {
+        "title": "\u6545\u969c\u7edf\u8ba1",
+        "subtitle": "",
+        "variant": "panel",
+        "align": "left",
+        "accentColor": "#ff2b7a",
+        "lineColor": "#4ce7ff",
+        "backgroundColor": "rgba(8,24,56,0.68)",
+        "titleColor": "#ecf7ff",
+        "subtitleColor": "rgba(238,247,255,0.68)",
+        "fontSize": 16,
+        "subtitleFontSize": 12,
+        "paddingX": 10,
+        "paddingY": 3,
+        "stripeWidth": 34,
+        "borderRadius": 4,
+        "showStripe": true,
+        "showTail": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "left-title-4",
+      "name": "Report Header",
+      "type": "custom/section-header",
+      "position": {
+        "x": 92,
+        "y": 850
+      },
+      "size": {
+        "width": 456,
+        "height": 26
+      },
+      "props": {
+        "title": "\u6570\u636e\u62a5\u8868",
+        "subtitle": "",
+        "variant": "panel",
+        "align": "left",
+        "accentColor": "#ff2b7a",
+        "lineColor": "#4ce7ff",
+        "backgroundColor": "rgba(8,24,56,0.68)",
+        "titleColor": "#ecf7ff",
+        "subtitleColor": "rgba(238,247,255,0.68)",
+        "fontSize": 16,
+        "subtitleFontSize": 12,
+        "paddingX": 10,
+        "paddingY": 3,
+        "stripeWidth": 34,
+        "borderRadius": 4,
+        "showStripe": true,
+        "showTail": true,
+        "glow": true
+      }
+    },
+    {
+      "id": "process-title",
+      "name": "Process Title",
+      "type": "basic/text",
+      "position": {
+        "x": 666,
+        "y": 306
+      },
+      "size": {
+        "width": 220,
+        "height": 28
+      },
+      "props": {
+        "text": "\u5de5\u827a\u6d41\u7a0b\u793a\u610f",
+        "fontSize": 18,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#7eeaff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "source-label",
+      "name": "Source Label",
+      "type": "basic/text",
+      "position": {
+        "x": 642,
+        "y": 782
+      },
+      "size": {
+        "width": 180,
+        "height": 26
+      },
+      "props": {
+        "text": "\u81ea\u6765\u6c34 / \u81ea\u6d41\u4e95",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "700",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#dff8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "hx-label-1",
+      "name": "HX Label 1",
+      "type": "basic/text",
+      "position": {
+        "x": 1118,
+        "y": 452
+      },
+      "size": {
+        "width": 120,
+        "height": 24
+      },
+      "props": {
+        "text": "1\u7ebf\u6362\u70ed\u5668",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#dff8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "hx-label-2",
+      "name": "HX Label 2",
+      "type": "basic/text",
+      "position": {
+        "x": 1118,
+        "y": 598
+      },
+      "size": {
+        "width": 120,
+        "height": 24
+      },
+      "props": {
+        "text": "2\u7ebf\u6362\u70ed\u5668",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#dff8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "pump5-label",
+      "name": "Deep Well Pump Label",
+      "type": "basic/text",
+      "position": {
+        "x": 738,
+        "y": 972
+      },
+      "size": {
+        "width": 96,
+        "height": 24
+      },
+      "props": {
+        "text": "\u6df1\u4e95\u6cf5",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#dff8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "pool-label",
+      "name": "Pool Label",
+      "type": "basic/text",
+      "position": {
+        "x": 1540,
+        "y": 994
+      },
+      "size": {
+        "width": 96,
+        "height": 24
+      },
+      "props": {
+        "text": "\u96c6\u6c34\u6c60",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "fontStyle": "normal",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "letterSpacing": 0,
+        "textDecoration": "none",
+        "fill": "#dff8ff",
+        "opacity": 1,
+        "textShadowEnabled": false,
+        "textShadowColor": "rgba(0,255,255,0.35)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "flow-1",
+      "name": "Flow Meter 1",
+      "type": "industrial/flow-meter",
+      "position": {
+        "x": 690,
+        "y": 344
+      },
+      "size": {
+        "width": 118,
+        "height": 58
+      },
+      "props": {
+        "value": 52,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.3,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "flow-2",
+      "name": "Flow Meter 2",
+      "type": "industrial/flow-meter",
+      "position": {
+        "x": 1672,
+        "y": 344
+      },
+      "size": {
+        "width": 118,
+        "height": 58
+      },
+      "props": {
+        "value": 49,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.2,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "flow-3",
+      "name": "Flow Meter 3",
+      "type": "industrial/flow-meter",
+      "position": {
+        "x": 648,
+        "y": 728
+      },
+      "size": {
+        "width": 118,
+        "height": 58
+      },
+      "props": {
+        "value": 61,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.1,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "valve-1",
+      "name": "Valve 1",
+      "type": "industrial/valve",
+      "position": {
+        "x": 912,
+        "y": 348
+      },
+      "size": {
+        "width": 42,
+        "height": 42
+      },
+      "props": {
+        "openColor": "#22c55e",
+        "closedColor": "#566579",
+        "isOpen": true,
+        "hasError": false
+      }
+    },
+    {
+      "id": "gauge-1",
+      "name": "Gauge 1",
+      "type": "industrial/pressure-gauge",
+      "position": {
+        "x": 964,
+        "y": 344
+      },
+      "size": {
+        "width": 42,
+        "height": 42
+      },
+      "props": {
+        "value": 62,
+        "min": 0,
+        "max": 100,
+        "dialColor": "#12395a",
+        "pointerColor": "#f472b6",
+        "hasError": false
+      }
+    },
+    {
+      "id": "valve-2",
+      "name": "Valve 2",
+      "type": "industrial/valve",
+      "position": {
+        "x": 1184,
+        "y": 348
+      },
+      "size": {
+        "width": 42,
+        "height": 42
+      },
+      "props": {
+        "openColor": "#22c55e",
+        "closedColor": "#566579",
+        "isOpen": true,
+        "hasError": false
+      }
+    },
+    {
+      "id": "gauge-2",
+      "name": "Gauge 2",
+      "type": "industrial/pressure-gauge",
+      "position": {
+        "x": 1236,
+        "y": 344
+      },
+      "size": {
+        "width": 42,
+        "height": 42
+      },
+      "props": {
+        "value": 59,
+        "min": 0,
+        "max": 100,
+        "dialColor": "#12395a",
+        "pointerColor": "#f472b6",
+        "hasError": false
+      }
+    },
+    {
+      "id": "hx-1",
+      "name": "Heat Exchanger 1",
+      "type": "industrial/svg-symbol",
+      "position": {
+        "x": 1026,
+        "y": 410
+      },
+      "size": {
+        "width": 88,
+        "height": 110
+      },
+      "props": {
+        "selectedIconId": "heat-exchanger",
+        "svgContent": "",
+        "iconColor": "#31d5ff"
+      }
+    },
+    {
+      "id": "hx-2",
+      "name": "Heat Exchanger 2",
+      "type": "industrial/svg-symbol",
+      "position": {
+        "x": 1026,
+        "y": 556
+      },
+      "size": {
+        "width": 88,
+        "height": 110
+      },
+      "props": {
+        "selectedIconId": "heat-exchanger",
+        "svgContent": "",
+        "iconColor": "#31d5ff"
+      }
+    },
+    {
+      "id": "pump-1",
+      "name": "Loop Pump 1",
+      "type": "industrial/pump",
+      "position": {
+        "x": 1388,
+        "y": 436
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 64
+      }
+    },
+    {
+      "id": "pump-2",
+      "name": "Loop Pump 2",
+      "type": "industrial/pump",
+      "position": {
+        "x": 1388,
+        "y": 566
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 66
+      }
+    },
+    {
+      "id": "pump-3",
+      "name": "Supplement Pump 1",
+      "type": "industrial/pump",
+      "position": {
+        "x": 1500,
+        "y": 694
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 61
+      }
+    },
+    {
+      "id": "pump-4",
+      "name": "Supplement Pump 2",
+      "type": "industrial/pump",
+      "position": {
+        "x": 1500,
+        "y": 782
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 59
+      }
+    },
+    {
+      "id": "pump-5",
+      "name": "Deep Well Pump",
+      "type": "industrial/pump",
+      "position": {
+        "x": 760,
+        "y": 900
+      },
+      "size": {
+        "width": 72,
+        "height": 72
+      },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 63
+      }
+    },
+    {
+      "id": "source-tank",
+      "name": "Source Tank",
+      "type": "industrial/tank",
+      "position": {
+        "x": 660,
+        "y": 806
+      },
+      "size": {
+        "width": 118,
+        "height": 160
+      },
+      "props": {
+        "level": 42,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 80,
+        "hasError": false
+      }
+    },
+    {
+      "id": "water-box",
+      "name": "Water Box",
+      "type": "industrial/tank",
+      "position": {
+        "x": 1060,
+        "y": 778
+      },
+      "size": {
+        "width": 146,
+        "height": 188
+      },
+      "props": {
+        "level": 78,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 85,
+        "hasError": false
+      }
+    },
+    {
+      "id": "water-pool",
+      "name": "Water Pool",
+      "type": "industrial/tank",
+      "position": {
+        "x": 1546,
+        "y": 904
+      },
+      "size": {
+        "width": 108,
+        "height": 132
+      },
+      "props": {
+        "level": 34,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 85,
+        "hasError": false
+      }
+    },
+    {
+      "id": "tag-top-heat",
+      "name": "Top Heat Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 620,
+        "y": 406
+      },
+      "size": {
+        "width": 120,
+        "height": 44
+      },
+      "props": {
+        "label": "\u77ac\u65f6\u70ed\u91cf",
+        "value": 11.8,
+        "unit": "GJ",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-supply-p",
+      "name": "Supply Pressure Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1312,
+        "y": 332
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u4f9b\u6c34\u538b\u529b",
+        "value": 11.9,
+        "unit": "MPa",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-supply-t",
+      "name": "Supply Temp Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1442,
+        "y": 332
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u4f9b\u6c34\u6e29\u5ea6",
+        "value": 19.9,
+        "unit": "\u00b0C",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-left-p",
+      "name": "Left Return Pressure Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 824,
+        "y": 392
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u538b\u529b",
+        "value": 12.5,
+        "unit": "MPa",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-left-t",
+      "name": "Left Return Temp Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 824,
+        "y": 442
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u6e29\u5ea6",
+        "value": 20.6,
+        "unit": "\u00b0C",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-loop1",
+      "name": "Loop 1 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1228,
+        "y": 450
+      },
+      "size": {
+        "width": 146,
+        "height": 44
+      },
+      "props": {
+        "label": "NO.1\u5faa\u73af\u6cf5\u9891\u7387",
+        "value": 20.6,
+        "unit": "Hz",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-loop2",
+      "name": "Loop 2 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1228,
+        "y": 580
+      },
+      "size": {
+        "width": 146,
+        "height": 44
+      },
+      "props": {
+        "label": "NO.2\u5faa\u73af\u6cf5\u9891\u7387",
+        "value": 20.8,
+        "unit": "Hz",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-right-1",
+      "name": "Right 1 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1516,
+        "y": 450
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u538b\u529b",
+        "value": 12.9,
+        "unit": "MPa",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-right-2",
+      "name": "Right 2 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1642,
+        "y": 450
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u6e29\u5ea6",
+        "value": 21.3,
+        "unit": "\u00b0C",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-right-3",
+      "name": "Right 3 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1516,
+        "y": 580
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u538b\u529b",
+        "value": 12.7,
+        "unit": "MPa",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-right-4",
+      "name": "Right 4 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1642,
+        "y": 580
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u56de\u6c34\u6e29\u5ea6",
+        "value": 21.5,
+        "unit": "\u00b0C",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-source-flow",
+      "name": "Source Flow Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 612,
+        "y": 664
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u77ac\u65f6\u6d41\u91cf",
+        "value": 12.4,
+        "unit": "m\u00b3/h",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-valve",
+      "name": "Valve Opening Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 770,
+        "y": 664
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u7535\u52a8\u9600\u5f00\u5ea6",
+        "value": 20.4,
+        "unit": "%",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-waterbox",
+      "name": "Water Box Level Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1044,
+        "y": 724
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u6c34\u7bb1\u6db2\u4f4d",
+        "value": 97.8,
+        "unit": "m",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-supp1",
+      "name": "Supplement 1 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1390,
+        "y": 706
+      },
+      "size": {
+        "width": 146,
+        "height": 44
+      },
+      "props": {
+        "label": "NO.1\u8865\u6c34\u6cf5\u9891\u7387",
+        "value": 21.1,
+        "unit": "Hz",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-supp2",
+      "name": "Supplement 2 Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1390,
+        "y": 794
+      },
+      "size": {
+        "width": 146,
+        "height": 44
+      },
+      "props": {
+        "label": "NO.2\u8865\u6c34\u6cf5\u9891\u7387",
+        "value": 21.2,
+        "unit": "Hz",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    },
+    {
+      "id": "tag-pool",
+      "name": "Pool Tag",
+      "type": "industrial/data-tag",
+      "position": {
+        "x": 1522,
+        "y": 866
+      },
+      "size": {
+        "width": 118,
+        "height": 44
+      },
+      "props": {
+        "label": "\u96c6\u6c34\u6c60\u6db2\u4f4d",
+        "value": 21.6,
+        "unit": "m",
+        "labelColor": "#ffe3f0",
+        "valueColor": "#ff2f7f",
+        "unitColor": "#ffe3f0",
+        "fontSize": 13,
+        "valueScale": 1,
+        "unitScale": 0.9,
+        "valueBold": true,
+        "layout": "compact",
+        "gap": 2,
+        "backgroundColor": "rgba(76, 11, 47, 0.78)",
+        "borderColor": "rgba(255, 47, 127, 0.26)",
+        "borderRadius": 4,
+        "padding": 6,
+        "align": "left"
+      }
+    }
+  ]
+}

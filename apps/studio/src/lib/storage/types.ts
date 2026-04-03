@@ -87,4 +87,6 @@ export interface AutoSaveConfig {
   warnOnUnload?: boolean;
   /** Save behavior: auto = debounce/periodic save, manual = only track dirty and require explicit saveNow() */
   mode?: 'auto' | 'manual';
+  /** Optional callback for host integrations that mirror unsaved state externally */
+  onDirtyChange?: (hasUnsavedChanges: boolean) => void;
 }

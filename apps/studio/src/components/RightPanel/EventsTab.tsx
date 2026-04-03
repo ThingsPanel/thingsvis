@@ -1,7 +1,7 @@
 /**
- * EventsTab — Widget event handler configuration panel.
+ * EventsTab - Widget event handler configuration panel.
  */
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Zap } from 'lucide-react';
@@ -34,16 +34,44 @@ export interface EventHandlerConfig {
   actions: ActionConfigItem[];
 }
 
-const COMMON_EVENTS = [
-  { value: 'click', label: '点击 (click)' },
-  { value: 'dblclick', label: '双击 (dblclick)' },
-  { value: 'mouseenter', label: '鼠标移入 (mouseenter)' },
-  { value: 'mouseleave', label: '鼠标移出 (mouseleave)' },
-  { value: 'change', label: '值改变 (change)' },
-];
+type CommonEventOption = {
+  value: string;
+  label: string;
+  shortLabel: string;
+};
 
 export default function EventsTab({ nodeId, kernelStore, onUserEdit }: EventsTabProps) {
   const { t } = useTranslation('editor');
+  const commonEvents = useMemo<CommonEventOption[]>(
+    () => [
+      {
+        value: 'click',
+        shortLabel: t('events.common.clickShort', { defaultValue: 'Click' }),
+        label: t('events.common.click', { defaultValue: 'Click (click)' }),
+      },
+      {
+        value: 'dblclick',
+        shortLabel: t('events.common.dblclickShort', { defaultValue: 'Double Click' }),
+        label: t('events.common.dblclick', { defaultValue: 'Double Click (dblclick)' }),
+      },
+      {
+        value: 'mouseenter',
+        shortLabel: t('events.common.mouseenterShort', { defaultValue: 'Mouse Enter' }),
+        label: t('events.common.mouseenter', { defaultValue: 'Mouse Enter (mouseenter)' }),
+      },
+      {
+        value: 'mouseleave',
+        shortLabel: t('events.common.mouseleaveShort', { defaultValue: 'Mouse Leave' }),
+        label: t('events.common.mouseleave', { defaultValue: 'Mouse Leave (mouseleave)' }),
+      },
+      {
+        value: 'change',
+        shortLabel: t('events.common.changeShort', { defaultValue: 'Change' }),
+        label: t('events.common.change', { defaultValue: 'Change (change)' }),
+      },
+    ],
+    [t],
+  );
 
   const state = useSyncExternalStore(
     useCallback((sub) => kernelStore.subscribe(sub), [kernelStore]),
@@ -116,13 +144,11 @@ export default function EventsTab({ nodeId, kernelStore, onUserEdit }: EventsTab
               <AccordionTrigger className="flex-1 py-3 text-sm hover:no-underline">
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-xs text-foreground">
-                    {(() => {
-                      const evt = COMMON_EVENTS.find((e) => e.value === handler.event);
-                      return evt ? evt.label.split(' ')[0] : handler.event;
-                    })()}
+                    {commonEvents.find((eventOption) => eventOption.value === handler.event)
+                      ?.shortLabel ?? handler.event}
                   </span>
                   <span className="px-1.5 py-0.5 rounded-sm bg-muted text-[10px] text-muted-foreground font-medium">
-                    {handler.actions.length} 个动作
+                    {handler.actions.length} {t('events.actionsCount')}
                   </span>
                 </div>
               </AccordionTrigger>
@@ -153,19 +179,22 @@ export default function EventsTab({ nodeId, kernelStore, onUserEdit }: EventsTab
                   }}
                 >
                   <option value="" disabled>
-                    --- 选择触发条件 ---
+                    {t('events.selectEvent', { defaultValue: '--- Select Event ---' })}
                   </option>
-                  {COMMON_EVENTS.map((evt) => (
+                  {commonEvents.map((evt) => (
                     <option key={evt.value} value={evt.value} className="font-sans">
                       {evt.label}
                     </option>
                   ))}
-                  {/* Fallback array in case of existing unknown event */}
-                  {!COMMON_EVENTS.find((e) => e.value === handler.event) && handler.event && (
-                    <option value={handler.event} className="font-sans">
-                      自定义: {handler.event}
-                    </option>
-                  )}
+                  {!commonEvents.find((eventOption) => eventOption.value === handler.event) &&
+                    handler.event && (
+                      <option value={handler.event} className="font-sans">
+                        {t('events.customEvent', {
+                          event: handler.event,
+                          defaultValue: 'Custom: {{event}}',
+                        })}
+                      </option>
+                    )}
                 </select>
               </div>
               <div className="pt-2">
@@ -177,14 +206,20 @@ export default function EventsTab({ nodeId, kernelStore, onUserEdit }: EventsTab
                       size="sm"
                       className="w-full h-8 text-xs border-dashed bg-background shadow-xs"
                     >
-                      配置动作序列 ({handler.actions.length})
+                      {t('events.configureActions', {
+                        count: handler.actions.length,
+                        defaultValue: 'Configure Actions ({{count}})',
+                      })}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="text-base flex items-center gap-2">
                         <Zap className="h-4 w-4 text-amber-500 fill-amber-500" />
-                        事件动作流配置: {handler.event}
+                        {t('events.configureActionsTitle', {
+                          event: handler.event,
+                          defaultValue: 'Event Action Flow: {{event}}',
+                        })}
                       </DialogTitle>
                     </DialogHeader>
                     <div className="mt-4">

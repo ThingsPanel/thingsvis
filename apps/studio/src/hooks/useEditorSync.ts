@@ -5,6 +5,7 @@ import { STORAGE_CONSTANTS } from '../lib/storage/constants';
 import type { ProjectFile } from '../lib/storage/schemas';
 import type { CanvasConfigSchema } from './useProjectBootstrap';
 import { normalizeCanvasBackground } from '../lib/canvasBackground';
+import { hasPersistedEditorStateChange } from '../lib/canvasPersistence';
 
 export interface UseEditorSyncProps {
   projectId: string;
@@ -109,35 +110,28 @@ export function useEditorSync({
     if (isBootstrapping) return;
 
     const state = store.getState();
-    let prevNodesById: any = state.nodesById;
-    let prevLayerOrder: any = state.layerOrder;
-    let prevDataSourceStates: any = (state as any).dataSourceStates;
-    let prevVariableDefinitions: any = state.variableDefinitions;
-    let prevCanvas: any = state.canvas;
+    let prevPersistedState = {
+      nodesById: state.nodesById,
+      layerOrder: state.layerOrder,
+      variableDefinitions: state.variableDefinitions,
+      canvas: state.canvas,
+    };
 
     const unsubscribe = store.subscribe(() => {
       if (bootstrappingRef.current) return;
 
       const currentState = store.getState();
-      const nodesById = currentState.nodesById;
-      const layerOrder = currentState.layerOrder;
-      const dataSourceStates = (currentState as any).dataSourceStates;
-      const variableDefinitions = currentState.variableDefinitions;
-      const canvas = currentState.canvas;
+      const currentPersistedState = {
+        nodesById: currentState.nodesById,
+        layerOrder: currentState.layerOrder,
+        variableDefinitions: currentState.variableDefinitions,
+        canvas: currentState.canvas,
+      };
 
-      // Compare references (zustand creates new references on state change)
-      if (
-        nodesById !== prevNodesById ||
-        layerOrder !== prevLayerOrder ||
-        dataSourceStates !== prevDataSourceStates ||
-        variableDefinitions !== prevVariableDefinitions ||
-        canvas !== prevCanvas
-      ) {
-        prevNodesById = nodesById;
-        prevLayerOrder = layerOrder;
-        prevDataSourceStates = dataSourceStates;
-        prevVariableDefinitions = variableDefinitions;
-        prevCanvas = canvas;
+      // Compare persisted editor structures only.
+      // Canvas viewport changes (zoom/pan) are runtime-only and must not re-mark the project dirty.
+      if (hasPersistedEditorStateChange(prevPersistedState, currentPersistedState)) {
+        prevPersistedState = currentPersistedState;
         markDirty();
       }
     });

@@ -1,7 +1,7 @@
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
 import './lib/video-rtc.js'; // Registers <video-rtc> element
 
 import zh from './locales/zh.json';
@@ -17,8 +17,7 @@ type RuntimeMessages = {
 };
 
 function getRuntimeMessages(locale: string | undefined): RuntimeMessages {
-  const normalized = locale?.toLowerCase();
-  return normalized?.startsWith('zh') ? (localeCatalog.zh as RuntimeMessages) : (localeCatalog.en as RuntimeMessages);
+  return resolveLocaleRecord(localeCatalog, locale) as RuntimeMessages;
 }
 
 export const Main = defineWidget({

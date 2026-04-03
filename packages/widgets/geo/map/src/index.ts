@@ -26,6 +26,12 @@ const LEAFLET_CSS = `
     top: 0;
   }
   .leaflet-container { overflow: hidden; }
+  .leaflet-container img,
+  .leaflet-container svg,
+  .leaflet-container canvas {
+    max-width: none !important;
+    max-height: none !important;
+  }
   .leaflet-tile,
   .leaflet-marker-icon,
   .leaflet-marker-shadow {
@@ -73,6 +79,60 @@ const LEAFLET_CSS = `
   .leaflet-right .leaflet-control { margin-right: 10px; }
 `;
 
+const TILE_SOURCES: Record<Props['mapStyle'], { url: string; subdomains: string }> = {
+  standard: {
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    subdomains: 'abc',
+  },
+  dark: {
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    subdomains: 'abcd',
+  },
+  light: {
+    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    subdomains: 'abcd',
+  },
+};
+
+function getTileSource(style: Props['mapStyle']) {
+  return TILE_SOURCES[style] ?? TILE_SOURCES.standard;
+}
+
+function createMarkerIcon(L: typeof import('leaflet'), element: HTMLElement) {
+  const colors = resolveWidgetColors(element);
+  const primaryColor = colors.primary || '#0078A8';
+
+  const svgIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+      <path fill="${primaryColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+      <circle cx="12" cy="9" r="2.5" fill="white"/>
+    </svg>
+  `;
+  const iconUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgIcon)));
+
+  return L.icon({
+    iconUrl,
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+}
+
+function syncMarkerPopup(marker: any, title: string) {
+  if (title) {
+    if (marker.getPopup?.()) {
+      marker.setPopupContent(title);
+    } else {
+      marker.bindPopup(title);
+    }
+    marker.openPopup?.();
+    return;
+  }
+
+  marker.closePopup?.();
+  marker.unbindPopup?.();
+}
+
 export const Main = defineWidget({
   ...metadata,
   schema: PropsSchema,
@@ -82,14 +142,17 @@ export const Main = defineWidget({
     let currentProps = props;
     let map: any = null;
     let marker: any = null;
+    let tileLayer: any = null;
     let resizeObserver: ResizeObserver | null = null;
+    let pendingInit: Promise<boolean> | null = null;
     
     // Inject Leaflet CSS once (include full CSS for tiles)
     if (!document.getElementById('leaflet-widget-css')) {
       const style = document.createElement('style');
       style.id = 'leaflet-widget-css';
       style.textContent = LEAFLET_CSS + `
-        .leaflet-tile { visibility: visible; }
+        .leaflet-tile { visibility: hidden; }
+        .leaflet-tile-loaded { visibility: inherit; }
         .leaflet-container { background: #ddd; }
         .leaflet-container .leaflet-tile-pane { opacity: 1; }
       `;
@@ -108,7 +171,27 @@ export const Main = defineWidget({
     container.style.cssText = 'width: 100%; height: 100%; position: absolute; inset: 0;';
     element.appendChild(container);
 
+    const createTileLayer = (L: typeof import('leaflet'), style: Props['mapStyle']) => {
+      const source = getTileSource(style);
+      const layer = L.tileLayer(source.url, {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        maxZoom: 19,
+        subdomains: source.subdomains,
+      });
+
+      layer.on('tileerror', (event: { tile?: HTMLImageElement }) => {
+        console.warn('Map tile failed to load.', event?.tile?.src ?? source.url);
+      });
+
+      return layer;
+    };
+
     const initMap = async () => {
+      if (map) {
+        return true;
+      }
+
       // Wait for container to have size
       if (container.clientWidth === 0 || container.clientHeight === 0) {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -119,7 +202,7 @@ export const Main = defineWidget({
       }
 
       const L = await import('leaflet');
-      
+
       // Create map
       map = L.map(container, {
         zoomControl: currentProps.showZoomControl,
@@ -135,56 +218,15 @@ export const Main = defineWidget({
       // Set view
       map.setView([currentProps.lat, currentProps.lng], currentProps.zoom);
 
-      // Add tile layer based on style
-      const tileUrls: Record<string, string> = {
-        standard: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        dark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-        light: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-      };
-
-      // Use a reliable tile source - using CartoDB which has better CDN
-      const tileUrl = tileUrls[currentProps.mapStyle] ?? tileUrls.standard;
-      
-      const tileLayer = L.tileLayer(tileUrl as string, {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        maxZoom: 19,
-        subdomains: 'abcd',
-      });
-      
-      tileLayer.on('tileerror', () => {
-        // Tiles may fail to load in local dev due to network/CORS
-        console.warn('Map tiles failed to load. This is normal in local development.');
-      });
-      
+      tileLayer = createTileLayer(L, currentProps.mapStyle);
       tileLayer.addTo(map);
 
       // Add marker
       if (currentProps.showMarker) {
-        const colors = resolveWidgetColors(element);
-        const primaryColor = colors.primary || '#0078A8';
-        
-        // Custom marker icon using SVG
-        const svgIcon = `
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-            <path fill="${primaryColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-            <circle cx="12" cy="9" r="2.5" fill="white"/>
-          </svg>
-        `;
-        const iconUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgIcon)));
-        
-        const customIcon = L.icon({
-          iconUrl,
-          iconSize: [32, 32],
-          iconAnchor: [16, 32],
-          popupAnchor: [0, -32],
-        });
-
-        marker = L.marker([currentProps.lat, currentProps.lng], { icon: customIcon })
-          .addTo(map);
-        
-        if (currentProps.markerTitle) {
-          marker.bindPopup(currentProps.markerTitle).openPopup();
-        }
+        marker = L.marker([currentProps.lat, currentProps.lng], {
+          icon: createMarkerIcon(L, element),
+        }).addTo(map);
+        syncMarkerPopup(marker, currentProps.markerTitle);
       }
 
       return true;
@@ -193,7 +235,13 @@ export const Main = defineWidget({
     // Initialize with retry logic
     let initAttempts = 0;
     const tryInit = async () => {
-      const success = await initMap();
+      if (!pendingInit) {
+        pendingInit = initMap().finally(() => {
+          pendingInit = null;
+        });
+      }
+
+      const success = await pendingInit;
       if (!success && initAttempts < 10) {
         initAttempts++;
         setTimeout(tryInit, 100);
@@ -223,46 +271,28 @@ export const Main = defineWidget({
         if (!map) return;
 
         // Update view if lat/lng/zoom changed
-        if (oldProps.lat !== nextProps.lat || 
-            oldProps.lng !== nextProps.lng || 
+        if (oldProps.lat !== nextProps.lat ||
+            oldProps.lng !== nextProps.lng ||
             oldProps.zoom !== nextProps.zoom) {
           map.setView([nextProps.lat, nextProps.lng], nextProps.zoom);
+        }
+
+        if (oldProps.mapStyle !== nextProps.mapStyle) {
+          tileLayer?.remove();
+          tileLayer = createTileLayer(L, nextProps.mapStyle);
+          tileLayer.addTo(map);
         }
 
         // Update marker
         if (nextProps.showMarker) {
           if (marker) {
             marker.setLatLng([nextProps.lat, nextProps.lng]);
-            if (nextProps.markerTitle) {
-              marker.setPopupContent(nextProps.markerTitle);
-              marker.openPopup();
-            }
+            syncMarkerPopup(marker, nextProps.markerTitle);
           } else {
-            // Recreate marker
-            const colors = resolveWidgetColors(element);
-            const primaryColor = colors.primary || '#0078A8';
-            
-            const svgIcon = `
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
-                <path fill="${primaryColor}" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-                <circle cx="12" cy="9" r="2.5" fill="white"/>
-              </svg>
-            `;
-            const iconUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgIcon)));
-            
-            const customIcon = L.icon({
-              iconUrl,
-              iconSize: [32, 32],
-              iconAnchor: [16, 32],
-              popupAnchor: [0, -32],
-            });
-
-            marker = L.marker([nextProps.lat, nextProps.lng], { icon: customIcon })
-              .addTo(map);
-            
-            if (nextProps.markerTitle) {
-              marker.bindPopup(nextProps.markerTitle).openPopup();
-            }
+            marker = L.marker([nextProps.lat, nextProps.lng], {
+              icon: createMarkerIcon(L, element),
+            }).addTo(map);
+            syncMarkerPopup(marker, nextProps.markerTitle);
           }
         } else if (marker) {
           map.removeLayer(marker);
@@ -299,6 +329,7 @@ export const Main = defineWidget({
       },
       destroy: () => {
         resizeObserver?.disconnect();
+        tileLayer = null;
         if (map) {
           map.remove();
           map = null;

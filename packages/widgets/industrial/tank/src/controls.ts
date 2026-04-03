@@ -4,44 +4,45 @@ export const controls: WidgetControls = {
   groups: [
     {
       id: 'tank-config',
-      label: { zh: '液位罐配置', en: 'Tank Config' },
+      label: 'controls.industrial-tank.group',
       fields: [
         {
           path: 'level',
           kind: 'number',
-          label: { zh: '液位 (%)', en: 'Level (%)' },
+          label: 'controls.industrial-tank.level',
           default: 50,
           min: 0,
           max: 100,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
         {
           path: 'tankColor',
           kind: 'color',
-          label: { zh: '罐体颜色', en: 'Tank Color' },
+          label: 'controls.industrial-tank.tankColor',
           default: '#334155',
         },
         {
           path: 'liquidColor',
           kind: 'color',
-          label: { zh: '液体颜色', en: 'Liquid Color' },
+          label: 'controls.industrial-tank.liquidColor',
           default: '#0ea5e9',
         },
         {
           path: 'lowColor',
           kind: 'color',
-          label: { zh: '低液位颜色', en: 'Low Level Color' },
+          label: 'controls.industrial-tank.lowColor',
           default: '#eab308',
         },
         {
           path: 'highColor',
           kind: 'color',
-          label: { zh: '高液位颜色', en: 'High Level Color' },
+          label: 'controls.industrial-tank.highColor',
           default: '#ef4444',
         },
         {
           path: 'lowThreshold',
           kind: 'number',
-          label: { zh: '低液位阈值', en: 'Low Threshold' },
+          label: 'controls.industrial-tank.lowThreshold',
           default: 20,
           min: 0,
           max: 100,
@@ -49,7 +50,7 @@ export const controls: WidgetControls = {
         {
           path: 'highThreshold',
           kind: 'number',
-          label: { zh: '高液位阈值', en: 'High Threshold' },
+          label: 'controls.industrial-tank.highThreshold',
           default: 80,
           min: 0,
           max: 100,
@@ -57,8 +58,9 @@ export const controls: WidgetControls = {
         {
           path: 'hasError',
           kind: 'boolean',
-          label: { zh: '故障告警', en: 'Has Error' },
+          label: 'controls.industrial-tank.hasError',
           default: false,
+          binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
       ],
     },

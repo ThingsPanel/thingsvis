@@ -7,6 +7,8 @@ import { z } from 'zod';
  */
 export const WIDGET_CATEGORIES = [
   'basic',
+  'controls',
+  'charts',
   'chart',
   'interaction',
   'media',

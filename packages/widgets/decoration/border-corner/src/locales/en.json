@@ -1,0 +1,23 @@
+{
+  "widgets": {
+    "thingsvis-widget-decoration-border-corner": {
+      "groupColor": "Color",
+      "useThemeColor": "Follow Theme",
+      "color": "Primary Glow",
+      "secondaryColor": "Secondary",
+      "glowColor": "Glow Color",
+      "groupStyle": "Style",
+      "lineWidth": "Line Width",
+      "cornerLength": "Corner Length",
+      "opacity": "Opacity",
+      "groupGlow": "Glow Effect",
+      "glowIntensity": "Glow Intensity",
+      "glowBlur": "Glow Blur",
+      "innerGlow": "Inner Glow",
+      "groupAnimation": "Animation",
+      "animated": "Enable Animation",
+      "pulseMode": "Pulse Mode",
+      "animationSpeed": "Animation Speed(s)"
+    }
+  }
+}
