@@ -238,8 +238,8 @@ class ApiClient {
         body: body ? JSON.stringify(body) : undefined,
         ...options,
       });
-
-      const data = await response.json();
+      const rawText = await response.text();
+      const data = rawText ? JSON.parse(rawText) : {};
 
       if (response.status === 401) {
         debugAuthLog('apiClient.401', {
