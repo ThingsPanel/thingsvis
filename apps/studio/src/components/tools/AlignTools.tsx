@@ -32,6 +32,85 @@ interface AlignToolsProps {
   onUserEdit?: () => void;
 }
 
+type BoundingBox = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+  width: number;
+  height: number;
+  centerX: number;
+  centerY: number;
+};
+
+type AlignPositionInput = {
+  type: AlignType;
+  selectedCount: number;
+  currentX: number;
+  currentY: number;
+  width: number;
+  height: number;
+  bbox: BoundingBox;
+  canvasWidth: number;
+  canvasHeight: number;
+};
+
+export function shouldShowAlignTools(selectedCount: number, disabled: boolean): boolean {
+  return selectedCount > 0 && !disabled;
+}
+
+export function isAlignButtonAvailable(type: AlignType, selectedCount: number): boolean {
+  if (selectedCount <= 0) return false;
+  if ((type === 'distribute-h' || type === 'distribute-v') && selectedCount < 3) {
+    return false;
+  }
+  return true;
+}
+
+export function resolveAlignedPosition({
+  type,
+  selectedCount,
+  currentX,
+  currentY,
+  width,
+  height,
+  bbox,
+  canvasWidth,
+  canvasHeight,
+}: AlignPositionInput): { x: number; y: number } {
+  const alignToCanvas = selectedCount === 1;
+
+  let newX = currentX;
+  let newY = currentY;
+
+  switch (type) {
+    case 'left':
+      newX = alignToCanvas ? 0 : bbox.left;
+      break;
+    case 'right':
+      newX = alignToCanvas ? canvasWidth - width : bbox.right - width;
+      break;
+    case 'top':
+      newY = alignToCanvas ? 0 : bbox.top;
+      break;
+    case 'bottom':
+      newY = alignToCanvas ? canvasHeight - height : bbox.bottom - height;
+      break;
+    case 'center-h':
+      newX = (alignToCanvas ? canvasWidth / 2 : bbox.centerX) - width / 2;
+      break;
+    case 'center-v':
+      newY = (alignToCanvas ? canvasHeight / 2 : bbox.centerY) - height / 2;
+      break;
+    case 'canvas-center':
+      newX = canvasWidth / 2 - width / 2;
+      newY = canvasHeight / 2 - height / 2;
+      break;
+  }
+
+  return { x: Math.round(newX), y: Math.round(newY) };
+}
+
 /**
  * AlignTools Component
  *
@@ -45,14 +124,14 @@ interface AlignToolsProps {
 export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignToolsProps) {
   const { t } = useTranslation('editor');
   const selectedIds = useStore(kernelStore, (s) => s.selection.nodeIds);
-  const canAlign = selectedIds.length > 1 && !disabled;
+  const canAlign = shouldShowAlignTools(selectedIds.length, disabled);
 
   const getState = () => kernelStore.getState();
 
   /**
    * Calculate the bounding box of selected nodes
    */
-  const getBoundingBox = () => {
+  const getBoundingBox = (): BoundingBox | null => {
     if (selectedIds.length === 0) return null;
 
     let minX = Infinity;
@@ -169,36 +248,18 @@ export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignT
         const width = schema.size?.width ?? 0;
         const height = schema.size?.height ?? 0;
 
-        let newX = currentX;
-        let newY = currentY;
-
-        switch (type) {
-          case 'left':
-            newX = bbox.left;
-            break;
-          case 'right':
-            newX = bbox.right - width;
-            break;
-          case 'top':
-            newY = bbox.top;
-            break;
-          case 'bottom':
-            newY = bbox.bottom - height;
-            break;
-          case 'center-h':
-            newX = bbox.centerX - width / 2;
-            break;
-          case 'center-v':
-            newY = bbox.centerY - height / 2;
-            break;
-          case 'canvas-center':
-            newX = canvasWidth / 2 - width / 2;
-            newY = canvasHeight / 2 - height / 2;
-            break;
-        }
-
         updates[id] = {
-          position: { x: Math.round(newX), y: Math.round(newY) },
+          position: resolveAlignedPosition({
+            type,
+            selectedCount: selectedIds.length,
+            currentX,
+            currentY,
+            width,
+            height,
+            bbox,
+            canvasWidth,
+            canvasHeight,
+          }),
         };
       });
     }
@@ -275,19 +336,21 @@ export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignT
     <>
       <div className="border-l border-border h-6 mx-1" />
       <div className="flex items-center gap-0.5">
-        {alignButtons.map(({ type, icon: Icon, label, shortcut }) => (
-          <Button
-            key={type}
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:ring-0 focus:outline-none"
-            onClick={() => handleAlign(type)}
-            title={`${label} (${shortcut})`}
-            disabled={disabled}
-          >
-            <Icon className="h-4.5 w-4.5 stroke-2" />
-          </Button>
-        ))}
+        {alignButtons
+          .filter(({ type }) => isAlignButtonAvailable(type, selectedIds.length))
+          .map(({ type, icon: Icon, label, shortcut }) => (
+            <Button
+              key={type}
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:ring-0 focus:outline-none"
+              onClick={() => handleAlign(type)}
+              title={`${label} (${shortcut})`}
+              disabled={disabled}
+            >
+              <Icon className="h-4.5 w-4.5 stroke-2" />
+            </Button>
+          ))}
       </div>
     </>
   );

@@ -82,6 +82,23 @@ type Props = {
   gridLayout?: GridLayoutHandlers; // Grid layout handlers from useGridLayout hook
 };
 
+type CanvasGuidelines = {
+  verticalGuidelines: number[];
+  horizontalGuidelines: number[];
+};
+
+export function getCanvasSnapGuidelines(
+  canvas: { width?: number; height?: number } | null | undefined,
+): CanvasGuidelines {
+  const width = typeof canvas?.width === 'number' && canvas.width > 0 ? canvas.width : 0;
+  const height = typeof canvas?.height === 'number' && canvas.height > 0 ? canvas.height : 0;
+
+  return {
+    verticalGuidelines: width > 0 ? [0, width / 2, width] : [],
+    horizontalGuidelines: height > 0 ? [0, height / 2, height] : [],
+  };
+}
+
 export default function TransformControls({
   containerRef,
   dragContainerRef,
@@ -149,18 +166,25 @@ export default function TransformControls({
         const colWidth = (containerWidth - (cols - 1) * gap) / cols;
         moveableRef.current.snapGridWidth = colWidth + gap;
         moveableRef.current.snapGridHeight = settings.rowHeight + gap;
+        moveableRef.current.verticalGuidelines = [];
+        moveableRef.current.horizontalGuidelines = [];
       } else {
         moveableRef.current.snappable = false;
         moveableRef.current.snapGridWidth = 0;
         moveableRef.current.snapGridHeight = 0;
+        moveableRef.current.verticalGuidelines = [];
+        moveableRef.current.horizontalGuidelines = [];
       }
     } else {
       // Fixed/infinite mode: enable smart element alignment guidelines
       const isGridEnabled = (state.canvas as any)?.gridEnabled ?? false;
       const gridSize = (state.canvas as any)?.gridSize ?? 20;
+      const { verticalGuidelines, horizontalGuidelines } = getCanvasSnapGuidelines(state.canvas);
 
       moveableRef.current.snappable = true;
       moveableRef.current.elementGuidelines = ['.node-proxy-target'];
+      moveableRef.current.verticalGuidelines = verticalGuidelines;
+      moveableRef.current.horizontalGuidelines = horizontalGuidelines;
       moveableRef.current.snapDirections = {
         top: true,
         left: true,
@@ -228,6 +252,7 @@ export default function TransformControls({
     try {
       // Use dragContainer (outer, unscaled) for Moveable to match Selecto's coordinate system
       const dragContainer = dragContainerRef?.current || container;
+      const { verticalGuidelines, horizontalGuidelines } = getCanvasSnapGuidelines(state.canvas);
 
       moveableRef.current = new Moveable(dragContainer, {
         target: [],
@@ -248,10 +273,13 @@ export default function TransformControls({
 
         // Snapping: always enabled. In grid mode snap to grid cells; in fixed/infinite mode use element guidelines.
         snappable: true,
+        snapContainer: container,
         snapGridWidth: 0,
         snapGridHeight: 0,
         snapThreshold: 5,
         elementGuidelines: isGridMode ? [] : ['.node-proxy-target'],
+        verticalGuidelines: isGridMode ? [] : verticalGuidelines,
+        horizontalGuidelines: isGridMode ? [] : horizontalGuidelines,
         snapDirections: {
           top: true,
           left: true,
