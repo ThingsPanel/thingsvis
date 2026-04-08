@@ -28,9 +28,10 @@ describe('aspectRatio helpers', () => {
     expect(getStoredAspectRatio(props)).toBe(1.6);
   });
 
-  it('defaults to locked unless explicitly disabled', () => {
-    expect(isAspectRatioLocked(undefined)).toBe(true);
+  it('defaults to unlocked unless explicitly enabled', () => {
+    expect(isAspectRatioLocked(undefined)).toBe(false);
     expect(isAspectRatioLocked({ [KEEP_ASPECT_RATIO_PROP]: false })).toBe(false);
+    expect(isAspectRatioLocked({ [KEEP_ASPECT_RATIO_PROP]: true })).toBe(true);
   });
 
   it('resizes by width while preserving ratio', () => {

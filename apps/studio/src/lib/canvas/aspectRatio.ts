@@ -38,7 +38,7 @@ export function getAspectRatioFromSize(
 }
 
 export function isAspectRatioLocked(props: AspectRatioProps): boolean {
-  return props?.[KEEP_ASPECT_RATIO_PROP] !== false;
+  return props?.[KEEP_ASPECT_RATIO_PROP] === true;
 }
 
 export function getStoredAspectRatio(props: AspectRatioProps): number | undefined {

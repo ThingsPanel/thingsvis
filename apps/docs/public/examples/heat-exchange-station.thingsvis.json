@@ -1,0 +1,1093 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "id": "heat-exchange-station-components-demo-20260407",
+    "name": "换热站工艺重构演示",
+    "createdAt": 1775529600000,
+    "updatedAt": 1775529600000
+  },
+  "canvas": {
+    "mode": "fixed",
+    "width": 1920,
+    "height": 1080,
+    "theme": "midnight",
+    "background": {
+      "color": "#061126",
+      "image": "",
+      "size": "cover",
+      "repeat": "no-repeat",
+      "attachment": "scroll"
+    }
+  },
+  "nodes": [
+    {
+      "id": "screen-border",
+      "name": "Screen Border",
+      "type": "decoration/tech-border",
+      "position": { "x": 28, "y": 18 },
+      "size": { "width": 1864, "height": 1040 },
+      "props": {
+        "variant": "corner-cut",
+        "borderColor": "#2acbff",
+        "borderWidth": 2,
+        "contentPadding": 8,
+        "backgroundColor": "transparent",
+        "glowEnabled": true,
+        "glowColor": "#1793c8",
+        "glowBlur": 10,
+        "glowSpread": 3,
+        "cornerSize": 16,
+        "showCornerDecoration": true,
+        "decorationLength": 36,
+        "decorationWidth": 3,
+        "animated": false,
+        "gradientEnabled": true,
+        "gradientStart": "#5ae7ff",
+        "gradientEnd": "#0e6fc2",
+        "gradientAngle": 0
+      }
+    },
+    {
+      "id": "title-bg",
+      "name": "Title Background",
+      "type": "basic/rectangle",
+      "position": { "x": 72, "y": 72 },
+      "size": { "width": 688, "height": 78 },
+      "props": {
+        "fill": "rgba(11,29,52,0.84)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "title-main",
+      "name": "Title Main",
+      "type": "basic/text",
+      "position": { "x": 96, "y": 84 },
+      "size": { "width": 520, "height": 34 },
+      "props": {
+        "text": "换热站工艺重构演示",
+        "fontSize": 30,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "700",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.1,
+        "fill": "#e6f7ff",
+        "textShadowEnabled": true,
+        "textShadowColor": "rgba(31,201,255,0.28)",
+        "textShadowBlur": 8,
+        "textShadowOffsetX": 0,
+        "textShadowOffsetY": 0
+      }
+    },
+    {
+      "id": "title-sub",
+      "name": "Title Subtitle",
+      "type": "basic/text",
+      "position": { "x": 98, "y": 120 },
+      "size": { "width": 620, "height": 22 },
+      "props": {
+        "text": "基于现有工业组件快速重建，适合直接录制演示视频",
+        "fontSize": 14,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "400",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#8fb5d3"
+      }
+    },
+    {
+      "id": "note-bg",
+      "name": "Note Background",
+      "type": "basic/rectangle",
+      "position": { "x": 72, "y": 170 },
+      "size": { "width": 432, "height": 190 },
+      "props": {
+        "fill": "rgba(10,24,42,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "note-title",
+      "name": "Note Title",
+      "type": "basic/text",
+      "position": { "x": 96, "y": 190 },
+      "size": { "width": 260, "height": 28 },
+      "props": {
+        "text": "本版示例使用组件",
+        "fontSize": 18,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "note-body",
+      "name": "Note Body",
+      "type": "basic/text",
+      "position": { "x": 96, "y": 230 },
+      "size": { "width": 380, "height": 126 },
+      "props": {
+        "text": "\u73b0\u6709\u7ec4\u4ef6\uff1a\n\u5de5\u4e1a\u7ba1\u9053\uff08industrial/pipe\uff09\n\u5de5\u4e1a\u6cf5\uff08industrial/pump\uff09\n\u5de5\u4e1a\u9600\u95e8\uff08industrial/valve\uff09\n\u538b\u529b\u8868\uff08industrial/pressure-gauge\uff09\n\u6d41\u91cf\u8ba1\uff08industrial/flow-meter\uff09\n\u50a8\u7f50\uff08industrial/tank\uff09\n\u5de5\u4e1a\u56fe\u6807\uff08industrial/svg-symbol\uff09",
+        "fontSize": 15,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "400",
+        "textAlign": "left",
+        "verticalAlign": "top",
+        "lineHeight": 1.5,
+        "fill": "#bfd8ea"
+      }
+    },
+    {
+      "id": "metric-flow",
+      "name": "Metric Flow",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 1376, "y": 78 },
+      "size": { "width": 150, "height": 82 },
+      "props": {
+        "title": "供热流量",
+        "value": 52.4,
+        "unit": "t/h",
+        "showUnit": true,
+        "precision": 1,
+        "trend": 3.4,
+        "trendLabel": "较昨日",
+        "showTrend": true,
+        "valueColor": "auto"
+      }
+    },
+    {
+      "id": "metric-pressure",
+      "name": "Metric Pressure",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 1540, "y": 78 },
+      "size": { "width": 150, "height": 82 },
+      "props": {
+        "title": "二次供压",
+        "value": 0.62,
+        "unit": "MPa",
+        "showUnit": true,
+        "precision": 2,
+        "trend": 1.2,
+        "trendLabel": "较昨日",
+        "showTrend": true,
+        "valueColor": "auto"
+      }
+    },
+    {
+      "id": "metric-level",
+      "name": "Metric Level",
+      "type": "interaction/value-card-simple",
+      "position": { "x": 1704, "y": 78 },
+      "size": { "width": 150, "height": 82 },
+      "props": {
+        "title": "水箱液位",
+        "value": 78,
+        "unit": "%",
+        "showUnit": true,
+        "precision": 0,
+        "trend": -0.8,
+        "trendLabel": "较昨日",
+        "showTrend": true,
+        "valueColor": "auto"
+      }
+    },
+    {
+      "id": "valve-control-bg",
+      "name": "Valve Control Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1018, "y": 72 },
+      "size": { "width": 326, "height": 96 },
+      "props": {
+        "fill": "rgba(11,29,52,0.84)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "valve-control-title",
+      "name": "Valve Control Title",
+      "type": "basic/text",
+      "position": { "x": 1040, "y": 84 },
+      "size": { "width": 180, "height": 24 },
+      "props": {
+        "text": "阀门联控",
+        "fontSize": 18,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "valve-master-switch",
+      "name": "Valve Master Switch",
+      "type": "interaction/basic-switch",
+      "position": { "x": 1040, "y": 110 },
+      "size": { "width": 170, "height": 36 },
+      "props": {
+        "value": true,
+        "label": "总阀开关",
+        "showLabel": true,
+        "labelPosition": "left",
+        "onLabel": "开",
+        "offLabel": "关",
+        "onColor": "#22c55e",
+        "offColor": "#64748b",
+        "size": "default",
+        "disabled": false,
+        "loading": false,
+        "confirmToggle": false,
+        "confirmMessage": "确认切换阀门状态？"
+      },
+      "data": [
+        {
+          "targetProp": "value",
+          "expression": "{{ var.valveMasterOpen }}"
+        }
+      ],
+      "events": [
+        {
+          "event": "change",
+          "actions": [
+            {
+              "type": "setVariable",
+              "variableName": "valveMasterOpen",
+              "value": "payload"
+            },
+            {
+              "type": "runScript",
+              "script": "const open = payload === true || payload === 'true' || payload === 1 || payload === '1'; store.updateNode('valve-1', { props: { isOpen: open } }); store.updateNode('valve-2', { props: { isOpen: open } });"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "valve-master-status",
+      "name": "Valve Master Status",
+      "type": "basic/text",
+      "position": { "x": 1230, "y": 116 },
+      "size": { "width": 96, "height": 24 },
+      "props": {
+        "text": "联控状态：开启",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "500",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#8fb5d3"
+      },
+      "data": [
+        {
+          "targetProp": "text",
+          "expression": "{{ var.valveMasterOpen }}",
+          "transform": "return value ? '联控状态：开启' : '联控状态：关闭';"
+        }
+      ]
+    },
+    {
+      "id": "process-bg",
+      "name": "Process Background",
+      "type": "basic/rectangle",
+      "position": { "x": 560, "y": 170 },
+      "size": { "width": 1300, "height": 840 },
+      "props": {
+        "fill": "rgba(7,20,38,0.52)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "process-title",
+      "name": "Process Title",
+      "type": "basic/text",
+      "position": { "x": 604, "y": 190 },
+      "size": { "width": 300, "height": 28 },
+      "props": {
+        "text": "工艺流程区",
+        "fontSize": 20,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "process-desc",
+      "name": "Process Description",
+      "type": "basic/text",
+      "position": { "x": 604, "y": 220 },
+      "size": { "width": 520, "height": 20 },
+      "props": {
+        "text": "主管路、换热器、循环泵、水箱和补水泵均由现有组件搭建",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "400",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#8fb5d3"
+      }
+    },
+    {
+      "id": "tag-supply-p-bg",
+      "name": "Supply Pressure Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1262, "y": 256 },
+      "size": { "width": 128, "height": 52 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-supply-p-text",
+      "name": "Supply Pressure Text",
+      "type": "basic/text",
+      "position": { "x": 1278, "y": 268 },
+      "size": { "width": 98, "height": 30 },
+      "props": {
+        "text": "供水压力\n0.62 MPa",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "tag-supply-t-bg",
+      "name": "Supply Temp Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1404, "y": 256 },
+      "size": { "width": 128, "height": 52 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-supply-t-text",
+      "name": "Supply Temp Text",
+      "type": "basic/text",
+      "position": { "x": 1420, "y": 268 },
+      "size": { "width": 98, "height": 30 },
+      "props": {
+        "text": "供水温度\n72.4 °C",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "tag-loop1-bg",
+      "name": "Loop1 Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1172, "y": 386 },
+      "size": { "width": 140, "height": 48 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-loop1-text",
+      "name": "Loop1 Text",
+      "type": "basic/text",
+      "position": { "x": 1186, "y": 398 },
+      "size": { "width": 120, "height": 26 },
+      "props": {
+        "text": "1#循环泵\n46 Hz",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "tag-loop2-bg",
+      "name": "Loop2 Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1172, "y": 532 },
+      "size": { "width": 140, "height": 48 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-loop2-text",
+      "name": "Loop2 Text",
+      "type": "basic/text",
+      "position": { "x": 1186, "y": 544 },
+      "size": { "width": 120, "height": 26 },
+      "props": {
+        "text": "2#循环泵\n44 Hz",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "tag-supp1-bg",
+      "name": "Supp1 Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1288, "y": 704 },
+      "size": { "width": 140, "height": 48 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-supp1-text",
+      "name": "Supp1 Text",
+      "type": "basic/text",
+      "position": { "x": 1302, "y": 716 },
+      "size": { "width": 120, "height": 26 },
+      "props": {
+        "text": "1#补水泵\n41 Hz",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "tag-supp2-bg",
+      "name": "Supp2 Bg",
+      "type": "basic/rectangle",
+      "position": { "x": 1288, "y": 792 },
+      "size": { "width": 140, "height": 48 },
+      "props": {
+        "fill": "rgba(76,11,47,0.78)",
+        "opacity": 1
+      }
+    },
+    {
+      "id": "tag-supp2-text",
+      "name": "Supp2 Text",
+      "type": "basic/text",
+      "position": { "x": 1302, "y": 804 },
+      "size": { "width": 120, "height": 26 },
+      "props": {
+        "text": "2#补水泵\n39 Hz",
+        "fontSize": 13,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.35,
+        "fill": "#ffd6e8"
+      }
+    },
+    {
+      "id": "main-top-pipe",
+      "name": "Main Top Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 707, "y": 307 },
+      "size": { "width": 960, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 960, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 80,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "left-vertical-pipe",
+      "name": "Left Vertical Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 701, "y": 313 },
+      "size": { "width": 12, "height": 601 },
+      "props": {
+        "points": [
+          { "x": 6, "y": 0 },
+          { "x": 6, "y": 601 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 70,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "reverse",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "center-vertical-pipe",
+      "name": "Center Vertical Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1018, "y": 313 },
+      "size": { "width": 12, "height": 529 },
+      "props": {
+        "points": [
+          { "x": 6, "y": 0 },
+          { "x": 6, "y": 529 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 72,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "loop-1-pipe",
+      "name": "Loop 1 Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1024, "y": 401 },
+      "size": { "width": 643, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 643, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 62,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "loop-2-pipe",
+      "name": "Loop 2 Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1024, "y": 548 },
+      "size": { "width": 643, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 643, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 62,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "supp-1-pipe",
+      "name": "Supplement 1 Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1024, "y": 720 },
+      "size": { "width": 643, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 643, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 58,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "supp-2-pipe",
+      "name": "Supplement 2 Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1024, "y": 808 },
+      "size": { "width": 643, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 643, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 58,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "right-vertical-pipe",
+      "name": "Right Vertical Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 1661, "y": 313 },
+      "size": { "width": 12, "height": 635 },
+      "props": {
+        "points": [
+          { "x": 6, "y": 0 },
+          { "x": 6, "y": 635 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 78,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "source-bottom-pipe",
+      "name": "Source Bottom Pipe",
+      "type": "industrial/pipe",
+      "position": { "x": 707, "y": 908 },
+      "size": { "width": 73, "height": 12 },
+      "props": {
+        "points": [
+          { "x": 0, "y": 6 },
+          { "x": 73, "y": 6 }
+        ],
+        "pipeColor": "#28d4ff",
+        "pipeBackground": "#0c2943",
+        "strokeWidth": 12,
+        "flowEnabled": true,
+        "flowSpeed": 52,
+        "flowLength": 18,
+        "flowSpacing": 30,
+        "flowColor": "#90f4ff",
+        "flowDirection": "forward",
+        "glowEnabled": true,
+        "glowColor": "#22d3ee",
+        "glowIntensity": 4
+      }
+    },
+    {
+      "id": "flow-1",
+      "name": "Flow Meter 1",
+      "type": "industrial/flow-meter",
+      "position": { "x": 640, "y": 284 },
+      "size": { "width": 118, "height": 58 },
+      "props": {
+        "value": 52,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.3,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "valve-1",
+      "name": "Valve 1",
+      "type": "industrial/valve",
+      "position": { "x": 862, "y": 292 },
+      "size": { "width": 42, "height": 42 },
+      "props": {
+        "openColor": "#22c55e",
+        "closedColor": "#566579",
+        "isOpen": true,
+        "hasError": false
+      }
+    },
+    {
+      "id": "gauge-1",
+      "name": "Gauge 1",
+      "type": "industrial/pressure-gauge",
+      "position": { "x": 914, "y": 288 },
+      "size": { "width": 42, "height": 42 },
+      "props": {
+        "value": 62,
+        "min": 0,
+        "max": 100,
+        "dialColor": "#12395a",
+        "pointerColor": "#f472b6",
+        "hasError": false
+      }
+    },
+    {
+      "id": "valve-2",
+      "name": "Valve 2",
+      "type": "industrial/valve",
+      "position": { "x": 1136, "y": 292 },
+      "size": { "width": 42, "height": 42 },
+      "props": {
+        "openColor": "#22c55e",
+        "closedColor": "#566579",
+        "isOpen": true,
+        "hasError": false
+      }
+    },
+    {
+      "id": "gauge-2",
+      "name": "Gauge 2",
+      "type": "industrial/pressure-gauge",
+      "position": { "x": 1188, "y": 288 },
+      "size": { "width": 42, "height": 42 },
+      "props": {
+        "value": 59,
+        "min": 0,
+        "max": 100,
+        "dialColor": "#12395a",
+        "pointerColor": "#f472b6",
+        "hasError": false
+      }
+    },
+    {
+      "id": "flow-2",
+      "name": "Flow Meter 2",
+      "type": "industrial/flow-meter",
+      "position": { "x": 1608, "y": 284 },
+      "size": { "width": 118, "height": 58 },
+      "props": {
+        "value": 49,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.2,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "hx-1",
+      "name": "Heat Exchanger 1",
+      "type": "industrial/svg-symbol",
+      "position": { "x": 980, "y": 352 },
+      "size": { "width": 88, "height": 110 },
+      "props": {
+        "selectedIconId": "heat-exchanger",
+        "svgContent": "",
+        "iconColor": "#31d5ff"
+      }
+    },
+    {
+      "id": "hx-1-label",
+      "name": "HX 1 Label",
+      "type": "basic/text",
+      "position": { "x": 1088, "y": 390 },
+      "size": { "width": 120, "height": 24 },
+      "props": {
+        "text": "1#换热器",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "hx-2",
+      "name": "Heat Exchanger 2",
+      "type": "industrial/svg-symbol",
+      "position": { "x": 980, "y": 498 },
+      "size": { "width": 88, "height": 110 },
+      "props": {
+        "selectedIconId": "heat-exchanger",
+        "svgContent": "",
+        "iconColor": "#31d5ff"
+      }
+    },
+    {
+      "id": "hx-2-label",
+      "name": "HX 2 Label",
+      "type": "basic/text",
+      "position": { "x": 1088, "y": 536 },
+      "size": { "width": 120, "height": 24 },
+      "props": {
+        "text": "2#换热器",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "left",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "pump-1",
+      "name": "Loop Pump 1",
+      "type": "industrial/pump",
+      "position": { "x": 1328, "y": 378 },
+      "size": { "width": 72, "height": 72 },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 64
+      }
+    },
+    {
+      "id": "pump-2",
+      "name": "Loop Pump 2",
+      "type": "industrial/pump",
+      "position": { "x": 1328, "y": 518 },
+      "size": { "width": 72, "height": 72 },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 66
+      }
+    },
+    {
+      "id": "flow-3",
+      "name": "Flow Meter 3",
+      "type": "industrial/flow-meter",
+      "position": { "x": 648, "y": 688 },
+      "size": { "width": 118, "height": 58 },
+      "props": {
+        "value": 61,
+        "min": 0,
+        "max": 100,
+        "baseColor": "#144768",
+        "liquidColor": "#18dcff",
+        "flowSpeed": 1.1,
+        "hasError": false,
+        "showValue": true
+      }
+    },
+    {
+      "id": "source-tank",
+      "name": "Source Tank",
+      "type": "industrial/tank",
+      "position": { "x": 648, "y": 786 },
+      "size": { "width": 118, "height": 160 },
+      "props": {
+        "level": 42,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 80,
+        "hasError": false
+      }
+    },
+    {
+      "id": "source-label",
+      "name": "Source Label",
+      "type": "basic/text",
+      "position": { "x": 634, "y": 962 },
+      "size": { "width": 150, "height": 24 },
+      "props": {
+        "text": "补水源",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "pump-5",
+      "name": "Deep Well Pump",
+      "type": "industrial/pump",
+      "position": { "x": 744, "y": 878 },
+      "size": { "width": 72, "height": 72 },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 63
+      }
+    },
+    {
+      "id": "pump-5-label",
+      "name": "Pump 5 Label",
+      "type": "basic/text",
+      "position": { "x": 732, "y": 956 },
+      "size": { "width": 100, "height": 24 },
+      "props": {
+        "text": "深井泵",
+        "fontSize": 14,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "500",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#8fb5d3"
+      }
+    },
+    {
+      "id": "water-box",
+      "name": "Water Box",
+      "type": "industrial/tank",
+      "position": { "x": 952, "y": 760 },
+      "size": { "width": 144, "height": 188 },
+      "props": {
+        "level": 78,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 85,
+        "hasError": false
+      }
+    },
+    {
+      "id": "water-box-label",
+      "name": "Water Box Label",
+      "type": "basic/text",
+      "position": { "x": 958, "y": 956 },
+      "size": { "width": 132, "height": 24 },
+      "props": {
+        "text": "水箱",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    },
+    {
+      "id": "pump-3",
+      "name": "Supplement Pump 1",
+      "type": "industrial/pump",
+      "position": { "x": 1438, "y": 690 },
+      "size": { "width": 72, "height": 72 },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 61
+      }
+    },
+    {
+      "id": "pump-4",
+      "name": "Supplement Pump 2",
+      "type": "industrial/pump",
+      "position": { "x": 1438, "y": 778 },
+      "size": { "width": 72, "height": 72 },
+      "props": {
+        "baseColor": "#0f466b",
+        "isRunning": true,
+        "hasError": false,
+        "rpm": 59
+      }
+    },
+    {
+      "id": "water-pool",
+      "name": "Water Pool",
+      "type": "industrial/tank",
+      "position": { "x": 1677, "y": 882 },
+      "size": { "width": 108, "height": 132 },
+      "props": {
+        "level": 34,
+        "tankColor": "#0e466b",
+        "liquidColor": "#18dcff",
+        "lowColor": "#eab308",
+        "highColor": "#ef4444",
+        "lowThreshold": 20,
+        "highThreshold": 85,
+        "hasError": false
+      }
+    },
+    {
+      "id": "water-pool-label",
+      "name": "Water Pool Label",
+      "type": "basic/text",
+      "position": { "x": 1656, "y": 1020 },
+      "size": { "width": 150, "height": 24 },
+      "props": {
+        "text": "集水池",
+        "fontSize": 16,
+        "fontFamily": "Inter, Noto Sans SC, Noto Sans, sans-serif",
+        "fontWeight": "600",
+        "textAlign": "center",
+        "verticalAlign": "middle",
+        "lineHeight": 1.2,
+        "fill": "#7ee7ff"
+      }
+    }
+  ],
+  "dataSources": [],
+  "variables": [
+    {
+      "name": "valveMasterOpen",
+      "label": "\u603b\u9600\u5f00\u5173",
+      "type": "boolean",
+      "defaultValue": true,
+      "persistent": false
+    }
+  ]
+}

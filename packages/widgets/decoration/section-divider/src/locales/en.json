@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "name": "Section Divider",
+    "description": "Pure decorative divider with scan-line, slide-bar, hex-chain, and signal-wave variants"
+  },
+  "props": {
+    "useThemeColor": "Use Theme Color",
+    "variant": "Variant",
+    "primaryColor": "Primary Color",
+    "secondaryColor": "Secondary Color",
+    "width": "Width",
+    "height": "Height",
+    "animated": "Enable Animation",
+    "animationSpeed": "Animation Speed"
+  },
+  "widgets.thingsvis-widget-decoration-divider.label_1": "Use Theme Color",
+  "widgets.thingsvis-widget-decoration-divider.label_2": "Variant",
+  "widgets.thingsvis-widget-decoration-divider.label_3": "Scan Line",
+  "widgets.thingsvis-widget-decoration-divider.label_4": "Slide Bar",
+  "widgets.thingsvis-widget-decoration-divider.label_5": "Hex Chain",
+  "widgets.thingsvis-widget-decoration-divider.label_6": "Signal Wave",
+  "widgets.thingsvis-widget-decoration-divider.label_7": "Primary Color",
+  "widgets.thingsvis-widget-decoration-divider.label_8": "Secondary Color",
+  "widgets.thingsvis-widget-decoration-divider.label_9": "Width",
+  "widgets.thingsvis-widget-decoration-divider.label_10": "Height",
+  "widgets.thingsvis-widget-decoration-divider.label_11": "Enable Animation",
+  "widgets.thingsvis-widget-decoration-divider.label_12": "Animation Speed",
+  "widgets.thingsvis-widget-decoration-divider.label_13": "Dot Chain",
+  "widgets.thingsvis-widget-decoration-divider.label_14": "Bracket Ends",
+  "widgets.thingsvis-widget-decoration-divider.label_16": "Diamond Trail"
+}
