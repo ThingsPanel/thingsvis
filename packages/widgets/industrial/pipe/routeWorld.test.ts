@@ -229,6 +229,27 @@ describe('industrial pipe routeWorld helpers', () => {
     ]);
   });
 
+  it('snaps a dirty free straight route back into the current node box', () => {
+    const route = computeIndustrialPipeLocalRoute(
+      {
+        ...getDefaultProps(),
+        points: [
+          { x: 0, y: 40 },
+          { x: 2400, y: 40 },
+        ],
+      },
+      { width: 300, height: 80 },
+      { x: 120, y: 140 },
+      undefined,
+      { viewport: { zoom: 1, offsetX: 0, offsetY: 0 }, containerEl: null },
+    );
+
+    expect(route).toEqual([
+      { x: 0, y: 40 },
+      { x: 300, y: 40 },
+    ]);
+  });
+
   it('uses bound anchors but preserves interior bends when explicit points exist', () => {
     const route = computeIndustrialPipeLocalRoute(
       {

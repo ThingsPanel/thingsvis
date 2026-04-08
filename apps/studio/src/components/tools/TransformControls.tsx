@@ -11,6 +11,7 @@ import {
   isAspectRatioLocked,
   resizeDimensionWithAspectRatio,
 } from '@/lib/canvas/aspectRatio';
+import { buildFreePipeLocalPoints } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -22,6 +23,27 @@ function isPipeNodeType(type: string | undefined): boolean {
 
 function isConnectorNodeType(type: string | undefined): boolean {
   return isLineNodeType(type) || isPipeNodeType(type);
+}
+
+function hasPipeEndpointBinding(props: Record<string, unknown> | null | undefined): boolean {
+  return !!(
+    props?.sourceNodeId ||
+    props?.targetNodeId ||
+    props?.sourcePortId ||
+    props?.targetPortId
+  );
+}
+
+function isFreePipeSchema(
+  schema:
+    | {
+        type?: string;
+        props?: Record<string, unknown>;
+      }
+    | null
+    | undefined,
+): boolean {
+  return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
 }
 
 function resolveNodeAspectRatio(
@@ -957,6 +979,8 @@ export default function TransformControls({
         if (nodeId) {
           let width = parseFloat(target.style.width || '0') || 0;
           let height = parseFloat(target.style.height || '0') || 0;
+          const node = (kernelStore.getState() as KernelState).nodesById[nodeId];
+          const schema = node?.schemaRef as any;
 
           const baseSize = baseWorldSizeByIdRef.current[nodeId];
           if (baseSize) {
@@ -1013,9 +1037,23 @@ export default function TransformControls({
               kernelStore.getState().moveGridItemWithPosition(nodeId, { x: gridX, y: gridY });
             }
           } else {
-            kernelStore
-              .getState()
-              .updateNode(nodeId, { position: { x, y }, size: { width, height } });
+            if (isFreePipeSchema(schema)) {
+              const currentProps = { ...((schema?.props ?? {}) as Record<string, unknown>) };
+              const straightPoints = buildFreePipeLocalPoints({ width, height });
+              kernelStore.getState().updateNode(nodeId, {
+                position: { x, y },
+                size: { width, height },
+                props: {
+                  ...currentProps,
+                  points: straightPoints,
+                  waypoints: [],
+                },
+              });
+            } else {
+              kernelStore
+                .getState()
+                .updateNode(nodeId, { position: { x, y }, size: { width, height } });
+            }
           }
           onUserEdit?.();
         }
@@ -1128,14 +1166,15 @@ export default function TransformControls({
         validSelectedIds.length > 0 &&
         validSelectedIds.every((id) => isConnectorNodeType(state.nodesById[id]?.schemaRef?.type));
 
-      queryContainer.classList.toggle('connector-moveable-minimal', onlyConnectorsSelected);
-
       const targets = moveableTargetIds
         .map((id) => queryContainer.querySelector(`.node-proxy-target[data-node-id="${id}"]`))
         .filter(Boolean) as HTMLElement[];
 
       const anyNonResizableSelected = validSelectedIds.some((id) => {
         const node = state.nodesById[id];
+        if (isFreePipeSchema((node?.schemaRef as any) ?? null)) {
+          return false;
+        }
         const widgetType = (node?.schemaRef as any)?.type;
         if (!widgetType) return false;
 
@@ -1156,6 +1195,12 @@ export default function TransformControls({
           (singleSelectedNode?.schemaRef as any) ?? null,
           ((singleWidget as any)?.constraints ?? {}) as { aspectRatio?: number },
         );
+      const allowFreePipeResize =
+        moveableTargetIds.length === 1 &&
+        isFreePipeSchema((singleSelectedNode?.schemaRef as any) ?? null);
+      const useConnectorMinimalChrome = onlyConnectorsSelected && !allowFreePipeResize;
+
+      queryContainer.classList.toggle('connector-moveable-minimal', useConnectorMinimalChrome);
 
       // Disable transforms for locked nodes and non-resizable widgets
       const hasLockedSelection = selectedIds.some((id) => state.nodesById[id]?.locked);
@@ -1165,7 +1210,7 @@ export default function TransformControls({
         !hasLockedSelection &&
         !anyNonResizableSelected &&
         moveableTargetIds.length > 0 &&
-        !anyConnectorSelected;
+        (!anyConnectorSelected || allowFreePipeResize);
       moveableRef.current.rotatable =
         !hasLockedSelection &&
         !anyNonResizableSelected &&

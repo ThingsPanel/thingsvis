@@ -207,6 +207,15 @@ function collapseRenderedFreeJog(points: Pt[], props: Record<string, unknown>): 
   return points;
 }
 
+function hasPipeConnectionBinding(props: Record<string, unknown> | null | undefined): boolean {
+  return !!(
+    props?.sourceNodeId ||
+    props?.targetNodeId ||
+    props?.sourcePortId ||
+    props?.targetPortId
+  );
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function PipeConnectionTool({
@@ -276,9 +285,15 @@ export default function PipeConnectionTool({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state.selection, state.nodesById, getViewport, containerRef],
   );
+  const supportsConnectionEditing = hasPipeConnectionBinding(
+    routePoints.props as Record<string, unknown>,
+  );
+  const canRenderEndpointHandles = !!routePoints.pipeId && routePoints.points.length >= 2;
 
   // ── Drag event handlers ──────────────────────────────────────────────────
   useEffect(() => {
+    if (!canRenderEndpointHandles) return;
+
     const onMouseMove = (e: MouseEvent) => {
       if (!dragRef.current) return;
       const world = screenToWorld(e.clientX, e.clientY);
@@ -386,9 +401,18 @@ export default function PipeConnectionTool({
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
     };
-  }, [kernelStore, getViewport, screenToWorld, state, onUserEdit, rerender]);
+  }, [
+    kernelStore,
+    getViewport,
+    screenToWorld,
+    state,
+    onUserEdit,
+    rerender,
+    canRenderEndpointHandles,
+  ]);
 
   useEffect(() => {
+    if (!supportsConnectionEditing) return;
     if (dragRef.current) return;
     if (!routePoints.pipeId) return;
 
@@ -441,9 +465,17 @@ export default function PipeConnectionTool({
       props: nextProps,
     });
     onUserEdit?.();
-  }, [kernelStore, onUserEdit, routePoints.pipeId, state, viewport.zoom]);
+  }, [
+    kernelStore,
+    onUserEdit,
+    routePoints.pipeId,
+    state,
+    viewport.zoom,
+    supportsConnectionEditing,
+  ]);
 
   useEffect(() => {
+    if (!supportsConnectionEditing) return;
     if (dragRef.current) return;
     if (!routePoints.pipeId) return;
 
@@ -474,9 +506,18 @@ export default function PipeConnectionTool({
       },
     });
     onUserEdit?.();
-  }, [containerRef, kernelStore, onUserEdit, routePoints.pipeId, state, viewport]);
+  }, [
+    containerRef,
+    kernelStore,
+    onUserEdit,
+    routePoints.pipeId,
+    state,
+    viewport,
+    supportsConnectionEditing,
+  ]);
 
   useEffect(() => {
+    if (!supportsConnectionEditing) return;
     if (!routePoints.pipeId) return;
 
     const overlay =
@@ -521,7 +562,7 @@ export default function PipeConnectionTool({
       observer.disconnect();
       if (rafId != null) window.cancelAnimationFrame(rafId);
     };
-  }, [rerender, routePoints.pipeId, routePoints.props.pipeColor]);
+  }, [rerender, routePoints.pipeId, routePoints.props.pipeColor, supportsConnectionEditing]);
 
   // ── Conditional return AFTER all hooks ───────────────────────────────────
   useEffect(() => {
@@ -536,7 +577,9 @@ export default function PipeConnectionTool({
     rerender();
   }, [routePoints.pipeId, rerender]);
 
-  if (!routePoints.pipeId || routePoints.points.length < 2) return null;
+  if (!routePoints.pipeId || routePoints.points.length < 2) {
+    return null;
+  }
 
   const { props } = routePoints;
   const points =
@@ -682,7 +725,7 @@ export default function PipeConnectionTool({
       <div className="pointer-events-none">
         {renderEndpointHandle('start', points[0]!)}
         {renderEndpointHandle('end', points[points.length - 1]!)}
-        {renderSegmentHandles()}
+        {supportsConnectionEditing ? renderSegmentHandles() : null}
       </div>
 
       {renderDragLine()}

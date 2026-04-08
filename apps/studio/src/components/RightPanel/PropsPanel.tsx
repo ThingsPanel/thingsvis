@@ -37,9 +37,31 @@ import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
 import { resolveControlText } from '@/lib/i18n/controlText';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
+import { buildFreePipeLocalPoints } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function isHostDataSourceId(id: string): boolean {
   return id === '__platform__' || /^__platform_.+__$/.test(id);
+}
+
+function hasPipeEndpointBinding(props: Record<string, unknown> | null | undefined): boolean {
+  return !!(
+    props?.sourceNodeId ||
+    props?.targetNodeId ||
+    props?.sourcePortId ||
+    props?.targetPortId
+  );
+}
+
+function isFreePipeSchema(
+  schema:
+    | {
+        type?: string;
+        props?: Record<string, unknown>;
+      }
+    | null
+    | undefined,
+): boolean {
+  return schema?.type === 'industrial/pipe' && !hasPipeEndpointBinding(schema?.props);
 }
 
 type Props = {
@@ -201,7 +223,9 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     updateNode({ data: newBindings });
   };
 
+  const isFreePipe = isFreePipeSchema(schema);
   const isResizable = (widgetEntry as any)?.resizable !== false;
+  const showSizeInputs = componentType === 'industrial/pipe' ? isFreePipe : isResizable;
   const widgetConstraints = ((widgetEntry as any)?.constraints ?? {}) as {
     minWidth?: number;
     minHeight?: number;
@@ -289,7 +313,18 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         });
         onUserEdit?.();
       } else {
-        updateNode({ size: nextSize });
+        if (isFreePipe) {
+          updateNode({
+            size: nextSize,
+            props: {
+              ...currentProps,
+              points: buildFreePipeLocalPoints(nextSize),
+              waypoints: [],
+            },
+          });
+        } else {
+          updateNode({ size: nextSize });
+        }
       }
     };
 
@@ -342,7 +377,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
           </div>
         </div>
         {/* 只有 resizable 组件才显示宽高设置 */}
-        {isResizable && (
+        {showSizeInputs && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">

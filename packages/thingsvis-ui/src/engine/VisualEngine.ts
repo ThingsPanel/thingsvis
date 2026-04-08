@@ -26,6 +26,24 @@ function isConnectorNodeType(type: string | undefined): boolean {
   return isLineNodeType(type) || isPipeNodeType(type);
 }
 
+function hasPipeEndpointBinding(props: Record<string, unknown> | null | undefined): boolean {
+  return !!(
+    props?.sourceNodeId ||
+    props?.targetNodeId ||
+    props?.sourcePortId ||
+    props?.targetPortId
+  );
+}
+
+function shouldTreatNodeAsResizable(node: NodeState, renderer: RendererFactory): boolean {
+  if (renderer.resizable !== false) {
+    return true;
+  }
+
+  const schema = node.schemaRef as { type?: string; props?: Record<string, unknown> } | null | undefined;
+  return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
+}
+
 function getConnectorPadding(strokeWidth?: unknown): number {
   const width = Number(strokeWidth ?? 2);
   return Math.max(28, Math.ceil(width * 2 + 16));
@@ -834,7 +852,7 @@ export class VisualEngine {
       // DOM overlay（仅当 renderer 支持且 overlayRoot 存在）
       let overlayBox: HTMLDivElement | undefined;
       let overlayInst: { destroy?: () => void } | undefined;
-      const isResizable = rendererToUse.resizable !== false;
+      const isResizable = shouldTreatNodeAsResizable(node, rendererToUse);
 
       if (rendererToUse.createOverlay && this.overlayRoot) {
         overlayBox = document.createElement('div');
@@ -999,7 +1017,7 @@ export class VisualEngine {
     }
 
     // 更新 overlay
-    const isResizable = existing.renderer.resizable !== false;
+    const isResizable = shouldTreatNodeAsResizable(node, existing.renderer);
     if (existing.overlayBox) {
       existing.overlayBox.style.pointerEvents = this.getOverlayPointerEvents(node.id);
       this.positionOverlayBox(existing.overlayBox, node, isResizable);

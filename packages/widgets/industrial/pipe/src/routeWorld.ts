@@ -782,6 +782,80 @@ function buildDefaultLocalEndpoints(size: { width: number; height: number }) {
   };
 }
 
+export function buildFreePipeLocalPoints(size: { width: number; height: number }) {
+  if (size.height > size.width) {
+    const centerX = size.width / 2;
+    return [
+      { x: centerX, y: 0 },
+      { x: centerX, y: size.height },
+    ];
+  }
+
+  const centerY = size.height / 2;
+  return [
+    { x: 0, y: centerY },
+    { x: size.width, y: centerY },
+  ];
+}
+
+function clampToRange(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function getRouteBounds(points: Pt[]) {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    minY = Math.min(minY, point.y);
+    maxX = Math.max(maxX, point.x);
+    maxY = Math.max(maxY, point.y);
+  }
+
+  return { minX, minY, maxX, maxY };
+}
+
+function isStraightFreeRoute(points: Pt[]): boolean {
+  if (points.length !== 2) return false;
+  return pipeIsHorizontal(points[0]!, points[1]!) || pipeIsVertical(points[0]!, points[1]!);
+}
+
+function routeEscapesNodeBox(
+  points: Pt[],
+  size: { width: number; height: number },
+  tolerance = 2,
+): boolean {
+  if (!points.length) return false;
+  const bounds = getRouteBounds(points);
+  return (
+    bounds.minX < -tolerance ||
+    bounds.minY < -tolerance ||
+    bounds.maxX > size.width + tolerance ||
+    bounds.maxY > size.height + tolerance
+  );
+}
+
+function fitStraightFreeRouteToNodeBox(
+  points: Pt[],
+  size: { width: number; height: number },
+): Pt[] {
+  if (!isStraightFreeRoute(points)) return points;
+  const canonical = buildFreePipeLocalPoints(size);
+  const start = canonical[0]!;
+  const end = canonical[1]!;
+  const source = points[0]!;
+  const target = points[1]!;
+  if (Math.abs(target.x - source.x) >= Math.abs(target.y - source.y)) {
+    const y = clampToRange((source.y + target.y) / 2, 0, size.height);
+    return start.y === end.y ? [{ x: start.x, y }, { x: end.x, y }] : [{ x: 0, y }, { x: size.width, y }];
+  }
+  const x = clampToRange((source.x + target.x) / 2, 0, size.width);
+  return start.x === end.x ? [{ x, y: start.y }, { x, y: end.y }] : [{ x, y: 0 }, { x, y: size.height }];
+}
+
 function getExplicitEndpoint(points: Pt[], endpoint: 'start' | 'end'): Pt | null {
   if (!points.length) return null;
   return endpoint === 'start' ? points[0]! : points[points.length - 1]!;
@@ -914,6 +988,13 @@ export function computeIndustrialPipeLocalRoute(
   const explicitWaypoints = localRouteToWaypoints(explicitLocalPoints);
 
   if (!hasNodeBinding && explicitLocalPoints.length >= 2) {
+    if (
+      explicitWaypoints.length === 0 &&
+      isStraightFreeRoute(explicitLocalPoints) &&
+      routeEscapesNodeBox(explicitLocalPoints, size)
+    ) {
+      return fitStraightFreeRouteToNodeBox(explicitLocalPoints, size);
+    }
     return explicitLocalPoints;
   }
 
