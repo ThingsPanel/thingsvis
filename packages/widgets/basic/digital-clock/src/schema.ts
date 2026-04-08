@@ -4,6 +4,7 @@ export const PropsSchema = z.object({
   hourCycle: z.enum(['24h', '12h']).default('24h').describe('hourCycle'),
   showSeconds: z.boolean().default(true).describe('showSeconds'),
   showDate: z.boolean().default(true).describe('showDate'),
+  layout: z.enum(['vertical', 'horizontal']).default('vertical').describe('layout'),
   align: z.enum(['left', 'center', 'right']).default('center').describe('align'),
   timeFontSize: z.number().min(18).max(120).default(32).describe('timeFontSize'),
   dateFontSize: z.number().min(10).max(48).default(16).describe('dateFontSize'),

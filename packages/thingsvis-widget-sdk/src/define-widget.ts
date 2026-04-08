@@ -275,6 +275,35 @@ export function defineWidget<TProps extends z.ZodRawShape>(
 
     // 调用渲染函数
     const lifecycle = render(element, currentProps, ctx);
+    let destroyed = false;
+    let postMountSyncFrame: number | null = null;
+    let postMountSyncAttempts = 0;
+
+    // Widgets frequently read inherited theme tokens during render().
+    // createOverlay() runs before the host inserts the element into the DOM,
+    // so sync once more after connection to refresh DOM-derived values.
+    const schedulePostMountSync = () => {
+      if (typeof window === 'undefined' || typeof window.requestAnimationFrame !== 'function') {
+        return;
+      }
+
+      const flushPostMountSync = () => {
+        postMountSyncFrame = null;
+        if (destroyed) return;
+
+        if (!element.isConnected && postMountSyncAttempts < 10) {
+          postMountSyncAttempts += 1;
+          postMountSyncFrame = window.requestAnimationFrame(flushPostMountSync);
+          return;
+        }
+
+        lifecycle.update?.(currentProps, currentCtx);
+      };
+
+      postMountSyncFrame = window.requestAnimationFrame(flushPostMountSync);
+    };
+
+    schedulePostMountSync();
 
     return {
       element,
@@ -284,6 +313,11 @@ export function defineWidget<TProps extends z.ZodRawShape>(
         lifecycle.update?.(currentProps, newCtx);
       },
       destroy: () => {
+        destroyed = true;
+        if (postMountSyncFrame !== null && typeof window !== 'undefined') {
+          window.cancelAnimationFrame?.(postMountSyncFrame);
+          postMountSyncFrame = null;
+        }
         element.removeEventListener('widget:emit', handleWidgetEmit as EventListener);
         lifecycle.destroy?.();
       },

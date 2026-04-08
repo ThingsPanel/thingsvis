@@ -8,6 +8,7 @@
         "hourCycle": "Hour Cycle",
         "showSeconds": "Show Seconds",
         "showDate": "Show Date",
+        "layout": "Layout",
         "align": "Alignment",
         "timeFontSize": "Time Font Size",
         "dateFontSize": "Date Font Size",

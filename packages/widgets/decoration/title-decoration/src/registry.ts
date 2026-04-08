@@ -16,7 +16,7 @@ export interface VariantDef {
 
 export const VARIANT_DEFS: VariantDef[] = [
   // ==================== 区域标题栏 ====================
-  { id: 'bar',           category: 'section-title', animated: false, defaultSize: { width: 500, height: 36 }, description: { zh: '竖条标题', en: 'Bar Title' } },
+  { id: 'bar',           category: 'section-title', animated: false, defaultSize: { width: 250, height: 36 }, description: { zh: '竖条标题', en: 'Bar Title' } },
   { id: 'chevron',       category: 'section-title', animated: false, defaultSize: { width: 500, height: 32 }, description: { zh: '双箭头标题', en: 'Chevron Title' } },
   { id: 'slash',         category: 'section-title', animated: false, defaultSize: { width: 500, height: 36 }, description: { zh: '斜切标题栏', en: 'Slash Tab' } },
   { id: 'trapezoid',     category: 'section-title', animated: false, defaultSize: { width: 500, height: 38 }, description: { zh: '梯形标签', en: 'Trapezoid Tab' } },

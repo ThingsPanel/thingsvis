@@ -51,10 +51,7 @@ export function useEditorSync({
   // Mark dirty on meaningful changes only
   useEffect(() => {
     if (bootstrappingRef.current) return;
-    if (!canvasInitializedRef.current) {
-      canvasInitializedRef.current = true;
-      return;
-    }
+    if (!canvasInitializedRef.current) return;
     markDirty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -77,6 +74,11 @@ export function useEditorSync({
     canvasConfig.scaleMode,
     canvasConfig.previewAlignY,
   ]);
+
+  useEffect(() => {
+    if (isBootstrapping || bootstrappingRef.current) return;
+    canvasInitializedRef.current = true;
+  }, [isBootstrapping, bootstrappingRef, canvasInitializedRef]);
 
   // Sync background changes to kernel store
   useEffect(() => {

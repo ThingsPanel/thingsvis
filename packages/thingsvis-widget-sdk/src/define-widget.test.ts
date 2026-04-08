@@ -68,4 +68,60 @@ describe('defineWidget createOverlay event bridge', () => {
 
     expect(secondEmit).not.toHaveBeenCalled();
   });
+
+  it('triggers one post-mount update after the overlay element is connected', () => {
+    const renderSpy = vi.fn();
+    const updateSpy = vi.fn();
+    const frameQueue: FrameRequestCallback[] = [];
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback: FrameRequestCallback) => {
+        frameQueue.push(callback);
+        return frameQueue.length;
+      });
+    const cancelAnimationFrameSpy = vi
+      .spyOn(window, 'cancelAnimationFrame')
+      .mockImplementation(() => {});
+
+    const themeWidget = defineWidget({
+      id: 'test/post-mount-sync',
+      name: 'Post Mount Sync',
+      schema: z.object({
+        label: z.string().default(''),
+      }),
+      render: (element) => {
+        renderSpy(element.isConnected);
+        return {
+          update: () => {
+            updateSpy(element.isConnected);
+          },
+        };
+      },
+    });
+
+    const instance = themeWidget.createOverlay?.({
+      props: {},
+      emit: vi.fn(),
+    });
+
+    expect(instance).toBeTruthy();
+    expect(renderSpy).toHaveBeenCalledWith(false);
+    expect(updateSpy).not.toHaveBeenCalled();
+
+    const host = document.createElement('div');
+    host.setAttribute('data-canvas-theme', 'ember');
+    document.body.appendChild(host);
+    host.appendChild(instance!.element);
+
+    expect(frameQueue).toHaveLength(1);
+    frameQueue.shift()?.(16.7);
+
+    expect(updateSpy).toHaveBeenCalledTimes(1);
+    expect(updateSpy).toHaveBeenCalledWith(true);
+
+    instance!.destroy?.();
+    host.remove();
+    requestAnimationFrameSpy.mockRestore();
+    cancelAnimationFrameSpy.mockRestore();
+  });
 });

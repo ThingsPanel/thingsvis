@@ -8,6 +8,7 @@
         "hourCycle": "时间制式",
         "showSeconds": "显示秒",
         "showDate": "显示日期",
+        "layout": "排列方式",
         "align": "对齐方式",
         "timeFontSize": "时间字号",
         "dateFontSize": "日期字号",

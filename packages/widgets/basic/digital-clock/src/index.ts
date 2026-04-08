@@ -33,6 +33,14 @@ function getHorizontalAlign(align: Props['align']): string {
   return 'center';
 }
 
+function getVerticalAlign(_align: Props['align']): string {
+  return 'center';
+}
+
+function layoutToFlexDirection(layout: Props['layout']): 'row' | 'column' {
+  return layout === 'horizontal' ? 'row' : 'column';
+}
+
 export const Main = defineWidget({
   ...metadata,
   schema: PropsSchema,
@@ -73,9 +81,19 @@ export const Main = defineWidget({
 
     const renderClock = () => {
       colors = resolveWidgetColors(element);
-      stackEl.style.alignItems = getHorizontalAlign(currentProps.align);
-      timeEl.style.textAlign = currentProps.align;
-      dateEl.style.textAlign = currentProps.align;
+      stackEl.style.flexDirection = layoutToFlexDirection(currentProps.layout);
+      stackEl.style.gap = currentProps.layout === 'horizontal' ? '20px' : '8px';
+      if (currentProps.layout === 'vertical') {
+        stackEl.style.justifyContent = 'center';
+        stackEl.style.alignItems = getHorizontalAlign(currentProps.align);
+        timeEl.style.textAlign = currentProps.align;
+        dateEl.style.textAlign = currentProps.align;
+      } else {
+        stackEl.style.alignItems = getVerticalAlign(currentProps.align);
+        stackEl.style.justifyContent = getHorizontalAlign(currentProps.align);
+        timeEl.style.textAlign = currentProps.align === 'left' ? 'left' : currentProps.align === 'right' ? 'right' : 'center';
+        dateEl.style.textAlign = currentProps.align === 'left' ? 'left' : currentProps.align === 'right' ? 'right' : 'center';
+      }
       timeEl.style.color = resolveLayeredColor({
         instance: currentProps.timeColor,
         theme: colors.fg,

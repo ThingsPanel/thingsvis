@@ -27,5 +27,6 @@
   "widgets.thingsvis-widget-decoration-divider.label_12": "Animation Speed",
   "widgets.thingsvis-widget-decoration-divider.label_13": "Dot Chain",
   "widgets.thingsvis-widget-decoration-divider.label_14": "Bracket Ends",
-  "widgets.thingsvis-widget-decoration-divider.label_16": "Diamond Trail"
+  "widgets.thingsvis-widget-decoration-divider.label_16": "Diamond Trail",
+  "widgets.thingsvis-widget-decoration-divider.label_17": "Blinking Dot Matrix"
 }

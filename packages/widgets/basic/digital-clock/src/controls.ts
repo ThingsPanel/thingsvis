@@ -13,6 +13,13 @@ export const controls = createControlPanel()
     });
     b.addSwitch('showSeconds', { label: `${W}.showSeconds` });
     b.addSwitch('showDate', { label: `${W}.showDate` });
+    b.addSelect('layout', {
+      label: `${W}.layout`,
+      options: [
+        { label: { zh: '竖排', en: 'Vertical' }, value: 'vertical' },
+        { label: { zh: '横排', en: 'Horizontal' }, value: 'horizontal' },
+      ],
+    });
     b.addSelect('align', {
       label: `${W}.align`,
       options: [

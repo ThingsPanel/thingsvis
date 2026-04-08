@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const PropsSchema = z.object({
   // 变体选择
   variant: z
-    .enum(['scan-line', 'slide-bar', 'hex-chain', 'signal-wave', 'dot-chain', 'bracket-ends', 'diamond-trail'])
+    .enum(['scan-line', 'slide-bar', 'hex-chain', 'signal-wave', 'dot-chain', 'bracket-ends', 'diamond-trail', 'dot-matrix-flash'])
     .default('dot-chain'),
 
   // 颜色

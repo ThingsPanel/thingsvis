@@ -17,8 +17,8 @@ export const controls = createControlPanel()
           { label: `${W}.label_5`, value: 'hex-chain' },
           { label: `${W}.label_6`, value: 'signal-wave' },
           { label: `${W}.label_13`, value: 'dot-chain' },
-          { label: `${W}.label_14`, value: 'bracket-ends' },
           { label: `${W}.label_16`, value: 'diamond-trail' },
+          { label: `${W}.label_17`, value: 'dot-matrix-flash' },
         ],
         default: 'dot-chain',
       })

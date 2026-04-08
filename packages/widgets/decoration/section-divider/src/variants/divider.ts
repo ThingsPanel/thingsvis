@@ -18,16 +18,32 @@ function svgShell(vw: number, vh: number, content: string): string {
   return `<svg width="100%" height="100%" viewBox="0 0 ${vw} ${vh}" preserveAspectRatio="none">${content}</svg>`;
 }
 
-// ===================== D1: 扫描渐变条 =====================
+// ===================== D1: 扫描渐变条（细线彗星尾 + 右端亮头，无滤镜） =====================
 function renderScanLine(ctx: RenderContext): string {
-  const vw = 500, vh = 8;
+  const vw = 500;
+  const vh = 6;
   const speed = ctx.animationSpeed;
+  const id = 'd1';
+  const beamW = 88;
+  const beamH = 2;
+  const cy = vh / 2;
+  const y = cy - beamH / 2;
+  const xStatic = (vw - beamW) / 2;
+  const anim = ctx.animated
+    ? `<animate attributeName="x" from="-${beamW}" to="${vw}" dur="${speed * 2.4}s" repeatCount="indefinite" calcMode="spline" keyTimes="0;1" keySplines="0.25,0.1,0.25,1"/>`
+    : '';
+
   return svgShell(vw, vh, `
-  <rect x="0" y="3" width="${vw}" height="2" fill="${ctx.primaryColor}" rx="1">
-    ${ctx.animated ? `<animate attributeName="width" from="0" to="${vw}" dur="${speed * 2}s" calcMode="spline" keyTimes="0;1" keySplines="0.42,0,0.58,1" repeatCount="indefinite"/>` : ''}
-  </rect>
-  <rect x="0" y="3" width="1" height="2" fill="#fff" rx="0.5">
-    ${ctx.animated ? `<animate attributeName="x" from="0" to="${vw}" dur="${speed * 2}s" calcMode="spline" keyTimes="0;1" keySplines="0.42,0,0.58,1" repeatCount="indefinite"/>` : ''}
+  <defs>
+    <linearGradient id="${id}-beam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${ctx.primaryColor}" stop-opacity="0"/>
+      <stop offset="62%" stop-color="${ctx.primaryColor}" stop-opacity="0.38"/>
+      <stop offset="100%" stop-color="${ctx.secondaryColor}" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <line x1="0" y1="${cy}" x2="${vw}" y2="${cy}" stroke="${ctx.primaryColor}" stroke-opacity="0.07" stroke-width="1"/>
+  <rect x="${ctx.animated ? -beamW : xStatic}" y="${y}" width="${beamW}" height="${beamH}" rx="1" fill="url(#${id}-beam)">
+    ${anim}
   </rect>`);
 }
 
@@ -146,6 +162,49 @@ function renderDiamondTrail(ctx: RenderContext): string {
   <polygon points="420,18 412,10 404,18 412,26" fill="none" stroke="${ctx.primaryColor}" stroke-width="0.6" opacity="0.15"/>`);
 }
 
+// ===================== D8: 闪烁点阵 =====================
+function renderMatrixFlash(ctx: RenderContext): string {
+  const vw = 500;
+  const vh = 36;
+  const rows = 2;
+  const cols = 32;
+  const cellW = vw / cols;
+  const cellH = vh / rows;
+  const dotSize = Math.min(cellW, cellH) * 0.52;
+  const id = 'd8';
+
+  let rects = '';
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const seed = (r * 17 + c * 7) % 10;
+      const isBright = seed >= 7;
+      const isMedium = seed >= 4 && seed < 7;
+      const x = c * cellW + (cellW - dotSize) / 2;
+      const y = r * cellH + (cellH - dotSize) / 2;
+      const delay = ((r * cols + c) * 0.08) % 5;
+      const dur = ctx.animationSpeed * 1.5;
+
+      let opacity = isBright ? 1 : isMedium ? 0.5 : 0.18;
+      let animTag = '';
+
+      if (ctx.animated) {
+        if (isBright) {
+          animTag = `<animate attributeName="opacity" from="1" to="0.15" dur="${dur}s" begin="${delay}s" repeatCount="indefinite"/>`;
+        } else if (isMedium) {
+          animTag = `<animate attributeName="opacity" from="0.55" to="0.08" dur="${dur * 0.9}s" begin="${delay}s" repeatCount="indefinite"/>`;
+        } else {
+          animTag = `<animate attributeName="opacity" from="0.25" to="0.05" dur="${dur * 0.7}s" begin="${delay + 0.3}s" repeatCount="indefinite"/>`;
+        }
+        opacity = isBright ? 1 : isMedium ? 0.55 : 0.25;
+      }
+
+      rects += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${dotSize.toFixed(1)}" height="${dotSize.toFixed(1)}" fill="${ctx.primaryColor}" opacity="${opacity.toFixed(2)}" rx="0.5">${animTag}</rect>`;
+    }
+  }
+
+  return svgShell(vw, vh, `<defs><filter id="${id}-g"><feGaussianBlur stdDeviation="1.2"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>${rects}`);
+}
+
 // ===================== 统一入口 =====================
 export function renderDivider(
   variant: string,
@@ -153,13 +212,14 @@ export function renderDivider(
   ctx: RenderContext,
 ): string {
   switch (variant) {
-    case 'scan-line':     return renderScanLine(ctx);
-    case 'slide-bar':     return renderSlideBar(ctx);
-    case 'hex-chain':     return renderHexChain(ctx);
-    case 'signal-wave':   return renderSignalWave(ctx);
-    case 'dot-chain':     return renderDotChain(ctx);
-    case 'bracket-ends':  return renderBracketEnds(ctx);
-    case 'diamond-trail': return renderDiamondTrail(ctx);
-    default:              return renderDotChain(ctx);
+    case 'scan-line':      return renderScanLine(ctx);
+    case 'slide-bar':      return renderSlideBar(ctx);
+    case 'hex-chain':      return renderHexChain(ctx);
+    case 'signal-wave':    return renderSignalWave(ctx);
+    case 'dot-chain':      return renderDotChain(ctx);
+    case 'bracket-ends':   return renderBracketEnds(ctx);
+    case 'diamond-trail':   return renderDiamondTrail(ctx);
+    case 'dot-matrix-flash': return renderMatrixFlash(ctx);
+    default:               return renderDotChain(ctx);
   }
 }
