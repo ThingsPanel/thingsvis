@@ -158,8 +158,11 @@ export class DataSourceManager {
       const cloudConfigs = await this.syncAdapter.loadAll();
       const cloudIds = new Set(cloudConfigs.map((c) => c.id));
 
-      // Disconnect all existing adapters and remove them from the store
+      // Snapshot adapter ids before any mutations to avoid iterator invalidation
       const existingIds = Array.from(this.adapters.keys());
+      const existingStoreIds = Object.keys(this.store?.getState().dataSources ?? {});
+
+      // Disconnect all existing adapters first
       for (const id of existingIds) {
         const adapter = this.adapters.get(id);
         if (adapter) {
@@ -171,13 +174,16 @@ export class DataSourceManager {
         }
         this.adapters.delete(id);
         this.configs.delete(id);
-        // Clear from store immediately so UI doesn't show stale data during reload
+      }
+
+      // Clear from store after all adapters are disconnected to prevent
+      // intermediate store mutations from triggering re-renders mid-loop
+      for (const id of existingIds) {
         this.store?.getState().removeDataSourceFromStore(id);
       }
 
       // Also clear any orphan store entries that have no adapter (e.g. from previous sessions)
-      const storeIds = Object.keys(this.store?.getState().dataSources ?? {});
-      for (const id of storeIds) {
+      for (const id of existingStoreIds) {
         if (!cloudIds.has(id)) {
           this.store?.getState().removeDataSourceFromStore(id);
         }

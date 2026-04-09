@@ -82,7 +82,9 @@ export const createDataSourceSlice: StateCreator<
 
   removeDataSourceFromStore: (id) => {
     set((state) => {
-      delete state.dataSources[id];
+      const next = { ...state.dataSources };
+      delete next[id];
+      state.dataSources = next;
     });
   },
 });
