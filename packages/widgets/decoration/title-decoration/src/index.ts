@@ -36,7 +36,10 @@ function resolveRenderProps(
 
 /** 哪些变体支持文字渲染 */
 const TITLE_VARIANTS = new Set([
-  'bar', 'chevron', 'slash', 'trapezoid',
+  'line-bar-1', 'line-bar-2', 'line-bar-3', 'line-bar-4', 'line-bar-5',
+  'line-bar-6', 'line-bar-8', 'line-bar-9', 'line-bar-10',
+  'line-bar-11', 'line-bar-12', 'line-bar-13', 'line-bar-16', 'skew-bar', 'center-band',
+  'stripe-overlay', 'trapezoid',
   'circuit-line', 'glow-beam', 'arc-dip', 'zigzag-flow',
   'diamond-bar', 'sleek', 'diamond-crown', 'circuit',
   'aurora', 'wing-arrow', 'bold-shield', 'bracket-frame', 'nav-tab', 'cyber-matrix',
@@ -66,7 +69,10 @@ function renderTitle(
   const ctx = getRenderContext(props);
 
   // 根据变体分类分发到对应的渲染器
-  const sectionVariants = ['bar','chevron','slash','trapezoid','glow-beam',
+  const sectionVariants = ['line-bar-1','line-bar-2','line-bar-3','line-bar-4','line-bar-5',
+    'line-bar-6','line-bar-8','line-bar-9','line-bar-10',
+    'line-bar-11','line-bar-12','line-bar-13','line-bar-16','skew-bar','center-band',
+    'stripe-overlay','trapezoid','glow-beam',
     'arc-dip','circuit-line','zigzag-flow','sparkle-dots',
     'triple-segment','corner-mark','center-fade'];
   const mainVariants = ['diamond-bar','sleek','diamond-crown','circuit',

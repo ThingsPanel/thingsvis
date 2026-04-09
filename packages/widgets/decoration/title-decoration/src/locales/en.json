@@ -1,7 +1,7 @@
 {
   "metadata": {
     "name": "Title Decoration",
-    "description": "Dashboard main title and section title decoration with 24 variants and theme color support"
+    "description": "Dashboard main and section title decoration: 20 variants (10 section + 10 main header), theme color support"
   },
   "props": {
     "useThemeColor": "Use Theme Color",
@@ -33,9 +33,24 @@
   "widgets.thingsvis-widget-decoration-title.label_14": "Variant List",
   "widgets.thingsvis-widget-decoration-title.label_15": "Use Theme Color",
   "widgets.thingsvis-widget-decoration-title.placeholder_1": "Enter title",
-  "widgets.thingsvis-widget-decoration-title.variant.bar": "Bar Title",
-  "widgets.thingsvis-widget-decoration-title.variant.chevron": "Chevron Title",
-  "widgets.thingsvis-widget-decoration-title.variant.slash": "Slash Tab",
+  "variant.bar": "Deprecated",
+  "variant.chevron": "Deprecated",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-1": "Left Accent Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-2": "Slash Fill Tag",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-3": "Midpoint Glow",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-4": "Scan Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-5": "Fade Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-6": "Line Arrow",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-8": "Comment Prefix Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-9": "Dot Trail Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-10": "Bottom Glow Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-11": "Gradient Trapezoid",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-12": "Double Line Center",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-13": "L-Corner Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.line-bar-16": "Icon Fade Band",
+  "widgets.thingsvis-widget-decoration-title.variant.skew-bar": "Skew Bar",
+  "widgets.thingsvis-widget-decoration-title.variant.center-band": "Center Band",
+  "widgets.thingsvis-widget-decoration-title.variant.stripe-overlay": "Stripe Overlay",
   "widgets.thingsvis-widget-decoration-title.variant.trapezoid": "Trapezoid Tab",
   "widgets.thingsvis-widget-decoration-title.variant.glow-beam": "Glow Beam",
   "widgets.thingsvis-widget-decoration-title.variant.arc-dip": "Arc Dip",

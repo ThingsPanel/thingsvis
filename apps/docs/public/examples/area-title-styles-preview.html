@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>区域标题样式预览 v4 · 渐变 / 半透明标题</title>
+  <style>
+    :root {
+      --bg: #080d1e;
+      --bg-card: rgba(8, 16, 36, 0.72);
+      --c: #00c2ff;
+      --c2: #7fdbff;
+      --c-glow: rgba(0, 194, 255, 0.25);
+      --c-dim: rgba(0, 194, 255, 0.45);
+      --c-line: rgba(0, 194, 255, 0.18);
+      --text: #dff2ff;
+      --muted: rgba(180, 220, 255, 0.5);
+      --gold: #f0b429;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 2.5rem 2rem 4rem;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+      color: var(--c2);
+      text-shadow: 0 0 28px var(--c-glow);
+    }
+
+    p.sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      line-height: 1.65;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 1.5rem;
+      max-width: 1180px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 194, 255, 0.1);
+      border-radius: 3px;
+      padding: 1.25rem 1.5rem;
+    }
+
+    .label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .label::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 0 6px var(--c);
+    }
+
+    /* S1 · 左缘高光条 + 标题下短渐变线（替代四角 HUD 框） */
+    .s1 {
+      display: flex;
+      align-items: stretch;
+      gap: 0.75rem;
+      min-height: 36px;
+    }
+
+    .s1__accent {
+      width: 3px;
+      border-radius: 1px;
+      background: linear-gradient(180deg, var(--c2), var(--c) 55%, rgba(0, 194, 255, 0.25));
+      box-shadow: 0 0 10px var(--c-glow);
+      flex-shrink: 0;
+    }
+
+    .s1__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .s1__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--c2);
+    }
+
+    .s1__underline {
+      height: 2px;
+      max-width: 12rem;
+      border-radius: 1px;
+      background: linear-gradient(90deg, var(--c), rgba(0, 194, 255, 0.15) 70%, transparent);
+      box-shadow: 0 0 8px var(--c-glow);
+    }
+
+    .s1__trail {
+      flex: 1;
+      align-self: center;
+      height: 1px;
+      min-width: 2rem;
+      background: linear-gradient(90deg, var(--c-line), transparent 92%);
+    }
+
+    /* ================================================================
+       S2 · 斜切填充标签
+       特点：背景渐变色 + clip-path 斜切右边
+       简洁有力，参考花瓣/站酷经典风格
+    ================================================================ */
+    .s2 {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .s2__inner {
+      padding: 0.4rem 1.6rem 0.45rem 1.1rem;
+      background: linear-gradient(
+        135deg,
+        rgba(0, 194, 255, 0.18) 0%,
+        rgba(0, 194, 255, 0.08) 100%
+      );
+      clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 100%, 0 100%);
+      border-top: 1px solid rgba(0, 194, 255, 0.6);
+      border-left: 1px solid rgba(0, 194, 255, 0.4);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+    }
+
+    .s2__trail {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), transparent 70%);
+    }
+
+    /* ================================================================
+       S3 · 横线中点光晕
+       特点：细横线 + 居中菱形光点 + 两侧渐隐
+       极简，留白感强
+    ================================================================ */
+    .s3 {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      min-height: 40px;
+    }
+
+    .s3__line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--c-dim));
+      position: relative;
+    }
+
+    .s3__line--right {
+      background: linear-gradient(90deg, var(--c-dim), transparent);
+    }
+
+    .s3__line--right::before {
+      content: "";
+      position: absolute;
+      right: -1px;
+      top: -3px;
+      width: 7px;
+      height: 7px;
+      background: var(--c);
+      transform: rotate(45deg);
+      box-shadow: 0 0 8px var(--c-glow);
+    }
+
+    .s3__diamond {
+      width: 10px;
+      height: 10px;
+      background: var(--c);
+      transform: rotate(45deg);
+      box-shadow:
+        0 0 8px var(--c),
+        0 0 20px var(--c-glow),
+        inset 0 0 3px rgba(255,255,255,0.4);
+      flex-shrink: 0;
+    }
+
+    .s3__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--c2);
+      white-space: nowrap;
+    }
+
+    /* ================================================================
+       S4 · 扫描线标签
+       特点：背景板内嵌两条细横线（模拟扫描轨道）+ 标题居中
+       FUI 感，精密感
+    ================================================================ */
+    .s4 {
+      position: relative;
+      background: rgba(0, 30, 60, 0.45);
+      border: 1px solid rgba(0, 194, 255, 0.2);
+      padding: 0.65rem 1rem;
+    }
+
+    .s4::before,
+    .s4::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      height: 1px;
+      background: linear-gradient(90deg,
+        var(--c) 0%,
+        var(--c-dim) 20%,
+        var(--c-dim) 80%,
+        var(--c) 100%
+      );
+      opacity: 0.5;
+    }
+
+    .s4::before { top: 6px; }
+    .s4::after  { bottom: 6px; }
+
+    .s4__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--c2);
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .s4__scan {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        var(--c) 40%,
+        var(--c) 60%,
+        transparent 100%
+      );
+      opacity: 0.25;
+      animation: s4-scan 2.8s ease-in-out infinite;
+    }
+
+    @keyframes s4-scan {
+      0%   { left: 8px; opacity: 0.3; }
+      80%  { left: calc(100% - 10px); opacity: 0.3; }
+      100% { left: 8px; opacity: 0; }
+    }
+
+    /* S5 · 左实右透通栏渐变 + 斜切右缘（参考大屏横条） */
+    .s5 {
+      width: 100%;
+    }
+
+    .s5__bar {
+      display: flex;
+      align-items: center;
+      min-height: 40px;
+      padding: 0.42rem 2.25rem 0.48rem 0.85rem;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 72, 120, 0.65) 0%,
+        rgba(0, 140, 200, 0.22) 38%,
+        rgba(0, 194, 255, 0.06) 72%,
+        transparent 100%
+      );
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 100%, 0 100%);
+      border-left: 2px solid rgba(0, 194, 255, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(127, 219, 255, 0.14),
+        0 8px 24px rgba(0, 40, 80, 0.25);
+    }
+
+    .s5__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #f0f9ff;
+      text-shadow: 0 0 18px var(--c-glow);
+    }
+
+    /* S6 · 标题 + 连续渐变轨 + 末端小箭（替代密集短划线） */
+    .s6 {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 34px;
+    }
+
+    .s6__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .s6__track {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      min-width: 0;
+      height: 10px;
+    }
+
+    .s6__line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), var(--c-line) 45%, rgba(0, 194, 255, 0.08));
+      position: relative;
+    }
+
+    .s6__line::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), transparent);
+    }
+
+    .s6__cap {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 4px 0 4px 7px;
+      border-color: transparent transparent transparent var(--c-dim);
+      opacity: 0.85;
+      flex-shrink: 0;
+      filter: drop-shadow(0 0 4px var(--c-glow));
+    }
+
+    /* S7 · 双轨分隔 + 中间断点（替代厚重凹陷盒） */
+    .s7 {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      align-items: flex-start;
+    }
+
+    .s7__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+    }
+
+    .s7__rule {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      gap: 0.5rem;
+    }
+
+    .s7__rule-line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), transparent);
+      max-width: 42%;
+    }
+
+    .s7__rule-line:last-child {
+      background: linear-gradient(90deg, transparent, var(--c-dim));
+    }
+
+    .s7__rule-gap {
+      width: 6px;
+      height: 6px;
+      border: 1px solid rgba(0, 194, 255, 0.45);
+      transform: rotate(45deg);
+      flex-shrink: 0;
+      opacity: 0.75;
+      box-shadow: 0 0 6px var(--c-glow);
+    }
+
+    /* S8 · 「//」代码感前缀 + 细线延伸（替代三段竖条） */
+    .s8 {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 34px;
+    }
+
+    .s8__prefix {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: rgba(127, 219, 255, 0.45);
+      letter-spacing: 0.02em;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .s8__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+      white-space: nowrap;
+    }
+
+    .s8__trail {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-line), transparent 88%);
+      position: relative;
+      min-width: 1.5rem;
+    }
+
+    .s8__trail::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 3px;
+      background: var(--c);
+      border-radius: 1px;
+      opacity: 0.7;
+      box-shadow: 0 0 6px var(--c-glow);
+    }
+
+    /* S9 · 三点节奏 + 单条渐隐线（替代套娃菱形） */
+    .s9 {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-height: 34px;
+    }
+
+    .s9__dots {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .s9__dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--c);
+      opacity: 0.35;
+      box-shadow: 0 0 6px var(--c-glow);
+    }
+
+    .s9__dots span:nth-child(2) {
+      opacity: 0.65;
+      transform: scale(1.15);
+    }
+
+    .s9__dots span:nth-child(3) {
+      opacity: 0.95;
+    }
+
+    .s9__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+      white-space: nowrap;
+    }
+
+    .s9__line {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), rgba(0, 194, 255, 0.06) 72%, transparent);
+      position: relative;
+      min-width: 2rem;
+    }
+
+    .s9__line::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: -2px;
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 3px 0 3px 5px;
+      border-color: transparent transparent transparent rgba(0, 194, 255, 0.35);
+    }
+
+    /* S10 · 半透明竖渐变底 + 底部整条青线发光（非小盒子顶边） */
+    .s10 {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .s10__panel {
+      padding: 0.45rem 1rem 0.5rem;
+      background: linear-gradient(
+        180deg,
+        rgba(0, 60, 110, 0.42) 0%,
+        rgba(8, 20, 45, 0.28) 55%,
+        rgba(4, 12, 28, 0.2) 100%
+      );
+      border: 1px solid rgba(0, 194, 255, 0.14);
+      border-bottom: none;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .s10__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--c2);
+    }
+
+    .s10__glow {
+      height: 2px;
+      width: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(0, 194, 255, 0.35) 18%,
+        var(--c2) 48%,
+        var(--c) 52%,
+        rgba(0, 194, 255, 0.35) 82%,
+        transparent 100%
+      );
+      box-shadow: 0 0 14px var(--c-glow), 0 0 28px rgba(0, 194, 255, 0.15);
+    }
+
+    /* ---------- S13–S17：更多渐变 / 半透明标题 ---------- */
+
+    /* S13 · 半透明渐变条 + 左上 / 右下 L 角标 */
+    .s13 {
+      position: relative;
+      width: 100%;
+      padding: 0.48rem 1rem 0.52rem;
+      background: linear-gradient(
+        95deg,
+        rgba(0, 90, 150, 0.4) 0%,
+        rgba(0, 40, 80, 0.22) 55%,
+        rgba(0, 20, 45, 0.12) 100%
+      );
+      border: 1px solid rgba(0, 194, 255, 0.12);
+    }
+
+    .s13::before,
+    .s13::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+    }
+
+    .s13::before {
+      top: 5px;
+      left: 5px;
+      border-top: 2px solid var(--c-dim);
+      border-left: 2px solid var(--c-dim);
+    }
+
+    .s13::after {
+      bottom: 5px;
+      right: 5px;
+      border-bottom: 2px solid var(--c-dim);
+      border-right: 2px solid var(--c-dim);
+    }
+
+    .s13__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* S14 · 平行四边形渐变条 + 右侧三道斜线 */
+    .s14 {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      width: 100%;
+      min-height: 40px;
+      overflow: hidden;
+      border-radius: 2px;
+    }
+
+    .s14__skew {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 0 1.25rem;
+      background: linear-gradient(
+        100deg,
+        rgba(0, 120, 180, 0.45) 0%,
+        rgba(0, 60, 100, 0.2) 70%,
+        transparent 100%
+      );
+      transform: skewX(-8deg);
+      margin-left: -6px;
+      padding-left: 1.5rem;
+      border-left: 2px solid rgba(0, 194, 255, 0.45);
+      box-shadow: inset 0 0 20px rgba(0, 194, 255, 0.06);
+    }
+
+    .s14__text {
+      transform: skewX(8deg);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #eaf8ff;
+      text-shadow: 0 0 12px var(--c-glow);
+    }
+
+    .s14__ticks {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 0.35rem 0 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .s14__ticks span {
+      width: 3px;
+      height: 22px;
+      background: linear-gradient(180deg, var(--c2), transparent);
+      opacity: 0.55;
+      transform: skewX(-12deg);
+    }
+
+    /* S15 · 中间亮、两侧暗的横向渐变条 */
+    .s15 {
+      width: 100%;
+      padding: 0.45rem 1rem;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 30, 60, 0.35) 0%,
+        rgba(0, 100, 160, 0.35) 42%,
+        rgba(0, 100, 160, 0.35) 58%,
+        rgba(0, 30, 60, 0.2) 100%
+      );
+      border: 1px solid rgba(0, 194, 255, 0.1);
+      border-radius: 2px;
+      text-align: center;
+    }
+
+    .s15__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--c2);
+      text-shadow: 0 0 16px var(--c-glow);
+    }
+
+    /* S16 · 小方标 + 左→右渐隐长条 */
+    .s16 {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      width: 100%;
+      min-height: 38px;
+    }
+
+    .s16__icon {
+      width: 10px;
+      height: 10px;
+      background: var(--c);
+      flex-shrink: 0;
+      box-shadow: 0 0 10px var(--c-glow);
+      border-radius: 1px;
+    }
+
+    .s16__band {
+      flex: 1;
+      min-width: 0;
+      padding: 0.38rem 1rem 0.42rem;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 80, 130, 0.5) 0%,
+        rgba(0, 120, 170, 0.18) 40%,
+        transparent 100%
+      );
+      border-top: 1px solid rgba(0, 194, 255, 0.25);
+    }
+
+    .s16__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+    }
+
+    /* S17 · 斜纹叠层 + 半透明底 */
+    .s17 {
+      position: relative;
+      width: 100%;
+      padding: 0.48rem 1rem;
+      overflow: hidden;
+      border-radius: 2px;
+      border: 1px solid rgba(0, 194, 255, 0.14);
+    }
+
+    .s17__bg {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(0, 70, 120, 0.5) 0%,
+          rgba(0, 25, 50, 0.25) 100%
+        );
+    }
+
+    .s17__stripes {
+      position: absolute;
+      inset: 0;
+      opacity: 0.12;
+      background: repeating-linear-gradient(
+        -55deg,
+        transparent,
+        transparent 4px,
+        rgba(127, 219, 255, 0.9) 4px,
+        rgba(127, 219, 255, 0.9) 5px
+      );
+      pointer-events: none;
+    }
+
+    .s17__text {
+      position: relative;
+      z-index: 1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: var(--c2);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+    }
+
+    /* ================================================================
+       S11 · 渐变背景梯形 + 端点装饰
+       特点：渐变背景填满左侧梯形区域，右边渐隐
+       稳重感，适合政务/生产大屏
+    ================================================================ */
+    .s11 {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .s11__tab {
+      padding: 0.35rem 1.1rem 0.4rem 0.85rem;
+      background: linear-gradient(
+        90deg,
+        rgba(0, 194, 255, 0.28) 0%,
+        rgba(0, 194, 255, 0.1) 100%
+      );
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 100%, 0 100%);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--c2);
+      border-top: 1px solid rgba(0, 194, 255, 0.55);
+      flex-shrink: 0;
+    }
+
+    .s11__trail {
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--c-dim), transparent 80%);
+      position: relative;
+    }
+
+    .s11__trail::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: -3px;
+      width: 7px;
+      height: 7px;
+      border-top: 1px solid var(--c-dim);
+      border-right: 1px solid var(--c-dim);
+      transform: rotate(45deg);
+    }
+
+    /* ================================================================
+       S12 · 双划线居中标题
+       特点：标题居中，上下各有短划线
+       经典科技风，适合各类大屏
+    ================================================================ */
+    .s12 {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-height: 38px;
+    }
+
+    .s12__line {
+      flex: 1;
+      height: 1px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .s12__line::before {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--c-line);
+    }
+
+    .s12__line::after {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-top: 1px solid var(--c);
+      border-right: 1px solid var(--c);
+      transform: rotate(45deg) translateY(2px);
+      flex-shrink: 0;
+    }
+
+    .s12__line--right::before {
+      background: linear-gradient(90deg, var(--c-line), transparent 60%);
+    }
+
+    .s12__line--right::after {
+      display: none;
+    }
+
+    .s12__line--right::before {
+      background: linear-gradient(90deg, var(--c-dim), transparent);
+    }
+
+    .s12__line--right::after {
+      display: block;
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-top: 1px solid var(--c);
+      border-left: 1px solid var(--c);
+      border-right: none;
+      transform: rotate(45deg) translateY(-3px);
+      flex-shrink: 0;
+    }
+
+    .s12__text {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--c2);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>区域标题样式预览 v4 · 渐变 / 半透明</h1>
+  <p class="sub">
+    已移除 S5 胶囊与 S10 顶边毛玻璃小盒。S5 / S10 改为横向渐变通栏与半透明竖渐变 + 底边整段发光；并新增 S13–S17（L 角标渐变条、斜切条、居中亮带、方标长条、斜纹叠层）。S2 亦为斜切渐变，可与 S5 对比。浏览器打开本文件即可预览。
+  </p>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="label">S1 · 左缘高光条 + 标题下短渐变线</div>
+      <div class="s1">
+        <div class="s1__accent" aria-hidden="true"></div>
+        <div class="s1__body">
+          <span class="s1__text">数据概览</span>
+          <div class="s1__underline" aria-hidden="true"></div>
+        </div>
+        <div class="s1__trail" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S2 · 斜切填充标签</div>
+      <div class="s2">
+        <span class="s2__inner">区域标题文案</span>
+        <div class="s2__trail"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S3 · 横线中点光晕</div>
+      <div class="s3">
+        <div class="s3__line"></div>
+        <div class="s3__diamond"></div>
+        <span class="s3__text">实时监控</span>
+        <div class="s3__line s3__line--right"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S4 · 扫描线标签（带动效）</div>
+      <div class="s4">
+        <div class="s4__scan"></div>
+        <div class="s4__text">数据采集</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S5 · 左实右透通栏渐变 + 斜切右缘</div>
+      <div class="s5">
+        <div class="s5__bar">
+          <span class="s5__text">分析看板</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S6 · 连续渐变轨 + 末端小三角</div>
+      <div class="s6">
+        <span class="s6__text">生产统计</span>
+        <div class="s6__track">
+          <div class="s6__line" aria-hidden="true"></div>
+          <div class="s6__cap" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S7 · 双轨分隔 + 中间菱形断点</div>
+      <div class="s7">
+        <span class="s7__text">设备状态</span>
+        <div class="s7__rule">
+          <span class="s7__rule-line" aria-hidden="true"></span>
+          <span class="s7__rule-gap" aria-hidden="true"></span>
+          <span class="s7__rule-line" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S8 · 「//」前缀 + 细线延伸</div>
+      <div class="s8">
+        <span class="s8__prefix" aria-hidden="true">//</span>
+        <span class="s8__text">告警记录</span>
+        <div class="s8__trail" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S9 · 三点节奏 + 渐隐线</div>
+      <div class="s9">
+        <div class="s9__dots" aria-hidden="true"><span></span><span></span><span></span></div>
+        <span class="s9__text">能耗分析</span>
+        <div class="s9__line" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S10 · 半透明竖渐变 + 底部整条青线发光</div>
+      <div class="s10">
+        <div class="s10__panel">
+          <span class="s10__text">运维中心</span>
+        </div>
+        <div class="s10__glow" aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S11 · 渐变背景梯形</div>
+      <div class="s11">
+        <span class="s11__tab">系统概览</span>
+        <div class="s11__trail"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S12 · 双划线居中标题</div>
+      <div class="s12">
+        <div class="s12__line"></div>
+        <span class="s12__text">质量检测</span>
+        <div class="s12__line s12__line--right"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S13 · 半透明渐变条 + 左上 / 右下 L 角标</div>
+      <div class="s13">
+        <span class="s13__text">综合监控</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S14 · 斜切渐变条 + 右侧三道斜线</div>
+      <div class="s14">
+        <div class="s14__skew">
+          <span class="s14__text">运行态势</span>
+        </div>
+        <div class="s14__ticks" aria-hidden="true"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S15 · 中间亮、两侧暗（横向渐变带）</div>
+      <div class="s15">
+        <span class="s15__text">数据总览</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S16 · 小方标 + 左→右渐隐长条</div>
+      <div class="s16">
+        <span class="s16__icon" aria-hidden="true"></span>
+        <div class="s16__band">
+          <span class="s16__text">实时指标</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">S17 · 斜纹叠层 + 半透明底</div>
+      <div class="s17">
+        <div class="s17__bg" aria-hidden="true"></div>
+        <div class="s17__stripes" aria-hidden="true"></div>
+        <span class="s17__text">告警中心</span>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
