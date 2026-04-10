@@ -37,7 +37,7 @@ import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
 import { resolveControlText } from '@/lib/i18n/controlText';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
-import { buildFreePipeLocalPoints } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
+import { preserveFreePipeLocalRouteOnResize } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function isHostDataSourceId(id: string): boolean {
   return id === '__platform__' || /^__platform_.+__$/.test(id);
@@ -62,6 +62,24 @@ function isFreePipeSchema(
     | undefined,
 ): boolean {
   return schema?.type === 'industrial/pipe' && !hasPipeEndpointBinding(schema?.props);
+}
+
+export function buildFreePipePropsPanelSizeProps(
+  currentProps: Record<string, unknown> | null | undefined,
+  previousSize: { width: number; height: number } | undefined,
+  nextSize: { width: number; height: number },
+) {
+  const route = preserveFreePipeLocalRouteOnResize(
+    currentProps?.points as Array<{ x: number; y: number }> | undefined,
+    previousSize,
+    nextSize,
+  );
+
+  return {
+    ...(currentProps ?? {}),
+    points: route.points,
+    waypoints: route.waypoints,
+  };
 }
 
 type Props = {
@@ -316,11 +334,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         if (isFreePipe) {
           updateNode({
             size: nextSize,
-            props: {
-              ...currentProps,
-              points: buildFreePipeLocalPoints(nextSize),
-              waypoints: [],
-            },
+            props: buildFreePipePropsPanelSizeProps(currentProps, schema?.size, nextSize),
           });
         } else {
           updateNode({ size: nextSize });

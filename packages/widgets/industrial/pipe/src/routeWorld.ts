@@ -795,7 +795,47 @@ export function buildFreePipeLocalPoints(size: { width: number; height: number }
   return [
     { x: 0, y: centerY },
     { x: size.width, y: centerY },
-  ];
+   ];
+}
+
+export function preserveFreePipeLocalRouteOnResize(
+  routePointsIn: Pt[] | undefined,
+  previousSizeIn: { width: number; height: number } | undefined,
+  nextSizeIn: { width: number; height: number },
+) {
+  const previousSize = clampMinSize(previousSizeIn);
+  const nextSize = clampMinSize(nextSizeIn);
+  const normalized = normalizeLocalRoutePoints(routePointsIn);
+
+  if (normalized.length < 2) {
+    const points = buildFreePipeLocalPoints(nextSize);
+    return {
+      points,
+      waypoints: [],
+      usedFallback: true,
+    };
+  }
+
+  const scaled = normalized.map((point) => ({
+    x: clampToRange((point.x / previousSize.width) * nextSize.width, 0, nextSize.width),
+    y: clampToRange((point.y / previousSize.height) * nextSize.height, 0, nextSize.height),
+  }));
+  const points = normalizeLocalRoutePoints(scaled);
+
+  if (points.length < 2) {
+    const fallbackPoints = buildFreePipeLocalPoints(nextSize);
+    return {
+      points: fallbackPoints,
+      waypoints: [],
+      usedFallback: true,
+    };
+  }
+
+  return {
+    points,
+    waypoints: localRouteToWaypoints(points),
+    usedFallback: false,
+  };
 }
 
 function clampToRange(value: number, min: number, max: number) {

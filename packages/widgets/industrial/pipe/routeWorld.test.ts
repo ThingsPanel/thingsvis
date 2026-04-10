@@ -4,6 +4,7 @@ import {
   fitWorldRouteToNodeBox,
   localRouteToWaypoints,
   movePipeSegment,
+  preserveFreePipeLocalRouteOnResize,
   worldRouteToLocalPoints,
   worldRouteToLocalWaypoints,
 } from './src/routeWorld';
@@ -444,6 +445,90 @@ describe('industrial pipe routeWorld helpers', () => {
       { x: 36, y: 96 },
       { x: 176, y: 96 },
     ]);
+  });
+
+  it('preserves a free vertical route when resizing the pipe box', () => {
+    const resized = preserveFreePipeLocalRouteOnResize(
+      [
+        { x: 6, y: 0 },
+        { x: 6, y: 240 },
+      ],
+      { width: 12, height: 240 },
+      { width: 24, height: 360 },
+    );
+
+    expect(resized.usedFallback).toBe(false);
+    expect(resized.points).toEqual([
+      { x: 12, y: 0 },
+      { x: 12, y: 360 },
+    ]);
+    expect(resized.waypoints).toEqual([]);
+  });
+
+  it('preserves an authored orthogonal elbow when resizing a free pipe', () => {
+    const resized = preserveFreePipeLocalRouteOnResize(
+      [
+        { x: 20, y: 30 },
+        { x: 140, y: 30 },
+        { x: 140, y: 90 },
+        { x: 260, y: 90 },
+      ],
+      { width: 260, height: 120 },
+      { width: 390, height: 240 },
+    );
+
+    expect(resized.usedFallback).toBe(false);
+    expect(resized.points).toEqual([
+      { x: 30, y: 60 },
+      { x: 210, y: 60 },
+      { x: 210, y: 180 },
+      { x: 390, y: 180 },
+    ]);
+    expect(resized.waypoints).toEqual([
+      { x: 210, y: 60 },
+      { x: 210, y: 180 },
+    ]);
+  });
+
+  it('keeps a free multi-bend route canonical after resize', () => {
+    const resized = preserveFreePipeLocalRouteOnResize(
+      [
+        { x: 12, y: 24 },
+        { x: 120, y: 24 },
+        { x: 120, y: 72 },
+        { x: 220, y: 72 },
+        { x: 220, y: 120 },
+      ],
+      { width: 220, height: 120 },
+      { width: 440, height: 180 },
+    );
+
+    expect(resized.usedFallback).toBe(false);
+    expect(resized.points).toHaveLength(5);
+    expect(resized.points[0]).toEqual({ x: 24, y: 36 });
+    expect(resized.points[1]!.x).toBeCloseTo(240, 6);
+    expect(resized.points[1]!.y).toBe(36);
+    expect(resized.points[2]!.x).toBeCloseTo(240, 6);
+    expect(resized.points[2]!.y).toBe(108);
+    expect(resized.points[3]).toEqual({ x: 440, y: 108 });
+    expect(resized.points[4]).toEqual({ x: 440, y: 180 });
+    expect(resized.waypoints).toHaveLength(3);
+    expect(resized.waypoints[0]!.x).toBeCloseTo(240, 6);
+    expect(resized.waypoints[0]!.y).toBe(36);
+    expect(resized.waypoints[1]!.x).toBeCloseTo(240, 6);
+    expect(resized.waypoints[1]!.y).toBe(108);
+    expect(resized.waypoints[2]).toEqual({ x: 440, y: 108 });
+  });
+
+  it('falls back to default free-pipe geometry when resize input route is invalid', () => {
+    const resized = preserveFreePipeLocalRouteOnResize([], { width: 0, height: 0 }, { width: 40, height: 120 });
+
+    expect(resized.usedFallback).toBe(true);
+    expect(resized.points).toEqual([
+      { x: 20, y: 0 },
+      { x: 20, y: 120 },
+    ]);
+    expect(resized.waypoints).toEqual([]);
   });
 
   it('falls back to overlay or proxy DOM bounds when linkedNodes are unavailable', () => {

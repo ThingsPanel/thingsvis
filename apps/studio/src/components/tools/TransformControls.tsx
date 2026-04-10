@@ -11,7 +11,7 @@ import {
   isAspectRatioLocked,
   resizeDimensionWithAspectRatio,
 } from '@/lib/canvas/aspectRatio';
-import { buildFreePipeLocalPoints } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
+import { preserveFreePipeLocalRouteOnResize } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -44,6 +44,61 @@ function isFreePipeSchema(
     | undefined,
 ): boolean {
   return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
+}
+
+function getNodeRotation(
+  schema:
+    | {
+        props?: Record<string, unknown>;
+        rotation?: number;
+      }
+    | null
+    | undefined,
+): number {
+  const raw = schema?.props?._rotation ?? schema?.props?.rotation ?? schema?.rotation ?? 0;
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+}
+
+export function shouldUseConnectorMinimalChrome(
+  schemas: Array<
+    | {
+        type?: string;
+        props?: Record<string, unknown>;
+        rotation?: number;
+      }
+    | null
+    | undefined
+  >,
+): boolean {
+  const validSchemas = schemas.filter((schema): schema is NonNullable<(typeof schemas)[number]> =>
+    Boolean(schema),
+  );
+  if (validSchemas.length === 0) return false;
+  if (!validSchemas.every((schema) => isConnectorNodeType(schema.type))) return false;
+  if (validSchemas.length !== 1) return true;
+
+  const singleSchema = validSchemas[0];
+  if (!isFreePipeSchema(singleSchema)) return true;
+
+  return Math.abs(getNodeRotation(singleSchema)) > 0.01;
+}
+
+export function buildFreePipeResizeProps(
+  currentProps: Record<string, unknown> | null | undefined,
+  previousSize: { width: number; height: number } | undefined,
+  nextSize: { width: number; height: number },
+) {
+  const route = preserveFreePipeLocalRouteOnResize(
+    currentProps?.points as Array<{ x: number; y: number }> | undefined,
+    previousSize,
+    nextSize,
+  );
+
+  return {
+    ...(currentProps ?? {}),
+    points: route.points,
+    waypoints: route.waypoints,
+  };
 }
 
 function resolveNodeAspectRatio(
@@ -1039,15 +1094,10 @@ export default function TransformControls({
           } else {
             if (isFreePipeSchema(schema)) {
               const currentProps = { ...((schema?.props ?? {}) as Record<string, unknown>) };
-              const straightPoints = buildFreePipeLocalPoints({ width, height });
               kernelStore.getState().updateNode(nodeId, {
                 position: { x, y },
                 size: { width, height },
-                props: {
-                  ...currentProps,
-                  points: straightPoints,
-                  waypoints: [],
-                },
+                props: buildFreePipeResizeProps(currentProps, schema?.size, { width, height }),
               });
             } else {
               kernelStore
@@ -1198,7 +1248,11 @@ export default function TransformControls({
       const allowFreePipeResize =
         moveableTargetIds.length === 1 &&
         isFreePipeSchema((singleSelectedNode?.schemaRef as any) ?? null);
-      const useConnectorMinimalChrome = onlyConnectorsSelected && !allowFreePipeResize;
+      const useConnectorMinimalChrome =
+        onlyConnectorsSelected &&
+        shouldUseConnectorMinimalChrome(
+          validSelectedIds.map((id) => (state.nodesById[id]?.schemaRef as any) ?? null),
+        );
 
       queryContainer.classList.toggle('connector-moveable-minimal', useConnectorMinimalChrome);
 

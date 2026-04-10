@@ -45,11 +45,13 @@ type DragState =
       pipeId: string;
       segmentIndex: number;
       axis: 'x' | 'y';
+      startWorld: Pt;
       basePoints: Pt[];
       currentWorld: Pt;
     };
 
 const PIPE_DETACH_DISTANCE_PX = 24;
+const PIPE_SEGMENT_DRAG_DISTANCE_PX = 6;
 
 function worldDistance(a: Pt, b: Pt): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
@@ -214,6 +216,50 @@ function hasPipeConnectionBinding(props: Record<string, unknown> | null | undefi
     props?.sourcePortId ||
     props?.targetPortId
   );
+}
+
+export type PipeSegmentHitRegion = {
+  key: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  segmentIndex: number;
+};
+
+export function buildPipeSegmentHitRegions(
+  points: Pt[],
+  worldToScreen: (wx: number, wy: number) => Pt,
+  size = 18,
+): PipeSegmentHitRegion[] {
+  if (!Array.isArray(points) || points.length < 2) return [];
+
+  const half = size / 2;
+  return points.slice(0, -1).flatMap((point, segmentIndex) => {
+    const next = points[segmentIndex + 1];
+    if (!next) return [];
+
+    const start = worldToScreen(point.x, point.y);
+    const end = worldToScreen(next.x, next.y);
+    const mid = { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 };
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) {
+      return [];
+    }
+
+    return [
+      {
+        key: `seg-${segmentIndex}`,
+        left: mid.x - half,
+        top: mid.y - half,
+        width: size,
+        height: size,
+        segmentIndex,
+      },
+    ];
+  });
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -384,6 +430,13 @@ export default function PipeConnectionTool({
         }
         commitWorldRoute(nextWorldPoints);
       } else {
+        const segmentDragDistanceWorld =
+          PIPE_SEGMENT_DRAG_DISTANCE_PX / Math.max(0.0001, getViewport().zoom);
+        if (worldDistance(ds.startWorld, ds.currentWorld) <= segmentDragDistanceWorld) {
+          rerender();
+          return;
+        }
+
         commitWorldRoute(
           movePipeSegment(ds.basePoints, ds.segmentIndex, ds.currentWorld, {
             sourceAnchor: nodeProps.sourceAnchor as any,
@@ -642,48 +695,42 @@ export default function PipeConnectionTool({
     );
   };
 
-  const renderSegmentHandles = () => {
-    return points.slice(0, -1).map((pt, i) => {
-      const next = points[i + 1]!;
-      const mid: Pt = { x: (pt.x + next.x) / 2, y: (pt.y + next.y) / 2 };
-      const screen = worldToScreen(mid.x, mid.y);
-      const isDragging =
-        dragRef.current?.kind === 'segment' && (dragRef.current as any).segmentIndex === i;
-      const isEndpoint = i === 0 || i === points.length - 2;
-
-      return (
-        <div
-          key={`seg-${i}`}
-          className={`absolute rounded border transition-all duration-75 ${
-            isDragging
-              ? 'bg-orange-500 border-orange-600 shadow-lg'
-              : 'bg-white/90 border-orange-400 hover:bg-orange-50'
-          }`}
-          style={{
-            left: screen.x - 9,
-            top: screen.y - 9,
-            width: 18,
-            height: 18,
-            zIndex: isEndpoint ? 998 : 999,
-            pointerEvents: 'auto' as const,
-          }}
-          onMouseDown={(e) => {
-            (e.nativeEvent as MouseEvent).stopImmediatePropagation();
-            e.preventDefault();
-            dragRef.current = {
-              kind: 'segment',
-              pipeId: selectedPipeId,
-              segmentIndex: i,
-              axis: Math.abs(next.x - pt.x) >= Math.abs(next.y - pt.y) ? 'y' : 'x',
-              basePoints: routePoints.points.map((point) => ({ ...point })),
-              currentWorld: screenToWorld(e.clientX, e.clientY),
-            };
-            rerender();
-          }}
-          title="Drag segment midpoint to adjust routing"
-        />
-      );
-    });
+  const renderSegmentHitRegions = () => {
+    return buildPipeSegmentHitRegions(points, worldToScreen).map((segment) => (
+      <div
+        key={segment.key}
+        data-pipe-segment-hit="true"
+        data-segment-index={segment.segmentIndex}
+        className="pipe-segment-hit absolute"
+        style={{
+          left: segment.left,
+          top: segment.top,
+          width: segment.width,
+          height: segment.height,
+          zIndex: 999,
+          pointerEvents: 'auto' as const,
+          cursor: 'move',
+          background: 'transparent',
+        }}
+        onMouseDown={(e) => {
+          const start = points[segment.segmentIndex]!;
+          const next = points[segment.segmentIndex + 1]!;
+          (e.nativeEvent as MouseEvent).stopImmediatePropagation();
+          e.preventDefault();
+          dragRef.current = {
+            kind: 'segment',
+            pipeId: selectedPipeId,
+            segmentIndex: segment.segmentIndex,
+            axis: Math.abs(next.x - start.x) >= Math.abs(next.y - start.y) ? 'y' : 'x',
+            startWorld: screenToWorld(e.clientX, e.clientY),
+            basePoints: routePoints.points.map((point) => ({ ...point })),
+            currentWorld: screenToWorld(e.clientX, e.clientY),
+          };
+          rerender();
+        }}
+        title="Drag pipe segment to adjust routing"
+      />
+    ));
   };
 
   const renderDragLine = () => {
@@ -725,7 +772,7 @@ export default function PipeConnectionTool({
       <div className="pointer-events-none">
         {renderEndpointHandle('start', points[0]!)}
         {renderEndpointHandle('end', points[points.length - 1]!)}
-        {supportsConnectionEditing ? renderSegmentHandles() : null}
+        {renderSegmentHitRegions()}
       </div>
 
       {renderDragLine()}

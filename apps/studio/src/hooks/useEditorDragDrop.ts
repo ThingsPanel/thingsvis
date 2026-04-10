@@ -5,6 +5,35 @@ import { dataSourceManager, store } from '../lib/store';
 import type { NodeSchemaType } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 
+export function resolveInitialNodeSize(entry: {
+  defaultSize?: { width?: number; height?: number };
+  resizable?: boolean;
+  constraints?: Record<string, unknown>;
+}): { width: number; height: number } | undefined {
+  if (entry.resizable === false) {
+    return undefined;
+  }
+
+  const fallback = { width: 200, height: 100 };
+  const size = {
+    width: Number(entry.defaultSize?.width ?? fallback.width),
+    height: Number(entry.defaultSize?.height ?? fallback.height),
+  };
+
+  const constraints = entry.constraints ?? {};
+  const minWidth = Number(constraints.minWidth);
+  const minHeight = Number(constraints.minHeight);
+  const maxWidth = Number(constraints.maxWidth);
+  const maxHeight = Number(constraints.maxHeight);
+
+  if (Number.isFinite(minWidth)) size.width = Math.max(size.width, minWidth);
+  if (Number.isFinite(minHeight)) size.height = Math.max(size.height, minHeight);
+  if (Number.isFinite(maxWidth)) size.width = Math.min(size.width, maxWidth);
+  if (Number.isFinite(maxHeight)) size.height = Math.min(size.height, maxHeight);
+
+  return size;
+}
+
 export function useEditorDragDrop(markDirty: () => void) {
   const hydratePlatformDataSourcesForNodes = useCallback(async (nodes: NodeSchemaType[]) => {
     const currentConfigs = dataSourceManager.getAllConfigs();
@@ -32,6 +61,13 @@ export function useEditorDragDrop(markDirty: () => void) {
           standaloneDefaults: entry.standaloneDefaults,
           fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
         });
+        const initialSize = resolveInitialNodeSize(
+          entry as Record<string, unknown> & {
+            defaultSize?: { width?: number; height?: number };
+            resizable?: boolean;
+            constraints?: Record<string, unknown>;
+          },
+        );
         const now = Date.now();
 
         // Calculate grid position for new widget
@@ -48,7 +84,7 @@ export function useEditorDragDrop(markDirty: () => void) {
           id: `node-${componentType}-${now}`,
           type: componentType,
           position: { x: 100, y: 100 },
-          size: { width: 200, height: 80 },
+          ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
           grid: { x: 0, y: gridY, w: 4, h: 3, static: false, isDraggable: true, isResizable: true },
         };
@@ -70,11 +106,19 @@ export function useEditorDragDrop(markDirty: () => void) {
           standaloneDefaults: entry.standaloneDefaults,
           fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
         });
+        const initialSize = resolveInitialNodeSize(
+          entry as Record<string, unknown> & {
+            defaultSize?: { width?: number; height?: number };
+            resizable?: boolean;
+            constraints?: Record<string, unknown>;
+          },
+        );
         const now = Date.now();
         const node: NodeSchemaType = {
           id: `node-${componentType}-${now}`,
           type: componentType,
           position: { x: 0, y: 0 },
+          ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
           grid: {
             x: gridPosition.x,
