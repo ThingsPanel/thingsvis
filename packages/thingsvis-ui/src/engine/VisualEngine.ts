@@ -44,6 +44,21 @@ function shouldTreatNodeAsResizable(node: NodeState, renderer: RendererFactory):
   return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
 }
 
+export function shouldUseVisibleOverlayOverflow(
+  node: Pick<NodeState, 'schemaRef'>,
+  isResizable: boolean,
+): boolean {
+  if (!isResizable) {
+    return true;
+  }
+
+  const schema = node.schemaRef as
+    | { type?: string; props?: Record<string, unknown> }
+    | null
+    | undefined;
+  return isPipeNodeType(schema?.type) && hasPipeEndpointBinding(schema?.props);
+}
+
 function getConnectorPadding(strokeWidth?: unknown): number {
   const width = Number(strokeWidth ?? 2);
   return Math.max(28, Math.ceil(width * 2 + 16));
@@ -1333,7 +1348,7 @@ export class VisualEngine {
       const height = schema.size?.height ?? 0;
       box.style.width = `${width}px`;
       box.style.height = `${height}px`;
-      box.style.overflow = 'hidden';
+      box.style.overflow = shouldUseVisibleOverlayOverflow(node, true) ? 'visible' : 'hidden';
       // 应用旋转，以中心为原点
       box.style.transform = rotation !== 0 ? `rotate(${rotation}deg)` : '';
       box.style.transformOrigin = 'center center';
