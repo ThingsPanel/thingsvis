@@ -1,40 +1,48 @@
 # ThingsVis
 
-**A data visualization engine and dashboard workspace purpose-built for the modern Web and IoT.**
+**专为现代 Web 与物联网（IoT）打造的数据可视化引擎与大屏工作台。**
 
-[中文](./README_ZH.md) · [Documentation](./apps/docs/guide/introduction.md) · [Widget Development Guide](./apps/docs/development/quick-start.md)
+[English](./README_EN.md) · [官方文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
 
-![ThingsVis Showcase Dashboard](./apps/docs/public/images/showcase/city-ops-editor.png)
+<p align="center">
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-16-50.png" alt="ThingsVis Screenshot 1" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-17-34.png" alt="ThingsVis Screenshot 2" width="48%" />
+</p>
+<p align="center">
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-04.png" alt="ThingsVis Screenshot 3" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-29.png" alt="ThingsVis Screenshot 4" width="48%" />
+</p>
 
-## Why ThingsVis?
+## 什么是 ThingsVis？
 
-### AI-Native Root Protocol (AI-Native)
-**Pain point**: Traditional visualization platforms rely on tightly-coupled, discrete internal config formats, making it extremely difficult to connect with Large Language Models for "natural language dashboard generation."
-**Rebuilt**: The core utilizes Zod to converge a strictly typed visualization contract (Schema). The system natively supports parsing 100% structured JSON view blueprints, providing perfect machine-readability that paves the way for AI to generate industrial dashboards directly via dialogue.
+ThingsVis 是面向现代 Web 与物联网场景的数据可视化引擎与大屏工作台，适合构建工业看板、监控大屏、数字孪生页面、设备控制面板和可嵌入式可视化模块。与偏报表分析、经营洞察的传统 BI 工具不同，ThingsVis 更关注复杂可视化界面、实时交互、工程化扩展和业务系统集成能力。
 
-### Zero-Coupling Component Sandbox (Sandbox)
-**Pain point**: To add just a simple pie chart, developers often have to pull gigabytes of core engine source code and endure long, error-prone full builds.
-**Rebuilt**: Our exclusive CLI and SDK offer a pure, micro-frontend-level independent development experience. External components can be developed, debugged, and built standalone just like a regular React NPM package, enabling dynamic hot-plugging without polluting the core codebase.
+ThingsVis 的优势：
 
-### Headless & Backend-Free Integration (Embed)
-**Pain point**: When you just want to add a dashboard module to an existing project, you're frequently forced to deploy a heavy, bulky Java backend and microservice infrastructure.
-**Rebuilt**: By distilling the core down to a pure frontend runtime (Kernel), we achieve true zero-backend dependency. With just a few lines of SDK or iframe code, you can seamlessly embed this visualization infrastructure into any third-party SaaS projects.
+- AI 友好：基于 Zod 收敛统一 Schema 契约，视图描述结构化、可校验，天然适合大模型生成、修改和回放。
+- 扩展灵活：提供 Widget 沙箱机制与 CLI/SDK，开发者可以像开发普通 React 包一样独立构建和发布业务组件。
+- 集成轻量：核心能力沉淀为前端运行时 Kernel，可通过 SDK、组件或 iframe 方式嵌入现有 Web 系统与 SaaS 平台。
+- 交互优先：不仅支持展示实时数据，还支持订阅、联动、动作触发和设备控制，适合需要闭环操作的 IoT 场景。
+- 工程友好：采用 Monorepo 架构，清晰拆分 Studio、Kernel、Schema 与工具链，便于二次开发、维护与持续交付。
 
-### Interactive IoT Viewport (IoT-Ready)
-**Pain point**: Many open-source frontend "competitors" are built strictly for rigid scaled-display scenarios—they are read-only and become useless when real bidirectional "device control" or command dispatch is required.
-**Rebuilt**: We natively injected reactive device communication channels and action triggers based on subscriptions. Whether it's responsive grid dashboards or device switch operations, ThingsVis elevates read-only screens into actionable industrial IoT control panels.
+ThingsVis 适合的场景：
+
+- 工业设备监控、产线看板、园区运营中心等实时大屏场景；
+- 能源、楼宇、物联网设备管理等需要状态联动与控制闭环的业务场景；
+- SaaS、低代码平台或行业系统中需要嵌入可视化能力的集成场景；
+- 需要通过 AI 生成、调整和编排可视化页面的智能化场景。
 
 ---
 
-## Quick Start
+## 快速开始
 
-### Requirements
+### 前置环境要求
 - Node.js `>= 20.10.0`
 - pnpm `>= 9.0.0`
 
-### Start Local Frontend Environment
+### 启动本地前端开发环境
 
-Experience an isolated, pure-frontend developer sandbox (including Studio canvas and Kernel engine) in just 3 steps:
+仅需三步，体验隔离式的纯前端开发者沙箱（包含 Studio 画布与 Kernel 引擎核心）：
 
 ```bash
 pnpm install
@@ -42,19 +50,19 @@ pnpm build:widgets
 pnpm dev
 ```
 
-If you need to experience the full-stack flow, including real authentication and project management:
+如需体验涉及真实认证授权、资源管理的完整闭环全栈服务，请启动：
 
 ```bash
 pnpm dev:app
 ```
 
-### Initialize the database and admin user before first full-stack startup
+### 首次启动完整服务时，先初始化数据库与管理员账号
 
-`pnpm dev:app` starts Studio, Kernel, and Server together, but it does not create the first administrator in your local PostgreSQL database. Before your first login, complete the following initialization steps:
+`pnpm dev:app` 会同时启动 Studio、Kernel 和 Server，但不会替你创建本地 PostgreSQL 数据库里的首个管理员用户。首次使用前，请先完成以下初始化：
 
-1. Copy `apps/server/.env.example` to `apps/server/.env`, then fill in required values such as `DATABASE_URL` and `AUTH_SECRET`.
-2. Make sure PostgreSQL is running locally and that `DATABASE_URL` points to a writable database.
-3. Run schema push and seed from `apps/server`:
+1. 复制 `apps/server/.env.example` 为 `apps/server/.env`，并填好 `DATABASE_URL`、`AUTH_SECRET` 等必要环境变量。
+2. 确保本地 PostgreSQL 已启动，并且 `DATABASE_URL` 指向可写库。
+3. 在 `apps/server` 目录执行数据库建表与种子脚本：
 
 ```bash
 cd apps/server
@@ -62,12 +70,12 @@ pnpm db:push
 pnpm seed
 ```
 
-The default admin account is:
+默认会创建以下管理员账号：
 
-- Email: `admin@thingsvis.io`
-- Password: `admin123`
+- 邮箱：`admin@thingsvis.io`
+- 密码：`admin123`
 
-If you want to customize the seeded account, override these variables in `apps/server/.env` and run `pnpm seed` again:
+如需自定义初始化账号，可在 `apps/server/.env` 中覆盖以下环境变量后重新执行 `pnpm seed`：
 
 ```bash
 SEED_ADMIN_EMAIL=admin@thingsvis.io
@@ -75,66 +83,66 @@ SEED_ADMIN_PASSWORD=admin123
 SEED_ADMIN_NAME=Admin
 ```
 
-Then go back to the repo root and start the full development stack:
+完成后回到仓库根目录，再启动完整开发环境：
 
 ```bash
 pnpm dev:app
 ```
 
-> If the login page shows "Server error, please try again later", the usual causes are that `apps/server` failed to start, `pnpm db:push` was not run, or `pnpm seed` has not created the initial admin user yet.
+> 如果登录页出现“服务器出错，请稍后重试”，通常是因为 `apps/server` 未成功启动、数据库未执行 `pnpm db:push`，或尚未运行 `pnpm seed` 创建初始管理员。
 
-> **Useful Commands**:
-> - `pnpm docs:dev`: Run the docs site locally.
-> - `pnpm typecheck` & `pnpm lint`: Run workspace TypeScript checks and linting rules.
-> - `pnpm test`: Execute unit test suites.
+> **常用工程命令一览**：
+> - `pnpm docs:dev`：在本地挂载官方文档站。
+> - `pnpm typecheck` & `pnpm lint`：执行项目 TypeScript 全局检查与代码规则校验。
+> - `pnpm test`：执行单元测试套件。
 
 ---
 
-## Developer Experience: Build a Widget in 5 Minutes
+## 开发者体验：五分钟构建你的专属 Widget
 
-We redefined the technical experience of extending code in a visualization platform. Creating an independent widget is as simple as bootstrapping a React app:
+我们重新定义了在大屏平台中扩展代码的技术体验。创建一个独立 Widget 犹如起草一个基础 React 项目：
 
 ```bash
 pnpm vis-cli create <YourCategory> <YourWidgetName>
 ```
 
-Based on the scaffolding, we provide a crystal-clear 3-step authoring path:
-1. **Schema Contract**: Define strict data prop validations using Zod in `schema.ts`.
-2. **Controls Panel**: Register and mount the interactive properties panel in `controls.ts`.
-3. **Render View**: Use React's `defineWidget` to implement the actual logic and styling in `index.tsx`.
+基于脚手架，我们为你规划了极度清晰的三步研发路径：
+1. **Schema 契约**：在 `schema.ts` 中基于 Zod 提供精准的数据属性检验契约。
+2. **可视面板**：在 `controls.ts` 中注册挂载交互属性控制面板。
+3. **渲染视图**：在 `index.tsx` 提供 React `defineWidget` 完成真正的内容逻辑与样式。
 
-To dive deep into this isolated plugin mechanism, refer to: [CLI Reference](./tools/cli/README.md) or [Widget SDK Reference](./packages/thingsvis-widget-sdk/README.md).
-
----
-
-## Architecture
-
-ThingsVis is a modern Monorepo (powered by Turborepo) that cleanly separates the core state machine, shared protocols, and runtimes:
-
-- **`apps/studio/`**: The visual Studio editor entry and main view.
-- **`packages/thingsvis-kernel/`**: Extremely decoupled headless runtime environment and state management core.
-- **`packages/thingsvis-schema/`**: Global contracts and types defining the platform runtime lifecycle and cross-component communication.
-- **`tools/cli/`**: Built-in developer toolkit — the powerful `vis-cli` scaffolding tool.
-
-> Further design references:
-> - [Global Variables Guide](./apps/docs/guide/variables.md)
-> - [Integration and Embed Guide](./docs/thingspanel-integration-guide.md)
-> - [Showcase Dashboard Analysis](./apps/docs/guide/showcase-dashboard.md)
+深入探索这套隔离与插拔机制，请参阅：[CLI 架构与指南](./tools/cli/README.md) 或 [Widget SDK 说明](./packages/thingsvis-widget-sdk/README.md)。
 
 ---
 
-## Contributing
+## 核心技术栈与代码组织 (Architecture)
 
-ThingsVis is eager to see ideas collide from open-source developers! Before you submit your first PR, please read our [Contributing Guide (CONTRIBUTING.md)](./CONTRIBUTING.md).
+ThingsVis 是现代化的 Monorepo（基于 Turborepo），清晰分离了核心状态机、共享协议与运行时：
 
-- 🐞 **Report Bugs**: Please use the unified [Bug Report Template](./.github/ISSUE_TEMPLATE/bug-report.yml).
-- ✨ **Request Features**: If you have exciting ideas, use the [Feature Request Template](./.github/ISSUE_TEMPLATE/feature-request.yml) to discuss with us.
-- 📝 **Commit Convention**: We strictly follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). If your PR involves user-facing UI or interaction changes, we highly expect you to include **screenshots** or **recordings**.
+- **`apps/studio/`**: 承载了可视化的 Studio 画布编辑器入口与主视图。
+- **`packages/thingsvis-kernel/`**: 高度解耦的无头（Headless）运行时环境及其状态管理核心。
+- **`packages/thingsvis-schema/`**: 定义了整套平台运行生命周期与组件间通信的全局契约及类型。
+- **`tools/cli/`**: 内置的开发者利器 —— 强大的 `vis-cli` 脚手架工具。
 
-> For reporting any potential security design vulnerabilities, please refer to our [Official Security Policy (SECURITY.md)](./SECURITY.md).
+> 查看更详尽的设计参考：
+> - [系统全局变量使用指南](./apps/docs/guide/variables.md)
+> - [第三方集成与嵌入指南](./docs/thingspanel-integration-guide.md)
+> - [大屏标杆示例剖析](./apps/docs/guide/showcase-dashboard.md)
 
 ---
 
-## License
+## 参与开源共建 (Contributing)
 
-ThingsVis is open-sourced under the [Apache-2.0 License](./LICENSE).
+ThingsVis 渴望更多开源开发者的想法碰撞！在您准备好提交第一份 PR 之前，请务必阅读我们的 [贡献指引(CONTRIBUTING.md)](./CONTRIBUTING.md)。
+
+- 🐞 **上报缺陷**：请通过统一规范的 [Bug 追踪模板](./.github/ISSUE_TEMPLATE/bug-report.yml) 反馈给维护团队。
+- ✨ **提出新特性**：如你有令人激动的创意，欢迎通过 [功能规划模板](./.github/ISSUE_TEMPLATE/feature-request.yml) 一同讨论。
+- 📝 **代码提交规范**：我们严格遵循 [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)。若 PR 涉及用户可见界面或交互操作的变更，我们非常期待您能附带操作**截图**或**录屏**。
+
+> 对于任何可能涉及框架安全设计的漏洞上报，请参照执行我们的 [官方安全策略 (SECURITY.md)](./SECURITY.md)。
+
+---
+
+## 许可证 (License)
+
+ThingsVis 在 [Apache-2.0 许可证](./LICENSE) 下开源发布。

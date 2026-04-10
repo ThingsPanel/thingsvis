@@ -2,27 +2,35 @@
 
 **专为现代 Web 与物联网（IoT）打造的数据可视化引擎与大屏工作台。**
 
-[English](./README.md) · [官方文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
+[English](./README_EN.md) · [官方文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
 
-![ThingsVis Showcase Dashboard](./apps/docs/public/images/showcase/city-ops-editor.png)
+<p align="center">
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-16-50.png" alt="ThingsVis Screenshot 1" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-17-34.png" alt="ThingsVis Screenshot 2" width="48%" />
+</p>
+<p align="center">
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-04.png" alt="ThingsVis Screenshot 3" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-29.png" alt="ThingsVis Screenshot 4" width="48%" />
+</p>
 
-## 为什么选择 ThingsVis？
+## 什么是 ThingsVis？
 
-### 专为 AI 生成设计的底层协议（AI-Native）
-**痛点**：传统可视化平台使用强耦合且离散的内部配置格式，极难对接当前流行的大语言模型以实现“自然语言建站”。
-**重塑**：内核通过 Zod 强类型收敛了一致的可视化契约（Schema）。系统天然支持解析 100% 结构化的 JSON 视图蓝图，为 AI 问答直接生成完整工业大屏提供了绝佳的机器可读土壤。
+ThingsVis 是面向现代 Web 与物联网场景的数据可视化引擎与大屏工作台，适合构建工业看板、监控大屏、数字孪生页面、设备控制面板和可嵌入式可视化模块。与偏报表分析、经营洞察的传统 BI 工具不同，ThingsVis 更关注复杂可视化界面、实时交互、工程化扩展和业务系统集成能力。
 
-### 零源码入侵的组件沙箱级扩展（Sandbox）
-**痛点**：当业务需要扩充哪怕一个小小的饼图，开发者往往需要拉取成百上千兆的主引擎源码，忍受漫长且极易报错的全量打包。
-**重塑**：专属的 CLI 和 SDK 套件带来纯粹的微前端级独立开发体验。外置组件就像普通的 React 包一样独立调试和单独构建，实现动态热插拔，全面告别与主系统代码的相互污染。
+ThingsVis 的优势：
 
-### 零后端依赖的无缝集成能力（Embed）
-**痛点**：仅仅是想给已有项目附加一个数据看板模块，却常常被迫引入一整套沉重且部署繁杂的 Java 后端和微服务底座。
-**重塑**：通过提纯出纯粹的前端运行时架构（Kernel），您可以做到真正的零后台绑定。只需简单的组件级 SDK 或 iframe 调用，即可将可视化基建无缝集成至任意第三方 SaaS 开发项目中。
+- AI 友好：基于 Zod 收敛统一 Schema 契约，视图描述结构化、可校验，天然适合大模型生成、修改和回放。
+- 扩展灵活：提供 Widget 沙箱机制与 CLI/SDK，开发者可以像开发普通 React 包一样独立构建和发布业务组件。
+- 集成轻量：核心能力沉淀为前端运行时 Kernel，可通过 SDK、组件或 iframe 方式嵌入现有 Web 系统与 SaaS 平台。
+- 交互优先：不仅支持展示实时数据，还支持订阅、联动、动作触发和设备控制，适合需要闭环操作的 IoT 场景。
+- 工程友好：采用 Monorepo 架构，清晰拆分 Studio、Kernel、Schema 与工具链，便于二次开发、维护与持续交付。
 
-### 支持反向控制的交互视口（IoT-Ready）
-**痛点**：大量前端开源“竞品”多面向死板的缩放展示场景，只能单向“看”，面对需要真实互动的双向“设备控制”或指令下发时形同摆设。
-**重塑**：原生注入基于订阅源的设备通信通道和动作触发器。无论是自适应的网格 Dashboard 还是设备状态开关操作，真正实现将大屏升格为一套可操作的工业物联网控制面板。
+ThingsVis 适合的场景：
+
+- 工业设备监控、产线看板、园区运营中心等实时大屏场景；
+- 能源、楼宇、物联网设备管理等需要状态联动与控制闭环的业务场景；
+- SaaS、低代码平台或行业系统中需要嵌入可视化能力的集成场景；
+- 需要通过 AI 生成、调整和编排可视化页面的智能化场景。
 
 ---
 
