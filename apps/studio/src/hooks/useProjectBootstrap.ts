@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  DEFAULT_PLATFORM_FIELD_CONFIG,
   validateCanvasTheme,
   type CanvasThemeId,
   type NodeSchemaType,
@@ -31,6 +30,10 @@ import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { deriveCanvasBackgroundState, normalizeCanvasBackground } from '../lib/canvasBackground';
+import {
+  buildEmbedRuntimeVariableValues,
+  mergeEmbedRuntimeVariableDefinitions,
+} from '../embed/runtimeVariables';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -134,6 +137,22 @@ function normalizeCanvasScaleMode(mode: unknown): PreviewScaleMode {
 
 function normalizePreviewAlignY(value: unknown): PreviewAlignY {
   return value === 'top' ? 'top' : 'center';
+}
+
+function applyRuntimeVariables(
+  definitions: unknown[] | undefined,
+  runtimeValues: Record<string, unknown> = {},
+) {
+  const mergedDefinitions = mergeEmbedRuntimeVariableDefinitions(definitions, runtimeValues);
+  store.getState().setVariableDefinitions(mergedDefinitions as any);
+  store.getState().initVariablesFromDefinitions(mergedDefinitions as any);
+  Object.entries(runtimeValues).forEach(([name, value]) => {
+    if (value !== undefined) {
+      store.getState().setVariableValue(name, value);
+    }
+  });
+
+  return mergedDefinitions;
 }
 
 export function useProjectBootstrap({
@@ -283,6 +302,11 @@ export function useProjectBootstrap({
         dataSources: (loaded.dataSources as any) ?? prev.dataSources,
       }));
 
+      if (loaded.variables && Array.isArray(loaded.variables)) {
+        store.getState().setVariableDefinitions(loaded.variables as any);
+        store.getState().initVariablesFromDefinitions(loaded.variables as any);
+      }
+
       if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
         for (const ds of loaded.dataSources) {
           try {
@@ -305,11 +329,6 @@ export function useProjectBootstrap({
           breakpoints: [],
           responsive: true,
         } as any);
-      }
-
-      if (loaded.variables && Array.isArray(loaded.variables)) {
-        store.getState().setVariableDefinitions(loaded.variables as any);
-        store.getState().initVariablesFromDefinitions(loaded.variables as any);
       }
 
       try {
@@ -518,15 +537,15 @@ export function useProjectBootstrap({
       let nodesToLoad = processed.nodes;
       let loadedMeta: any = null;
       let loadedCanvas: any = null;
+      let variablesToLoad = Array.isArray((payload as any)?.data?.variables)
+        ? ((payload as any).data.variables as unknown[])
+        : [];
       let mergedDataSources = [...processed.dataSources] as Array<Record<string, any>>;
       const inheritedPlatformBufferSize = getResolvedPlatformBufferSize(
         mergedDataSources as any,
         processed.platformBufferSize,
       );
 
-      if (processed.platformFieldScope) {
-        platformFieldStore.setScope(processed.platformFieldScope as any);
-      }
       if (Array.isArray(processed.platformFields) && processed.platformFields.length > 0) {
         platformFieldStore.setFields(processed.platformFields as any);
       }
@@ -545,22 +564,6 @@ export function useProjectBootstrap({
         }
       }
 
-      if (!mergedDataSources.some((ds) => ds.id === '__platform__')) {
-        mergedDataSources.push({
-          id: '__platform__',
-          name: 'System Platform',
-          type: 'PLATFORM_FIELD',
-          config: {
-            ...DEFAULT_PLATFORM_FIELD_CONFIG,
-            source: 'platform',
-            bufferSize: inheritedPlatformBufferSize,
-            requestedFields: (processed.platformFields || [])
-              .map((field: any) => field?.id)
-              .filter((id: unknown) => typeof id === 'string'),
-          },
-        });
-      }
-
       deviceArr.forEach((device: any) => {
         if (!device?.deviceId) return;
         const dsId = `__platform_${device.deviceId}__`;
@@ -570,8 +573,8 @@ export function useProjectBootstrap({
           name: device.deviceName || `Device ${device.deviceId}`,
           type: 'PLATFORM_FIELD',
           config: {
-            ...DEFAULT_PLATFORM_FIELD_CONFIG,
             source: 'platform',
+            fieldMappings: {},
             deviceId: device.deviceId,
             bufferSize: inheritedPlatformBufferSize,
             requestedFields: [],
@@ -595,6 +598,9 @@ export function useProjectBootstrap({
                   mergedDataSources.push(ds);
                 }
               });
+            }
+            if (Array.isArray((cloudProject.schema as any)?.variables)) {
+              variablesToLoad = (cloudProject.schema as any).variables;
             }
           }
         } catch (err) {
@@ -680,6 +686,11 @@ export function useProjectBootstrap({
           projectLoaded: true,
         });
       }
+
+      applyRuntimeVariables(
+        variablesToLoad,
+        buildEmbedRuntimeVariableValues((payload as any)?.config as Record<string, unknown>),
+      );
 
       try {
         store.temporal.getState().clear?.();

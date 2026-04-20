@@ -11,8 +11,8 @@ export type DevicePresetSchema = {
   dataSources?: unknown[];
 };
 
-const GENERIC_PLATFORM_DATA_SOURCE_ID = '__platform__';
-const GENERIC_PLATFORM_BINDING_RE = /\bds\.__platform__(?=\.data\b)/g;
+const GENERIC_PLATFORM_DATA_SOURCE_ID = '__device_platform_template__';
+const GENERIC_PLATFORM_BINDING_RE = /\bds\.__device_platform_template__(?=\.data\b)/g;
 
 function cloneValue<T>(value: T): T {
   if (value == null) return value;

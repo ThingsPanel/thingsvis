@@ -124,4 +124,20 @@ describe('defineWidget createOverlay event bridge', () => {
     requestAnimationFrameSpy.mockRestore();
     cancelAnimationFrameSpy.mockRestore();
   });
+
+  it('returns preview defaults and sample data as widget metadata', () => {
+    const previewWidget = defineWidget({
+      id: 'test/preview-contract',
+      name: 'Preview Contract',
+      schema: z.object({
+        label: z.string().default(''),
+      }),
+      previewDefaults: { label: 'Preview' },
+      sampleData: { data: [{ value: 1 }] },
+      render: () => ({}),
+    });
+
+    expect(previewWidget.previewDefaults).toEqual({ label: 'Preview' });
+    expect(previewWidget.sampleData).toEqual({ data: [{ value: 1 }] });
+  });
 });

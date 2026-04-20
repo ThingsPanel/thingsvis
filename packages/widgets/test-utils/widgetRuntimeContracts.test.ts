@@ -206,6 +206,14 @@ const runtimeContractModulePaths = widgetModulePaths.filter(
     !modulePath.includes('../media/video-player/') &&
     !modulePath.includes('../resources/model-3d/'),
 );
+const dataPreviewModulePaths = [
+  '../basic/table/src/index.ts',
+  '../chart/echarts-bar/src/index.ts',
+  '../chart/echarts-gauge/src/index.ts',
+  '../chart/echarts-line/src/index.ts',
+  '../chart/echarts-pie/src/index.ts',
+  '../chart/uplot-line/src/index.ts',
+];
 
 describe('widget runtime contracts', () => {
   afterEach(() => {
@@ -233,6 +241,20 @@ describe('widget runtime contracts', () => {
       '../media/video-player/src/index.ts',
       '../resources/model-3d/src/index.ts',
     ]);
+  });
+
+  it('declares ThingsVis-owned sample data for data preview widgets', async () => {
+    for (const modulePath of dataPreviewModulePaths) {
+      const moduleExports = await widgetModuleLoaders[modulePath]!();
+      const widget = moduleExports.default ?? moduleExports.Main;
+
+      expect(widget?.sampleData, `${modulePath} missing sampleData`).toMatchObject({
+        data: expect.anything(),
+      });
+      expect(widget?.previewDefaults, `${modulePath} missing previewDefaults`).toMatchObject({
+        data: expect.anything(),
+      });
+    }
   });
 
   for (const modulePath of runtimeContractModulePaths) {

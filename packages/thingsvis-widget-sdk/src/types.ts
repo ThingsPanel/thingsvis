@@ -130,6 +130,10 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   locales?: Record<string, unknown>;
   /** Standalone-only demo props merged over schema defaults on initial creation. */
   standaloneDefaults?: Record<string, unknown>;
+  /** Embedded-editor preview props merged over schema defaults on initial creation. */
+  previewDefaults?: Record<string, unknown>;
+  /** Widget-owned embedded-editor sample data. */
+  sampleData?: Record<string, unknown>;
   /** Zod Schema (generic for authoring-time type inference) */
   schema?: z.ZodType<TProps>;
   /** 控件配置 */
@@ -141,16 +145,16 @@ export type WidgetMainModule<TProps = Record<string, unknown>> = {
   /** 是否支持调整大小（默认 true） */
   resizable?: boolean;
   create?: (ctx?: WidgetOverlayContext) => unknown;
-  /** 
+  /**
    * 属性迁移函数
-   * 
+   *
    * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数将旧格式 props 迁移为新格式
    * @param props - 保存的旧属性对象
    * @param fromVersion - 保存时的 widget 版本
    * @returns 迁移后的新属性对象
    */
   migrate?: (props: unknown, fromVersion: string) => unknown;
-  /** 
+  /**
    * 创建 DOM Overlay
    */
   createOverlay?: (ctx: WidgetOverlayContext) => PluginOverlayInstance;

@@ -45,18 +45,12 @@ describe('platformDatasourceBindings', () => {
       needsHistory: true,
       requestedFields: new Set(['cpu_usage']),
     });
-    expect(requirements.get('__platform__')).toEqual({
-      needsHistory: false,
-      requestedFields: new Set(['temperature']),
-    });
+    expect(requirements.has('__platform__')).toBe(false);
   });
 
   it('augments existing platform data sources so history bindings enable buffers', () => {
     const nextConfigs = augmentPlatformDataSourcesForNodes(
-      [
-        createPlatformDataSource('__platform__'),
-        createPlatformDataSource('__platform_dev-1__', { deviceId: 'dev-1' }),
-      ],
+      [createPlatformDataSource('__platform_dev-1__', { deviceId: 'dev-1' })],
       [
         {
           type: 'chart/uplot-line',

@@ -40,7 +40,7 @@ import { BaseStylePanel } from './BaseStylePanel';
 import { preserveFreePipeLocalRouteOnResize } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
 
 function isHostDataSourceId(id: string): boolean {
-  return id === '__platform__' || /^__platform_.+__$/.test(id);
+  return /^__platform_.+__$/.test(id);
 }
 
 function hasPipeEndpointBinding(props: Record<string, unknown> | null | undefined): boolean {

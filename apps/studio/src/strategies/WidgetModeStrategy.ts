@@ -14,7 +14,6 @@ import type { ProjectFile } from '../lib/storage/schemas';
 import { messageRouter, MSG_TYPES } from '../embed/message-router';
 import { usePlatformFieldStore, type PlatformFieldItem } from '../lib/stores/platformFieldStore';
 import { usePlatformDeviceStore } from '../lib/stores/platformDeviceStore';
-import { normalizePlatformFieldScope } from '../lib/embedded/default-platform-fields';
 import { dataSourceManager } from '../lib/store';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
@@ -41,8 +40,6 @@ export interface EmbedInitPayload {
   };
   nodes?: Record<string, unknown>[];
   dataSources?: Record<string, unknown>[];
-  platformFieldScope?: string;
-  roleScope?: string;
   platformFields?: PlatformFieldItem[];
   platformDevices?: PlatformDevice[];
   [key: string]: unknown;
@@ -92,21 +89,7 @@ export class WidgetModeStrategy implements EditorStrategy {
       return;
     }
 
-    // 1. Inject the implicit Platform Data Source (Legacy default)
-    dataSourceManager.registerDataSource({
-      id: '__platform__',
-      name: 'System Platform',
-      type: 'PLATFORM_FIELD',
-      config: {
-        ...DEFAULT_PLATFORM_FIELD_CONFIG,
-        source: 'plugin-identifier',
-        requestedFields: (payload.platformFields || [])
-          .map((field: any) => field?.id)
-          .filter((id: unknown) => typeof id === 'string'),
-      },
-    });
-
-    // 1.5 Inject per-device Data Sources if platformDevices are provided (Multi-device Phase 4)
+    // 1. Register per-device Data Sources if platformDevices are provided.
     if (Array.isArray(payload.platformDevices)) {
       payload.platformDevices.forEach((device) => {
         if (!device.deviceId) return;
@@ -126,10 +109,6 @@ export class WidgetModeStrategy implements EditorStrategy {
     }
 
     // 2. Process Platform Fields provided by Host
-    usePlatformFieldStore
-      .getState()
-      .setScope(normalizePlatformFieldScope(payload.platformFieldScope || payload.roleScope));
-
     if (Array.isArray(payload.platformFields)) {
       usePlatformFieldStore.getState().setFields(payload.platformFields);
     }

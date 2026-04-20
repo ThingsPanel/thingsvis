@@ -267,8 +267,7 @@
         "commands": "Commands",
         "noFields": "No platform fields available",
         "noFieldsTip": "Please configure device model in the host platform",
-        "title": "Platform Fields",
-        "bindingTip": "Click field to create data binding with real-time updates"
+        "title": "Platform Fields"
     },
     "dataSourceSelector": {
         "noDataSources": "No data sources available",

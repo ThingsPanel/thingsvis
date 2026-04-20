@@ -8,7 +8,6 @@
     },
     "runtime": {
         "defaultSeriesName": "数值",
-        "emptyState": "等待时序数据",
-        "previewState": "示意样式，绑定数据后自动替换"
+        "emptyState": "等待时序数据"
     }
 }

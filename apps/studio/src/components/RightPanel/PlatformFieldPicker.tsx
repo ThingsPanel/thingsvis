@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Database, ChevronRight, Info } from 'lucide-react';
+import { Database, ChevronRight } from 'lucide-react';
 import type { PlatformField } from '@/lib/embedded/service-config';
 
 interface PlatformFieldPickerProps {
@@ -82,12 +82,6 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
         <Badge variant="secondary" className="ml-auto text-xs">
           {platformFields.length}
         </Badge>
-      </div>
-
-      {/* Tip */}
-      <div className="flex items-start gap-2 px-3 py-2 bg-blue-500/5 rounded-md border border-blue-500/10">
-        <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-        <p className="text-xs text-blue-600/90">{t('platformPicker.bindingTip')}</p>
       </div>
 
       {/* Field Groups */}

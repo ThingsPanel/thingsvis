@@ -10,6 +10,21 @@ import en from './locales/en.json';
 // Apple Flat Design Table - Clean & Minimal
 // ============================================================================
 
+const SAMPLE_TABLE_COLUMNS = [
+  { key: 'name', title: '设备名称', align: 'left' },
+  { key: 'status', title: '运行状态', align: 'center' },
+  { key: 'value', title: '系统负载', align: 'right' },
+];
+
+const SAMPLE_TABLE_DATA = [
+  { name: '1号冷水机组', status: '在线', value: '78.5%' },
+  { name: '2号冷却塔', status: '离线', value: '0%' },
+  { name: '3号空压机', status: '运行中', value: '87.2%' },
+  { name: '新风机组A', status: '在线', value: '42.1%' },
+  { name: '新风机组B', status: '告警', value: '96.3%' },
+  { name: '排风风机', status: '在线', value: '30.1%' },
+];
+
 function escapeHtml(input: unknown): string {
   return String(input ?? '')
     .replace(/&/g, '&amp;')
@@ -180,6 +195,9 @@ export const Main = defineWidget({
   locales: { zh, en },
   schema: PropsSchema,
   controls,
+  sampleData: { columns: SAMPLE_TABLE_COLUMNS, data: SAMPLE_TABLE_DATA },
+  standaloneDefaults: { columns: SAMPLE_TABLE_COLUMNS, data: SAMPLE_TABLE_DATA },
+  previewDefaults: { columns: SAMPLE_TABLE_COLUMNS, data: SAMPLE_TABLE_DATA },
   
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;

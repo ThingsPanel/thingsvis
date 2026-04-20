@@ -260,8 +260,7 @@
         "commands": "命令",
         "noFields": "暂无平台字段",
         "noFieldsTip": "请在宿主平台中配置设备物模型",
-        "title": "平台字段",
-        "bindingTip": "点击字段可创建数据源绑定，支持实时数据推送"
+        "title": "平台字段"
     },
     "dataSourceSelector": {
         "noDataSources": "暂无可用数据源",

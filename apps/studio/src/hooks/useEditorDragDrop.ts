@@ -59,6 +59,8 @@ export function useEditorDragDrop(markDirty: () => void) {
         const defaultProps = resolveInitialWidgetProps({
           schema: entry.schema,
           standaloneDefaults: entry.standaloneDefaults,
+          previewDefaults: entry.previewDefaults,
+          sampleData: entry.sampleData,
           fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
         });
         const initialSize = resolveInitialNodeSize(
@@ -104,6 +106,8 @@ export function useEditorDragDrop(markDirty: () => void) {
         const defaultProps = resolveInitialWidgetProps({
           schema: entry.schema,
           standaloneDefaults: entry.standaloneDefaults,
+          previewDefaults: entry.previewDefaults,
+          sampleData: entry.sampleData,
           fallbackDefaults: (entry as { defaultProps?: Record<string, unknown> }).defaultProps,
         });
         const initialSize = resolveInitialNodeSize(

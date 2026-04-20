@@ -233,8 +233,6 @@ export interface EmbedInitPayload {
   platformDevices?: unknown[];
   platformFields?: unknown[];
   platformBufferSize?: number;
-  platformFieldScope?: string;
-  roleScope?: string;
   data?: {
     meta?: { id?: string; name?: string; thumbnail?: string };
     canvas?: {
@@ -289,7 +287,6 @@ export interface ProcessedEmbedData {
   platformDeviceGroups: unknown[];
   platformDevices: unknown[];
   platformBufferSize: number;
-  platformFieldScope?: string;
 }
 
 function normalizeEmbedCanvasMode(mode: unknown): 'fixed' | 'infinite' | 'grid' {
@@ -411,9 +408,6 @@ export function processEmbedInitPayload(
       typeof p.platformBufferSize === 'number' && Number.isFinite(p.platformBufferSize)
         ? Math.max(0, Math.trunc(p.platformBufferSize))
         : 0,
-    platformFieldScope:
-      (typeof p.platformFieldScope === 'string' ? p.platformFieldScope : undefined) ||
-      (typeof p.roleScope === 'string' ? p.roleScope : undefined),
   };
 }
 
@@ -463,7 +457,6 @@ export function initEmbedModeFromUrl(isAuthenticated: boolean): void {
 
       // Load platform fields from URL-injected service config (backward compat)
       const serviceConfig = resolveEditorServiceConfig();
-      platformFieldStore.setScope(serviceConfig.platformFieldScope ?? 'all');
       if (serviceConfig.platformFields && serviceConfig.platformFields.length > 0) {
         platformFieldStore.setFields(serviceConfig.platformFields as never);
       }

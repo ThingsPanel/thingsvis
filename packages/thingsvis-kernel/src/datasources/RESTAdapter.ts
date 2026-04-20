@@ -20,6 +20,66 @@ function resolveVarExpressions(template: string, variableValues: Record<string, 
   return resolved;
 }
 
+function resolveConfigValue(value: unknown, variableValues: Record<string, unknown>): unknown {
+  if (typeof value === 'string') {
+    return resolveVarExpressions(value, variableValues);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveConfigValue(item, variableValues));
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([key, nestedValue]) => [
+        key,
+        resolveConfigValue(nestedValue, variableValues),
+      ]),
+    );
+  }
+  return value;
+}
+
+function toQueryValues(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => toQueryValues(item));
+  }
+  if (typeof value === 'object') {
+    return [JSON.stringify(value)];
+  }
+  return [String(value)];
+}
+
+function getUrlBase(): string {
+  if (typeof globalThis.location?.origin === 'string' && globalThis.location.origin) {
+    return globalThis.location.origin;
+  }
+  return 'http://localhost';
+}
+
+function buildRequestUrl(
+  urlTemplate: string,
+  paramsTemplate: Record<string, unknown> | undefined,
+  variableValues: Record<string, unknown>,
+  includeParams: boolean,
+): string {
+  const resolvedUrl = resolveVarExpressions(urlTemplate, variableValues);
+  const url = new URL(resolvedUrl, getUrlBase());
+
+  if (includeParams && paramsTemplate) {
+    const resolvedParams = resolveConfigValue(paramsTemplate, variableValues) as Record<
+      string,
+      unknown
+    >;
+    for (const [key, value] of Object.entries(resolvedParams)) {
+      for (const item of toQueryValues(value)) {
+        url.searchParams.append(key, item);
+      }
+    }
+  }
+
+  return url.toString();
+}
+
 /**
  * RESTAdapter: Handles standard REST API data fetching with polling support.
  *
@@ -101,7 +161,7 @@ export class RESTAdapter extends BaseAdapter {
     }
     try {
       const config = this.restConfig;
-      const url = resolveVarExpressions(config.url, this.variableValues);
+      const url = buildRequestUrl(config.url, config.params, this.variableValues, true);
       const auth = config.auth ?? DEFAULT_AUTH_CONFIG;
       const authParams = generateAuthParams(auth);
       const finalUrl = appendAuthParamsToUrl(url, authParams);
@@ -110,7 +170,7 @@ export class RESTAdapter extends BaseAdapter {
       const resolvedHeaders: Record<string, string> = {};
       if (config.headers) {
         for (const [k, v] of Object.entries(config.headers)) {
-          resolvedHeaders[k] = resolveVarExpressions(v, this.variableValues);
+          resolvedHeaders[k] = String(resolveConfigValue(v, this.variableValues) ?? '');
         }
       }
 
@@ -124,8 +184,6 @@ export class RESTAdapter extends BaseAdapter {
       // Send payload directly — no wrapping in { value: ... }
       // Strings are assumed to already be JSON; objects are stringified.
       const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
-
-      console.debug('[RESTAdapter] write →', finalUrl, '\nbody:', body);
 
       const response = await fetch(finalUrl, { method: 'POST', headers, body });
 
@@ -155,8 +213,13 @@ export class RESTAdapter extends BaseAdapter {
       this.abortController?.abort();
       this.abortController = new AbortController();
 
-      // Resolve variable expressions in URL
-      const rawUrl = resolveVarExpressions(config.url, this.variableValues);
+      const shouldAppendParamsToUrl = config.method === 'GET' || config.method === 'DELETE';
+      const rawUrl = buildRequestUrl(
+        config.url,
+        config.params,
+        this.variableValues,
+        shouldAppendParamsToUrl,
+      );
 
       // Build URL with auth params if needed
       const auth = config.auth ?? DEFAULT_AUTH_CONFIG;
@@ -167,7 +230,7 @@ export class RESTAdapter extends BaseAdapter {
       const resolvedHeaders: Record<string, string> = {};
       if (config.headers) {
         for (const [k, v] of Object.entries(config.headers)) {
-          resolvedHeaders[k] = resolveVarExpressions(v, this.variableValues);
+          resolvedHeaders[k] = String(resolveConfigValue(v, this.variableValues) ?? '');
         }
       }
 
@@ -185,13 +248,12 @@ export class RESTAdapter extends BaseAdapter {
 
       // Determine request body (resolve variable expressions in body too)
       let body: string | undefined;
-      if (config.method !== 'GET') {
-        const rawBody =
-          config.body ??
-          (config.params && Object.keys(config.params).length > 0
-            ? JSON.stringify(config.params)
-            : undefined);
-        body = rawBody ? resolveVarExpressions(rawBody, this.variableValues) : undefined;
+      if (config.method !== 'GET' && config.method !== 'DELETE') {
+        if (config.body) {
+          body = resolveVarExpressions(config.body, this.variableValues);
+        } else if (config.params && Object.keys(config.params).length > 0) {
+          body = JSON.stringify(resolveConfigValue(config.params, this.variableValues));
+        }
       }
 
       // Execute fetch with timeout

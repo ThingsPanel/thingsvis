@@ -36,7 +36,7 @@ export const DataSourceModeSchema = z.enum(['auto', 'manual']);
  */
 export const RESTConfigSchema = z.object({
   // Existing fields (backward compatible)
-  url: z.string().url(),
+  url: z.string().min(1),
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).default('GET'),
   headers: z.record(z.string()).optional().default({}),
   params: z.record(z.unknown()).optional().default({}),

@@ -1,9 +1,3 @@
-import {
-  mergeWithDefaultAggregatePlatformFields,
-  normalizePlatformFieldScope,
-  type PlatformFieldScope,
-} from './default-platform-fields';
-
 export type EditorServiceMode = 'standalone' | 'embedded';
 export type IntegrationLevel = 'full' | 'minimal';
 
@@ -38,7 +32,6 @@ export type EditorServiceConfig = {
   integrationLevel: IntegrationLevel;
   ui: EditorUiConfig;
   saveTarget?: SaveTarget;
-  platformFieldScope?: PlatformFieldScope;
   platformFields?: PlatformField[];
   warnings: string[];
 };
@@ -155,28 +148,14 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
       ? (saveTargetParam as SaveTarget)
       : undefined;
 
-  const platformFieldScope = normalizePlatformFieldScope(
-    getParam('platformFieldScope') || getParam('roleScope') || getParam('role'),
-  );
-
   // -------- Platform fields --------
-  // Embedded mode always exposes a small built-in aggregate field set so
-  // homepage/dashboard widgets can bind value-card and line-chart data even
-  // before the host injects a richer schema.
-  let platformFields: PlatformField[] | undefined = mergeWithDefaultAggregatePlatformFields(
-    [],
-    platformFieldScope,
-  ) as PlatformField[];
+  let platformFields: PlatformField[] | undefined;
 
   try {
     const fieldsParam = getParam('platformFields');
     if (fieldsParam) {
       // URLSearchParams.get() already decodes the parameter, no need to decode again
-      const parsed = JSON.parse(fieldsParam) as PlatformField[];
-      platformFields = mergeWithDefaultAggregatePlatformFields(
-        parsed,
-        platformFieldScope,
-      ) as PlatformField[];
+      platformFields = JSON.parse(fieldsParam) as PlatformField[];
     }
   } catch (e) {
     warnings.push('Failed to parse platform fields');
@@ -209,7 +188,6 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
         toolbarItems: undefined,
       },
       saveTarget,
-      platformFieldScope,
       platformFields,
       warnings,
     };
@@ -221,7 +199,6 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     integrationLevel,
     ui: requestedUi,
     saveTarget,
-    platformFieldScope,
     platformFields,
     warnings,
   };

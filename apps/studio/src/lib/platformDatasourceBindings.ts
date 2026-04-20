@@ -25,7 +25,7 @@ function visitStringLeaves(value: unknown, visitor: (input: string) => void): vo
 }
 
 function isPlatformDataSourceId(dataSourceId: string): boolean {
-  return dataSourceId === '__platform__' || /^__platform_(.+)__$/.test(dataSourceId);
+  return /^__platform_(.+)__$/.test(dataSourceId);
 }
 
 function getFieldRoot(fieldPath?: string): string | null {

@@ -12,6 +12,7 @@ import { PlatformFieldAdapter } from '@thingsvis/kernel';
 
 type PlatformWriteMessage = {
   type: 'tv:platform-write';
+  requestId: string;
   payload: {
     dataSourceId: string;
     data: Record<string, unknown>;
@@ -240,13 +241,22 @@ describe('E2E-04: 反向写回 (tv:platform-write)', () => {
       capturedMessages.push(msg);
     });
 
-    await adapter.write({ switch: true });
+    const writePromise = adapter.write({ switch: true });
 
     expect(capturedMessages).toHaveLength(1);
     const msg = capturedMessages[0] as PlatformWriteMessage;
     expect(msg.type).toBe('tv:platform-write');
+    expect(msg.requestId).toEqual(expect.any(String));
     expect(msg.payload.dataSourceId).toBe('__platform__');
     expect(msg.payload.data).toEqual({ switch: true });
+
+    simulateHostMessage({
+      type: 'tv:platform-write-result',
+      requestId: msg.requestId,
+      success: true,
+      echo: { accepted: true },
+    });
+    await expect(writePromise).resolves.toEqual({ success: true, echo: { accepted: true } });
 
     spy.mockRestore();
     await adapter.disconnect();
@@ -272,18 +282,103 @@ describe('E2E-04: 反向写回 (tv:platform-write)', () => {
       capturedMessages.push(msg);
     });
 
-    await adapter.write(false);
+    const writePromise = adapter.write(false);
 
     expect(capturedMessages).toHaveLength(1);
     const msg = capturedMessages[0] as PlatformWriteMessage & {
       payload: PlatformWriteMessage['payload'] & { deviceId?: string };
     };
     expect(msg.type).toBe('tv:platform-write');
+    expect(msg.requestId).toEqual(expect.any(String));
     expect(msg.payload.dataSourceId).toBe('__platform_device-1__');
     expect(msg.payload.deviceId).toBe('device-1');
     expect(msg.payload.data).toEqual({ switch: false });
 
+    simulateHostMessage({
+      type: 'tv:platform-write-result',
+      requestId: msg.requestId,
+      success: true,
+    });
+    await expect(writePromise).resolves.toMatchObject({ success: true });
+
     spy.mockRestore();
     await adapter.disconnect();
+  });
+
+  it('E2E-04c: write() resolves failure when host returns an error', async () => {
+    const adapter = new PlatformFieldAdapter();
+    await adapter.connect({
+      id: '__platform__',
+      type: 'PLATFORM_FIELD',
+      name: 'Platform',
+      config: { source: 'platform', fieldMappings: {}, bufferSize: 0 },
+    });
+
+    const capturedMessages: unknown[] = [];
+    const spy = vi.spyOn(window, 'postMessage').mockImplementation((msg) => {
+      capturedMessages.push(msg);
+    });
+
+    const writePromise = adapter.write({ switch: true });
+    const msg = capturedMessages[0] as PlatformWriteMessage;
+    simulateHostMessage({
+      type: 'tv:platform-write-result',
+      requestId: msg.requestId,
+      success: false,
+      error: 'permission denied',
+    });
+
+    await expect(writePromise).resolves.toMatchObject({
+      success: false,
+      error: 'permission denied',
+    });
+
+    spy.mockRestore();
+    await adapter.disconnect();
+  });
+
+  it('E2E-04d: write() times out when host does not return a result', async () => {
+    vi.useFakeTimers();
+    const adapter = new PlatformFieldAdapter();
+    await adapter.connect({
+      id: '__platform__',
+      type: 'PLATFORM_FIELD',
+      name: 'Platform',
+      config: { source: 'platform', fieldMappings: {}, bufferSize: 0 },
+    });
+
+    const spy = vi.spyOn(window, 'postMessage').mockImplementation(() => {});
+    const writePromise = adapter.write({ switch: true });
+
+    await vi.advanceTimersByTimeAsync(5000);
+    await expect(writePromise).resolves.toMatchObject({
+      success: false,
+      error: 'Platform write timed out after 5s',
+    });
+
+    spy.mockRestore();
+    await adapter.disconnect();
+    vi.useRealTimers();
+  });
+
+  it('E2E-04e: disconnect() clears pending write requests', async () => {
+    const adapter = new PlatformFieldAdapter();
+    await adapter.connect({
+      id: '__platform__',
+      type: 'PLATFORM_FIELD',
+      name: 'Platform',
+      config: { source: 'platform', fieldMappings: {}, bufferSize: 0 },
+    });
+
+    const spy = vi.spyOn(window, 'postMessage').mockImplementation(() => {});
+    const writePromise = adapter.write({ switch: true });
+
+    await adapter.disconnect();
+    await expect(writePromise).resolves.toMatchObject({
+      success: false,
+      error: 'PlatformFieldAdapter disconnected before write result',
+    });
+
+    spy.mockRestore();
   });
 });

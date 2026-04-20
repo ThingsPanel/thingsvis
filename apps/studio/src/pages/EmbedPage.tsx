@@ -26,17 +26,18 @@ import { platformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 import {
   applyPlatformBufferSize,
-  adoptLegacyPlatformDataSources,
-  findLegacyPlatformDataSourceIdsForAdoption,
-  hasPlatformDataSourceBoundToDevice,
   getResolvedPlatformBufferSize,
-  inferSinglePlatformDeviceId,
 } from '@/embed/platformDeviceCompat';
 import {
   buildPlatformReplayPayloads,
   cachePlatformData,
   type PlatformDataSnapshot,
 } from '@/embed/platformDataSnapshot';
+import {
+  buildEmbedRuntimeVariableValues,
+  mergeEmbedRuntimeVariableDefinitions,
+  resolveThingsVisApiBaseUrl,
+} from '@/embed/runtimeVariables';
 import { augmentPlatformDataSourcesForNodes } from '@/lib/platformDatasourceBindings';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -50,6 +51,37 @@ interface EmbedState {
   error: string | null;
   schema: unknown;
   variables: Record<string, unknown>;
+}
+
+function buildRuntimeConfigFromSearchParams(searchParams: URLSearchParams) {
+  const config: Record<string, unknown> = {};
+  ['platformApiBaseUrl', 'thingsvisApiBaseUrl', 'deviceId'].forEach((key) => {
+    const value = searchParams.get(key);
+    if (value) config[key] = value;
+  });
+
+  const startTime = searchParams.get('startTime');
+  const endTime = searchParams.get('endTime');
+  if (startTime || endTime) {
+    config.dateRange = { startTime: startTime ?? '', endTime: endTime ?? '' };
+  }
+
+  return config;
+}
+
+function applyEmbedRuntimeVariables(
+  definitions: unknown[] | undefined,
+  runtimeValues: Record<string, unknown>,
+) {
+  const mergedDefinitions = mergeEmbedRuntimeVariableDefinitions(definitions, runtimeValues);
+  store.getState().setVariableDefinitions(mergedDefinitions as any);
+  store.getState().initVariablesFromDefinitions(mergedDefinitions as any);
+  Object.entries(runtimeValues).forEach(([name, value]) => {
+    if (value !== undefined) {
+      store.getState().setVariableValue(name, value);
+    }
+  });
+  return mergedDefinitions;
 }
 
 // Message types for postMessage communication
@@ -133,9 +165,6 @@ export default function EmbedPage() {
   const pendingPlatformDataRef = useRef<
     Array<{ fieldId: string; value: unknown; timestamp: number; deviceId?: string }>
   >([]);
-  /** Legacy platform datasource ids that should bind to the runtime device in single-device detail pages. */
-  const legacyPlatformDataSourceIdsRef = useRef<string[]>([]);
-  const adoptedLegacyDeviceIdRef = useRef<string | null>(null);
   /** Latest platform field snapshot, retained across repeated tv:init re-registration. */
   const latestPlatformDataRef = useRef<PlatformDataSnapshot>({});
 
@@ -289,11 +318,11 @@ export default function EmbedPage() {
           });
         }
 
-        const variables = (dashboard.variables as any[]) || [];
-        if (Array.isArray(variables)) {
-          store.getState().setVariableDefinitions(variables as any);
-          store.getState().initVariablesFromDefinitions(variables as any);
-        }
+        const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];
+        applyEmbedRuntimeVariables(
+          variables,
+          buildEmbedRuntimeVariableValues(buildRuntimeConfigFromSearchParams(searchParams)),
+        );
 
         setState({
           isLoading: false,
@@ -319,7 +348,7 @@ export default function EmbedPage() {
         postToParent({ type: 'ERROR', payload: errorMessage });
       }
     },
-    [postToParent],
+    [postToParent, searchParams],
   );
 
   // Load dashboard from API by ID
@@ -366,11 +395,11 @@ export default function EmbedPage() {
           });
         }
 
-        const variables = (dashboard.variables as any[]) || [];
-        if (Array.isArray(variables)) {
-          store.getState().setVariableDefinitions(variables as any);
-          store.getState().initVariablesFromDefinitions(variables as any);
-        }
+        const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];
+        applyEmbedRuntimeVariables(
+          variables,
+          buildEmbedRuntimeVariableValues(buildRuntimeConfigFromSearchParams(searchParams)),
+        );
 
         setState({
           isLoading: false,
@@ -397,7 +426,7 @@ export default function EmbedPage() {
         postToParent({ type: 'ERROR', payload: errorMessage });
       }
     },
-    [postToParent, setEmbedApiToken],
+    [postToParent, searchParams, setEmbedApiToken],
   );
 
   // Load dashboard from schema data
@@ -532,51 +561,6 @@ export default function EmbedPage() {
     // TODO: Dispatch variable update to kernel when variable system is implemented
   }, []);
 
-  const adoptLegacyPlatformBindings = useCallback(async (deviceId?: string) => {
-    if (!deviceId) return false;
-    if (adoptedLegacyDeviceIdRef.current === deviceId) return false;
-
-    const legacyIds = legacyPlatformDataSourceIdsRef.current;
-    if (legacyIds.length === 0) return false;
-
-    const currentConfigs = dataSourceManager.getAllConfigs();
-    if (hasPlatformDataSourceBoundToDevice(currentConfigs, deviceId)) {
-      adoptedLegacyDeviceIdRef.current = deviceId;
-      legacyPlatformDataSourceIdsRef.current = [];
-      return false;
-    }
-
-    const adoptedConfigs = adoptLegacyPlatformDataSources(
-      currentConfigs.filter((config) => legacyIds.includes(config.id)),
-      deviceId,
-    );
-
-    if (adoptedConfigs.length === 0) return false;
-
-    await Promise.all(
-      adoptedConfigs.map((config) =>
-        dataSourceManager.registerDataSource(config, false).catch((error) => {
-          console.error(
-            '[EmbedPage] Failed to adopt legacy platform datasource:',
-            config.id,
-            error,
-          );
-        }),
-      ),
-    );
-
-    adoptedLegacyDeviceIdRef.current = deviceId;
-    legacyPlatformDataSourceIdsRef.current = [];
-
-    console.warn(
-      '[EmbedPage] Adopted legacy platform datasource bindings for runtime device:',
-      deviceId,
-      adoptedConfigs.map((config) => config.id),
-    );
-
-    return true;
-  }, []);
-
   // Phase 3: Handle messages from parent via messageRouter
   useEffect(() => {
     const cleanups: Array<() => void> = [];
@@ -613,23 +597,29 @@ export default function EmbedPage() {
           platformDevices?: Array<Record<string, unknown>>;
           platformFields?: Array<Record<string, unknown>>;
           platformBufferSize?: number;
-          platformFieldScope?: string;
-          roleScope?: string;
         };
         if (!msg.data) return;
-        const apiBaseUrl = msg.config?.apiBaseUrl;
-        if (typeof apiBaseUrl === 'string' && apiBaseUrl) {
-          apiClient.configure({ baseUrl: apiBaseUrl });
+        const thingsvisApiBaseUrl = resolveThingsVisApiBaseUrl(msg.config);
+        if (thingsvisApiBaseUrl) {
+          apiClient.configure({ baseUrl: thingsvisApiBaseUrl });
         }
         {
           const initData = msg.data;
           const meta = initData.meta as { id?: string; name?: string } | undefined;
-          const schema = {
+          const schema: {
+            id?: string;
+            name?: string;
+            canvas: unknown;
+            nodes?: unknown[];
+            dataSources: unknown[];
+            variables: unknown[];
+          } = {
             id: meta?.id,
             name: meta?.name,
             canvas: initData.canvas,
             nodes: initData.nodes as unknown[] | undefined,
             dataSources: (initData.dataSources as unknown[] | undefined) ?? [],
+            variables: (initData.variables as unknown[] | undefined) ?? [],
           };
 
           const platformDeviceGroups = Array.isArray(msg.platformDeviceGroups)
@@ -643,13 +633,6 @@ export default function EmbedPage() {
             ? initData.platformFields
             : topLevelPlatformFields;
 
-          if (typeof msg.platformFieldScope === 'string' || typeof msg.roleScope === 'string') {
-            platformFieldStore.setScope(
-              (msg.platformFieldScope || msg.roleScope || 'all') as Parameters<
-                typeof platformFieldStore.setScope
-              >[0],
-            );
-          }
           if (platformDeviceGroups.length > 0) {
             platformDeviceStore.setGroups(platformDeviceGroups as never);
           }
@@ -658,26 +641,6 @@ export default function EmbedPage() {
             (schema.dataSources ?? []) as DataSource[],
             msg.platformBufferSize,
           );
-
-          // Auto-inject __platform__ data source only when the host has not already provided one.
-          // Preserving the host-supplied entry is critical: it may carry a non-zero bufferSize
-          // that enables the rolling history buffer in PlatformFieldAdapter.
-          if (!schema.dataSources?.some((ds: any) => ds.id === '__platform__')) {
-            if (!schema.dataSources) schema.dataSources = [];
-            schema.dataSources.push({
-              id: '__platform__',
-              name: 'System Platform',
-              type: 'PLATFORM_FIELD',
-              config: {
-                source: 'platform',
-                fieldMappings: {},
-                requestedFields: initPlatformFields
-                  .map((field: any) => field?.id)
-                  .filter((id: unknown) => typeof id === 'string'),
-                bufferSize: inheritedPlatformBufferSize,
-              },
-            });
-          }
 
           if (platformDevices.length > 0) {
             platformDeviceStore.setDevices(platformDevices as never);
@@ -721,30 +684,11 @@ export default function EmbedPage() {
             platformDevices.length === 1 && typeof platformDevices[0]?.deviceId === 'string'
               ? (platformDevices[0].deviceId as string)
               : null;
-          const inferredRuntimeDeviceId =
-            singleRuntimeDeviceId ??
-            inferSinglePlatformDeviceId((schema.dataSources ?? []) as DataSource[]);
 
-          if (inferredRuntimeDeviceId) {
-            schema.dataSources = adoptLegacyPlatformDataSources(
-              (schema.dataSources ?? []) as DataSource[],
-              inferredRuntimeDeviceId,
-            );
-            adoptedLegacyDeviceIdRef.current = inferredRuntimeDeviceId;
-            legacyPlatformDataSourceIdsRef.current = [];
-          } else {
-            legacyPlatformDataSourceIdsRef.current = findLegacyPlatformDataSourceIdsForAdoption(
-              (schema.dataSources ?? []) as DataSource[],
-            );
-            adoptedLegacyDeviceIdRef.current = null;
-          }
-
-          if (legacyPlatformDataSourceIdsRef.current.length > 0) {
-            console.warn(
-              '[EmbedPage] Legacy platform bindings detected; waiting for runtime deviceId:',
-              legacyPlatformDataSourceIdsRef.current,
-            );
-          }
+          schema.variables = applyEmbedRuntimeVariables(
+            schema.variables,
+            buildEmbedRuntimeVariableValues(msg.config, singleRuntimeDeviceId),
+          );
 
           // Platform Fields
           if (initPlatformFields.length > 0) {
@@ -807,26 +751,8 @@ export default function EmbedPage() {
         latestPlatformDataRef.current = cachePlatformData(latestPlatformDataRef.current, payload);
 
         void (async () => {
-          const adopted =
-            payload.__legacyCompatReplay === true
-              ? false
-              : await adoptLegacyPlatformBindings(payload.deviceId);
-
           // Per-field messages are handled by PlatformFieldAdapter directly.
-          // If a legacy datasource was rebound just now, replay the same message once.
           if (payload.fieldId !== undefined) {
-            if (adopted) {
-              window.postMessage(
-                {
-                  type: MSG_TYPES.PLATFORM_DATA,
-                  payload: {
-                    ...payload,
-                    __legacyCompatReplay: true,
-                  },
-                },
-                '*',
-              );
-            }
             return;
           }
 
@@ -891,7 +817,7 @@ export default function EmbedPage() {
 
     cleanupRef.current = cleanups;
     return () => cleanups.forEach((fn) => fn());
-  }, [adoptLegacyPlatformBindings, loadFromSchema, setEmbedApiToken, updateVariables]);
+  }, [loadFromSchema, setEmbedApiToken, updateVariables]);
 
   // Initial load from URL params
   useEffect(() => {
