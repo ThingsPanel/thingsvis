@@ -7,6 +7,8 @@ import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { dataSourceManager } from '@/lib/store';
 import { usePlatformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
+import { resolveControlText } from '@/lib/i18n/controlText';
 import {
   Dialog,
   DialogContent,
@@ -37,140 +39,19 @@ type PlatformStatField = {
 type PlatformStatSource = {
   id: string;
   name: string;
+  group: 'dashboard' | 'current-device' | 'current-device-history';
   url: string;
   params?: Record<string, unknown>;
   fields: PlatformStatField[];
   transformation: string;
 };
 
-const PLATFORM_STAT_SOURCES: PlatformStatSource[] = [
-  {
-    id: 'thingspanel_device_summary',
-    name: '设备统计',
-    url: '{{ var.platformApiBaseUrl }}/board/device',
-    fields: [
-      { id: 'device_total', name: '设备总数', type: 'number' },
-      { id: 'device_online', name: '在线设备数', type: 'number' },
-      { id: 'device_offline', name: '离线设备数', type: 'number' },
-      { id: 'device_activity', name: '激活设备数', type: 'number' },
-    ],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const total = Number(payload?.device_total ?? 0);
-const online = Number(payload?.device_online ?? payload?.device_on ?? 0);
-return {
-  device_total: total,
-  device_online: online,
-  device_offline: Math.max(0, total - online),
-  device_activity: online
+type RuntimeDeviceField = {
+  id: string;
+  name: string;
+  alias: string;
+  type: FieldPathInfo['type'];
 };
-`,
-  },
-  {
-    id: 'thingspanel_alarm_summary',
-    name: '告警统计',
-    url: '{{ var.platformApiBaseUrl }}/alarm/device/counts',
-    fields: [{ id: 'alarm_device_total', name: '告警设备数', type: 'number' }],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return { alarm_device_total: Number(payload?.alarm_device_total ?? 0) };
-`,
-  },
-  {
-    id: 'thingspanel_device_trend',
-    name: '设备趋势',
-    url: '{{ var.platformApiBaseUrl }}/board/trend',
-    fields: [
-      { id: 'device_total__history', name: '设备总数趋势', type: 'array' },
-      { id: 'device_online__history', name: '在线设备趋势', type: 'array' },
-      { id: 'device_offline__history', name: '离线设备趋势', type: 'array' },
-      { id: 'device_activity__history', name: '激活设备趋势', type: 'array' },
-    ],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const points = Array.isArray(payload?.points) ? payload.points : Array.isArray(payload) ? payload : [];
-const mapSeries = (field) => points.map((point) => ({
-  timestamp: point.timestamp ?? point.time ?? point.created_at,
-  value: Number(point[field] ?? 0)
-}));
-return {
-  device_total__history: mapSeries('device_total'),
-  device_online__history: mapSeries('device_online'),
-  device_offline__history: mapSeries('device_offline'),
-  device_activity__history: mapSeries('device_online')
-};
-`,
-  },
-  {
-    id: 'thingspanel_tenant_summary',
-    name: '租户统计',
-    url: '{{ var.platformApiBaseUrl }}/board/tenant',
-    fields: [
-      { id: 'tenant_total', name: '租户总数', type: 'number' },
-      { id: 'tenant_added_yesterday', name: '昨日新增租户', type: 'number' },
-      { id: 'tenant_added_month', name: '本月新增租户', type: 'number' },
-      { id: 'tenant_growth__history', name: '租户增长趋势', type: 'array' },
-    ],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const year = new Date().getFullYear();
-const rows = Array.isArray(payload?.user_list_month) ? payload.user_list_month : [];
-return {
-  tenant_total: Number(payload?.user_total ?? 0),
-  tenant_added_yesterday: Number(payload?.user_added_yesterday ?? 0),
-  tenant_added_month: Number(payload?.user_added_month ?? 0),
-  tenant_growth__history: rows.map((row) => ({
-    timestamp: new Date(year, Number(row.mon ?? 1) - 1, 1).toISOString(),
-    value: Number(row.num ?? 0)
-  }))
-};
-`,
-  },
-  {
-    id: 'thingspanel_system_metrics',
-    name: '系统资源',
-    url: '{{ var.platformApiBaseUrl }}/system/metrics/current',
-    fields: [
-      { id: 'cpu_usage', name: 'CPU 占用率', type: 'number' },
-      { id: 'memory_usage', name: '内存占用率', type: 'number' },
-      { id: 'disk_usage', name: '磁盘占用率', type: 'number' },
-    ],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return {
-  cpu_usage: Number(payload?.cpu_usage ?? 0),
-  memory_usage: Number(payload?.memory_usage ?? 0),
-  disk_usage: Number(payload?.disk_usage ?? 0)
-};
-`,
-  },
-  {
-    id: 'thingspanel_system_metrics_trend',
-    name: '系统资源趋势',
-    url: '{{ var.platformApiBaseUrl }}/system/metrics/history',
-    params: { hours: 24 },
-    fields: [
-      { id: 'cpu_usage__history', name: 'CPU 占用趋势', type: 'array' },
-      { id: 'memory_usage__history', name: '内存占用趋势', type: 'array' },
-      { id: 'disk_usage__history', name: '磁盘占用趋势', type: 'array' },
-    ],
-    transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const rows = Array.isArray(payload) ? payload : [];
-const mapSeries = (usageKey, fallbackKey) => rows.map((row) => ({
-  timestamp: row.timestamp ?? row.time ?? row.created_at,
-  value: Number(row[usageKey] ?? row[fallbackKey] ?? 0)
-}));
-return {
-  cpu_usage__history: mapSeries('cpu_usage', 'cpu'),
-  memory_usage__history: mapSeries('memory_usage', 'memory'),
-  disk_usage__history: mapSeries('disk_usage', 'disk')
-};
-`,
-  },
-];
-
-const PLATFORM_STAT_SOURCE_IDS = new Set(PLATFORM_STAT_SOURCES.map((source) => source.id));
 
 type Props = {
   kernelStore: KernelStore;
@@ -290,9 +171,57 @@ function ensurePlatformStatDataSource(source: PlatformStatSource): void {
 }
 
 export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }: Props) {
-  const { t } = useTranslation('editor');
+  const { t, i18n } = useTranslation('editor');
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const isEmbeddedMode = serviceConfig.mode === 'embedded';
+  const providerCatalog = useMemo(
+    () => (isEmbeddedMode ? resolveEmbeddedProviderCatalog(serviceConfig.provider) : undefined),
+    [isEmbeddedMode, serviceConfig.provider],
+  );
+  const platformSources = useMemo<PlatformStatSource[]>(
+    () =>
+      (providerCatalog?.dataSources ?? []).map((source) => ({
+        id: source.id,
+        name: resolveControlText(source.label, locale, t),
+        group: source.group,
+        url: source.url,
+        params: source.params,
+        transformation: source.transformation,
+        fields: source.fields.map((field) => ({
+          id: field.id,
+          name: resolveControlText(field.label, locale, t),
+          type: field.type as FieldPathInfo['type'],
+        })),
+      })),
+    [locale, providerCatalog, t],
+  );
+  const platformSourceIds = useMemo(
+    () => new Set(platformSources.map((source) => source.id)),
+    [platformSources],
+  );
+  const runtimeDeviceFields = useMemo<RuntimeDeviceField[]>(
+    () =>
+      (providerCatalog?.runtimeDeviceFields ?? []).map((field) => ({
+        id: field.id,
+        name: resolveControlText(field.label, locale, t),
+        alias: resolveControlText(field.alias ?? field.label, locale, t),
+        type: field.type as FieldPathInfo['type'],
+      })),
+    [locale, providerCatalog, t],
+  );
+  const platformSourcesByGroup = useMemo(
+    () => ({
+      dashboard: platformSources.filter((source) => source.group === 'dashboard'),
+      currentDevice: platformSources.filter((source) => source.group === 'current-device'),
+      currentDeviceHistory: platformSources.filter(
+        (source) => source.group === 'current-device-history',
+      ),
+    }),
+    [platformSources],
+  );
 
   // 🆕 平台字段（嵌入模式）
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -307,7 +236,6 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
-  const isEmbeddedMode = useMemo(() => resolveEditorServiceConfig().mode === 'embedded', []);
   const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>('device');
   const [selectedDeviceGroupIdState, setSelectedDeviceGroupIdState] = useState('');
 
@@ -348,11 +276,11 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
         (id) =>
           id !== '__platform__' &&
           parseDeviceDataSourceId(id) === null &&
-          !PLATFORM_STAT_SOURCE_IDS.has(id),
+          !platformSourceIds.has(id),
       ),
-    [dataSourceIds],
+    [dataSourceIds, platformSourceIds],
   );
-  const hasPlatformStatsCatalog = isEmbeddedMode;
+  const hasPlatformStatsCatalog = isEmbeddedMode && platformSources.length > 0;
   const hasDeviceCatalog = platformDeviceGroups.length > 0 || deviceSources.length > 0;
   const hasTemplateFieldCatalog =
     isEmbeddedMode &&
@@ -388,7 +316,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       return;
     }
 
-    if (selectedDataSourceId && PLATFORM_STAT_SOURCE_IDS.has(selectedDataSourceId)) {
+    if (selectedDataSourceId && platformSourceIds.has(selectedDataSourceId)) {
       setEmbeddedSourceGroup('platform');
       return;
     }
@@ -406,13 +334,14 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
     hasDeviceCatalog,
     hasPlatformStatsCatalog,
     isEmbeddedMode,
+    platformSourceIds,
     selectedDataSourceId,
   ]);
 
   useEffect(() => {
     if (!isEmbeddedMode || embeddedSourceGroup !== 'platform') return;
-    PLATFORM_STAT_SOURCES.forEach(ensurePlatformStatDataSource);
-  }, [embeddedSourceGroup, isEmbeddedMode]);
+    platformSources.forEach(ensurePlatformStatDataSource);
+  }, [embeddedSourceGroup, isEmbeddedMode, platformSources]);
 
   useEffect(() => {
     if (!isEmbeddedMode || embeddedSourceGroup !== 'device') return;
@@ -474,13 +403,23 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
   const selectedDeviceFields = useMemo(() => {
     if (selectedGroup !== 'device') return [];
-    return selectedDeviceSource?.fields ?? [];
-  }, [selectedDeviceSource, selectedGroup]);
+    const fields = Array.isArray(selectedDeviceSource?.fields)
+      ? [...selectedDeviceSource.fields]
+      : [];
+    const existingIds = new Set(
+      fields.map((field: any) => (typeof field?.id === 'string' ? field.id : '')).filter(Boolean),
+    );
+    runtimeDeviceFields.forEach((field) => {
+      if (!existingIds.has(field.id)) {
+        fields.push(field as any);
+      }
+    });
+    return fields;
+  }, [runtimeDeviceFields, selectedDeviceSource, selectedGroup]);
 
   const selectedPlatformSource =
     selectedGroup === 'platform'
-      ? PLATFORM_STAT_SOURCES.find((source) => source.id === selectedDataSourceId) ||
-        PLATFORM_STAT_SOURCES[0]
+      ? platformSources.find((source) => source.id === selectedDataSourceId) || platformSources[0]
       : undefined;
 
   const selectedPlatformFields = useMemo(() => {
@@ -738,7 +677,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 }
 
                 if (nextGroup === 'platform') {
-                  const nextSource = PLATFORM_STAT_SOURCES[0];
+                  const nextSource = platformSources[0];
                   if (nextSource) ensurePlatformStatDataSource(nextSource);
                   safeOnChange(nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null);
                   return;
@@ -752,15 +691,15 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               {hasDeviceCatalog && (
                 <option value="device">
                   {hasTemplateFieldCatalog
-                    ? t('binding.modelFields', '物模型字段')
-                    : t('binding.deviceFields')}
+                    ? t('binding.currentDeviceFields', '当前设备字段')
+                    : t('binding.currentDeviceFields', '当前设备字段')}
                 </option>
               )}
               {hasPlatformStatsCatalog && (
-                <option value="platform">{t('binding.platformStatistics', '平台统计')}</option>
+                <option value="platform">{t('binding.dashboardSources', '首页看板')}</option>
               )}
               {customDataSourceIds.length > 0 && (
-                <option value="custom">{t('binding.customDataSources')}</option>
+                <option value="custom">{t('binding.customDataSources', '自定义数据源')}</option>
               )}
             </select>
           </div>
@@ -769,10 +708,10 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             <div className="space-y-1">
               <label className="text-sm font-medium text-muted-foreground">
                 {selectedGroup === 'device'
-                  ? t('binding.deviceGroup')
+                  ? t('binding.deviceGroup', '设备分组')
                   : selectedGroup === 'platform'
-                    ? t('binding.statCategory', '统计分类')
-                    : t('binding.dataSource')}
+                    ? t('binding.businessDataSource', '业务数据源')
+                    : t('binding.dataSource', '数据源')}
               </label>
               <select
                 value={selectedGroup === 'device' ? selectedDeviceGroupId : effectiveDataSourceId}
@@ -787,7 +726,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                     return;
                   }
                   if (selectedGroup === 'platform') {
-                    const nextSource = PLATFORM_STAT_SOURCES.find((source) => source.id === nextId);
+                    const nextSource = platformSources.find((source) => source.id === nextId);
                     if (nextSource) ensurePlatformStatDataSource(nextSource);
                     safeOnChange(
                       nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null,
@@ -801,7 +740,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                   (selectedGroup === 'device' &&
                     deviceGroupOptions.length === 0 &&
                     deviceSources.length === 0) ||
-                  (selectedGroup === 'platform' && PLATFORM_STAT_SOURCES.length === 0) ||
+                  (selectedGroup === 'platform' && platformSources.length === 0) ||
                   (selectedGroup === 'custom' && customDataSourceIds.length === 0)
                 }
               >
@@ -811,12 +750,37 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                       {group.groupName}
                     </option>
                   ))}
-                {selectedGroup === 'platform' &&
-                  PLATFORM_STAT_SOURCES.map((source) => (
-                    <option key={source.id} value={source.id}>
-                      {source.name}
-                    </option>
-                  ))}
+                {selectedGroup === 'platform' && (
+                  <>
+                    {platformSourcesByGroup.dashboard.length > 0 && (
+                      <optgroup label={t('binding.dashboardSources', '首页看板')}>
+                        {platformSourcesByGroup.dashboard.map((source) => (
+                          <option key={source.id} value={source.id}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {platformSourcesByGroup.currentDevice.length > 0 && (
+                      <optgroup label={t('binding.currentDeviceFields', '当前设备字段')}>
+                        {platformSourcesByGroup.currentDevice.map((source) => (
+                          <option key={source.id} value={source.id}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {platformSourcesByGroup.currentDeviceHistory.length > 0 && (
+                      <optgroup label={t('binding.currentDeviceHistorySources', '当前设备历史')}>
+                        {platformSourcesByGroup.currentDeviceHistory.map((source) => (
+                          <option key={source.id} value={source.id}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </>
+                )}
                 {selectedGroup === 'custom' &&
                   customDataSourceIds.map((id) => (
                     <option key={id} value={id}>
@@ -830,7 +794,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       ) : (
         <div className="space-y-1">
           <label className="text-sm font-medium text-muted-foreground">
-            {t('binding.dataSource')}
+            {t('binding.dataSource', '数据源')}
           </label>
           <select
             value={effectiveDataSourceId}
@@ -841,7 +805,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             disabled={customDataSourceIds.length === 0}
           >
-            <option value="">{t('binding.selectDataSource', '(select a data source)')}</option>
+            <option value="">{t('binding.selectDataSource', '请选择数据源')}</option>
             {customDataSourceIds.map((id) => (
               <option key={id} value={id}>
                 {id}
@@ -853,7 +817,9 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
       {isEmbeddedMode && selectedGroup === 'device' && !isTemplateDeviceSelection && (
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">{t('binding.device')}</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            {t('binding.device', '设备')}
+          </label>
           <select
             value={effectiveDataSourceId}
             onChange={(e) => {
@@ -867,7 +833,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               <option value="">
                 {isSelectedDeviceGroupLoaded
                   ? t('binding.noDevicesInGroup', '该分组下暂无设备')
-                  : t('binding.loadingData', 'Loading data...')}
+                  : t('binding.loadingData', '正在加载设备数据...')}
               </option>
             ) : (
               visibleDeviceSources.map((device) => (

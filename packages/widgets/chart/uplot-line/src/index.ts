@@ -199,6 +199,25 @@ function normalizeSeries(data: unknown, timeRangePreset: Props['timeRangePreset'
   return filtered.length > 0 ? filtered : [normalized[normalized.length - 1]!];
 }
 
+function ensureRenderableSeries(points: ParsedPoint[], fallbackRangeSec: number): ParsedPoint[] {
+  const finitePoints = points.filter(
+    (point) => Number.isFinite(point.tsSec) && Number.isFinite(point.value),
+  );
+  if (finitePoints.length === 0) return [];
+
+  const sorted = finitePoints.slice().sort((a, b) => a.tsSec - b.tsSec);
+  if (sorted.length > 1 && sorted[0]!.tsSec !== sorted[sorted.length - 1]!.tsSec) {
+    return sorted;
+  }
+
+  const point = sorted[sorted.length - 1]!;
+  const offsetSec = Math.max(60, Math.floor(fallbackRangeSec / 12));
+  return [
+    { tsSec: point.tsSec - offsetSec, value: point.value },
+    point,
+  ];
+}
+
 function getFallbackRangeSec(timeRangePreset: Props['timeRangePreset']): number {
   return timeRangePreset === 'all' ? TIME_RANGE_SEC['1h'] : TIME_RANGE_SEC[timeRangePreset];
 }
@@ -466,10 +485,13 @@ export const Main = defineWidget({
         chart = null;
       }
 
-      const points = normalizeSeries(currentProps.data, currentProps.timeRangePreset);
+      const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
+      const points = ensureRenderableSeries(
+        normalizeSeries(currentProps.data, currentProps.timeRangePreset),
+        fallbackRangeSec,
+      );
       const hasData = points.length > 0;
       const renderPoints = hasData ? points : buildPreviewSeries(currentProps.timeRangePreset);
-      const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
       const fallbackEndSec = Math.floor(Date.now() / 1000);
       const finalTimes =
         renderPoints.length > 0
@@ -488,7 +510,9 @@ export const Main = defineWidget({
       const showX = currentProps.showXAxis !== false;
       const showY = currentProps.showYAxis !== false;
       const showLegend = currentProps.showLegend;
-      const { width: plotW, height: plotH } = computeUplotInnerSize(cw, ch, showLegend, scale);
+      const { width: rawPlotW, height: rawPlotH } = computeUplotInnerSize(cw, ch, showLegend, scale);
+      const plotW = Math.max(80, rawPlotW);
+      const plotH = Math.max(48, rawPlotH);
 
       const currentColors = resolveWidgetColors(element);
       const currentAxisLabelColor = resolveLayeredColor({
@@ -646,7 +670,7 @@ export const Main = defineWidget({
             currentProps.showLegend,
             newScale,
           );
-          chart.setSize({ width: pw, height: ph });
+          chart.setSize({ width: Math.max(80, pw), height: Math.max(48, ph) });
         }
       });
       ro.observe(element);

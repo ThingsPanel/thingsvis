@@ -30,6 +30,8 @@ import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { deriveCanvasBackgroundState, normalizeCanvasBackground } from '../lib/canvasBackground';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
+import { resolveEmbeddedProviderCatalog } from '../lib/embedded/embedded-data-source-registry';
 import {
   buildEmbedRuntimeVariableValues,
   mergeEmbedRuntimeVariableDefinitions,
@@ -40,6 +42,51 @@ export const generateId = () => `${Date.now()}-${Math.random().toString(36).subs
 type CanvasBackground = string | NonNullable<IPageConfig['background']>;
 type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
 type PreviewAlignY = 'top' | 'center';
+
+function normalizeEmbeddedProviderDataSources(
+  dataSources: Array<Record<string, any>>,
+  runtimeVariableValues: Record<string, unknown>,
+): Array<Record<string, any>> {
+  const serviceConfig = resolveEditorServiceConfig();
+  if (serviceConfig.mode !== 'embedded') return dataSources;
+
+  const providerCatalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
+  if (!providerCatalog) return dataSources;
+
+  const definitionsById = new Map(providerCatalog.dataSources.map((source) => [source.id, source]));
+  const hasRuntimeDeviceId =
+    typeof runtimeVariableValues.deviceId === 'string' &&
+    runtimeVariableValues.deviceId.trim().length > 0;
+
+  return dataSources.map((dataSource: Record<string, any>) => {
+    const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
+    const definition = definitionsById.get(sourceId);
+    if (!definition) return dataSource;
+
+    const isCurrentDeviceScoped =
+      definition.group === 'current-device' || definition.group === 'current-device-history';
+
+    return {
+      id: definition.id,
+      name:
+        typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
+      type: 'REST',
+      config: {
+        url: definition.url,
+        method: 'GET',
+        headers: {
+          'x-token': '{{ var.platformToken }}',
+        },
+        params: definition.params ?? {},
+        pollingInterval: 60,
+        timeout: 30,
+        auth: { type: 'none' },
+      },
+      transformation: definition.transformation,
+      ...(isCurrentDeviceScoped && !hasRuntimeDeviceId ? { mode: 'manual' } : {}),
+    };
+  });
+}
 
 export type CanvasConfigSchema = {
   // Meta - 基础身份
@@ -687,9 +734,14 @@ export function useProjectBootstrap({
         });
       }
 
-      applyRuntimeVariables(
-        variablesToLoad,
-        buildEmbedRuntimeVariableValues((payload as any)?.config as Record<string, unknown>),
+      const embedRuntimeVariableValues = buildEmbedRuntimeVariableValues(
+        (payload as any)?.config as Record<string, unknown>,
+      );
+      applyRuntimeVariables(variablesToLoad, embedRuntimeVariableValues);
+
+      mergedDataSources = normalizeEmbeddedProviderDataSources(
+        mergedDataSources,
+        embedRuntimeVariableValues,
       );
 
       try {

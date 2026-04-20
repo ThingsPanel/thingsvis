@@ -30,6 +30,7 @@ export type SaveTarget = 'self' | 'host';
 export type EditorServiceConfig = {
   mode: EditorServiceMode;
   integrationLevel: IntegrationLevel;
+  provider?: string;
   ui: EditorUiConfig;
   saveTarget?: SaveTarget;
   platformFields?: PlatformField[];
@@ -113,6 +114,7 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
   const integrationParam = (getParam('integration') || getParam('integrationLevel') || '')
     .trim()
     .toLowerCase();
+  const providerParam = (getParam('provider') || '').trim().toLowerCase();
   let integrationLevel: IntegrationLevel = mode === 'embedded' ? 'full' : 'full';
   if (integrationParam) {
     if (integrationParam === 'minimal') integrationLevel = 'minimal';
@@ -179,6 +181,7 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     return {
       mode,
       integrationLevel,
+      provider: providerParam || undefined,
       ui: {
         showComponentLibrary: false,
         showPropsPanel: false,
@@ -197,6 +200,7 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
   return {
     mode,
     integrationLevel,
+    provider: providerParam || undefined,
     ui: requestedUi,
     saveTarget,
     platformFields,
