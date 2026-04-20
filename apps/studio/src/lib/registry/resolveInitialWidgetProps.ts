@@ -37,8 +37,11 @@ export function resolveInitialWidgetProps({
   const schemaDefaults = schema != null ? extractDefaults(schema) : { ...(fallbackDefaults ?? {}) };
 
   if (resolveEditorServiceConfig().mode !== 'standalone') {
+    const hasEmbeddedDefaults = sampleData != null || previewDefaults != null;
+
     return {
       ...schemaDefaults,
+      ...(hasEmbeddedDefaults ? {} : (standaloneDefaults ?? {})),
       ...(sampleData ?? {}),
       ...(previewDefaults ?? {}),
     };

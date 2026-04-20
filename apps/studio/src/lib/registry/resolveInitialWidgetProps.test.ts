@@ -114,6 +114,38 @@ describe('resolveInitialWidgetProps', () => {
     });
   });
 
+  it('uses standalone defaults as an embedded fallback for older widget bundles', () => {
+    mockedResolveEditorServiceConfig.mockReturnValue({
+      mode: 'embedded',
+      integrationLevel: 'full',
+      ui: {
+        showComponentLibrary: true,
+        showPropsPanel: true,
+        showTopLeft: true,
+        showToolbar: true,
+        showTopRight: true,
+      },
+      warnings: [],
+    });
+
+    const schema = z.object({
+      title: z.string().default('CPU'),
+      data: z.any().default(null),
+    });
+
+    const result = resolveInitialWidgetProps({
+      schema,
+      standaloneDefaults: {
+        data: [{ name: 'CPU', value: 67 }],
+      },
+    });
+
+    expect(result).toEqual({
+      title: 'CPU',
+      data: [{ name: 'CPU', value: 67 }],
+    });
+  });
+
   it('falls back safely when only fallback defaults are available', () => {
     mockedResolveEditorServiceConfig.mockReturnValue({
       mode: 'standalone',
