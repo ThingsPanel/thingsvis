@@ -110,7 +110,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
   const isPositive = trendValue >= 0;
   const trendColor = isPositive ? '#34c759' : '#ff3b30';
 
-  const titleSize = 12;
+  const titleSize = props.titleFontSize;
   const valueSize = 28;
   const unitSize = 13;
 

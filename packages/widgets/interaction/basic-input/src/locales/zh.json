@@ -7,6 +7,7 @@
                 "groupStyle": "样式",
                 "label": "标签",
                 "placeholder": "占位符",
+                "value": "当前值",
                 "inputType": "输入类型",
                 "submitOn": "提交方式",
                 "disabled": "禁用",

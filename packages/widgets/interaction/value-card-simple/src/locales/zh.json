@@ -14,6 +14,7 @@
                 "trend": "趋势百分比",
                 "trendLabel": "趋势说明",
                 "showTrend": "显示趋势",
+                "titleFontSize": "标题字号",
                 "valueColor": "数值颜色",
                 "thresholds": "阈值规则",
                 "color.auto": "自动",

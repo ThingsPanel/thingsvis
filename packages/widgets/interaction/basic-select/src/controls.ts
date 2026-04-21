@@ -7,6 +7,7 @@ export const controls = createControlPanel()
     'Content',
     (builder) => {
       builder.addTextInput('label', { label: `${W}.label`, binding: true });
+      builder.addTextInput('value', { label: `${W}.value`, binding: true });
       builder.addTextInput('placeholder', { label: `${W}.placeholder` });
       builder.addTextInput('options', { label: `${W}.options` });
       builder.addSlider('fontSize', { label: `${W}.fontSize`, min: 10, max: 48, step: 1, default: 14 });

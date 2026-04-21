@@ -14,6 +14,7 @@
                 "trend": "Trend %",
                 "trendLabel": "Trend Label",
                 "showTrend": "Show Trend",
+                "titleFontSize": "Title Font Size",
                 "valueColor": "Value Color",
                 "thresholds": "Thresholds",
                 "color.auto": "Auto",

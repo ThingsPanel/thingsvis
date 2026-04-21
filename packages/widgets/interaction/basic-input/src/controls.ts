@@ -8,6 +8,7 @@ export const controls = createControlPanel()
     (builder) => {
       builder.addTextInput('label', { label: `${W}.label` });
       builder.addTextInput('placeholder', { label: `${W}.placeholder` });
+      builder.addTextInput('value', { label: `${W}.value`, binding: true });
       builder.addSegmented('inputType', {
         label: `${W}.inputType`,
         options: [

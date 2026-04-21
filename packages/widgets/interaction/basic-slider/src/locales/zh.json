@@ -6,6 +6,7 @@
                 "groupContent": "内容",
                 "groupStyle": "样式",
                 "label": "标签文字",
+                "value": "当前值",
                 "min": "最小值",
                 "max": "最大值",
                 "step": "步长",

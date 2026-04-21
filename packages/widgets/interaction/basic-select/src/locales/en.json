@@ -6,6 +6,7 @@
                 "groupContent": "Content",
                 "groupStyle": "Style",
                 "label": "Label",
+                "value": "Value",
                 "placeholder": "Placeholder",
                 "options": "Options Config",
                 "fontSize": "Font Size",
