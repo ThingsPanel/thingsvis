@@ -6,6 +6,7 @@ import { useDataSourceRegistry } from '@thingsvis/ui';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { dataSourceManager } from '@/lib/store';
 import { usePlatformDeviceStore } from '@/lib/stores/platformDeviceStore';
+import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
 import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
 import { resolveControlText } from '@/lib/i18n/controlText';
@@ -222,22 +223,20 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
     }),
     [platformSources],
   );
+  const visiblePlatformSources = platformSourcesByGroup.dashboard;
 
-  // 🆕 平台字段（嵌入模式）
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const platformDeviceGroups = usePlatformDeviceStore((s) => s.groups ?? []);
-  const loadedGroupIds = usePlatformDeviceStore((s) => s.loadedGroupIds ?? []);
   const platformDevices = usePlatformDeviceStore((s) => s.devices ?? []);
+  const platformFields = usePlatformFieldStore((s) => s.fields ?? []);
 
   const [transformDialogOpen, setTransformDialogOpen] = useState(false);
   /** Draft code while the dialog is open — only committed on Apply */
   const [draftCode, setDraftCode] = useState('');
+  const [deviceSearchText, setDeviceSearchText] = useState('');
 
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
   const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>('device');
-  const [selectedDeviceGroupIdState, setSelectedDeviceGroupIdState] = useState('');
 
   const deviceSources = useMemo(() => {
     const fromStore = platformDevices.map((device) => ({
@@ -250,7 +249,26 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       fields: device.fields ?? [],
     }));
 
-    const knownDeviceIds = new Set(fromStore.map((item) => item.dataSourceId));
+    const templateDevice =
+      serviceConfig.context === 'device-template' &&
+      platformFields.length > 0 &&
+      !fromStore.some((device) => isTemplateDeviceSource(device))
+        ? [
+            {
+              deviceId: TEMPLATE_DEVICE_ID,
+              label: t('binding.templateFields', '物模型字段'),
+              groupId: TEMPLATE_DEVICE_ID,
+              groupName: t('binding.templateFields', '物模型字段'),
+              templateId: undefined,
+              dataSourceId: getDeviceDataSourceId(TEMPLATE_DEVICE_ID),
+              fields: platformFields,
+            },
+          ]
+        : [];
+
+    const knownDeviceIds = new Set(
+      [...fromStore, ...templateDevice].map((item) => item.dataSourceId),
+    );
     const inferred = dataSourceIds
       .filter((id) => parseDeviceDataSourceId(id))
       .filter((id) => !knownDeviceIds.has(id))
@@ -267,8 +285,10 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
         };
       });
 
-    return [...fromStore, ...inferred].sort((a, b) => a.label.localeCompare(b.label));
-  }, [platformDevices, dataSourceIds, t]);
+    return [...templateDevice, ...fromStore, ...inferred].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [dataSourceIds, platformDevices, platformFields, serviceConfig.context, t]);
 
   const customDataSourceIds = useMemo(
     () =>
@@ -280,27 +300,15 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       ),
     [dataSourceIds, platformSourceIds],
   );
-  const hasPlatformStatsCatalog = isEmbeddedMode && platformSources.length > 0;
-  const hasDeviceCatalog = platformDeviceGroups.length > 0 || deviceSources.length > 0;
+  const hasPlatformStatsCatalog = isEmbeddedMode && visiblePlatformSources.length > 0;
+  const hasDeviceCatalog = deviceSources.length > 0;
   const hasTemplateFieldCatalog =
     isEmbeddedMode &&
-    platformDeviceGroups.length === 0 &&
-    deviceSources.length === 1 &&
-    isTemplateDeviceSource(deviceSources[0]);
-  const deviceGroupOptions = useMemo(() => {
-    if (platformDeviceGroups.length > 0) return platformDeviceGroups;
-
-    const deduped = new Map<string, { groupId: string; groupName: string }>();
-    deviceSources.forEach((device) => {
-      if (!deduped.has(device.groupId)) {
-        deduped.set(device.groupId, {
-          groupId: device.groupId,
-          groupName: device.groupName,
-        });
-      }
-    });
-    return Array.from(deduped.values());
-  }, [deviceSources, platformDeviceGroups]);
+    (serviceConfig.context === 'device-template' ||
+      (deviceSources.length === 1 && isTemplateDeviceSource(deviceSources[0])));
+  const deviceSourceLabel = hasTemplateFieldCatalog
+    ? t('binding.templateFields', '物模型字段')
+    : t('binding.deviceData', '设备数据');
 
   useEffect(() => {
     if (!isEmbeddedMode) return;
@@ -310,9 +318,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       const selectedDevice = deviceSources.find(
         (device) => device.dataSourceId === selectedDataSourceId,
       );
-      if (selectedDevice?.groupId) {
-        setSelectedDeviceGroupIdState(selectedDevice.groupId);
-      }
+      if (selectedDevice?.label) setDeviceSearchText('');
       return;
     }
 
@@ -340,66 +346,51 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
   useEffect(() => {
     if (!isEmbeddedMode || embeddedSourceGroup !== 'platform') return;
-    platformSources.forEach(ensurePlatformStatDataSource);
-  }, [embeddedSourceGroup, isEmbeddedMode, platformSources]);
+    visiblePlatformSources.forEach(ensurePlatformStatDataSource);
+  }, [embeddedSourceGroup, isEmbeddedMode, visiblePlatformSources]);
 
   useEffect(() => {
     if (!isEmbeddedMode || embeddedSourceGroup !== 'device') return;
-
-    if (platformDeviceGroups.length > 0) {
-      if (
-        !selectedDeviceGroupIdState ||
-        !deviceGroupOptions.some((group) => group.groupId === selectedDeviceGroupIdState)
-      ) {
-        setSelectedDeviceGroupIdState(String(deviceGroupOptions[0]?.groupId || ''));
-      }
+    if (
+      selectedDataSourceId &&
+      deviceSources.some((device) => device.dataSourceId === selectedDataSourceId)
+    )
       return;
+    if (deviceSources[0]) {
+      safeOnChange({ dataSourceId: deviceSources[0].dataSourceId, fieldPath: '' });
     }
-
-    if (!selectedDeviceGroupIdState && deviceSources[0]?.groupId) {
-      setSelectedDeviceGroupIdState(deviceSources[0].groupId);
-    }
-  }, [
-    deviceGroupOptions,
-    deviceSources,
-    embeddedSourceGroup,
-    isEmbeddedMode,
-    platformDeviceGroups.length,
-    selectedDeviceGroupIdState,
-  ]);
+  }, [deviceSources, embeddedSourceGroup, isEmbeddedMode, safeOnChange, selectedDataSourceId]);
 
   const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
-  const selectedDeviceFromValue =
-    selectedGroup === 'device'
-      ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId)
-      : undefined;
-  const selectedDeviceGroupId =
-    selectedGroup === 'device'
-      ? selectedDeviceFromValue?.groupId ||
-        selectedDeviceGroupIdState ||
-        String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '')
-      : '';
-  const visibleDeviceSources = useMemo(
-    () =>
-      selectedGroup === 'device'
-        ? deviceSources.filter((device) => device.groupId === selectedDeviceGroupId)
-        : [],
-    [deviceSources, selectedDeviceGroupId, selectedGroup],
-  );
-  const isSelectedDeviceGroupLoaded =
-    selectedGroup === 'device' &&
-    selectedDeviceGroupId.length > 0 &&
-    (loadedGroupIds.includes(selectedDeviceGroupId) || window.parent === window);
+  const visibleDeviceSources = useMemo(() => {
+    if (selectedGroup !== 'device') return [];
+    const keyword = deviceSearchText.trim().toLowerCase();
+    if (!keyword) return deviceSources;
+    return deviceSources.filter((device) =>
+      [device.label, device.deviceId, device.templateId]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword)),
+    );
+  }, [deviceSearchText, deviceSources, selectedGroup]);
 
   const selectedDeviceSource =
     selectedGroup === 'device'
-      ? visibleDeviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
-        visibleDeviceSources[0]
+      ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
+        visibleDeviceSources[0] ||
+        deviceSources[0]
       : undefined;
   const isTemplateDeviceSelection =
     hasTemplateFieldCatalog &&
     selectedGroup === 'device' &&
     isTemplateDeviceSource(selectedDeviceSource);
+
+  useEffect(() => {
+    if (selectedGroup !== 'device' || !selectedDeviceSource?.deviceId) return;
+    ensurePlatformDeviceDataSource({
+      deviceId: selectedDeviceSource.deviceId,
+      deviceName: selectedDeviceSource.label,
+    });
+  }, [selectedDeviceSource, selectedGroup]);
 
   const selectedDeviceFields = useMemo(() => {
     if (selectedGroup !== 'device') return [];
@@ -419,7 +410,8 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
   const selectedPlatformSource =
     selectedGroup === 'platform'
-      ? platformSources.find((source) => source.id === selectedDataSourceId) || platformSources[0]
+      ? visiblePlatformSources.find((source) => source.id === selectedDataSourceId) ||
+        visiblePlatformSources[0]
       : undefined;
 
   const selectedPlatformFields = useMemo(() => {
@@ -566,46 +558,6 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
 
   useEffect(() => {
     if (selectedGroup !== 'device') return;
-    if (!selectedDeviceGroupId || loadedGroupIds.includes(selectedDeviceGroupId)) return;
-    if (window.parent === window) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
-        | undefined;
-      if (data?.type !== 'tv:devices-by-group') return;
-      const payload = data.payload;
-      if (payload?.groupId !== selectedDeviceGroupId || !Array.isArray(payload.devices)) return;
-
-      const devices = payload.devices as Array<{ deviceId?: string; deviceName?: string }>;
-      usePlatformDeviceStore.getState().setDevicesForGroup(selectedDeviceGroupId, devices as any);
-      devices.forEach((device) => {
-        if (!device?.deviceId) return;
-        ensurePlatformDeviceDataSource({
-          deviceId: device.deviceId,
-          deviceName: device.deviceName,
-        });
-      });
-    };
-
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestDevicesByGroup',
-        payload: {
-          groupId: selectedDeviceGroupId,
-        },
-      },
-      '*',
-    );
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [loadedGroupIds, selectedDeviceGroupId, selectedGroup]);
-
-  useEffect(() => {
-    if (selectedGroup !== 'device') return;
     if (!selectedDeviceSource?.deviceId || !selectedDeviceSource?.templateId) return;
     if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
@@ -665,11 +617,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 setEmbeddedSourceGroup(nextGroup);
 
                 if (nextGroup === 'device') {
-                  const nextGroupId =
-                    selectedDeviceGroupIdState ||
-                    String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '');
-                  setSelectedDeviceGroupIdState(nextGroupId);
-                  const nextDevice = deviceSources.find((device) => device.groupId === nextGroupId);
+                  const nextDevice = deviceSources[0];
                   safeOnChange(
                     nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
                   );
@@ -677,7 +625,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 }
 
                 if (nextGroup === 'platform') {
-                  const nextSource = platformSources[0];
+                  const nextSource = visiblePlatformSources[0];
                   if (nextSource) ensurePlatformStatDataSource(nextSource);
                   safeOnChange(nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null);
                   return;
@@ -688,15 +636,9 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               }}
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             >
-              {hasDeviceCatalog && (
-                <option value="device">
-                  {hasTemplateFieldCatalog
-                    ? t('binding.currentDeviceFields', '当前设备字段')
-                    : t('binding.currentDeviceFields', '当前设备字段')}
-                </option>
-              )}
+              {hasDeviceCatalog && <option value="device">{deviceSourceLabel}</option>}
               {hasPlatformStatsCatalog && (
-                <option value="platform">{t('binding.dashboardSources', '首页看板')}</option>
+                <option value="platform">{t('binding.dashboardSources', '平台概览')}</option>
               )}
               {customDataSourceIds.length > 0 && (
                 <option value="custom">{t('binding.customDataSources', '自定义数据源')}</option>
@@ -704,29 +646,21 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             </select>
           </div>
 
-          {!isTemplateDeviceSelection && (
+          {selectedGroup !== 'device' && (
             <div className="space-y-1">
               <label className="text-sm font-medium text-muted-foreground">
-                {selectedGroup === 'device'
-                  ? t('binding.deviceGroup', '设备分组')
-                  : selectedGroup === 'platform'
-                    ? t('binding.businessDataSource', '业务数据源')
-                    : t('binding.dataSource', '数据源')}
+                {selectedGroup === 'platform'
+                  ? t('binding.businessDataSource', '业务数据源')
+                  : t('binding.dataSource', '数据源')}
               </label>
               <select
-                value={selectedGroup === 'device' ? selectedDeviceGroupId : effectiveDataSourceId}
+                value={effectiveDataSourceId}
                 onChange={(e) => {
                   const nextId = e.target.value;
-                  if (selectedGroup === 'device') {
-                    setSelectedDeviceGroupIdState(nextId);
-                    const nextDevice = deviceSources.find((device) => device.groupId === nextId);
-                    safeOnChange(
-                      nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
-                    );
-                    return;
-                  }
                   if (selectedGroup === 'platform') {
-                    const nextSource = platformSources.find((source) => source.id === nextId);
+                    const nextSource = visiblePlatformSources.find(
+                      (source) => source.id === nextId,
+                    );
                     if (nextSource) ensurePlatformStatDataSource(nextSource);
                     safeOnChange(
                       nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null,
@@ -737,42 +671,15 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 }}
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
                 disabled={
-                  (selectedGroup === 'device' &&
-                    deviceGroupOptions.length === 0 &&
-                    deviceSources.length === 0) ||
-                  (selectedGroup === 'platform' && platformSources.length === 0) ||
+                  (selectedGroup === 'platform' && visiblePlatformSources.length === 0) ||
                   (selectedGroup === 'custom' && customDataSourceIds.length === 0)
                 }
               >
-                {selectedGroup === 'device' &&
-                  deviceGroupOptions.map((group) => (
-                    <option key={group.groupId} value={group.groupId}>
-                      {group.groupName}
-                    </option>
-                  ))}
                 {selectedGroup === 'platform' && (
                   <>
                     {platformSourcesByGroup.dashboard.length > 0 && (
-                      <optgroup label={t('binding.dashboardSources', '首页看板')}>
+                      <optgroup label={t('binding.dashboardSources', '平台概览')}>
                         {platformSourcesByGroup.dashboard.map((source) => (
-                          <option key={source.id} value={source.id}>
-                            {source.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {platformSourcesByGroup.currentDevice.length > 0 && (
-                      <optgroup label={t('binding.currentDeviceFields', '当前设备字段')}>
-                        {platformSourcesByGroup.currentDevice.map((source) => (
-                          <option key={source.id} value={source.id}>
-                            {source.name}
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {platformSourcesByGroup.currentDeviceHistory.length > 0 && (
-                      <optgroup label={t('binding.currentDeviceHistorySources', '当前设备历史')}>
-                        {platformSourcesByGroup.currentDeviceHistory.map((source) => (
                           <option key={source.id} value={source.id}>
                             {source.name}
                           </option>
@@ -820,6 +727,12 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           <label className="text-sm font-medium text-muted-foreground">
             {t('binding.device', '设备')}
           </label>
+          <input
+            value={deviceSearchText}
+            onChange={(e) => setDeviceSearchText(e.target.value)}
+            placeholder={t('binding.searchDevice', '搜索设备名称或ID')}
+            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
+          />
           <select
             value={effectiveDataSourceId}
             onChange={(e) => {
@@ -831,9 +744,9 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           >
             {visibleDeviceSources.length === 0 ? (
               <option value="">
-                {isSelectedDeviceGroupLoaded
-                  ? t('binding.noDevicesInGroup', '该分组下暂无设备')
-                  : t('binding.loadingData', '正在加载设备数据...')}
+                {deviceSources.length === 0
+                  ? t('binding.loadingData', '正在加载设备数据...')
+                  : t('binding.noMatchedDevices', '未找到匹配设备')}
               </option>
             ) : (
               visibleDeviceSources.map((device) => (

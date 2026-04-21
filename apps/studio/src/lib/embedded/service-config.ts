@@ -1,5 +1,6 @@
 export type EditorServiceMode = 'standalone' | 'embedded';
 export type IntegrationLevel = 'full' | 'minimal';
+export type EmbeddedEditorContext = 'dashboard' | 'device-template';
 
 export type EditorUiConfig = {
   /** Left panel (component library / layers) */
@@ -31,6 +32,7 @@ export type EditorServiceConfig = {
   mode: EditorServiceMode;
   integrationLevel: IntegrationLevel;
   provider?: string;
+  context?: EmbeddedEditorContext;
   ui: EditorUiConfig;
   saveTarget?: SaveTarget;
   platformFields?: PlatformField[];
@@ -115,6 +117,9 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     .trim()
     .toLowerCase();
   const providerParam = (getParam('provider') || '').trim().toLowerCase();
+  const contextParam = (getParam('context') || '').trim().toLowerCase();
+  const context: EmbeddedEditorContext | undefined =
+    contextParam === 'dashboard' || contextParam === 'device-template' ? contextParam : undefined;
   let integrationLevel: IntegrationLevel = mode === 'embedded' ? 'full' : 'full';
   if (integrationParam) {
     if (integrationParam === 'minimal') integrationLevel = 'minimal';
@@ -182,6 +187,7 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
       mode,
       integrationLevel,
       provider: providerParam || undefined,
+      context,
       ui: {
         showComponentLibrary: false,
         showPropsPanel: false,
@@ -201,6 +207,7 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     mode,
     integrationLevel,
     provider: providerParam || undefined,
+    context,
     ui: requestedUi,
     saveTarget,
     platformFields,
