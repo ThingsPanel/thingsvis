@@ -218,6 +218,16 @@ function ensureRenderableSeries(points: ParsedPoint[], fallbackRangeSec: number)
   ];
 }
 
+function ensureFiniteRange(min: number, max: number): [number, number] {
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return [0, 1];
+  if (min > max) return ensureFiniteRange(max, min);
+  if (min === max) {
+    const pad = Math.max(1, Math.abs(min) * 0.1);
+    return [min - pad, max + pad];
+  }
+  return [min, max];
+}
+
 function getFallbackRangeSec(timeRangePreset: Props['timeRangePreset']): number {
   return timeRangePreset === 'all' ? TIME_RANGE_SEC['1h'] : TIME_RANGE_SEC[timeRangePreset];
 }
@@ -614,11 +624,12 @@ export const Main = defineWidget({
           y: {
             auto: (): boolean => currentProps.yAxisMin == null && currentProps.yAxisMax == null,
             range: (_self: uPlot, min: number, max: number): [number, number] => {
-              if (currentProps.yAxisMin != null && currentProps.yAxisMax != null)
-                return [currentProps.yAxisMin, currentProps.yAxisMax];
-              if (currentProps.yAxisMin != null) return [currentProps.yAxisMin, max];
-              if (currentProps.yAxisMax != null) return [min, currentProps.yAxisMax];
-              return [min, max];
+              if (currentProps.yAxisMin != null && currentProps.yAxisMax != null) {
+                return ensureFiniteRange(currentProps.yAxisMin, currentProps.yAxisMax);
+              }
+              if (currentProps.yAxisMin != null) return ensureFiniteRange(currentProps.yAxisMin, max);
+              if (currentProps.yAxisMax != null) return ensureFiniteRange(min, currentProps.yAxisMax);
+              return ensureFiniteRange(min, max);
             },
           },
         },
@@ -652,6 +663,29 @@ export const Main = defineWidget({
       chart = new uPlot(opts, chartData, chartContainer);
     };
 
+    const safeInitChart = () => {
+      try {
+        initChart();
+      } catch (error) {
+        console.error('[uplot-line] Failed to render chart:', error);
+        if (chart) {
+          chart.destroy();
+          chart = null;
+        }
+        applyHeader(lastScale > 0 ? lastScale : 1);
+        const currentColors = resolveWidgetColors(element);
+        const currentAxisLabelColor = resolveLayeredColor({
+          instance: currentProps.axisLabelColor,
+          theme: currentColors?.fg,
+          fallback: currentColors?.fg ?? '#333',
+        });
+        const runtimeMessages = getRuntimeMessages(currentLocale);
+        emptyStateEl.style.color = withAlpha(currentAxisLabelColor, 0.65);
+        emptyStateEl.textContent = runtimeMessages.runtime?.emptyState || 'No data';
+        emptyStateEl.style.display = 'flex';
+      }
+    };
+
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         if (!chart) return;
@@ -662,7 +696,7 @@ export const Main = defineWidget({
         const newScale = Math.max(0.6, Math.min(1.5, minDim / 300));
 
         if (Math.abs(newScale - lastScale) > 0.05 && lastScale !== -1) {
-          initChart();
+          safeInitChart();
         } else {
           const { width: pw, height: ph } = computeUplotInnerSize(
             cw,
@@ -679,7 +713,7 @@ export const Main = defineWidget({
     const themeTarget = element.closest('[data-canvas-theme]');
     if (themeTarget && typeof MutationObserver !== 'undefined') {
       themeObserver = new MutationObserver(() => {
-        initChart();
+        safeInitChart();
       });
       themeObserver.observe(themeTarget, {
         attributes: true,
@@ -692,7 +726,7 @@ export const Main = defineWidget({
         const cw = chartContainer.clientWidth || 300;
         const ch = chartContainer.clientHeight || 200;
         lastScale = Math.max(0.6, Math.min(1.5, Math.min(cw, ch) / 300));
-        initChart();
+        safeInitChart();
       });
     };
 
@@ -703,7 +737,7 @@ export const Main = defineWidget({
         currentProps = newProps;
         currentLocale = newCtx.locale;
         colors = resolveWidgetColors(element);
-        initChart();
+        safeInitChart();
       },
       destroy: () => {
         ro?.disconnect();
