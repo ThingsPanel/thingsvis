@@ -161,6 +161,8 @@ export default function EmbedPage() {
   const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
   const initDoneRef = useRef<boolean>(false);
+  /** Fingerprint for the last processed tv:init payload to suppress duplicate host retries. */
+  const lastInitFingerprintRef = useRef<string>('');
   /** Buffer for tv:platform-data messages that arrive before adapters are ready. */
   const pendingPlatformDataRef = useRef<
     Array<{ fieldId: string; value: unknown; timestamp: number; deviceId?: string }>
@@ -431,7 +433,7 @@ export default function EmbedPage() {
 
   // Load dashboard from schema data
   const loadFromSchema = useCallback(
-    (schema: any) => {
+    (schema: any, options?: { skipVariableInitialization?: boolean }) => {
       setState((s) => ({ ...s, isLoading: true, error: null }));
 
       if (!schema || !schema.canvas) {
@@ -529,7 +531,7 @@ export default function EmbedPage() {
         }
 
         const variables = (schema.variables as any[]) || [];
-        if (Array.isArray(variables)) {
+        if (!options?.skipVariableInitialization && Array.isArray(variables)) {
           store.getState().setVariableDefinitions(variables as any);
           store.getState().initVariablesFromDefinitions(variables as any);
         }
@@ -599,13 +601,38 @@ export default function EmbedPage() {
           platformBufferSize?: number;
         };
         if (!msg.data) return;
+        const initData = msg.data;
+        const meta = initData.meta as { id?: string; name?: string } | undefined;
+        const nextFingerprint = JSON.stringify({
+          dashboardId: meta?.id ?? null,
+          dashboardName: meta?.name ?? null,
+          nodeCount: Array.isArray(initData.nodes) ? initData.nodes.length : 0,
+          dataSourceIds: Array.isArray(initData.dataSources)
+            ? initData.dataSources.map((ds: any) => ds?.id ?? null)
+            : [],
+          variableCount: Array.isArray(initData.variables) ? initData.variables.length : 0,
+          canvas: initData.canvas ?? null,
+          platformDeviceGroupIds: Array.isArray(msg.platformDeviceGroups)
+            ? msg.platformDeviceGroups.map((group: any) => group?.groupId ?? group?.id ?? null)
+            : [],
+          platformDeviceIds: Array.isArray(msg.platformDevices)
+            ? msg.platformDevices.map((device: any) => device?.deviceId ?? device?.id ?? null)
+            : [],
+          platformFieldIds: Array.isArray(msg.platformFields)
+            ? msg.platformFields.map((field: any) => field?.id ?? null)
+            : [],
+          platformBufferSize: msg.platformBufferSize ?? null,
+          config: msg.config ?? null,
+        });
+        if (nextFingerprint === lastInitFingerprintRef.current) {
+          return;
+        }
+        lastInitFingerprintRef.current = nextFingerprint;
         const thingsvisApiBaseUrl = resolveThingsVisApiBaseUrl(msg.config);
         if (thingsvisApiBaseUrl) {
           apiClient.configure({ baseUrl: thingsvisApiBaseUrl });
         }
         {
-          const initData = msg.data;
-          const meta = initData.meta as { id?: string; name?: string } | undefined;
           const schema: {
             id?: string;
             name?: string;
@@ -690,6 +717,12 @@ export default function EmbedPage() {
             buildEmbedRuntimeVariableValues(msg.config, singleRuntimeDeviceId),
           );
 
+          const schemaVariables = Array.isArray(schema.variables) ? schema.variables : [];
+          if (schemaVariables.length > 0) {
+            store.getState().setVariableDefinitions(schemaVariables as any);
+            store.getState().initVariablesFromDefinitions(schemaVariables as any);
+          }
+
           // Platform Fields
           if (initPlatformFields.length > 0) {
             platformFieldStore.setFields(initPlatformFields as never);
@@ -711,7 +744,7 @@ export default function EmbedPage() {
                 }
               }
             }
-            loadFromSchema(schema);
+            loadFromSchema(schema, { skipVariableInitialization: true });
 
             // Replay any platform-data messages that arrived before adapters were ready.
             if (pendingPlatformDataRef.current.length > 0) {
