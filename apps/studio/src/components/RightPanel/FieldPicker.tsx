@@ -287,6 +287,8 @@ export function FieldPicker({
     [platformSources, writableOnly],
   );
 
+  const platformDeviceGroups = usePlatformDeviceStore((s) => s.groups ?? []);
+  const loadedPlatformGroupIds = usePlatformDeviceStore((s) => s.loadedGroupIds ?? []);
   const platformDevices = usePlatformDeviceStore((s) => s.devices ?? []);
   const platformFields = usePlatformFieldStore((s) => s.fields ?? []);
 
@@ -446,6 +448,58 @@ export function FieldPicker({
     : undefined;
   const isTemplateDeviceSelection =
     hasTemplateFieldCatalog && isDeviceScopedGroup && isTemplateDeviceSource(selectedDeviceSource);
+  const pendingPlatformGroupIds = useMemo(() => {
+    if (!isEmbeddedMode || !isDeviceScopedGroup || isTemplateDeviceSelection) return [];
+    if (window.parent === window) return [];
+    const loadedGroupIds = new Set(loadedPlatformGroupIds);
+    return platformDeviceGroups
+      .map((group) => group.groupId)
+      .filter((groupId) => groupId && !loadedGroupIds.has(groupId));
+  }, [
+    isDeviceScopedGroup,
+    isEmbeddedMode,
+    isTemplateDeviceSelection,
+    loadedPlatformGroupIds,
+    platformDeviceGroups,
+  ]);
+  const isPlatformDeviceListLoading =
+    isEmbeddedMode &&
+    isDeviceScopedGroup &&
+    !isTemplateDeviceSelection &&
+    pendingPlatformGroupIds.length > 0;
+
+  useEffect(() => {
+    if (!isPlatformDeviceListLoading) return;
+
+    const pendingGroupIds = new Set(pendingPlatformGroupIds);
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
+        | undefined;
+      if (data?.type !== 'tv:devices-by-group') return;
+
+      const payload = data.payload;
+      if (!payload?.groupId || !pendingGroupIds.has(payload.groupId)) return;
+      if (!Array.isArray(payload.devices)) return;
+
+      usePlatformDeviceStore.getState().setDevicesForGroup(payload.groupId, payload.devices as any);
+    };
+
+    window.addEventListener('message', handleMessage);
+    pendingPlatformGroupIds.forEach((groupId) => {
+      window.parent.postMessage(
+        {
+          type: 'thingsvis:requestDevicesByGroup',
+          payload: { groupId },
+        },
+        '*',
+      );
+    });
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [isPlatformDeviceListLoading, pendingPlatformGroupIds]);
 
   useEffect(() => {
     if (!isDeviceScopedGroup || !selectedDeviceSource?.deviceId) return;
@@ -907,7 +961,7 @@ export function FieldPicker({
           >
             {visibleDeviceSources.length === 0 ? (
               <option value="">
-                {deviceSources.length === 0
+                {isPlatformDeviceListLoading || deviceSources.length === 0
                   ? t('binding.loadingData', '正在加载设备数据...')
                   : t('binding.noMatchedDevices', '未找到匹配设备')}
               </option>

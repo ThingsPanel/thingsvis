@@ -26,7 +26,11 @@ import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useTranslation } from 'react-i18next';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
-import { listEmbeddedProviderDataSourceIds } from '@/lib/embedded/embedded-data-source-registry';
+import {
+  listEmbeddedProviderDataSourceIds,
+  resolveEmbeddedProviderCatalog,
+} from '@/lib/embedded/embedded-data-source-registry';
+import { resolveControlText } from '@/lib/i18n/controlText';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -55,7 +59,7 @@ interface DataSourceDialogProps {
 }
 
 export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialogProps) {
-  const { t } = useTranslation('editor');
+  const { t, i18n } = useTranslation('editor');
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -76,6 +80,18 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
   });
   const jsonExtensions = useMemo(() => [json()], []);
   const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const providerDataSourceNameMap = useMemo(() => {
+    const catalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
+    if (!catalog) return new Map<string, string>();
+
+    const locale = i18n.resolvedLanguage ?? i18n.language;
+    return new Map(
+      catalog.dataSources.map((source) => [
+        source.id,
+        resolveControlText(source.label, locale, t as any),
+      ]),
+    );
+  }, [i18n.language, i18n.resolvedLanguage, serviceConfig.provider, t]);
   const protectedDataSourceIds = useMemo(() => {
     if (serviceConfig.mode !== 'embedded') return new Set<string>();
 
@@ -102,6 +118,12 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
       setStaticJsonText('{}');
       setStaticJsonError(null);
     }
+  };
+
+  const getDisplayName = (dataSourceId: string): string => {
+    const config = dataSourceManager.getConfig(dataSourceId);
+    if (config?.name && config.name !== dataSourceId) return config.name;
+    return providerDataSourceNameMap.get(dataSourceId) ?? dataSourceId;
   };
 
   // 验证数据源 ID 格式（只允许字母、数字和下划线）
@@ -220,7 +242,18 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                     <div
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${ds.status === 'connected' ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-yellow-400'}`}
                     />
-                    <span className="text-sm font-semibold truncate">{ds.id}</span>
+                    <div className="min-w-0 flex flex-col">
+                      <span className="text-sm font-semibold truncate">
+                        {getDisplayName(ds.id)}
+                      </span>
+                      {getDisplayName(ds.id) !== ds.id ? (
+                        <span
+                          className={`text-[10px] truncate ${selectedId === ds.id ? 'text-white/60' : 'text-muted-foreground'}`}
+                        >
+                          {ds.id}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
                   {!protectedDataSourceIds.has(ds.id) && (
                     <button
