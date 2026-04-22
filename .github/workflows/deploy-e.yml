@@ -196,6 +196,9 @@ jobs:
           port: 22
           script: |
             set -e
+
+            export PATH="/usr/local/lib/nodejs/node-v16.14.2-linux-x64/bin:$PATH"
+
             echo "=== Deploying ThingsVis ==="
 
             # Ensure directories exist
