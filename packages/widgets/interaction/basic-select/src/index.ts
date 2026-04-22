@@ -37,6 +37,14 @@ function parseOptions(optionsJson: string): Array<{ label: string; value: string
   }
 }
 
+function normalizeSelectValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'boolean') return value ? '1' : '0';
+  if (typeof value === 'number') return String(value);
+  return '';
+}
+
 function renderSelect(element: HTMLElement, props: Props, colors: WidgetColors, emit?: (event: string, data: unknown) => void): void {
   const textPrimary = props.textColor || colors.fg;
   const borderColor = props.borderColor || withAlpha(textPrimary, 0.15);
@@ -52,12 +60,13 @@ function renderSelect(element: HTMLElement, props: Props, colors: WidgetColors, 
   `;
   
   const options = parseOptions(props.options);
+  const normalizedValue = normalizeSelectValue((props as Props & { value?: unknown }).value);
   const optionsHtml = options.map(opt => 
-    `<option value="${opt.value}" ${opt.value === props.value ? 'selected' : ''}>${opt.label}</option>`
+    `<option value="${opt.value}" ${opt.value === normalizedValue ? 'selected' : ''}>${opt.label}</option>`
   ).join('');
   
   const placeholderHtml = props.placeholder ? 
-    `<option value="" disabled ${!props.value ? 'selected' : ''}>${props.placeholder}</option>` : '';
+    `<option value="" disabled ${!normalizedValue ? 'selected' : ''}>${props.placeholder}</option>` : '';
   
   element.innerHTML = `
     <select 
