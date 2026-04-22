@@ -31,7 +31,10 @@ import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBin
 import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { deriveCanvasBackgroundState, normalizeCanvasBackground } from '../lib/canvasBackground';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
-import { resolveEmbeddedProviderCatalog } from '../lib/embedded/embedded-data-source-registry';
+import {
+  buildEmbeddedProviderDataSources,
+  resolveEmbeddedProviderCatalog,
+} from '../lib/embedded/embedded-data-source-registry';
 import {
   buildEmbedRuntimeVariableValues,
   mergeEmbedRuntimeVariableDefinitions,
@@ -53,39 +56,40 @@ function normalizeEmbeddedProviderDataSources(
   const providerCatalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
   if (!providerCatalog) return dataSources;
 
-  const definitionsById = new Map(providerCatalog.dataSources.map((source) => [source.id, source]));
-  const hasRuntimeDeviceId =
-    typeof runtimeVariableValues.deviceId === 'string' &&
-    runtimeVariableValues.deviceId.trim().length > 0;
+  const protectedGroups =
+    serviceConfig.context === 'dashboard'
+      ? (['dashboard'] as const)
+      : serviceConfig.context === 'device-template'
+        ? (['dashboard', 'current-device', 'current-device-history'] as const)
+        : undefined;
 
-  return dataSources.map((dataSource: Record<string, any>) => {
+  const providerDefaults = buildEmbeddedProviderDataSources(
+    serviceConfig.provider,
+    runtimeVariableValues,
+    protectedGroups ? { groups: [...protectedGroups] } : undefined,
+  );
+  const definitionsById = new Map(providerDefaults.map((source) => [source.id, source]));
+
+  const normalized = dataSources.map((dataSource: Record<string, any>) => {
     const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
     const definition = definitionsById.get(sourceId);
     if (!definition) return dataSource;
 
-    const isCurrentDeviceScoped =
-      definition.group === 'current-device' || definition.group === 'current-device-history';
-
     return {
-      id: definition.id,
+      ...definition,
       name:
         typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
-      type: 'REST',
-      config: {
-        url: definition.url,
-        method: 'GET',
-        headers: {
-          'x-token': '{{ var.platformToken }}',
-        },
-        params: definition.params ?? {},
-        pollingInterval: 60,
-        timeout: 30,
-        auth: { type: 'none' },
-      },
-      transformation: definition.transformation,
-      ...(isCurrentDeviceScoped && !hasRuntimeDeviceId ? { mode: 'manual' } : {}),
+      mode:
+        typeof dataSource?.mode === 'string' && dataSource.mode ? dataSource.mode : definition.mode,
     };
   });
+
+  providerDefaults.forEach((definition) => {
+    if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
+    normalized.push(definition);
+  });
+
+  return normalized;
 }
 
 export type CanvasConfigSchema = {

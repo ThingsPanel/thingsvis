@@ -41,6 +41,8 @@ import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { dataSourceManager, store } from '../lib/store';
 import { buildHashRoute } from '../lib/embed/navigation';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
+import { listEmbeddedProviderDataSourceIds } from '../lib/embedded/embedded-data-source-registry';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -104,6 +106,24 @@ export default function DataSourcesPage() {
   });
 
   const jsonExtensions = useMemo(() => [json()], []);
+  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const protectedDataSourceIds = useMemo(() => {
+    if (serviceConfig.mode !== 'embedded') return new Set<string>();
+
+    const groups =
+      serviceConfig.context === 'dashboard'
+        ? ['dashboard']
+        : serviceConfig.context === 'device-template'
+          ? ['dashboard', 'current-device', 'current-device-history']
+          : undefined;
+
+    return new Set(
+      listEmbeddedProviderDataSourceIds(
+        serviceConfig.provider,
+        groups ? { groups: groups as any } : undefined,
+      ),
+    );
+  }, [serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, visible: true, type });
@@ -199,6 +219,10 @@ export default function DataSourcesPage() {
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (protectedDataSourceIds.has(id)) {
+      showToast(t('dataSources.deleteFailed'), 'error');
+      return;
+    }
 
     // Find name for confirmation
     const config = dataSourceManager.getConfig(id);
@@ -209,6 +233,12 @@ export default function DataSourcesPage() {
 
   const confirmDelete = async () => {
     if (!sourceToDelete) return;
+    if (protectedDataSourceIds.has(sourceToDelete)) {
+      showToast(t('dataSources.deleteFailed'), 'error');
+      setDeleteDialogOpen(false);
+      setSourceToDelete(null);
+      return;
+    }
 
     try {
       await dataSourceManager.unregisterDataSource(sourceToDelete);
@@ -376,12 +406,14 @@ export default function DataSourcesPage() {
                     );
                   })()}
                 </div>
-                <button
-                  onClick={(e) => handleDeleteClick(e, ds.id)}
-                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                {!protectedDataSourceIds.has(ds.id) && (
+                  <button
+                    onClick={(e) => handleDeleteClick(e, ds.id)}
+                    className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             ))}
             {Object.keys(states).length === 0 && !isAdding && (

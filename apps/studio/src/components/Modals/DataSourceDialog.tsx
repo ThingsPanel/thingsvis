@@ -25,6 +25,8 @@ import { TransformationEditor } from '../DataSourceConfig/TransformationEditor';
 import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { useTranslation } from 'react-i18next';
+import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { listEmbeddedProviderDataSourceIds } from '@/lib/embedded/embedded-data-source-registry';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -73,6 +75,24 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
     transformation: '',
   });
   const jsonExtensions = useMemo(() => [json()], []);
+  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const protectedDataSourceIds = useMemo(() => {
+    if (serviceConfig.mode !== 'embedded') return new Set<string>();
+
+    const groups =
+      serviceConfig.context === 'dashboard'
+        ? ['dashboard']
+        : serviceConfig.context === 'device-template'
+          ? ['dashboard', 'current-device', 'current-device-history']
+          : undefined;
+
+    return new Set(
+      listEmbeddedProviderDataSourceIds(
+        serviceConfig.provider,
+        groups ? { groups: groups as any } : undefined,
+      ),
+    );
+  }, [serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
 
   const syncStaticJsonTextFromConfig = (configValue: unknown) => {
     try {
@@ -143,6 +163,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
 
   const deleteSource = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (protectedDataSourceIds.has(id)) return;
     await dataSourceManager.unregisterDataSource(id);
     if (selectedId === id) setSelectedId(null);
   };
@@ -201,12 +222,14 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                     />
                     <span className="text-sm font-semibold truncate">{ds.id}</span>
                   </div>
-                  <button
-                    onClick={(e) => deleteSource(e, ds.id)}
-                    className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  {!protectedDataSourceIds.has(ds.id) && (
+                    <button
+                      onClick={(e) => deleteSource(e, ds.id)}
+                      className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
               {Object.keys(states).length === 0 && (
