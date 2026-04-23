@@ -6,6 +6,7 @@
                 "groupContent": "内容",
                 "groupStyle": "样式",
                 "label": "标签文字",
+                "value": "当前值",
                 "placeholder": "占位文字",
                 "options": "选项配置",
                 "fontSize": "字体大小",

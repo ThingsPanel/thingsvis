@@ -567,6 +567,8 @@ const CanvasView = forwardRef<
         ...resolveInitialWidgetProps({
           schema: moduleDefs?.schema,
           standaloneDefaults: moduleDefs?.standaloneDefaults,
+          previewDefaults: moduleDefs?.previewDefaults,
+          sampleData: moduleDefs?.sampleData,
           fallbackDefaults: entry?.defaultProps,
         }),
         ...(snippetEntry?.props && typeof snippetEntry.props === 'object'
@@ -729,6 +731,8 @@ const CanvasView = forwardRef<
         props: resolveInitialWidgetProps({
           schema: moduleDefs?.schema,
           standaloneDefaults: moduleDefs?.standaloneDefaults,
+          previewDefaults: moduleDefs?.previewDefaults,
+          sampleData: moduleDefs?.sampleData,
           fallbackDefaults: moduleDefs?.defaultProps,
         }),
         grid: {

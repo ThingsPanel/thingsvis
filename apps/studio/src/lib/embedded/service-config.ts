@@ -1,11 +1,6 @@
-import {
-  mergeWithDefaultAggregatePlatformFields,
-  normalizePlatformFieldScope,
-  type PlatformFieldScope,
-} from './default-platform-fields';
-
 export type EditorServiceMode = 'standalone' | 'embedded';
 export type IntegrationLevel = 'full' | 'minimal';
+export type EmbeddedEditorContext = 'dashboard' | 'device-template';
 
 export type EditorUiConfig = {
   /** Left panel (component library / layers) */
@@ -36,9 +31,10 @@ export type SaveTarget = 'self' | 'host';
 export type EditorServiceConfig = {
   mode: EditorServiceMode;
   integrationLevel: IntegrationLevel;
+  provider?: string;
+  context?: EmbeddedEditorContext;
   ui: EditorUiConfig;
   saveTarget?: SaveTarget;
-  platformFieldScope?: PlatformFieldScope;
   platformFields?: PlatformField[];
   warnings: string[];
 };
@@ -120,6 +116,10 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
   const integrationParam = (getParam('integration') || getParam('integrationLevel') || '')
     .trim()
     .toLowerCase();
+  const providerParam = (getParam('provider') || '').trim().toLowerCase();
+  const contextParam = (getParam('context') || '').trim().toLowerCase();
+  const context: EmbeddedEditorContext | undefined =
+    contextParam === 'dashboard' || contextParam === 'device-template' ? contextParam : undefined;
   let integrationLevel: IntegrationLevel = mode === 'embedded' ? 'full' : 'full';
   if (integrationParam) {
     if (integrationParam === 'minimal') integrationLevel = 'minimal';
@@ -155,28 +155,14 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
       ? (saveTargetParam as SaveTarget)
       : undefined;
 
-  const platformFieldScope = normalizePlatformFieldScope(
-    getParam('platformFieldScope') || getParam('roleScope') || getParam('role'),
-  );
-
   // -------- Platform fields --------
-  // Embedded mode always exposes a small built-in aggregate field set so
-  // homepage/dashboard widgets can bind value-card and line-chart data even
-  // before the host injects a richer schema.
-  let platformFields: PlatformField[] | undefined = mergeWithDefaultAggregatePlatformFields(
-    [],
-    platformFieldScope,
-  ) as PlatformField[];
+  let platformFields: PlatformField[] | undefined;
 
   try {
     const fieldsParam = getParam('platformFields');
     if (fieldsParam) {
       // URLSearchParams.get() already decodes the parameter, no need to decode again
-      const parsed = JSON.parse(fieldsParam) as PlatformField[];
-      platformFields = mergeWithDefaultAggregatePlatformFields(
-        parsed,
-        platformFieldScope,
-      ) as PlatformField[];
+      platformFields = JSON.parse(fieldsParam) as PlatformField[];
     }
   } catch (e) {
     warnings.push('Failed to parse platform fields');
@@ -200,6 +186,8 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
     return {
       mode,
       integrationLevel,
+      provider: providerParam || undefined,
+      context,
       ui: {
         showComponentLibrary: false,
         showPropsPanel: false,
@@ -209,7 +197,6 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
         toolbarItems: undefined,
       },
       saveTarget,
-      platformFieldScope,
       platformFields,
       warnings,
     };
@@ -219,9 +206,10 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
   return {
     mode,
     integrationLevel,
+    provider: providerParam || undefined,
+    context,
     ui: requestedUi,
     saveTarget,
-    platformFieldScope,
     platformFields,
     warnings,
   };

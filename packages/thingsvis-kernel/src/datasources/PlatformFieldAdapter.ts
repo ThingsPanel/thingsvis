@@ -13,6 +13,11 @@ export class PlatformFieldAdapter extends BaseAdapter {
   /** Rolling time-series buffers — populated only when bufferSize > 0. */
   private dataBuffers: Map<string, Array<{ value: unknown; ts: number }>> = new Map();
   private messageListener: ((event: MessageEvent) => void) | null = null;
+  private pendingWrites = new Map<
+    string,
+    { resolve: (result: WriteResult) => void; timeoutId: ReturnType<typeof setTimeout> }
+  >();
+  private readonly writeTimeoutMs = 5000;
 
   constructor() {
     super('PLATFORM_FIELD');
@@ -44,6 +49,11 @@ export class PlatformFieldAdapter extends BaseAdapter {
       // Security: In production, verify event.origin against the known ThingsVis origin.
       const msgType: unknown = event.data?.type;
 
+      if (msgType === 'tv:platform-write-result') {
+        this.handleWriteResult(event.data);
+        return;
+      }
+
       // ── Bulk history pre-fill ────────────────────────────────────────────────
       if (msgType === 'tv:platform-history') {
         const { fieldId, history, deviceId } = event.data.payload as {
@@ -55,7 +65,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
         const historyPlatformConfig = this.config?.config as PlatformFieldConfig | undefined;
         // Strict routing:
         // - device-scoped datasource: only accept matching deviceId
-        // - global datasource (__platform__): only accept messages without deviceId
+        // - unscoped datasource: only accept messages without deviceId
         if (historyPlatformConfig?.deviceId) {
           if (historyPlatformConfig.deviceId !== deviceId) return;
         } else if (deviceId !== undefined) {
@@ -95,7 +105,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
       const platformConfig = this.config?.config as PlatformFieldConfig | undefined;
       // Strict routing:
       // - device-scoped datasource: only accept matching deviceId
-      // - global datasource (__platform__): only accept messages without deviceId
+      // - unscoped datasource: only accept messages without deviceId
       if (platformConfig?.deviceId) {
         if (platformConfig.deviceId !== deviceId) return;
       } else if (deviceId !== undefined) {
@@ -132,6 +142,43 @@ export class PlatformFieldAdapter extends BaseAdapter {
     };
 
     window.addEventListener('message', this.messageListener);
+  }
+
+  private createWriteRequestId(): string {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
+    }
+    return `platform-write-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+
+  private handleWriteResult(message: unknown) {
+    const resultMessage = message as {
+      requestId?: unknown;
+      success?: unknown;
+      error?: unknown;
+      echo?: unknown;
+    };
+    if (typeof resultMessage.requestId !== 'string') return;
+
+    const pending = this.pendingWrites.get(resultMessage.requestId);
+    if (!pending) return;
+
+    clearTimeout(pending.timeoutId);
+    this.pendingWrites.delete(resultMessage.requestId);
+
+    const success = resultMessage.success === true;
+    pending.resolve({
+      success,
+      ...(success
+        ? {}
+        : {
+            error:
+              typeof resultMessage.error === 'string'
+                ? resultMessage.error
+                : 'Platform write failed',
+          }),
+      echo: resultMessage.echo,
+    });
   }
 
   /**
@@ -208,26 +255,42 @@ export class PlatformFieldAdapter extends BaseAdapter {
     if (!this.config) {
       return { success: false, error: 'PlatformFieldAdapter is not connected' };
     }
-    try {
-      const platformConfig = this.config.config as PlatformFieldConfig | undefined;
-      const normalizedPayload = this.normalizeWritePayload(payload);
-      window.parent.postMessage(
-        {
-          type: 'tv:platform-write',
-          payload: {
-            dataSourceId: this.config.id,
-            deviceId: platformConfig?.deviceId,
-            data: normalizedPayload,
+    const requestId = this.createWriteRequestId();
+    const platformConfig = this.config.config as PlatformFieldConfig | undefined;
+    const normalizedPayload = this.normalizeWritePayload(payload);
+
+    return new Promise<WriteResult>((resolve) => {
+      const timeoutId = setTimeout(() => {
+        this.pendingWrites.delete(requestId);
+        resolve({
+          success: false,
+          error: `Platform write timed out after ${this.writeTimeoutMs / 1000}s`,
+        });
+      }, this.writeTimeoutMs);
+
+      this.pendingWrites.set(requestId, { resolve, timeoutId });
+
+      try {
+        window.parent.postMessage(
+          {
+            type: 'tv:platform-write',
+            requestId,
+            payload: {
+              dataSourceId: this.config?.id,
+              deviceId: platformConfig?.deviceId,
+              data: normalizedPayload,
+            },
           },
-        },
-        '*',
-      );
-      return { success: true };
-    } catch (e) {
-      const err = e instanceof Error ? e.message : String(e);
-      console.error('[PlatformFieldAdapter] write postMessage failed:', e);
-      return { success: false, error: err };
-    }
+          '*',
+        );
+      } catch (e) {
+        clearTimeout(timeoutId);
+        this.pendingWrites.delete(requestId);
+        const err = e instanceof Error ? e.message : String(e);
+        console.error('[PlatformFieldAdapter] write postMessage failed:', e);
+        resolve({ success: false, error: err });
+      }
+    });
   }
 
   /**
@@ -295,6 +358,14 @@ export class PlatformFieldAdapter extends BaseAdapter {
       window.removeEventListener('message', this.messageListener);
       this.messageListener = null;
     }
+    for (const pending of this.pendingWrites.values()) {
+      clearTimeout(pending.timeoutId);
+      pending.resolve({
+        success: false,
+        error: 'PlatformFieldAdapter disconnected before write result',
+      });
+    }
+    this.pendingWrites.clear();
     this.platformDataCache.clear();
     this.dataBuffers.clear();
   }

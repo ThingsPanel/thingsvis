@@ -84,7 +84,7 @@ function resolveNavigateDestination(
  */
 function buildExpressionContext(
   state: Record<string, unknown>,
-  payload: unknown
+  payload: unknown,
 ): Record<string, unknown> {
   return {
     payload,
@@ -107,10 +107,7 @@ function buildExpressionContext(
  *   `{"id": "{{payload ? 1 : 0}}"}`               → `{"id": "1"}`
  *   `{{payload}}`                                  → `true`
  */
-function resolveTemplateExpressions(
-  template: string,
-  context: Record<string, unknown>
-): string {
+function resolveTemplateExpressions(template: string, context: Record<string, unknown>): string {
   return template.replace(/\{\{(.+?)\}\}/gs, (_match, expr: string) => {
     const result = SafeExecutor.executeScript(expr.trim(), context);
     if (result === undefined || result === null) return '';
@@ -127,17 +124,25 @@ function resolveTemplateExpressions(
  * 3. If not valid JSON — try evaluating as a full JS expression via SafeExecutor
  * 4. Final fallback — return raw string
  */
-function resolvePayload(
-  raw: unknown,
-  context: Record<string, unknown>
-): unknown {
+function resolvePayload(raw: unknown, context: Record<string, unknown>): unknown {
   if (typeof raw !== 'string') return raw;
 
   const hasMustache = /\{\{.+?\}\}/s.test(raw);
 
   if (hasMustache) {
+    const singleExpression = raw.match(/^\s*\{\{([\s\S]+?)\}\}\s*$/);
+    if (singleExpression) {
+      const evaluated = SafeExecutor.executeScript((singleExpression[1] ?? '').trim(), context);
+      if (evaluated !== undefined && evaluated !== null) return evaluated;
+      return '';
+    }
+
     const resolved = resolveTemplateExpressions(raw, context);
-    try { return JSON.parse(resolved); } catch { /* not JSON after resolution */ }
+    try {
+      return JSON.parse(resolved);
+    } catch {
+      /* not JSON after resolution */
+    }
     // If the entire string was a single {{expr}}, the resolved value might be
     // a primitive that doesn't JSON.parse — evaluate it directly
     const evaluated = SafeExecutor.executeScript(resolved, context);
@@ -146,7 +151,11 @@ function resolvePayload(
   }
 
   // No mustache — try static JSON first (most common case for callWrite payloads)
-  try { return JSON.parse(raw); } catch { /* not valid JSON */ }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /* not valid JSON */
+  }
 
   // Not JSON — try as full JS expression (e.g. `payload ? {...} : {...}`)
   const evaluated = SafeExecutor.executeScript(raw, context);
@@ -156,7 +165,10 @@ function resolvePayload(
 }
 
 // Exported for testing
-export { resolvePayload as _resolvePayload, resolveTemplateExpressions as _resolveTemplateExpressions };
+export {
+  resolvePayload as _resolvePayload,
+  resolveTemplateExpressions as _resolveTemplateExpressions,
+};
 export { buildExpressionContext as _buildExpressionContext };
 export { resolveNavigateDestination as _resolveNavigateDestination };
 
@@ -202,21 +214,34 @@ export function executeAction(
     }
 
     case 'callWrite': {
-      const dsId = action.dataSourceId;
-      if (!dsId) break;
+      const rawDsId = action.dataSourceId;
+      if (!rawDsId) break;
+
+      const context = buildExpressionContext(state, payload);
+      const resolvedDsId = resolvePayload(rawDsId, context);
+      const dsId = typeof resolvedDsId === 'string' ? resolvedDsId.trim() : '';
+      if (!dsId) {
+        console.warn('[ThingsVis] callWrite skipped: dataSourceId did not resolve to a string', {
+          dataSourceId: rawDsId,
+          resolved: resolvedDsId,
+        });
+        break;
+      }
 
       const dataSourceManager = runtime.dataSourceManager;
       if (!dataSourceManager) {
-        console.warn('[ThingsVis] callWrite skipped: no runtime-scoped dataSourceManager provided', {
-          dataSourceId: dsId,
-        });
+        console.warn(
+          '[ThingsVis] callWrite skipped: no runtime-scoped dataSourceManager provided',
+          {
+            dataSourceId: dsId,
+          },
+        );
         break;
       }
 
       // Use configured payload if set, otherwise fall back to event payload
       const rawPayload = action.payload ?? payload;
       // Resolve dynamic expressions: {{expr}}, full JS expressions, or static JSON
-      const context = buildExpressionContext(state, payload);
       const writePayload = resolvePayload(rawPayload, context);
       if ((import.meta as any).env?.DEV) {
         console.debug('[ThingsVis] callWrite →', dsId, {
@@ -225,13 +250,14 @@ export function executeAction(
           resolvedType: typeof writePayload,
         });
       }
-      dataSourceManager.writeDataSource(dsId, writePayload)
-        .then(result => {
+      dataSourceManager
+        .writeDataSource(dsId, writePayload)
+        .then((result) => {
           if (!result.success) {
             console.error('[ThingsVis] callWrite failed for dataSource', dsId, result.error);
           }
         })
-        .catch(e => {
+        .catch((e) => {
           console.error('[ThingsVis] callWrite error for dataSource', dsId, e);
         });
       break;
@@ -289,7 +315,7 @@ export function buildEmit(
   return (eventName: string, payload?: unknown) => {
     const schema = getSchema();
     const handlers = (schema?.events ?? []) as EventHandlerConfig[];
-    const matching = handlers.filter(h => h.event === eventName);
+    const matching = handlers.filter((h) => h.event === eventName);
 
     const state = getState();
 

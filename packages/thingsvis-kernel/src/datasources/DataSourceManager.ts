@@ -375,6 +375,11 @@ export class DataSourceManager {
       }
     });
 
+    const currentVariableValues = this.store?.getState().variableValues;
+    if (currentVariableValues) {
+      await adapter.refreshWithVariables(currentVariableValues);
+    }
+
     // Determine trigger mode: 'manual' data sources only prepare (no fetch/polling on load)
     const effectiveMode = this.resolveEffectiveMode(config, normalizedType);
     this.resolvedModes.set(config.id, effectiveMode);

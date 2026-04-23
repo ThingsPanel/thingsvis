@@ -1,6 +1,6 @@
 /**
  * defineWidget - 一站式插件定义
- * 
+ *
  * 借鉴 Grafana 的设计理念，提供简洁的 API
  */
 
@@ -69,24 +69,28 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
   schema: z.ZodObject<TProps>;
   /** Standalone-only demo props merged over schema defaults on initial creation. */
   standaloneDefaults?: Record<string, unknown>;
+  /** Embedded-editor preview props merged over schema defaults on initial creation. */
+  previewDefaults?: Record<string, unknown>;
+  /** Widget-owned embedded-editor sample data. */
+  sampleData?: Record<string, unknown>;
   /** 多语言翻译配置 (可选) */
   locales?: Record<string, Record<string, unknown>>;
-  /** 
+  /**
    * 控件配置
-   * 
+   *
    * 支持两种模式：
    * 1. 简化模式：{ Content: ['title'], Style: ['color'] }
    * 2. 详细模式：{ Content: [{ title: { binding: true } }] }
    */
   controls?: SimpleGroupConfig | WidgetControls;
-  /** 
+  /**
    * 一键开启所有绑定（傻瓜模式）
    * 设为 true 则所有字段自动支持数据绑定
    */
   enableAllBindings?: boolean;
   /**
    * 属性迁移函数
-   * 
+   *
    * 当保存的 widgetVersion 与当前 widget.version 不匹配时，宿主调用此函数
    * @param props - 保存的旧属性对象
    * @param fromVersion - 保存时的 widget 版本
@@ -98,9 +102,9 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
    * 返回值将放入 WidgetOverlayContext.data 供组件使用。
    */
   transformData?: (rawData: unknown, props: Record<string, unknown>) => unknown;
-  /** 
+  /**
    * 渲染函数
-   * 
+   *
    * @param el - DOM 容器元素
    * @param props - 组件属性
    * @param ctx - 组件上下文（位置、尺寸、主题等）
@@ -109,7 +113,7 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
   render: (
     el: HTMLElement,
     props: z.infer<z.ZodObject<TProps>>,
-    ctx: WidgetOverlayContext
+    ctx: WidgetOverlayContext,
   ) => {
     update?: (props: z.infer<z.ZodObject<TProps>>, ctx: WidgetOverlayContext) => void;
     destroy?: () => void;
@@ -121,13 +125,22 @@ export type DefineWidgetConfig<TProps extends z.ZodRawShape> = {
 // ============================================================================
 
 function isWidgetControls(obj: unknown): obj is WidgetControls {
-  return typeof obj === 'object' && obj !== null && 'groups' in obj && Array.isArray((obj as WidgetControls).groups);
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'groups' in obj &&
+    Array.isArray((obj as WidgetControls).groups)
+  );
 }
 
 function normalizeSimpleGroupConfig(
   simpleConfig: SimpleGroupConfig,
-  enableAllBindings: boolean
-): { groups: Record<string, string[]>; overrides: Record<string, Partial<ControlField>>; bindings: Record<string, ControlBinding> } {
+  enableAllBindings: boolean,
+): {
+  groups: Record<string, string[]>;
+  overrides: Record<string, Partial<ControlField>>;
+  bindings: Record<string, ControlBinding>;
+} {
   const groups: Record<string, string[]> = {};
   const overrides: Record<string, Partial<ControlField>> = {};
   const bindings: Record<string, ControlBinding> = {};
@@ -176,27 +189,27 @@ function normalizeSimpleGroupConfig(
 
 /**
  * 定义 ThingsVis 插件
- * 
+ *
  * @example
  * ```typescript
  * import { defineWidget } from '@thingsvis/widget-sdk';
  * import { z } from 'zod';
- * 
+ *
  * export default defineWidget({
  *   id: 'my-chart',
  *   name: '我的图表',
  *   category: 'chart',
- *   
+ *
  *   schema: z.object({
  *     title: z.string().default('标题'),
  *     color: z.string().default('#1890ff'),
  *   }),
- *   
+ *
  *   controls: {
  *     Content: ['title'],
  *     Style: [{ color: { kind: 'color', binding: true } }],
  *   },
- *   
+ *
  *   render: (el, props) => {
  *     el.innerHTML = `<h1 style="color: ${props.color}">${props.title}</h1>`;
  *     return {
@@ -211,9 +224,7 @@ function normalizeSimpleGroupConfig(
  * });
  * ```
  */
-export function defineWidget<TProps extends z.ZodRawShape>(
-  config: DefineWidgetConfig<TProps>
-) {
+export function defineWidget<TProps extends z.ZodRawShape>(config: DefineWidgetConfig<TProps>) {
   const {
     id,
     name,
@@ -222,6 +233,8 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     version = '1.0.0',
     schema,
     standaloneDefaults,
+    previewDefaults,
+    sampleData,
     controls: controlsConfig,
     locales,
     enableAllBindings = false,
@@ -239,16 +252,24 @@ export function defineWidget<TProps extends z.ZodRawShape>(
   if (!controlsConfig) {
     // 无配置：自动从 schema 生成，所有字段放 Advanced
     controls = generateControls(schema, {
-      bindings: enableAllBindings ? Object.fromEntries(
-        Object.keys(schema.shape).map(key => [key, { enabled: true, modes: ['static', 'field', 'expr'] }])
-      ) : undefined,
+      bindings: enableAllBindings
+        ? Object.fromEntries(
+            Object.keys(schema.shape).map((key) => [
+              key,
+              { enabled: true, modes: ['static', 'field', 'expr'] },
+            ]),
+          )
+        : undefined,
     });
   } else if (isWidgetControls(controlsConfig)) {
     // 已是完整格式
     controls = controlsConfig;
   } else {
     // 简化格式，需要转换
-    const { groups, overrides, bindings } = normalizeSimpleGroupConfig(controlsConfig, enableAllBindings);
+    const { groups, overrides, bindings } = normalizeSimpleGroupConfig(
+      controlsConfig,
+      enableAllBindings,
+    );
     controls = generateControls(schema, { groups, overrides, bindings });
   }
 
@@ -309,7 +330,10 @@ export function defineWidget<TProps extends z.ZodRawShape>(
       element,
       update: (newCtx: WidgetOverlayContext) => {
         currentCtx = newCtx;
-        currentProps = { ...defaultProps, ...(newCtx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
+        currentProps = {
+          ...defaultProps,
+          ...(newCtx.props as Partial<z.infer<z.ZodObject<TProps>>>),
+        };
         lifecycle.update?.(currentProps, newCtx);
       },
       destroy: () => {
@@ -331,6 +355,8 @@ export function defineWidget<TProps extends z.ZodRawShape>(
     icon,
     version,
     standaloneDefaults,
+    previewDefaults,
+    sampleData,
     schema,
     controls,
     locales,

@@ -17,14 +17,14 @@ describe('devicePresetHydration', () => {
             data: [
               {
                 targetProp: 'data',
-                expression: '{{ ds.__platform__.data.temperature__history }}',
+                expression: '{{ ds.__device_platform_template__.data.temperature__history }}',
               },
             ],
           } as any,
         ],
         dataSources: [
           {
-            id: '__platform__',
+            id: '__device_platform_template__',
             name: 'Template Device',
             type: 'PLATFORM_FIELD',
             config: {
@@ -57,7 +57,7 @@ describe('devicePresetHydration', () => {
         data: [
           {
             targetProp: 'text',
-            expression: '{{ ds.__platform__.data.temperature }}',
+            expression: '{{ ds.__device_platform_template__.data.temperature }}',
           },
         ],
       },

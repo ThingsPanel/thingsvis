@@ -6,6 +6,7 @@
                 "groupContent": "Content",
                 "groupStyle": "Style",
                 "label": "Label",
+                "value": "Value",
                 "min": "Min",
                 "max": "Max",
                 "step": "Step",

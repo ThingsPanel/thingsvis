@@ -31,7 +31,13 @@ function withAlpha(color: string, alpha: number): string {
   return normalized;
 }
 
-function renderButton(element: HTMLElement, props: Props, colors: WidgetColors, lastClickTs: { current: number }): void {
+function renderButton(
+  element: HTMLElement,
+  props: Props,
+  colors: WidgetColors,
+  lastClickTs: { current: number },
+  emit?: (event: string, data: unknown) => void,
+): void {
   const isOutline = props.variant === 'outline';
   const isGhost = props.variant === 'ghost';
   
@@ -85,11 +91,7 @@ function renderButton(element: HTMLElement, props: Props, colors: WidgetColors, 
         const now = Date.now();
         if (now - lastClickTs.current < CLICK_DEBOUNCE_MS) return;
         lastClickTs.current = now;
-        // Emit event via the widget context
-        element.dispatchEvent(new CustomEvent('widget:emit', { 
-          detail: { event: 'click', data: { label: props.label } },
-          bubbles: true 
-        }));
+        emit?.('click', { label: props.label });
       }
     });
   }
@@ -111,15 +113,16 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
     let colors = resolveWidgetColors(element);
+    let currentEmit = ctx.emit;
     const lastClickTs = { current: 0 };
     
-    renderButton(element, currentProps, colors, lastClickTs);
+    renderButton(element, currentProps, colors, lastClickTs, currentEmit);
     
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         colors = resolveWidgetColors(element);
-        renderButton(element, currentProps, colors, lastClickTs);
+        renderButton(element, currentProps, colors, lastClickTs, currentEmit);
       });
       ro.observe(element);
     }
@@ -127,8 +130,9 @@ export const Main = defineWidget({
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
+        currentEmit = newCtx.emit;
         colors = resolveWidgetColors(element);
-        renderButton(element, currentProps, colors, lastClickTs);
+        renderButton(element, currentProps, colors, lastClickTs, currentEmit);
       },
       destroy: () => {
         ro?.disconnect();

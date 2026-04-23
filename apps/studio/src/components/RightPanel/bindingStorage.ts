@@ -17,7 +17,7 @@ export function isValidExpression(expression: string): boolean {
 export function parseFieldBindingExpression(expression: string): FieldBindingSelection | null {
   const trimmed = expression.trim();
 
-  // Check for regular (and __platform__) data source expression: {{ ds.<id>.data.<path> }}
+  // Check for regular data source expression: {{ ds.<id>.data.<path> }}
   const match = FIELD_BINDING_EXPR_RE.exec(trimmed);
   if (!match) return null;
   const dataSourceId = match[1];

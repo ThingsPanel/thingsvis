@@ -40,7 +40,10 @@ function shouldTreatNodeAsResizable(node: NodeState, renderer: RendererFactory):
     return true;
   }
 
-  const schema = node.schemaRef as { type?: string; props?: Record<string, unknown> } | null | undefined;
+  const schema = node.schemaRef as
+    | { type?: string; props?: Record<string, unknown> }
+    | null
+    | undefined;
   return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
 }
 
@@ -252,7 +255,7 @@ export class VisualEngine {
   private getAnchorWorldPoint(
     position: { x: number; y: number },
     size: { width: number; height: number },
-    anchor?: string
+    anchor?: string,
   ): { x: number; y: number } {
     const cx = position.x + size.width / 2;
     const cy = position.y + size.height / 2;
@@ -271,7 +274,13 @@ export class VisualEngine {
     }
   }
 
-  private scheduleAutoLayoutConnectedLine(node: NodeState, linkedNodes: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }>) {
+  private scheduleAutoLayoutConnectedLine(
+    node: NodeState,
+    linkedNodes: Record<
+      string,
+      { id: string; position: { x: number; y: number }; size: { width: number; height: number } }
+    >,
+  ) {
     // Only for line nodes that have endpoint bindings
     if (!isConnectorNodeType(node.schemaRef.type)) return;
     const schema = node.schemaRef as any;
@@ -289,9 +298,12 @@ export class VisualEngine {
     const firstPt = pts && pts.length >= 2 ? pts[0] : null;
     const lastPt = pts && pts.length >= 2 ? pts[pts.length - 1] : null;
     const normalizedPts =
-      firstPt && lastPt &&
-      typeof firstPt?.x === 'number' && typeof firstPt?.y === 'number' &&
-      typeof lastPt?.x === 'number' && typeof lastPt?.y === 'number' &&
+      firstPt &&
+      lastPt &&
+      typeof firstPt?.x === 'number' &&
+      typeof firstPt?.y === 'number' &&
+      typeof lastPt?.x === 'number' &&
+      typeof lastPt?.y === 'number' &&
       Math.max(firstPt.x, firstPt.y, lastPt.x, lastPt.y) <= 1;
 
     const localToWorld = (p: any, fallback: { x: number; y: number }) => {
@@ -312,11 +324,12 @@ export class VisualEngine {
     const padding = getConnectorPadding(props.strokeWidth);
     let worldPoints: Array<{ x: number; y: number }>;
     if (isPipeNodeType(node.schemaRef.type)) {
-      const explicitWaypoints = Array.isArray((props as any).waypoints) && (props as any).waypoints.length > 0
-        ? ((props as any).waypoints as Array<any>)
-        : pts && pts.length >= 3
-          ? pts.slice(1, -1)
-          : [];
+      const explicitWaypoints =
+        Array.isArray((props as any).waypoints) && (props as any).waypoints.length > 0
+          ? ((props as any).waypoints as Array<any>)
+          : pts && pts.length >= 3
+            ? pts.slice(1, -1)
+            : [];
 
       if (explicitWaypoints.length > 0) {
         worldPoints = orthogonalizePipePoints(
@@ -334,7 +347,12 @@ export class VisualEngine {
           props.targetAnchor,
         );
       } else {
-        worldPoints = buildElbowRoutePoints(startWorld, endWorld, props.sourceAnchor, props.targetAnchor);
+        worldPoints = buildElbowRoutePoints(
+          startWorld,
+          endWorld,
+          props.sourceAnchor,
+          props.targetAnchor,
+        );
       }
     } else {
       worldPoints = [startWorld, endWorld];
@@ -348,7 +366,7 @@ export class VisualEngine {
     const nextPosition = { x: minPointX - padding, y: minPointY - padding };
     const nextSize = {
       width: Math.max(40, maxPointX - minPointX + padding * 2),
-      height: Math.max(40, maxPointY - minPointY + padding * 2)
+      height: Math.max(40, maxPointY - minPointY + padding * 2),
     };
 
     const nextPoints = worldPoints.map((point) => ({
@@ -363,7 +381,14 @@ export class VisualEngine {
     // Avoid re-entrancy: schedule into next frame.
     requestAnimationFrame(() => {
       const { updateNode } = this.store.getState() as KernelState & {
-        updateNode?: (id: string, changes: { position?: { x: number; y: number }; size?: { width: number; height: number }; props?: Record<string, unknown> }) => void;
+        updateNode?: (
+          id: string,
+          changes: {
+            position?: { x: number; y: number };
+            size?: { width: number; height: number };
+            props?: Record<string, unknown>;
+          },
+        ) => void;
       };
       if (!updateNode) return;
 
@@ -381,14 +406,17 @@ export class VisualEngine {
       const samePoints =
         Array.isArray(curPts) &&
         curPts.length === nextPoints.length &&
-        curPts.every((point: any, index: number) => point?.x === nextPoints[index]?.x && point?.y === nextPoints[index]?.y);
+        curPts.every(
+          (point: any, index: number) =>
+            point?.x === nextPoints[index]?.x && point?.y === nextPoints[index]?.y,
+        );
 
       if (!posChanged && !sizeChanged && samePoints) return;
 
       updateNode(node.id, {
         position: nextPosition,
         size: nextSize,
-        props: { ...curProps, points: nextPoints }
+        props: { ...curProps, points: nextPoints },
       });
     });
   }
@@ -400,8 +428,8 @@ export class VisualEngine {
       editable?: boolean;
       actionRuntime?: ActionRuntime;
       locale?: string;
-    }
-  ) { }
+    },
+  ) {}
 
   /**
    * 构建连接节点信息，用于 line 插件的节点连接功能
@@ -410,9 +438,15 @@ export class VisualEngine {
    */
   private buildLinkedNodes(
     node: NodeState,
-    allNodes: Record<string, NodeState>
-  ): Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> {
-    const result: Record<string, { id: string; position: { x: number; y: number }; size: { width: number; height: number } }> = {};
+    allNodes: Record<string, NodeState>,
+  ): Record<
+    string,
+    { id: string; position: { x: number; y: number }; size: { width: number; height: number } }
+  > {
+    const result: Record<
+      string,
+      { id: string; position: { x: number; y: number }; size: { width: number; height: number } }
+    > = {};
     const props = (node.schemaRef as any).props || {};
 
     const nodeIds = [props.sourceNodeId, props.targetNodeId].filter(Boolean) as string[];
@@ -454,12 +488,14 @@ export class VisualEngine {
     const node = (this.store.getState() as KernelState).nodesById[nodeId];
 
     if (shouldCommit && node) {
-      const currentProps = (((node.schemaRef as any)?.props ?? {}) as Record<string, unknown>);
+      const currentProps = ((node.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
       const nextText = textarea.value;
       if ((currentProps.text ?? '') !== nextText) {
-        (this.store.getState() as KernelState & {
-          updateNode?: (id: string, changes: { props?: Record<string, unknown> }) => void;
-        }).updateNode?.(nodeId, {
+        (
+          this.store.getState() as KernelState & {
+            updateNode?: (id: string, changes: { props?: Record<string, unknown> }) => void;
+          }
+        ).updateNode?.(nodeId, {
           props: {
             ...currentProps,
             text: nextText,
@@ -480,7 +516,7 @@ export class VisualEngine {
 
     this.closeInlineTextEditor({ commit: true });
 
-    const props = (((node?.schemaRef as any)?.props ?? {}) as Record<string, unknown>);
+    const props = ((node?.schemaRef as any)?.props ?? {}) as Record<string, unknown>;
     const textarea = document.createElement('textarea');
     textarea.value = typeof props.text === 'string' ? props.text : String(props.text ?? '');
     textarea.style.position = 'absolute';
@@ -567,9 +603,9 @@ export class VisualEngine {
 
     event.preventDefault();
     event.stopPropagation();
-    (this.store.getState() as KernelState & { selectNode?: (id: string | null) => void }).selectNode?.(
-      target.nodeId,
-    );
+    (
+      this.store.getState() as KernelState & { selectNode?: (id: string | null) => void }
+    ).selectNode?.(target.nodeId);
     this.openInlineTextEditor(target.nodeId, target.overlayBox);
   };
 
@@ -594,7 +630,7 @@ export class VisualEngine {
 
     this.app = new App({
       view: container,
-      tree: {}
+      tree: {},
     });
     this.root = this.app.tree as unknown as Group;
 
@@ -665,7 +701,11 @@ export class VisualEngine {
     for (const entry of this.instanceMap.values()) {
       entry.overlayClickCleanup?.();
       if (entry.reactRoot) {
-        try { entry.reactRoot.unmount(); } catch { /* already unmounted */ }
+        try {
+          entry.reactRoot.unmount();
+        } catch {
+          /* already unmounted */
+        }
       }
     }
     this.instanceMap.clear();
@@ -691,11 +731,13 @@ export class VisualEngine {
     }
   }
 
-
-
   private isSyncing = false;
 
-  sync(nodes: Record<string, NodeState>, connections: ConnectionState[] = [], layerOrder: string[] = []) {
+  sync(
+    nodes: Record<string, NodeState>,
+    connections: ConnectionState[] = [],
+    layerOrder: string[] = [],
+  ) {
     if (!this.app || !this.root || this.isSyncing) return;
     this.isSyncing = true;
 
@@ -705,7 +747,8 @@ export class VisualEngine {
       // Sync canvas theme attribute on overlayRoot so --w-* CSS tokens cascade to all widgets.
       // When the theme changes, invalidate all props caches to force a full widget update cycle.
       if (this.overlayRoot) {
-        const currentTheme = (this.store.getState().page as any)?.config?.theme ?? DEFAULT_CANVAS_THEME;
+        const currentTheme =
+          (this.store.getState().page as any)?.config?.theme ?? DEFAULT_CANVAS_THEME;
         if (currentTheme !== this.lastAppliedCanvasTheme) {
           this.overlayRoot.dataset['canvasTheme'] = currentTheme;
           this.lastAppliedCanvasTheme = currentTheme;
@@ -725,14 +768,19 @@ export class VisualEngine {
           entry.renderer.destroy(entry.instance);
           if (entry.renderer.destroyOverlay && entry.overlayInst) {
             // Pass the node state (may be undefined if node was removed from store — use cached id)
-            const removingNode = nodes[id] ?? { id, schemaRef: {} } as unknown as NodeState;
+            const removingNode = nodes[id] ?? ({ id, schemaRef: {} } as unknown as NodeState);
             entry.renderer.destroyOverlay(entry.overlayInst as any, removingNode);
           }
           // Unmount React root before removing DOM
           if (entry.reactRoot) {
-            try { entry.reactRoot.unmount(); } catch { /* already unmounted */ }
+            try {
+              entry.reactRoot.unmount();
+            } catch {
+              /* already unmounted */
+            }
           }
-          if (entry.overlayBox?.parentElement) entry.overlayBox.parentElement.removeChild(entry.overlayBox);
+          if (entry.overlayBox?.parentElement)
+            entry.overlayBox.parentElement.removeChild(entry.overlayBox);
           this.instanceMap.delete(id);
           // Clean up props cache
           this.lastNodePropsCache.delete(id);
@@ -740,7 +788,7 @@ export class VisualEngine {
       }
 
       // Add or update visible nodes
-      Object.values(nodes).forEach(node => {
+      Object.values(nodes).forEach((node) => {
         // Wrap each node's sync in try-catch to isolate errors
         try {
           this.syncSingleNode(node, root, nodes);
@@ -757,7 +805,11 @@ export class VisualEngine {
               this.instanceMap.set(node.id, { instance, renderer: errorRenderer });
             }
           } catch (placeholderError) {
-            console.error('[VisualEngine] errorRenderer itself failed for node', node.id, placeholderError);
+            console.error(
+              '[VisualEngine] errorRenderer itself failed for node',
+              node.id,
+              placeholderError,
+            );
           }
         }
       });
@@ -780,8 +832,8 @@ export class VisualEngine {
     if (!this.root) return;
 
     const visibleIds = Object.values(nodes)
-      .filter(n => n.visible)
-      .map(n => n.id);
+      .filter((n) => n.visible)
+      .map((n) => n.id);
 
     const ordered: string[] = [];
     const seen = new Set<string>();
@@ -834,7 +886,9 @@ export class VisualEngine {
     if (!type || typeof type !== 'string') {
       const msg = 'Invalid node type';
       this.errorMessageByNode.set(node.id, msg);
-      const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+      const { setNodeError } = this.store.getState() as KernelState & {
+        setNodeError?: (id: string, msg: string) => void;
+      };
       setNodeError?.(node.id, msg);
       return;
     }
@@ -859,7 +913,9 @@ export class VisualEngine {
       // If renderer is the errorRenderer, surface a non-fatal error into kernel state for visibility.
       const errMsg = this.errorMessageByNode.get(node.id) ?? this.errorMessageByType.get(type);
       if (errMsg && node.error !== errMsg) {
-        const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+        const { setNodeError } = this.store.getState() as KernelState & {
+          setNodeError?: (id: string, msg: string) => void;
+        };
         setNodeError?.(node.id, errMsg);
       }
       root.add(instance as any);
@@ -897,7 +953,7 @@ export class VisualEngine {
               undefined,
               this.opts?.actionRuntime,
             ),
-            on: (_event: string, _handler: (payload?: unknown) => void) => () => { },
+            on: (_event: string, _handler: (payload?: unknown) => void) => () => {},
           };
 
           const ov = rendererToUse.createOverlay(contextWithLinks);
@@ -912,18 +968,20 @@ export class VisualEngine {
 
           const reactRoot = createRoot(wrapperEl);
           reactRoot.render(
-            React.createElement(WidgetErrorBoundary, {
-              widgetType,
-              onError: (error: Error) => {
-                console.error(`[VisualEngine] Widget "${widgetType}" runtime error:`, error);
-                const { setNodeError } = this.store.getState() as KernelState & {
-                  setNodeError?: (id: string, msg: string) => void;
-                };
-                setNodeError?.(node.id, error.message);
+            React.createElement(
+              WidgetErrorBoundary,
+              {
+                widgetType,
+                onError: (error: Error) => {
+                  console.error(`[VisualEngine] Widget "${widgetType}" runtime error:`, error);
+                  const { setNodeError } = this.store.getState() as KernelState & {
+                    setNodeError?: (id: string, msg: string) => void;
+                  };
+                  setNodeError?.(node.id, error.message);
+                },
               },
-            },
-              React.createElement(DomBridge, { element: ov.element })
-            )
+              React.createElement(DomBridge, { element: ov.element }),
+            ),
           );
 
           // Track reactRoot for cleanup
@@ -975,7 +1033,11 @@ export class VisualEngine {
         } catch (e) {
           // overlay 创建失败 — 显示红色错误占位框，不传播到 App 级别（防白屏）
           // eslint-disable-next-line no-console
-          console.error('[VisualEngine] Widget overlay failed to mount:', (node.schemaRef as any)?.type, e);
+          console.error(
+            '[VisualEngine] Widget overlay failed to mount:',
+            (node.schemaRef as any)?.type,
+            e,
+          );
           if (overlayBox) {
             const widgetType = (node.schemaRef as any)?.type ?? 'unknown';
             const errMsg = e instanceof Error ? e.message : String(e);
@@ -1099,7 +1161,8 @@ export class VisualEngine {
 
         // Stringify both props and data bindings once — used to scan for ds./var. references
         // so that expressions in either location trigger cache invalidation.
-        const stringifiedContext = JSON.stringify((node.schemaRef as any).props || {}) + JSON.stringify(dataBindings);
+        const stringifiedContext =
+          JSON.stringify((node.schemaRef as any).props || {}) + JSON.stringify(dataBindings);
 
         let dataSourceKey = '';
         if (stringifiedContext.includes('ds.')) {
@@ -1119,7 +1182,7 @@ export class VisualEngine {
         }
 
         // Extract referenced variables from props and bindings
-        // We stringify both and search for `var.` references 
+        // We stringify both and search for `var.` references
         // to ensure variable updates trigger a visual refresh.
         let variableKey = '';
         if (stringifiedContext.includes('var.')) {
@@ -1147,8 +1210,16 @@ export class VisualEngine {
 
         // Only call updateOverlay if props, linkedNodes, data source values, variable values,
         // binding expressions, or theme changed.
-        // Platform field data (ds.__platform__) is already covered by dataSourceKey above.
-        const propsKey = JSON.stringify((node.schemaRef as any).props || {}) + linkedKey + dataSourceKey + variableKey + '||' + bindingExprsKey + '||' + canvasTheme;
+        // Platform field data is already covered by dataSourceKey above.
+        const propsKey =
+          JSON.stringify((node.schemaRef as any).props || {}) +
+          linkedKey +
+          dataSourceKey +
+          variableKey +
+          '||' +
+          bindingExprsKey +
+          '||' +
+          canvasTheme;
         const lastPropsKey = this.lastNodePropsCache.get(node.id);
 
         if (propsKey !== lastPropsKey) {
@@ -1168,15 +1239,27 @@ export class VisualEngine {
 
         // 销毁旧的崩溃实例
         if (existing.reactRoot) {
-          try { existing.reactRoot.unmount(); } catch { /* teardown — already unmounted */ }
+          try {
+            existing.reactRoot.unmount();
+          } catch {
+            /* teardown — already unmounted */
+          }
         }
         if (existing.renderer.destroyOverlay) {
-          try { existing.renderer.destroyOverlay(existing.overlayInst as any, node); } catch { /* teardown — overlay already destroyed */ }
+          try {
+            existing.renderer.destroyOverlay(existing.overlayInst as any, node);
+          } catch {
+            /* teardown — overlay already destroyed */
+          }
         }
         if (existing.overlayBox) {
           existing.overlayBox.innerHTML = ''; // 清理 DOM 残留
         }
-        try { existing.renderer.destroy(existing.instance); } catch { /* teardown — instance already destroyed */ }
+        try {
+          existing.renderer.destroy(existing.instance);
+        } catch {
+          /* teardown — instance already destroyed */
+        }
 
         // 创建 errorRenderer 并替换当前渲染器
         existing.renderer = errorRenderer;
@@ -1185,18 +1268,21 @@ export class VisualEngine {
         existing.overlayInst = undefined;
         root.add(existing.instance as any);
 
-        const { setNodeError } = this.store.getState() as KernelState & { setNodeError?: (id: string, msg: string) => void };
+        const { setNodeError } = this.store.getState() as KernelState & {
+          setNodeError?: (id: string, msg: string) => void;
+        };
         setNodeError?.(node.id, e instanceof Error ? e.message : String(e));
       }
     }
   }
 
-
   private getNodeEventHandlers(node: NodeState, eventName: string): EventHandlerConfig[] {
     const handlers = (node.schemaRef as any)?.events;
     if (!Array.isArray(handlers)) return [];
     return handlers.filter((handler): handler is EventHandlerConfig => {
-      return handler?.event === eventName && Array.isArray(handler.actions) && handler.actions.length > 0;
+      return (
+        handler?.event === eventName && Array.isArray(handler.actions) && handler.actions.length > 0
+      );
     });
   }
 
@@ -1206,14 +1292,15 @@ export class VisualEngine {
       overlayBox?: HTMLDivElement;
       overlayClickCleanup?: () => void;
       overlayClickSignature?: string;
-    }
+    },
   ) {
     const box = entry.overlayBox;
     if (!box) return;
 
     const clickHandlers = this.getNodeEventHandlers(node, 'click');
     const type = String((node.schemaRef as any)?.type ?? '');
-    const shouldBind = this.opts?.editable === false && type.startsWith('basic/') && clickHandlers.length > 0;
+    const shouldBind =
+      this.opts?.editable === false && type.startsWith('basic/') && clickHandlers.length > 0;
     const nextSignature = shouldBind ? JSON.stringify(clickHandlers) : '';
 
     if (entry.overlayClickSignature === nextSignature) {
@@ -1253,9 +1340,9 @@ export class VisualEngine {
     // Built-in fallback for legacy "rect" nodes
     if (type === 'rect') {
       const builtIn: RendererFactory = {
-        create: node => new Rect(this.toRectProps(node)),
+        create: (node) => new Rect(this.toRectProps(node)),
         update: (inst: any, node) => inst.set?.(this.toRectProps(node)),
-        destroy: inst => inst.remove?.()
+        destroy: (inst) => inst.remove?.(),
       };
       this.rendererByType.set(type, builtIn);
       return builtIn;
@@ -1296,7 +1383,6 @@ export class VisualEngine {
           this.failedRendererTypes.set(type, Date.now());
           this.errorMessageByType.set(type, e instanceof Error ? e.message : String(e));
           // eslint-disable-next-line no-console
-
         }
       })();
       this.pendingRendererLoad.set(type, p);
@@ -1384,10 +1470,12 @@ export class VisualEngine {
 
     // Border
     if (baseStyle.border) {
-      box.style.borderWidth = baseStyle.border.width !== undefined ? `${baseStyle.border.width}px` : '';
+      box.style.borderWidth =
+        baseStyle.border.width !== undefined ? `${baseStyle.border.width}px` : '';
       box.style.borderColor = baseStyle.border.color || '';
       box.style.borderStyle = baseStyle.border.style || 'solid';
-      box.style.borderRadius = baseStyle.border.radius !== undefined ? `${baseStyle.border.radius}px` : '';
+      box.style.borderRadius =
+        baseStyle.border.radius !== undefined ? `${baseStyle.border.radius}px` : '';
     } else {
       box.style.borderWidth = '';
       box.style.borderColor = '';
@@ -1436,7 +1524,7 @@ export class VisualEngine {
       rotation,
       fill: 'transparent', // Always transparent - visual rendering is done via DOM overlay
       draggable: isEditable,
-      cursor: isEditable ? 'pointer' : 'default'
+      cursor: isEditable ? 'pointer' : 'default',
     };
   }
 }

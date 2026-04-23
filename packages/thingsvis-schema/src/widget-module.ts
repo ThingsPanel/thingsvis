@@ -86,6 +86,17 @@ export type WidgetMainModule = {
    */
   standaloneDefaults?: Record<string, unknown>;
   /**
+   * Preview props applied when a widget is first created in an embedded editor.
+   * These values are author-owned display defaults and must not be treated as
+   * persisted business data once real bindings are configured.
+   */
+  previewDefaults?: Record<string, unknown>;
+  /**
+   * Widget-owned sample data used for embedded-editor preview state.
+   * Real data bindings override these values through normal runtime resolution.
+   */
+  sampleData?: Record<string, unknown>;
+  /**
    * Whether the widget supports resizing.
    * - true: widget can be resized by user (default)
    * - false: widget size is determined by content (e.g., text)

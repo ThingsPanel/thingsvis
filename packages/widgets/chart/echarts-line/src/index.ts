@@ -68,7 +68,13 @@ function withAlpha(color: string, alpha: number): string {
   const hexMatch = normalized.match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
   if (hexMatch && hexMatch[1]) {
     const hex = hexMatch[1];
-    const fullHex = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex;
+    const fullHex =
+      hex.length === 3
+        ? hex
+            .split('')
+            .map((c) => c + c)
+            .join('')
+        : hex;
     const num = Number.parseInt(fullHex, 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
@@ -152,10 +158,10 @@ function formatTimeLabel(timeMs: number, spanMs: number): string {
 }
 
 function normalizeLineData(data: Props['data'], timeRangePreset: Props['timeRangePreset']) {
-    if (!Array.isArray(data) || data.length === 0) {
-        return {
-            mode: 'category' as const,
-            categoryData: [],
+  if (!Array.isArray(data) || data.length === 0) {
+    return {
+      mode: 'category' as const,
+      categoryData: [],
       timeData: [],
       timeSpanMs: 0,
     };
@@ -218,9 +224,10 @@ function normalizeLineData(data: Props['data'], timeRangePreset: Props['timeRang
         mode: 'time' as const,
         categoryData: [],
         timeData: filtered.length > 0 ? filtered : [sorted[sorted.length - 1]!],
-        timeSpanMs: filtered.length > 1
-          ? filtered[filtered.length - 1]!.timeMs - filtered[0]!.timeMs
-          : fullSpanMs,
+        timeSpanMs:
+          filtered.length > 1
+            ? filtered[filtered.length - 1]!.timeMs - filtered[0]!.timeMs
+            : fullSpanMs,
       };
     }
 
@@ -240,8 +247,12 @@ function normalizeLineData(data: Props['data'], timeRangePreset: Props['timeRang
   };
 }
 
-function getEmptyTimeWindow(timeRangePreset: Props['timeRangePreset']): { startMs: number; endMs: number } {
-  const fallbackRangeMs = timeRangePreset === 'all' ? TIME_RANGE_MS['1h'] : TIME_RANGE_MS[timeRangePreset];
+function getEmptyTimeWindow(timeRangePreset: Props['timeRangePreset']): {
+  startMs: number;
+  endMs: number;
+} {
+  const fallbackRangeMs =
+    timeRangePreset === 'all' ? TIME_RANGE_MS['1h'] : TIME_RANGE_MS[timeRangePreset];
   const endMs = Date.now();
   return { startMs: endMs - fallbackRangeMs, endMs };
 }
@@ -299,62 +310,74 @@ function buildOption(
   const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const seriesName = title || messages.runtime?.defaultSeriesName || 'Value';
-  const hasData = normalizedData.mode === 'time'
-    ? normalizedData.timeData.length > 0
-    : normalizedData.categoryData.length > 0;
+  const hasData =
+    normalizedData.mode === 'time'
+      ? normalizedData.timeData.length > 0
+      : normalizedData.categoryData.length > 0;
   const emptyTimeWindow = getEmptyTimeWindow(timeRangePreset);
   const useEmptyTimeSkeleton = !hasData;
   const isTimeSeries = normalizedData.mode === 'time' || useEmptyTimeSkeleton;
-  const xAxis: echarts.XAXisComponentOption = isTimeSeries ? {
-    show: showXAxis !== false,
-    type: 'time',
-    min: hasData ? undefined : emptyTimeWindow.startMs,
-    max: hasData ? undefined : emptyTimeWindow.endMs,
-    axisLabel: {
-      color: resolvedAxisLabelColor,
-      fontSize: Math.round(12 * scale),
-      hideOverlap: true,
-      formatter: (value: string | number) =>
-        formatTimeLabel(Number(value), hasData ? normalizedData.timeSpanMs : emptyTimeWindow.endMs - emptyTimeWindow.startMs),
-    },
-    axisLine: { lineStyle: { color: splitLineColor } },
-    axisTick: { show: true, lineStyle: { color: splitLineColor } },
-  } : {
-    show: showXAxis !== false,
-    type: 'category',
-    axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
-    axisLine: { lineStyle: { color: splitLineColor } },
-    axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
-  };
+  const xAxis: echarts.XAXisComponentOption = isTimeSeries
+    ? {
+        show: showXAxis !== false,
+        type: 'time',
+        min: hasData ? undefined : emptyTimeWindow.startMs,
+        max: hasData ? undefined : emptyTimeWindow.endMs,
+        axisLabel: {
+          color: resolvedAxisLabelColor,
+          fontSize: Math.round(12 * scale),
+          hideOverlap: true,
+          formatter: (value: string | number) =>
+            formatTimeLabel(
+              Number(value),
+              hasData ? normalizedData.timeSpanMs : emptyTimeWindow.endMs - emptyTimeWindow.startMs,
+            ),
+        },
+        axisLine: { lineStyle: { color: splitLineColor } },
+        axisTick: { show: true, lineStyle: { color: splitLineColor } },
+      }
+    : {
+        show: showXAxis !== false,
+        type: 'category',
+        axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
+        axisLine: { lineStyle: { color: splitLineColor } },
+        axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
+      };
 
   // 面积阴影渐变色（如果开启）
-  const areaGradient = showArea ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-    { offset: 0, color: withAlpha(seriesColor, 0.5) },
-    { offset: 1, color: withAlpha(seriesColor, 0) }
-  ]) : undefined;
+  const areaGradient = showArea
+    ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: withAlpha(seriesColor, 0.5) },
+        { offset: 1, color: withAlpha(seriesColor, 0) },
+      ])
+    : undefined;
 
   return {
     backgroundColor: 'transparent',
     color: colors.series,
-    graphic: hasData ? undefined : {
-      type: 'text',
-      left: 'center',
-      top: '38%',
-      silent: true,
-      style: {
-        text: messages.runtime?.emptyState || 'Add data points or bind a data series',
-        fill: resolvedAxisLabelColor,
-        opacity: 0.58,
-        fontSize: Math.round(12 * scale),
-      },
-    },
-    title: title ? {
-      text: title,
-      left: resolveChartLeft(titleAlign),
-      textAlign: resolveTitleTextAlign(titleAlign),
-      textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
-      top: padding,
-    } : undefined,
+    graphic: hasData
+      ? undefined
+      : {
+          type: 'text',
+          left: 'center',
+          top: '38%',
+          silent: true,
+          style: {
+            text: messages.runtime?.emptyState || 'Add data points or bind a data series',
+            fill: resolvedAxisLabelColor,
+            opacity: 0.58,
+            fontSize: Math.round(12 * scale),
+          },
+        },
+    title: title
+      ? {
+          text: title,
+          left: resolveChartLeft(titleAlign),
+          textAlign: resolveTitleTextAlign(titleAlign),
+          textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
+          top: padding,
+        }
+      : undefined,
     tooltip: {
       trigger: 'axis',
     },
@@ -374,10 +397,16 @@ function buildOption(
       top: padding + titleSpace,
       containLabel: true,
     },
-    dataset: !isTimeSeries && normalizedData.categoryData.length > 0 ? {
-      dimensions: [{ name: 'name', displayName: 'Category' }, { name: 'value', displayName: seriesName }],
-      source: normalizedData.categoryData
-    } : undefined,
+    dataset:
+      !isTimeSeries && normalizedData.categoryData.length > 0
+        ? {
+            dimensions: [
+              { name: 'name', displayName: 'Category' },
+              { name: 'value', displayName: seriesName },
+            ],
+            source: normalizedData.categoryData,
+          }
+        : undefined,
     xAxis,
     yAxis: {
       show: showYAxis !== false,
@@ -394,14 +423,15 @@ function buildOption(
       {
         type: 'line',
         name: seriesName,
-        encode: isTimeSeries || !hasData ? undefined : { x: 'name', y: 'value', tooltip: ['value'] },
+        encode:
+          isTimeSeries || !hasData ? undefined : { x: 'name', y: 'value', tooltip: ['value'] },
         data: isTimeSeries
-          ? (hasData
-              ? normalizedData.timeData.map((point) => [point.timeMs, point.value])
-              : [
-                  [emptyTimeWindow.startMs, null],
-                  [emptyTimeWindow.endMs, null],
-                ])
+          ? hasData
+            ? normalizedData.timeData.map((point) => [point.timeMs, point.value])
+            : [
+                [emptyTimeWindow.startMs, null],
+                [emptyTimeWindow.endMs, null],
+              ]
           : undefined,
         smooth: smooth,
         showSymbol: false,
@@ -414,9 +444,12 @@ function buildOption(
           opacity: hasData ? 1 : 0.35,
           type: hasData ? 'solid' : 'dashed',
         },
-        areaStyle: showArea && hasData ? {
-          color: areaGradient,
-        } : undefined,
+        areaStyle:
+          showArea && hasData
+            ? {
+                color: areaGradient,
+              }
+            : undefined,
       },
     ],
   };
@@ -469,7 +502,10 @@ function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayConte
       colors = resolveWidgetColors(element);
       scheduleResize();
     });
-    themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
+    themeObserver.observe(themeTarget, {
+      attributes: true,
+      attributeFilter: ['data-canvas-theme'],
+    });
   }
 
   return {
@@ -493,7 +529,9 @@ export const Main = defineWidget({
   ...metadata,
   locales: { zh, en },
   schema: PropsSchema,
+  sampleData: { data: STANDALONE_LINE_SERIES },
   standaloneDefaults: { data: STANDALONE_LINE_SERIES },
+  previewDefaults: { data: STANDALONE_LINE_SERIES },
   controls,
   render: renderChart,
 });

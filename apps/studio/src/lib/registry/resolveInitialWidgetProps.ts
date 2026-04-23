@@ -4,6 +4,8 @@ import { extractDefaults } from './schemaUtils';
 type ResolveInitialWidgetPropsInput = {
   schema?: unknown;
   standaloneDefaults?: Record<string, unknown>;
+  previewDefaults?: Record<string, unknown>;
+  sampleData?: Record<string, unknown>;
   fallbackDefaults?: Record<string, unknown>;
 };
 
@@ -27,13 +29,22 @@ type ResolveInitialWidgetPropsInput = {
 export function resolveInitialWidgetProps({
   schema,
   standaloneDefaults,
+  previewDefaults,
+  sampleData,
   fallbackDefaults,
 }: ResolveInitialWidgetPropsInput): Record<string, unknown> {
   // Priority 1: canonical schema defaults (or migration fallback if no schema)
   const schemaDefaults = schema != null ? extractDefaults(schema) : { ...(fallbackDefaults ?? {}) };
 
   if (resolveEditorServiceConfig().mode !== 'standalone') {
-    return schemaDefaults;
+    const hasEmbeddedDefaults = sampleData != null || previewDefaults != null;
+
+    return {
+      ...schemaDefaults,
+      ...(hasEmbeddedDefaults ? {} : (standaloneDefaults ?? {})),
+      ...(sampleData ?? {}),
+      ...(previewDefaults ?? {}),
+    };
   }
 
   // Priority 2: merge standaloneDefaults over schema defaults (standalone only)

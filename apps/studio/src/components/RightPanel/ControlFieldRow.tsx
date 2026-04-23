@@ -42,6 +42,149 @@ function allowedModes(field: ControlField): BindingMode[] {
   return normalized.length ? normalized : ['static'];
 }
 
+const DEFAULT_WRITE_EVENT_BY_COMPONENT: Record<string, string> = {
+  'interaction/basic-switch': 'change',
+  'interaction/basic-slider': 'change',
+  'interaction/basic-select': 'change',
+  'interaction/basic-input': 'submit',
+};
+
+const AUTO_WRITE_MARKER = 'field-binding';
+
+type EventHandlerLike = {
+  event?: unknown;
+  actions?: unknown[];
+  [key: string]: unknown;
+};
+
+type ActionLike = {
+  type?: unknown;
+  dataSourceId?: unknown;
+  payload?: unknown;
+  __thingsvisAutoWrite?: unknown;
+  [key: string]: unknown;
+};
+
+function isDefaultWriteBindingTarget(
+  componentType: string | undefined,
+  targetProp: string,
+): boolean {
+  return (
+    targetProp === 'value' &&
+    Boolean(componentType && DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType])
+  );
+}
+
+function getRootFieldPath(fieldPath: string): string | null {
+  if (!fieldPath || fieldPath === '(root)') return null;
+  return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+}
+
+function createDefaultWriteAction(dataSourceId: string, fieldId: string): ActionLike {
+  return {
+    type: 'callWrite',
+    dataSourceId,
+    payload: `({ ${JSON.stringify(fieldId)}: payload })`,
+    __thingsvisAutoWrite: AUTO_WRITE_MARKER,
+  };
+}
+
+function isAutoWriteAction(action: unknown): action is ActionLike {
+  return (
+    Boolean(action) &&
+    typeof action === 'object' &&
+    (action as ActionLike).type === 'callWrite' &&
+    (action as ActionLike).__thingsvisAutoWrite === AUTO_WRITE_MARKER
+  );
+}
+
+function ensureDefaultWriteEvent(
+  events: EventHandlerLike[] | undefined,
+  eventName: string,
+  dataSourceId: string,
+  fieldId: string,
+): EventHandlerLike[] | null {
+  const sourceEvents = Array.isArray(events) ? events : [];
+  const defaultAction = createDefaultWriteAction(dataSourceId, fieldId);
+  let found = false;
+  let changed = false;
+
+  const nextEvents = sourceEvents.map((handler) => {
+    if (handler.event !== eventName) return handler;
+    found = true;
+
+    const actions = Array.isArray(handler.actions) ? handler.actions : [];
+    const hasAutoAction = actions.some(isAutoWriteAction);
+    const hasManualActions = actions.some((action) => !isAutoWriteAction(action));
+
+    if (hasManualActions && !hasAutoAction) return handler;
+
+    const nextActions = [...actions.filter((action) => !isAutoWriteAction(action)), defaultAction];
+    const currentAuto = actions.find(isAutoWriteAction) as ActionLike | undefined;
+    changed =
+      changed ||
+      !hasAutoAction ||
+      currentAuto?.dataSourceId !== defaultAction.dataSourceId ||
+      currentAuto?.payload !== defaultAction.payload ||
+      nextActions.length !== actions.length;
+
+    return {
+      ...handler,
+      actions: nextActions,
+    };
+  });
+
+  if (!found) {
+    return [...sourceEvents, { event: eventName, actions: [defaultAction] }];
+  }
+
+  return changed ? nextEvents : null;
+}
+
+function removeDefaultWriteEvent(
+  events: EventHandlerLike[] | undefined,
+  eventName: string,
+): EventHandlerLike[] | null {
+  const sourceEvents = Array.isArray(events) ? events : [];
+  let changed = false;
+
+  const nextEvents = sourceEvents
+    .map((handler) => {
+      if (handler.event !== eventName) return handler;
+      const actions = Array.isArray(handler.actions) ? handler.actions : [];
+      const nextActions = actions.filter((action) => !isAutoWriteAction(action));
+      if (nextActions.length === actions.length) return handler;
+      changed = true;
+      return { ...handler, actions: nextActions };
+    })
+    .filter((handler) => {
+      if (handler.event !== eventName) return true;
+      return Array.isArray(handler.actions) && handler.actions.length > 0;
+    });
+
+  return changed ? nextEvents : null;
+}
+
+function buildDefaultWriteEventsForSelection(
+  componentType: string | undefined,
+  targetProp: string,
+  selection: FieldPickerValue | null,
+  events: EventHandlerLike[] | undefined,
+): EventHandlerLike[] | null {
+  if (!isDefaultWriteBindingTarget(componentType, targetProp)) return null;
+  const eventName = componentType ? DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType] : undefined;
+  if (!eventName) return null;
+
+  if (!selection?.dataSourceId || !selection.fieldPath) {
+    return removeDefaultWriteEvent(events, eventName);
+  }
+
+  const fieldId = getRootFieldPath(selection.fieldPath);
+  if (!fieldId) return null;
+
+  return ensureDefaultWriteEvent(events, eventName, selection.dataSourceId, fieldId);
+}
+
 export function ControlFieldRow({
   kernelStore,
   nodeId,
@@ -169,6 +312,21 @@ export function ControlFieldRow({
         return m;
     }
   };
+
+  useEffect(() => {
+    const currentEvents = (
+      (kernelStore.getState() as KernelState).nodesById[nodeId]?.schemaRef as
+        | { events?: EventHandlerLike[] }
+        | undefined
+    )?.events;
+    const nextEvents = buildDefaultWriteEventsForSelection(
+      componentType,
+      field.path,
+      fieldSelection,
+      currentEvents,
+    );
+    if (nextEvents) updateNode({ events: nextEvents });
+  }, [componentType, field.path, fieldSelection, kernelStore, nodeId, updateNode]);
 
   return (
     <div className="space-y-1.5 relative group/field">
@@ -430,8 +588,22 @@ export function ControlFieldRow({
           <FieldPicker
             kernelStore={kernelStore}
             value={fieldSelection}
+            targetKind={field.kind}
+            writableOnly={isDefaultWriteBindingTarget(componentType, field.path)}
             onChange={(next) => {
               setFieldSelection(next);
+              const currentEvents = (
+                (kernelStore.getState() as KernelState).nodesById[nodeId]?.schemaRef as
+                  | { events?: EventHandlerLike[] }
+                  | undefined
+              )?.events;
+              const nextEvents = buildDefaultWriteEventsForSelection(
+                componentType,
+                field.path,
+                next,
+                currentEvents,
+              );
+
               if (next?.dataSourceId && next.fieldPath) {
                 const expression = makeFieldBindingExpression(next);
                 const selection = parseFieldBindingExpression(expression);
@@ -444,12 +616,14 @@ export function ControlFieldRow({
                     ...(next.transform ? { transform: next.transform } : {}),
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   } as any),
+                  ...(nextEvents ? { events: nextEvents } : {}),
                 });
                 return;
               }
 
               updateNode({
                 data: removeBinding(bindings, field.path),
+                ...(nextEvents ? { events: nextEvents } : {}),
               });
             }}
           />

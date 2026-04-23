@@ -44,6 +44,13 @@ export const controls = createControlPanel()
   }, { label: `${W}.groupTrend` })
 
   .addGroup('Style', (b) => {
+    b.addSlider('titleFontSize', {
+      label: `${W}.titleFontSize`,
+      min: 10,
+      max: 100,
+      step: 1,
+      default: 12
+    });
     b.addSelect('valueColor', {
       label: `${W}.valueColor`,
       options: [

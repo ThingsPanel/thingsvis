@@ -41,6 +41,12 @@ import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { dataSourceManager, store } from '../lib/store';
 import { buildHashRoute } from '../lib/embed/navigation';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
+import {
+  listEmbeddedProviderDataSourceIds,
+  resolveEmbeddedProviderCatalog,
+} from '../lib/embedded/embedded-data-source-registry';
+import { resolveControlText } from '../lib/i18n/controlText';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -66,7 +72,7 @@ export default function DataSourcesPage() {
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
-  const { t } = useTranslation('pages');
+  const { t, i18n } = useTranslation('pages');
 
   // Toast state
   const [toast, setToast] = useState<{
@@ -104,10 +110,46 @@ export default function DataSourcesPage() {
   });
 
   const jsonExtensions = useMemo(() => [json()], []);
+  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const providerDataSourceNameMap = useMemo(() => {
+    const catalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
+    if (!catalog) return new Map<string, string>();
+
+    const locale = i18n.resolvedLanguage ?? i18n.language;
+    return new Map(
+      catalog.dataSources.map((source) => [
+        source.id,
+        resolveControlText(source.label, locale, t as any),
+      ]),
+    );
+  }, [i18n.language, i18n.resolvedLanguage, serviceConfig.provider, t]);
+  const protectedDataSourceIds = useMemo(() => {
+    if (serviceConfig.mode !== 'embedded') return new Set<string>();
+
+    const groups =
+      serviceConfig.context === 'dashboard'
+        ? ['dashboard']
+        : serviceConfig.context === 'device-template'
+          ? ['dashboard', 'current-device', 'current-device-history']
+          : undefined;
+
+    return new Set(
+      listEmbeddedProviderDataSourceIds(
+        serviceConfig.provider,
+        groups ? { groups: groups as any } : undefined,
+      ),
+    );
+  }, [serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, visible: true, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
+  };
+
+  const getDisplayName = (dataSourceId: string): string => {
+    const config = dataSourceManager.getConfig(dataSourceId);
+    if (config?.name && config.name !== dataSourceId) return config.name;
+    return providerDataSourceNameMap.get(dataSourceId) ?? dataSourceId;
   };
 
   const syncStaticJsonTextFromConfig = (configValue: unknown) => {
@@ -199,6 +241,10 @@ export default function DataSourcesPage() {
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (protectedDataSourceIds.has(id)) {
+      showToast(t('dataSources.deleteFailed'), 'error');
+      return;
+    }
 
     // Find name for confirmation
     const config = dataSourceManager.getConfig(id);
@@ -209,6 +255,12 @@ export default function DataSourcesPage() {
 
   const confirmDelete = async () => {
     if (!sourceToDelete) return;
+    if (protectedDataSourceIds.has(sourceToDelete)) {
+      showToast(t('dataSources.deleteFailed'), 'error');
+      setDeleteDialogOpen(false);
+      setSourceToDelete(null);
+      return;
+    }
 
     try {
       await dataSourceManager.unregisterDataSource(sourceToDelete);
@@ -338,22 +390,14 @@ export default function DataSourcesPage() {
                     className={`w-2 h-2 rounded-full shrink-0 ${ds.status === 'connected' ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-yellow-400'}`}
                   />
                   <div className="min-w-0 flex flex-col">
-                    <span className="text-sm font-semibold truncate">
-                      {(() => {
-                        const cfg = dataSourceManager.getConfig(ds.id);
-                        return cfg?.name || ds.id;
-                      })()}
-                    </span>
-                    {(() => {
-                      const cfg = dataSourceManager.getConfig(ds.id);
-                      return cfg?.name ? (
-                        <span
-                          className={`text-[10px] truncate ${selectedId === ds.id ? 'text-white/60' : 'text-muted-foreground'}`}
-                        >
-                          {ds.id}
-                        </span>
-                      ) : null;
-                    })()}
+                    <span className="text-sm font-semibold truncate">{getDisplayName(ds.id)}</span>
+                    {getDisplayName(ds.id) !== ds.id ? (
+                      <span
+                        className={`text-[10px] truncate ${selectedId === ds.id ? 'text-white/60' : 'text-muted-foreground'}`}
+                      >
+                        {ds.id}
+                      </span>
+                    ) : null}
                   </div>
                   {(() => {
                     const mode = dataSourceManager.getResolvedMode(ds.id);
@@ -376,12 +420,14 @@ export default function DataSourcesPage() {
                     );
                   })()}
                 </div>
-                <button
-                  onClick={(e) => handleDeleteClick(e, ds.id)}
-                  className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                {!protectedDataSourceIds.has(ds.id) && (
+                  <button
+                    onClick={(e) => handleDeleteClick(e, ds.id)}
+                    className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${selectedId === ds.id ? 'hover:bg-white/20 text-white' : 'hover:bg-red-500/10 text-destructive'}`}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             ))}
             {Object.keys(states).length === 0 && !isAdding && (

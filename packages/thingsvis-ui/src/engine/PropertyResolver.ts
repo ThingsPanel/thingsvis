@@ -8,47 +8,6 @@ import { ExpressionEvaluator } from '@thingsvis/utils';
  * for direct renderer updates.
  */
 export class PropertyResolver {
-  private static readonly GLOBAL_PLATFORM_DATA_SOURCE_ID = '__platform__'
-
-  private static readonly TEMPLATE_PLATFORM_DATA_SOURCE_ID = '__platform___template____'
-
-  private static isPlatformDataSourceId(dataSourceId: string): boolean {
-    return dataSourceId === this.GLOBAL_PLATFORM_DATA_SOURCE_ID || /^__platform_.+__$/.test(dataSourceId)
-  }
-
-  private static hasUsablePlatformData(runtimeState: unknown): boolean {
-    if (!runtimeState || typeof runtimeState !== 'object') return false
-    const data = (runtimeState as Record<string, unknown>).data
-    return !!data && typeof data === 'object' && !Array.isArray(data) && Object.keys(data as Record<string, unknown>).length > 0
-  }
-
-  private static applyPlatformAliases(resolved: Record<string, unknown>): Record<string, unknown> {
-    const platformIds = Object.keys(resolved).filter((dataSourceId) => this.isPlatformDataSourceId(dataSourceId))
-    if (platformIds.length === 0) return resolved
-
-    const preferredPlatformId =
-      platformIds.find((dataSourceId) => dataSourceId !== this.TEMPLATE_PLATFORM_DATA_SOURCE_ID && this.hasUsablePlatformData(resolved[dataSourceId])) ??
-      platformIds.find((dataSourceId) => this.hasUsablePlatformData(resolved[dataSourceId])) ??
-      null
-
-    if (!preferredPlatformId) return resolved
-
-    const preferredEntry = resolved[preferredPlatformId]
-    const aliasIds = new Set<string>([
-      this.GLOBAL_PLATFORM_DATA_SOURCE_ID,
-      this.TEMPLATE_PLATFORM_DATA_SOURCE_ID,
-      ...platformIds,
-    ])
-
-    aliasIds.forEach((aliasId) => {
-      if (!this.hasUsablePlatformData(resolved[aliasId])) {
-        resolved[aliasId] = preferredEntry
-      }
-    })
-
-    return resolved
-  }
-
   private static buildExpressionDataSources(
     dataSources: Record<string, unknown>,
   ): Record<string, unknown> {
@@ -79,7 +38,7 @@ export class PropertyResolver {
       resolved[dataSourceId] = entry;
     });
 
-    return this.applyPlatformAliases(resolved);
+    return resolved;
   }
 
   /**
@@ -90,20 +49,19 @@ export class PropertyResolver {
   public static resolve(
     node: NodeState,
     dataSources: Record<string, unknown>,
-    variableValues?: Record<string, unknown>
+    variableValues?: Record<string, unknown>,
   ): Record<string, unknown> {
     const rawProps = (node.schemaRef.props ?? {}) as Record<string, unknown>;
     const resolvedProps: Record<string, unknown> = { ...rawProps };
 
     // Preparation: Context for expression evaluation
-    // Platform data is accessed via ds.__platform__ (standard DataSource path)
     const context = {
       ds: this.buildExpressionDataSources(dataSources),
       var: variableValues ?? {},
     };
 
     // 1. Resolve standard property bindings (legacy/simple)
-    Object.keys(resolvedProps).forEach(key => {
+    Object.keys(resolvedProps).forEach((key) => {
       let val = resolvedProps[key];
       if (typeof val === 'string') {
         if (val.includes('{{')) {
@@ -122,13 +80,20 @@ export class PropertyResolver {
           if (resolvedValue !== undefined && resolvedValue !== null) {
             // Apply optional JS transform snippet.
             // Receives: `value` (the resolved field value), `data` (full DS snapshot for cross-field access)
-            if (binding.transform && typeof binding.transform === 'string' && binding.transform.trim()) {
+            if (
+              binding.transform &&
+              typeof binding.transform === 'string' &&
+              binding.transform.trim()
+            ) {
               try {
                 // Resolve full DS snapshot so transforms can access sibling fields
                 // binding.dataSourcePath is like 'ds.myDs.data' — evaluate it from context
                 let dsSnapshot: unknown = undefined;
                 if (binding.dataSourcePath && typeof binding.dataSourcePath === 'string') {
-                  dsSnapshot = ExpressionEvaluator.evaluate(`{{ ${binding.dataSourcePath} }}`, context);
+                  dsSnapshot = ExpressionEvaluator.evaluate(
+                    `{{ ${binding.dataSourcePath} }}`,
+                    context,
+                  );
                 }
                 // Use SafeExecutor sandbox (blocks window/document/fetch access)
                 const result = SafeExecutor.executeScript(binding.transform.trim(), {
@@ -136,7 +101,8 @@ export class PropertyResolver {
                   data: dsSnapshot,
                 });
                 resolvedProps[binding.targetProp] = result ?? resolvedValue;
-              } catch { /* transform eval failed — use raw resolved value */
+              } catch {
+                /* transform eval failed — use raw resolved value */
                 resolvedProps[binding.targetProp] = resolvedValue;
               }
             } else {
@@ -150,4 +116,3 @@ export class PropertyResolver {
     return resolvedProps;
   }
 }
-

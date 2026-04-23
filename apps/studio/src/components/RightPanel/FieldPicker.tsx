@@ -5,9 +5,11 @@ import type { KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { dataSourceManager } from '@/lib/store';
-import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { usePlatformDeviceStore } from '@/lib/stores/platformDeviceStore';
+import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
+import { resolveControlText } from '@/lib/i18n/controlText';
 import {
   Dialog,
   DialogContent,
@@ -25,12 +27,40 @@ export type FieldPickerValue = {
   transform?: string;
 };
 
-type SourceGroup = 'platform' | 'device' | 'custom';
+type SourceGroup = 'device' | 'deviceStatus' | 'deviceHistory' | 'platform' | 'custom';
+
+const TEMPLATE_DEVICE_ID = '__template__';
+const HISTORY_FIELD_SUFFIX = '__history';
+
+type PlatformStatField = {
+  id: string;
+  name: string;
+  type: FieldPathInfo['type'];
+};
+
+type PlatformStatSource = {
+  id: string;
+  name: string;
+  group: 'dashboard' | 'current-device' | 'current-device-history';
+  url: string;
+  params?: Record<string, unknown>;
+  fields: PlatformStatField[];
+  transformation: string;
+};
+
+type RuntimeDeviceField = {
+  id: string;
+  name: string;
+  alias: string;
+  type: FieldPathInfo['type'];
+};
 
 type Props = {
   kernelStore: KernelStore;
   value: FieldPickerValue | null;
   onChange: (next: FieldPickerValue | null) => void;
+  targetKind?: string;
+  writableOnly?: boolean;
   maxDepth?: number;
   maxNodes?: number;
 };
@@ -76,6 +106,54 @@ function getRequestedFieldId(fieldPath: string): string | null {
   return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
 }
 
+function isHistoryFieldPath(fieldPath: string): boolean {
+  return fieldPath.endsWith(HISTORY_FIELD_SUFFIX);
+}
+
+function isTemplateDeviceSource(device: { deviceId?: string } | undefined): boolean {
+  return device?.deviceId === TEMPLATE_DEVICE_ID;
+}
+
+function isTelemetryField(field: unknown): boolean {
+  if (!field || typeof field !== 'object') return false;
+  const dataType = (field as { dataType?: unknown }).dataType;
+  return dataType === undefined || dataType === 'telemetry';
+}
+
+function isFieldTypeCompatible(type: FieldPathInfo['type'], targetKind?: string): boolean {
+  if (!targetKind || type === 'unknown') return true;
+
+  if (targetKind === 'boolean') return type === 'boolean';
+  if (targetKind === 'number' || targetKind === 'slider' || targetKind === 'rangeSlider') {
+    return type === 'number';
+  }
+  if (targetKind === 'string' || targetKind === 'textarea' || targetKind === 'select') {
+    return type === 'string' || type === 'number' || type === 'boolean';
+  }
+  if (targetKind === 'color') return type === 'string';
+
+  return true;
+}
+
+function getStaticFieldId(field: unknown): string {
+  if (!field || typeof field !== 'object') return '';
+  const id = (field as { id?: unknown }).id;
+  return typeof id === 'string' ? id : '';
+}
+
+function getStaticFieldType(field: unknown): FieldPathInfo['type'] {
+  if (!field || typeof field !== 'object') return 'unknown';
+  const type = (field as { type?: unknown }).type;
+  return type === 'string' ||
+    type === 'number' ||
+    type === 'boolean' ||
+    type === 'object' ||
+    type === 'array' ||
+    type === 'unknown'
+    ? type
+    : 'string';
+}
+
 function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?: string }): void {
   const dataSourceId = getDeviceDataSourceId(device.deviceId);
   const existing = dataSourceManager.getAllConfigs().some((config) => config.id === dataSourceId);
@@ -85,7 +163,7 @@ function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?:
     0,
     ...dataSourceManager
       .getAllConfigs()
-      .filter((config) => config.id === '__platform__')
+      .filter((config) => parseDeviceDataSourceId(config.id) !== null)
       .map((config) => {
         const bufferSize = (config.config as { bufferSize?: unknown } | undefined)?.bufferSize;
         return typeof bufferSize === 'number' && Number.isFinite(bufferSize) ? bufferSize : 0;
@@ -106,32 +184,124 @@ function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?:
   });
 }
 
-export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }: Props) {
-  const { t } = useTranslation('editor');
+function ensurePlatformStatDataSource(source: PlatformStatSource): void {
+  const existing = dataSourceManager.getAllConfigs().some((config) => config.id === source.id);
+  if (existing) return;
+
+  void dataSourceManager
+    .registerDataSource(
+      {
+        id: source.id,
+        name: source.name,
+        type: 'REST',
+        config: {
+          url: source.url,
+          method: 'GET',
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: source.params ?? {},
+          pollingInterval: 60,
+          timeout: 30,
+          auth: { type: 'none' },
+        },
+        transformation: source.transformation,
+      },
+      false,
+    )
+    .catch((error) => {
+      console.error(
+        '[FieldPicker] Failed to register platform statistics source:',
+        source.id,
+        error,
+      );
+    });
+}
+
+export function FieldPicker({
+  kernelStore,
+  value,
+  onChange,
+  targetKind,
+  writableOnly = false,
+  maxDepth,
+  maxNodes,
+}: Props) {
+  const { t, i18n } = useTranslation('editor');
   const { states } = useDataSourceRegistry(kernelStore);
   const dataSourceIds = useMemo(() => Object.keys(states).sort(), [states]);
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const serviceConfig = useMemo(() => resolveEditorServiceConfig(), []);
+  const isEmbeddedMode = serviceConfig.mode === 'embedded';
+  const providerCatalog = useMemo(
+    () => (isEmbeddedMode ? resolveEmbeddedProviderCatalog(serviceConfig.provider) : undefined),
+    [isEmbeddedMode, serviceConfig.provider],
+  );
+  const platformSources = useMemo<PlatformStatSource[]>(
+    () =>
+      (providerCatalog?.dataSources ?? []).map((source) => ({
+        id: source.id,
+        name: resolveControlText(source.label, locale, t),
+        group: source.group,
+        url: source.url,
+        params: source.params,
+        transformation: source.transformation,
+        fields: source.fields.map((field) => ({
+          id: field.id,
+          name: resolveControlText(field.label, locale, t),
+          type: field.type as FieldPathInfo['type'],
+        })),
+      })),
+    [locale, providerCatalog, t],
+  );
+  const platformSourceIds = useMemo(
+    () => new Set(platformSources.map((source) => source.id)),
+    [platformSources],
+  );
+  const runtimeDeviceFields = useMemo<RuntimeDeviceField[]>(
+    () =>
+      (providerCatalog?.runtimeDeviceFields ?? []).map((field) => ({
+        id: field.id,
+        name: resolveControlText(field.label, locale, t),
+        alias: resolveControlText(field.alias ?? field.label, locale, t),
+        type: field.type as FieldPathInfo['type'],
+      })),
+    [locale, providerCatalog, t],
+  );
+  const runtimeDeviceFieldIds = useMemo(
+    () => new Set(runtimeDeviceFields.map((field) => field.id)),
+    [runtimeDeviceFields],
+  );
+  const platformSourcesByGroup = useMemo(
+    () => ({
+      dashboard: platformSources.filter((source) => source.group === 'dashboard'),
+      currentDevice: platformSources.filter((source) => source.group === 'current-device'),
+      currentDeviceHistory: platformSources.filter(
+        (source) => source.group === 'current-device-history',
+      ),
+    }),
+    [platformSources],
+  );
+  const visiblePlatformSources = useMemo(
+    () => (writableOnly ? [] : platformSources.filter((source) => source.group === 'dashboard')),
+    [platformSources, writableOnly],
+  );
 
-  // 🆕 平台字段（嵌入模式）
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const platformFields = usePlatformFieldStore((s: any) => s.fields ?? []);
   const platformDeviceGroups = usePlatformDeviceStore((s) => s.groups ?? []);
-  const loadedGroupIds = usePlatformDeviceStore((s) => s.loadedGroupIds ?? []);
+  const loadedPlatformGroupIds = usePlatformDeviceStore((s) => s.loadedGroupIds ?? []);
   const platformDevices = usePlatformDeviceStore((s) => s.devices ?? []);
-  const hasPlatformFields = platformFields.length > 0;
+  const platformFields = usePlatformFieldStore((s) => s.fields ?? []);
 
   const [transformDialogOpen, setTransformDialogOpen] = useState(false);
   /** Draft code while the dialog is open — only committed on Apply */
   const [draftCode, setDraftCode] = useState('');
+  const [deviceSearchText, setDeviceSearchText] = useState('');
 
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
-  const isEmbeddedMode = useMemo(() => resolveEditorServiceConfig().mode === 'embedded', []);
-  const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>(() => {
-    if (!isEmbeddedMode) return 'custom';
-    return hasPlatformFields ? 'platform' : 'device';
-  });
-  const [selectedDeviceGroupIdState, setSelectedDeviceGroupIdState] = useState('');
+  const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
+  const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>('device');
 
   const deviceSources = useMemo(() => {
     const fromStore = platformDevices.map((device) => ({
@@ -144,7 +314,26 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       fields: device.fields ?? [],
     }));
 
-    const knownDeviceIds = new Set(fromStore.map((item) => item.dataSourceId));
+    const templateDevice =
+      serviceConfig.context === 'device-template' &&
+      platformFields.length > 0 &&
+      !fromStore.some((device) => isTemplateDeviceSource(device))
+        ? [
+            {
+              deviceId: TEMPLATE_DEVICE_ID,
+              label: t('binding.templateFields', '物模型字段'),
+              groupId: TEMPLATE_DEVICE_ID,
+              groupName: t('binding.templateFields', '物模型字段'),
+              templateId: undefined,
+              dataSourceId: getDeviceDataSourceId(TEMPLATE_DEVICE_ID),
+              fields: platformFields,
+            },
+          ]
+        : [];
+
+    const knownDeviceIds = new Set(
+      [...fromStore, ...templateDevice].map((item) => item.dataSourceId),
+    );
     const inferred = dataSourceIds
       .filter((id) => parseDeviceDataSourceId(id))
       .filter((id) => !knownDeviceIds.has(id))
@@ -161,46 +350,54 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
         };
       });
 
-    return [...fromStore, ...inferred].sort((a, b) => a.label.localeCompare(b.label));
-  }, [platformDevices, dataSourceIds, t]);
+    return [...templateDevice, ...fromStore, ...inferred].sort((a, b) =>
+      a.label.localeCompare(b.label),
+    );
+  }, [dataSourceIds, platformDevices, platformFields, serviceConfig.context, t]);
 
   const customDataSourceIds = useMemo(
     () =>
-      dataSourceIds.filter((id) => id !== '__platform__' && parseDeviceDataSourceId(id) === null),
-    [dataSourceIds],
+      dataSourceIds.filter(
+        (id) =>
+          id !== '__platform__' &&
+          parseDeviceDataSourceId(id) === null &&
+          !platformSourceIds.has(id),
+      ),
+    [dataSourceIds, platformSourceIds],
   );
-  const hasDeviceCatalog = platformDeviceGroups.length > 0 || deviceSources.length > 0;
-  const deviceGroupOptions = useMemo(() => {
-    if (platformDeviceGroups.length > 0) return platformDeviceGroups;
-
-    const deduped = new Map<string, { groupId: string; groupName: string }>();
-    deviceSources.forEach((device) => {
-      if (!deduped.has(device.groupId)) {
-        deduped.set(device.groupId, {
-          groupId: device.groupId,
-          groupName: device.groupName,
-        });
-      }
-    });
-    return Array.from(deduped.values());
-  }, [deviceSources, platformDeviceGroups]);
+  const hasPlatformStatsCatalog = isEmbeddedMode && visiblePlatformSources.length > 0;
+  const hasDeviceCatalog = deviceSources.length > 0;
+  const hasTemplateFieldCatalog =
+    isEmbeddedMode &&
+    (serviceConfig.context === 'device-template' ||
+      (deviceSources.length === 1 && isTemplateDeviceSource(deviceSources[0])));
+  const deviceSourceLabel = hasTemplateFieldCatalog
+    ? t('binding.templateFields', '物模型字段')
+    : t('binding.deviceData', '当前设备字段');
+  const hasDeviceStatusCatalog = isEmbeddedMode && !writableOnly && runtimeDeviceFields.length > 0;
+  const hasDeviceHistoryCatalog = isEmbeddedMode && !writableOnly && deviceSources.length > 0;
 
   useEffect(() => {
     if (!isEmbeddedMode) return;
 
-    if (selectedDataSourceId === '__platform__') {
-      setEmbeddedSourceGroup('platform');
-      return;
-    }
-
     if (selectedDataSourceId && parseDeviceDataSourceId(selectedDataSourceId)) {
-      setEmbeddedSourceGroup('device');
+      const fieldRoot = getRequestedFieldId(selectedFieldPath) ?? '';
+      if (isHistoryFieldPath(fieldRoot)) {
+        setEmbeddedSourceGroup('deviceHistory');
+      } else if (runtimeDeviceFieldIds.has(fieldRoot)) {
+        setEmbeddedSourceGroup('deviceStatus');
+      } else {
+        setEmbeddedSourceGroup('device');
+      }
       const selectedDevice = deviceSources.find(
         (device) => device.dataSourceId === selectedDataSourceId,
       );
-      if (selectedDevice?.groupId) {
-        setSelectedDeviceGroupIdState(selectedDevice.groupId);
-      }
+      if (selectedDevice?.label) setDeviceSearchText('');
+      return;
+    }
+
+    if (selectedDataSourceId && platformSourceIds.has(selectedDataSourceId)) {
+      setEmbeddedSourceGroup('platform');
       return;
     }
 
@@ -209,137 +406,248 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       return;
     }
 
-    setEmbeddedSourceGroup(hasPlatformFields ? 'platform' : hasDeviceCatalog ? 'device' : 'custom');
-  }, [deviceSources, hasDeviceCatalog, hasPlatformFields, isEmbeddedMode, selectedDataSourceId]);
-
-  useEffect(() => {
-    if (!isEmbeddedMode || embeddedSourceGroup !== 'device') return;
-
-    if (platformDeviceGroups.length > 0) {
-      if (
-        !selectedDeviceGroupIdState ||
-        !deviceGroupOptions.some((group) => group.groupId === selectedDeviceGroupIdState)
-      ) {
-        setSelectedDeviceGroupIdState(String(deviceGroupOptions[0]?.groupId || ''));
-      }
-      return;
-    }
-
-    if (!selectedDeviceGroupIdState && deviceSources[0]?.groupId) {
-      setSelectedDeviceGroupIdState(deviceSources[0].groupId);
-    }
+    setEmbeddedSourceGroup(
+      hasDeviceCatalog ? 'device' : hasPlatformStatsCatalog ? 'platform' : 'custom',
+    );
   }, [
-    deviceGroupOptions,
     deviceSources,
-    embeddedSourceGroup,
+    hasDeviceCatalog,
+    hasPlatformStatsCatalog,
     isEmbeddedMode,
-    platformDeviceGroups.length,
-    selectedDeviceGroupIdState,
+    platformSourceIds,
+    runtimeDeviceFieldIds,
+    selectedDataSourceId,
+    selectedFieldPath,
   ]);
 
+  useEffect(() => {
+    if (!isEmbeddedMode || embeddedSourceGroup !== 'platform') return;
+    visiblePlatformSources.forEach(ensurePlatformStatDataSource);
+  }, [embeddedSourceGroup, isEmbeddedMode, visiblePlatformSources]);
+
   const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
-  const selectedDeviceFromValue =
-    selectedGroup === 'device'
-      ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId)
-      : undefined;
-  const selectedDeviceGroupId =
-    selectedGroup === 'device'
-      ? selectedDeviceFromValue?.groupId ||
-        selectedDeviceGroupIdState ||
-        String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '')
-      : '';
-  const selectedDeviceGroupName =
-    selectedGroup === 'device'
-      ? deviceGroupOptions.find((group) => group.groupId === selectedDeviceGroupId)?.groupName ||
-        selectedDeviceFromValue?.groupName ||
-        ''
-      : '';
+  const isDeviceScopedGroup =
+    selectedGroup === 'device' ||
+    selectedGroup === 'deviceStatus' ||
+    selectedGroup === 'deviceHistory';
+  const visibleDeviceSources = useMemo(() => {
+    if (!isDeviceScopedGroup) return [];
+    const keyword = deviceSearchText.trim().toLowerCase();
+    if (!keyword) return deviceSources;
+    return deviceSources.filter((device) =>
+      [device.label, device.deviceId, device.templateId]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(keyword)),
+    );
+  }, [deviceSearchText, deviceSources, isDeviceScopedGroup]);
 
-  const visibleDeviceSources = useMemo(
-    () =>
-      selectedGroup === 'device'
-        ? deviceSources.filter((device) => device.groupId === selectedDeviceGroupId)
-        : [],
-    [deviceSources, selectedDeviceGroupId, selectedGroup],
-  );
+  const selectedDeviceSource = isDeviceScopedGroup
+    ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
+      visibleDeviceSources[0] ||
+      deviceSources[0]
+    : undefined;
+  const isTemplateDeviceSelection =
+    hasTemplateFieldCatalog && isDeviceScopedGroup && isTemplateDeviceSource(selectedDeviceSource);
+  const pendingPlatformGroupIds = useMemo(() => {
+    if (!isEmbeddedMode || !isDeviceScopedGroup || isTemplateDeviceSelection) return [];
+    if (window.parent === window) return [];
+    const loadedGroupIds = new Set(loadedPlatformGroupIds);
+    return platformDeviceGroups
+      .map((group) => group.groupId)
+      .filter((groupId) => groupId && !loadedGroupIds.has(groupId));
+  }, [
+    isDeviceScopedGroup,
+    isEmbeddedMode,
+    isTemplateDeviceSelection,
+    loadedPlatformGroupIds,
+    platformDeviceGroups,
+  ]);
+  const isPlatformDeviceListLoading =
+    isEmbeddedMode &&
+    isDeviceScopedGroup &&
+    !isTemplateDeviceSelection &&
+    pendingPlatformGroupIds.length > 0;
 
-  const selectedDeviceSource =
-    selectedGroup === 'device'
-      ? visibleDeviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
-        visibleDeviceSources[0]
-      : undefined;
+  useEffect(() => {
+    if (!isPlatformDeviceListLoading) return;
+
+    const pendingGroupIds = new Set(pendingPlatformGroupIds);
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
+        | undefined;
+      if (data?.type !== 'tv:devices-by-group') return;
+
+      const payload = data.payload;
+      if (!payload?.groupId || !pendingGroupIds.has(payload.groupId)) return;
+      if (!Array.isArray(payload.devices)) return;
+
+      usePlatformDeviceStore.getState().setDevicesForGroup(payload.groupId, payload.devices as any);
+    };
+
+    window.addEventListener('message', handleMessage);
+    pendingPlatformGroupIds.forEach((groupId) => {
+      window.parent.postMessage(
+        {
+          type: 'thingsvis:requestDevicesByGroup',
+          payload: { groupId },
+        },
+        '*',
+      );
+    });
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [isPlatformDeviceListLoading, pendingPlatformGroupIds]);
+
+  useEffect(() => {
+    if (!isDeviceScopedGroup || !selectedDeviceSource?.deviceId) return;
+    ensurePlatformDeviceDataSource({
+      deviceId: selectedDeviceSource.deviceId,
+      deviceName: selectedDeviceSource.label,
+    });
+  }, [isDeviceScopedGroup, selectedDeviceSource]);
+
+  const selectedDeviceBaseFields = useMemo(() => {
+    if (!isDeviceScopedGroup) return [];
+    const fields = Array.isArray(selectedDeviceSource?.fields)
+      ? [...selectedDeviceSource.fields]
+      : [];
+    const existingIds = new Set(
+      fields.map((field: any) => (typeof field?.id === 'string' ? field.id : '')).filter(Boolean),
+    );
+    runtimeDeviceFields.forEach((field) => {
+      if (!existingIds.has(field.id)) {
+        fields.push(field as any);
+      }
+    });
+    return fields;
+  }, [isDeviceScopedGroup, runtimeDeviceFields, selectedDeviceSource]);
 
   const selectedDeviceFields = useMemo(() => {
     if (selectedGroup !== 'device') return [];
-    return selectedDeviceSource?.fields ?? [];
-  }, [selectedDeviceSource, selectedGroup]);
+    return selectedDeviceBaseFields.filter((field: any) => {
+      const fieldId = getStaticFieldId(field);
+      if (runtimeDeviceFieldIds.has(fieldId)) return false;
+      return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
+    });
+  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, targetKind]);
+
+  const selectedDeviceStatusFields = useMemo(() => {
+    if (selectedGroup !== 'deviceStatus') return [];
+    return selectedDeviceBaseFields.filter((field: any) => {
+      const fieldId = getStaticFieldId(field);
+      if (!runtimeDeviceFieldIds.has(fieldId)) return false;
+      return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
+    });
+  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, targetKind]);
+
+  const selectedDeviceHistoryFields = useMemo(() => {
+    if (selectedGroup !== 'deviceHistory') return [];
+    return selectedDeviceBaseFields
+      .filter((field: any) => {
+        const fieldId = getStaticFieldId(field);
+        if (!fieldId || runtimeDeviceFieldIds.has(fieldId)) return false;
+        if (!isTelemetryField(field)) return false;
+        return getStaticFieldType(field) === 'number';
+      })
+      .map((field: any) => {
+        const fieldId = getStaticFieldId(field);
+        const rawLabel =
+          typeof field?.alias === 'string' && field.alias
+            ? field.alias
+            : typeof field?.name === 'string' && field.name
+              ? field.name
+              : fieldId;
+        return {
+          id: `${fieldId}${HISTORY_FIELD_SUFFIX}`,
+          name: `${rawLabel} ${t('binding.historySeriesSuffix', '历史趋势')}`,
+          type: 'array' as FieldPathInfo['type'],
+        };
+      });
+  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, t]);
+
+  const selectedPlatformSource =
+    selectedGroup === 'platform'
+      ? visiblePlatformSources.find((source) => source.id === selectedDataSourceId) ||
+        visiblePlatformSources[0]
+      : undefined;
+
+  const selectedPlatformFields = useMemo(() => {
+    if (selectedGroup !== 'platform') return [];
+    return (selectedPlatformSource?.fields ?? []).filter((field) =>
+      isFieldTypeCompatible(field.type, targetKind),
+    );
+  }, [selectedPlatformSource, selectedGroup, targetKind]);
+  const hasStaticFieldOptions =
+    (selectedGroup === 'device' && selectedDeviceFields.length > 0) ||
+    (selectedGroup === 'deviceStatus' && selectedDeviceStatusFields.length > 0) ||
+    (selectedGroup === 'deviceHistory' && selectedDeviceHistoryFields.length > 0) ||
+    (selectedGroup === 'platform' && selectedPlatformFields.length > 0);
+  const fieldDisplayNameByPath = useMemo(() => {
+    const labels = new Map<string, string>();
+    if (selectedGroup === 'device' || selectedGroup === 'deviceStatus') {
+      const fields = selectedGroup === 'device' ? selectedDeviceFields : selectedDeviceStatusFields;
+      fields.forEach((field: any) => {
+        const id = typeof field?.id === 'string' ? field.id : '';
+        const label =
+          typeof field?.alias === 'string' && field.alias
+            ? field.alias
+            : typeof field?.name === 'string' && field.name
+              ? field.name
+              : '';
+        if (id && label && label !== id) labels.set(id, label);
+      });
+    }
+    if (selectedGroup === 'deviceHistory') {
+      selectedDeviceHistoryFields.forEach((field) => {
+        if (field.name && field.name !== field.id) labels.set(field.id, field.name);
+      });
+    }
+    if (selectedGroup === 'platform') {
+      selectedPlatformFields.forEach((field) => {
+        if (field.name && field.name !== field.id) labels.set(field.id, field.name);
+      });
+    }
+    return labels;
+  }, [
+    selectedDeviceFields,
+    selectedDeviceHistoryFields,
+    selectedDeviceStatusFields,
+    selectedGroup,
+    selectedPlatformFields,
+  ]);
 
   const effectiveDataSourceId = !isEmbeddedMode
     ? customDataSourceIds.includes(selectedDataSourceId)
       ? selectedDataSourceId
       : (customDataSourceIds[0] ?? '')
-    : selectedGroup === 'platform'
-      ? hasPlatformFields
-        ? '__platform__'
-        : ''
-      : selectedGroup === 'device'
-        ? (selectedDeviceSource?.dataSourceId ?? '')
+    : isDeviceScopedGroup
+      ? (selectedDeviceSource?.dataSourceId ?? '')
+      : selectedGroup === 'platform'
+        ? (selectedPlatformSource?.id ?? '')
         : selectedDataSourceId || customDataSourceIds[0] || '';
-  const isPlatformSource = effectiveDataSourceId === '__platform__';
 
-  const dsState = effectiveDataSourceId && !isPlatformSource ? states[effectiveDataSourceId] : null;
+  const dsState = effectiveDataSourceId ? states[effectiveDataSourceId] : null;
   const snapshot = dsState?.data ?? null;
   const dsStatus = dsState?.status ?? 'disconnected';
   // fieldSchema — available even when DS is offline (cached from last connection)
   const fieldSchema = (dsState as any)?.fieldSchema ?? null;
   const isOffline = snapshot === null && fieldSchema !== null;
-  // Live data snapshot emitted by PlatformFieldAdapter (populated whenever the host pushes tv:platform-data).
-  // Used to traverse JSON sub-paths and expose __history buffer keys in the field picker.
-  const platformSnapshot = isPlatformSource
-    ? ((states['__platform__'] as any)?.data ?? null)
-    : null;
-
   // Derive field paths for the active data source.
-  // Platform source: prefer live adapter snapshot to expose JSON sub-paths + __history keys;
-  //   fall back to static field definitions with optional jsonSchema sub-path hints.
-  // Non-platform: prefer cached fieldSchema (offline-friendly); fall back to live snapshot traversal.
+  // Prefer cached fieldSchema (offline-friendly); fall back to static device fields or live snapshot traversal.
   const { paths, pathInfos, truncated } = useMemo(() => {
-    if (isPlatformSource) {
-      const staticInfos: FieldPathInfo[] = [];
-      (
-        platformFields as Array<{ id: string; type?: string; jsonSchema?: Record<string, string> }>
-      ).forEach((f) => {
-        staticInfos.push({ path: f.id, type: (f.type ?? 'string') as FieldPathInfo['type'] });
-        if (f.jsonSchema) {
-          Object.entries(f.jsonSchema).forEach(([subPath, subType]) => {
-            staticInfos.push({
-              path: `${f.id}.${subPath}`,
-              type: subType as FieldPathInfo['type'],
-            });
-          });
-        }
-      });
+    const finalize = (infos: FieldPathInfo[], isTruncated = false) => {
+      const filtered = infos.filter((info) => isFieldTypeCompatible(info.type, targetKind));
+      return {
+        paths: filtered.map((info) => info.path),
+        pathInfos: filtered,
+        truncated: isTruncated,
+      };
+    };
 
-      if (platformSnapshot && typeof platformSnapshot === 'object') {
-        const snapshotResult = listFieldPaths(platformSnapshot, {
-          maxDepth: maxDepth ?? 5,
-          maxNodes: maxNodes ?? 200,
-        });
-        const merged = new Map<string, FieldPathInfo>();
-        snapshotResult.pathInfos.forEach((info) => merged.set(info.path, info));
-        staticInfos.forEach((info) => {
-          if (!merged.has(info.path)) merged.set(info.path, info);
-        });
-        const mergedInfos = Array.from(merged.values());
-        return {
-          paths: mergedInfos.map((info) => info.path),
-          pathInfos: mergedInfos,
-          truncated: snapshotResult.truncated,
-        };
-      }
-      return { paths: staticInfos.map((i) => i.path), pathInfos: staticInfos, truncated: false };
-    }
-    if (fieldSchema && fieldSchema.length > 0) {
+    if (selectedGroup === 'custom' && Array.isArray(fieldSchema) && fieldSchema.length > 0) {
       const infos: FieldPathInfo[] = fieldSchema.map((e: any) => ({
         path: e.path,
         type: (e.type === 'array'
@@ -352,7 +660,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 ? 'object'
                 : 'string') as FieldPathInfo['type'],
       }));
-      return { paths: infos.map((i) => i.path), pathInfos: infos, truncated: false };
+      return finalize(infos);
     }
     if (selectedGroup === 'device' && selectedDeviceFields.length > 0) {
       const staticInfos: FieldPathInfo[] = [];
@@ -370,38 +678,59 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           });
         }
       });
-      return { paths: staticInfos.map((i) => i.path), pathInfos: staticInfos, truncated: false };
+      return finalize(staticInfos);
     }
-    return listFieldPaths(snapshot, {
+    if (selectedGroup === 'deviceStatus' && selectedDeviceStatusFields.length > 0) {
+      const staticInfos: FieldPathInfo[] = selectedDeviceStatusFields.map((field: any) => ({
+        path: field.id,
+        type: (field.type ?? 'string') as FieldPathInfo['type'],
+      }));
+      return finalize(staticInfos);
+    }
+    if (selectedGroup === 'deviceHistory' && selectedDeviceHistoryFields.length > 0) {
+      const staticInfos: FieldPathInfo[] = selectedDeviceHistoryFields.map((field) => ({
+        path: field.id,
+        type: field.type,
+      }));
+      return finalize(staticInfos);
+    }
+    if (selectedGroup === 'platform' && selectedPlatformFields.length > 0) {
+      const staticInfos: FieldPathInfo[] = selectedPlatformFields.map((field) => ({
+        path: field.id,
+        type: field.type as FieldPathInfo['type'],
+      }));
+      return finalize(staticInfos);
+    }
+    const live = listFieldPaths(snapshot, {
       maxDepth: maxDepth ?? 5,
       maxNodes: maxNodes ?? 200,
     });
+    return finalize(live.pathInfos, live.truncated);
   }, [
     fieldSchema,
     snapshot,
     maxDepth,
     maxNodes,
-    isPlatformSource,
     selectedGroup,
     selectedDeviceFields,
-    platformFields,
-    platformSnapshot,
+    selectedDeviceHistoryFields,
+    selectedDeviceStatusFields,
+    selectedPlatformFields,
+    targetKind,
   ]);
 
   // 🆕 当前值预览
   const rawPreviewValue = useMemo(() => {
     if (!selectedFieldPath) return undefined;
-    const activeSnapshot = isPlatformSource ? platformSnapshot : snapshot;
-    if (!activeSnapshot) return undefined;
-    return resolveFieldPath(activeSnapshot, selectedFieldPath);
-  }, [snapshot, platformSnapshot, selectedFieldPath, isPlatformSource]);
+    if (!snapshot) return undefined;
+    return resolveFieldPath(snapshot, selectedFieldPath);
+  }, [snapshot, selectedFieldPath]);
 
   const previewDisplay = useMemo(() => {
     if (rawPreviewValue === undefined) return null;
     if (selectedTransform.trim()) {
       // Pass full DS snapshot as `data` so the preview matches runtime behaviour
-      const activeSnapshot = isPlatformSource ? platformSnapshot : snapshot;
-      const { ok, result } = applyTransform(selectedTransform, rawPreviewValue, activeSnapshot);
+      const { ok, result } = applyTransform(selectedTransform, rawPreviewValue, snapshot);
       return {
         raw: formatPreview(rawPreviewValue),
         transformed: ok ? formatPreview(result) : '⚠ transform error',
@@ -409,9 +738,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
       };
     }
     return { raw: formatPreview(rawPreviewValue), transformed: null, hasTransform: false };
-  }, [rawPreviewValue, selectedTransform, snapshot, platformSnapshot, isPlatformSource]);
-
-  const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
+  }, [rawPreviewValue, selectedTransform, snapshot]);
 
   const requestFieldPreview = useCallback((dataSourceId: string, fieldPath: string) => {
     const fieldId = getRequestedFieldId(fieldPath);
@@ -431,47 +758,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
   }, []);
 
   useEffect(() => {
-    if (selectedGroup !== 'device') return;
-    if (!selectedDeviceGroupId || loadedGroupIds.includes(selectedDeviceGroupId)) return;
-    if (window.parent === window) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
-        | undefined;
-      if (data?.type !== 'tv:devices-by-group') return;
-      const payload = data.payload;
-      if (payload?.groupId !== selectedDeviceGroupId || !Array.isArray(payload.devices)) return;
-
-      const devices = payload.devices as Array<{ deviceId?: string; deviceName?: string }>;
-      usePlatformDeviceStore.getState().setDevicesForGroup(selectedDeviceGroupId, devices as any);
-      devices.forEach((device) => {
-        if (!device?.deviceId) return;
-        ensurePlatformDeviceDataSource({
-          deviceId: device.deviceId,
-          deviceName: device.deviceName,
-        });
-      });
-    };
-
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestDevicesByGroup',
-        payload: {
-          groupId: selectedDeviceGroupId,
-        },
-      },
-      '*',
-    );
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [loadedGroupIds, selectedDeviceGroupId, selectedGroup]);
-
-  useEffect(() => {
-    if (selectedGroup !== 'device') return;
+    if (!isDeviceScopedGroup) return;
     if (!selectedDeviceSource?.deviceId || !selectedDeviceSource?.templateId) return;
     if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
@@ -504,7 +791,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [selectedGroup, selectedDeviceSource]);
+  }, [isDeviceScopedGroup, selectedDeviceSource]);
 
   const handleTransformChange = (code: string) => {
     if (!effectiveDataSourceId || !selectedFieldPath) return;
@@ -530,22 +817,22 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
                 const nextGroup = e.target.value as SourceGroup;
                 setEmbeddedSourceGroup(nextGroup);
 
-                if (nextGroup === 'platform') {
+                if (
+                  nextGroup === 'device' ||
+                  nextGroup === 'deviceStatus' ||
+                  nextGroup === 'deviceHistory'
+                ) {
+                  const nextDevice = deviceSources[0];
                   safeOnChange(
-                    hasPlatformFields ? { dataSourceId: '__platform__', fieldPath: '' } : null,
+                    nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
                   );
                   return;
                 }
 
-                if (nextGroup === 'device') {
-                  const nextGroupId =
-                    selectedDeviceGroupIdState ||
-                    String(deviceGroupOptions[0]?.groupId || deviceSources[0]?.groupId || '');
-                  setSelectedDeviceGroupIdState(nextGroupId);
-                  const nextDevice = deviceSources.find((device) => device.groupId === nextGroupId);
-                  safeOnChange(
-                    nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
-                  );
+                if (nextGroup === 'platform') {
+                  const nextSource = visiblePlatformSources[0];
+                  if (nextSource) ensurePlatformStatDataSource(nextSource);
+                  safeOnChange(nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null);
                   return;
                 }
 
@@ -554,65 +841,84 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               }}
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             >
-              {hasPlatformFields && (
-                <option value="platform">{t('binding.platformFieldsLabel')}</option>
+              {hasDeviceCatalog && <option value="device">{deviceSourceLabel}</option>}
+              {hasDeviceStatusCatalog && (
+                <option value="deviceStatus">
+                  {t('binding.deviceStatusFields', '设备状态字段')}
+                </option>
               )}
-              {hasDeviceCatalog && <option value="device">{t('binding.deviceFields')}</option>}
+              {hasDeviceHistoryCatalog && (
+                <option value="deviceHistory">
+                  {t('binding.deviceHistoryTelemetry', '设备历史遥测')}
+                </option>
+              )}
+              {hasPlatformStatsCatalog && (
+                <option value="platform">{t('binding.dashboardSources', '平台概览')}</option>
+              )}
               {customDataSourceIds.length > 0 && (
-                <option value="custom">{t('binding.customDataSources')}</option>
+                <option value="custom">{t('binding.customDataSources', '自定义数据源')}</option>
               )}
             </select>
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-muted-foreground">
-              {selectedGroup === 'device' ? t('binding.deviceGroup') : t('binding.dataSource')}
-            </label>
-            <select
-              value={selectedGroup === 'device' ? selectedDeviceGroupId : effectiveDataSourceId}
-              onChange={(e) => {
-                const nextId = e.target.value;
-                if (selectedGroup === 'device') {
-                  setSelectedDeviceGroupIdState(nextId);
-                  const nextDevice = deviceSources.find((device) => device.groupId === nextId);
-                  safeOnChange(
-                    nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
-                  );
-                  return;
-                }
-                safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
-              }}
-              className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
-              disabled={
-                (selectedGroup === 'platform' && !hasPlatformFields) ||
-                (selectedGroup === 'device' &&
-                  deviceGroupOptions.length === 0 &&
-                  deviceSources.length === 0) ||
-                (selectedGroup === 'custom' && customDataSourceIds.length === 0)
-              }
-            >
-              {selectedGroup === 'platform' && (
-                <option value="__platform__">{t('binding.platformFieldsLabel')}</option>
-              )}
-              {selectedGroup === 'device' &&
-                deviceGroupOptions.map((group) => (
-                  <option key={group.groupId} value={group.groupId}>
-                    {group.groupName}
-                  </option>
-                ))}
-              {selectedGroup === 'custom' &&
-                customDataSourceIds.map((id) => (
-                  <option key={id} value={id}>
-                    {id}
-                  </option>
-                ))}
-            </select>
-          </div>
+          {selectedGroup !== 'device' &&
+            selectedGroup !== 'deviceStatus' &&
+            selectedGroup !== 'deviceHistory' && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {selectedGroup === 'platform'
+                    ? t('binding.businessDataSource', '业务数据源')
+                    : t('binding.dataSource', '数据源')}
+                </label>
+                <select
+                  value={effectiveDataSourceId}
+                  onChange={(e) => {
+                    const nextId = e.target.value;
+                    if (selectedGroup === 'platform') {
+                      const nextSource = visiblePlatformSources.find(
+                        (source) => source.id === nextId,
+                      );
+                      if (nextSource) ensurePlatformStatDataSource(nextSource);
+                      safeOnChange(
+                        nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null,
+                      );
+                      return;
+                    }
+                    safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
+                  }}
+                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
+                  disabled={
+                    (selectedGroup === 'platform' && visiblePlatformSources.length === 0) ||
+                    (selectedGroup === 'custom' && customDataSourceIds.length === 0)
+                  }
+                >
+                  {selectedGroup === 'platform' && (
+                    <>
+                      {platformSourcesByGroup.dashboard.length > 0 && (
+                        <optgroup label={t('binding.dashboardSources', '平台概览')}>
+                          {platformSourcesByGroup.dashboard.map((source) => (
+                            <option key={source.id} value={source.id}>
+                              {source.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </>
+                  )}
+                  {selectedGroup === 'custom' &&
+                    customDataSourceIds.map((id) => (
+                      <option key={id} value={id}>
+                        {id}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
         </>
       ) : (
         <div className="space-y-1">
           <label className="text-sm font-medium text-muted-foreground">
-            {t('binding.dataSource')}
+            {t('binding.dataSource', '数据源')}
           </label>
           <select
             value={effectiveDataSourceId}
@@ -623,7 +929,7 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             disabled={customDataSourceIds.length === 0}
           >
-            <option value="">{t('binding.selectDataSource', '(select a data source)')}</option>
+            <option value="">{t('binding.selectDataSource', '请选择数据源')}</option>
             {customDataSourceIds.map((id) => (
               <option key={id} value={id}>
                 {id}
@@ -633,9 +939,17 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
         </div>
       )}
 
-      {isEmbeddedMode && selectedGroup === 'device' && (
+      {isEmbeddedMode && isDeviceScopedGroup && !isTemplateDeviceSelection && (
         <div className="space-y-1">
-          <label className="text-sm font-medium text-muted-foreground">{t('binding.device')}</label>
+          <label className="text-sm font-medium text-muted-foreground">
+            {t('binding.device', '设备')}
+          </label>
+          <input
+            value={deviceSearchText}
+            onChange={(e) => setDeviceSearchText(e.target.value)}
+            placeholder={t('binding.searchDevice', '搜索设备名称或ID')}
+            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
+          />
           <select
             value={effectiveDataSourceId}
             onChange={(e) => {
@@ -646,7 +960,11 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             disabled={visibleDeviceSources.length === 0}
           >
             {visibleDeviceSources.length === 0 ? (
-              <option value="">{t('binding.loadingData', 'Loading data...')}</option>
+              <option value="">
+                {isPlatformDeviceListLoading || deviceSources.length === 0
+                  ? t('binding.loadingData', '正在加载设备数据...')
+                  : t('binding.noMatchedDevices', '未找到匹配设备')}
+              </option>
             ) : (
               visibleDeviceSources.map((device) => (
                 <option key={device.dataSourceId} value={device.dataSourceId}>
@@ -689,7 +1007,8 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
           }}
           className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
           disabled={
-            !effectiveDataSourceId || (dsStatus === 'loading' && !isPlatformSource && !fieldSchema)
+            !effectiveDataSourceId ||
+            (dsStatus === 'loading' && !fieldSchema && !hasStaticFieldOptions)
           }
         >
           <option value="">{t('binding.selectField', '(select a field)')}</option>
@@ -707,14 +1026,14 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
               >
                 {isOffline ? '⚡ ' : ''}
                 {indent}
-                {p}
+                {fieldDisplayNameByPath.has(p) ? `${fieldDisplayNameByPath.get(p)} (${p})` : p}
                 {typeTag}
               </option>
             );
           })}
         </select>
 
-        {dsStatus === 'loading' && !isPlatformSource && !fieldSchema && (
+        {dsStatus === 'loading' && !fieldSchema && !hasStaticFieldOptions && (
           <p className="text-xs text-muted-foreground">
             {t('common.loadingData', 'Loading data...')}
           </p>
@@ -725,22 +1044,14 @@ export function FieldPicker({ kernelStore, value, onChange, maxDepth, maxNodes }
             {dsState.error}
           </p>
         )}
-        {dsStatus === 'connected' &&
-          paths.length === 0 &&
-          snapshot === null &&
-          !isPlatformSource && (
-            <p className="text-xs text-muted-foreground">
-              {t('binding.noDataHint', 'No data available. Check config or wait for data.')}
-            </p>
-          )}
+        {dsStatus === 'connected' && paths.length === 0 && snapshot === null && (
+          <p className="text-xs text-muted-foreground">
+            {t('binding.noDataHint', 'No data available. Check config or wait for data.')}
+          </p>
+        )}
         {truncated && (
           <p className="text-xs text-muted-foreground">
             {t('binding.fieldTruncated', 'Field list truncated (depth/size limit).')}
-          </p>
-        )}
-        {isPlatformSource && platformFields.length > 0 && selectedFieldPath && (
-          <p className="text-xs text-muted-foreground">
-            💡 {t('binding.externalProvided', 'Platform field provided by host app')}
           </p>
         )}
       </div>

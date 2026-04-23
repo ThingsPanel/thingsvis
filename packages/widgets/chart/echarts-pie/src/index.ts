@@ -33,6 +33,11 @@ function normalizePieData(data: Props['data']) {
 }
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
+const SAMPLE_PIE_SERIES = [
+    { name: '设备在线', value: 68 },
+    { name: '设备离线', value: 18 },
+    { name: '设备告警', value: 14 },
+];
 
 /**
  * 根据 Props 和 Theme 生成 ECharts Option
@@ -137,6 +142,9 @@ export const Main = defineWidget({
     locales: { zh, en },
     schema: PropsSchema,
     controls,
+    sampleData: { data: SAMPLE_PIE_SERIES },
+    standaloneDefaults: { data: SAMPLE_PIE_SERIES },
+    previewDefaults: { data: SAMPLE_PIE_SERIES },
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;
         let colors: WidgetColors = resolveWidgetColors(element);

@@ -43,7 +43,7 @@ describe('resolveInitialWidgetProps', () => {
     });
   });
 
-  it('returns only schema defaults in embedded mode', () => {
+  it('merges embedded preview defaults over schema defaults in embedded mode', () => {
     mockedResolveEditorServiceConfig.mockReturnValue({
       mode: 'embedded',
       integrationLevel: 'full',
@@ -67,11 +67,82 @@ describe('resolveInitialWidgetProps', () => {
       standaloneDefaults: {
         data: [{ name: 'Mon', value: 18 }],
       },
+      sampleData: {
+        data: [{ name: 'Sample', value: 12 }],
+      },
+      previewDefaults: {
+        title: 'Preview CPU',
+      },
+    });
+
+    expect(result).toEqual({
+      title: 'Preview CPU',
+      data: [{ name: 'Sample', value: 12 }],
+    });
+  });
+
+  it('does not apply embedded sample data in standalone mode', () => {
+    mockedResolveEditorServiceConfig.mockReturnValue({
+      mode: 'standalone',
+      integrationLevel: 'full',
+      ui: {
+        showComponentLibrary: true,
+        showPropsPanel: true,
+        showTopLeft: true,
+        showToolbar: true,
+        showTopRight: true,
+      },
+      warnings: [],
+    });
+
+    const schema = z.object({
+      data: z.array(z.any()).default([]),
+    });
+
+    const result = resolveInitialWidgetProps({
+      schema,
+      standaloneDefaults: {
+        data: [{ name: 'Standalone', value: 18 }],
+      },
+      sampleData: {
+        data: [{ name: 'Embedded', value: 12 }],
+      },
+    });
+
+    expect(result).toEqual({
+      data: [{ name: 'Standalone', value: 18 }],
+    });
+  });
+
+  it('uses standalone defaults as an embedded fallback for older widget bundles', () => {
+    mockedResolveEditorServiceConfig.mockReturnValue({
+      mode: 'embedded',
+      integrationLevel: 'full',
+      ui: {
+        showComponentLibrary: true,
+        showPropsPanel: true,
+        showTopLeft: true,
+        showToolbar: true,
+        showTopRight: true,
+      },
+      warnings: [],
+    });
+
+    const schema = z.object({
+      title: z.string().default('CPU'),
+      data: z.any().default(null),
+    });
+
+    const result = resolveInitialWidgetProps({
+      schema,
+      standaloneDefaults: {
+        data: [{ name: 'CPU', value: 67 }],
+      },
     });
 
     expect(result).toEqual({
       title: 'CPU',
-      data: [],
+      data: [{ name: 'CPU', value: 67 }],
     });
   });
 
