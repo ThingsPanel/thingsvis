@@ -40,6 +40,7 @@ export interface PlatformDevice {
   deviceName: string;
   groupId?: string;
   groupName?: string;
+  deviceConfigId?: string;
   templateId?: string;
   fields?: PlatformDeviceField[];
   presets?: PlatformDevicePreset[];

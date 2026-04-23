@@ -21,10 +21,7 @@ import {
   processEmbedInitPayload,
   type EmbedInitPayload,
 } from '../embed/message-router';
-import {
-  applyPlatformBufferSize,
-  getResolvedPlatformBufferSize,
-} from '../embed/platformDeviceCompat';
+import { applyPlatformBufferSize } from '../embed/platformDeviceCompat';
 import { platformDeviceStore } from '../lib/stores/platformDeviceStore';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
@@ -82,11 +79,6 @@ function normalizeEmbeddedProviderDataSources(
       mode:
         typeof dataSource?.mode === 'string' && dataSource.mode ? dataSource.mode : definition.mode,
     };
-  });
-
-  providerDefaults.forEach((definition) => {
-    if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
-    normalized.push(definition);
   });
 
   return normalized;
@@ -592,10 +584,6 @@ export function useProjectBootstrap({
         ? ((payload as any).data.variables as unknown[])
         : [];
       let mergedDataSources = [...processed.dataSources] as Array<Record<string, any>>;
-      const inheritedPlatformBufferSize = getResolvedPlatformBufferSize(
-        mergedDataSources as any,
-        processed.platformBufferSize,
-      );
 
       if (Array.isArray(processed.platformFields) && processed.platformFields.length > 0) {
         platformFieldStore.setFields(processed.platformFields as any);
@@ -614,24 +602,6 @@ export function useProjectBootstrap({
           platformDeviceStore.clearDevices();
         }
       }
-
-      deviceArr.forEach((device: any) => {
-        if (!device?.deviceId) return;
-        const dsId = `__platform_${device.deviceId}__`;
-        if (mergedDataSources.some((ds) => ds.id === dsId)) return;
-        mergedDataSources.push({
-          id: dsId,
-          name: device.deviceName || `Device ${device.deviceId}`,
-          type: 'PLATFORM_FIELD',
-          config: {
-            source: 'platform',
-            fieldMappings: {},
-            deviceId: device.deviceId,
-            bufferSize: inheritedPlatformBufferSize,
-            requestedFields: [],
-          },
-        });
-      });
 
       if (processed.saveTarget === 'self' && processed.projectId) {
         try {

@@ -120,8 +120,6 @@ export function useEditorSync({
     };
 
     const unsubscribe = store.subscribe(() => {
-      if (bootstrappingRef.current) return;
-
       const currentState = store.getState();
       const currentPersistedState = {
         nodesById: currentState.nodesById,
@@ -129,6 +127,11 @@ export function useEditorSync({
         variableDefinitions: currentState.variableDefinitions,
         canvas: currentState.canvas,
       };
+
+      if (bootstrappingRef.current) {
+        prevPersistedState = currentPersistedState;
+        return;
+      }
 
       // Compare persisted editor structures only.
       // Canvas viewport changes (zoom/pan) are runtime-only and must not re-mark the project dirty.

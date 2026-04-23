@@ -26,6 +26,9 @@ import {
 import { notifyChange, requestSave as sendToHost } from '../embed/message-router';
 import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 
+const GENERATED_HOST_DATA_SOURCE_ID_RE = /^(?:__platform_.+__|thingspanel_.+)$/;
+const DATA_SOURCE_EXPRESSION_RE = /ds\.([^\s.}]+)\./g;
+
 // =============================================================================
 // Hook Options
 // =============================================================================
@@ -70,6 +73,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
         setEmbedSessionSnapshot(project.meta.id, project, 'host-save');
+        const dataSources = sanitizeDataSourcesForHostSave(project.nodes, project.dataSources);
         const payload: SavePayload = {
           meta: {
             id: project.meta.id,
@@ -78,7 +82,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
           },
           canvas: project.canvas,
           nodes: project.nodes,
-          dataSources: project.dataSources,
+          dataSources,
           variables: project.variables,
           dataBindings: extractDataBindings(project.nodes),
         };
@@ -250,4 +254,45 @@ function extractDataBindings(nodes: any[]): any[] {
       transform: binding.transform,
     }));
   });
+}
+
+function sanitizeDataSourcesForHostSave(nodes: any[], dataSources: any[]): any[] {
+  if (!Array.isArray(dataSources)) return [];
+
+  const referencedIds = collectReferencedDataSourceIds(nodes);
+  return dataSources.filter((dataSource) => {
+    const id = typeof dataSource?.id === 'string' ? dataSource.id : '';
+    if (!GENERATED_HOST_DATA_SOURCE_ID_RE.test(id)) return true;
+    return referencedIds.has(id);
+  });
+}
+
+function collectReferencedDataSourceIds(
+  value: unknown,
+  referencedIds = new Set<string>(),
+): Set<string> {
+  if (typeof value === 'string') {
+    DATA_SOURCE_EXPRESSION_RE.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = DATA_SOURCE_EXPRESSION_RE.exec(value))) {
+      if (match[1]) referencedIds.add(match[1]);
+    }
+    return referencedIds;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectReferencedDataSourceIds(item, referencedIds));
+    return referencedIds;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+      if (key === 'dataSourceId' && typeof item === 'string') {
+        referencedIds.add(item);
+      }
+      collectReferencedDataSourceIds(item, referencedIds);
+    });
+  }
+
+  return referencedIds;
 }
