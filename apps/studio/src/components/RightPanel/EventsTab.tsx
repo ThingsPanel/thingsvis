@@ -69,6 +69,11 @@ export default function EventsTab({ nodeId, kernelStore, onUserEdit }: EventsTab
         shortLabel: t('events.common.changeShort', { defaultValue: 'Change' }),
         label: t('events.common.change', { defaultValue: 'Change (change)' }),
       },
+      {
+        value: 'submit',
+        shortLabel: t('events.common.submitShort', { defaultValue: 'Submit' }),
+        label: t('events.common.submit', { defaultValue: 'Submit (submit)' }),
+      },
     ],
     [t],
   );

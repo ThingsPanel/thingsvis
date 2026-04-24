@@ -29,6 +29,10 @@ function withAlpha(color: string, alpha: number): string {
   return normalized;
 }
 
+function readInputValue(input: HTMLInputElement): string | number {
+  return input.type === 'number' ? Number(input.value) : input.value;
+}
+
 function renderInput(element: HTMLElement, props: Props, colors: WidgetColors, emit?: (event: string, data: unknown) => void): void {
   const textPrimary = props.textColor || colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.6);
@@ -91,18 +95,21 @@ function renderInput(element: HTMLElement, props: Props, colors: WidgetColors, e
   
   const input = element.querySelector('input');
   if (input) {
+    input.addEventListener('input', () => {
+      emit?.('change', readInputValue(input));
+    });
     input.addEventListener('focus', () => {
       input.style.borderColor = accentColor;
     });
     input.addEventListener('blur', () => {
       input.style.borderColor = borderColor;
       if (props.submitOn === 'blur' || props.submitOn === 'both') {
-        emit?.('submit', input.type === 'number' ? Number(input.value) : input.value);
+        emit?.('submit', readInputValue(input));
       }
     });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (props.submitOn === 'enter' || props.submitOn === 'both')) {
-        emit?.('submit', input.type === 'number' ? Number(input.value) : input.value);
+        emit?.('submit', readInputValue(input));
       }
     });
   }

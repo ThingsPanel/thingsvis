@@ -35,7 +35,9 @@ import {
 import {
   buildEmbedRuntimeVariableValues,
   mergeEmbedRuntimeVariableDefinitions,
+  resolveEmbedRuntimeVariableValues,
 } from '../embed/runtimeVariables';
+import { mergeActionVariableDefinitions } from '../lib/eventVariables';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -230,10 +232,14 @@ function applyRuntimeVariables(
   definitions: unknown[] | undefined,
   runtimeValues: Record<string, unknown> = {},
 ) {
-  const mergedDefinitions = mergeEmbedRuntimeVariableDefinitions(definitions, runtimeValues);
+  const effectiveRuntimeValues = resolveEmbedRuntimeVariableValues(definitions, runtimeValues);
+  const mergedDefinitions = mergeEmbedRuntimeVariableDefinitions(
+    definitions,
+    effectiveRuntimeValues,
+  );
   store.getState().setVariableDefinitions(mergedDefinitions as any);
   store.getState().initVariablesFromDefinitions(mergedDefinitions as any);
-  Object.entries(runtimeValues).forEach(([name, value]) => {
+  Object.entries(effectiveRuntimeValues).forEach(([name, value]) => {
     if (value !== undefined) {
       store.getState().setVariableValue(name, value);
     }
@@ -474,7 +480,7 @@ export function useProjectBootstrap({
       },
       nodes: nodes,
       dataSources: effectiveDataSources,
-      variables: state.variableDefinitions ?? [],
+      variables: mergeActionVariableDefinitions(state.variableDefinitions ?? [], nodes),
     };
   }, []);
 

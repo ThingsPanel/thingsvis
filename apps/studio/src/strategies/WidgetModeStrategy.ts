@@ -40,6 +40,7 @@ export interface EmbedInitPayload {
   };
   nodes?: Record<string, unknown>[];
   dataSources?: Record<string, unknown>[];
+  variables?: Record<string, unknown>[];
   platformFields?: PlatformFieldItem[];
   platformDevices?: PlatformDevice[];
   [key: string]: unknown;
@@ -149,6 +150,7 @@ export class WidgetModeStrategy implements EditorStrategy {
         id: string;
         config: Record<string, unknown>;
       }[],
+      variables: Array.isArray(payload.variables) ? payload.variables : [],
     };
 
     this.finishInit(projectFile);
@@ -176,6 +178,7 @@ export class WidgetModeStrategy implements EditorStrategy {
       canvas: projectState.canvas,
       nodes: projectState.nodes,
       dataSources: projectState.dataSources,
+      variables: projectState.variables,
       thumbnail: projectState.meta.thumbnail,
       meta: {
         ...projectState.meta,
