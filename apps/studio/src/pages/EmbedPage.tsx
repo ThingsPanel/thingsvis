@@ -41,6 +41,7 @@ import {
 import { augmentPlatformDataSourcesForNodes } from '@/lib/platformDatasourceBindings';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import LoadingScreen from '@/components/LoadingScreen';
 import type { PreviewAlignY, PreviewScaleMode } from './PreviewPage';
 
 /** Padding applied around the grid canvas in embed mode (px). */
@@ -184,6 +185,9 @@ export default function EmbedPage() {
   const canvasHeight = kernelState?.canvas?.height ?? 1080;
 
   const isGridLayout = canvasMode === 'grid';
+  const isHostManagedEmbed =
+    searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
+  const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
     const page = kernelState?.page as any;
@@ -870,24 +874,23 @@ export default function EmbedPage() {
       // Try loading with current token (if any)
       loadFromApi(dashboardId);
     } else {
-      // No ID provided - waiting for postMessage
-      setState((s) => ({ ...s, isLoading: false }));
+      // Host-managed embed waits for tv:init via postMessage.
+      // Keep the built-in loading state alive so the viewer only shows one
+      // continuous ThingsVis loading animation instead of loading -> ready -> loading.
+      if (!isHostManagedEmbed) {
+        setState((s) => ({ ...s, isLoading: false }));
+      }
       postToParent({ type: 'READY' });
     }
   }, [searchParams, loadFromApi, loadFromApiWithShareToken, postToParent, setEmbedApiToken]);
 
   // Render
-  if (state.isLoading) {
+  if (state.isLoading || shouldKeepLoadingOnError) {
     return (
-      <div
-        className="w-full h-full flex items-center justify-center bg-background"
-        style={{ minHeight: '100%' }}
-      >
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground text-sm">加载仪表板中...</p>
-        </div>
-      </div>
+      <LoadingScreen
+        progress={shouldKeepLoadingOnError ? 28 : 36}
+        statusText={shouldKeepLoadingOnError ? '初始化可视化引擎...' : '加载仪表板中...'}
+      />
     );
   }
 
