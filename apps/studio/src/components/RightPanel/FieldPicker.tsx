@@ -239,20 +239,22 @@ export function FieldPicker({
   );
   const platformSources = useMemo<PlatformStatSource[]>(
     () =>
-      (providerCatalog?.dataSources ?? []).map((source) => ({
-        id: source.id,
-        name: resolveControlText(source.label, locale, t),
-        group: source.group,
-        url: source.url,
-        params: source.params,
-        transformation: source.transformation,
-        fields: source.fields.map((field) => ({
-          id: field.id,
-          name: resolveControlText(field.label, locale, t),
-          type: field.type as FieldPathInfo['type'],
+      (providerCatalog?.dataSources ?? [])
+        .filter((source) => serviceConfig.context !== 'dashboard' || source.group !== 'dashboard')
+        .map((source) => ({
+          id: source.id,
+          name: resolveControlText(source.label, locale, t),
+          group: source.group,
+          url: source.url,
+          params: source.params,
+          transformation: source.transformation,
+          fields: source.fields.map((field) => ({
+            id: field.id,
+            name: resolveControlText(field.label, locale, t),
+            type: field.type as FieldPathInfo['type'],
+          })),
         })),
-      })),
-    [locale, providerCatalog, t],
+    [locale, providerCatalog, serviceConfig.context, t],
   );
   const platformSourceIds = useMemo(
     () => new Set(platformSources.map((source) => source.id)),

@@ -48,10 +48,18 @@ function normalizeEmbeddedProviderDataSources(
   runtimeVariableValues: Record<string, unknown>,
 ): Array<Record<string, any>> {
   const serviceConfig = resolveEditorServiceConfig();
-  if (serviceConfig.mode !== 'embedded') return dataSources;
+  const shouldStripDashboardProviderSources =
+    serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard';
+  const isBlockedDataSource = (dataSource: Record<string, any>) =>
+    shouldStripDashboardProviderSources && /^thingspanel_.+$/.test(String(dataSource?.id ?? ''));
+  if (serviceConfig.mode !== 'embedded') {
+    return dataSources;
+  }
 
   const providerCatalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
-  if (!providerCatalog) return dataSources;
+  if (!providerCatalog) {
+    return dataSources.filter((dataSource) => !isBlockedDataSource(dataSource));
+  }
 
   const protectedGroups =
     serviceConfig.context === 'dashboard'
@@ -67,21 +75,43 @@ function normalizeEmbeddedProviderDataSources(
   );
   const definitionsById = new Map(providerDefaults.map((source) => [source.id, source]));
 
-  const normalized = dataSources.map((dataSource: Record<string, any>) => {
-    const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
-    const definition = definitionsById.get(sourceId);
-    if (!definition) return dataSource;
+  const normalized = dataSources
+    .filter((dataSource) => !isBlockedDataSource(dataSource))
+    .map((dataSource: Record<string, any>) => {
+      const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
+      const definition = definitionsById.get(sourceId);
+      if (!definition) return dataSource;
 
-    return {
-      ...definition,
-      name:
-        typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
-      mode:
-        typeof dataSource?.mode === 'string' && dataSource.mode ? dataSource.mode : definition.mode,
-    };
-  });
+      return {
+        ...definition,
+        name:
+          typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
+        mode:
+          typeof dataSource?.mode === 'string' && dataSource.mode
+            ? dataSource.mode
+            : definition.mode,
+      };
+    });
 
   return normalized;
+}
+
+function applyEmbeddedEditorDataSourcePolicy(
+  dataSources: Array<Record<string, any>>,
+): Array<Record<string, any>> {
+  const serviceConfig = resolveEditorServiceConfig();
+  if (!(serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard')) {
+    return dataSources;
+  }
+
+  return dataSources.map((dataSource) => {
+    if (String(dataSource?.type ?? '').toUpperCase() !== 'REST') return dataSource;
+    return {
+      ...dataSource,
+      mode: 'manual',
+      __editorAutoManual: true,
+    };
+  });
 }
 
 export type CanvasConfigSchema = {
@@ -180,6 +210,17 @@ function normalizeCanvasScaleMode(mode: unknown): PreviewScaleMode {
 
 function normalizePreviewAlignY(value: unknown): PreviewAlignY {
   return value === 'top' ? 'top' : 'center';
+}
+
+function isHostManagedEmbedMode(isEmbedded: boolean): boolean {
+  if (!isEmbedded || typeof window === 'undefined') return false;
+  try {
+    const hashQuery = window.location.hash.split('?')[1] || '';
+    const hashParams = new URLSearchParams(hashQuery);
+    return (hashParams.get('saveTarget') || '') === 'host';
+  } catch {
+    return false;
+  }
 }
 
 function applyRuntimeVariables(
@@ -289,15 +330,19 @@ export function useProjectBootstrap({
   const projectId = canvasConfig.id;
   const bootstrappingRef = useRef(true);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [isAwaitingEmbedInit, setIsAwaitingEmbedInit] = useState(false);
   const [bootstrapSummary, setBootstrapSummary] =
     useState<BootstrapSummary>(EMPTY_BOOTSTRAP_SUMMARY);
   const canvasInitializedRef = useRef(false);
   const skipNextEmbedInitRequestRef = useRef(false);
+  const embedInitRequestSentRef = useRef(false);
+  const hasProcessedEmbedInitRef = useRef(false);
 
   const storage = useStorage(projectId);
 
   const applyProjectToEditor = useCallback(
     async (loaded: ProjectFile) => {
+      await dataSourceManager.resetRuntimeDataSources();
       setBootstrapSummary(createBootstrapSummary(loaded.nodes));
       const backgroundState = deriveCanvasBackgroundState(loaded.canvas.background);
       const loadedBackground = backgroundState.background;
@@ -420,12 +465,19 @@ export function useProjectBootstrap({
 
   // Bootstrap logic
   useEffect(() => {
+    if (isHostManagedEmbedMode(embedVisibility.isEmbedded) && hasProcessedEmbedInitRef.current) {
+      return;
+    }
+
     let cancelled = false;
     canvasInitializedRef.current = false;
     skipNextEmbedInitRequestRef.current = false;
+    embedInitRequestSentRef.current = false;
     (async () => {
       bootstrappingRef.current = true;
       setIsBootstrapping(true);
+      setIsAwaitingEmbedInit(false);
+      let deferBootstrapCompletion = false;
 
       try {
         let loaded: ProjectFile | null = null;
@@ -450,8 +502,12 @@ export function useProjectBootstrap({
             if (sessionSnapshot?.project) {
               skipNextEmbedInitRequestRef.current = true;
               await applyProjectToEditor(sessionSnapshot.project);
+              setIsAwaitingEmbedInit(false);
             } else {
-              setBootstrapSummary({ ...EMPTY_BOOTSTRAP_SUMMARY, projectLoaded: true });
+              setBootstrapSummary(EMPTY_BOOTSTRAP_SUMMARY);
+              setIsAwaitingEmbedInit(true);
+              deferBootstrapCompletion = true;
+              return;
             }
             bootstrappingRef.current = false;
             setIsBootstrapping(false);
@@ -520,7 +576,7 @@ export function useProjectBootstrap({
       } catch (e) {
         console.error('[Editor] Bootstrap error:', e);
       } finally {
-        if (!cancelled) {
+        if (!cancelled && !deferBootstrapCompletion) {
           setIsBootstrapping(false);
           // Delay ref reset until after React reconciliation so that
           // useEditorSync effects still see bootstrappingRef === true
@@ -546,6 +602,7 @@ export function useProjectBootstrap({
 
     const unsubscribe = onEmbedEvent<EmbedInitPayload>('init', async (payload) => {
       const processed = processEmbedInitPayload(payload);
+      hasProcessedEmbedInitRef.current = Boolean(processed);
       if (!processed) {
         console.warn('[Editor] ⚠️ embed init 数据无效');
         return;
@@ -576,6 +633,7 @@ export function useProjectBootstrap({
 
       // FIX-G2: Suppress markDirty during init processing (mirrors bootstrap flow)
       bootstrappingRef.current = true;
+      setIsAwaitingEmbedInit(false);
 
       let nodesToLoad = processed.nodes;
       let loadedMeta: any = null;
@@ -717,6 +775,8 @@ export function useProjectBootstrap({
         mergedDataSources,
         embedRuntimeVariableValues,
       );
+      mergedDataSources = applyEmbeddedEditorDataSourcePolicy(mergedDataSources);
+      await dataSourceManager.resetRuntimeDataSources();
 
       try {
         store.temporal.getState().clear?.();
@@ -765,6 +825,7 @@ export function useProjectBootstrap({
 
       // FIX-G2: Restore markDirty responsiveness after React reconciliation
       requestAnimationFrame(() => {
+        setIsBootstrapping(false);
         bootstrappingRef.current = false;
       });
     });
@@ -777,6 +838,15 @@ export function useProjectBootstrap({
   // Handshake after bootstrap
   useEffect(() => {
     if (!embedVisibility.isEmbedded) return;
+    if (isAwaitingEmbedInit) {
+      if (embedInitRequestSentRef.current) return;
+      embedInitRequestSentRef.current = true;
+      messageRouter.send(MSG_TYPES.READY);
+      setTimeout(() => {
+        messageRouter.send(MSG_TYPES.REQUEST_INIT);
+      }, 100);
+      return;
+    }
     if (bootstrappingRef.current) return;
     if (isBootstrapping) return;
     if (skipNextEmbedInitRequestRef.current) {
@@ -787,7 +857,7 @@ export function useProjectBootstrap({
     setTimeout(() => {
       messageRouter.send(MSG_TYPES.REQUEST_INIT);
     }, 100);
-  }, [isBootstrapping]);
+  }, [embedVisibility.isEmbedded, isAwaitingEmbedInit, isBootstrapping]);
 
   return {
     canvasConfig,
@@ -795,6 +865,7 @@ export function useProjectBootstrap({
     projectId,
     getProjectState,
     isBootstrapping,
+    isAwaitingEmbedInit,
     bootstrapSummary,
     bootstrappingRef,
     canvasInitializedRef,

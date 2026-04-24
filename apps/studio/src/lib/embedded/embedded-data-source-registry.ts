@@ -9,6 +9,10 @@ const EMBEDDED_PROVIDER_CATALOGS: Record<string, EmbeddedProviderCatalog> = {
   [thingspanelCatalog.provider]: thingspanelCatalog,
 };
 
+function isAllowedEmbeddedSource(source: EmbeddedDataSourceDef): boolean {
+  return source.group !== 'dashboard';
+}
+
 export function resolveEmbeddedProviderCatalog(
   provider?: string | null,
 ): EmbeddedProviderCatalog | undefined {
@@ -33,6 +37,7 @@ export function listEmbeddedProviderDataSourceIds(
   if (!catalog) return [];
 
   return catalog.dataSources
+    .filter(isAllowedEmbeddedSource)
     .filter((source) => shouldIncludeGroup(source, options?.groups))
     .map((source) => source.id);
 }
@@ -50,6 +55,7 @@ export function buildEmbeddedProviderDataSources(
     runtimeVariableValues.deviceId.trim().length > 0;
 
   return catalog.dataSources
+    .filter(isAllowedEmbeddedSource)
     .filter((source) => shouldIncludeGroup(source, options?.groups))
     .map((source) => {
       const isCurrentDeviceScoped =

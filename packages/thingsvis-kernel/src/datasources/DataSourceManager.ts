@@ -527,6 +527,36 @@ export class DataSourceManager {
   }
 
   /**
+   * Disconnects and forgets all runtime data sources without touching
+   * persisted cloud/local storage entries.
+   *
+   * Used when the editor swaps projects or host-init payloads inside the
+   * same SPA session and must stop old polling/websocket activity first.
+   */
+  public async resetRuntimeDataSources(): Promise<void> {
+    const existingIds = Array.from(this.adapters.keys());
+    const existingStoreIds = Object.keys(this.store?.getState().dataSources ?? {});
+
+    for (const id of existingIds) {
+      const adapter = this.adapters.get(id);
+      if (adapter) {
+        try {
+          await adapter.disconnect();
+        } catch {
+          /* ignore */
+        }
+      }
+      this.adapters.delete(id);
+      this.configs.delete(id);
+      this.resolvedModes.delete(id);
+    }
+
+    for (const id of new Set([...existingIds, ...existingStoreIds])) {
+      this.store?.getState().removeDataSourceFromStore(id);
+    }
+  }
+
+  /**
    * Disconnects all data sources.
    */
   public async dispose(): Promise<void> {

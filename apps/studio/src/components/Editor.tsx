@@ -288,6 +288,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     projectId,
     getProjectState,
     isBootstrapping,
+    isAwaitingEmbedInit,
     bootstrapSummary,
     bootstrappingRef,
     canvasInitializedRef,
@@ -310,6 +311,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     cloudProjectId: currentProject?.id,
     getProjectState,
     isBootstrapping,
+    isEmbedded: embedVisibility.isEmbedded,
     isWidgetMode,
     setCanvasConfig,
     canvasConfig,
@@ -323,6 +325,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     projectLoaded: bootstrapSummary.projectLoaded,
     widgetTypes: bootstrapSummary.widgetTypes,
   });
+  const shouldRenderEditorShell =
+    !embedVisibility.isEmbedded || (!isAwaitingEmbedInit && isStartupReady);
 
   const { handleAddNode, onDropComponent } = useEditorDragDrop(markDirty);
 
@@ -537,87 +541,91 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     >
       <div className="absolute inset-0 bg-background" />
 
-      <ErrorBoundary>
-        <WorkspaceEngine
-          canvasConfig={canvasConfig}
-          locale={language}
-          activeTool={activeTool}
-          setActiveTool={handleToolChange}
-          zoom={zoom}
-          setZoom={setZoom}
-          embedVisibility={embedVisibility}
-          showLeftPanel={showLeftPanel}
-          showRightPanel={showRightPanel}
-          markDirty={markDirty}
-          formatBrushActive={formatBrush.active}
-          onApplyFormatBrush={handleApplyFormatBrush}
-        />
-      </ErrorBoundary>
+      {shouldRenderEditorShell && (
+        <ErrorBoundary>
+          <WorkspaceEngine
+            canvasConfig={canvasConfig}
+            locale={language}
+            activeTool={activeTool}
+            setActiveTool={handleToolChange}
+            zoom={zoom}
+            setZoom={setZoom}
+            embedVisibility={embedVisibility}
+            showLeftPanel={showLeftPanel}
+            showRightPanel={showRightPanel}
+            markDirty={markDirty}
+            formatBrushActive={formatBrush.active}
+            onApplyFormatBrush={handleApplyFormatBrush}
+          />
+        </ErrorBoundary>
+      )}
       <EditorStartupOverlay startup={startup} visible={!isStartupReady} />
 
-      <EditorTopNav
-        canvasMode={canvasConfig.mode}
-        tools={tools}
-        activeTool={activeTool}
-        isDarkMode={isDarkMode}
-        isEmbedded={embedVisibility.isEmbedded}
-        showTopLeft={embedVisibility.showTopLeft}
-        showToolbar={embedVisibility.showToolbar}
-        showTopRight={embedVisibility.showTopRight}
-        showRightPanel={showRightPanel}
-        showLibrary={embedVisibility.showLibrary}
-        isFullscreen={!!document.fullscreenElement}
-        gridVisible={canvasConfig.gridEnabled}
-        canUseFormatBrush={Boolean(selectedNode)}
-        formatBrushActive={formatBrush.active}
-        saveStatus={saveState.status}
-        lastSavedAt={saveState.lastSavedAt}
-        saveError={saveState.error}
-        isSaving={saveState.status === 'saving'}
-        isAuthenticated={isAuthenticated}
-        authLoading={authLoading}
-        user={user}
-        projectName={canvasConfig.name}
-        projectId={projectId}
-        onToolChange={handleToolChange}
-        onProjectNameChange={(name: string) => setCanvasConfig({ ...canvasConfig, name })}
-        onSave={() => saveNow()}
-        onPreview={openPreview}
-        onPublish={openPublish}
-        onToggleTheme={toggleTheme}
-        onToggleGrid={handleToggleGrid}
-        onToggleFormatBrush={handleToggleFormatBrush}
-        onToggleRightPanel={() => setShowRightPanel(true)}
-        showLeftPanel={showLeftPanel}
-        onToggleLeftPanel={toggleLeftPanel}
-        onToggleFullscreen={() => {
-          if (!document.fullscreenElement)
-            document.documentElement.requestFullscreen().catch(() => {});
-          else if (document.exitFullscreen) document.exitFullscreen();
-        }}
-        onOpenProjectDialog={() => setShowProjectDialog(true)}
-        onOpenVariables={() => setShowVariablesPanel(true)}
-        onOpenHelp={() => setShowHelpDialog(true)}
-        onOpenDataSources={async () => {
-          if (embedVisibility.isEmbedded) {
-            await saveNow();
-            window.location.hash = buildHashRoute('#/data-sources', {
-              preserveCurrentParams: true,
-              params: { projectId, resumeSession: null },
-            });
-          } else {
-            window.open('#/data-sources', '_blank');
-          }
-        }}
-        onLogout={() => {
-          logout();
-          window.location.hash = '#/';
-        }}
-        onLogin={() => (window.location.hash = '#/login')}
-        onShare={() => setShowShareDialog(true)}
-      />
+      {shouldRenderEditorShell && (
+        <EditorTopNav
+          canvasMode={canvasConfig.mode}
+          tools={tools}
+          activeTool={activeTool}
+          isDarkMode={isDarkMode}
+          isEmbedded={embedVisibility.isEmbedded}
+          showTopLeft={embedVisibility.showTopLeft}
+          showToolbar={embedVisibility.showToolbar}
+          showTopRight={embedVisibility.showTopRight}
+          showRightPanel={showRightPanel}
+          showLibrary={embedVisibility.showLibrary}
+          isFullscreen={!!document.fullscreenElement}
+          gridVisible={canvasConfig.gridEnabled}
+          canUseFormatBrush={Boolean(selectedNode)}
+          formatBrushActive={formatBrush.active}
+          saveStatus={saveState.status}
+          lastSavedAt={saveState.lastSavedAt}
+          saveError={saveState.error}
+          isSaving={saveState.status === 'saving'}
+          isAuthenticated={isAuthenticated}
+          authLoading={authLoading}
+          user={user}
+          projectName={canvasConfig.name}
+          projectId={projectId}
+          onToolChange={handleToolChange}
+          onProjectNameChange={(name: string) => setCanvasConfig({ ...canvasConfig, name })}
+          onSave={() => saveNow()}
+          onPreview={openPreview}
+          onPublish={openPublish}
+          onToggleTheme={toggleTheme}
+          onToggleGrid={handleToggleGrid}
+          onToggleFormatBrush={handleToggleFormatBrush}
+          onToggleRightPanel={() => setShowRightPanel(true)}
+          showLeftPanel={showLeftPanel}
+          onToggleLeftPanel={toggleLeftPanel}
+          onToggleFullscreen={() => {
+            if (!document.fullscreenElement)
+              document.documentElement.requestFullscreen().catch(() => {});
+            else if (document.exitFullscreen) document.exitFullscreen();
+          }}
+          onOpenProjectDialog={() => setShowProjectDialog(true)}
+          onOpenVariables={() => setShowVariablesPanel(true)}
+          onOpenHelp={() => setShowHelpDialog(true)}
+          onOpenDataSources={async () => {
+            if (embedVisibility.isEmbedded) {
+              await saveNow();
+              window.location.hash = buildHashRoute('#/data-sources', {
+                preserveCurrentParams: true,
+                params: { projectId, resumeSession: null },
+              });
+            } else {
+              window.open('#/data-sources', '_blank');
+            }
+          }}
+          onLogout={() => {
+            logout();
+            window.location.hash = '#/';
+          }}
+          onLogin={() => (window.location.hash = '#/login')}
+          onShare={() => setShowShareDialog(true)}
+        />
+      )}
 
-      {embedVisibility.showLibrary && showLeftPanel && (
+      {shouldRenderEditorShell && embedVisibility.showLibrary && showLeftPanel && (
         <aside
           className={`absolute left-4 ${embedVisibility.isEmbedded ? (embedVisibility.showTopLeft || embedVisibility.showTopRight ? 'top-20' : 'top-4') : 'top-20'} bottom-4 z-40 w-72`}
         >
@@ -680,26 +688,28 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         </aside>
       )}
 
-      <EditorBottomBar
-        zoom={zoom}
-        zoomInput={zoomInput}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        showLeftPanel={showLeftPanel}
-        showProps={embedVisibility.showProps}
-        showRightPanel={showRightPanel}
-        canvasWidth={canvasConfig.width}
-        canvasHeight={canvasConfig.height}
-        onZoomChange={setZoom}
-        onZoomInputChange={setZoomInput}
-        onZoomInputBlur={handleZoomInputBlur}
-        onZoomInputKeyDown={handleZoomInputKeyDown}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        onShowShortcuts={() => setShowShortcuts(true)}
-      />
+      {shouldRenderEditorShell && (
+        <EditorBottomBar
+          zoom={zoom}
+          zoomInput={zoomInput}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          showLeftPanel={showLeftPanel}
+          showProps={embedVisibility.showProps}
+          showRightPanel={showRightPanel}
+          canvasWidth={canvasConfig.width}
+          canvasHeight={canvasConfig.height}
+          onZoomChange={setZoom}
+          onZoomInputChange={setZoomInput}
+          onZoomInputBlur={handleZoomInputBlur}
+          onZoomInputKeyDown={handleZoomInputKeyDown}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          onShowShortcuts={() => setShowShortcuts(true)}
+        />
+      )}
 
-      {embedVisibility.showProps && showRightPanel && (
+      {shouldRenderEditorShell && embedVisibility.showProps && showRightPanel && (
         <aside
           className={`absolute right-4 ${embedVisibility.isEmbedded ? (embedVisibility.showTopLeft || embedVisibility.showTopRight ? 'top-20' : 'top-4') : 'top-20'} bottom-4 w-80 z-40`}
         >

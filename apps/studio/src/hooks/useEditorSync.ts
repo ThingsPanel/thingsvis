@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useAutoSave } from './useAutoSave';
 import { store } from '../lib/store';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
@@ -12,6 +12,7 @@ export interface UseEditorSyncProps {
   cloudProjectId?: string;
   getProjectState: () => ProjectFile;
   isBootstrapping: boolean;
+  isEmbedded: boolean;
   isWidgetMode: boolean;
   setCanvasConfig: React.Dispatch<React.SetStateAction<CanvasConfigSchema>>;
   canvasConfig: CanvasConfigSchema;
@@ -24,6 +25,7 @@ export function useEditorSync({
   cloudProjectId,
   getProjectState,
   isBootstrapping,
+  isEmbedded,
   isWidgetMode,
   setCanvasConfig,
   canvasConfig,
@@ -32,6 +34,7 @@ export function useEditorSync({
 }: UseEditorSyncProps) {
   const autoSaveEnabled = !isBootstrapping;
   const saveMode = isWidgetMode ? 'manual' : 'auto';
+  const dirtyTrackingArmedRef = useRef(!isEmbedded);
 
   // Auto-save hook
   const { saveState, markDirty, saveNow } = useAutoSave({
@@ -48,11 +51,43 @@ export function useEditorSync({
     },
   });
 
+  const markDirtyWhenArmed = useCallback(
+    (immediate = false) => {
+      if (isEmbedded && !dirtyTrackingArmedRef.current) return;
+      markDirty(immediate);
+    },
+    [isEmbedded, markDirty],
+  );
+
+  useEffect(() => {
+    if (!isEmbedded) {
+      dirtyTrackingArmedRef.current = true;
+      return;
+    }
+    if (isBootstrapping || bootstrappingRef.current) {
+      dirtyTrackingArmedRef.current = false;
+      return;
+    }
+
+    dirtyTrackingArmedRef.current = false;
+    const armDirtyTracking = () => {
+      dirtyTrackingArmedRef.current = true;
+    };
+
+    window.addEventListener('pointerdown', armDirtyTracking, true);
+    window.addEventListener('keydown', armDirtyTracking, true);
+
+    return () => {
+      window.removeEventListener('pointerdown', armDirtyTracking, true);
+      window.removeEventListener('keydown', armDirtyTracking, true);
+    };
+  }, [bootstrappingRef, isBootstrapping, isEmbedded, projectId]);
+
   // Mark dirty on meaningful changes only
   useEffect(() => {
     if (bootstrappingRef.current) return;
     if (!canvasInitializedRef.current) return;
-    markDirty();
+    markDirtyWhenArmed();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     canvasConfig.name,
@@ -73,6 +108,7 @@ export function useEditorSync({
     canvasConfig.theme,
     canvasConfig.scaleMode,
     canvasConfig.previewAlignY,
+    markDirtyWhenArmed,
   ]);
 
   useEffect(() => {
@@ -137,12 +173,12 @@ export function useEditorSync({
       // Canvas viewport changes (zoom/pan) are runtime-only and must not re-mark the project dirty.
       if (hasPersistedEditorStateChange(prevPersistedState, currentPersistedState)) {
         prevPersistedState = currentPersistedState;
-        markDirty();
+        markDirtyWhenArmed();
       }
     });
 
     return unsubscribe;
-  }, [isBootstrapping, markDirty, bootstrappingRef]);
+  }, [isBootstrapping, markDirtyWhenArmed, bootstrappingRef]);
 
   // Bidirectional Canvas Sync
   const syncingRef = useRef(false);
@@ -208,5 +244,5 @@ export function useEditorSync({
     canvasConfig.gridEnabled,
   ]);
 
-  return { saveState, markDirty, saveNow };
+  return { saveState, markDirty: markDirtyWhenArmed, saveNow };
 }

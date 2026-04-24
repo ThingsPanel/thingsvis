@@ -25,10 +25,10 @@ import {
 } from '../lib/storage/saveStrategy';
 import { notifyChange, requestSave as sendToHost } from '../embed/message-router';
 import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 
 const GENERATED_HOST_DATA_SOURCE_ID_RE = /^(?:__platform_.+__|thingspanel_.+)$/;
 const DATA_SOURCE_EXPRESSION_RE = /ds\.([^\s.}]+)\./g;
-
 // =============================================================================
 // Hook Options
 // =============================================================================
@@ -259,12 +259,26 @@ function extractDataBindings(nodes: any[]): any[] {
 function sanitizeDataSourcesForHostSave(nodes: any[], dataSources: any[]): any[] {
   if (!Array.isArray(dataSources)) return [];
 
+  const serviceConfig = resolveEditorServiceConfig();
+  const shouldStripDashboardProviderSources =
+    serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard';
   const referencedIds = collectReferencedDataSourceIds(nodes);
-  return dataSources.filter((dataSource) => {
-    const id = typeof dataSource?.id === 'string' ? dataSource.id : '';
-    if (!GENERATED_HOST_DATA_SOURCE_ID_RE.test(id)) return true;
-    return referencedIds.has(id);
-  });
+  return dataSources
+    .filter((dataSource) => {
+      const id = typeof dataSource?.id === 'string' ? dataSource.id : '';
+      if (shouldStripDashboardProviderSources && /^thingspanel_.+$/.test(id)) return false;
+      if (!GENERATED_HOST_DATA_SOURCE_ID_RE.test(id)) return true;
+      return referencedIds.has(id);
+    })
+    .map((dataSource) => {
+      if (!(dataSource as any)?.__editorAutoManual) return dataSource;
+      const {
+        __editorAutoManual: _editorAutoManual,
+        mode: _mode,
+        ...rest
+      } = dataSource as Record<string, unknown>;
+      return rest;
+    });
 }
 
 function collectReferencedDataSourceIds(
