@@ -203,16 +203,27 @@ const latestDevices = devices.map((device) => ({
   last_push_time: device?.last_push_time ?? '',
   telemetry_data: Array.isArray(device?.telemetry_data) ? device.telemetry_data : []
 }));
+// Format ISO/timestamp to HH:mm:ss local time.
+const fmtTime = (raw) => {
+  if (!raw) return '';
+  try {
+    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);
+    if (isNaN(d.getTime())) return String(raw);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  } catch { return String(raw); }
+};
 const rows = latestDevices.flatMap((device) =>
   (Array.isArray(device.telemetry_data) ? device.telemetry_data : []).map((item) => ({
+    // Table-ready fields: name / metric / value / time
+    name: device.device_name,
+    metric: String(item?.label ?? item?.key ?? ''),
+    value: item?.unit ? String(item.value ?? '') + ' ' + item.unit : String(item?.value ?? ''),
+    time: fmtTime(device.last_push_time),
+    // Raw fields kept for advanced bindings
     device_id: device.device_id,
-    device_name: device.device_name,
     key: item?.key ?? '',
-    label: item?.label ?? item?.key ?? '',
-    unit: item?.unit ?? '',
-    value: item?.value,
-    last_push_time: device.last_push_time,
-    is_online: device.is_online
+    raw_value: item?.value,
+    is_online: device.is_online,
   }))
 );
 return {
@@ -222,6 +233,7 @@ return {
 };
 `,
     },
+
     {
       id: 'thingspanel_current_device_telemetry_snapshot',
       group: 'current-device',

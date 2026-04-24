@@ -8,10 +8,12 @@ export const controls = createControlPanel()
     b.addJsonEditor('columns', { 
       label: `${W}.columns`,
       placeholder: '[{"key":"name","title":"Name"}]',
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] }
     });
     b.addJsonEditor('data', { 
       label: `${W}.data`,
       placeholder: '[{"name":"Item 1"}]',
+      binding: { enabled: true, modes: ['static', 'field', 'expr'] }
     });
   }, { label: `${W}.groupData` })
   
