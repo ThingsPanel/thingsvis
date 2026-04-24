@@ -209,6 +209,31 @@ describe('PropertyResolver', () => {
       const result = PropertyResolver.resolve(node, dataSources);
       expect(result.x).toBe(0.75);
     });
+
+    it('infers the datasource snapshot from canonical field bindings when transform needs sibling fields', () => {
+      const node = makeNode({ data: { value: 0, name: 'fallback' } }, [
+        {
+          targetProp: 'data',
+          expression: '{{ ds.dashboard.data.device_total }}',
+          transform:
+            "({ value: Number(((Number(data?.device_online ?? 0) / Math.max(Number(value ?? 0), 1)) * 100).toFixed(2)), name: '设备在线率(%)' })",
+        },
+      ]);
+      const result = PropertyResolver.resolve(node, {
+        dashboard: {
+          data: {
+            device_total: 216,
+            device_online: 9,
+          },
+          status: 'connected',
+        },
+      });
+
+      expect(result.data).toEqual({
+        value: 4.17,
+        name: '设备在线率(%)',
+      });
+    });
   });
 
   // ── Live data source update scenario ──────────────────────────────────────

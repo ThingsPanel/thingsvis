@@ -1,7 +1,7 @@
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext } from '@thingsvis/widget-sdk';
+import { defineWidget, resolveLocaleRecord, type WidgetOverlayContext, resolveWidgetColors } from '@thingsvis/widget-sdk';
 import './lib/video-rtc.js'; // Registers <video-rtc> element
 
 import zh from './locales/zh.json';
@@ -62,12 +62,26 @@ export const Main = defineWidget({
       }, 300);
     };
 
+    let colors = resolveWidgetColors(element);
+    
     element.style.width = '100%';
     element.style.height = '100%';
+    element.style.display = 'flex';
+    element.style.flexDirection = 'column';
+
+    const titleEl = document.createElement('div');
+    titleEl.style.cssText = `
+      flex: 0 0 auto;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      text-align: left;
+    `;
+    element.appendChild(titleEl);
 
     const container = document.createElement('div');
+    container.style.flex = '1 1 0';
     container.style.width = '100%';
-    container.style.height = '100%';
     container.style.position = 'relative';
     container.style.overflow = 'hidden';
     container.style.backgroundColor = 'transparent';
@@ -175,8 +189,17 @@ export const Main = defineWidget({
     bindInternalVideo();
 
     const updateView = () => {
-      const { src, mode, background, visibilityThreshold, objectFit, borderWidth, borderColor, borderRadius } = currentProps;
+      const { src, mode, background, visibilityThreshold, objectFit, borderWidth, borderColor, borderRadius, showTitle, title } = currentProps;
       const normalizedSrc = normalizeSource(src);
+
+      // Title
+      if (showTitle && title) {
+        titleEl.style.display = 'block';
+        titleEl.textContent = title;
+        titleEl.style.color = colors.fg;
+      } else {
+        titleEl.style.display = 'none';
+      }
 
       // Update placeholder vs video visibility
       if (!normalizedSrc) {
@@ -216,6 +239,7 @@ export const Main = defineWidget({
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
         currentLocale = newCtx.locale;
+        colors = resolveWidgetColors(element);
         updateView();
       },
       destroy: () => {

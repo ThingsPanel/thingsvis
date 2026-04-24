@@ -3,6 +3,10 @@ import { createControlPanel } from '@thingsvis/widget-sdk';
 const W = 'widgets.thingsvis-widget-media-video-player';
 
 export const controls = createControlPanel()
+  .addGroup('Title', (builder) => {
+    builder.addSwitch('showTitle', { label: '显示标题', binding: true });
+    builder.addTextInput('title', { label: '组件标题', binding: true });
+  }, { label: '标题' })
   .addGroup(
     'Source',
     (builder) => {

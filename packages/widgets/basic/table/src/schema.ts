@@ -18,6 +18,10 @@ export const PropsSchema = z.object({
     { name: '排风风机', status: '在线', value: '30.1%' }
   ]).describe('props.tableData'),
 
+  // Widget Title
+  title: z.string().default('表格组件').describe('props.title'),
+  showTitle: z.boolean().default(false).describe('props.showTitle'),
+
   // Header Styles
   showHeader: z.boolean().default(true).describe('props.showHeader'),
   headerFontSize: z.number().default(14).describe('props.headerFontSize'),

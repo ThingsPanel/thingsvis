@@ -8,6 +8,8 @@ import { ExpressionEvaluator } from '@thingsvis/utils';
  * for direct renderer updates.
  */
 export class PropertyResolver {
+  private static readonly FIELD_BINDING_EXPR_RE = /^\{\{\s*ds\.([^.\s}]+)\.data(?:\..+?)?\s*\}\}$/;
+
   private static buildExpressionDataSources(
     dataSources: Record<string, unknown>,
   ): Record<string, unknown> {
@@ -39,6 +41,24 @@ export class PropertyResolver {
     });
 
     return resolved;
+  }
+
+  private static resolveBindingDataSnapshot(
+    binding: { dataSourcePath?: unknown; expression?: unknown },
+    context: Record<string, unknown>,
+  ): unknown {
+    const explicitPath =
+      typeof binding.dataSourcePath === 'string' ? binding.dataSourcePath.trim() : '';
+    if (explicitPath) {
+      return ExpressionEvaluator.evaluate(`{{ ${explicitPath} }}`, context);
+    }
+
+    const expression =
+      typeof binding.expression === 'string' ? binding.expression.trim() : '';
+    const match = this.FIELD_BINDING_EXPR_RE.exec(expression);
+    if (!match?.[1]) return undefined;
+
+    return ExpressionEvaluator.evaluate(`{{ ds.${match[1]}.data }}`, context);
   }
 
   /**
@@ -88,13 +108,7 @@ export class PropertyResolver {
               try {
                 // Resolve full DS snapshot so transforms can access sibling fields
                 // binding.dataSourcePath is like 'ds.myDs.data' — evaluate it from context
-                let dsSnapshot: unknown = undefined;
-                if (binding.dataSourcePath && typeof binding.dataSourcePath === 'string') {
-                  dsSnapshot = ExpressionEvaluator.evaluate(
-                    `{{ ${binding.dataSourcePath} }}`,
-                    context,
-                  );
-                }
+                const dsSnapshot = this.resolveBindingDataSnapshot(binding, context);
                 // Use SafeExecutor sandbox (blocks window/document/fetch access)
                 const result = SafeExecutor.executeScript(binding.transform.trim(), {
                   value: resolvedValue,

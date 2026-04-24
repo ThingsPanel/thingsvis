@@ -98,9 +98,23 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
     -moz-osx-font-smoothing: grayscale;
   `;
   
-  // Build table HTML
+  // Build HTML
+  let tableHtml = '';
+
+  if (props.showTitle && props.title) {
+    tableHtml += `<div style="
+      flex: 0 0 auto;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: ${textPrimary};
+      text-align: left;
+    ">${escapeHtml(props.title)}</div>`;
+  }
+
   // table-layout: fixed 和 height: 100% 组合使其行高均匀撑满父级
-  let tableHtml = `<table style="
+  // 外加一层 div 以免被父级的 display: flex 压扁
+  tableHtml += `<div style="flex: 1 1 0; overflow: hidden;"><table style="
     width: 100%;
     height: 100%;
     table-layout: fixed;
@@ -174,7 +188,7 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
   }
   tableHtml += '</tbody>';
   
-  tableHtml += '</table>';
+  tableHtml += '</table></div>';
   
   element.innerHTML = tableHtml;
 }

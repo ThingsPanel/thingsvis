@@ -243,6 +243,29 @@ function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (
   `;
   scrollContainer.innerHTML = rows.join("");
   element.innerHTML = "";
+  
+  if (props.showTitle && props.title) {
+    const titleEl = document.createElement("div");
+    titleEl.style.cssText = `
+      flex: 0 0 auto;
+      margin-bottom: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: ${colors.fg};
+      text-align: left;
+    `;
+    titleEl.textContent = props.title;
+    element.appendChild(titleEl);
+    
+    // Adjust scrollContainer to stretch
+    scrollContainer.style.flex = "1 1 0";
+    scrollContainer.style.height = "0"; // so it scrolls
+    
+    // Ensure element is flex column
+    element.style.display = "flex";
+    element.style.flexDirection = "column";
+  }
+
   element.appendChild(styleTag);
   element.appendChild(scrollContainer);
 

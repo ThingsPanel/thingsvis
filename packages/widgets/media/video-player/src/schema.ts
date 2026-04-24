@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
+  title: z.string().default('视频组件').describe('props.title'),
+  showTitle: z.boolean().default(false).describe('props.showTitle'),
   src: z.string().default('').describe('props.src'),
   mode: z.string().default('webrtc,mse,hls,mjpeg').describe('props.mode'),
   background: z.boolean().default(false).describe('props.background'),

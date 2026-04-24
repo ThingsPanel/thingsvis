@@ -25,6 +25,8 @@ const DEFAULT_ITEMS = [
 ] as const;
 
 export const PropsSchema = z.object({
+  title: z.string().default('告警信息').describe("props.title"),
+  showTitle: z.boolean().default(false).describe("props.showTitle"),
   items: z.array(z.any()).default(() => DEFAULT_ITEMS.map((item) => ({ ...item }))).describe("props.items"),
   maxItems: z.number().int().min(1).max(100).default(6).describe("props.maxItems"),
   autoScroll: z.boolean().default(true).describe("props.autoScroll"),

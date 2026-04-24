@@ -16,6 +16,12 @@ export const controls = createControlPanel()
       binding: { enabled: true, modes: ['static', 'field', 'expr'] }
     });
   }, { label: `${W}.groupData` })
+
+  // Title Group
+  .addGroup('Title', (b) => {
+    b.addSwitch('showTitle', { label: '显示标题', binding: true });
+    b.addTextInput('title', { label: '组件标题', binding: true });
+  }, { label: '标题' })
   
   // Header Group
   .addGroup('Header', (b) => {
