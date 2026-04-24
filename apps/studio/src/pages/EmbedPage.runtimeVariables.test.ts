@@ -26,11 +26,24 @@ describe('EmbedPage runtime variables', () => {
     });
   });
 
-  it('adds missing runtime variable definitions without replacing dashboard definitions', () => {
+  it('adds missing runtime variable definitions and syncs runtime-managed base URLs', () => {
     const merged = mergeEmbedRuntimeVariableDefinitions(
-      [{ name: 'deviceId', type: 'string', defaultValue: 'from-dashboard' }],
+      [
+        { name: 'deviceId', type: 'string', defaultValue: 'from-dashboard' },
+        {
+          name: 'platformApiBaseUrl',
+          type: 'string',
+          defaultValue: 'https://legacy-platform.example.com',
+        },
+        {
+          name: 'thingsvisApiBaseUrl',
+          type: 'string',
+          defaultValue: 'https://legacy-thingsvis.example.com',
+        },
+      ],
       {
         platformApiBaseUrl: 'https://platform.example.com',
+        thingsvisApiBaseUrl: 'https://thingsvis.example.com',
         platformToken: 'runtime-only-token',
         deviceId: 'device-001',
       },
@@ -42,6 +55,9 @@ describe('EmbedPage runtime variables', () => {
     expect(
       merged.find((definition) => definition.name === 'platformApiBaseUrl')?.defaultValue,
     ).toBe('https://platform.example.com');
+    expect(
+      merged.find((definition) => definition.name === 'thingsvisApiBaseUrl')?.defaultValue,
+    ).toBe('https://thingsvis.example.com');
     expect(merged.map((definition) => definition.name)).toEqual([
       'deviceId',
       'platformApiBaseUrl',

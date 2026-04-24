@@ -12,6 +12,10 @@ export const EMBED_RUNTIME_VARIABLES: RuntimeVariableDefinition[] = [
   { name: 'dateRange', type: 'object', defaultValue: { startTime: '', endTime: '' } },
 ];
 
+// These runtime-managed URLs must follow the current host deployment instead of
+// preserving stale dashboard defaults from a previous environment.
+const RUNTIME_MANAGED_DEFAULT_NAMES = new Set(['platformApiBaseUrl', 'thingsvisApiBaseUrl']);
+
 function readConfigString(config: Record<string, unknown> | undefined, key: string) {
   const value = config?.[key];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -46,7 +50,21 @@ export function mergeEmbedRuntimeVariableDefinitions(
   runtimeValues: Record<string, unknown>,
 ): RuntimeVariableDefinition[] {
   const merged = Array.isArray(definitions)
-    ? ([...definitions] as RuntimeVariableDefinition[])
+    ? ([...definitions] as RuntimeVariableDefinition[]).map((definition) => {
+        if (!definition || typeof definition !== 'object') return definition;
+        const name = definition.name;
+        if (typeof name !== 'string' || !RUNTIME_MANAGED_DEFAULT_NAMES.has(name)) {
+          return definition;
+        }
+
+        const runtimeValue = runtimeValues[name];
+        if (runtimeValue === undefined) return definition;
+
+        return {
+          ...definition,
+          defaultValue: runtimeValue,
+        };
+      })
     : [];
   const existingNames = new Set(
     merged
