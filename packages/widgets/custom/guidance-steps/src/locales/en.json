@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-guidance-steps": {
+        "name": "Guidance Steps",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "items": "Steps",
+        "itemsDescription": "Each item can configure title, description, top-right link, action button, and destination URL.",
+        "themeColor": "Theme Color",
+        "titleFontSize": "Title Font Size",
+        "descFontSize": "Description Font Size"
+      }
+    }
+  }
+}

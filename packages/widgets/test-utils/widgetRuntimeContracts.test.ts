@@ -171,6 +171,7 @@ const expectedWidgetModulePaths = [
   '../chart/uplot-line/src/index.ts',
   '../custom/alert-list/src/index.ts',
   '../custom/device-status-card/src/index.ts',
+  '../custom/guidance-steps/src/index.ts',
   '../decoration/border-corner/src/index.ts',
   '../decoration/border-scanline/src/index.ts',
   '../decoration/section-divider/src/index.ts',

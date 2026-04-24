@@ -178,7 +178,7 @@ function generateRegistryData() {
                 // Enhanced metadata (Phase 0)
                 category: (function() {
                     const id = componentId;
-                    if (['basic/analog-clock', 'basic/digital-clock', 'basic/luxury-clock', 'basic/table', 'interaction/value-card', 'interaction/value-card-simple', 'custom/alert-list'].includes(id)) return 'basic';
+                    if (['basic/analog-clock', 'basic/digital-clock', 'basic/luxury-clock', 'basic/table', 'interaction/value-card', 'interaction/value-card-simple', 'custom/alert-list', 'custom/guidance-steps'].includes(id)) return 'basic';
                     if (['basic/glass-panel'].includes(id)) return 'decoration';
                     if (['geo/map', 'geo/map-china'].includes(id)) return 'charts';
                     if (['resources/model-3d'].includes(id)) return 'media';

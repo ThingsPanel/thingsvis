@@ -1,0 +1,16 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-custom-guidance-steps": {
+        "name": "引导步骤",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "items": "步骤配置",
+        "itemsDescription": "每一项都可以配置标题、说明、右上角链接、操作按钮和跳转地址。",
+        "themeColor": "主题颜色",
+        "titleFontSize": "标题字体大小",
+        "descFontSize": "说明字体大小"
+      }
+    }
+  }
+}
