@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import { createVariableDefinition, isValidVariableName } from '@/lib/eventVariables';
+import type { DashboardVariable, KernelState, KernelStore } from '@thingsvis/kernel';
 
 export type ActionType = 'setVariable' | 'callWrite' | 'navigate' | 'runScript';
 
@@ -20,8 +22,6 @@ export interface ActionConfigItem {
   url?: string;
   script?: string;
 }
-
-import type { KernelStore, KernelState } from '@thingsvis/kernel';
 
 interface ActionConfigEditorProps {
   actions: ActionConfigItem[];
@@ -46,6 +46,7 @@ function ActionRow({
   isFirst,
   isLast,
   variables,
+  onEnsureVariable,
   dataSources,
 }: {
   action: ActionConfigItem;
@@ -56,11 +57,14 @@ function ActionRow({
   onMoveDown: (index: number) => void;
   isFirst: boolean;
   isLast: boolean;
-  variables: { name: string; label?: string }[];
+  variables: DashboardVariable[];
+  onEnsureVariable: (name: string, value?: unknown) => void;
   dataSources: string[];
 }) {
   const { t } = useTranslation('editor');
   const update = (partial: Partial<ActionConfigItem>) => onChange(index, { ...action, ...partial });
+  const variableName = action.variableName ?? '';
+  const variableInputListId = `event-variable-options-${index}`;
 
   return (
     <div className="bg-muted/30 rounded-md p-2 border border-border/40 space-y-2 relative group/action">
@@ -126,20 +130,28 @@ function ActionRow({
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1">
             <span className="text-[10px] text-muted-foreground">{t('events.variableName')}</span>
-            <select
-              className="h-7 px-2 text-xs rounded-md border border-input bg-background outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
-              value={action.variableName ?? ''}
+            <Input
+              className="h-7 text-xs font-mono"
+              list={variableInputListId}
+              placeholder="temp_input"
+              value={variableName}
               onChange={(e) => update({ variableName: e.target.value })}
-            >
-              <option value="" disabled>
-                {t('common.pleaseSelect', { defaultValue: 'Select' })}
-              </option>
+              onBlur={() => onEnsureVariable(variableName, action.value)}
+            />
+            <datalist id={variableInputListId}>
               {variables.map((v) => (
                 <option key={v.name} value={v.name}>
                   {v.label || v.name} ({v.name})
                 </option>
               ))}
-            </select>
+            </datalist>
+            {variableName && !isValidVariableName(variableName.trim()) && (
+              <span className="text-[10px] text-destructive">
+                {t('events.variableNameInvalid', {
+                  defaultValue: 'Use letters, numbers and underscores.',
+                })}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-[10px] text-muted-foreground">{t('events.value')}</span>
@@ -246,6 +258,21 @@ export default function ActionConfigEditor({
   const variables = state.variableDefinitions ?? [];
   const dataSources = Object.keys(state.dataSources ?? {});
 
+  const ensureVariable = React.useCallback(
+    (name: string, value?: unknown) => {
+      const definition = createVariableDefinition(name, value);
+      if (!definition) return;
+
+      const current = (kernelStore.getState() as KernelState).variableDefinitions ?? [];
+      if (current.some((item) => item.name === definition.name)) return;
+
+      const next = [...current, definition];
+      kernelStore.getState().setVariableDefinitions(next);
+      kernelStore.getState().initVariablesFromDefinitions(next);
+    },
+    [kernelStore],
+  );
+
   const addAction = () => {
     onChange([...actions, { type: 'setVariable' }]);
   };
@@ -297,6 +324,7 @@ export default function ActionConfigEditor({
           isFirst={idx === 0}
           isLast={idx === actions.length - 1}
           variables={variables}
+          onEnsureVariable={ensureVariable}
           dataSources={dataSources}
         />
       ))}

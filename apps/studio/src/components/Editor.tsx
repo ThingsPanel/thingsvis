@@ -639,15 +639,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 >
                   <Grid3x3 className="h-4 w-4" />
                 </button>
-                {hasDevices && (
-                  <button
-                    onClick={() => setLeftPanelTab('devices')}
-                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'devices' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                    title={t('leftPanel.devices')}
-                  >
-                    <Box className="h-4 w-4" />
-                  </button>
-                )}
                 <button
                   onClick={() => setLeftPanelTab('layers')}
                   className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'layers' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
@@ -671,8 +662,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 <div>
                   <ComponentsList onInsert={handleAddNode} />
                 </div>
-              ) : leftPanelTab === 'devices' && hasDevices ? (
-                <DeviceLibraryPanel />
               ) : leftPanelTab === 'layers' ? (
                 <LayerPanel
                   store={store}

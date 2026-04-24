@@ -36,6 +36,7 @@ import {
   buildEmbedRuntimeVariableValues,
   mergeEmbedRuntimeVariableDefinitions,
 } from '../embed/runtimeVariables';
+import { mergeActionVariableDefinitions } from '../lib/eventVariables';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -474,7 +475,7 @@ export function useProjectBootstrap({
       },
       nodes: nodes,
       dataSources: effectiveDataSources,
-      variables: state.variableDefinitions ?? [],
+      variables: mergeActionVariableDefinitions(state.variableDefinitions ?? [], nodes),
     };
   }, []);
 
