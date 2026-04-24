@@ -124,8 +124,8 @@ return {
           type: 'string',
         },
         {
-          id: 'latest_alarm_message',
-          label: zhEn('最新告警内容', 'Latest Alarm Message'),
+          id: 'latest_alarm_title',
+          label: zhEn('最新告警标题', 'Latest Alarm Title'),
           type: 'string',
         },
       ],
@@ -138,23 +138,39 @@ const rows = Array.isArray(payload?.list)
     : Array.isArray(payload)
       ? payload
       : [];
+// Normalize alarm level code to semantic string.
+// ThingsPanel API uses: 1=critical/high, 2=warning/medium, 3=info/low (or string variants).
+const normalizeLevel = (raw) => {
+  const v = String(raw ?? '').toLowerCase().trim();
+  if (v === '1' || v === 'critical' || v === 'high' || v === 'serious') return 'critical';
+  if (v === '2' || v === 'warning' || v === 'medium' || v === 'warn') return 'warning';
+  return 'info';
+};
+// Format ISO/timestamp to HH:mm local time.
+const fmtTime = (raw) => {
+  if (!raw) return '';
+  try {
+    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);
+    if (isNaN(d.getTime())) return String(raw);
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch { return String(raw); }
+};
 const latest = rows[0] ?? null;
 return {
   alarm_rows: rows.map((row) => ({
-    id: row?.id,
-    device_id: row?.device_id,
-    device_name: row?.device_name ?? row?.name ?? '',
-    level: row?.alarm_level ?? row?.level ?? '',
-    status: row?.alarm_status ?? row?.status ?? '',
-    message: row?.alarm_description ?? row?.alarm_message ?? row?.message ?? '',
-    time: row?.create_time ?? row?.created_at ?? row?.time ?? ''
+    level: normalizeLevel(row?.alarm_level ?? row?.level),
+    title: String(row?.alarm_name ?? row?.name ?? row?.title ?? ''),
+    detail: String(row?.alarm_description ?? row?.alarm_message ?? row?.message ?? row?.detail ?? ''),
+    source: String(row?.device_name ?? row?.source ?? ''),
+    time: fmtTime(row?.create_time ?? row?.created_at ?? row?.time),
   })),
   alarm_total: Number(payload?.total ?? rows.length ?? 0),
-  latest_alarm_level: String(latest?.alarm_level ?? latest?.level ?? ''),
-  latest_alarm_message: String(latest?.alarm_description ?? latest?.alarm_message ?? latest?.message ?? '')
+  latest_alarm_level: normalizeLevel(latest?.alarm_level ?? latest?.level),
+  latest_alarm_title: String(latest?.alarm_name ?? latest?.name ?? latest?.title ?? ''),
 };
 `,
     },
+
     {
       id: 'thingspanel_home_latest_telemetry',
       group: 'dashboard',
