@@ -240,7 +240,10 @@ export function FieldPicker({
   const platformSources = useMemo<PlatformStatSource[]>(
     () =>
       (providerCatalog?.dataSources ?? [])
-        .filter((source) => serviceConfig.context !== 'dashboard' || source.group !== 'dashboard')
+        // When context=dashboard, only dashboard group makes sense (no device scoped).
+        // When context=device-template, expose all groups (device history etc. are relevant).
+        // When context is unset, include everything so nothing is silently hidden.
+        .filter((source) => serviceConfig.context !== 'dashboard' || source.group === 'dashboard')
         .map((source) => ({
           id: source.id,
           name: resolveControlText(source.label, locale, t),
@@ -373,9 +376,13 @@ export function FieldPicker({
     [dataSourceIds, platformSourceIds],
   );
   const hasPlatformStatsCatalog = isEmbeddedMode && visiblePlatformSources.length > 0;
-  const hasLazyDeviceCatalog = isEmbeddedMode;
+  // Device-scoped field groups are not relevant in the dashboard context;
+  // they are only shown in the device-template context.
+  const isDashboardContext = serviceConfig.context === 'dashboard';
+  const hasLazyDeviceCatalog = isEmbeddedMode && !isDashboardContext;
   const hasDeviceCatalog =
-    deviceSources.length > 0 || platformDeviceGroups.length > 0 || hasLazyDeviceCatalog;
+    !isDashboardContext &&
+    (deviceSources.length > 0 || platformDeviceGroups.length > 0 || hasLazyDeviceCatalog);
   const hasTemplateFieldCatalog =
     isEmbeddedMode &&
     (serviceConfig.context === 'device-template' ||
@@ -383,8 +390,10 @@ export function FieldPicker({
   const deviceSourceLabel = hasTemplateFieldCatalog
     ? t('binding.templateFields', '物模型字段')
     : t('binding.deviceData', '当前设备字段');
-  const hasDeviceStatusCatalog = isEmbeddedMode && !writableOnly && runtimeDeviceFields.length > 0;
-  const hasDeviceHistoryCatalog = isEmbeddedMode && !writableOnly && hasDeviceCatalog;
+  const hasDeviceStatusCatalog =
+    isEmbeddedMode && !isDashboardContext && !writableOnly && runtimeDeviceFields.length > 0;
+  const hasDeviceHistoryCatalog =
+    isEmbeddedMode && !isDashboardContext && !writableOnly && hasDeviceCatalog;
 
   useEffect(() => {
     if (!isEmbeddedMode) return;

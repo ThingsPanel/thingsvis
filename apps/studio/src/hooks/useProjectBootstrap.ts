@@ -48,17 +48,13 @@ function normalizeEmbeddedProviderDataSources(
   runtimeVariableValues: Record<string, unknown>,
 ): Array<Record<string, any>> {
   const serviceConfig = resolveEditorServiceConfig();
-  const shouldStripDashboardProviderSources =
-    serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard';
-  const isBlockedDataSource = (dataSource: Record<string, any>) =>
-    shouldStripDashboardProviderSources && /^thingspanel_.+$/.test(String(dataSource?.id ?? ''));
   if (serviceConfig.mode !== 'embedded') {
     return dataSources;
   }
 
   const providerCatalog = resolveEmbeddedProviderCatalog(serviceConfig.provider);
   if (!providerCatalog) {
-    return dataSources.filter((dataSource) => !isBlockedDataSource(dataSource));
+    return dataSources;
   }
 
   const protectedGroups =
@@ -75,26 +71,31 @@ function normalizeEmbeddedProviderDataSources(
   );
   const definitionsById = new Map(providerDefaults.map((source) => [source.id, source]));
 
-  const normalized = dataSources
-    .filter((dataSource) => !isBlockedDataSource(dataSource))
-    .map((dataSource: Record<string, any>) => {
-      const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
-      const definition = definitionsById.get(sourceId);
-      if (!definition) return dataSource;
+  const normalized = dataSources.map((dataSource: Record<string, any>) => {
+    const sourceId = typeof dataSource?.id === 'string' ? dataSource.id : '';
+    const definition = definitionsById.get(sourceId);
+    if (!definition) return dataSource;
 
-      return {
-        ...definition,
-        name:
-          typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
-        mode:
-          typeof dataSource?.mode === 'string' && dataSource.mode
-            ? dataSource.mode
-            : definition.mode,
-      };
-    });
+    return {
+      ...definition,
+      name:
+        typeof dataSource?.name === 'string' && dataSource.name ? dataSource.name : definition.id,
+      mode:
+        typeof dataSource?.mode === 'string' && dataSource.mode ? dataSource.mode : definition.mode,
+    };
+  });
+
+  providerDefaults.forEach((definition) => {
+    if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
+    normalized.push(definition);
+  });
 
   return normalized;
 }
+
+// Builtin dashboard provider data sources (e.g. thingspanel_device_summary) are
+// always auto-polled; they should never be suppressed to manual mode in the editor.
+const BUILTIN_PROVIDER_DS_RE = /^thingspanel_/;
 
 function applyEmbeddedEditorDataSourcePolicy(
   dataSources: Array<Record<string, any>>,
@@ -106,6 +107,8 @@ function applyEmbeddedEditorDataSourcePolicy(
 
   return dataSources.map((dataSource) => {
     if (String(dataSource?.type ?? '').toUpperCase() !== 'REST') return dataSource;
+    // Builtin provider sources always run in auto mode; skip manual suppression.
+    if (BUILTIN_PROVIDER_DS_RE.test(String(dataSource?.id ?? ''))) return dataSource;
     return {
       ...dataSource,
       mode: 'manual',
@@ -432,6 +435,18 @@ export function useProjectBootstrap({
     const nodes = state.layerOrder
       .map((id: string) => state.nodesById[id]?.schemaRef)
       .filter((schema: any): schema is NodeSchemaType => Boolean(schema));
+    const runtimeDataSources = dataSourceManager.getAllConfigs();
+    const persistedDataSources = Array.isArray(currentCanvasConfig.dataSources)
+      ? currentCanvasConfig.dataSources
+      : [];
+    const sessionSnapshotDataSources =
+      getEmbedSessionSnapshot(currentCanvasConfig.id)?.project.dataSources ?? [];
+    const effectiveDataSources =
+      runtimeDataSources.length > 0
+        ? runtimeDataSources
+        : persistedDataSources.length > 0
+          ? persistedDataSources
+          : sessionSnapshotDataSources;
 
     return {
       meta: {
@@ -458,7 +473,7 @@ export function useProjectBootstrap({
         homeFlag: currentCanvasConfig.homeFlag,
       },
       nodes: nodes,
-      dataSources: dataSourceManager.getAllConfigs(),
+      dataSources: effectiveDataSources,
       variables: state.variableDefinitions ?? [],
     };
   }, []);
@@ -776,6 +791,10 @@ export function useProjectBootstrap({
         embedRuntimeVariableValues,
       );
       mergedDataSources = applyEmbeddedEditorDataSourcePolicy(mergedDataSources);
+      setCanvasConfig((prev) => ({
+        ...prev,
+        dataSources: mergedDataSources as any,
+      }));
       await dataSourceManager.resetRuntimeDataSources();
 
       try {

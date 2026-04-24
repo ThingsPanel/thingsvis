@@ -260,13 +260,13 @@ function sanitizeDataSourcesForHostSave(nodes: any[], dataSources: any[]): any[]
   if (!Array.isArray(dataSources)) return [];
 
   const serviceConfig = resolveEditorServiceConfig();
-  const shouldStripDashboardProviderSources =
+  const shouldKeepDashboardProviderSources =
     serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard';
   const referencedIds = collectReferencedDataSourceIds(nodes);
   return dataSources
     .filter((dataSource) => {
       const id = typeof dataSource?.id === 'string' ? dataSource.id : '';
-      if (shouldStripDashboardProviderSources && /^thingspanel_.+$/.test(id)) return false;
+      if (shouldKeepDashboardProviderSources && /^thingspanel_.+$/.test(id)) return true;
       if (!GENERATED_HOST_DATA_SOURCE_ID_RE.test(id)) return true;
       return referencedIds.has(id);
     })

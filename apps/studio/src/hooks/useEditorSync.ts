@@ -236,6 +236,10 @@ export function useEditorSync({
       rowHeight: canvasConfig.gridRowHeight ?? 50,
       gap: canvasConfig.gridGap ?? 10,
       showGridLines: canvasConfig.gridEnabled,
+      // Disable responsive breakpoints in design-time editor so the
+      // user-configured cols value is always used as-is. Responsive
+      // scaling only makes sense at runtime (EmbedPage / PreviewPage).
+      responsive: false,
     });
   }, [
     canvasConfig.gridCols,
