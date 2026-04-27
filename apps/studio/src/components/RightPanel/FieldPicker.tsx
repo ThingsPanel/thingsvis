@@ -26,12 +26,26 @@ export type FieldPickerValue = {
   dataSourceId: string;
   fieldPath: string;
   transform?: string;
+  historyConfig?: {
+    timeRange: string;
+    aggFunction?: 'AVG' | 'MIN' | 'MAX' | 'SUM' | 'COUNT' | 'NONE_RAW';
+    aggWindow?: string;
+  };
 };
 
-type SourceGroup = 'device' | 'deviceStatus' | 'deviceHistory' | 'platform' | 'custom';
+type SourceGroup = 'global' | 'device' | 'custom';
+type DeviceBindingKind = 'model' | 'status' | 'history' | 'alarmStatus';
 
 const TEMPLATE_DEVICE_ID = '__template__';
 const HISTORY_FIELD_SUFFIX = '__history';
+const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
+  'device_alarm_active',
+  'device_alarm_count',
+  'device_alarm_highest_level',
+  'latest_device_alarm_title',
+  'latest_device_alarm_level',
+  'latest_device_alarm_time',
+]);
 
 type PlatformStatField = {
   id: string;
@@ -157,8 +171,17 @@ function getStaticFieldType(field: unknown): FieldPathInfo['type'] {
 
 function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?: string }): void {
   const dataSourceId = getDeviceDataSourceId(device.deviceId);
-  const existing = dataSourceManager.getAllConfigs().some((config) => config.id === dataSourceId);
-  if (existing) return;
+  const existing = dataSourceManager.getAllConfigs().find((config) => config.id === dataSourceId);
+  const nextName = device.deviceName || `Device ${device.deviceId}`;
+  if (existing) {
+    if (existing.name === nextName) return;
+    dataSourceManager
+      .registerDataSource({ ...existing, name: nextName }, false)
+      .catch((error) =>
+        console.warn('[FieldPicker] Failed to update device data source name', error),
+      );
+    return;
+  }
 
   const inheritedBufferSize = Math.max(
     0,
@@ -173,7 +196,7 @@ function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?:
 
   dataSourceManager.registerDataSource({
     id: dataSourceId,
-    name: device.deviceName || `Device ${device.deviceId}`,
+    name: nextName,
     type: 'PLATFORM_FIELD',
     config: {
       ...DEFAULT_PLATFORM_FIELD_CONFIG,
@@ -308,8 +331,10 @@ export function FieldPicker({
   const selectedDataSourceId = value?.dataSourceId || '';
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
+  const selectedHistoryConfig = value?.historyConfig;
   const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
   const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>('device');
+  const [deviceBindingKind, setDeviceBindingKind] = useState<DeviceBindingKind>('model');
 
   const deviceSources = useMemo(() => {
     const fromStore = platformDevices.map((device) => ({
@@ -349,11 +374,14 @@ export function FieldPicker({
       .filter((id) => !knownDeviceIds.has(id))
       .map((id) => {
         const deviceId = parseDeviceDataSourceId(id) as string;
+        const dataSourceName = dataSourceManager
+          .getAllConfigs()
+          .find((config) => config.id === id)?.name;
         return {
           deviceId,
-          label: `Device ${deviceId}`,
-          groupId: '__ungrouped__',
-          groupName: t('binding.deviceFields', 'Device Fields'),
+          label: dataSourceName || `Device ${deviceId}`,
+          groupId: '',
+          groupName: '',
           deviceConfigId: undefined,
           templateId: undefined,
           dataSourceId: id,
@@ -376,6 +404,8 @@ export function FieldPicker({
       ),
     [dataSourceIds, platformSourceIds],
   );
+  const hasVisibleCustomDataSources =
+    customDataSourceIds.length > 0 && (!isEmbeddedMode || serviceConfig.context !== 'dashboard');
   const hasPlatformStatsCatalog = isEmbeddedMode && visiblePlatformSources.length > 0;
   const hasLazyDeviceCatalog = isEmbeddedMode && window.parent !== window;
   const hasDeviceCatalog =
@@ -384,10 +414,14 @@ export function FieldPicker({
     isEmbeddedMode &&
     (serviceConfig.context === 'device-template' ||
       (deviceSources.length === 1 && isTemplateDeviceSource(deviceSources[0])));
-  const deviceSourceLabel = hasTemplateFieldCatalog
-    ? t('binding.templateFields', '物模型字段')
-    : t('binding.deviceData', '当前设备字段');
-  const hasDeviceStatusCatalog = isEmbeddedMode && !writableOnly && runtimeDeviceFields.length > 0;
+  const hasDeviceStatusCatalog =
+    isEmbeddedMode &&
+    !writableOnly &&
+    runtimeDeviceFields.some((field) => !DEVICE_ALARM_STATUS_FIELD_IDS.has(field.id));
+  const hasDeviceAlarmStatusCatalog =
+    isEmbeddedMode &&
+    !writableOnly &&
+    runtimeDeviceFields.some((field) => DEVICE_ALARM_STATUS_FIELD_IDS.has(field.id));
   const hasDeviceHistoryCatalog = isEmbeddedMode && !writableOnly && hasDeviceCatalog;
 
   useEffect(() => {
@@ -396,12 +430,15 @@ export function FieldPicker({
     if (selectedDataSourceId && parseDeviceDataSourceId(selectedDataSourceId)) {
       const fieldRoot = getRequestedFieldId(selectedFieldPath) ?? '';
       if (isHistoryFieldPath(fieldRoot)) {
-        setEmbeddedSourceGroup('deviceHistory');
+        setDeviceBindingKind('history');
+      } else if (DEVICE_ALARM_STATUS_FIELD_IDS.has(fieldRoot)) {
+        setDeviceBindingKind('alarmStatus');
       } else if (runtimeDeviceFieldIds.has(fieldRoot)) {
-        setEmbeddedSourceGroup('deviceStatus');
+        setDeviceBindingKind('status');
       } else {
-        setEmbeddedSourceGroup('device');
+        setDeviceBindingKind('model');
       }
+      setEmbeddedSourceGroup('device');
       const selectedDevice = deviceSources.find(
         (device) => device.dataSourceId === selectedDataSourceId,
       );
@@ -410,20 +447,27 @@ export function FieldPicker({
     }
 
     if (selectedDataSourceId && platformSourceIds.has(selectedDataSourceId)) {
-      setEmbeddedSourceGroup('platform');
+      setEmbeddedSourceGroup('global');
       return;
     }
 
-    if (selectedDataSourceId) {
+    if (selectedDataSourceId && hasVisibleCustomDataSources) {
       setEmbeddedSourceGroup('custom');
       return;
     }
 
     setEmbeddedSourceGroup(
-      hasDeviceCatalog ? 'device' : hasPlatformStatsCatalog ? 'platform' : 'custom',
+      hasPlatformStatsCatalog
+        ? 'global'
+        : hasDeviceCatalog
+          ? 'device'
+          : hasVisibleCustomDataSources
+            ? 'custom'
+            : 'global',
     );
   }, [
     deviceSources,
+    hasVisibleCustomDataSources,
     hasDeviceCatalog,
     hasPlatformStatsCatalog,
     isEmbeddedMode,
@@ -434,10 +478,7 @@ export function FieldPicker({
   ]);
 
   const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
-  const isDeviceScopedGroup =
-    selectedGroup === 'device' ||
-    selectedGroup === 'deviceStatus' ||
-    selectedGroup === 'deviceHistory';
+  const isDeviceScopedGroup = selectedGroup === 'device';
   const hasHostDeviceCatalog =
     isEmbeddedMode && isDeviceScopedGroup && !hasTemplateFieldCatalog && window.parent !== window;
 
@@ -549,25 +590,47 @@ export function FieldPicker({
   }, [isDeviceScopedGroup, runtimeDeviceFields, selectedDeviceSource]);
 
   const selectedDeviceFields = useMemo(() => {
-    if (selectedGroup !== 'device') return [];
+    if (selectedGroup !== 'device' || deviceBindingKind !== 'model') return [];
     return selectedDeviceBaseFields.filter((field: any) => {
       const fieldId = getStaticFieldId(field);
       if (runtimeDeviceFieldIds.has(fieldId)) return false;
       return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
     });
-  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, targetKind]);
+  }, [
+    deviceBindingKind,
+    runtimeDeviceFieldIds,
+    selectedDeviceBaseFields,
+    selectedGroup,
+    targetKind,
+  ]);
 
   const selectedDeviceStatusFields = useMemo(() => {
-    if (selectedGroup !== 'deviceStatus') return [];
+    if (selectedGroup !== 'device' || deviceBindingKind !== 'status') return [];
     return selectedDeviceBaseFields.filter((field: any) => {
       const fieldId = getStaticFieldId(field);
       if (!runtimeDeviceFieldIds.has(fieldId)) return false;
+      if (DEVICE_ALARM_STATUS_FIELD_IDS.has(fieldId)) return false;
       return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
     });
-  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, targetKind]);
+  }, [
+    deviceBindingKind,
+    runtimeDeviceFieldIds,
+    selectedDeviceBaseFields,
+    selectedGroup,
+    targetKind,
+  ]);
+
+  const selectedDeviceAlarmStatusFields = useMemo(() => {
+    if (selectedGroup !== 'device' || deviceBindingKind !== 'alarmStatus') return [];
+    return selectedDeviceBaseFields.filter((field: any) => {
+      const fieldId = getStaticFieldId(field);
+      if (!DEVICE_ALARM_STATUS_FIELD_IDS.has(fieldId)) return false;
+      return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
+    });
+  }, [deviceBindingKind, selectedDeviceBaseFields, selectedGroup, targetKind]);
 
   const selectedDeviceHistoryFields = useMemo(() => {
-    if (selectedGroup !== 'deviceHistory') return [];
+    if (selectedGroup !== 'device' || deviceBindingKind !== 'history') return [];
     return selectedDeviceBaseFields
       .filter((field: any) => {
         const fieldId = getStaticFieldId(field);
@@ -589,29 +652,35 @@ export function FieldPicker({
           type: 'array' as FieldPathInfo['type'],
         };
       });
-  }, [runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, t]);
+  }, [deviceBindingKind, runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, t]);
 
   const selectedPlatformSource =
-    selectedGroup === 'platform'
+    selectedGroup === 'global'
       ? visiblePlatformSources.find((source) => source.id === selectedDataSourceId) ||
         visiblePlatformSources[0]
       : undefined;
 
   const selectedPlatformFields = useMemo(() => {
-    if (selectedGroup !== 'platform') return [];
+    if (selectedGroup !== 'global') return [];
     return (selectedPlatformSource?.fields ?? []).filter((field) =>
       isFieldTypeCompatible(field.type, targetKind),
     );
   }, [selectedPlatformSource, selectedGroup, targetKind]);
   const hasStaticFieldOptions =
     (selectedGroup === 'device' && selectedDeviceFields.length > 0) ||
-    (selectedGroup === 'deviceStatus' && selectedDeviceStatusFields.length > 0) ||
-    (selectedGroup === 'deviceHistory' && selectedDeviceHistoryFields.length > 0) ||
-    (selectedGroup === 'platform' && selectedPlatformFields.length > 0);
+    (selectedGroup === 'device' && selectedDeviceStatusFields.length > 0) ||
+    (selectedGroup === 'device' && selectedDeviceHistoryFields.length > 0) ||
+    (selectedGroup === 'device' && selectedDeviceAlarmStatusFields.length > 0) ||
+    (selectedGroup === 'global' && selectedPlatformFields.length > 0);
   const fieldDisplayNameByPath = useMemo(() => {
     const labels = new Map<string, string>();
-    if (selectedGroup === 'device' || selectedGroup === 'deviceStatus') {
-      const fields = selectedGroup === 'device' ? selectedDeviceFields : selectedDeviceStatusFields;
+    if (selectedGroup === 'device') {
+      const fields =
+        deviceBindingKind === 'status'
+          ? selectedDeviceStatusFields
+          : deviceBindingKind === 'alarmStatus'
+            ? selectedDeviceAlarmStatusFields
+            : selectedDeviceFields;
       fields.forEach((field: any) => {
         const id = typeof field?.id === 'string' ? field.id : '';
         const label =
@@ -623,18 +692,20 @@ export function FieldPicker({
         if (id && label && label !== id) labels.set(id, label);
       });
     }
-    if (selectedGroup === 'deviceHistory') {
+    if (selectedGroup === 'device' && deviceBindingKind === 'history') {
       selectedDeviceHistoryFields.forEach((field) => {
         if (field.name && field.name !== field.id) labels.set(field.id, field.name);
       });
     }
-    if (selectedGroup === 'platform') {
+    if (selectedGroup === 'global') {
       selectedPlatformFields.forEach((field) => {
         if (field.name && field.name !== field.id) labels.set(field.id, field.name);
       });
     }
     return labels;
   }, [
+    deviceBindingKind,
+    selectedDeviceAlarmStatusFields,
     selectedDeviceFields,
     selectedDeviceHistoryFields,
     selectedDeviceStatusFields,
@@ -648,7 +719,7 @@ export function FieldPicker({
       : (customDataSourceIds[0] ?? '')
     : isDeviceScopedGroup
       ? (selectedDeviceSource?.dataSourceId ?? '')
-      : selectedGroup === 'platform'
+      : selectedGroup === 'global'
         ? (selectedPlatformSource?.id ?? '')
         : selectedDataSourceId || customDataSourceIds[0] || '';
 
@@ -685,7 +756,11 @@ export function FieldPicker({
       }));
       return finalize(infos);
     }
-    if (selectedGroup === 'device' && selectedDeviceFields.length > 0) {
+    if (
+      selectedGroup === 'device' &&
+      deviceBindingKind === 'model' &&
+      selectedDeviceFields.length > 0
+    ) {
       const staticInfos: FieldPathInfo[] = [];
       selectedDeviceFields.forEach((f: any) => {
         staticInfos.push({
@@ -703,21 +778,40 @@ export function FieldPicker({
       });
       return finalize(staticInfos);
     }
-    if (selectedGroup === 'deviceStatus' && selectedDeviceStatusFields.length > 0) {
+    if (
+      selectedGroup === 'device' &&
+      deviceBindingKind === 'status' &&
+      selectedDeviceStatusFields.length > 0
+    ) {
       const staticInfos: FieldPathInfo[] = selectedDeviceStatusFields.map((field: any) => ({
         path: field.id,
         type: (field.type ?? 'string') as FieldPathInfo['type'],
       }));
       return finalize(staticInfos);
     }
-    if (selectedGroup === 'deviceHistory' && selectedDeviceHistoryFields.length > 0) {
+    if (
+      selectedGroup === 'device' &&
+      deviceBindingKind === 'history' &&
+      selectedDeviceHistoryFields.length > 0
+    ) {
       const staticInfos: FieldPathInfo[] = selectedDeviceHistoryFields.map((field) => ({
         path: field.id,
         type: field.type,
       }));
       return finalize(staticInfos);
     }
-    if (selectedGroup === 'platform' && selectedPlatformFields.length > 0) {
+    if (
+      selectedGroup === 'device' &&
+      deviceBindingKind === 'alarmStatus' &&
+      selectedDeviceAlarmStatusFields.length > 0
+    ) {
+      const staticInfos: FieldPathInfo[] = selectedDeviceAlarmStatusFields.map((field: any) => ({
+        path: field.id,
+        type: (field.type ?? 'string') as FieldPathInfo['type'],
+      }));
+      return finalize(staticInfos);
+    }
+    if (selectedGroup === 'global' && selectedPlatformFields.length > 0) {
       const staticInfos: FieldPathInfo[] = selectedPlatformFields.map((field) => ({
         path: field.id,
         type: field.type as FieldPathInfo['type'],
@@ -735,6 +829,8 @@ export function FieldPicker({
     maxDepth,
     maxNodes,
     selectedGroup,
+    deviceBindingKind,
+    selectedDeviceAlarmStatusFields,
     selectedDeviceFields,
     selectedDeviceHistoryFields,
     selectedDeviceStatusFields,
@@ -763,22 +859,30 @@ export function FieldPicker({
     return { raw: formatPreview(rawPreviewValue), transformed: null, hasTransform: false };
   }, [rawPreviewValue, selectedTransform, snapshot]);
 
-  const requestFieldPreview = useCallback((dataSourceId: string, fieldPath: string) => {
-    const fieldId = getRequestedFieldId(fieldPath);
-    if (!fieldId || window.parent === window) return;
+  const requestFieldPreview = useCallback(
+    (
+      dataSourceId: string,
+      fieldPath: string,
+      historyConfig?: FieldPickerValue['historyConfig'],
+    ) => {
+      const fieldId = getRequestedFieldId(fieldPath);
+      if (!fieldId || window.parent === window) return;
 
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestFieldData',
-        payload: {
-          dataSourceId,
-          deviceId: parseDeviceDataSourceId(dataSourceId) ?? undefined,
-          fieldIds: [fieldId],
+      window.parent.postMessage(
+        {
+          type: 'thingsvis:requestFieldData',
+          payload: {
+            dataSourceId,
+            deviceId: parseDeviceDataSourceId(dataSourceId) ?? undefined,
+            fieldIds: [fieldId],
+            ...(historyConfig ? { historyConfig } : {}),
+          },
         },
-      },
-      '*',
-    );
-  }, []);
+        '*',
+      );
+    },
+    [],
+  );
 
   const handleDevicesLoaded = useCallback((groupId: string, devices: PlatformDevice[]) => {
     usePlatformDeviceStore.getState().setDevicesForGroup(groupId, devices);
@@ -787,6 +891,7 @@ export function FieldPicker({
   const handleDeviceSelect = useCallback(
     (device: PlatformDevice) => {
       const dataSourceId = getDeviceDataSourceId(device.deviceId);
+      ensurePlatformDeviceDataSource(device);
       if (device.groupId) setSelectedPlatformGroupId(device.groupId);
       safeOnChange({ dataSourceId, fieldPath: '' });
     },
@@ -837,7 +942,35 @@ export function FieldPicker({
       dataSourceId: effectiveDataSourceId,
       fieldPath: selectedFieldPath,
       transform: code || undefined,
+      ...(deviceBindingKind === 'history'
+        ? {
+            historyConfig: selectedHistoryConfig ?? {
+              timeRange: 'last_30d',
+              aggFunction: 'NONE_RAW',
+              aggWindow: 'no_aggregate',
+            },
+          }
+        : {}),
     });
+  };
+
+  const handleHistoryConfigChange = (
+    patch: Partial<NonNullable<FieldPickerValue['historyConfig']>>,
+  ) => {
+    if (!effectiveDataSourceId || !selectedFieldPath) return;
+    const nextHistoryConfig = {
+      timeRange: selectedHistoryConfig?.timeRange ?? 'last_30d',
+      aggFunction: selectedHistoryConfig?.aggFunction ?? 'NONE_RAW',
+      aggWindow: selectedHistoryConfig?.aggWindow ?? 'no_aggregate',
+      ...patch,
+    };
+    safeOnChange({
+      dataSourceId: effectiveDataSourceId,
+      fieldPath: selectedFieldPath,
+      transform: selectedTransform || undefined,
+      historyConfig: nextHistoryConfig,
+    });
+    requestFieldPreview(effectiveDataSourceId, selectedFieldPath, nextHistoryConfig);
   };
 
   return (
@@ -847,7 +980,7 @@ export function FieldPicker({
           {/* Data Source selector */}
           <div className="space-y-1">
             <label className="text-sm font-medium text-muted-foreground">
-              {t('binding.groupLabel')}
+              {t('binding.dataScope', '数据范围')}
             </label>
             <select
               value={selectedGroup}
@@ -855,11 +988,7 @@ export function FieldPicker({
                 const nextGroup = e.target.value as SourceGroup;
                 setEmbeddedSourceGroup(nextGroup);
 
-                if (
-                  nextGroup === 'device' ||
-                  nextGroup === 'deviceStatus' ||
-                  nextGroup === 'deviceHistory'
-                ) {
+                if (nextGroup === 'device') {
                   const nextDevice = deviceSources[0];
                   safeOnChange(
                     nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
@@ -867,7 +996,7 @@ export function FieldPicker({
                   return;
                 }
 
-                if (nextGroup === 'platform') {
+                if (nextGroup === 'global') {
                   const nextSource = visiblePlatformSources[0];
                   if (nextSource) ensurePlatformStatDataSource(nextSource);
                   safeOnChange(nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null);
@@ -879,79 +1008,69 @@ export function FieldPicker({
               }}
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             >
-              {hasDeviceCatalog && <option value="device">{deviceSourceLabel}</option>}
-              {hasDeviceStatusCatalog && (
-                <option value="deviceStatus">
-                  {t('binding.deviceStatusFields', '设备状态字段')}
-                </option>
-              )}
-              {hasDeviceHistoryCatalog && (
-                <option value="deviceHistory">
-                  {t('binding.deviceHistoryTelemetry', '设备历史遥测')}
-                </option>
-              )}
               {hasPlatformStatsCatalog && (
-                <option value="platform">{t('binding.dashboardSources', '平台概览')}</option>
+                <option value="global">{t('binding.globalData', '全局数据')}</option>
               )}
-              {customDataSourceIds.length > 0 && (
+              {hasDeviceCatalog && (
+                <option value="device">{t('binding.singleDeviceData', '单设备数据')}</option>
+              )}
+              {hasVisibleCustomDataSources && (
                 <option value="custom">{t('binding.customDataSources', '自定义数据源')}</option>
               )}
             </select>
           </div>
 
-          {selectedGroup !== 'device' &&
-            selectedGroup !== 'deviceStatus' &&
-            selectedGroup !== 'deviceHistory' && (
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-muted-foreground">
-                  {selectedGroup === 'platform'
-                    ? t('binding.businessDataSource', '业务数据源')
-                    : t('binding.dataSource', '数据源')}
-                </label>
-                <select
-                  value={effectiveDataSourceId}
-                  onChange={(e) => {
-                    const nextId = e.target.value;
-                    if (selectedGroup === 'platform') {
-                      const nextSource = visiblePlatformSources.find(
-                        (source) => source.id === nextId,
-                      );
-                      if (nextSource) ensurePlatformStatDataSource(nextSource);
-                      safeOnChange(
-                        nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null,
-                      );
-                      return;
-                    }
-                    safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
-                  }}
-                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
-                  disabled={
-                    (selectedGroup === 'platform' && visiblePlatformSources.length === 0) ||
-                    (selectedGroup === 'custom' && customDataSourceIds.length === 0)
+          {selectedGroup !== 'device' && (
+            <div className="space-y-1">
+              <label className="text-sm font-medium text-muted-foreground">
+                {selectedGroup === 'global'
+                  ? t('binding.businessDataSource', '业务数据源')
+                  : t('binding.dataSource', '数据源')}
+              </label>
+              <select
+                value={effectiveDataSourceId}
+                onChange={(e) => {
+                  const nextId = e.target.value;
+                  if (selectedGroup === 'global') {
+                    const nextSource = visiblePlatformSources.find(
+                      (source) => source.id === nextId,
+                    );
+                    if (nextSource) ensurePlatformStatDataSource(nextSource);
+                    safeOnChange(
+                      nextSource ? { dataSourceId: nextSource.id, fieldPath: '' } : null,
+                    );
+                    return;
                   }
-                >
-                  {selectedGroup === 'platform' && (
-                    <>
-                      {platformSourcesByGroup.dashboard.length > 0 && (
-                        <optgroup label={t('binding.dashboardSources', '平台概览')}>
-                          {platformSourcesByGroup.dashboard.map((source) => (
-                            <option key={source.id} value={source.id}>
-                              {source.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </>
-                  )}
-                  {selectedGroup === 'custom' &&
-                    customDataSourceIds.map((id) => (
-                      <option key={id} value={id}>
-                        {id}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            )}
+                  safeOnChange(nextId ? { dataSourceId: nextId, fieldPath: '' } : null);
+                }}
+                className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
+                disabled={
+                  (selectedGroup === 'global' && visiblePlatformSources.length === 0) ||
+                  (selectedGroup === 'custom' && !hasVisibleCustomDataSources)
+                }
+              >
+                {selectedGroup === 'global' && (
+                  <>
+                    {platformSourcesByGroup.dashboard.length > 0 && (
+                      <optgroup label={t('binding.globalData', '全局数据')}>
+                        {platformSourcesByGroup.dashboard.map((source) => (
+                          <option key={source.id} value={source.id}>
+                            {source.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </>
+                )}
+                {selectedGroup === 'custom' &&
+                  customDataSourceIds.map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
         </>
       ) : (
         <div className="space-y-1">
@@ -1005,6 +1124,38 @@ export function FieldPicker({
         </div>
       )}
 
+      {isEmbeddedMode && isDeviceScopedGroup && (
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-muted-foreground">
+            {t('binding.dataType', '数据类型')}
+          </label>
+          <select
+            value={deviceBindingKind}
+            onChange={(e) => {
+              const nextKind = e.target.value as DeviceBindingKind;
+              setDeviceBindingKind(nextKind);
+              safeOnChange(
+                effectiveDataSourceId
+                  ? { dataSourceId: effectiveDataSourceId, fieldPath: '' }
+                  : null,
+              );
+            }}
+            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
+          >
+            <option value="model">{t('binding.modelFields', '物模型字段')}</option>
+            {hasDeviceStatusCatalog && (
+              <option value="status">{t('binding.runtimeStatus', '运行状态')}</option>
+            )}
+            {hasDeviceHistoryCatalog && (
+              <option value="history">{t('binding.historyData', '历史数据')}</option>
+            )}
+            {hasDeviceAlarmStatusCatalog && (
+              <option value="alarmStatus">{t('binding.alarmStatus', '告警状态')}</option>
+            )}
+          </select>
+        </div>
+      )}
+
       {/* Field selector */}
       <div className="space-y-1">
         <div className="flex items-center justify-between">
@@ -1027,11 +1178,15 @@ export function FieldPicker({
                 deviceName: selectedDeviceSource.label,
               });
             }
-            if (selectedGroup === 'platform' && selectedPlatformSource && nextPath) {
+            if (selectedGroup === 'global' && selectedPlatformSource && nextPath) {
               ensurePlatformStatDataSource(selectedPlatformSource);
             }
             if (isDeviceScopedGroup && effectiveDataSourceId && nextPath) {
-              requestFieldPreview(effectiveDataSourceId, nextPath);
+              requestFieldPreview(
+                effectiveDataSourceId,
+                nextPath,
+                deviceBindingKind === 'history' ? selectedHistoryConfig : undefined,
+              );
             }
             safeOnChange(
               effectiveDataSourceId
@@ -1039,6 +1194,15 @@ export function FieldPicker({
                     dataSourceId: effectiveDataSourceId,
                     fieldPath: nextPath,
                     transform: selectedTransform || undefined,
+                    ...(deviceBindingKind === 'history'
+                      ? {
+                          historyConfig: selectedHistoryConfig ?? {
+                            timeRange: 'last_30d',
+                            aggFunction: 'NONE_RAW',
+                            aggWindow: 'no_aggregate',
+                          },
+                        }
+                      : {}),
                   }
                 : null,
             );
@@ -1093,6 +1257,72 @@ export function FieldPicker({
           </p>
         )}
       </div>
+
+      {isEmbeddedMode &&
+        isDeviceScopedGroup &&
+        deviceBindingKind === 'history' &&
+        selectedFieldPath && (
+          <div className="grid grid-cols-1 gap-2 rounded-sm border border-input bg-muted/20 p-2">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">
+                {t('binding.historyTimeRange', '时间范围')}
+              </label>
+              <select
+                value={selectedHistoryConfig?.timeRange ?? 'last_30d'}
+                onChange={(e) => handleHistoryConfigChange({ timeRange: e.target.value })}
+                className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
+              >
+                <option value="last_15m">{t('binding.last15m', '最近 15 分钟')}</option>
+                <option value="last_1h">{t('binding.last1h', '最近 1 小时')}</option>
+                <option value="last_24h">{t('binding.last24h', '最近 24 小时')}</option>
+                <option value="last_7d">{t('binding.last7d', '最近 7 天')}</option>
+                <option value="last_30d">{t('binding.last30d', '最近 30 天')}</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('binding.aggFunction', '聚合函数')}
+                </label>
+                <select
+                  value={selectedHistoryConfig?.aggFunction ?? 'NONE_RAW'}
+                  onChange={(e) =>
+                    handleHistoryConfigChange({
+                      aggFunction: e.target.value as NonNullable<
+                        FieldPickerValue['historyConfig']
+                      >['aggFunction'],
+                    })
+                  }
+                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
+                >
+                  <option value="NONE_RAW">{t('binding.noneRaw', '原始值')}</option>
+                  <option value="AVG">AVG</option>
+                  <option value="MIN">MIN</option>
+                  <option value="MAX">MAX</option>
+                  <option value="SUM">SUM</option>
+                  <option value="COUNT">COUNT</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  {t('binding.aggWindow', '聚合窗口')}
+                </label>
+                <select
+                  value={selectedHistoryConfig?.aggWindow ?? 'no_aggregate'}
+                  onChange={(e) => handleHistoryConfigChange({ aggWindow: e.target.value })}
+                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
+                >
+                  <option value="no_aggregate">{t('binding.noAggregate', '不聚合')}</option>
+                  <option value="1m">1m</option>
+                  <option value="5m">5m</option>
+                  <option value="15m">15m</option>
+                  <option value="1h">1h</option>
+                  <option value="1d">1d</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
 
       {/* current value preview */}
       {previewDisplay && (

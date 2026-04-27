@@ -23,6 +23,42 @@ export const thingspanelCatalog: EmbeddedProviderCatalog = {
       alias: zhEn('状态更新时间', 'Status Updated At'),
       type: 'number',
     },
+    {
+      id: 'device_alarm_active',
+      label: zhEn('当前告警状态', 'Current Alarm Status'),
+      alias: zhEn('当前告警状态', 'Current Alarm Status'),
+      type: 'number',
+    },
+    {
+      id: 'device_alarm_count',
+      label: zhEn('未恢复告警数', 'Uncleared Alarm Count'),
+      alias: zhEn('未恢复告警数', 'Uncleared Alarm Count'),
+      type: 'number',
+    },
+    {
+      id: 'device_alarm_highest_level',
+      label: zhEn('最高告警级别', 'Highest Alarm Level'),
+      alias: zhEn('最高告警级别', 'Highest Alarm Level'),
+      type: 'string',
+    },
+    {
+      id: 'latest_device_alarm_title',
+      label: zhEn('最近告警名称', 'Latest Alarm Name'),
+      alias: zhEn('最近告警名称', 'Latest Alarm Name'),
+      type: 'string',
+    },
+    {
+      id: 'latest_device_alarm_level',
+      label: zhEn('最近告警级别', 'Latest Alarm Level'),
+      alias: zhEn('最近告警级别', 'Latest Alarm Level'),
+      type: 'string',
+    },
+    {
+      id: 'latest_device_alarm_time',
+      label: zhEn('最近触发时间', 'Latest Alarm Time'),
+      alias: zhEn('最近触发时间', 'Latest Alarm Time'),
+      type: 'string',
+    },
   ],
   dataSources: [
     {

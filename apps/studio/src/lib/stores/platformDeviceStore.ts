@@ -41,6 +41,13 @@ export interface PlatformDevice {
   groupId?: string;
   groupName?: string;
   deviceConfigId?: string;
+  deviceConfigName?: string;
+  isOnline?: number | string | boolean;
+  warnStatus?: string;
+  deviceType?: string;
+  accessWay?: string;
+  protocolType?: string;
+  lastPushTime?: string;
   templateId?: string;
   fields?: PlatformDeviceField[];
   presets?: PlatformDevicePreset[];

@@ -6,6 +6,11 @@ export type FieldBindingSelection = {
   dataSourceId: string;
   fieldPath: string;
   transform?: string;
+  historyConfig?: {
+    timeRange: string;
+    aggFunction?: 'AVG' | 'MIN' | 'MAX' | 'SUM' | 'COUNT' | 'NONE_RAW';
+    aggWindow?: string;
+  };
 };
 
 const FIELD_BINDING_EXPR_RE = /^\{\{\s*ds\.([^.\s]+)\.data(?:\.(.+?))?\s*\}\}$/;

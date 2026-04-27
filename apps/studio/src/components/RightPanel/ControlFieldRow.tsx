@@ -209,7 +209,14 @@ export function ControlFieldRow({
   const [fieldSelection, setFieldSelection] = useState<FieldPickerValue | null>(() => {
     if (binding) {
       const sel = parseFieldBindingExpression(binding.expression);
-      if (sel && binding.transform) return { ...sel, transform: binding.transform };
+      if (sel) {
+        const historyConfig = (binding as any).historyConfig;
+        return {
+          ...sel,
+          ...(binding.transform ? { transform: binding.transform } : {}),
+          ...(historyConfig ? { historyConfig } : {}),
+        };
+      }
       return sel;
     }
     return null;
@@ -245,12 +252,19 @@ export function ControlFieldRow({
       return;
     }
     const selection = parseFieldBindingExpression(binding.expression);
-    const withTransform =
-      selection && binding.transform ? { ...selection, transform: binding.transform } : selection;
-    setFieldSelection(withTransform);
+    const historyConfig = (binding as any).historyConfig;
+    setFieldSelection(
+      selection
+        ? {
+            ...selection,
+            ...(binding.transform ? { transform: binding.transform } : {}),
+            ...(historyConfig ? { historyConfig } : {}),
+          }
+        : selection,
+    );
     setExprDraft(binding.expression);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [binding?.expression, binding?.transform]);
+  }, [binding?.expression, binding?.transform, (binding as any)?.historyConfig]);
 
   const setStatic = (nextValue: unknown) => {
     updateNode({
@@ -614,6 +628,7 @@ export function ControlFieldRow({
                     expression,
                     dataSourcePath,
                     ...(next.transform ? { transform: next.transform } : {}),
+                    ...(next.historyConfig ? { historyConfig: next.historyConfig } : {}),
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   } as any),
                   ...(nextEvents ? { events: nextEvents } : {}),
