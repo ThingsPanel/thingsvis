@@ -10,12 +10,6 @@ import { NumericInput } from '@/components/ui/NumericInput';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { gridToPixel, pixelToGrid } from '@thingsvis/ui';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
@@ -427,7 +421,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                 checked={aspectRatioLocked}
                 onChange={handleAspectRatioToggle}
                 disabled={widgetAspectRatio != null}
-                className="h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                className="h-4 w-4 rounded border-input text-[#6965db] accent-[#6965db] focus:ring-2 focus:ring-ring focus:ring-offset-0"
               />
               <span>{t('propsPanel.lockAspectRatio', '\u9501\u5b9a\u6bd4\u4f8b')}</span>
             </label>
@@ -498,7 +492,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
             onChange={(baseStyle) => updateNode({ baseStyle })}
           />
 
-          <Accordion type="multiple" defaultValue={defaultOpenGroups} className="w-full">
+          <div className="w-full space-y-4 pb-4">
             {controls.groups.map((group) => {
               if (!shouldShowGroup(group)) return null;
               // 过滤出应该显示的字段
@@ -506,11 +500,11 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
               if (visibleFields.length === 0) return null;
 
               return (
-                <AccordionItem key={group.id} value={group.id} className="border-b px-1">
-                  <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
+                <div key={group.id} className="px-1 border-t border-border pt-4">
+                  <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
                     {resolveControlText(group.label ?? group.id, locale, t)}
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3 pb-4 pt-1">
+                  </h3>
+                  <div className="space-y-3">
                     {visibleFields.map((field) => (
                       <ControlFieldRow
                         key={field.path}
@@ -523,11 +517,11 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                         updateNode={updateNode}
                       />
                     ))}
-                  </AccordionContent>
-                </AccordionItem>
+                  </div>
+                </div>
               );
             })}
-          </Accordion>
+          </div>
 
           {widgetError && <p className="text-xs text-muted-foreground px-1">{widgetError}</p>}
         </TabsContent>

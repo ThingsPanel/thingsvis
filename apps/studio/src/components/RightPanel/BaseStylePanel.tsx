@@ -3,12 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion';
 
 type BaseStylePanelProps = {
   baseStyle: any;
@@ -37,13 +31,13 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
   };
 
   return (
-    <Accordion type="multiple" defaultValue={[]} className="w-full">
+    <div className="w-full space-y-4 pb-4">
       {/* Background */}
-      <AccordionItem value="background" className="border-b px-1">
-        <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
+      <div className="px-1 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('propsPanel.baseStyle.background', '背景')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-3 pb-4 pt-1">
+        </h3>
+        <div className="space-y-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">
               {t('propsPanel.baseStyle.color', '颜色')}
@@ -62,15 +56,15 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               onChange={(val) => updateStyle('background', 'image', val)}
             />
           </div>
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      </div>
 
       {/* Border — compact single-row for width/radius, color below */}
-      <AccordionItem value="border" className="border-b px-1">
-        <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
+      <div className="px-1 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('propsPanel.baseStyle.border', '边框')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-3 pb-4 pt-1">
+        </h3>
+        <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
@@ -110,15 +104,15 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               onChange={(v) => updateStyle('border', 'color', v)}
             />
           </div>
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      </div>
 
-      {/* Shadow — collapsed by default */}
-      <AccordionItem value="shadow" className="border-b px-1">
-        <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
+      {/* Shadow */}
+      <div className="px-1 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('propsPanel.baseStyle.shadow', '发光 / 阴影')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-3 pb-4 pt-1">
+        </h3>
+        <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
@@ -169,15 +163,15 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               />
             </div>
           </div>
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      </div>
 
-      {/* Others (Padding & Opacity) — always open */}
-      <AccordionItem value="others" className="border-b px-1">
-        <AccordionTrigger className="text-sm font-semibold uppercase tracking-wider py-3 hover:no-underline">
+      {/* Others (Padding & Opacity) */}
+      <div className="px-1 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('propsPanel.baseStyle.others', '其他外观')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-3 pb-4 pt-1">
+        </h3>
+        <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
@@ -207,8 +201,8 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
               />
             </div>
           </div>
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        </div>
+      </div>
+    </div>
   );
 }

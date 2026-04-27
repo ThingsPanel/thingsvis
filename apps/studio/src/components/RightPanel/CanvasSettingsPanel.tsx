@@ -6,12 +6,7 @@
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/NumericInput';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
+
 import { processThumbnailFile } from '../../lib/storage/thumbnail';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
@@ -70,13 +65,13 @@ export function CanvasSettingsPanel({
       : {};
 
   return (
-    <Accordion type="multiple" defaultValue={['canvas', 'background']} className="w-full">
+    <div className="w-full space-y-4 pb-4">
       {/* Basic Info */}
-      <AccordionItem value="basic" className="border-b px-2">
-        <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-3">
+      <div className="px-2 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('canvas.basicInfo')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-4 pb-4">
+        </h3>
+        <div className="space-y-4">
           <div className="space-y-3">
             <label className="text-sm font-medium">{t('canvas.projectName')}</label>
             <Input
@@ -147,15 +142,15 @@ export function CanvasSettingsPanel({
               )}
             </div>
           </div>
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      </div>
 
       {/* Canvas Config */}
-      <AccordionItem value="canvas" className="border-b px-2">
-        <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-3">
+      <div className="px-2 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('canvas.settings')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-4 pb-4">
+        </h3>
+        <div className="space-y-4">
           <div className="space-y-3">
             <label className="text-sm font-medium">{t('canvas.theme')}</label>
             <div className="grid grid-cols-2 gap-3">
@@ -378,15 +373,15 @@ export function CanvasSettingsPanel({
               </div>
             </div>
           )}
-        </AccordionContent>
-      </AccordionItem>
+        </div>
+      </div>
 
       {/* Global Background Settings */}
-      <AccordionItem value="background" className="border-b-0 px-2">
-        <AccordionTrigger className="text-sm font-semibold text-foreground hover:no-underline py-3">
+      <div className="px-2 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
           {t('canvas.globalBackground')}
-        </AccordionTrigger>
-        <AccordionContent className="space-y-4 pb-4">
+        </h3>
+        <div className="space-y-4">
           <div className="space-y-3">
             <label className="text-sm font-medium">{t('canvas.backgroundColor')}</label>
             <ColorInput
@@ -465,8 +460,8 @@ export function CanvasSettingsPanel({
               </select>
             </div>
           )}
-        </AccordionContent>
-      </AccordionItem>
-    </Accordion>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -468,7 +468,7 @@ export function ControlFieldRow({
                   type="checkbox"
                   checked={Boolean(propsValue)}
                   onChange={(e) => setStatic(e.target.checked)}
-                  className="w-4 h-4 rounded border-input"
+                  className="w-4 h-4 rounded border-input accent-[#6965db]"
                 />
                 <span className="text-sm text-muted-foreground">
                   {propsValue ? t('common.on') : t('common.off')}
@@ -488,11 +488,18 @@ export function ControlFieldRow({
                     typeof propsValue === 'number' ? propsValue : ((field.default as number) ?? 0)
                   }
                   onChange={(e) => setStatic(Number(e.target.value))}
-                  className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-muted"
+                  className="flex-1 h-2 rounded-lg appearance-none cursor-pointer bg-muted accent-[#6965db]"
                 />
-                <span className="text-sm text-muted-foreground w-12 text-right tabular-nums">
-                  {typeof propsValue === 'number' ? propsValue : ((field.default as number) ?? 0)}
-                </span>
+                <NumericInput
+                  value={
+                    typeof propsValue === 'number' ? propsValue : ((field.default as number) ?? 0)
+                  }
+                  onValueChange={(nextValue) => setStatic(nextValue ?? field.default ?? 0)}
+                  className="h-8 text-sm w-16 tabular-nums"
+                  min={field.min}
+                  max={field.max}
+                  mode={numberFieldUsesFloat ? 'float' : 'int'}
+                />
               </div>
             )}
 
