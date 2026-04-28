@@ -71,19 +71,28 @@ export class ApiSyncAdapter implements DataSourceSyncAdapter {
 
     // Parse legacy or backend records
     const datasources = (response.data as Array<Record<string, unknown>>) || [];
-    return datasources.map((ds: Record<string, unknown>) => {
-      let mode = ds.mode;
-      // Extract mode if it was stashed inside the config JSON
-      // because the backend DTO lacks the root `mode` column
-      if (ds.config && typeof ds.config === 'object' && '_sys_mode' in ds.config) {
-        mode = (ds.config as Record<string, unknown>)._sys_mode;
-        delete (ds.config as Record<string, unknown>)._sys_mode;
-      }
-      return {
-        ...ds,
-        mode: mode,
-      } as unknown as DataSource;
-    });
+    const leakedManagedSources = datasources.filter(
+      (ds) => typeof ds.id === 'string' && /^(?:__platform_.+__|thingspanel_.+)$/.test(ds.id),
+    );
+    await Promise.allSettled(
+      leakedManagedSources.map((ds) => this.apiClient.delete(`/datasources/${ds.id}`)),
+    );
+
+    return datasources
+      .filter((ds) => !leakedManagedSources.includes(ds))
+      .map((ds: Record<string, unknown>) => {
+        let mode = ds.mode;
+        // Extract mode if it was stashed inside the config JSON
+        // because the backend DTO lacks the root `mode` column
+        if (ds.config && typeof ds.config === 'object' && '_sys_mode' in ds.config) {
+          mode = (ds.config as Record<string, unknown>)._sys_mode;
+          delete (ds.config as Record<string, unknown>)._sys_mode;
+        }
+        return {
+          ...ds,
+          mode: mode,
+        } as unknown as DataSource;
+      });
   }
 
   async save(config: DataSource): Promise<void> {

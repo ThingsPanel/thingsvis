@@ -3,6 +3,7 @@ import type {
   EmbeddedDataSourceGroup,
   EmbeddedProviderCatalog,
 } from './embedded-data-source';
+import { isTemplateDeviceId } from './hostDataSourcePolicy';
 import { thingspanelCatalog } from './providers/thingspanel.catalog';
 
 const EMBEDDED_PROVIDER_CATALOGS: Record<string, EmbeddedProviderCatalog> = {
@@ -47,7 +48,8 @@ export function buildEmbeddedProviderDataSources(
 
   const hasRuntimeDeviceId =
     typeof runtimeVariableValues.deviceId === 'string' &&
-    runtimeVariableValues.deviceId.trim().length > 0;
+    runtimeVariableValues.deviceId.trim().length > 0 &&
+    !isTemplateDeviceId(runtimeVariableValues.deviceId);
 
   return catalog.dataSources
     .filter((source) => shouldIncludeGroup(source, options?.groups))

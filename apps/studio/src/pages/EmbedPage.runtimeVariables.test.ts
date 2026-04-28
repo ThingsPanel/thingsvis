@@ -76,4 +76,29 @@ describe('EmbedPage runtime variables', () => {
     ]);
     expect(merged.some((definition) => definition.name === 'platformToken')).toBe(false);
   });
+
+  it('normalizes the local ThingsPanel frontend API fallback to the dev proxy endpoint', () => {
+    const runtimeValues = buildEmbedRuntimeVariableValues(
+      {
+        platformApiBaseUrl: 'http://localhost:5002/api/v1',
+        thingsvisApiBaseUrl: 'http://localhost:5002/thingsvis-api',
+      },
+      null,
+    );
+
+    expect(runtimeValues.platformApiBaseUrl).toBe('http://localhost:5002/proxy-default');
+
+    expect(
+      resolveEmbedRuntimeVariableValues(
+        [
+          {
+            name: 'platformApiBaseUrl',
+            type: 'string',
+            defaultValue: 'http://localhost:5002/api/v1',
+          },
+        ],
+        runtimeValues,
+      ).platformApiBaseUrl,
+    ).toBe('http://localhost:5002/proxy-default');
+  });
 });

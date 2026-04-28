@@ -40,6 +40,8 @@ import {
   resolveThingsVisApiBaseUrl,
 } from '@/embed/runtimeVariables';
 import { augmentPlatformDataSourcesForNodes } from '@/lib/platformDatasourceBindings';
+import { buildEmbeddedProviderDataSources } from '@/lib/embedded/embedded-data-source-registry';
+import { sanitizeDataSourcesForHostSave } from '@/lib/embedded/hostDataSourcePolicy';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LoadingScreen from '@/components/LoadingScreen';
@@ -88,6 +90,53 @@ function applyEmbedRuntimeVariables(
     }
   });
   return mergedDefinitions;
+}
+
+function normalizeEmbeddedProviderDataSources(
+  dataSources: unknown[],
+  provider: string | null,
+  context: string | null,
+  runtimeVariableValues: Record<string, unknown>,
+): unknown[] {
+  const groups =
+    context === 'dashboard'
+      ? (['dashboard'] as const)
+      : context === 'device-template'
+        ? (['current-device', 'current-device-history'] as const)
+        : undefined;
+  const providerDefaults = buildEmbeddedProviderDataSources(
+    provider,
+    runtimeVariableValues,
+    groups ? { groups: [...groups] } : undefined,
+  );
+  if (providerDefaults.length === 0) return dataSources;
+
+  const defaultsById = new Map(providerDefaults.map((source) => [source.id, source]));
+  const normalized = dataSources.map((dataSource) => {
+    const sourceId =
+      dataSource && typeof dataSource === 'object' && typeof (dataSource as any).id === 'string'
+        ? (dataSource as any).id
+        : '';
+    const definition = defaultsById.get(sourceId);
+    if (!definition) return dataSource;
+
+    return {
+      ...definition,
+      name:
+        typeof (dataSource as any)?.name === 'string' && (dataSource as any).name
+          ? (dataSource as any).name
+          : definition.id,
+    };
+  });
+
+  if (context === 'dashboard') {
+    providerDefaults.forEach((definition) => {
+      if (normalized.some((dataSource: any) => dataSource?.id === definition.id)) return;
+      normalized.push(definition);
+    });
+  }
+
+  return normalized;
 }
 
 // Message types for postMessage communication
@@ -330,10 +379,10 @@ export default function EmbedPage() {
         }
 
         const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];
-        applyEmbedRuntimeVariables(
-          variables,
-          buildEmbedRuntimeVariableValues(buildRuntimeConfigFromSearchParams(searchParams)),
+        const runtimeVariableValues = buildEmbedRuntimeVariableValues(
+          buildRuntimeConfigFromSearchParams(searchParams),
         );
+        applyEmbedRuntimeVariables(variables, runtimeVariableValues);
 
         setState({
           isLoading: false,
@@ -343,7 +392,12 @@ export default function EmbedPage() {
         });
 
         // Register dashboard data sources
-        const dataSources = (dashboard.dataSources as any[]) || [];
+        const dataSources = normalizeEmbeddedProviderDataSources(
+          (dashboard.dataSources as any[]) || [],
+          searchParams.get('provider'),
+          searchParams.get('context'),
+          runtimeVariableValues,
+        );
         if (dataSources.length > 0) {
           dataSources.forEach((ds: any) => {
             dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
@@ -407,10 +461,10 @@ export default function EmbedPage() {
         }
 
         const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];
-        applyEmbedRuntimeVariables(
-          variables,
-          buildEmbedRuntimeVariableValues(buildRuntimeConfigFromSearchParams(searchParams)),
+        const runtimeVariableValues = buildEmbedRuntimeVariableValues(
+          buildRuntimeConfigFromSearchParams(searchParams),
         );
+        applyEmbedRuntimeVariables(variables, runtimeVariableValues);
 
         setState({
           isLoading: false,
@@ -421,7 +475,12 @@ export default function EmbedPage() {
 
         // Register dashboard data sources so adapters (e.g. PLATFORM_FIELD) activate.
         // The INIT handler covers the postMessage-schema path; this covers the API-load path.
-        const dataSources = (dashboard.dataSources as any[]) || [];
+        const dataSources = normalizeEmbeddedProviderDataSources(
+          (dashboard.dataSources as any[]) || [],
+          searchParams.get('provider'),
+          searchParams.get('context'),
+          runtimeVariableValues,
+        );
         if (dataSources.length > 0) {
           dataSources.forEach((ds: any) => {
             dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
@@ -706,8 +765,24 @@ export default function EmbedPage() {
             platformDeviceStore.clearDevices();
           }
 
-          schema.dataSources = applyPlatformBufferSize(
+          const singleRuntimeDeviceId =
+            platformDevices.length === 1 && typeof platformDevices[0]?.deviceId === 'string'
+              ? (platformDevices[0].deviceId as string)
+              : null;
+          const runtimeVariableValues = buildEmbedRuntimeVariableValues(
+            msg.config,
+            singleRuntimeDeviceId,
+          );
+
+          const normalizedDataSources = normalizeEmbeddedProviderDataSources(
             (schema.dataSources ?? []) as DataSource[],
+            searchParams.get('provider'),
+            searchParams.get('context'),
+            runtimeVariableValues,
+          ) as DataSource[];
+
+          schema.dataSources = applyPlatformBufferSize(
+            normalizedDataSources,
             msg.platformBufferSize,
           );
 
@@ -716,15 +791,15 @@ export default function EmbedPage() {
             ((schema.nodes as unknown[]) ?? []) as Array<Record<string, unknown>>,
           );
 
-          const singleRuntimeDeviceId =
-            platformDevices.length === 1 && typeof platformDevices[0]?.deviceId === 'string'
-              ? (platformDevices[0].deviceId as string)
-              : null;
+          if (searchParams.get('context') === 'device-template') {
+            schema.dataSources = sanitizeDataSourcesForHostSave(
+              ((schema.nodes as unknown[]) ?? []) as Array<Record<string, unknown>>,
+              schema.dataSources,
+              'device-template',
+            ) as DataSource[];
+          }
 
-          schema.variables = applyEmbedRuntimeVariables(
-            schema.variables,
-            buildEmbedRuntimeVariableValues(msg.config, singleRuntimeDeviceId),
-          );
+          schema.variables = applyEmbedRuntimeVariables(schema.variables, runtimeVariableValues);
 
           const schemaVariables = Array.isArray(schema.variables) ? schema.variables : [];
           if (schemaVariables.length > 0) {

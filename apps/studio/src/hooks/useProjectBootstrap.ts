@@ -37,6 +37,7 @@ import {
   mergeEmbedRuntimeVariableDefinitions,
   resolveEmbedRuntimeVariableValues,
 } from '../embed/runtimeVariables';
+import { sanitizeDataSourcesForHostSave } from '../lib/embedded/hostDataSourcePolicy';
 import { mergeActionVariableDefinitions } from '../lib/eventVariables';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -59,17 +60,17 @@ function normalizeEmbeddedProviderDataSources(
     return dataSources;
   }
 
-  const protectedGroups =
+  const definitionGroups =
     serviceConfig.context === 'dashboard'
       ? (['dashboard'] as const)
       : serviceConfig.context === 'device-template'
-        ? (['dashboard', 'current-device', 'current-device-history'] as const)
+        ? (['current-device', 'current-device-history'] as const)
         : undefined;
 
   const providerDefaults = buildEmbeddedProviderDataSources(
     serviceConfig.provider,
     runtimeVariableValues,
-    protectedGroups ? { groups: [...protectedGroups] } : undefined,
+    definitionGroups ? { groups: [...definitionGroups] } : undefined,
   );
   const definitionsById = new Map(providerDefaults.map((source) => [source.id, source]));
 
@@ -87,10 +88,12 @@ function normalizeEmbeddedProviderDataSources(
     };
   });
 
-  providerDefaults.forEach((definition) => {
-    if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
-    normalized.push(definition);
-  });
+  if (serviceConfig.context === 'dashboard') {
+    providerDefaults.forEach((definition) => {
+      if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
+      normalized.push(definition);
+    });
+  }
 
   return normalized;
 }
@@ -722,6 +725,14 @@ export function useProjectBootstrap({
         mergedDataSources as any,
         (nodesToLoad ?? []) as Array<Record<string, unknown>>,
       ) as Array<Record<string, any>>;
+
+      if (resolveEditorServiceConfig().context === 'device-template') {
+        mergedDataSources = sanitizeDataSourcesForHostSave(
+          nodesToLoad,
+          mergedDataSources,
+          'device-template',
+        ) as Array<Record<string, any>>;
+      }
 
       // Restore background — may be a PageBackground object or a CSS string.
       const backgroundState = deriveCanvasBackgroundState(

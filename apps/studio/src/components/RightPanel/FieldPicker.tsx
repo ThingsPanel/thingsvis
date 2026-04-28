@@ -9,6 +9,7 @@ import { usePlatformDeviceStore, type PlatformDevice } from '@/lib/stores/platfo
 import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
 import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
+import { TEMPLATE_DEVICE_ID } from '@/lib/embedded/hostDataSourcePolicy';
 import { resolveControlText } from '@/lib/i18n/controlText';
 import {
   Dialog,
@@ -36,7 +37,6 @@ export type FieldPickerValue = {
 type SourceGroup = 'global' | 'device' | 'custom';
 type DeviceBindingKind = 'model' | 'status' | 'history' | 'alarmStatus';
 
-const TEMPLATE_DEVICE_ID = '__template__';
 const HISTORY_FIELD_SUFFIX = '__history';
 const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
   'device_alarm_active',
@@ -206,18 +206,25 @@ function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?:
       }),
   );
 
-  dataSourceManager.registerDataSource({
-    id: dataSourceId,
-    name: nextName,
-    type: 'PLATFORM_FIELD',
-    config: {
-      ...DEFAULT_PLATFORM_FIELD_CONFIG,
-      source: 'platform',
-      deviceId: device.deviceId,
-      bufferSize: inheritedBufferSize,
-      requestedFields: [],
-    },
-  });
+  dataSourceManager
+    .registerDataSource(
+      {
+        id: dataSourceId,
+        name: nextName,
+        type: 'PLATFORM_FIELD',
+        config: {
+          ...DEFAULT_PLATFORM_FIELD_CONFIG,
+          source: 'platform',
+          deviceId: device.deviceId,
+          bufferSize: inheritedBufferSize,
+          requestedFields: [],
+        },
+      },
+      false,
+    )
+    .catch((error) => {
+      console.warn('[FieldPicker] Failed to register device data source', error);
+    });
 }
 
 function ensurePlatformStatDataSource(source: PlatformStatSource): void {
@@ -384,6 +391,7 @@ export function FieldPicker({
     );
     const inferred = dataSourceIds
       .filter((id) => parseDeviceDataSourceId(id))
+      .filter(() => serviceConfig.context !== 'device-template')
       .filter((id) => !knownDeviceIds.has(id))
       .map((id) => {
         const deviceId = parseDeviceDataSourceId(id) as string;

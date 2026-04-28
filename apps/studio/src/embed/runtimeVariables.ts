@@ -22,6 +22,22 @@ function readConfigString(config: Record<string, unknown> | undefined, key: stri
   return typeof value === 'string' && value.length > 0 ? value : undefined;
 }
 
+function normalizeRuntimeManagedUrl(name: string, value: string | undefined): string | undefined {
+  if (!value || name !== 'platformApiBaseUrl') return value;
+
+  try {
+    const url = new URL(value);
+    if (url.hostname === 'localhost' && url.port === '5002' && url.pathname === '/api/v1') {
+      url.pathname = '/proxy-default';
+      return url.toString().replace(/\/$/, '');
+    }
+  } catch {
+    if (value === '/api/v1') return '/proxy-default';
+  }
+
+  return value;
+}
+
 export function resolveThingsVisApiBaseUrl(config: Record<string, unknown> | undefined) {
   return readConfigString(config, 'thingsvisApiBaseUrl');
 }
@@ -30,7 +46,10 @@ export function buildEmbedRuntimeVariableValues(
   config: Record<string, unknown> | undefined,
   fallbackDeviceId?: string | null,
 ): Record<string, unknown> {
-  const platformApiBaseUrl = readConfigString(config, 'platformApiBaseUrl');
+  const platformApiBaseUrl = normalizeRuntimeManagedUrl(
+    'platformApiBaseUrl',
+    readConfigString(config, 'platformApiBaseUrl'),
+  );
   const thingsvisApiBaseUrl = resolveThingsVisApiBaseUrl(config);
   const platformToken =
     readConfigString(config, 'platformToken') || readConfigString(config, 'token');
@@ -60,9 +79,11 @@ function readSavedRuntimeDefault(
       (entry as RuntimeVariableDefinition).name === name,
   );
   const defaultValue = definition?.defaultValue;
-  return typeof defaultValue === 'string' && defaultValue.trim().length > 0
-    ? defaultValue
-    : undefined;
+  if (typeof defaultValue !== 'string' || defaultValue.trim().length === 0) {
+    return undefined;
+  }
+
+  return normalizeRuntimeManagedUrl(name, defaultValue);
 }
 
 export function resolveEmbedRuntimeVariableValues(
