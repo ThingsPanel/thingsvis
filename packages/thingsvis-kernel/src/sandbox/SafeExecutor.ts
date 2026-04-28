@@ -9,6 +9,48 @@
 
 const EXEC_WARN_MS = 5_000;
 
+type Mapping = Record<string | number, unknown>;
+
+export const transformationUtils = Object.freeze({
+  formatTime(value: unknown, format = 'YYYY-MM-DD HH:mm:ss'): string {
+    const date =
+      value instanceof Date
+        ? value
+        : typeof value === 'number' || typeof value === 'string'
+          ? new Date(value)
+          : null;
+
+    if (!date || Number.isNaN(date.getTime())) return '';
+
+    const pad = (input: number, length = 2) => String(input).padStart(length, '0');
+    const tokens: Record<string, string> = {
+      YYYY: String(date.getFullYear()),
+      MM: pad(date.getMonth() + 1),
+      DD: pad(date.getDate()),
+      HH: pad(date.getHours()),
+      mm: pad(date.getMinutes()),
+      ss: pad(date.getSeconds()),
+      SSS: pad(date.getMilliseconds(), 3),
+    };
+
+    return format.replace(/YYYY|MM|DD|HH|mm|ss|SSS/g, (token) => tokens[token] ?? token);
+  },
+
+  toFixed(value: unknown, decimals = 2): unknown {
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    const precision = Number.isFinite(decimals) ? Math.max(0, Math.trunc(decimals)) : 2;
+
+    return Number.isFinite(numericValue) ? numericValue.toFixed(precision) : value;
+  },
+
+  map(value: unknown, mapping: Mapping): unknown {
+    if (!mapping || typeof mapping !== 'object') return value;
+
+    const key = String(value);
+    return Object.prototype.hasOwnProperty.call(mapping, key) ? mapping[key] : value;
+  },
+});
+
 export class SafeExecutor {
   /**
    * Executes a string of code with a given context.
@@ -39,6 +81,7 @@ export class SafeExecutor {
         parseFloat,
         isNaN,
         isFinite,
+        utils: transformationUtils,
       };
 
       return SafeExecutor._runInSandbox(code, sandbox);
@@ -85,6 +128,7 @@ export class SafeExecutor {
         setInterval: undefined,
         fetch: undefined,
         XMLHttpRequest: undefined,
+        utils: transformationUtils,
       };
 
       return SafeExecutor._runInSandbox(code, sandbox);

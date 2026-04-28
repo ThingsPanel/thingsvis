@@ -1,7 +1,7 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
+import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PenLine } from 'lucide-react';
-import type { KernelStore } from '@thingsvis/kernel';
+import { transformationUtils, type KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { dataSourceManager } from '@/lib/store';
@@ -47,6 +47,13 @@ const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
   'latest_device_alarm_time',
 ]);
 
+const TRANSFORM_SNIPPETS = [
+  { label: '标准时间', code: 'utils.formatTime(value)' },
+  { label: '保留两位', code: 'utils.toFixed(value, 2)' },
+  { label: '在线/离线', code: "value ? '在线' : '离线'" },
+  { label: '空值处理', code: "value ?? '--'" },
+] as const;
+
 type PlatformStatField = {
   id: string;
   name: string;
@@ -88,8 +95,13 @@ function applyTransform(
 ): { ok: boolean; result: unknown } {
   try {
     // eslint-disable-next-line no-new-func
-    const fn = new Function('value', 'data', `"use strict"; return (${transformCode.trim()});`);
-    return { ok: true, result: fn(value, data) };
+    const fn = new Function(
+      'value',
+      'data',
+      'utils',
+      `"use strict"; return (${transformCode.trim()});`,
+    );
+    return { ok: true, result: fn(value, data, transformationUtils) };
   } catch {
     return { ok: false, result: undefined };
   }
@@ -324,6 +336,7 @@ export function FieldPicker({
   const [transformDialogOpen, setTransformDialogOpen] = useState(false);
   /** Draft code while the dialog is open — only committed on Apply */
   const [draftCode, setDraftCode] = useState('');
+  const transformTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const [deviceGroupsRequested, setDeviceGroupsRequested] = useState(false);
   const [selectedPlatformGroupId, setSelectedPlatformGroupId] = useState('');
@@ -954,6 +967,29 @@ export function FieldPicker({
     });
   };
 
+  const handleInsertTransformSnippet = useCallback(
+    (snippet: string) => {
+      const textarea = transformTextareaRef.current;
+
+      if (!textarea) {
+        setDraftCode(snippet);
+        return;
+      }
+
+      const start = textarea.selectionStart ?? 0;
+      const end = textarea.selectionEnd ?? start;
+      const nextCode = `${draftCode.slice(0, start)}${snippet}${draftCode.slice(end)}`;
+
+      setDraftCode(nextCode);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const cursor = start + snippet.length;
+        textarea.setSelectionRange(cursor, cursor);
+      });
+    },
+    [draftCode],
+  );
+
   const handleHistoryConfigChange = (
     patch: Partial<NonNullable<FieldPickerValue['historyConfig']>>,
   ) => {
@@ -1385,8 +1421,27 @@ export function FieldPicker({
               </DialogHeader>
 
               <div className="grid grid-cols-1 gap-3">
+                <div className="flex flex-wrap items-center gap-2 rounded-md border border-input bg-muted/20 p-2">
+                  <span className="text-xs text-muted-foreground">
+                    {t('binding.transformQuickInsert', 'Quick insert')}
+                  </span>
+                  {TRANSFORM_SNIPPETS.map((snippet) => (
+                    <Button
+                      key={snippet.label}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => handleInsertTransformSnippet(snippet.code)}
+                    >
+                      {t(`binding.transformSnippet.${snippet.label}`, snippet.label)}
+                    </Button>
+                  ))}
+                </div>
+
                 {/* Code editor */}
                 <textarea
+                  ref={transformTextareaRef}
                   value={draftCode}
                   onChange={(e) => setDraftCode(e.target.value)}
                   rows={7}
@@ -1406,6 +1461,12 @@ export function FieldPicker({
                   </p>
                   <p className="font-mono text-foreground/80">
                     {t('binding.transformDocsData', '`data` — full data source snapshot')}
+                  </p>
+                  <p className="font-mono text-foreground/80">
+                    {t(
+                      'binding.transformDocsUtils',
+                      '`utils` — formatTime(value), toFixed(value, decimals), map(value, mapping)',
+                    )}
                   </p>
                 </div>
 

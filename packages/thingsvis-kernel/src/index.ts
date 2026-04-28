@@ -75,7 +75,7 @@ export { PlatformFieldAdapter } from './datasources/PlatformFieldAdapter';
 export type { WriteResult } from './datasources/BaseAdapter';
 export { NoopSyncAdapter, ApiSyncAdapter } from './datasources/DataSourceSync';
 export type { DataSourceSyncAdapter } from './datasources/DataSourceSync';
-export { SafeExecutor } from './sandbox/SafeExecutor';
+export { SafeExecutor, transformationUtils } from './sandbox/SafeExecutor';
 export { JsonPathResolver } from './datasources/JsonPathResolver';
 export { FieldMappingExecutor } from './datasources/FieldMappingExecutor';
 export { SandboxExecutor, runInSandbox } from './sandbox/SandboxExecutor';
