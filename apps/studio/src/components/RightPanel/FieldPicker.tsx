@@ -1052,11 +1052,11 @@ export function FieldPicker({
               }}
               className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
             >
-              {hasPlatformStatsCatalog && (
-                <option value="global">{t('binding.globalData', '全局数据')}</option>
-              )}
               {hasDeviceCatalog && (
-                <option value="device">{t('binding.singleDeviceData', '单设备数据')}</option>
+                <option value="device">{t('binding.singleDeviceData', '设备数据')}</option>
+              )}
+              {hasPlatformStatsCatalog && (
+                <option value="global">{t('binding.globalData', '系统数据')}</option>
               )}
               {hasVisibleCustomDataSources && (
                 <option value="custom">{t('binding.customDataSources', '自定义数据源')}</option>
@@ -1096,7 +1096,7 @@ export function FieldPicker({
                 {selectedGroup === 'global' && (
                   <>
                     {platformSourcesByGroup.dashboard.length > 0 && (
-                      <optgroup label={t('binding.globalData', '全局数据')}>
+                      <optgroup label={t('binding.globalData', '系统数据')}>
                         {platformSourcesByGroup.dashboard.map((source) => (
                           <option key={source.id} value={source.id}>
                             {source.name}
