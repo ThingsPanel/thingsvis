@@ -103,10 +103,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
     // Sync homeFlag from canvasConfig to Dashboard field
     if (typeof result.data.canvasConfig.homeFlag === 'boolean') {
       if (result.data.canvasConfig.homeFlag) {
-        // Clear other homepages in the same project
+        // Community edition allows one homepage per tenant, not one per project.
         await prisma.dashboard.updateMany({
           where: {
-            projectId: existing.projectId,
+            project: { tenantId: user.tenantId },
             id: { not: id },
           },
           data: { homeFlag: false },
