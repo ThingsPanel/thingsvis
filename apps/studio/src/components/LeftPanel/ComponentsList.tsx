@@ -100,17 +100,43 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Shapes,
 };
 
-const CATEGORY_DEFS = [
+export const COMPONENT_CATEGORY_DEFS = [
   { key: 'basic', Icon: Box },
   { key: 'controls', Icon: MousePointerClick },
   { key: 'charts', Icon: BarChart3 },
   { key: 'media', Icon: Film },
+  { key: 'business', Icon: Bell },
   { key: 'decoration', Icon: Shapes },
   { key: 'industrial', Icon: Cpu },
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
 const HIDDEN_COMPONENT_IDS = new Set(['geo/map-china']);
+
+export type ComponentCategoryKey = (typeof COMPONENT_CATEGORY_DEFS)[number]['key'];
+
+export function resolveComponentCategory(
+  entry: Pick<RegistryListEntry, 'category' | 'componentId'>,
+): ComponentCategoryKey {
+  const rawCategory =
+    entry.category?.toLowerCase() || (entry.componentId.split('/')[0] || 'basic').toLowerCase();
+  const prefixMap: Record<string, ComponentCategoryKey> = {
+    basic: 'basic',
+    controls: 'controls',
+    display: 'basic',
+    interaction: 'controls',
+    chart: 'charts',
+    charts: 'charts',
+    media: 'media',
+    resources: 'media',
+    geo: 'media',
+    custom: 'business',
+    decoration: 'decoration',
+    industrial: 'industrial',
+  };
+
+  return prefixMap[rawCategory] ?? 'basic';
+}
 
 function resolveEntryDisplayName(entry: RegistryListEntry, language: string): string {
   const normalized = (language || '').toLowerCase();
@@ -162,28 +188,13 @@ export default function ComponentsList({
 
   const entriesByCategory = useMemo(() => {
     const map: CategoryMap = {};
-    const prefixMap: Record<string, string> = {
-      basic: 'basic',
-      controls: 'controls',
-      display: 'basic',
-      chart: 'charts',
-      charts: 'charts',
-      media: 'media',
-      decoration: 'decoration',
-      industrial: 'industrial',
-    };
-
-    CATEGORY_DEFS.forEach((def) => {
+    COMPONENT_CATEGORY_DEFS.forEach((def) => {
       map[def.key] = [];
     });
 
     entries.forEach((entry) => {
       // 优先从注册表读取直接定义好的 category，如果不存在再 fallback 到路径前缀解析
-      const rawCategory =
-        ((entry as any).category as string | undefined)?.toLowerCase() ||
-        (entry.componentId.split('/')[0] || 'basic').toLowerCase();
-      const category = prefixMap[rawCategory] || rawCategory || 'basic';
-      map[category] = map[category] ?? [];
+      const category = resolveComponentCategory(entry);
       map[category].push(entry);
     });
 
@@ -253,7 +264,7 @@ export default function ComponentsList({
             defaultValue={searchQuery ? Object.keys(filteredCategoriesMap) : ['basic']}
             className="space-y-2"
           >
-            {CATEGORY_DEFS.map((categoryDef) => {
+            {COMPONENT_CATEGORY_DEFS.map((categoryDef) => {
               const items = filteredCategoriesMap[categoryDef.key] ?? [];
               if (items.length === 0 && searchQuery) {
                 return null;
