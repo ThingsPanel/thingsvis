@@ -353,7 +353,9 @@ export function FieldPicker({
   const selectedTransform = value?.transform || '';
   const selectedHistoryConfig = value?.historyConfig;
   const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
-  const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>('device');
+  const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>(() =>
+    serviceConfig.context === 'dashboard' ? 'global' : 'device',
+  );
   const [deviceBindingKind, setDeviceBindingKind] = useState<DeviceBindingKind>('model');
 
   const deviceSources = useMemo(() => {

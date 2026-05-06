@@ -340,9 +340,14 @@ return {
       id: 'thingspanel_current_device_alarm_history',
       group: 'current-device-history',
       label: zhEn('设备告警历史', 'Device Alarm History'),
-      url: '{{ var.platformApiBaseUrl }}/alarm/info/history',
+      url: '{{ var.platformApiBaseUrl }}/alarm/info/history/device',
       params: { device_id: '{{ var.deviceId }}', page: 1, page_size: 10 },
       fields: [
+        {
+          id: 'device_alarm_active',
+          label: zhEn('当前告警状态', 'Current Alarm Status'),
+          type: 'boolean',
+        },
         {
           id: 'device_alarm_rows',
           label: zhEn('设备告警列表', 'Device Alarm Rows'),
@@ -363,7 +368,9 @@ const rows = Array.isArray(payload?.list)
     : Array.isArray(payload)
       ? payload
       : [];
+const alarmActive = Boolean(payload?.alarm ?? payload?.active ?? rows.length > 0);
 return {
+  device_alarm_active: alarmActive,
   device_alarm_rows: rows.map((row) => ({
     id: row?.id,
     device_id: row?.device_id,
@@ -373,7 +380,7 @@ return {
     message: row?.alarm_description ?? row?.alarm_message ?? row?.message ?? '',
     time: row?.create_time ?? row?.created_at ?? row?.time ?? ''
   })),
-  device_alarm_total: Number(payload?.total ?? rows.length ?? 0)
+  device_alarm_total: Number(payload?.total ?? (alarmActive ? Math.max(rows.length, 1) : rows.length) ?? 0)
 };
 `,
     },
