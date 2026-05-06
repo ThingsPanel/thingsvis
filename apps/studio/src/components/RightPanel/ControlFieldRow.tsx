@@ -643,6 +643,10 @@ export function ControlFieldRow({
                 return;
               }
 
+              if (next?.dataSourceId && !next.fieldPath) {
+                return;
+              }
+
               updateNode({
                 data: removeBinding(bindings, field.path),
                 ...(nextEvents ? { events: nextEvents } : {}),
