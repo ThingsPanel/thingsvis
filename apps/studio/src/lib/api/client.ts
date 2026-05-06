@@ -6,38 +6,43 @@
 
 /**
  * Resolve API base URL from URL parameters (embed mode) or defaults.
- * The host application passes apiBaseUrl via URL params so that the
+ * The host application passes apiBaseUrl/thingsvisApiBaseUrl via URL params so that the
  * embedded iframe can route API requests through the correct proxy
  * path BEFORE any postMessage communication happens.
  */
+export function resolveApiBaseUrlFromHref(href: string, fallbackOrigin: string): string | null {
+  try {
+    const url = new URL(href, fallbackOrigin);
+
+    const readParams = (params: URLSearchParams) =>
+      params.get('apiBaseUrl') ||
+      params.get('thingsvisApiBaseUrl') ||
+      params.get('apiUrl') ||
+      params.get('backendUrl');
+
+    const fromSearch = readParams(url.searchParams);
+    if (fromSearch) return fromSearch;
+
+    const hash = url.hash || '';
+    const qIdx = hash.indexOf('?');
+    if (qIdx >= 0) {
+      const fromHash = readParams(new URLSearchParams(hash.slice(qIdx + 1)));
+      if (fromHash) return fromHash;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
 function resolveDefaultApiBaseUrl(): string {
   if (typeof window === 'undefined') {
     return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1`;
   }
 
-  // Priority: URL params > hash params > default
-  try {
-    const url = new URL(window.location.href);
-
-    // Check search params first
-    const fromSearch =
-      url.searchParams.get('apiBaseUrl') ||
-      url.searchParams.get('apiUrl') ||
-      url.searchParams.get('backendUrl');
-    if (fromSearch) return fromSearch;
-
-    // Check hash params (e.g. #/embed?apiBaseUrl=xxx)
-    const hash = url.hash || '';
-    const qIdx = hash.indexOf('?');
-    if (qIdx >= 0) {
-      const hashParams = new URLSearchParams(hash.slice(qIdx + 1));
-      const fromHash =
-        hashParams.get('apiBaseUrl') || hashParams.get('apiUrl') || hashParams.get('backendUrl');
-      if (fromHash) return fromHash;
-    }
-  } catch {
-    // URL parsing failed, fall through to default
-  }
+  const fromUrl = resolveApiBaseUrlFromHref(window.location.href, window.location.origin);
+  if (fromUrl) return fromUrl;
 
   return `${window.location.origin}/api/v1`;
 }
