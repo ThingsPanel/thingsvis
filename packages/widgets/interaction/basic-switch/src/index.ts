@@ -1,7 +1,12 @@
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
-import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import {
+  defineWidget,
+  type WidgetOverlayContext,
+  resolveWidgetColors,
+  type WidgetColors,
+} from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -35,22 +40,20 @@ function ensureSpinnerCSS(): void {
 }
 
 function renderSwitch(
-  element: HTMLElement, 
-  props: Props, 
-  colors: WidgetColors, 
+  element: HTMLElement,
+  props: Props,
+  colors: WidgetColors,
   internalChecked: boolean,
   isLoading: boolean,
-  onToggle: () => void
+  onToggle: () => void,
 ): void {
   const t = SIZE_TOKENS[props.size] ?? SIZE_TOKENS['default'];
-  const thumbPos = internalChecked
-    ? t.trackWidth - t.thumbSize - t.thumbOffset
-    : t.thumbOffset;
-  
+  const thumbPos = internalChecked ? t.trackWidth - t.thumbSize - t.thumbOffset : t.thumbOffset;
+
   const onColor = colors.primary || '#22c55e';
   const offColor = colors.axis || '#d1d5db';
   const trackColor = internalChecked ? onColor : offColor;
-  
+
   element.style.cssText = `
     width: 100%;
     height: 100%;
@@ -59,18 +62,21 @@ function renderSwitch(
     border-radius: inherit;
     font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
   `;
-  
-  const labelHtml = props.showLabel ? `
+
+  const labelHtml = props.showLabel
+    ? `
     <span style="
       font-size: ${t.labelFontSize}px;
       color: ${colors.fg};
       white-space: nowrap;
       user-select: none;
     ">${props.label}</span>
-  ` : '';
-  
+  `
+    : '';
+
   const spinnerSize = Math.round(t.thumbSize * 0.55);
-  const spinnerHtml = isLoading ? `
+  const spinnerHtml = isLoading
+    ? `
     <div style="
       width: ${spinnerSize}px;
       height: ${spinnerSize}px;
@@ -80,9 +86,11 @@ function renderSwitch(
       animation: tv-switch-spin 0.6s linear infinite;
       box-sizing: border-box;
     "></div>
-  ` : '';
-  
-  const onTextHtml = props.onLabel ? `
+  `
+    : '';
+
+  const onTextHtml = props.onLabel
+    ? `
     <span style="
       position: absolute;
       top: 50%;
@@ -97,9 +105,11 @@ function renderSwitch(
       opacity: ${internalChecked ? 1 : 0};
       transition: opacity 0.15s;
     ">${props.onLabel}</span>
-  ` : '';
-  
-  const offTextHtml = props.offLabel ? `
+  `
+    : '';
+
+  const offTextHtml = props.offLabel
+    ? `
     <span style="
       position: absolute;
       top: 50%;
@@ -114,8 +124,9 @@ function renderSwitch(
       opacity: ${!internalChecked ? 1 : 0};
       transition: opacity 0.15s;
     ">${props.offLabel}</span>
-  ` : '';
-  
+  `
+    : '';
+
   const trackHtml = `
     <div id="track" style="
       position: relative;
@@ -148,7 +159,7 @@ function renderSwitch(
       </div>
     </div>
   `;
-  
+
   element.innerHTML = `
     <div style="
       display: flex;
@@ -166,7 +177,7 @@ function renderSwitch(
       ${trackHtml}
     </div>
   `;
-  
+
   const track = element.querySelector('#track');
   if (track) {
     track.addEventListener('click', () => {
@@ -177,7 +188,7 @@ function renderSwitch(
   }
 }
 
-const ROLLBACK_TIMEOUT = 5000;
+const LOADING_FEEDBACK_TIMEOUT = 800;
 
 export const Main = defineWidget({
   id: metadata.id,
@@ -191,38 +202,39 @@ export const Main = defineWidget({
   locales: { zh, en },
   schema: PropsSchema,
   controls,
-  
+
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     ensureSpinnerCSS();
-    
+
     let currentProps = props;
     let colors = resolveWidgetColors(element);
     // Coerce initial value so numeric 0/1 from IoT bindings works as boolean.
-    let internalChecked = typeof props.value === 'number' ? props.value !== 0 : Boolean(props.value);
+    let internalChecked =
+      typeof props.value === 'number' ? props.value !== 0 : Boolean(props.value);
     let isLoading = props.loading;
     let rollbackTimer: ReturnType<typeof setTimeout> | null = null;
-    
+
     const handleToggle = () => {
       if (currentProps.confirmToggle) {
         if (!confirm(currentProps.confirmMessage)) return;
       }
-      
+
       internalChecked = !internalChecked;
       isLoading = true;
-      
+
       ctx.emit?.('change', internalChecked);
-      
+
       if (rollbackTimer) clearTimeout(rollbackTimer);
       rollbackTimer = setTimeout(() => {
         isLoading = false;
         renderSwitch(element, currentProps, colors, internalChecked, isLoading, handleToggle);
-      }, ROLLBACK_TIMEOUT);
-      
+      }, LOADING_FEEDBACK_TIMEOUT);
+
       renderSwitch(element, currentProps, colors, internalChecked, isLoading, handleToggle);
     };
-    
+
     renderSwitch(element, currentProps, colors, internalChecked, isLoading, handleToggle);
-    
+
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
@@ -231,7 +243,7 @@ export const Main = defineWidget({
       });
       ro.observe(element);
     }
-    
+
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
@@ -240,20 +252,19 @@ export const Main = defineWidget({
         // Accept any non-null value and coerce to boolean so the switch stays
         // in sync with the real device state.
         if (newProps.value !== undefined && newProps.value !== null) {
-          internalChecked = typeof newProps.value === 'number'
-            ? newProps.value !== 0
-            : Boolean(newProps.value);
+          internalChecked =
+            typeof newProps.value === 'number' ? newProps.value !== 0 : Boolean(newProps.value);
           isLoading = false;
           if (rollbackTimer) {
             clearTimeout(rollbackTimer);
             rollbackTimer = null;
           }
         }
-        
+
         if (typeof newProps.loading === 'boolean') {
           isLoading = newProps.loading;
         }
-        
+
         colors = resolveWidgetColors(element);
         renderSwitch(element, currentProps, colors, internalChecked, isLoading, handleToggle);
       },
@@ -261,9 +272,9 @@ export const Main = defineWidget({
         if (rollbackTimer) clearTimeout(rollbackTimer);
         ro?.disconnect();
         element.innerHTML = '';
-      }
+      },
     };
-  }
+  },
 });
 
 export default Main;
