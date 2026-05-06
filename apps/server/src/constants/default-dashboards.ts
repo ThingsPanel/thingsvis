@@ -243,7 +243,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         name: 'thingspanel_device_summary',
         type: 'REST',
         config: {
-          url: '{{ var.platformApiBaseUrl }}/board/trend',
+          url: '{{ var.platformApiBaseUrl }}/board/tenant/device/info',
           method: 'GET',
           headers: { 'x-token': '{{ var.platformToken }}' },
           params: {},
@@ -253,15 +253,14 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         },
         transformation: `
 const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const points = Array.isArray(payload?.points) ? payload.points : Array.isArray(payload) ? payload : [];
-const latest = points.length > 0 ? points[points.length - 1] : payload;
-const total = Number(latest?.device_total ?? payload?.device_total ?? 0);
-const online = Number(latest?.device_online ?? latest?.device_on ?? payload?.device_online ?? payload?.device_on ?? 0);
+const total = Number(payload?.device_total ?? 0);
+const online = Number(payload?.device_on ?? payload?.device_online ?? 0);
+const activity = Number(payload?.device_activity ?? 0);
 return {
   device_total: total,
   device_online: online,
   device_offline: Math.max(0, total - online),
-  device_activity: online
+  device_activity: activity
 };
 `,
       },
@@ -947,7 +946,7 @@ return {
         name: '设备统计',
         type: 'REST',
         config: {
-          url: '{{ var.platformApiBaseUrl }}/board/trend',
+          url: '{{ var.platformApiBaseUrl }}/board/tenant/device/info',
           method: 'GET',
           headers: { 'x-token': '{{ var.platformToken }}' },
           params: {},
@@ -957,15 +956,14 @@ return {
         },
         transformation: `
 const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const points = Array.isArray(payload?.points) ? payload.points : Array.isArray(payload) ? payload : [];
-const latest = points.length > 0 ? points[points.length - 1] : payload;
-const total = Number(latest?.device_total ?? payload?.device_total ?? 0);
-const online = Number(latest?.device_online ?? latest?.device_on ?? payload?.device_online ?? payload?.device_on ?? 0);
+const total = Number(payload?.device_total ?? 0);
+const online = Number(payload?.device_on ?? payload?.device_online ?? 0);
+const activity = Number(payload?.device_activity ?? 0);
 return {
   device_total: total,
   device_online: online,
   device_offline: Math.max(0, total - online),
-  device_activity: online
+  device_activity: activity
 };
 `,
       },
