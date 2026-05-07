@@ -29,7 +29,7 @@
   },
   "thingsvis": {
     "displayName": "3D模型",
-    "icon": "Box",
+    "icon": "Cuboid",
     "i18n": {
       "zh": "3D模型",
       "en": "3D Model"

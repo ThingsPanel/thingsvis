@@ -41,6 +41,15 @@ import {
   Cpu,
   Cog,
   Shapes,
+  FileText,
+  List,
+  LayoutGrid,
+  Tag,
+  TextCursor,
+  ChevronDown,
+  Maximize2,
+  ScanLine,
+  Cuboid,
 } from 'lucide-react';
 import {
   Accordion,
@@ -98,6 +107,15 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Cpu,
   Cog,
   Shapes,
+  FileText,
+  List,
+  LayoutGrid,
+  Tag,
+  TextCursor,
+  ChevronDown,
+  Maximize2,
+  ScanLine,
+  Cuboid,
 };
 
 export const COMPONENT_CATEGORY_DEFS = [
