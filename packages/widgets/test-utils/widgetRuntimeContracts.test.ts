@@ -157,6 +157,7 @@ const widgetModulePaths = Object.keys(widgetModuleLoaders)
 const expectedWidgetModulePaths = [
   '../basic/analog-clock/src/index.ts',
   '../basic/circle/src/index.ts',
+  '../basic/container/src/index.ts',
   '../basic/digital-clock/src/index.ts',
   '../basic/glass-panel/src/index.ts',
   '../basic/line/src/index.ts',

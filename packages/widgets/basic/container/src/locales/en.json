@@ -1,0 +1,29 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-container": {
+        "name": "Container",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "groupTitle": "Title",
+        "groupShadow": "Shadow",
+        "showTitle": "Show title",
+        "title": "Title",
+        "fillColor": "Fill color",
+        "containerOpacity": "Fill opacity",
+        "containerBorderColor": "Border color",
+        "containerBorderWidth": "Border width",
+        "cornerRadius": "Corner radius",
+        "contentPadding": "Padding",
+        "titleHeight": "Title height",
+        "titleFontSize": "Title font size",
+        "titleColor": "Title color",
+        "titleBackgroundColor": "Title background",
+        "shadowEnabled": "Show shadow",
+        "shadowColor": "Shadow color",
+        "shadowBlur": "Shadow blur",
+        "shadowOffsetY": "Shadow Y offset"
+      }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-container": {
+        "name": "容器",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "groupTitle": "标题",
+        "groupShadow": "阴影",
+        "showTitle": "显示标题",
+        "title": "标题",
+        "fillColor": "填充颜色",
+        "containerOpacity": "填充透明度",
+        "containerBorderColor": "边框颜色",
+        "containerBorderWidth": "边框宽度",
+        "cornerRadius": "圆角",
+        "contentPadding": "内边距",
+        "titleHeight": "标题高度",
+        "titleFontSize": "标题字号",
+        "titleColor": "标题颜色",
+        "titleBackgroundColor": "标题背景",
+        "shadowEnabled": "显示阴影",
+        "shadowColor": "阴影颜色",
+        "shadowBlur": "阴影模糊",
+        "shadowOffsetY": "阴影 Y 偏移"
+      }
+    }
+  }
+}
