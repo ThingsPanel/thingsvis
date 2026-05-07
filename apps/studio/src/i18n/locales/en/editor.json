@@ -104,12 +104,11 @@
         "noComponents": "No components",
         "categories": {
             "basic": "Basic",
+            "indicator": "Indicators",
             "controls": "Controls",
             "charts": "Charts",
-            "media": "Media",
-            "business": "Business",
-            "decoration": "Decoration",
-            "industrial": "Industrial"
+            "industrial": "Industrial",
+            "mediaDecoration": "Media & Decoration"
         }
     },
     "layers": {

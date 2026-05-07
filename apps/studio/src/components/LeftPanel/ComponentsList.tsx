@@ -102,36 +102,55 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 export const COMPONENT_CATEGORY_DEFS = [
   { key: 'basic', Icon: Box },
-  { key: 'controls', Icon: MousePointerClick },
+  { key: 'indicator', Icon: Activity },
   { key: 'charts', Icon: BarChart3 },
-  { key: 'media', Icon: Film },
-  { key: 'business', Icon: Bell },
-  { key: 'decoration', Icon: Shapes },
+  { key: 'controls', Icon: MousePointerClick },
   { key: 'industrial', Icon: Cpu },
+  { key: 'mediaDecoration', Icon: Shapes },
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
-const HIDDEN_COMPONENT_IDS = new Set(['geo/map-china']);
+const HIDDEN_COMPONENT_IDS = new Set(['basic/line', 'geo/map-china']);
 
 export type ComponentCategoryKey = (typeof COMPONENT_CATEGORY_DEFS)[number]['key'];
+const renderedCategoryKeys = new Set<string>(COMPONENT_CATEGORY_DEFS.map((def) => def.key));
 
 export function resolveComponentCategory(
-  entry: Pick<RegistryListEntry, 'category' | 'componentId'>,
+  entry: Pick<RegistryListEntry, 'category' | 'componentId' | 'displayCategory'>,
 ): ComponentCategoryKey {
+  if (entry.displayCategory && renderedCategoryKeys.has(entry.displayCategory)) {
+    return entry.displayCategory as ComponentCategoryKey;
+  }
+
+  const indicatorIds = new Set([
+    'basic/analog-clock',
+    'basic/digital-clock',
+    'basic/luxury-clock',
+    'interaction/value-card',
+    'interaction/value-card-simple',
+    'interaction/basic-progress',
+    'custom/alert-list',
+    'custom/device-status-card',
+    'custom/guidance-steps',
+  ]);
+
+  if (indicatorIds.has(entry.componentId)) {
+    return 'indicator';
+  }
+
   const rawCategory =
     entry.category?.toLowerCase() || (entry.componentId.split('/')[0] || 'basic').toLowerCase();
   const prefixMap: Record<string, ComponentCategoryKey> = {
     basic: 'basic',
     controls: 'controls',
-    display: 'basic',
     interaction: 'controls',
     chart: 'charts',
     charts: 'charts',
-    media: 'media',
-    resources: 'media',
-    geo: 'media',
-    custom: 'business',
-    decoration: 'decoration',
+    media: 'mediaDecoration',
+    resources: 'mediaDecoration',
+    geo: 'industrial',
+    custom: 'basic',
+    decoration: 'mediaDecoration',
     industrial: 'industrial',
   };
 
@@ -195,7 +214,7 @@ export default function ComponentsList({
     entries.forEach((entry) => {
       // 优先从注册表读取直接定义好的 category，如果不存在再 fallback 到路径前缀解析
       const category = resolveComponentCategory(entry);
-      map[category].push(entry);
+      (map[category] ??= []).push(entry);
     });
 
     return map;

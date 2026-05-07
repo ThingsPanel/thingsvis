@@ -59,6 +59,11 @@ export {
 
 // Export widget category enum and schema (唯一权威来源)
 export { WIDGET_CATEGORIES, WidgetCategorySchema, type WidgetCategory } from './widget-category';
+export {
+  WIDGET_DISPLAY_CATEGORIES,
+  WidgetDisplayCategorySchema,
+  type WidgetDisplayCategory,
+} from './widget-display-category';
 
 // Export widget remote module contract types (L1 widget layer)
 export {

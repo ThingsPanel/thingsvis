@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { WidgetCategorySchema } from './widget-category';
+import { WidgetDisplayCategorySchema } from './widget-display-category';
 
 /**
  * Component registry (registry.json)
@@ -20,6 +21,7 @@ export const ComponentRegistryEntrySchema = z.object({
   i18n: z.record(z.string()).optional(),
   // --- 组件中心增强元数据 ---
   category: WidgetCategorySchema.optional(),
+  displayCategory: WidgetDisplayCategorySchema.optional(),
   description: z.string().optional(),
   author: z.string().optional(),
   tags: z.array(z.string()).optional(),

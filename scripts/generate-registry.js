@@ -38,6 +38,32 @@ function extractDevPort(scripts) {
     return match ? parseInt(match[1], 10) : null;
 }
 
+function resolveDisplayCategory(componentId, sourceCategory) {
+    const indicatorIds = new Set([
+        'basic/analog-clock',
+        'basic/digital-clock',
+        'basic/luxury-clock',
+        'interaction/value-card',
+        'interaction/value-card-simple',
+        'interaction/basic-progress',
+        'custom/alert-list',
+        'custom/device-status-card',
+        'custom/guidance-steps',
+    ]);
+
+    if (indicatorIds.has(componentId)) return 'indicator';
+
+    const rawCategory = String(sourceCategory || componentId.split('/')[0] || 'basic').toLowerCase();
+    if (rawCategory === 'interaction' || rawCategory === 'controls') return 'controls';
+    if (rawCategory === 'chart' || rawCategory === 'charts') return 'charts';
+    if (rawCategory === 'geo' || rawCategory === 'industrial') return 'industrial';
+    if (rawCategory === 'media' || rawCategory === 'resources' || rawCategory === 'decoration') {
+        return 'mediaDecoration';
+    }
+
+    return 'basic';
+}
+
 // ─── Read metadata.ts ──────────────────────────────────────────────
 function readMetadataTs(widgetDir) {
     const metadataPath = path.join(widgetDir, 'src', 'metadata.ts');
@@ -186,6 +212,7 @@ function generateRegistryData() {
                     if (category.name === 'chart') return 'charts';
                     return category.name;
                 })(),
+                displayCategory: resolveDisplayCategory(componentId, category.name),
                 ...(meta.description || metadata.description ? { description: metadata.description || meta.description } : {}),
                 ...(meta.author || pkg.author ? { author: meta.author || pkg.author } : {}),
                 ...(metadata.tags || meta.tags ? { tags: metadata.tags || meta.tags } : {}),

@@ -104,12 +104,11 @@
         "noComponents": "暂无组件",
         "categories": {
             "basic": "基础",
+            "indicator": "指标",
             "controls": "控件",
             "charts": "图表",
-            "media": "媒体",
-            "business": "业务",
-            "decoration": "装饰",
-            "industrial": "工业"
+            "industrial": "工业",
+            "mediaDecoration": "媒体与装饰"
         }
     },
     "layers": {
