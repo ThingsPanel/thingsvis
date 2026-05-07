@@ -242,7 +242,7 @@ export function EditorTopNav({
         {tools
           .filter((tool) => {
             if (canvasMode === 'grid') {
-              return !['rectangle', 'circle', 'line', 'text'].includes(tool.id);
+              return !['rectangle', 'circle', 'line', 'text', 'image'].includes(tool.id);
             }
             return true;
           })
