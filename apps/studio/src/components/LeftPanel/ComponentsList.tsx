@@ -110,7 +110,12 @@ export const COMPONENT_CATEGORY_DEFS = [
 ] as const;
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
-const HIDDEN_COMPONENT_IDS = new Set(['basic/line', 'geo/map-china']);
+const HIDDEN_COMPONENT_IDS = new Set([
+  'basic/analog-clock',
+  'basic/line',
+  'basic/luxury-clock',
+  'geo/map-china',
+]);
 
 export type ComponentCategoryKey = (typeof COMPONENT_CATEGORY_DEFS)[number]['key'];
 const renderedCategoryKeys = new Set<string>(COMPONENT_CATEGORY_DEFS.map((def) => def.key));
