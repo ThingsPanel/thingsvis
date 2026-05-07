@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-card": {
+        "name": "卡片",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "groupTypography": "文字",
+        "groupShadow": "阴影",
+        "title": "标题",
+        "subtitle": "副标题",
+        "body": "正文",
+        "showSubtitle": "显示副标题",
+        "fillColor": "填充颜色",
+        "fillOpacity": "填充透明度",
+        "borderColor": "边框颜色",
+        "borderWidth": "边框宽度",
+        "cornerRadius": "圆角",
+        "paddingSize": "内边距",
+        "titleColor": "标题颜色",
+        "subtitleColor": "副标题颜色",
+        "bodyColor": "正文颜色",
+        "shadowEnabled": "显示阴影",
+        "shadowColor": "阴影颜色",
+        "shadowBlur": "阴影模糊",
+        "shadowOffsetY": "阴影 Y 偏移"
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-placeholder": {
+        "name": "占位块",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "title": "标题",
+        "description": "描述",
+        "icon": "图标",
+        "iconFrame": "框架",
+        "iconImage": "图片",
+        "iconChart": "图表",
+        "borderStyle": "边框样式",
+        "borderDashed": "虚线",
+        "borderSolid": "实线",
+        "titleFontSize": "标题字号",
+        "bodyFontSize": "正文字号",
+        "accentColor": "强调色",
+        "backgroundColor": "背景色",
+        "borderColor": "边框颜色",
+        "borderWidth": "边框宽度",
+        "cornerRadius": "圆角",
+        "opacity": "透明度"
+      }
+    }
+  }
+}

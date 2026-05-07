@@ -1,0 +1,31 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-icon": {
+        "name": "Icon",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "groupFrame": "Frame",
+        "iconName": "Icon",
+        "iconSquare": "Square",
+        "iconCircle": "Circle",
+        "iconTriangle": "Triangle",
+        "iconBolt": "Bolt",
+        "iconStar": "Star",
+        "iconHeart": "Heart",
+        "iconPin": "Pin",
+        "iconBell": "Bell",
+        "paddingSize": "Padding",
+        "strokeWidth": "Stroke width",
+        "color": "Icon color",
+        "backgroundColor": "Background",
+        "backgroundOpacity": "Background opacity",
+        "cornerRadius": "Corner radius",
+        "opacity": "Opacity",
+        "showFrame": "Show frame",
+        "frameColor": "Frame color",
+        "frameWidth": "Frame width"
+      }
+    }
+  }
+}

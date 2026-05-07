@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-card": {
+        "name": "Card",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "groupTypography": "Typography",
+        "groupShadow": "Shadow",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "body": "Body",
+        "showSubtitle": "Show subtitle",
+        "fillColor": "Fill color",
+        "fillOpacity": "Fill opacity",
+        "borderColor": "Border color",
+        "borderWidth": "Border width",
+        "cornerRadius": "Corner radius",
+        "paddingSize": "Padding",
+        "titleColor": "Title color",
+        "subtitleColor": "Subtitle color",
+        "bodyColor": "Body color",
+        "shadowEnabled": "Show shadow",
+        "shadowColor": "Shadow color",
+        "shadowBlur": "Shadow blur",
+        "shadowOffsetY": "Shadow Y offset"
+      }
+    }
+  }
+}

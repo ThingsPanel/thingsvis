@@ -1,0 +1,31 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-icon": {
+        "name": "图标",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "groupFrame": "边框",
+        "iconName": "图标",
+        "iconSquare": "方形",
+        "iconCircle": "圆形",
+        "iconTriangle": "三角形",
+        "iconBolt": "闪电",
+        "iconStar": "星形",
+        "iconHeart": "爱心",
+        "iconPin": "定位",
+        "iconBell": "铃铛",
+        "paddingSize": "内边距",
+        "strokeWidth": "线宽",
+        "color": "图标颜色",
+        "backgroundColor": "背景色",
+        "backgroundOpacity": "背景透明度",
+        "cornerRadius": "圆角",
+        "opacity": "透明度",
+        "showFrame": "显示边框",
+        "frameColor": "边框颜色",
+        "frameWidth": "边框宽度"
+      }
+    }
+  }
+}

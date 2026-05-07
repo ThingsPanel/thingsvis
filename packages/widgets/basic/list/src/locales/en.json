@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-list": {
+        "name": "List",
+        "groupContent": "Content",
+        "groupTypography": "Typography",
+        "groupStyle": "Style",
+        "showTitle": "Show title",
+        "title": "Title",
+        "itemsText": "Items",
+        "bulletStyle": "Bullet style",
+        "bulletDot": "Dot",
+        "bulletCheck": "Check",
+        "bulletNumber": "Number",
+        "titleFontSize": "Title size",
+        "fontSize": "Body size",
+        "rowGap": "Row gap",
+        "titleColor": "Title color",
+        "textColor": "Text color",
+        "accentColor": "Accent color",
+        "backgroundColor": "Background",
+        "borderColor": "Border color",
+        "borderWidth": "Border width",
+        "cornerRadius": "Corner radius",
+        "paddingSize": "Padding"
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-badge": {
+        "name": "Badge",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "text": "Text",
+        "tone": "Tone",
+        "toneDefault": "Default",
+        "toneSuccess": "Success",
+        "toneWarning": "Warning",
+        "toneDanger": "Danger",
+        "toneInfo": "Info",
+        "shape": "Shape",
+        "shapePill": "Pill",
+        "shapeRounded": "Rounded",
+        "shapeSquare": "Square",
+        "fontSize": "Font size",
+        "fontWeight": "Font weight",
+        "paddingX": "Horizontal padding",
+        "borderWidth": "Border width",
+        "backgroundColor": "Background color",
+        "textColor": "Text color",
+        "borderColor": "Border color",
+        "opacity": "Opacity"
+      }
+    }
+  }
+}

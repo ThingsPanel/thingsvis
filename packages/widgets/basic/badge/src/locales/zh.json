@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-badge": {
+        "name": "标签",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "text": "文本",
+        "tone": "色调",
+        "toneDefault": "默认",
+        "toneSuccess": "成功",
+        "toneWarning": "警告",
+        "toneDanger": "危险",
+        "toneInfo": "信息",
+        "shape": "形状",
+        "shapePill": "胶囊",
+        "shapeRounded": "圆角",
+        "shapeSquare": "方角",
+        "fontSize": "字号",
+        "fontWeight": "字重",
+        "paddingX": "水平内边距",
+        "borderWidth": "边框宽度",
+        "backgroundColor": "背景色",
+        "textColor": "文字颜色",
+        "borderColor": "边框颜色",
+        "opacity": "透明度"
+      }
+    }
+  }
+}

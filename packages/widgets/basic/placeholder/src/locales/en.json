@@ -1,0 +1,28 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-placeholder": {
+        "name": "Placeholder",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "title": "Title",
+        "description": "Description",
+        "icon": "Icon",
+        "iconFrame": "Frame",
+        "iconImage": "Image",
+        "iconChart": "Chart",
+        "borderStyle": "Border style",
+        "borderDashed": "Dashed",
+        "borderSolid": "Solid",
+        "titleFontSize": "Title size",
+        "bodyFontSize": "Body size",
+        "accentColor": "Accent color",
+        "backgroundColor": "Background color",
+        "borderColor": "Border color",
+        "borderWidth": "Border width",
+        "cornerRadius": "Corner radius",
+        "opacity": "Opacity"
+      }
+    }
+  }
+}

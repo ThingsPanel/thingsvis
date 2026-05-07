@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-rich-text": {
+        "name": "富文本",
+        "groupContent": "内容",
+        "groupTypography": "排版",
+        "groupStyle": "样式",
+        "showTitle": "显示标题",
+        "title": "标题",
+        "body": "正文",
+        "titleFontSize": "标题字号",
+        "bodyFontSize": "正文字号",
+        "lineHeight": "行高",
+        "align": "对齐",
+        "alignLeft": "左对齐",
+        "alignCenter": "居中",
+        "alignRight": "右对齐",
+        "titleColor": "标题颜色",
+        "bodyColor": "正文颜色",
+        "backgroundColor": "背景色",
+        "backgroundOpacity": "背景透明度",
+        "borderColor": "边框颜色",
+        "borderWidth": "边框宽度",
+        "cornerRadius": "圆角",
+        "paddingSize": "内边距"
+      }
+    }
+  }
+}

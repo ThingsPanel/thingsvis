@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-list": {
+        "name": "列表",
+        "groupContent": "内容",
+        "groupTypography": "排版",
+        "groupStyle": "样式",
+        "showTitle": "显示标题",
+        "title": "标题",
+        "itemsText": "列表项",
+        "bulletStyle": "标记样式",
+        "bulletDot": "圆点",
+        "bulletCheck": "勾选",
+        "bulletNumber": "编号",
+        "titleFontSize": "标题字号",
+        "fontSize": "正文字号",
+        "rowGap": "行间距",
+        "titleColor": "标题颜色",
+        "textColor": "文字颜色",
+        "accentColor": "强调色",
+        "backgroundColor": "背景色",
+        "borderColor": "边框颜色",
+        "borderWidth": "边框宽度",
+        "cornerRadius": "圆角",
+        "paddingSize": "内边距"
+      }
+    }
+  }
+}

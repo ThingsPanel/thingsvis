@@ -1,0 +1,30 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-rich-text": {
+        "name": "Rich Text",
+        "groupContent": "Content",
+        "groupTypography": "Typography",
+        "groupStyle": "Style",
+        "showTitle": "Show title",
+        "title": "Title",
+        "body": "Body",
+        "titleFontSize": "Title size",
+        "bodyFontSize": "Body size",
+        "lineHeight": "Line height",
+        "align": "Align",
+        "alignLeft": "Left",
+        "alignCenter": "Center",
+        "alignRight": "Right",
+        "titleColor": "Title color",
+        "bodyColor": "Body color",
+        "backgroundColor": "Background",
+        "backgroundOpacity": "Background opacity",
+        "borderColor": "Border color",
+        "borderWidth": "Border width",
+        "cornerRadius": "Corner radius",
+        "paddingSize": "Padding"
+      }
+    }
+  }
+}
