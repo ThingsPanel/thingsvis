@@ -44,7 +44,9 @@ export interface SavePayload {
     id?: string;
     name?: string;
     version?: string;
+    thumbnail?: string;
   };
+  thumbnail?: string;
   canvas: {
     mode: string;
     width: number;
