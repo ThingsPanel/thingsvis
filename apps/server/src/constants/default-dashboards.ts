@@ -73,18 +73,12 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           showTrend: false,
           valueColor: 'auto',
           thresholds: '[]',
+          titleFontSize: 16,
         },
-        baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { style: 'solid', radius: 8 },
-          opacity: 1,
-        },
-        position: { x: 0, y: 0 },
-        size: { width: 160, height: 80 },
         data: [
           {
             targetProp: 'value',
-            expression: '{{ ds.thingspanel_device_summary.data.device_total }}',
+            expression: '{{ ds.device_sum.data.device_total }}',
           },
         ],
         grid: { x: 0, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
@@ -101,18 +95,12 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           showTrend: false,
           valueColor: 'auto',
           thresholds: '[]',
+          titleFontSize: 16,
         },
-        baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { style: 'solid', radius: 8 },
-          opacity: 1,
-        },
-        position: { x: 20, y: 20 },
-        size: { width: 160, height: 80 },
         data: [
           {
             targetProp: 'value',
-            expression: '{{ ds.thingspanel_device_summary.data.device_online }}',
+            expression: '{{ ds.device_sum.data.device_on }}',
           },
         ],
         grid: { x: 6, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
@@ -129,18 +117,12 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           showTrend: false,
           valueColor: 'auto',
           thresholds: '[]',
+          titleFontSize: 16,
         },
-        baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { style: 'solid', radius: 8 },
-          opacity: 1,
-        },
-        position: { x: 40, y: 40 },
-        size: { width: 160, height: 80 },
         data: [
           {
             targetProp: 'value',
-            expression: '{{ ds.thingspanel_device_summary.data.device_offline }}',
+            expression: '{{ ds.device_sum.data.device_offline }}',
           },
         ],
         grid: { x: 12, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
@@ -157,14 +139,8 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           showTrend: true,
           valueColor: 'auto',
           thresholds: '[]',
+          titleFontSize: 16,
         },
-        baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { style: 'solid', radius: 8 },
-          opacity: 1,
-        },
-        position: { x: 60, y: 60 },
-        size: { width: 160, height: 80 },
         data: [
           {
             targetProp: 'value',
@@ -173,7 +149,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
           {
             targetProp: 'trend',
             expression: '{{ ds.thingspanel_tenant_summary.data.tenant_added_month }}',
-            transform: '(data.tenant_added_month / data.tenant_total).toFixed(2)*100',
+            transform: '(data.tenant_added_month / data.tenant_total).toFixed(2) * 100',
           },
         ],
         grid: { x: 18, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
@@ -239,177 +215,22 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
     ]),
     dataSources: JSON.stringify([
       {
-        id: 'thingspanel_device_summary',
-        name: 'thingspanel_device_summary',
+        id: 'device_sum',
+        name: '设备统计（超管）',
         type: 'REST',
         config: {
-          url: '{{ var.platformApiBaseUrl }}/board/tenant/device/info',
+          url: '{{ var.platformApiBaseUrl }}/board/device',
           method: 'GET',
           headers: { 'x-token': '{{ var.platformToken }}' },
           params: {},
-          pollingInterval: 60,
+          pollingInterval: 0,
           timeout: 30,
           auth: { type: 'none' },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const total = Number(payload?.device_total ?? 0);
-const online = Number(payload?.device_on ?? payload?.device_online ?? 0);
-const activity = Number(payload?.device_activity ?? 0);
-return {
-  device_total: total,
-  device_online: online,
-  device_offline: Math.max(0, total - online),
-  device_activity: activity
-};
-`,
-      },
-      {
-        id: 'thingspanel_alarm_summary',
-        name: 'thingspanel_alarm_summary',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/alarm/device/counts',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: {},
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return { alarm_device_total: Number(payload?.alarm_device_total ?? 0) };
-`,
-      },
-      {
-        id: 'thingspanel_device_trend',
-        name: 'thingspanel_device_trend',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/board/trend',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: {},
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const points = Array.isArray(payload?.points) ? payload.points : Array.isArray(payload) ? payload : [];
-const mapSeries = (field) => points.map((point) => ({
-  timestamp: point.timestamp ?? point.time ?? point.created_at,
-  value: Number(point[field] ?? 0)
-}));
-return {
-  device_total__history: mapSeries('device_total'),
-  device_online__history: mapSeries('device_online'),
-  device_offline__history: mapSeries('device_offline'),
-  device_activity__history: mapSeries('device_online')
-};
-`,
-      },
-      {
-        id: 'thingspanel_home_alarm_history',
-        name: 'thingspanel_home_alarm_history',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/alarm/info/history',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: { page: 1, page_size: 10 },
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const rows = Array.isArray(payload?.list)
-  ? payload.list
-  : Array.isArray(payload?.data)
-    ? payload.data
-    : Array.isArray(payload)
-      ? payload
-      : [];
-const normalizeLevel = (raw) => {
-  const v = String(raw ?? '').toLowerCase().trim();
-  if (v === '1' || v === 'critical' || v === 'high' || v === 'serious') return 'critical';
-  if (v === '2' || v === 'warning' || v === 'medium' || v === 'warn') return 'warning';
-  return 'info';
-};
-const fmtTime = (raw) => {
-  if (!raw) return '';
-  try {
-    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);
-    if (isNaN(d.getTime())) return String(raw);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  } catch { return String(raw); }
-};
-const latest = rows[0] ?? null;
-return {
-  alarm_rows: rows.map((row) => ({
-    level: normalizeLevel(row?.alarm_level ?? row?.level),
-    title: String(row?.alarm_name ?? row?.name ?? row?.title ?? ''),
-    detail: String(row?.alarm_description ?? row?.alarm_message ?? row?.message ?? row?.detail ?? ''),
-    source: String(row?.device_name ?? row?.source ?? ''),
-    time: fmtTime(row?.create_time ?? row?.created_at ?? row?.time),
-  })),
-  alarm_total: Number(payload?.total ?? rows.length ?? 0),
-  latest_alarm_level: normalizeLevel(latest?.alarm_level ?? latest?.level),
-  latest_alarm_title: String(latest?.alarm_name ?? latest?.name ?? latest?.title ?? ''),
-};
-`,
-      },
-      {
-        id: 'thingspanel_home_latest_telemetry',
-        name: 'thingspanel_home_latest_telemetry',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/device/telemetry/latest',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: {},
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const devices = Array.isArray(payload) ? payload : [];
-const latestDevices = devices.map((device) => ({
-  device_id: device?.device_id ?? '',
-  device_name: device?.device_name ?? '',
-  is_online: Number(device?.is_online ?? 0),
-  last_push_time: device?.last_push_time ?? '',
-  telemetry_data: Array.isArray(device?.telemetry_data) ? device.telemetry_data : []
-}));
-const fmtTime = (raw) => {
-  if (!raw) return '';
-  try {
-    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);
-    if (isNaN(d.getTime())) return String(raw);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  } catch { return String(raw); }
-};
-const rows = latestDevices.flatMap((device) =>
-  (Array.isArray(device.telemetry_data) ? device.telemetry_data : []).map((item) => ({
-    name: device.device_name,
-    metric: String(item?.label ?? item?.key ?? ''),
-    value: item?.unit ? String(item.value ?? '') + ' ' + item.unit : String(item?.value ?? ''),
-    time: fmtTime(device.last_push_time),
-    device_id: device.device_id,
-    key: item?.key ?? '',
-    raw_value: item?.value,
-    is_online: device.is_online,
-  }))
-);
-return {
-  latest_devices: latestDevices,
-  latest_telemetry_rows: rows,
-  latest_device_count: latestDevices.length
-};
-`,
+        transformation: `return data.data`,
+        createdAt: '2026-05-07T08:19:07.385Z',
+        updatedAt: '2026-05-07T12:40:58.098Z',
+        mode: 'auto',
       },
       {
         id: 'thingspanel_tenant_summary',
@@ -436,28 +257,6 @@ return {
     timestamp: new Date(year, Number(row.mon ?? 1) - 1, 1).toISOString(),
     value: Number(row.num ?? 0)
   }))
-};
-`,
-      },
-      {
-        id: 'thingspanel_system_metrics',
-        name: 'thingspanel_system_metrics',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/system/metrics/current',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: {},
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return {
-  cpu_usage: Number(payload?.cpu_usage ?? 0),
-  memory_usage: Number(payload?.memory_usage ?? 0),
-  disk_usage: Number(payload?.disk_usage ?? 0)
 };
 `,
       },
