@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand/vanilla';
 import type { KernelState, KernelActions, DataSourceRuntimeState } from '../types';
+import { extractFieldSchema } from '../../utils/extractFieldSchema';
 
 export type DataSourceSliceState = {
   dataSources: Record<string, DataSourceRuntimeState>;
@@ -41,6 +42,8 @@ export const createDataSourceSlice: StateCreator<
         data: existing?.data ?? null,
         status: existing?.status ?? 'loading',
         lastUpdated: existing?.lastUpdated ?? Date.now(),
+        fieldSchema: existing?.fieldSchema,
+        fieldSchemaUpdatedAt: existing?.fieldSchemaUpdatedAt,
         ...partialState,
       };
 
@@ -48,7 +51,8 @@ export const createDataSourceSlice: StateCreator<
         existing &&
         existing.status === nextState.status &&
         existing.error === nextState.error &&
-        isSameValue(existing.data, nextState.data)
+        isSameValue(existing.data, nextState.data) &&
+        isSameValue(existing.fieldSchema, nextState.fieldSchema)
       ) {
         return;
       }
@@ -59,23 +63,31 @@ export const createDataSourceSlice: StateCreator<
 
   updateDataSourceData: (id, data) => {
     set((state) => {
+      const fieldSchema = extractFieldSchema(data);
+      const fieldSchemaUpdatedAt = Date.now();
+
       if (!state.dataSources[id]) {
         state.dataSources[id] = {
           id,
           data,
           status: 'connected',
-          lastUpdated: Date.now(),
+          lastUpdated: fieldSchemaUpdatedAt,
+          fieldSchema,
+          fieldSchemaUpdatedAt,
         };
       } else {
         if (
           state.dataSources[id].status === 'connected' &&
-          isSameValue(state.dataSources[id].data, data)
+          isSameValue(state.dataSources[id].data, data) &&
+          isSameValue(state.dataSources[id].fieldSchema, fieldSchema)
         ) {
           return;
         }
         state.dataSources[id].data = data;
-        state.dataSources[id].lastUpdated = Date.now();
+        state.dataSources[id].lastUpdated = fieldSchemaUpdatedAt;
         state.dataSources[id].status = 'connected';
+        state.dataSources[id].fieldSchema = fieldSchema;
+        state.dataSources[id].fieldSchemaUpdatedAt = fieldSchemaUpdatedAt;
       }
     });
   },

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Plus,
@@ -27,7 +27,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import type { DataSourceType, DataSourceMode, RESTConfig, WSConfig } from '@thingsvis/schema';
+import type {
+  DataSource,
+  DataSourceType,
+  DataSourceMode,
+  RESTConfig,
+  WSConfig,
+} from '@thingsvis/schema';
 import {
   DEFAULT_AUTH_CONFIG,
   DEFAULT_RECONNECT_POLICY,
@@ -43,6 +49,7 @@ import { dataSourceManager, store } from '../lib/store';
 import { buildHashRoute } from '../lib/embed/navigation';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import {
+  buildEmbeddedProviderDataSources,
   listEmbeddedProviderDataSourceIds,
   resolveEmbeddedProviderCatalog,
 } from '../lib/embedded/embedded-data-source-registry';
@@ -68,10 +75,19 @@ const DEFAULT_WS_CONFIG: WSConfig = {
   initMessages: [],
 };
 
+function getProviderGroups(context: string | undefined) {
+  return context === 'dashboard'
+    ? ['dashboard']
+    : context === 'device-template'
+      ? ['dashboard', 'current-device', 'current-device-history']
+      : undefined;
+}
+
 export default function DataSourcesPage() {
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [configVersion, setConfigVersion] = useState(0);
   const { t, i18n } = useTranslation('pages');
 
   // Toast state
@@ -126,12 +142,7 @@ export default function DataSourcesPage() {
   const protectedDataSourceIds = useMemo(() => {
     if (serviceConfig.mode !== 'embedded') return new Set<string>();
 
-    const groups =
-      serviceConfig.context === 'dashboard'
-        ? ['dashboard']
-        : serviceConfig.context === 'device-template'
-          ? ['dashboard', 'current-device', 'current-device-history']
-          : undefined;
+    const groups = getProviderGroups(serviceConfig.context);
 
     return new Set(
       listEmbeddedProviderDataSourceIds(
@@ -140,17 +151,113 @@ export default function DataSourcesPage() {
       ),
     );
   }, [serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
+  const embeddedProviderDataSources = useMemo(() => {
+    if (serviceConfig.mode !== 'embedded') return [] as DataSource[];
+
+    const groups = getProviderGroups(serviceConfig.context);
+
+    return buildEmbeddedProviderDataSources(
+      serviceConfig.provider,
+      store.getState().variableValues,
+      groups ? { groups: groups as any } : undefined,
+    ) as DataSource[];
+  }, [configVersion, serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
+  const embeddedProviderDataSourceMap = useMemo(
+    () => new Map(embeddedProviderDataSources.map((source) => [source.id, source])),
+    [embeddedProviderDataSources],
+  );
+
+  useEffect(() => {
+    if (embeddedProviderDataSources.length === 0) return;
+
+    let cancelled = false;
+    const missingSources = embeddedProviderDataSources.filter(
+      (source) => !dataSourceManager.getConfig(source.id),
+    );
+    if (missingSources.length === 0) return;
+
+    Promise.allSettled(
+      missingSources.map((source) => dataSourceManager.registerDataSource(source, false)),
+    ).then(() => {
+      if (!cancelled) {
+        setConfigVersion((version) => version + 1);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [embeddedProviderDataSources]);
+
+  const configuredDataSources = useMemo(() => {
+    const byId = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        state: (typeof states)[string] | undefined;
+        mode: DataSourceMode;
+      }
+    >();
+
+    embeddedProviderDataSources.forEach((config: DataSource) => {
+      const providerName = providerDataSourceNameMap.get(config.id);
+      byId.set(config.id, {
+        id: config.id,
+        name: providerName || (config.name && config.name !== config.id ? config.name : config.id),
+        state: states[config.id],
+        mode: dataSourceManager.getResolvedMode(config.id),
+      });
+    });
+
+    dataSourceManager.getAllConfigs().forEach((config: DataSource) => {
+      const providerName = providerDataSourceNameMap.get(config.id);
+      byId.set(config.id, {
+        id: config.id,
+        name: providerName || (config.name && config.name !== config.id ? config.name : config.id),
+        state: states[config.id],
+        mode: dataSourceManager.getResolvedMode(config.id),
+      });
+    });
+
+    Object.values(states).forEach((state) => {
+      if (byId.has(state.id)) return;
+      byId.set(state.id, {
+        id: state.id,
+        name: getDisplayName(state.id),
+        state,
+        mode: dataSourceManager.getResolvedMode(state.id),
+      });
+    });
+
+    return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [embeddedProviderDataSources, providerDataSourceNameMap, states]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, visible: true, type });
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
   };
 
-  const getDisplayName = (dataSourceId: string): string => {
+  function getDisplayName(dataSourceId: string): string {
     const config = dataSourceManager.getConfig(dataSourceId);
+    const providerName = providerDataSourceNameMap.get(dataSourceId);
+    if (providerName) return providerName;
     if (config?.name && config.name !== dataSourceId) return config.name;
-    return providerDataSourceNameMap.get(dataSourceId) ?? dataSourceId;
-  };
+    return dataSourceId;
+  }
+
+  function getStatusDotClass(dataSource: {
+    id: string;
+    state: (typeof states)[string] | undefined;
+  }): string {
+    if (dataSource.state?.status === 'error') return 'bg-red-400';
+    if (protectedDataSourceIds.has(dataSource.id)) {
+      return 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]';
+    }
+    return dataSource.state?.status === 'connected'
+      ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]'
+      : 'bg-yellow-400';
+  }
 
   const syncStaticJsonTextFromConfig = (configValue: unknown) => {
     try {
@@ -196,6 +303,7 @@ export default function DataSourcesPage() {
         transformation: editingSource.transformation || undefined,
         mode: editingSource.mode,
       });
+      setConfigVersion((version) => version + 1);
       setIsAdding(false);
       setSelectedId(editingSource.id);
       showToast(t('dataSources.saveSuccess'), 'success');
@@ -219,7 +327,7 @@ export default function DataSourcesPage() {
   };
 
   const selectSource = (id: string) => {
-    const config = dataSourceManager.getConfig(id);
+    const config = dataSourceManager.getConfig(id) ?? embeddedProviderDataSourceMap.get(id);
     if (config) {
       setIsAdding(false);
       setSelectedId(id);
@@ -236,7 +344,10 @@ export default function DataSourcesPage() {
       } else {
         setStaticJsonError(null);
       }
+      return;
     }
+
+    showToast(t('dataSources.configMissing', '数据源配置尚未加载，请稍后重试'), 'error');
   };
 
   const handleDeleteClick = (e: React.MouseEvent, id: string) => {
@@ -264,6 +375,7 @@ export default function DataSourcesPage() {
 
     try {
       await dataSourceManager.unregisterDataSource(sourceToDelete);
+      setConfigVersion((version) => version + 1);
       if (selectedId === sourceToDelete) setSelectedId(null);
 
       showToast(t('dataSources.deleted'), 'success');
@@ -375,7 +487,7 @@ export default function DataSourcesPage() {
             </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1">
-            {Object.values(states).map((ds) => (
+            {configuredDataSources.map((ds) => (
               <div
                 key={ds.id}
                 onClick={() => selectSource(ds.id)}
@@ -386,12 +498,10 @@ export default function DataSourcesPage() {
                 }`}
               >
                 <div className="flex items-center gap-2 min-w-0">
-                  <div
-                    className={`w-2 h-2 rounded-full shrink-0 ${ds.status === 'connected' ? 'bg-green-400 shadow-[0_0_6px_rgba(74,222,128,0.6)]' : 'bg-yellow-400'}`}
-                  />
+                  <div className={`w-2 h-2 rounded-full shrink-0 ${getStatusDotClass(ds)}`} />
                   <div className="min-w-0 flex flex-col">
-                    <span className="text-sm font-semibold truncate">{getDisplayName(ds.id)}</span>
-                    {getDisplayName(ds.id) !== ds.id ? (
+                    <span className="text-sm font-semibold truncate">{ds.name}</span>
+                    {ds.name !== ds.id ? (
                       <span
                         className={`text-[10px] truncate ${selectedId === ds.id ? 'text-white/60' : 'text-muted-foreground'}`}
                       >
@@ -399,26 +509,21 @@ export default function DataSourcesPage() {
                       </span>
                     ) : null}
                   </div>
-                  {(() => {
-                    const mode = dataSourceManager.getResolvedMode(ds.id);
-                    return (
-                      <span
-                        className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none ${
-                          mode === 'manual'
-                            ? selectedId === ds.id
-                              ? 'bg-white/20 text-white'
-                              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
-                            : selectedId === ds.id
-                              ? 'bg-white/20 text-white'
-                              : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-                        }`}
-                      >
-                        {mode === 'manual'
-                          ? t('dataSources.modeManualShort')
-                          : t('dataSources.modeAutoShort')}
-                      </span>
-                    );
-                  })()}
+                  <span
+                    className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold leading-none ${
+                      ds.mode === 'manual'
+                        ? selectedId === ds.id
+                          ? 'bg-white/20 text-white'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                        : selectedId === ds.id
+                          ? 'bg-white/20 text-white'
+                          : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                    }`}
+                  >
+                    {ds.mode === 'manual'
+                      ? t('dataSources.modeManualShort')
+                      : t('dataSources.modeAutoShort')}
+                  </span>
                 </div>
                 {!protectedDataSourceIds.has(ds.id) && (
                   <button
@@ -430,7 +535,7 @@ export default function DataSourcesPage() {
                 )}
               </div>
             ))}
-            {Object.keys(states).length === 0 && !isAdding && (
+            {configuredDataSources.length === 0 && !isAdding && (
               <div className="py-16 text-center text-muted-foreground/40 text-sm italic">
                 {t('dataSources.empty')}
               </div>

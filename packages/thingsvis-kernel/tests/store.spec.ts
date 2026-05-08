@@ -191,12 +191,27 @@ describe('KernelStore', () => {
 
             expect(state.dataSources['ds-1']?.data).toEqual({ temp: 25 });
             expect(state.dataSources['ds-1']?.status).toBe('connected');
+            expect(state.dataSources['ds-1']?.fieldSchema?.map((field) => field.path)).toEqual([
+                '(root)',
+                'temp',
+            ]);
+            expect(state.dataSources['ds-1']?.fieldSchemaUpdatedAt).toBeGreaterThan(0);
         });
 
         it('should set datasource state partially', () => {
             useStore.getState().setDataSourceState('ds-2', { status: 'error', error: 'timeout' });
             expect(useStore.getState().dataSources['ds-2']?.status).toBe('error');
             expect(useStore.getState().dataSources['ds-2']?.error).toBe('timeout');
+        });
+
+        it('should preserve datasource field schema during lifecycle updates', () => {
+            useStore.getState().updateDataSourceData('ds-1', { temp: 25 });
+            const before = useStore.getState().dataSources['ds-1']?.fieldSchema;
+
+            useStore.getState().setDataSourceState('ds-1', { status: 'loading' });
+
+            expect(useStore.getState().dataSources['ds-1']?.fieldSchema).toBe(before);
+            expect(useStore.getState().dataSources['ds-1']?.status).toBe('loading');
         });
 
         it('should remove datasource', () => {

@@ -8,6 +8,7 @@ import type {
   IBaseStyle,
 } from '@thingsvis/schema';
 import type { DashboardVariable } from '../variables/types';
+import type { FieldSchemaEntry } from '../utils/extractFieldSchema';
 import type { StoreApi } from 'zustand/vanilla';
 import type { TemporalState } from 'zundo';
 
@@ -65,6 +66,8 @@ export type DataSourceRuntimeState = {
   status: 'idle' | 'connected' | 'disconnected' | 'error' | 'loading';
   error?: string;
   lastUpdated: number;
+  fieldSchema?: FieldSchemaEntry[];
+  fieldSchemaUpdatedAt?: number;
 };
 
 export type LayerGroup = {

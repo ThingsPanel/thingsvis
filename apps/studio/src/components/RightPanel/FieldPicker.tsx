@@ -427,8 +427,19 @@ export function FieldPicker({
       ),
     [dataSourceIds, platformSourceIds],
   );
-  const hasVisibleCustomDataSources =
-    customDataSourceIds.length > 0 && (!isEmbeddedMode || serviceConfig.context !== 'dashboard');
+  const customDataSourceLabelById = useMemo(() => {
+    const labels = new Map<string, string>();
+    dataSourceManager.getAllConfigs().forEach((config) => {
+      if (!customDataSourceIds.includes(config.id)) return;
+      const name = typeof config.name === 'string' ? config.name.trim() : '';
+      labels.set(config.id, name && name !== config.id ? `${name} (${config.id})` : config.id);
+    });
+    customDataSourceIds.forEach((id) => {
+      if (!labels.has(id)) labels.set(id, id);
+    });
+    return labels;
+  }, [customDataSourceIds, states]);
+  const hasVisibleCustomDataSources = customDataSourceIds.length > 0;
   const hasPlatformStatsCatalog = isEmbeddedMode && visiblePlatformSources.length > 0;
   const hasLazyDeviceCatalog = isEmbeddedMode && window.parent !== window;
   const hasDeviceCatalog =
@@ -754,13 +765,14 @@ export function FieldPicker({
   const isOffline = snapshot === null && fieldSchema !== null;
   // Derive field paths for the active data source.
   // Prefer cached fieldSchema (offline-friendly); fall back to static device fields or live snapshot traversal.
-  const { paths, pathInfos, truncated } = useMemo(() => {
+  const { paths, pathInfos, truncated, filteredOutCount } = useMemo(() => {
     const finalize = (infos: FieldPathInfo[], isTruncated = false) => {
       const filtered = infos.filter((info) => isFieldTypeCompatible(info.type, targetKind));
       return {
         paths: filtered.map((info) => info.path),
         pathInfos: filtered,
         truncated: isTruncated,
+        filteredOutCount: infos.length - filtered.length,
       };
     };
 
@@ -1111,7 +1123,7 @@ export function FieldPicker({
                 {selectedGroup === 'custom' &&
                   customDataSourceIds.map((id) => (
                     <option key={id} value={id}>
-                      {id}
+                      {customDataSourceLabelById.get(id) ?? id}
                     </option>
                   ))}
               </select>
@@ -1135,7 +1147,7 @@ export function FieldPicker({
             <option value="">{t('binding.selectDataSource', '请选择数据源')}</option>
             {customDataSourceIds.map((id) => (
               <option key={id} value={id}>
-                {id}
+                {customDataSourceLabelById.get(id) ?? id}
               </option>
             ))}
           </select>
@@ -1295,6 +1307,14 @@ export function FieldPicker({
         {dsStatus === 'connected' && paths.length === 0 && snapshot === null && (
           <p className="text-xs text-muted-foreground">
             {t('binding.noDataHint', 'No data available. Check config or wait for data.')}
+          </p>
+        )}
+        {paths.length === 0 && filteredOutCount > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {t(
+              'binding.fieldTypeFiltered',
+              'Some fields are hidden because they do not match this property type.',
+            )}
           </p>
         )}
         {truncated && (
