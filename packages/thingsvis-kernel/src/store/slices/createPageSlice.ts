@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand/vanilla';
-import type { KernelState, KernelActions, NodeState } from '../types';
+import type { KernelState, KernelActions, NodeState, LayerGroup } from '../types';
 import type { NodeSchemaType, IPage } from '@thingsvis/schema';
 import { PageSchema } from '@thingsvis/schema';
 import { defaultCanvas } from './createCanvasSlice';
@@ -36,6 +36,52 @@ function extractConfig(page: IPage | Record<string, unknown>): Record<string, un
     return page.config as Record<string, unknown>;
   }
   return {};
+}
+
+function normalizeLayerOrder(config: Record<string, unknown>, nodes: NodeSchemaType[]): string[] {
+  const nodeIds = nodes.map((node) => node.id);
+  const nodeIdSet = new Set(nodeIds);
+  const configuredOrder = Array.isArray(config.layerOrder)
+    ? config.layerOrder.filter((id): id is string => typeof id === 'string' && nodeIdSet.has(id))
+    : [];
+  const configuredIdSet = new Set(configuredOrder);
+  const missingIds = nodeIds.filter((id) => !configuredIdSet.has(id));
+  return [...configuredOrder, ...missingIds];
+}
+
+function normalizeLayerGroups(
+  config: Record<string, unknown>,
+  nodeIds: string[],
+): Record<string, LayerGroup> {
+  if (
+    !config.layerGroups ||
+    typeof config.layerGroups !== 'object' ||
+    Array.isArray(config.layerGroups)
+  ) {
+    return {};
+  }
+
+  const nodeIdSet = new Set(nodeIds);
+  const groups: Record<string, LayerGroup> = {};
+  Object.entries(config.layerGroups as Record<string, unknown>).forEach(([groupId, rawGroup]) => {
+    if (!rawGroup || typeof rawGroup !== 'object' || Array.isArray(rawGroup)) return;
+    const group = rawGroup as Record<string, unknown>;
+    const memberIds = Array.isArray(group.memberIds)
+      ? group.memberIds.filter((id): id is string => typeof id === 'string' && nodeIdSet.has(id))
+      : [];
+    if (memberIds.length === 0) return;
+
+    groups[groupId] = {
+      id: typeof group.id === 'string' ? group.id : groupId,
+      name: typeof group.name === 'string' && group.name.trim() ? group.name : groupId,
+      expanded: group.expanded !== false,
+      locked: group.locked === true,
+      visible: group.visible !== false,
+      memberIds,
+    };
+  });
+
+  return groups;
 }
 
 export const createPageSlice: StateCreator<
@@ -77,9 +123,8 @@ export const createPageSlice: StateCreator<
         gridEnabled: Boolean(config.gridEnabled),
         gridSize: typeof config.gridSize === 'number' ? config.gridSize : defaultCanvas.gridSize,
       } as typeof state.canvas;
-      // Initialize layer order from nodes
-      state.layerOrder = nodes.map((n: NodeSchemaType) => n.id);
-      state.layerGroups = {};
+      state.layerOrder = normalizeLayerOrder(config, nodes);
+      state.layerGroups = normalizeLayerGroups(config, state.layerOrder);
     });
   },
 

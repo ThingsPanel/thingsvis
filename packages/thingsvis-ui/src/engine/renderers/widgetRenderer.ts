@@ -70,6 +70,7 @@ function nodeToOverlayContext(
     position: schema.position,
     size: schema.size,
     props: resolvedProps,
+    baseStyle: schema.baseStyle,
     mode,
     locale: opts?.locale ?? 'en',
     visible: true,

@@ -60,6 +60,28 @@ export type WidgetOverlayContext = SchemaOverlayContext & {
   id?: string;
   /** 组件类型标识 */
   type?: string;
+  /** Node-level visual style forwarded by the host. */
+  baseStyle?: {
+    background?: {
+      color?: string;
+      image?: string;
+      opacity?: number;
+    };
+    border?: {
+      width?: number;
+      color?: string;
+      style?: string;
+      radius?: number;
+    };
+    shadow?: {
+      color?: string;
+      blur?: number;
+      offsetX?: number;
+      offsetY?: number;
+    };
+    padding?: number;
+    opacity?: number;
+  };
   /** 当前画布的主题上下文 (Dawn/Midnight) */
   theme?: WidgetTheme;
   /** 关联节点信息 */

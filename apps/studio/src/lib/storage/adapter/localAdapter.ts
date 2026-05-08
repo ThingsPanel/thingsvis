@@ -33,6 +33,7 @@ function projectFileToStorageProject(file: ProjectFile): StorageProject {
       canvas: file.canvas,
       nodes: file.nodes,
       dataSources: file.dataSources,
+      variables: file.variables,
     },
   };
 }
@@ -54,6 +55,7 @@ function storageProjectToProjectFile(project: StorageProject): ProjectFile {
     },
     nodes: project.schema.nodes || [],
     dataSources: project.schema.dataSources || [],
+    variables: project.schema.variables || [],
   };
 }
 

@@ -7,6 +7,7 @@ import {
   type IPageConfig,
   DEFAULT_CANVAS_THEME,
 } from '@thingsvis/schema';
+import type { LayerGroup } from '@thingsvis/kernel';
 import { projectStorage } from '../lib/storage/projectStorage';
 import { recentProjects } from '../lib/storage/recentProjects';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
@@ -148,6 +149,8 @@ export type CanvasConfigSchema = {
   scaleMode: PreviewScaleMode;
   previewAlignY: PreviewAlignY;
   gridSize: number;
+  layerOrder?: string[];
+  layerGroups?: Record<string, LayerGroup>;
   bgType: 'color' | 'image';
   bgValue: string;
   bgColor: string; // Added for color input
@@ -370,6 +373,8 @@ export function useProjectBootstrap({
           theme: validateCanvasTheme((loaded.canvas as any).theme),
           scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
           previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
+          layerOrder: (loaded.canvas as any).layerOrder,
+          layerGroups: (loaded.canvas as any).layerGroups,
           background: loadedBackground as unknown as
             | NonNullable<IPageConfig['background']>
             | undefined,
@@ -399,6 +404,8 @@ export function useProjectBootstrap({
         gridGap: loaded.canvas.gridGap ?? prev.gridGap,
         gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
         gridSize: loaded.canvas.gridSize ?? prev.gridSize,
+        layerOrder: (loaded.canvas as any).layerOrder,
+        layerGroups: (loaded.canvas as any).layerGroups,
         dataSources: (loaded.dataSources as any) ?? prev.dataSources,
       }));
 
@@ -480,6 +487,8 @@ export function useProjectBootstrap({
         gridEnabled: currentCanvasConfig.gridEnabled,
         gridSize: currentCanvasConfig.gridSize,
         homeFlag: currentCanvasConfig.homeFlag,
+        layerOrder: state.layerOrder,
+        layerGroups: state.layerGroups,
       },
       nodes: nodes,
       dataSources: effectiveDataSources,
@@ -758,6 +767,8 @@ export function useProjectBootstrap({
         gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
         gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
         gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+        layerOrder: (resolvedCanvas as any)?.layerOrder,
+        layerGroups: (resolvedCanvas as any)?.layerGroups,
         thumbnail: loadedMeta?.thumbnail || processed.thumbnail || '',
         dataSources: mergedDataSources as any,
       }));
@@ -774,6 +785,8 @@ export function useProjectBootstrap({
           theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
           scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
           previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
+          layerOrder: (resolvedCanvas as any)?.layerOrder,
+          layerGroups: (resolvedCanvas as any)?.layerGroups,
           background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
           gridSettings: {
             cols: resolvedCanvas?.gridCols ?? 24,
@@ -851,6 +864,8 @@ export function useProjectBootstrap({
             gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
             gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
             homeFlag: (resolvedCanvas as any)?.homeFlag,
+            layerOrder: store.getState().layerOrder,
+            layerGroups: store.getState().layerGroups,
           },
           nodes: nodesToLoad,
           dataSources: mergedDataSources as any,

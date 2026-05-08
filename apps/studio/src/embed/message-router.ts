@@ -248,6 +248,8 @@ export interface EmbedInitPayload {
       gridRowHeight?: number;
       gridGap?: number;
       fullWidthPreview?: boolean;
+      layerOrder?: unknown[];
+      layerGroups?: Record<string, unknown>;
     };
     nodes?: unknown[];
     dataSources?: unknown[];
@@ -278,6 +280,8 @@ export interface ProcessedEmbedData {
     gridRowHeight: number;
     gridGap: number;
     fullWidthPreview: boolean;
+    layerOrder?: unknown[];
+    layerGroups?: Record<string, unknown>;
   };
   nodes: NodeSchemaType[];
   dataSources: unknown[];
@@ -358,6 +362,13 @@ export function processEmbedInitPayload(
     gridRowHeight: data.canvas?.gridRowHeight ?? 50,
     gridGap: data.canvas?.gridGap ?? 5,
     fullWidthPreview: data.canvas?.fullWidthPreview ?? false,
+    layerOrder: Array.isArray(data.canvas?.layerOrder) ? data.canvas.layerOrder : undefined,
+    layerGroups:
+      data.canvas?.layerGroups &&
+      typeof data.canvas.layerGroups === 'object' &&
+      !Array.isArray(data.canvas.layerGroups)
+        ? data.canvas.layerGroups
+        : undefined,
   };
 
   const nodes = ((data.nodes || []) as Record<string, unknown>[]).map((rawNode, index) => {
@@ -367,6 +378,7 @@ export function processEmbedInitPayload(
           ? rawNode.id
           : `node-${Date.now()}-${index}`,
       type: rawNode.type,
+      name: typeof rawNode.name === 'string' ? rawNode.name : undefined,
       position: rawNode.position ?? DEFAULT_EMBED_NODE_POSITION,
       size: rawNode.size ?? DEFAULT_EMBED_NODE_SIZE,
       props: rawNode.props ?? {},

@@ -33,7 +33,7 @@ interface LayerPanelProps {
   store: any;
   language?: string;
   searchQuery?: string;
-  onUserEdit?: () => void;
+  onUserEdit?: (immediate?: boolean) => void;
 }
 
 interface LayerItemData {
@@ -284,14 +284,16 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
   const handleCreateGroup = useCallback(() => {
     if (selectedIds.length > 1) {
       store.getState().createGroup(selectedIds);
+      onUserEdit?.(true);
     }
-  }, [store, selectedIds]);
+  }, [store, selectedIds, onUserEdit]);
 
   const handleUngroup = useCallback(
     (groupId: string) => {
       store.getState().ungroup(groupId);
+      onUserEdit?.(true);
     },
-    [store],
+    [store, onUserEdit],
   );
 
   const handleToggleGroupExpanded = useCallback(
@@ -345,9 +347,10 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
     if (editingId && editingName.trim()) {
       if (editingType === 'node') {
         store.getState().renameNode(editingId, editingName.trim());
-        onUserEdit?.();
+        onUserEdit?.(true);
       } else {
         store.getState().renameGroup(editingId, editingName.trim());
+        onUserEdit?.(true);
       }
     }
     setEditingId(null);

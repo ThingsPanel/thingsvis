@@ -58,6 +58,21 @@ export const CanvasConfigSchema = z.object({
   gridEnabled: z.boolean().optional(),
   /** Grid cell size in pixels */
   gridSize: z.number().int().positive().optional(),
+  /** Persisted render order for the layer panel */
+  layerOrder: z.array(z.string()).optional(),
+  /** Persisted layer groups keyed by group id */
+  layerGroups: z
+    .record(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        expanded: z.boolean(),
+        locked: z.boolean(),
+        visible: z.boolean(),
+        memberIds: z.array(z.string()),
+      }),
+    )
+    .optional(),
   /** Whether to use full width in preview mode */
   fullWidthPreview: z.boolean().optional(),
   /** Whether this dashboard is set as homepage */

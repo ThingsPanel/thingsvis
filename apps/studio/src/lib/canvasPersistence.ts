@@ -2,7 +2,7 @@ import type { CanvasState, KernelState } from '@thingsvis/kernel';
 
 export type PersistedEditorState = Pick<
   KernelState,
-  'nodesById' | 'layerOrder' | 'variableDefinitions' | 'canvas'
+  'nodesById' | 'layerOrder' | 'layerGroups' | 'variableDefinitions' | 'canvas'
 >;
 
 export function getCanvasPersistenceSignature(canvas: CanvasState): string {
@@ -22,6 +22,7 @@ export function hasPersistedEditorStateChange(
   return (
     previous.nodesById !== current.nodesById ||
     previous.layerOrder !== current.layerOrder ||
+    previous.layerGroups !== current.layerGroups ||
     previous.variableDefinitions !== current.variableDefinitions ||
     getCanvasPersistenceSignature(previous.canvas) !== getCanvasPersistenceSignature(current.canvas)
   );

@@ -151,6 +151,7 @@ export function useEditorSync({
     let prevPersistedState = {
       nodesById: state.nodesById,
       layerOrder: state.layerOrder,
+      layerGroups: state.layerGroups,
       variableDefinitions: state.variableDefinitions,
       canvas: state.canvas,
     };
@@ -160,6 +161,7 @@ export function useEditorSync({
       const currentPersistedState = {
         nodesById: currentState.nodesById,
         layerOrder: currentState.layerOrder,
+        layerGroups: currentState.layerGroups,
         variableDefinitions: currentState.variableDefinitions,
         canvas: currentState.canvas,
       };

@@ -42,6 +42,46 @@ describe('KernelStore', () => {
             expect(state.layerOrder).toEqual(['node-1', 'node-2']);
         });
 
+        it('should restore persisted layer order and groups', () => {
+            const mockPage = {
+                config: {
+                    mode: 'fixed',
+                    width: 800,
+                    height: 600,
+                    layerOrder: ['node-2', 'node-1'],
+                    layerGroups: {
+                        'group-1': {
+                            id: 'group-1',
+                            name: 'Persisted Group',
+                            expanded: false,
+                            locked: false,
+                            visible: true,
+                            memberIds: ['node-2', 'missing-node'],
+                        },
+                    },
+                },
+                nodes: [
+                    { id: 'node-1', type: 'basic/rect' },
+                    { id: 'node-2', type: 'basic/text' },
+                    { id: 'node-3', type: 'basic/text' },
+                ],
+                connections: [],
+            } as any;
+
+            useStore.getState().loadPage(mockPage);
+            const state = useStore.getState();
+
+            expect(state.layerOrder).toEqual(['node-2', 'node-1', 'node-3']);
+            expect(state.layerGroups['group-1']).toEqual({
+                id: 'group-1',
+                name: 'Persisted Group',
+                expanded: false,
+                locked: false,
+                visible: true,
+                memberIds: ['node-2'],
+            });
+        });
+
         it('should update canvas state', () => {
             useStore.getState().updateCanvas({ zoom: 1.5, offsetX: 100, gridEnabled: true, gridSize: 32 });
             const state = useStore.getState();

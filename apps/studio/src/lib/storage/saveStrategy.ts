@@ -60,6 +60,8 @@ export interface SavePayload {
     gridRowHeight?: number;
     gridGap?: number;
     fullWidthPreview?: boolean;
+    layerOrder?: unknown[];
+    layerGroups?: Record<string, unknown>;
   };
   nodes: Record<string, unknown>[];
   dataSources?: Record<string, unknown>[];

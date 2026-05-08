@@ -32,6 +32,15 @@ export const PageScaleModeSchema = z.enum([
 
 export const PagePreviewAlignYSchema = z.enum(['top', 'center']);
 
+export const PageLayerGroupSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  expanded: z.boolean(),
+  locked: z.boolean(),
+  visible: z.boolean(),
+  memberIds: z.array(z.string()),
+});
+
 /**
  * Page metadata schema
  * Contains identification and versioning information for a page
@@ -108,6 +117,12 @@ export const PageConfigSchema = z.object({
    * Vertical alignment for preview layout
    */
   previewAlignY: PagePreviewAlignYSchema.optional(),
+
+  /**
+   * Persisted layer render order and layer panel grouping metadata.
+   */
+  layerOrder: z.array(z.string()).optional(),
+  layerGroups: z.record(PageLayerGroupSchema).optional(),
 });
 
 /**

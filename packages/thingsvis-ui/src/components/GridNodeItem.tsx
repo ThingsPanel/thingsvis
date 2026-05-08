@@ -111,6 +111,7 @@ function buildOverlayContext(
         position: { x: pixelRect.x, y: pixelRect.y },
         size: { width: pixelRect.width, height: pixelRect.height },
         props: resolvedProps,
+        baseStyle: node.schemaRef.baseStyle,
         theme,
         mode,
         locale: locale ?? 'en',

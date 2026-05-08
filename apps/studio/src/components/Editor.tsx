@@ -847,6 +847,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               theme: loadedTheme,
               scaleMode: (project.canvas as any).scaleMode,
               previewAlignY: loadedPreviewAlignY,
+              layerOrder: (project.canvas as any).layerOrder,
+              layerGroups: (project.canvas as any).layerGroups,
               background: loadedBackground as any,
             },
           });
@@ -887,6 +889,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             gridGap: project.canvas.gridGap ?? prev.gridGap,
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
+            layerOrder: (project.canvas as any).layerOrder,
+            layerGroups: (project.canvas as any).layerGroups,
             thumbnail: project.meta.thumbnail || '',
           }));
           if (project.variables && Array.isArray(project.variables)) {

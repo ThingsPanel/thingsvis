@@ -43,6 +43,7 @@ describe('getCanvasPersistenceSignature', () => {
     const baseState = {
       nodesById: { nodeA: { id: 'nodeA' } },
       layerOrder: ['nodeA'],
+      layerGroups: {},
       variableDefinitions: [{ name: 'speed', defaultValue: 1 }],
       canvas: createCanvas(),
     } as any;
@@ -65,6 +66,22 @@ describe('getCanvasPersistenceSignature', () => {
       hasPersistedEditorStateChange(baseState, {
         ...baseState,
         nodesById: { nodeA: { id: 'nodeA' }, nodeB: { id: 'nodeB' } },
+      }),
+    ).toBe(true);
+
+    expect(
+      hasPersistedEditorStateChange(baseState, {
+        ...baseState,
+        layerGroups: {
+          groupA: {
+            id: 'groupA',
+            name: 'Group A',
+            expanded: true,
+            locked: false,
+            visible: true,
+            memberIds: ['nodeA'],
+          },
+        },
       }),
     ).toBe(true);
   });

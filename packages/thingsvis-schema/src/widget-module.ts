@@ -6,6 +6,7 @@
  * - Hosts can treat `Spec` as "unknown" and render it if it matches their runner expectations.
  */
 
+import type { IBaseStyle } from './style';
 import type { WidgetControls } from './widget-controls';
 
 export type WidgetComponentId = string; // e.g. "basic/rect"
@@ -45,6 +46,7 @@ export type WidgetOverlayContext = {
   position?: { x: number; y: number };
   size?: { width: number; height: number };
   props?: Record<string, unknown>;
+  baseStyle?: IBaseStyle;
   theme?: string;
   /** 当前语言 (e.g. 'zh', 'en') */
   locale?: string;
