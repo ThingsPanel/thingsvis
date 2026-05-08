@@ -13,6 +13,14 @@ export const controls = createControlPanel()
     b.addNumberInput('trend', { label: `${W}.trend`, min: -999, max: 999, step: 0.01, binding: true });
     b.addSlider('precision', { label: `${W}.precision`, min: 0, max: 6, step: 1, default: 0 });
     b.addIconPicker('icon', { label: `${W}.icon` });
+    b.addSelect('iconPosition', {
+      label: `${W}.iconPosition`,
+      options: [
+        { label: `${W}.iconPositionTop`, value: 'top' },
+        { label: `${W}.iconPositionLeft`, value: 'left' },
+        { label: `${W}.iconPositionRight`, value: 'right' },
+      ],
+    });
     b.addSlider('iconSize', { label: `${W}.iconSize`, min: 12, max: 100, step: 1, default: 24 });
   }, { label: `${W}.groupData` })
 

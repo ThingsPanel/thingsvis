@@ -17,6 +17,7 @@ export const PropsSchema = z.object({
 
   // Icon Settings
   icon: z.string().default('i-lucide:activity').describe('props.icon'),
+  iconPosition: z.enum(['top', 'left', 'right']).default('top').describe('props.iconPosition'),
   iconSize: z.number().int().min(12).max(100).default(24).describe('props.iconSize'),
 
   // Typography Settings

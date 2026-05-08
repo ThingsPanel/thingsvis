@@ -182,7 +182,7 @@ function renderTrendBadge(trend: number, fontSize: number, positiveColor: string
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): Root | null {
   const {
     title, prefix, value, suffix, subtitle, trend, precision,
-    icon, iconSize,
+    icon, iconPosition, iconSize,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
     titleColor: titleColorProp,
     valueColor: valueColorProp,
@@ -289,9 +289,83 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
 
   // Trend badge HTML
   const trendHtml = renderTrendBadge(trend, subtitleFontSize, trendUpColor, trendDownColor);
+  const hasSideIcon = !!iconHtml && (iconPosition === 'left' || iconPosition === 'right');
+  const titleHtml = `
+    <div style="
+      font-size: ${titleSize}px;
+      color: ${titleColor};
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    ">
+      ${escapeHtml(title)}
+    </div>
+  `;
+  const valueHtml = `
+    <div style="
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      line-height: 1.2;
+      font-feature-settings: 'tnum';
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      justify-content: ${align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'};
+    ">
+      ${prefix ? `
+        <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
+          ${escapeHtml(prefix)}
+        </span>
+      ` : ''}
+      <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
+        ${escapeHtml(displayValue)}
+      </span>
+      ${suffix ? `
+        <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
+          ${escapeHtml(suffix)}
+        </span>
+      ` : ''}
+    </div>
+  `;
+  const subtitleHtml = subtitle ? `
+    <div style="
+      font-size: ${subTitleSize}px;
+      color: ${subtitleColor};
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    ">
+      ${escapeHtml(subtitle)}
+    </div>
+  ` : '';
+  const textContentHtml = `
+    <div style="
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      gap: ${contentGap}px;
+      align-items: ${alignItems};
+      text-align: ${textAlign};
+      width: 100%;
+    ">
+      ${hasSideIcon && trendHtml ? `
+        <div style="display:flex;justify-content:${align === 'right' ? 'flex-end' : 'flex-start'};width:100%;">
+          ${trendHtml}
+        </div>
+      ` : ''}
+      ${titleHtml}
+      ${valueHtml}
+      ${subtitleHtml}
+    </div>
+  `;
 
   // Row 1 visibility: only render when icon or trend exists
-  const hasRow1 = iconHtml || trendHtml;
+  const hasRow1 = !hasSideIcon && (iconHtml || trendHtml);
 
   // HTML Structure — 4-row layout per spec v2
   element.innerHTML = `
@@ -309,6 +383,22 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
       color: ${valueColor};
       background: transparent;
     ">
+      ${hasSideIcon ? `
+        <div style="
+          display: flex;
+          align-items: center;
+          justify-content: ${align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start'};
+          gap: 14px;
+          width: 100%;
+          min-width: 0;
+        ">
+          ${iconPosition === 'left' ? iconHtml : ''}
+          ${textContentHtml}
+          ${iconPosition === 'right' ? iconHtml : ''}
+        </div>
+      ` : ''}
+
+      ${!hasSideIcon ? `
       ${hasRow1 ? `
         <div style="
           display: flex;
@@ -321,55 +411,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
         </div>
       ` : ''}
 
-      <div style="
-        font-size: ${titleSize}px;
-        color: ${titleColor};
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-      ">
-        ${escapeHtml(title)}
-      </div>
-
-      <div style="
-        display: flex;
-        align-items: baseline;
-        gap: 4px;
-        line-height: 1.2;
-        font-feature-settings: 'tnum';
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
-        justify-content: ${align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'};
-      ">
-        ${prefix ? `
-          <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
-            ${escapeHtml(prefix)}
-          </span>
-        ` : ''}
-        <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
-          ${escapeHtml(displayValue)}
-        </span>
-        ${suffix ? `
-          <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
-            ${escapeHtml(suffix)}
-          </span>
-        ` : ''}
-      </div>
-
-      ${subtitle ? `
-        <div style="
-          font-size: ${subTitleSize}px;
-          color: ${subtitleColor};
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          width: 100%;
-        ">
-          ${escapeHtml(subtitle)}
-        </div>
+      ${titleHtml}
+      ${valueHtml}
+      ${subtitleHtml}
       ` : ''}
     </div>
   `;
