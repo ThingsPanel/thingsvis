@@ -11,6 +11,8 @@ export interface IconPickerProps {
 
 const COMMON_ICONS = [
   'Activity',
+  'Thermometer',
+  'Gauge',
   'AlertCircle',
   'AlertTriangle',
   'ArrowDown',
