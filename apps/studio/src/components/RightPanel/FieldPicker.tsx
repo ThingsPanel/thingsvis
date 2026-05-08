@@ -354,7 +354,7 @@ export function FieldPicker({
   const selectedHistoryConfig = value?.historyConfig;
   const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
   const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>(() =>
-    serviceConfig.context === 'dashboard' ? 'global' : 'device',
+    serviceConfig.mode === 'embedded' ? 'device' : 'custom',
   );
   const [deviceBindingKind, setDeviceBindingKind] = useState<DeviceBindingKind>('model');
 
@@ -491,10 +491,10 @@ export function FieldPicker({
     }
 
     setEmbeddedSourceGroup(
-      hasPlatformStatsCatalog
-        ? 'global'
-        : hasDeviceCatalog
-          ? 'device'
+      hasDeviceCatalog
+        ? 'device'
+        : hasPlatformStatsCatalog
+          ? 'global'
           : hasVisibleCustomDataSources
             ? 'custom'
             : 'global',
@@ -548,7 +548,7 @@ export function FieldPicker({
 
   const selectedDeviceSource = isDeviceScopedGroup
     ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
-      deviceSources[0]
+      (hasTemplateFieldCatalog ? deviceSources[0] : undefined)
     : undefined;
   const isTemplateDeviceSelection =
     hasTemplateFieldCatalog && isDeviceScopedGroup && isTemplateDeviceSource(selectedDeviceSource);
@@ -1047,10 +1047,11 @@ export function FieldPicker({
                 setEmbeddedSourceGroup(nextGroup);
 
                 if (nextGroup === 'device') {
-                  const nextDevice = deviceSources[0];
-                  safeOnChange(
-                    nextDevice ? { dataSourceId: nextDevice.dataSourceId, fieldPath: '' } : null,
-                  );
+                  const nextDevice = hasTemplateFieldCatalog ? deviceSources[0] : undefined;
+                  safeOnChange({
+                    dataSourceId: nextDevice?.dataSourceId ?? '',
+                    fieldPath: '',
+                  });
                   return;
                 }
 

@@ -34,6 +34,12 @@ type Props = {
   updateNode: (changes: any) => void;
 };
 
+const fieldModeDrafts = new Map<string, FieldPickerValue>();
+
+function getFieldModeDraftKey(nodeId: string, targetProp: string): string {
+  return `${nodeId}:${targetProp}`;
+}
+
 function allowedModes(field: ControlField): BindingMode[] {
   const modes = field.binding?.enabled ? field.binding.modes : [];
   const normalized = modes.filter(
@@ -203,8 +209,14 @@ export function ControlFieldRow({
     [bindings, field.path],
   );
   const binding = useMemo(() => getBinding(bindings, field.path), [bindings, field.path]);
+  const fieldModeDraftKey = useMemo(
+    () => getFieldModeDraftKey(nodeId, field.path),
+    [nodeId, field.path],
+  );
 
-  const [mode, setMode] = useState<BindingMode>(persistedMode);
+  const [mode, setMode] = useState<BindingMode>(() =>
+    persistedMode === 'static' && fieldModeDrafts.has(fieldModeDraftKey) ? 'field' : persistedMode,
+  );
 
   const [fieldSelection, setFieldSelection] = useState<FieldPickerValue | null>(() => {
     if (binding) {
@@ -219,7 +231,7 @@ export function ControlFieldRow({
       }
       return sel;
     }
-    return null;
+    return fieldModeDrafts.get(fieldModeDraftKey) ?? null;
   });
 
   const [exprDraft, setExprDraft] = useState<string>(
@@ -232,13 +244,18 @@ export function ControlFieldRow({
   // Do NOT continuously force UI mode from bindings; otherwise switching Field -> Expr
   // will get "snapped back" as long as the expression still matches the field-binding pattern.
   useEffect(() => {
-    setMode(persistedMode);
+    setMode(
+      persistedMode === 'static' && fieldModeDrafts.has(fieldModeDraftKey)
+        ? 'field'
+        : persistedMode,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodeId, field.path]);
 
   // Handle external binding updates (initial load, undo/redo)
   // Only sync if transitioning to/from 'static' to avoid interfering with Field/Expr preference
   useEffect(() => {
+    if (mode === 'field' && fieldSelection) return;
     if (persistedMode !== mode && (mode === 'static' || persistedMode === 'static')) {
       setMode(persistedMode);
     }
@@ -248,7 +265,9 @@ export function ControlFieldRow({
   // Keep UI drafts in sync with persisted binding expression.
   useEffect(() => {
     if (!binding) {
-      setFieldSelection(null);
+      const draft = fieldModeDrafts.get(fieldModeDraftKey) ?? null;
+      setFieldSelection(draft);
+      if (draft) setMode('field');
       return;
     }
     const selection = parseFieldBindingExpression(binding.expression);
@@ -292,13 +311,22 @@ export function ControlFieldRow({
     setMode(next);
 
     if (next === 'static') {
+      fieldModeDrafts.delete(fieldModeDraftKey);
+      setFieldSelection(null);
       updateNode({ data: removeBinding(bindings, field.path) });
     }
 
     if (next === 'expr') {
+      fieldModeDrafts.delete(fieldModeDraftKey);
       // Switching to Expr should be immediate in the UI.
       // Persist only when user enters a valid expression in the editor.
       setExprDraft(binding?.expression ?? exprDraft);
+    }
+
+    if (next === 'field') {
+      const draft = fieldSelection ?? { dataSourceId: '', fieldPath: '' };
+      setFieldSelection(draft);
+      fieldModeDrafts.set(fieldModeDraftKey, draft);
     }
 
     // For 'field', we wait for a concrete FieldPicker selection to persist.
@@ -626,6 +654,7 @@ export function ControlFieldRow({
               );
 
               if (next?.dataSourceId && next.fieldPath) {
+                fieldModeDrafts.delete(fieldModeDraftKey);
                 const expression = makeFieldBindingExpression(next);
                 const selection = parseFieldBindingExpression(expression);
                 const dataSourcePath = selection ? `ds.${selection.dataSourceId}.data` : undefined;
@@ -643,10 +672,12 @@ export function ControlFieldRow({
                 return;
               }
 
-              if (next?.dataSourceId && !next.fieldPath) {
+              if (next && !next.fieldPath) {
+                fieldModeDrafts.set(fieldModeDraftKey, next);
                 return;
               }
 
+              fieldModeDrafts.delete(fieldModeDraftKey);
               updateNode({
                 data: removeBinding(bindings, field.path),
                 ...(nextEvents ? { events: nextEvents } : {}),
