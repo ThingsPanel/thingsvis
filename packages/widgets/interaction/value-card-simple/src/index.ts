@@ -1,12 +1,18 @@
 import { metadata } from './metadata';
 import { PropsSchema, getDefaultProps, type Props } from './schema';
 import { controls } from './controls';
+import { createElement } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
+import * as LucideIcons from 'lucide-react';
 import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 const CARD_PADDING = 16;
+const ICON_SLOT_SELECTOR = '[data-value-card-simple-icon-slot="true"]';
+const MIN_ICON_GLYPH_SIZE = 12;
+const DEFAULT_ICON_STROKE_WIDTH = 2.25;
 
 function withAlpha(color: string, alpha: number): string {
   const clamped = Math.max(0, Math.min(1, alpha));
@@ -32,6 +38,11 @@ function withAlpha(color: string, alpha: number): string {
   }
 
   return normalized;
+}
+
+function resolveColor(value: string | undefined, fallback: string): string {
+  const normalized = String(value ?? '').trim();
+  return normalized && normalized.toLowerCase() !== 'auto' ? normalized : fallback;
 }
 
 function formatValue(value: unknown, precision: number): string {
@@ -84,7 +95,28 @@ function escapeHtml(input: unknown): string {
     .replace(/'/g, '&#39;');
 }
 
-function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
+function iconComponentNameFromValue(icon: string): string {
+  const trimmed = icon.trim();
+  if (!trimmed) return '';
+
+  const raw = trimmed.startsWith('i-lucide:') ? trimmed.slice('i-lucide:'.length) : trimmed;
+  return raw
+    .split(/[-_:]/g)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+}
+
+function resolveIconComponent(icon: string): LucideIcons.LucideIcon | null {
+  const iconName = iconComponentNameFromValue(icon);
+  if (!iconName) return null;
+
+  const iconRegistry = LucideIcons as unknown as Record<string, LucideIcons.LucideIcon | undefined>;
+  return iconRegistry[iconName] ?? null;
+}
+
+function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): Root | null {
   const textPrimary = colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.5);
 
@@ -113,30 +145,37 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
   const titleSize = props.titleFontSize;
   const valueSize = 28;
   const unitSize = 13;
-
-  element.style.cssText = `
-    width: 100%;
-    height: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
-    border-radius: inherit;
-    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  `;
-
-  element.innerHTML = `
+  const iconColor = resolveColor(props.iconColor, colors.primary || '#0ea5e9');
+  const iconBackgroundColor = resolveColor(props.iconBackgroundColor, withAlpha(iconColor, 0.14));
+  const iconComponent = props.showIcon ? resolveIconComponent(props.icon) : null;
+  const iconSize = Math.max(12, props.iconSize);
+  const iconGlyphSize = Math.max(MIN_ICON_GLYPH_SIZE, Math.round(iconSize * 0.68));
+  const hasSideIcon = props.showIcon && (props.iconPosition === 'left' || props.iconPosition === 'right');
+  const iconHtml = props.showIcon ? `
     <div style="
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
+      width: ${iconSize}px;
+      height: ${iconSize}px;
+      min-width: ${iconSize}px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      color: ${iconColor};
+      background: ${iconBackgroundColor};
+      box-shadow: 0 0 ${Math.round(iconSize * 0.45)}px ${withAlpha(iconColor, 0.22)};
+    ">
+      <div data-value-card-simple-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;"></div>
+    </div>
+  ` : '';
+
+  const textBlockHtml = `
+    <div style="
+      min-width: 0;
+      flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: flex-start;
-      text-align: left;
-      padding: ${CARD_PADDING}px;
-      background: transparent;
     ">
       <div style="
         width: 100%;
@@ -196,6 +235,50 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
       ` : ''}
     </div>
   `;
+
+  element.style.cssText = `
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: inherit;
+    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  `;
+
+  element.innerHTML = `
+    <div style="
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: ${hasSideIcon ? 'row' : 'column'};
+      justify-content: center;
+      align-items: ${hasSideIcon ? 'center' : 'flex-start'};
+      text-align: left;
+      padding: ${CARD_PADDING}px;
+      gap: ${hasSideIcon ? 14 : 6}px;
+      background: transparent;
+    ">
+      ${props.showIcon && props.iconPosition !== 'right' ? iconHtml : ''}
+      ${textBlockHtml}
+      ${props.showIcon && props.iconPosition === 'right' ? iconHtml : ''}
+    </div>
+  `;
+
+  const iconSlot = element.querySelector(ICON_SLOT_SELECTOR);
+  if (iconComponent && iconSlot instanceof HTMLElement) {
+    const iconRoot = createRoot(iconSlot);
+    iconRoot.render(createElement(iconComponent, {
+      size: iconGlyphSize,
+      color: iconColor,
+      strokeWidth: DEFAULT_ICON_STROKE_WIDTH,
+    }));
+    return iconRoot;
+  }
+
+  return null;
 }
 
 // ============================================================================
@@ -217,14 +300,20 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
     let colors = resolveWidgetColors(element);
+    let iconRoot: Root | null = null;
 
-    renderCard(element, currentProps, colors);
+    const renderWidget = () => {
+      iconRoot?.unmount();
+      iconRoot = renderCard(element, currentProps, colors);
+    };
+
+    renderWidget();
 
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
         colors = resolveWidgetColors(element);
-        renderCard(element, currentProps, colors);
+        renderWidget();
       });
       ro.observe(element);
     }
@@ -233,9 +322,10 @@ export const Main = defineWidget({
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
         colors = resolveWidgetColors(element);
-        renderCard(element, currentProps, colors);
+        renderWidget();
       },
       destroy: () => {
+        iconRoot?.unmount();
         ro?.disconnect();
         element.innerHTML = '';
       }

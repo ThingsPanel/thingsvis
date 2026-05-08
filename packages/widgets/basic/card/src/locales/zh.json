@@ -17,6 +17,7 @@
         "borderWidth": "边框宽度",
         "cornerRadius": "圆角",
         "paddingSize": "内边距",
+        "titleFontSize": "标题字号",
         "titleColor": "标题颜色",
         "subtitleColor": "副标题颜色",
         "bodyColor": "正文颜色",

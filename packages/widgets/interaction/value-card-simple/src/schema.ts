@@ -10,6 +10,12 @@ export const PropsSchema = z.object({
   trendLabel: z.string().default('').describe('Trend context label'),
   showTrend: z.boolean().default(false).describe('Display trend indicator'),
   titleFontSize: z.number().int().min(10).max(100).default(12).describe('props.titleFontSize'),
+  showIcon: z.boolean().default(false).describe('props.showIcon'),
+  icon: z.string().default('i-lucide:thermometer').describe('props.icon'),
+  iconPosition: z.enum(['top', 'left', 'right']).default('top').describe('props.iconPosition'),
+  iconSize: z.number().int().min(12).max(100).default(32).describe('props.iconSize'),
+  iconColor: z.string().default('').describe('props.iconColor'),
+  iconBackgroundColor: z.string().default('').describe('props.iconBackgroundColor'),
   valueColor: z.enum(['auto', 'theme', 'success', 'warning', 'danger']).default('auto').describe('Value color mode'),
   thresholds: z.string().default('[]').describe('Threshold rules JSON array'),
 });

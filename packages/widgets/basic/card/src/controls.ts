@@ -62,6 +62,13 @@ export const controls = createControlPanel()
     'Typography',
     (builder) => {
       builder
+        .addSlider('titleFontSize', {
+          label: `${W}.titleFontSize`,
+          min: 10,
+          max: 100,
+          step: 1,
+          default: 16,
+        })
         .addColorPicker('titleColor', { label: `${W}.titleColor`, binding: true })
         .addColorPicker('subtitleColor', { label: `${W}.subtitleColor`, binding: true })
         .addColorPicker('bodyColor', { label: `${W}.bodyColor`, binding: true });

@@ -11,6 +11,7 @@ export const PropsSchema = z.object({
   borderWidth: z.number().min(0).max(12).default(1).describe('props.borderWidth'),
   cornerRadius: z.number().min(0).max(32).default(10).describe('props.cornerRadius'),
   paddingSize: z.number().min(8).max(40).default(16).describe('props.paddingSize'),
+  titleFontSize: z.number().int().min(10).max(100).default(16).describe('props.titleFontSize'),
   titleColor: z.string().default('').describe('props.titleColor'),
   subtitleColor: z.string().default('').describe('props.subtitleColor'),
   bodyColor: z.string().default('').describe('props.bodyColor'),

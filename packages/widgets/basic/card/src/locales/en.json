@@ -17,6 +17,7 @@
         "borderWidth": "Border width",
         "cornerRadius": "Corner radius",
         "paddingSize": "Padding",
+        "titleFontSize": "Title font size",
         "titleColor": "Title color",
         "subtitleColor": "Subtitle color",
         "bodyColor": "Body color",

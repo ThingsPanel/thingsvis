@@ -52,7 +52,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
 
   if (title) {
     title.textContent = props.title;
-    title.style.fontSize = '16px';
+    title.style.fontSize = `${props.titleFontSize}px`;
     title.style.fontWeight = '700';
     title.style.lineHeight = '1.2';
     title.style.color = resolveColor(props.titleColor, colors.fg || '#0f172a');

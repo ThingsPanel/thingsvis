@@ -43,6 +43,39 @@ export const controls = createControlPanel()
     });
   }, { label: `${W}.groupTrend` })
 
+  .addGroup('Icon', (b) => {
+    b.addSwitch('showIcon', { label: `${W}.showIcon` });
+    b.addIconPicker('icon', {
+      label: `${W}.icon`,
+      showWhen: { field: 'showIcon', value: true },
+    });
+    b.addSelect('iconPosition', {
+      label: `${W}.iconPosition`,
+      options: [
+        { label: `${W}.iconPosition.top`, value: 'top' },
+        { label: `${W}.iconPosition.left`, value: 'left' },
+        { label: `${W}.iconPosition.right`, value: 'right' },
+      ],
+      showWhen: { field: 'showIcon', value: true },
+    });
+    b.addSlider('iconSize', {
+      label: `${W}.iconSize`,
+      min: 12,
+      max: 100,
+      step: 1,
+      default: 32,
+      showWhen: { field: 'showIcon', value: true },
+    });
+    b.addColorPicker('iconColor', {
+      label: `${W}.iconColor`,
+      showWhen: { field: 'showIcon', value: true },
+    });
+    b.addColorPicker('iconBackgroundColor', {
+      label: `${W}.iconBackgroundColor`,
+      showWhen: { field: 'showIcon', value: true },
+    });
+  }, { label: `${W}.groupIcon` })
+
   .addGroup('Style', (b) => {
     b.addSlider('titleFontSize', {
       label: `${W}.titleFontSize`,
