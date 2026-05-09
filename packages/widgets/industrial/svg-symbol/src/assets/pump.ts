@@ -19,16 +19,16 @@ export const CENTRIFUGAL_PUMP_SVG = `<svg width="100%" height="100%" viewBox="0 
       <stop offset="100%" style="stop-color:#0369a1;stop-opacity:0.88" />
     </linearGradient>
   </defs>
-  <rect x="0" y="24" width="16" height="12" fill="url(#pumpPipeGrad)"/>
-  <line x1="0" y1="24" x2="16" y2="24" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="0" y1="36" x2="16" y2="36" stroke="#1e293b" stroke-width="1"/>
-  <rect x="15" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
-  <line x1="16.5" y1="22" x2="16.5" y2="38" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
-  <rect x="84" y="24" width="16" height="12" fill="url(#pumpPipeGrad)"/>
-  <line x1="84" y1="24" x2="100" y2="24" stroke="#94a3b8" stroke-width="1"/>
-  <line x1="84" y1="36" x2="100" y2="36" stroke="#1e293b" stroke-width="1"/>
-  <rect x="79" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
-  <line x1="83.5" y1="22" x2="83.5" y2="38" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
+  <rect x="0" y="24" width="22" height="12" fill="url(#pumpPipeGrad)"/>
+  <line x1="0" y1="24" x2="22" y2="24" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="0" y1="36" x2="22" y2="36" stroke="#1e293b" stroke-width="1"/>
+  <rect x="78" y="24" width="22" height="12" fill="url(#pumpPipeGrad)"/>
+  <line x1="78" y1="24" x2="100" y2="24" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="78" y1="36" x2="100" y2="36" stroke="#1e293b" stroke-width="1"/>
+  <rect x="20" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="21.5" y1="22" x2="21.5" y2="38" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
+  <rect x="74" y="19" width="6" height="22" rx="1" fill="url(#pumpFlangeGrad)" stroke="#1e293b" stroke-width="1"/>
+  <line x1="78.5" y1="22" x2="78.5" y2="38" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
   <circle cx="50" cy="31.5" r="24" fill="#0f172a" opacity="0.22"/>
   <circle cx="50" cy="30" r="24" fill="url(#pumpGrad)" stroke="#1e293b" stroke-width="1.5"/>
   <path d="M 31 19 A 24 24 0 0 1 60 8" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>

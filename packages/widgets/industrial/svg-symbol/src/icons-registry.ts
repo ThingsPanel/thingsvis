@@ -156,7 +156,7 @@ export const INDUSTRIAL_ICONS: IconEntry[] = [
     label: { zh: '换热器', en: 'Heat Exchanger' },
     categoryLabel: { zh: '换热设备', en: 'Heat Transfer' },
     svgContent: HEAT_EXCHANGER_SVG,
-    defaultSize: { width: 48, height: 80 },
+    defaultSize: { width: 88, height: 62 },
   },
   {
     id: 'boiler',
