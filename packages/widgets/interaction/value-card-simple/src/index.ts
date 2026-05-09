@@ -40,27 +40,6 @@ function withAlpha(color: string, alpha: number): string {
   return normalized;
 }
 
-function isTransparentColor(color: string | undefined): boolean {
-  const normalized = String(color ?? '').trim().toLowerCase();
-  if (!normalized || normalized === 'transparent') return true;
-
-  const rgbaMatch = normalized.match(/^rgba?\(([^)]+)\)$/);
-  if (!rgbaMatch?.[1]) return false;
-
-  const parts = rgbaMatch[1].split(',').map(part => part.trim());
-  if (parts.length < 4) return false;
-
-  const alpha = Number(parts[3]);
-  return Number.isFinite(alpha) && alpha <= 0;
-}
-
-function hasConfiguredBackground(ctx: WidgetOverlayContext): boolean {
-  const background = ctx.baseStyle?.background;
-  if (!background) return false;
-  if (background.opacity === 0) return false;
-  return !isTransparentColor(background.color) || !!String(background.image ?? '').trim();
-}
-
 function resolveColor(value: string | undefined, fallback: string): string {
   const normalized = String(value ?? '').trim();
   return normalized && normalized.toLowerCase() !== 'auto' ? normalized : fallback;
@@ -137,10 +116,9 @@ function resolveIconComponent(icon: string): LucideIcons.LucideIcon | null {
   return iconRegistry[iconName] ?? null;
 }
 
-function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ctx: WidgetOverlayContext): Root | null {
+function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): Root | null {
   const textPrimary = colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.5);
-  const padding = hasConfiguredBackground(ctx) ? CARD_PADDING : 0;
 
   const numericValue = typeof props.value === 'number' ? props.value : Number(props.value);
   const displayValue = formatValue(props.value, props.precision);
@@ -279,7 +257,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       justify-content: center;
       align-items: ${hasSideIcon ? 'center' : 'flex-start'};
       text-align: left;
-      padding: ${padding}px;
+      padding: ${CARD_PADDING}px;
       gap: ${hasSideIcon ? 14 : 6}px;
       background: transparent;
     ">
@@ -321,13 +299,12 @@ export const Main = defineWidget({
 
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
-    let currentCtx = ctx;
     let colors = resolveWidgetColors(element);
     let iconRoot: Root | null = null;
 
     const renderWidget = () => {
       iconRoot?.unmount();
-      iconRoot = renderCard(element, currentProps, colors, currentCtx);
+      iconRoot = renderCard(element, currentProps, colors);
     };
 
     renderWidget();
@@ -344,7 +321,6 @@ export const Main = defineWidget({
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
-        currentCtx = newCtx;
         colors = resolveWidgetColors(element);
         renderWidget();
       },
