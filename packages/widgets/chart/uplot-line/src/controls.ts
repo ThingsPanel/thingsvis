@@ -41,14 +41,14 @@ export const controls = generateControls(PropsSchema, {
         xAxisFontSize: {
             kind: 'slider',
             label: { zh: 'X轴字号', en: 'X Axis Font Size' },
-            min: 8,
+            min: 12,
             max: 24,
             step: 1,
         },
         yAxisFontSize: {
             kind: 'slider',
             label: { zh: 'Y轴字号', en: 'Y Axis Font Size' },
-            min: 8,
+            min: 12,
             max: 24,
             step: 1,
         },

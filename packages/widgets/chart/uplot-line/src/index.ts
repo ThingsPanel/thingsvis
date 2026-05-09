@@ -60,6 +60,7 @@ const STANDALONE_UPLOT_SERIES = [
 ];
 
 type ParsedPoint = { tsSec: number; value: number };
+type ParsedLineSeries = { name: string; points: ParsedPoint[] };
 type RuntimeMessages = {
   runtime?: {
     defaultSeriesName?: string;
@@ -199,6 +200,37 @@ function normalizeSeries(data: unknown, timeRangePreset: Props['timeRangePreset'
   return filtered.length > 0 ? filtered : [normalized[normalized.length - 1]!];
 }
 
+function normalizeLineSeries(
+  data: Props['data'],
+  timeRangePreset: Props['timeRangePreset'],
+  fallbackSeriesName: string,
+): ParsedLineSeries[] {
+  if (Array.isArray(data) && data.length > 0) {
+    const seriesRecords = data.filter((entry): entry is Record<string, unknown> => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+      const record = entry as Record<string, unknown>;
+      return Array.isArray(record.data) || Array.isArray(record.values);
+    });
+
+    if (seriesRecords.length > 0) {
+      return seriesRecords.slice(0, 4).map((record, index) => {
+        const seriesData = (Array.isArray(record.data) ? record.data : record.values) as Props['data'];
+        return {
+          name: String(record.name ?? record.label ?? record.seriesName ?? `Series ${index + 1}`),
+          points: normalizeSeries(seriesData, timeRangePreset),
+        };
+      });
+    }
+  }
+
+  return [
+    {
+      name: fallbackSeriesName,
+      points: normalizeSeries(data, timeRangePreset),
+    },
+  ];
+}
+
 function ensureRenderableSeries(points: ParsedPoint[], fallbackRangeSec: number): ParsedPoint[] {
   const finitePoints = points.filter(
     (point) => Number.isFinite(point.tsSec) && Number.isFinite(point.value),
@@ -254,6 +286,14 @@ function pickLineColor(props: Props, colors: WidgetColors): string {
   });
 }
 
+function pickLineColorByIndex(props: Props, colors: WidgetColors, index: number): string {
+  if (index === 0) {
+    return pickLineColor(props, colors);
+  }
+
+  return colors.series[index] ?? colors.series[index % colors.series.length] ?? pickLineColor(props, colors);
+}
+
 function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
@@ -286,7 +326,7 @@ function escapeHtml(s: string): string {
 
 type HoverTooltipCtx = {
   spanSec: number;
-  seriesLabel: string;
+  seriesLabels: string[];
   fg: string;
   tooltipBg: string;
   tooltipBorder: string;
@@ -333,14 +373,26 @@ function createHoverTooltipPlugin(ctx: HoverTooltipCtx) {
           return;
         }
         const xRaw = u.data[0][idx];
-        const yRaw = u.data[1]?.[idx];
-        if (yRaw == null || (typeof yRaw === 'number' && Number.isNaN(yRaw))) {
+        const rows: string[] = [];
+        for (let seriesIndex = 1; seriesIndex < u.data.length; seriesIndex += 1) {
+          const yRaw = u.data[seriesIndex]?.[idx];
+          if (yRaw == null || (typeof yRaw === 'number' && Number.isNaN(yRaw))) {
+            continue;
+          }
+
+          const label = ctx.seriesLabels[seriesIndex - 1] ?? `Series ${seriesIndex}`;
+          const yStr = typeof yRaw === 'number' ? String(yRaw) : String(yRaw);
+          rows.push(
+            `<span style="opacity:0.78;font-size:11px;font-weight:400">${escapeHtml(label)}</span> <span>${escapeHtml(yStr)}</span>`,
+          );
+        }
+
+        if (rows.length === 0) {
           tt.style.display = 'none';
           return;
         }
         const timeStr = formatTick(Number(xRaw), ctx.spanSec);
-        const yStr = typeof yRaw === 'number' ? String(yRaw) : String(yRaw);
-        tt.innerHTML = `<span style="opacity:0.78;font-size:11px;font-weight:400">${escapeHtml(ctx.seriesLabel)}</span><br/><span style="font-weight:600">${escapeHtml(timeStr)}</span> <span style="opacity:0.55">·</span> <span>${escapeHtml(yStr)}</span>`;
+        tt.innerHTML = `<span style="font-weight:600">${escapeHtml(timeStr)}</span><br/>${rows.join('<br/>')}`;
         tt.style.display = 'block';
 
         const pad = 12;
@@ -496,20 +548,34 @@ export const Main = defineWidget({
       }
 
       const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
-      const points = ensureRenderableSeries(
-        normalizeSeries(currentProps.data, currentProps.timeRangePreset),
-        fallbackRangeSec,
-      );
-      const hasData = points.length > 0;
-      const renderPoints = hasData ? points : buildPreviewSeries(currentProps.timeRangePreset);
+      const runtimeMessages = getRuntimeMessages(currentLocale);
+      const seriesLabel =
+        currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value';
+      const renderLineSeries = normalizeLineSeries(
+        currentProps.data,
+        currentProps.timeRangePreset,
+        seriesLabel,
+      ).map((series) => ({
+        ...series,
+        points: ensureRenderableSeries(series.points, fallbackRangeSec),
+      }));
+      const hasData = renderLineSeries.some((series) => series.points.length > 0);
+      const activeLineSeries = hasData
+        ? renderLineSeries
+        : [{ name: seriesLabel, points: buildPreviewSeries(currentProps.timeRangePreset) }];
       const fallbackEndSec = Math.floor(Date.now() / 1000);
-      const finalTimes =
-        renderPoints.length > 0
-          ? renderPoints.map((p) => p.tsSec)
-          : [fallbackEndSec - fallbackRangeSec, fallbackEndSec];
-      const finalValues = renderPoints.length > 0 ? renderPoints.map((p) => p.value) : [18, 31];
+      const finalTimes = Array.from(
+        new Set(activeLineSeries.flatMap((series) => series.points.map((point) => point.tsSec))),
+      ).sort((a, b) => a - b);
+      if (finalTimes.length === 0) {
+        finalTimes.push(fallbackEndSec - fallbackRangeSec, fallbackEndSec);
+      }
+      const finalValuesBySeries = activeLineSeries.map((series) => {
+        const valueByTime = new Map(series.points.map((point) => [point.tsSec, point.value]));
+        return finalTimes.map((tsSec) => valueByTime.get(tsSec) ?? null);
+      });
 
-      const chartData = [finalTimes, finalValues] as uPlot.AlignedData;
+      const chartData = [finalTimes, ...finalValuesBySeries] as uPlot.AlignedData;
 
       const cw = chartContainer.clientWidth || 300;
       const ch = chartContainer.clientHeight || 200;
@@ -536,9 +602,6 @@ export const Main = defineWidget({
         finalTimes.length > 1
           ? Math.max(0, finalTimes[finalTimes.length - 1]! - finalTimes[0]!)
           : fallbackRangeSec;
-      const runtimeMessages = getRuntimeMessages(currentLocale);
-      const seriesLabel =
-        currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value';
       const tooltipBg =
         currentColors.bg && currentColors.bg !== 'transparent'
           ? withAlpha(currentColors.bg, 0.98)
@@ -562,8 +625,8 @@ export const Main = defineWidget({
       emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
       // Independent axis font sizes with scale
-      const xFontSize = Math.round((currentProps.xAxisFontSize ?? 12) * scale);
-      const yFontSize = Math.round((currentProps.yAxisFontSize ?? 12) * scale);
+      const xFontSize = Math.max(12, Math.round((currentProps.xAxisFontSize ?? 12) * scale));
+      const yFontSize = Math.max(12, Math.round((currentProps.yAxisFontSize ?? 12) * scale));
       const xAxisFont = `${xFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
       const yAxisFont = `${yFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
 
@@ -584,7 +647,7 @@ export const Main = defineWidget({
         plugins: [
           createHoverTooltipPlugin({
             spanSec,
-            seriesLabel,
+            seriesLabels: activeLineSeries.map((series) => series.name),
             fg: currentAxisLabelColor,
             tooltipBg,
             tooltipBorder,
@@ -635,21 +698,24 @@ export const Main = defineWidget({
         },
         series: [
           {},
-          {
-            label: seriesLabel,
-            stroke: lineColor,
-            fill: currentProps.showArea
-              ? withAlpha(lineColor, currentProps.areaFillAlpha ?? 0.18)
-              : undefined,
-            width: currentProps.lineWidth ?? 2,
-            paths:
-              currentProps.smooth && uPlot.paths.spline
-                ? uPlot.paths.spline()
-                : uPlot.paths.linear?.(),
-            points: {
-              show: false,
-            },
-          },
+          ...activeLineSeries.map((series, index) => {
+            const currentLineColor = pickLineColorByIndex(currentProps, currentColors, index);
+            return {
+              label: series.name,
+              stroke: currentLineColor,
+              fill: currentProps.showArea
+                ? withAlpha(currentLineColor, currentProps.areaFillAlpha ?? 0.18)
+                : undefined,
+              width: currentProps.lineWidth ?? 2,
+              paths:
+                currentProps.smooth && uPlot.paths.spline
+                  ? uPlot.paths.spline()
+                  : uPlot.paths.linear?.(),
+              points: {
+                show: false,
+              },
+            };
+          }),
         ],
         cursor: {
           points: {

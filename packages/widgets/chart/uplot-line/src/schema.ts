@@ -26,10 +26,10 @@ export const PropsSchema = z.object({
     showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 
     /** X 轴刻度文字大小 */
-    xAxisFontSize: z.number().min(8).max(32).default(12).describe('props.xAxisFontSize'),
+    xAxisFontSize: z.number().min(12).max(32).default(12).describe('props.xAxisFontSize'),
 
     /** Y 轴刻度文字大小 */
-    yAxisFontSize: z.number().min(8).max(32).default(12).describe('props.yAxisFontSize'),
+    yAxisFontSize: z.number().min(12).max(32).default(12).describe('props.yAxisFontSize'),
 
     /** Y 轴最小值（空=自动）；标签与说明见 controls overrides */
     yAxisMin: z.number().optional(),

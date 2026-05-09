@@ -69,4 +69,57 @@ describe('chart/echarts-line widget', () => {
 
     harness.destroy();
   });
+
+  it('renders multiple category line series from grouped data', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        data: [
+          {
+            name: 'Supply',
+            data: [
+              { name: 'Mon', value: 12 },
+              { name: 'Tue', value: 18 },
+            ],
+          },
+          {
+            name: 'Return',
+            data: [
+              { name: 'Mon', value: 8 },
+              { name: 'Tue', value: 11 },
+            ],
+          },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.legend?.data).toEqual(['Supply', 'Return']);
+    expect(latestOption?.xAxis?.data).toEqual(['Mon', 'Tue']);
+    expect(latestOption?.series).toHaveLength(2);
+    expect(latestOption?.series?.[0]?.data).toEqual([12, 18]);
+    expect(latestOption?.series?.[1]?.data).toEqual([8, 11]);
+
+    harness.destroy();
+  });
+
+  it('limits grouped line series to four entries', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        data: Array.from({ length: 5 }, (_, index) => ({
+          name: `Series ${index + 1}`,
+          data: [{ name: 'A', value: index + 1 }],
+        })),
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.legend?.data).toEqual(['Series 1', 'Series 2', 'Series 3', 'Series 4']);
+    expect(latestOption?.series).toHaveLength(4);
+
+    harness.destroy();
+  });
 });
