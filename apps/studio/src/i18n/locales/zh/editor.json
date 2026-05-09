@@ -637,6 +637,11 @@
     "contextMenu": {
         "copy": "复制",
         "paste": "粘贴",
+        "rename": "重命名",
+        "renameDescription": "为图层命名，方便在画布和图层面板中快速识别。",
+        "group": "成组",
+        "cancel": "取消",
+        "confirm": "重命名",
         "delete": "删除",
         "toggleLock": "锁定 / 解锁",
         "bringToFront": "置于顶层",

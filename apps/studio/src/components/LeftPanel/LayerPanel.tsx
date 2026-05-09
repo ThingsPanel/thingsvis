@@ -56,6 +56,22 @@ interface GroupData {
 
 // Union type for rendering: either a group or an ungrouped item
 type LayerListEntry = { kind: 'group'; data: GroupData } | { kind: 'item'; data: LayerItemData };
+type LayerDragPayload = { kind: 'node' | 'group'; id: string };
+
+function readLayerDragPayload(event: React.DragEvent): LayerDragPayload | null {
+  const rawPayload = event.dataTransfer.getData('application/thingsvis-layer');
+  if (rawPayload) {
+    try {
+      const payload = JSON.parse(rawPayload) as LayerDragPayload;
+      if ((payload.kind === 'node' || payload.kind === 'group') && payload.id) return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  const legacyId = event.dataTransfer.getData('text/plain');
+  return legacyId ? { kind: 'node', id: legacyId } : null;
+}
 
 export default function LayerPanel({ store, searchQuery = '', onUserEdit }: LayerPanelProps) {
   const { t } = useTranslation('editor');
@@ -274,6 +290,39 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
     [store],
   );
 
+  const handleReorderLayerBlock = useCallback(
+    (payload: LayerDragPayload, targetNodeIds: string[]) => {
+      const currentState = store.getState() as KernelState;
+      const currentOrder = currentState.layerOrder;
+      const draggedIds =
+        payload.kind === 'group'
+          ? currentOrder.filter((id) =>
+              currentState.layerGroups[payload.id]?.memberIds.includes(id),
+            )
+          : [payload.id];
+
+      if (draggedIds.length === 0) return;
+      if (targetNodeIds.some((id) => draggedIds.includes(id))) return;
+
+      const remainingOrder = currentOrder.filter((id) => !draggedIds.includes(id));
+      const targetIndexCandidates = targetNodeIds
+        .map((id) => remainingOrder.indexOf(id))
+        .filter((index) => index >= 0);
+      if (targetIndexCandidates.length === 0) return;
+
+      const targetIndex = Math.min(...targetIndexCandidates);
+      const nextLayerOrder = [
+        ...remainingOrder.slice(0, targetIndex),
+        ...draggedIds,
+        ...remainingOrder.slice(targetIndex),
+      ];
+
+      store.setState({ layerOrder: nextLayerOrder });
+      onUserEdit?.(true);
+    },
+    [store, onUserEdit],
+  );
+
   const handleDelete = useCallback(
     (nodeIds: string[]) => {
       store.getState().removeNodes(nodeIds);
@@ -393,6 +442,8 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
         onDoubleClick={() => handleDoubleClick(item)}
         draggable
         onDragStart={(e) => {
+          const payload: LayerDragPayload = { kind: 'node', id: item.id };
+          e.dataTransfer.setData('application/thingsvis-layer', JSON.stringify(payload));
           e.dataTransfer.setData('text/plain', item.id);
           e.dataTransfer.effectAllowed = 'move';
         }}
@@ -402,13 +453,8 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
         }}
         onDrop={(e) => {
           e.preventDefault();
-          const draggedId = e.dataTransfer.getData('text/plain');
-          if (draggedId && draggedId !== item.id) {
-            const targetIndex = layerOrder.indexOf(item.id);
-            if (targetIndex >= 0) {
-              store.getState().reorderLayers(draggedId, targetIndex);
-            }
-          }
+          const payload = readLayerDragPayload(e);
+          if (payload) handleReorderLayerBlock(payload, [item.id]);
         }}
       >
         {/* Icon */}
@@ -527,6 +573,26 @@ export default function LayerPanel({ store, searchQuery = '', onUserEdit }: Laye
           data-layer-group-id={group.id}
           onClick={(e) => handleSelectGroup(group.id, e)}
           onDoubleClick={() => handleGroupDoubleClick(group)}
+          draggable
+          onDragStart={(e) => {
+            const payload: LayerDragPayload = { kind: 'group', id: group.id };
+            e.dataTransfer.setData('application/thingsvis-layer', JSON.stringify(payload));
+            e.dataTransfer.setData('text/plain', group.id);
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            const payload = readLayerDragPayload(e);
+            if (payload)
+              handleReorderLayerBlock(
+                payload,
+                group.members.map((m) => m.id),
+              );
+          }}
         >
           {/* Expand/Collapse */}
           <button

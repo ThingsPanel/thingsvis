@@ -653,6 +653,11 @@
     "contextMenu": {
         "copy": "Copy",
         "paste": "Paste",
+        "rename": "Rename",
+        "renameDescription": "Name this layer so it is easier to find in the canvas and layer panel.",
+        "group": "Group",
+        "cancel": "Cancel",
+        "confirm": "Rename",
         "delete": "Delete",
         "toggleLock": "Lock / Unlock",
         "bringToFront": "Bring to Front",
