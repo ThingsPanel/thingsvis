@@ -20,6 +20,8 @@ export const PropsSchema = z.object({
   // === 管道外观 ===
   pipeColor: z.string().default('#334155'),       // 液体/主色
   pipeBackground: z.string().default('#0f172a'),   // 管壁色
+  pipeStyle: z.enum(['flat', 'realistic']).default('flat'),
+  cornerRadius: z.number().min(0).max(80).default(12),
   strokeWidth: z.number().min(2).max(80).default(12),
   opacity: z.number().min(0).max(1).default(1),
 

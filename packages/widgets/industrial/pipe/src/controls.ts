@@ -7,6 +7,8 @@ export const controls = generateControls(PropsSchema, {
     'controls.industrial-pipe.groupStyle': [
       'pipeColor',
       'pipeBackground',
+      'pipeStyle',
+      'cornerRadius',
       'strokeWidth',
       'opacity',
       'glowEnabled',
@@ -26,7 +28,15 @@ export const controls = generateControls(PropsSchema, {
   overrides: {
     pipeColor: { kind: 'color', label: 'controls.industrial-pipe.pipeColor' },
     pipeBackground: { kind: 'color', label: 'controls.industrial-pipe.pipeBackground' },
+    pipeStyle: {
+      label: 'controls.industrial-pipe.pipeStyle',
+      options: [
+        { label: 'controls.industrial-pipe.pipeStyleFlat', value: 'flat' },
+        { label: 'controls.industrial-pipe.pipeStyleRealistic', value: 'realistic' },
+      ],
+    },
     strokeWidth: { label: 'controls.industrial-pipe.strokeWidth' },
+    cornerRadius: { label: 'controls.industrial-pipe.cornerRadius' },
     flowEnabled: {
       label: 'controls.industrial-pipe.flowEnabled',
       binding: { enabled: true, modes: ['static', 'field', 'expr'] },

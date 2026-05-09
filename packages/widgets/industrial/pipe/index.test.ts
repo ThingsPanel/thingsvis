@@ -44,7 +44,8 @@ function parsePathPoints(d: string | null): Array<{ x: number; y: number }> {
 function getWorldPathPoints(element: HTMLElement) {
   const svg = element.querySelector('svg');
   const path = element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
-  const points = parsePathPoints(path?.getAttribute('d') ?? null);
+  const routePoints = path?.getAttribute('data-route-points');
+  const points = routePoints ? JSON.parse(routePoints) : parsePathPoints(path?.getAttribute('d') ?? null);
   const offsetX = Number.parseFloat(svg?.style.left || '0') || 0;
   const offsetY = Number.parseFloat(svg?.style.top || '0') || 0;
   return points.map((point) => ({ x: point.x + offsetX, y: point.y + offsetY }));
@@ -101,6 +102,70 @@ describe('industrial/pipe widget', () => {
 
     expect(flowShape).not.toBeNull();
     expect((flowShape as SVGElement).style.display).not.toBe('none');
+    expect(flowShape?.getAttribute('stroke-linecap')).toBe('butt');
+    expect(flowShape?.getAttribute('stroke-width')).toBe('10');
+
+    harness.destroy();
+  });
+
+  it('rounds pipe wall corners while keeping the flow path orthogonal', () => {
+    const harness = mountWidget(Main, {
+      size: { width: 120, height: 120 },
+      props: {
+        flowEnabled: true,
+        cornerRadius: 10,
+        points: [
+          { x: 20, y: 20 },
+          { x: 80, y: 20 },
+          { x: 80, y: 80 },
+        ],
+      },
+    } as any);
+
+    const pipeShape = harness.element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
+    const flowShape = harness.element.querySelector(`path[stroke="${defaults.flowColor}"]`);
+
+    expect(pipeShape?.getAttribute('d')).toContain(' Q ');
+    expect(flowShape?.getAttribute('d')).toContain(' Q ');
+    expect(flowShape?.getAttribute('clip-path')).toBeNull();
+    expect(flowShape?.getAttribute('stroke-linejoin')).toBe('round');
+
+    harness.destroy();
+  });
+
+  it('allows square pipe wall corners when corner radius is zero', () => {
+    const harness = mountWidget(Main, {
+      size: { width: 120, height: 120 },
+      props: {
+        cornerRadius: 0,
+        points: [
+          { x: 20, y: 20 },
+          { x: 80, y: 20 },
+          { x: 80, y: 80 },
+        ],
+      },
+    } as any);
+
+    const pipeShape = harness.element.querySelector(`path[stroke="${defaults.pipeColor}"]`);
+
+    expect(pipeShape?.getAttribute('d')).not.toContain(' Q ');
+
+    harness.destroy();
+  });
+
+  it('renders extra highlights in realistic pipe style', () => {
+    const harness = mountWidget(Main, {
+      size: { width: 120, height: 40 },
+      props: {
+        pipeStyle: 'realistic',
+      },
+    } as any);
+
+    const visiblePaths = Array.from(harness.element.querySelectorAll('path')).filter(
+      (node) => (node as SVGElement).style.display !== 'none',
+    );
+
+    expect(visiblePaths.length).toBeGreaterThan(3);
 
     harness.destroy();
   });

@@ -20,13 +20,56 @@ type LinkedNodeInfo = {
 
 type PipePt = Pt;
 
-function pipePointsToPathD(points: PipePt[]): string {
+function pipePointsToPathD(points: PipePt[], cornerRadius = 0): string {
   if (!points || points.length === 0) return '';
   const first = points[0]!;
   let d = `M ${first.x} ${first.y}`;
-  for (let i = 1; i < points.length; i++) {
-    d += ` L ${points[i]!.x} ${points[i]!.y}`;
+
+  if (cornerRadius <= 0 || points.length < 3) {
+    for (let i = 1; i < points.length; i++) {
+      d += ` L ${points[i]!.x} ${points[i]!.y}`;
+    }
+    return d;
   }
+
+  for (let i = 1; i < points.length; i++) {
+    const current = points[i]!;
+    const prev = points[i - 1]!;
+    const next = points[i + 1];
+
+    if (!next) {
+      d += ` L ${current.x} ${current.y}`;
+      continue;
+    }
+
+    const prevHorizontal = prev.y === current.y;
+    const nextHorizontal = next.y === current.y;
+    const isOrthogonalTurn = prevHorizontal !== nextHorizontal;
+
+    if (!isOrthogonalTurn) {
+      d += ` L ${current.x} ${current.y}`;
+      continue;
+    }
+
+    const prevLen = Math.abs(prevHorizontal ? current.x - prev.x : current.y - prev.y);
+    const nextLen = Math.abs(nextHorizontal ? next.x - current.x : next.y - current.y);
+    const radius = Math.min(cornerRadius, prevLen / 2, nextLen / 2);
+
+    if (radius <= 0) {
+      d += ` L ${current.x} ${current.y}`;
+      continue;
+    }
+
+    const before = prevHorizontal
+      ? { x: current.x - Math.sign(current.x - prev.x) * radius, y: current.y }
+      : { x: current.x, y: current.y - Math.sign(current.y - prev.y) * radius };
+    const after = nextHorizontal
+      ? { x: current.x + Math.sign(next.x - current.x) * radius, y: current.y }
+      : { x: current.x, y: current.y + Math.sign(next.y - current.y) * radius };
+
+    d += ` L ${before.x} ${before.y} Q ${current.x} ${current.y} ${after.x} ${after.y}`;
+  }
+
   return d;
 }
 
@@ -35,6 +78,24 @@ function clampMinSize(size?: { width: number; height: number }) {
     width: Math.max(1, Number(size?.width ?? 0)),
     height: Math.max(1, Number(size?.height ?? 0)),
   };
+}
+
+function lightenColor(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.min(255, (num >> 16) + amt);
+  const G = Math.min(255, ((num >> 8) & 0x00ff) + amt);
+  const B = Math.min(255, (num & 0x0000ff) + amt);
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
+}
+
+function darkenColor(hex: string, percent: number): string {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = Math.max(0, (num >> 16) - amt);
+  const G = Math.max(0, ((num >> 8) & 0x00ff) - amt);
+  const B = Math.max(0, (num & 0x0000ff) - amt);
+  return `#${(0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1)}`;
 }
 
 function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: WidgetOverlayContext) {
@@ -79,6 +140,16 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
   pipePath.setAttribute('fill', 'none');
   pipePath.setAttribute('vector-effect', 'non-scaling-stroke');
 
+  const shadowPath = document.createElementNS(svgNS, 'path');
+  shadowPath.setAttribute('fill', 'none');
+  shadowPath.setAttribute('vector-effect', 'non-scaling-stroke');
+  shadowPath.style.pointerEvents = 'none';
+
+  const highlightPath = document.createElementNS(svgNS, 'path');
+  highlightPath.setAttribute('fill', 'none');
+  highlightPath.setAttribute('vector-effect', 'non-scaling-stroke');
+  highlightPath.style.pointerEvents = 'none';
+
   const flowPath = document.createElementNS(svgNS, 'path');
   flowPath.setAttribute('fill', 'none');
   flowPath.setAttribute('vector-effect', 'non-scaling-stroke');
@@ -86,6 +157,8 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
 
   svg.appendChild(borderPath);
   svg.appendChild(pipePath);
+  svg.appendChild(shadowPath);
+  svg.appendChild(highlightPath);
   svg.appendChild(flowPath);
   element.appendChild(svg);
 
@@ -127,8 +200,8 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     el.setAttribute('stroke', props.pipeColor);
     el.setAttribute('stroke-width', String(strokeWidth));
     el.setAttribute('opacity', String(props.opacity));
-    el.setAttribute('stroke-linecap', 'square');
-    el.setAttribute('stroke-linejoin', 'miter');
+    el.setAttribute('stroke-linecap', props.pipeStyle === 'realistic' ? 'round' : 'square');
+    el.setAttribute('stroke-linejoin', 'round');
   }
 
   function applyBorderAttrs(el: SVGElement, props: Props) {
@@ -138,9 +211,33 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     el.setAttribute('stroke', props.pipeBackground);
     el.setAttribute('stroke-width', String(strokeWidth + outlineWidth * 2));
     el.setAttribute('opacity', String(props.opacity));
-    el.setAttribute('stroke-linecap', 'square');
-    el.setAttribute('stroke-linejoin', 'miter');
+    el.setAttribute('stroke-linecap', props.pipeStyle === 'realistic' ? 'round' : 'square');
+    el.setAttribute('stroke-linejoin', 'round');
     el.setAttribute('stroke-miterlimit', '10');
+  }
+
+  function applyRealisticAttrs(shadowEl: SVGElement, highlightEl: SVGElement, props: Props) {
+    if (props.pipeStyle !== 'realistic') {
+      shadowEl.style.display = 'none';
+      highlightEl.style.display = 'none';
+      return;
+    }
+
+    const strokeWidth = getStrokeWidthPx(props.strokeWidth);
+    shadowEl.style.display = '';
+    highlightEl.style.display = '';
+
+    shadowEl.setAttribute('stroke', darkenColor(props.pipeColor, 35));
+    shadowEl.setAttribute('stroke-width', String(Math.max(2, strokeWidth * 0.68)));
+    shadowEl.setAttribute('opacity', String(Math.min(0.45, props.opacity)));
+    shadowEl.setAttribute('stroke-linecap', 'round');
+    shadowEl.setAttribute('stroke-linejoin', 'round');
+
+    highlightEl.setAttribute('stroke', lightenColor(props.pipeColor, 42));
+    highlightEl.setAttribute('stroke-width', String(Math.max(1, strokeWidth * 0.18)));
+    highlightEl.setAttribute('opacity', String(Math.min(0.75, props.opacity)));
+    highlightEl.setAttribute('stroke-linecap', 'round');
+    highlightEl.setAttribute('stroke-linejoin', 'round');
   }
 
   function applyFlowAttrs(el: SVGElement, props: Props) {
@@ -150,7 +247,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     }
 
     const strokeWidth = getStrokeWidthPx(props.strokeWidth);
-    const flowWidth = Math.max(2, Math.min(strokeWidth - 2, Math.round(strokeWidth * 0.5) || 2));
+    const flowWidth = Math.max(2, strokeWidth - 2);
     el.style.display = '';
     
     if (props.glowEnabled) {
@@ -169,7 +266,7 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
     
     el.setAttribute('stroke-width', String(flowWidth));
     el.setAttribute('opacity', '1');
-    el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('stroke-linecap', 'butt');
     el.setAttribute('stroke-linejoin', 'round');
     el.setAttribute('stroke-dasharray', `${props.flowLength} ${props.flowSpacing}`);
   }
@@ -242,13 +339,19 @@ function renderPipe(element: HTMLElement, initialProps: Props, initialCtx: Widge
       svg.setAttribute('viewBox', `0 0 ${size.width} ${size.height}`);
     }
 
-    const d = pipePointsToPathD(routePoints);
-    borderPath.setAttribute('d', d);
-    pipePath.setAttribute('d', d);
-    flowPath.setAttribute('d', d);
+    const cornerRadius = Math.max(0, Math.min(nextProps.cornerRadius, 80));
+    const pipeD = pipePointsToPathD(routePoints, cornerRadius);
+    const flowD = pipeD;
+    borderPath.setAttribute('d', pipeD);
+    pipePath.setAttribute('d', pipeD);
+    pipePath.setAttribute('data-route-points', JSON.stringify(routePoints));
+    shadowPath.setAttribute('d', pipeD);
+    highlightPath.setAttribute('d', pipeD);
+    flowPath.setAttribute('d', flowD);
 
     applyBorderAttrs(borderPath, nextProps);
     applyPipeAttrs(pipePath, nextProps);
+    applyRealisticAttrs(shadowPath, highlightPath, nextProps);
     applyFlowAttrs(flowPath, nextProps);
 
     if (nextProps.flowEnabled && nextProps.flowSpeed > 0) {
