@@ -17,16 +17,56 @@ export const controls = createControlPanel()
           label: `${W}.itemsText`,
           binding: true,
         })
-        .addSelect('bulletStyle', {
-          label: `${W}.bulletStyle`,
+        .addSelect('listMode', {
+          label: `${W}.listMode`,
           options: [
-            { label: `${W}.bulletDot`, value: 'dot' },
-            { label: `${W}.bulletCheck`, value: 'check' },
-            { label: `${W}.bulletNumber`, value: 'number' },
+            { label: `${W}.listUnordered`, value: 'unordered' },
+            { label: `${W}.listOrdered`, value: 'ordered' },
           ],
+        })
+        .addSelect('unorderedMarker', {
+          label: `${W}.unorderedMarker`,
+          options: [
+            { label: `${W}.markerDisc`, value: 'disc' },
+            { label: `${W}.markerCircle`, value: 'circle' },
+            { label: `${W}.markerSquare`, value: 'square' },
+            { label: `${W}.markerDash`, value: 'dash' },
+            { label: `${W}.markerCheck`, value: 'check' },
+            { label: `${W}.markerCustom`, value: 'custom' },
+          ],
+          showWhen: { field: 'listMode', value: 'unordered' },
+        })
+        .addTextInput('customBullet', {
+          label: `${W}.customBullet`,
+          binding: true,
+          showWhen: { field: 'unorderedMarker', value: 'custom' },
+        })
+        .addSelect('numberStyle', {
+          label: `${W}.numberStyle`,
+          options: [
+            { label: `${W}.numberDot`, value: 'dot' },
+            { label: `${W}.numberParenClose`, value: 'parenClose' },
+            { label: `${W}.numberParenAround`, value: 'parenAround' },
+            { label: `${W}.numberPlain`, value: 'plain' },
+          ],
+          showWhen: { field: 'listMode', value: 'ordered' },
+        })
+        .addNumberInput('orderStart', {
+          label: `${W}.orderStart`,
+          showWhen: { field: 'listMode', value: 'ordered' },
         });
     },
     { label: `${W}.groupContent` },
+  )
+  .addGroup(
+    'Regions',
+    (builder) => {
+      builder
+        .addSwitch('showLeading', { label: `${W}.showLeading` })
+        .addSwitch('showLeftText', { label: `${W}.showLeftText` })
+        .addSwitch('showRightText', { label: `${W}.showRightText` });
+    },
+    { label: `${W}.groupRegions` },
   )
   .addGroup(
     'Typography',
@@ -40,17 +80,34 @@ export const controls = createControlPanel()
           default: 16,
           showWhen: { field: 'showTitle', value: true },
         })
-        .addSlider('fontSize', {
-          label: `${W}.fontSize`,
-          min: 10,
-          max: 24,
+        .addSlider('leftFontSize', {
+          label: `${W}.leftFontSize`,
+          min: 8,
+          max: 36,
           step: 1,
           default: 14,
+          showWhen: { field: 'showLeftText', value: true },
+        })
+        .addSlider('rightFontSize', {
+          label: `${W}.rightFontSize`,
+          min: 8,
+          max: 36,
+          step: 1,
+          default: 14,
+          showWhen: { field: 'showRightText', value: true },
+        })
+        .addSlider('leadingFontSize', {
+          label: `${W}.leadingFontSize`,
+          min: 8,
+          max: 36,
+          step: 1,
+          default: 14,
+          showWhen: { field: 'showLeading', value: true },
         })
         .addSlider('rowGap', {
           label: `${W}.rowGap`,
-          min: 4,
-          max: 24,
+          min: 0,
+          max: 64,
           step: 1,
           default: 10,
         });
@@ -58,36 +115,30 @@ export const controls = createControlPanel()
     { label: `${W}.groupTypography` },
   )
   .addGroup(
-    'Style',
+    'Color',
     (builder) => {
       builder
-        .addColorPicker('titleColor', { label: `${W}.titleColor`, binding: true })
-        .addColorPicker('textColor', { label: `${W}.textColor`, binding: true })
-        .addColorPicker('accentColor', { label: `${W}.accentColor`, binding: true })
-        .addColorPicker('backgroundColor', { label: `${W}.backgroundColor`, binding: true })
-        .addColorPicker('borderColor', { label: `${W}.borderColor`, binding: true })
-        .addSlider('borderWidth', {
-          label: `${W}.borderWidth`,
-          min: 0,
-          max: 8,
-          step: 1,
-          default: 1,
+        .addColorPicker('titleColor', {
+          label: `${W}.titleColor`,
+          binding: true,
+          showWhen: { field: 'showTitle', value: true },
         })
-        .addSlider('cornerRadius', {
-          label: `${W}.cornerRadius`,
-          min: 0,
-          max: 32,
-          step: 1,
-          default: 12,
+        .addColorPicker('leftColor', {
+          label: `${W}.leftColor`,
+          binding: true,
+          showWhen: { field: 'showLeftText', value: true },
         })
-        .addSlider('paddingSize', {
-          label: `${W}.paddingSize`,
-          min: 8,
-          max: 32,
-          step: 1,
-          default: 16,
+        .addColorPicker('rightColor', {
+          label: `${W}.rightColor`,
+          binding: true,
+          showWhen: { field: 'showRightText', value: true },
+        })
+        .addColorPicker('leadingColor', {
+          label: `${W}.leadingColor`,
+          binding: true,
+          showWhen: { field: 'showLeading', value: true },
         });
     },
-    { label: `${W}.groupStyle` },
+    { label: `${W}.groupColor` },
   )
   .build();

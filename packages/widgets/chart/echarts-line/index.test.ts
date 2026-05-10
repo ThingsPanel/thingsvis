@@ -122,4 +122,44 @@ describe('chart/echarts-line widget', () => {
 
     harness.destroy();
   });
+
+  it('renders multiple time line series from the original time-value point format', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        data: [
+          {
+            name: 'Supply',
+            data: [
+              { time: '2026-03-19T09:00:00.000Z', value: 47.2 },
+              { time: '2026-03-19T10:00:00.000Z', value: 47.8 },
+            ],
+          },
+          {
+            name: 'Return',
+            data: [
+              { time: '2026-03-19T09:00:00.000Z', value: 39.4 },
+              { time: '2026-03-19T10:00:00.000Z', value: 40.1 },
+            ],
+          },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.xAxis?.type).toBe('time');
+    expect(latestOption?.series).toHaveLength(2);
+    expect(latestOption?.series?.[0]?.encode).toEqual({ x: 0, y: 1, tooltip: [1] });
+    expect(latestOption?.series?.[0]?.data).toEqual([
+      { name: '2026-03-19T09:00:00.000Z', value: [1773910800000, 47.2] },
+      { name: '2026-03-19T10:00:00.000Z', value: [1773914400000, 47.8] },
+    ]);
+    expect(latestOption?.series?.[1]?.data).toEqual([
+      { name: '2026-03-19T09:00:00.000Z', value: [1773910800000, 39.4] },
+      { name: '2026-03-19T10:00:00.000Z', value: [1773914400000, 40.1] },
+    ]);
+
+    harness.destroy();
+  });
 });

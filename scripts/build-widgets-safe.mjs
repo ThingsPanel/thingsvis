@@ -68,6 +68,36 @@ function buildWidget(widget) {
   });
 }
 
+/**
+ * Bounded parallel runner (avoids dozens of simultaneous rspack/native processes —
+ * Windows has been observed to terminate rspack with 0xC0000409 / exit 3221226505).
+ */
+async function parallelMapLimit(items, limit, fn) {
+  const results = new Array(items.length);
+  let next = 0;
+  const workerCount = Math.min(limit, Math.max(1, items.length));
+  async function worker() {
+    for (;;) {
+      const i = next;
+      next += 1;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  }
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return results;
+}
+
+function defaultWidgetBuildJobs() {
+  const raw = process.env.TV_WIDGET_BUILD_JOBS;
+  if (raw !== undefined && raw !== '') {
+    const n = Math.max(1, Number.parseInt(raw, 10) || 1);
+    return n;
+  }
+  // Conservative default on Windows; override with TV_WIDGET_BUILD_JOBS=1 for fully sequential.
+  return process.platform === 'win32' ? 4 : 12;
+}
+
 async function main() {
   const widgets = getWidgetDirs();
   if (widgets.length === 0) {
@@ -75,10 +105,13 @@ async function main() {
     process.exit(0);
   }
 
-  console.log(`[build:widgets:safe] Building ${widgets.length} widgets in parallel...`);
+  const jobs = defaultWidgetBuildJobs();
+  console.log(
+    `[build:widgets:safe] Building ${widgets.length} widgets (concurrency=${jobs}, set TV_WIDGET_BUILD_JOBS to override)...`,
+  );
   const start = Date.now();
 
-  const results = await Promise.all(widgets.map(buildWidget));
+  const results = await parallelMapLimit(widgets, jobs, buildWidget);
 
   const succeeded = results.filter((r) => r.success);
   const failed = results.filter((r) => !r.success);

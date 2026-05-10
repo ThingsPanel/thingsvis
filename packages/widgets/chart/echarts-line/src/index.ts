@@ -375,12 +375,15 @@ function buildOption(
   const buildSeriesData = (normalized: NormalizedSingleLineData) => {
     if (isTimeSeries) {
       if (hasData && normalized.mode === 'time') {
-        return normalized.timeData.map((point) => [point.timeMs, point.value]);
+        return normalized.timeData.map((point) => ({
+          name: point.label,
+          value: [point.timeMs, point.value],
+        }));
       }
 
       return [
-        [emptyTimeWindow.startMs, null],
-        [emptyTimeWindow.endMs, null],
+        { value: [emptyTimeWindow.startMs, null] },
+        { value: [emptyTimeWindow.endMs, null] },
       ];
     }
 
@@ -489,6 +492,7 @@ function buildOption(
       return {
         type: 'line',
         name,
+        encode: isTimeSeries ? { x: 0, y: 1, tooltip: [1] } : undefined,
         data: buildSeriesData(normalized),
         smooth: smooth,
         showSymbol: false,
