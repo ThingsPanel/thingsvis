@@ -8,13 +8,14 @@
     "controls": {
       "industrial-tank": {
         "group": "液位罐配置",
-        "level": "液位 (%)",
+        "maxMeters": "量程 (m)",
+        "level": "液位 (m)",
         "tankColor": "罐体颜色",
         "liquidColor": "液体颜色",
         "lowColor": "低液位颜色",
         "highColor": "高液位颜色",
-        "lowThreshold": "低液位阈值",
-        "highThreshold": "高液位阈值",
+        "lowThreshold": "低液位阈值 (m)",
+        "highThreshold": "高液位阈值 (m)",
         "hasError": "故障告警"
       }
     }

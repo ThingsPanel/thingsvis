@@ -98,6 +98,11 @@ export const ControlFieldSchema = z.object({
   placeholder: ControlTextSchema.optional(),
   /** 描述/帮助文字 */
   description: ControlTextSchema.optional(),
+  /**
+   * When true, `select` options render as `label (value)` so users see exact binding tokens
+   * (e.g. 运行中 (running)). Off by default to avoid cluttering long option lists (e.g. icon ids).
+   */
+  showOptionValues: z.boolean().optional(),
   /** 是否禁用 */
   disabled: z.boolean().optional(),
   /** 条件显示（依赖其他字段） */

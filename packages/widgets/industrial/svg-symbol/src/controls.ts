@@ -35,6 +35,7 @@ export const controls: WidgetControls = {
           path: 'stateMode',
           kind: 'select',
           label: 'controls.industrial-svg-symbol.stateMode',
+          showOptionValues: true,
           options: [
             {
               label: 'controls.industrial-svg-symbol.stateModeNone',

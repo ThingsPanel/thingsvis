@@ -5,23 +5,73 @@ import { defineWidget } from '@thingsvis/widget-sdk';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
+const LEGACY_PERCENT_MAX = 100;
+
+/**
+ * Saved projects used 0–100 (%). New props are meters.
+ * If both thresholds look like percentages (e.g. 20 / 80), interpret level and thresholds as % of maxMeters.
+ */
+function levelsInMeters(props: Props): { maxM: number; level: number; low: number; high: number } {
+  const maxM = Math.max(0.001, props.maxMeters);
+  let level = props.level;
+  let low = props.lowThreshold;
+  let high = props.highThreshold;
+
+  const thresholdsLookLikePercent =
+    low > maxM && high > maxM && low <= LEGACY_PERCENT_MAX && high <= LEGACY_PERCENT_MAX;
+
+  const looksLegacyPercent =
+    thresholdsLookLikePercent && level <= LEGACY_PERCENT_MAX;
+
+  if (looksLegacyPercent) {
+    level = (level / LEGACY_PERCENT_MAX) * maxM;
+    low = (low / LEGACY_PERCENT_MAX) * maxM;
+    high = (high / LEGACY_PERCENT_MAX) * maxM;
+  }
+
+  return {
+    maxM,
+    level: Math.max(0, Math.min(maxM, level)),
+    low: Math.max(0, Math.min(maxM, low)),
+    high: Math.max(0, Math.min(maxM, high)),
+  };
+}
+
+function migrateTankProps(props: unknown, fromVersion: string): unknown {
+  if (fromVersion !== '1.0.0' || typeof props !== 'object' || props === null) {
+    return props;
+  }
+  const p = props as Record<string, unknown>;
+  const maxM = typeof p.maxMeters === 'number' && p.maxMeters > 0 ? p.maxMeters : 3;
+  const toM = (v: unknown) =>
+    typeof v === 'number' ? (v / LEGACY_PERCENT_MAX) * maxM : v;
+  return {
+    ...p,
+    maxMeters: maxM,
+    level: toM(p.level),
+    lowThreshold: toM(p.lowThreshold),
+    highThreshold: toM(p.highThreshold),
+  };
+}
+
 function renderTank(element: HTMLElement, props: Props): void {
   element.style.width = '100%';
   element.style.height = '100%';
   element.style.display = 'block';
   element.style.lineHeight = '0';
 
-  const level = Math.max(0, Math.min(100, props.level));
+  const { maxM: maxMeters, level, low: lowThreshold, high: highThreshold } = levelsInMeters(props);
+
   const previousLevel = Number.isFinite(Number(element.dataset.prevLevel))
-    ? Math.max(0, Math.min(100, Number(element.dataset.prevLevel)))
+    ? Math.max(0, Math.min(maxMeters, Number(element.dataset.prevLevel)))
     : level;
 
   let liquidColor = props.liquidColor;
   if (props.hasError) {
     liquidColor = '#ff4d4f';
-  } else if (level <= props.lowThreshold) {
+  } else if (level <= lowThreshold) {
     liquidColor = props.lowColor;
-  } else if (level >= props.highThreshold) {
+  } else if (level >= highThreshold) {
     liquidColor = props.highColor;
   }
 
@@ -39,20 +89,20 @@ function renderTank(element: HTMLElement, props: Props): void {
   const innerW = tankW - 8;
   const innerH = tankH - 9;
   const innerBot = innerY + innerH;
-  const maxMeters = 3;
 
-  const liquidHeight = (level / 100) * innerH;
+  const liquidHeight = (level / maxMeters) * innerH;
   const liquidY = innerBot - liquidHeight;
-  const prevLiquidHeight = (previousLevel / 100) * innerH;
+  const prevLiquidHeight = (previousLevel / maxMeters) * innerH;
   const prevLiquidY = innerBot - prevLiquidHeight;
-  const levelMeters = (level / 100) * maxMeters;
+  const levelMeters = level;
 
   const valueColor = props.hasError ? '#fecaca' : '#e2e8f0';
   const tickColor = props.hasError ? '#fca5a5' : '#94a3b8';
   const scaleX = tankX + tankW + 5;
   const scaleLabelX = scaleX + 7;
   const scaleFor = (meters: number) => innerBot - (meters / maxMeters) * innerH;
-  const scaleTicks = [3, 2, 1, 0]
+  const scaleTickMeters = [0, 1, 2, 3].map((i) => (maxMeters * (3 - i)) / 3);
+  const scaleTicks = scaleTickMeters
     .map((meters) => `
   <line x1="${scaleX - 3}" y1="${scaleFor(meters)}" x2="${scaleX + 3}" y2="${scaleFor(meters)}" stroke="${tickColor}" stroke-width="1"/>
   <text x="${scaleLabelX}" y="${scaleFor(meters) + 2.5}" fill="${valueColor}" font-size="6" font-family="sans-serif">${meters.toFixed(1)}m</text>`)
@@ -150,7 +200,7 @@ function renderTank(element: HTMLElement, props: Props): void {
 </svg>
 `;
 
-  element.dataset.prevLevel = String(level);
+  element.dataset.prevLevel = String(levelMeters);
 }
 
 function lightenColor(hex: string, percent: number): string {
@@ -176,6 +226,7 @@ export const Main = defineWidget({
   locales: { zh, en },
   schema: PropsSchema,
   controls,
+  migrate: migrateTankProps,
   render: (element: HTMLElement, props: Props) => {
     renderTank(element, props);
     return {

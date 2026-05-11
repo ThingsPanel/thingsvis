@@ -8,13 +8,14 @@
     "controls": {
       "industrial-tank": {
         "group": "Tank Config",
-        "level": "Level (%)",
+        "maxMeters": "Full scale (m)",
+        "level": "Level (m)",
         "tankColor": "Tank Color",
         "liquidColor": "Liquid Color",
         "lowColor": "Low Level Color",
         "highColor": "High Level Color",
-        "lowThreshold": "Low Threshold",
-        "highThreshold": "High Threshold",
+        "lowThreshold": "Low threshold (m)",
+        "highThreshold": "High threshold (m)",
         "hasError": "Has Error"
       }
     }

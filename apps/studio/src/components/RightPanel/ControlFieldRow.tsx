@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { KernelStore, KernelState } from '@thingsvis/kernel';
-import type { ControlField, DataBinding } from '@thingsvis/schema';
+import type { ControlField, ControlOption, DataBinding } from '@thingsvis/schema';
 import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/NumericInput';
 import * as LucideIcons from 'lucide-react';
@@ -84,6 +84,18 @@ function isDefaultWriteBindingTarget(
 function getRootFieldPath(fieldPath: string): string | null {
   if (!fieldPath || fieldPath === '(root)') return null;
   return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+}
+
+function selectOptionCaption(
+  opt: ControlOption,
+  showOptionValues: boolean | undefined,
+  locale: string,
+  t: (key: string, options?: { defaultValue?: string }) => string,
+): string {
+  const labelText = resolveControlText(opt.label, locale, t);
+  if (!showOptionValues) return labelText;
+  const valueHint = opt.value === '' ? '""' : String(opt.value);
+  return `${labelText} (${valueHint})`;
 }
 
 function createDefaultWriteAction(dataSourceId: string, fieldId: string): ActionLike {
@@ -481,9 +493,9 @@ export function ControlFieldRow({
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
               >
                 <option value="">{t('common.pleaseSelect')}</option>
-                {field.options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {resolveControlText(opt.label, locale, t)}
+                {field.options.map((opt, optIdx) => (
+                  <option key={`${field.path}:${optIdx}:${String(opt.value)}`} value={opt.value}>
+                    {selectOptionCaption(opt, field.showOptionValues, locale, t)}
                   </option>
                 ))}
               </select>
