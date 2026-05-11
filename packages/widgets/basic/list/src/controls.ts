@@ -13,8 +13,8 @@ export const controls = createControlPanel()
           binding: true,
           showWhen: { field: 'showTitle', value: true },
         })
-        .addCustom('itemsText', 'textarea', {
-          label: `${W}.itemsText`,
+        .addCustom('itemsJson', 'textarea', {
+          label: `${W}.itemsJson`,
           binding: true,
         })
         .addSelect('listMode', {

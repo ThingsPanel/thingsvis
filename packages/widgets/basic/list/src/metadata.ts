@@ -3,7 +3,7 @@ export const metadata = {
   name: 'widgets.basic/list.name',
   category: 'basic',
   icon: 'List',
-  version: '1.1.0',
+  version: '1.2.0',
   resizable: true,
   defaultSize: { width: 260, height: 200 },
   constraints: { minWidth: 140, minHeight: 100 },

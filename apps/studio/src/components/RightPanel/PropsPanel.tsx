@@ -29,6 +29,7 @@ import {
 } from '@/lib/canvas/aspectRatio';
 import { syncShapeStylePatch } from '@/lib/shapeStyleSync';
 import { resolveControlText } from '@/lib/i18n/controlText';
+import { extractDefaults } from '@/lib/registry/schemaUtils';
 import ControlFieldRow from './ControlFieldRow';
 import { BaseStylePanel } from './BaseStylePanel';
 import { preserveFreePipeLocalRouteOnResize } from '../../../../../packages/widgets/industrial/pipe/src/routeWorld';
@@ -81,6 +82,17 @@ type Props = {
   kernelStore: KernelStore;
   onUserEdit?: () => void;
 };
+
+function getEffectivePropForPanel(
+  stored: Record<string, unknown> | undefined,
+  path: string,
+  schemaDefaults: Record<string, unknown>,
+): unknown {
+  if (stored != null && Object.prototype.hasOwnProperty.call(stored, path)) {
+    return stored[path];
+  }
+  return schemaDefaults[path];
+}
 
 export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const { t, i18n } = useTranslation('editor');
@@ -144,6 +156,15 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
 
   const controlsParse = useMemo(() => getWidgetControls(widgetEntry ?? undefined), [widgetEntry]);
   const controls = controlsParse.controls;
+
+  const propsSchemaDefaults = useMemo(() => {
+    if (!widgetEntry?.schema) return {} as Record<string, unknown>;
+    try {
+      return extractDefaults(widgetEntry.schema as any);
+    } catch {
+      return {} as Record<string, unknown>;
+    }
+  }, [widgetEntry]);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== 'development') return;
@@ -512,7 +533,11 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                         nodeId={nodeId}
                         componentType={componentType}
                         field={field}
-                        propsValue={schema.props?.[field.path]}
+                        propsValue={getEffectivePropForPanel(
+                          schema.props as Record<string, unknown> | undefined,
+                          field.path,
+                          propsSchemaDefaults,
+                        )}
                         bindings={schema.data}
                         updateNode={updateNode}
                       />

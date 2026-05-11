@@ -9,7 +9,7 @@
         "groupColor": "颜色",
         "showTitle": "显示标题",
         "title": "标题",
-        "itemsText": "列表行（TAB 分列）",
+        "itemsJson": "列表项（JSON 数组）",
         "listMode": "列表类型",
         "listUnordered": "无序",
         "listOrdered": "有序",

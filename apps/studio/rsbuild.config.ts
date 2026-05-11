@@ -114,6 +114,7 @@ export default defineConfig({
           shared: {
             react: { singleton: true, eager: true, requiredVersion: false },
             'react-dom': { singleton: true, eager: true, requiredVersion: false },
+            'react-dom/client': { singleton: true, eager: true, requiredVersion: false },
             'leafer-ui': { singleton: true, eager: true, requiredVersion: false },
             '@thingsvis/schema': { singleton: true, eager: true, requiredVersion: false },
             '@thingsvis/kernel': { singleton: true, eager: true, requiredVersion: false },

@@ -1,5 +1,6 @@
 import { defineWidget, resolveWidgetColors } from '@thingsvis/widget-sdk';
 import { PropsSchema, type Props } from './schema';
+import { SAMPLE_LIST_ITEMS_JSON } from './sample-data';
 import { metadata } from './metadata';
 import { controls } from './controls';
 import zh from './locales/zh.json';
@@ -12,7 +13,71 @@ function resolveColor(value: string | undefined, fallback: string): string {
 
 type ParsedRow = { iconCell: string; left: string; right: string };
 
-function splitItemLine(line: string): ParsedRow {
+function pickKnown(obj: Record<string, unknown>, keys: readonly string[]): unknown {
+  for (const k of keys) {
+    if (Object.prototype.hasOwnProperty.call(obj, k)) {
+      const v = obj[k];
+      if (v !== undefined) return v;
+    }
+  }
+  return undefined;
+}
+
+function stringifyField(v: unknown): string {
+  if (v === undefined || v === null) return '';
+  return String(v);
+}
+
+function rowFromJsonItem(raw: unknown): ParsedRow | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
+    const left = String(raw).trim();
+    return left ? { iconCell: '', left, right: '' } : null;
+  }
+  if (typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+
+  const iconRaw = pickKnown(obj, ['icon', 'leading', 'leadingIcon', 'bullet'] as const);
+  const leftRaw = pickKnown(obj, ['left', 'leftText', 'label', 'name', 'title'] as const);
+  const rightRaw = pickKnown(obj, ['right', 'rightText', 'value', 'text', 'subtitle'] as const);
+
+  const iconCell = stringifyField(iconRaw).trim();
+  const left = stringifyField(leftRaw);
+  const right = stringifyField(rightRaw);
+
+  if (!iconCell && !left && !right) return null;
+  return { iconCell, left, right };
+}
+
+/** 顶层为数组、单行对象、`{ items|rows|data: [...] }`；绑定可把数组序列化为 JSON 传入 */
+function parseRowsFromItemsJson(itemsJson: string): ParsedRow[] {
+  try {
+    let raw: unknown = JSON.parse(itemsJson);
+
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const nest = pickKnown(raw as Record<string, unknown>, ['items', 'rows', 'data'] as const);
+      if (Array.isArray(nest)) raw = nest;
+    }
+
+    if (!Array.isArray(raw)) {
+      const one = rowFromJsonItem(raw);
+      return one ? [one] : [];
+    }
+
+    const out: ParsedRow[] = [];
+    for (const item of raw) {
+      const row = rowFromJsonItem(item);
+      if (row) out.push(row);
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+/* -------- 迁移：TAB 分列旧数据 -------- */
+
+function splitLegacyTabLine(line: string): ParsedRow {
   const parts = line.split('\t');
   if (parts.length === 1) {
     const left = parts[0]!.trim();
@@ -27,11 +92,21 @@ function splitItemLine(line: string): ParsedRow {
   return { iconCell, left, right };
 }
 
-function getItemRows(text: string): ParsedRow[] {
+function rowsFromLegacyTabText(text: string): ParsedRow[] {
   return text
     .split(/\r?\n/)
-    .map(splitItemLine)
+    .map(splitLegacyTabLine)
     .filter((r) => r.left || r.right || r.iconCell);
+}
+
+function tabTextToItemsJson(text: string): string {
+  const rows = rowsFromLegacyTabText(text);
+  const items = rows.map((r) => ({
+    ...(r.iconCell ? { icon: r.iconCell } : { icon: '' }),
+    left: r.left,
+    right: r.right,
+  }));
+  return JSON.stringify(items, null, 2);
 }
 
 const UNORDERED_GLYPH: Record<Exclude<Props['unorderedMarker'], 'custom'>, string> = {
@@ -156,7 +231,7 @@ function renderList(element: HTMLElement, props: Props): void {
   title.style.fontWeight = '700';
   title.style.color = resolveColor(props.titleColor, fg);
 
-  const rows = getItemRows(props.itemsText);
+  const rows = parseRowsFromItemsJson(props.itemsJson);
   body.innerHTML = '';
   body.style.flex = '1 1 auto';
   body.style.minHeight = '0';
@@ -251,6 +326,36 @@ function migrateListProps(raw: unknown): unknown {
     delete out.bulletStyle;
   }
 
+  /** itemsText（TAB）→ itemsJson */
+  if (typeof src.itemsText === 'string') {
+    const legacy = src.itemsText;
+    const legacyTrim = legacy.trim();
+    const existingJsonStr = typeof out.itemsJson === 'string' ? String(out.itemsJson).trim() : '';
+    const hasExistingJson =
+      !!existingJsonStr &&
+      (() => {
+        try {
+          const v = JSON.parse(existingJsonStr);
+          return Array.isArray(v) || (typeof v === 'object' && v !== null);
+        } catch {
+          return true;
+        }
+      })();
+
+    if (legacyTrim && !hasExistingJson) {
+      try {
+        out.itemsJson = tabTextToItemsJson(legacy);
+      } catch {
+        out.itemsJson = '[]';
+      }
+    }
+    delete out.itemsText;
+  }
+
+  if (typeof out.itemsJson !== 'string') {
+    out.itemsJson = '[]';
+  }
+
   if (typeof src.accentColor === 'string' && (out.leadingColor === '' || out.leadingColor === undefined)) {
     out.leadingColor = src.accentColor;
   }
@@ -284,6 +389,9 @@ export const Main = defineWidget({
   schema: PropsSchema,
   locales: { zh, en },
   controls,
+  sampleData: { itemsJson: SAMPLE_LIST_ITEMS_JSON },
+  standaloneDefaults: { itemsJson: SAMPLE_LIST_ITEMS_JSON },
+  previewDefaults: { itemsJson: SAMPLE_LIST_ITEMS_JSON },
   migrate: migrateListProps,
   render: (element: HTMLElement, props: Props) => {
     let currentProps = props;

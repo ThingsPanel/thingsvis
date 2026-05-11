@@ -1,30 +1,31 @@
 import { z } from 'zod';
+import { SAMPLE_LIST_ITEMS_JSON } from './sample-data';
+
+/** JSON：`[{ icon, left, right }]`，字段可用 leftText/rightText、label/value 等别名；`icon` 可为文字或图片 URL。 */
 
 export const PropsSchema = z.object({
   title: z.string().default('列表').describe('Title'),
   showTitle: z.boolean().default(true).describe('Show title'),
 
-  /** 每行以 Tab 分列：两列为「左边」「右边」，三列为「图标」「左边」「右边」；图标可为文字/emoji 或 http(s) / data:image 图片链接 */
-  itemsText: z
-    .string()
-    .default(
-      `运行时间\t6.5 h
-累计供热量\t125.6 GJ
-供水泵\t运行
-回水泵\t正常
-供水温度\t47.2 ℃`,
-    )
-    .describe('Items'),
+  /** JSON 数组字符串；每项含 icon / left / right（可选用别名）；数据源可绑定数组，预处理会序列化 */
+  itemsJson: z
+    .preprocess((raw) => {
+      if (raw === undefined || raw === null) return SAMPLE_LIST_ITEMS_JSON;
+      if (typeof raw === 'string') {
+        return raw.trim() === '' ? '[]' : raw;
+      }
+      if (Array.isArray(raw)) return JSON.stringify(raw);
+      if (typeof raw === 'object') return JSON.stringify(raw);
+      return String(raw ?? '[]');
+    }, z.string())
+    .describe('Items JSON'),
 
   listMode: z.enum(['unordered', 'ordered']).default('unordered').describe('List mode'),
 
   unorderedMarker: z.enum(['disc', 'circle', 'square', 'dash', 'check', 'custom']).default('disc').describe('Bullet'),
-  /** 当 unorderedMarker 为 custom 时使用 */
   customBullet: z.string().default('•').describe('Custom bullet'),
 
-  /** 有序列表序号样式：1. / 1) / (1) / 无前缀后缀 */
   numberStyle: z.enum(['dot', 'parenClose', 'parenAround', 'plain']).default('dot').describe('Number style'),
-  /** 有序列表起始序号（整数） */
   orderStart: z.number().int().min(-99999).max(99999).default(1).describe('Order start'),
 
   showLeading: z.boolean().default(true).describe('Show leading icon or list marker'),

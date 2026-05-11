@@ -9,7 +9,7 @@
         "groupColor": "Colors",
         "showTitle": "Show title",
         "title": "Title",
-        "itemsText": "Rows (TAB columns)",
+        "itemsJson": "Items (JSON array)",
         "listMode": "List type",
         "listUnordered": "Bulleted",
         "listOrdered": "Numbered",

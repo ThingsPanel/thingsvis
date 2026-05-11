@@ -132,6 +132,8 @@ function createWidgetConfig(pluginDir, opts = {}) {
         shared: {
           react: { singleton: true, requiredVersion: false, import: false },
           'react-dom': { singleton: true, requiredVersion: false, import: false },
+          // Needed so remotes importing createRoot from "react-dom/client" resolve correctly (notVia legacy "react-dom" entry).
+          'react-dom/client': { singleton: true, requiredVersion: false, import: false },
           'leafer-ui': { singleton: true, requiredVersion: false, import: false },
           'zod': { singleton: true, requiredVersion: false },
           '@thingsvis/schema': { singleton: true, requiredVersion: false, import: false },
