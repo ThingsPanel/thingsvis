@@ -9,6 +9,7 @@
       "industrial-tank": {
         "group": "液位罐配置",
         "maxMeters": "量程 (m)",
+        "maxMetersHint": "刻度 0～此值；液位、阈值均为米。若填 12 表示 12 m 请把量程设为 ≥12。遥测仍为 0–100 的百分数时，保持量程=罐高，系统会把 >量程 的数按百分比换算。",
         "level": "液位 (m)",
         "tankColor": "罐体颜色",
         "liquidColor": "液体颜色",

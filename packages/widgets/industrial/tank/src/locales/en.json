@@ -9,6 +9,7 @@
       "industrial-tank": {
         "group": "Tank Config",
         "maxMeters": "Full scale (m)",
+        "maxMetersHint": "Scale runs from 0 to this height (meters). Set it to your tank height (e.g. 20). If telemetry sends 0–100 as percent, keep max = tank height; values greater than max are treated as percent.",
         "level": "Level (m)",
         "tankColor": "Tank Color",
         "liquidColor": "Liquid Color",

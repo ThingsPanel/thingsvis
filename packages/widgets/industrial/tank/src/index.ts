@@ -7,33 +7,51 @@ import en from './locales/en.json';
 
 const LEGACY_PERCENT_MAX = 100;
 
+function finiteNumber(n: unknown, fallback: number): number {
+  const x = typeof n === 'number' ? n : Number(n);
+  return Number.isFinite(x) ? x : fallback;
+}
+
 /**
- * Saved projects used 0–100 (%). New props are meters.
- * If both thresholds look like percentages (e.g. 20 / 80), interpret level and thresholds as % of maxMeters.
+ * Thresholds like 20 / 80 (legacy 0–100) convert to meters when they cannot be literal
+ * meters on this tank (either value above full-scale), so changing maxMeters still works.
+ *
+ * Level: if it is greater than maxMeters but ≤100, treat as 0–100% of maxMeters
+ * (e.g. max=3, level=20 → 20%). If level ≤ maxMeters, it is already in meters
+ * (e.g. max=20, level=20 → full scale).
  */
 function levelsInMeters(props: Props): { maxM: number; level: number; low: number; high: number } {
-  const maxM = Math.max(0.001, props.maxMeters);
-  let level = props.level;
-  let low = props.lowThreshold;
-  let high = props.highThreshold;
+  const maxM = Math.max(0.001, finiteNumber(props.maxMeters, 3));
+  let level = finiteNumber(props.level, 0);
+  let low = finiteNumber(props.lowThreshold, 0);
+  let high = finiteNumber(props.highThreshold, 0);
 
   const thresholdsLookLikePercent =
-    low > maxM && high > maxM && low <= LEGACY_PERCENT_MAX && high <= LEGACY_PERCENT_MAX;
+    (low > maxM || high > maxM) &&
+    low <= LEGACY_PERCENT_MAX &&
+    high <= LEGACY_PERCENT_MAX;
 
-  const looksLegacyPercent =
-    thresholdsLookLikePercent && level <= LEGACY_PERCENT_MAX;
+  let lowM = low;
+  let highM = high;
+  if (thresholdsLookLikePercent) {
+    lowM = (low / LEGACY_PERCENT_MAX) * maxM;
+    highM = (high / LEGACY_PERCENT_MAX) * maxM;
+  }
 
-  if (looksLegacyPercent) {
-    level = (level / LEGACY_PERCENT_MAX) * maxM;
-    low = (low / LEGACY_PERCENT_MAX) * maxM;
-    high = (high / LEGACY_PERCENT_MAX) * maxM;
+  let levelM = level;
+  if (level > maxM) {
+    if (level <= LEGACY_PERCENT_MAX) {
+      levelM = (level / LEGACY_PERCENT_MAX) * maxM;
+    } else {
+      levelM = maxM;
+    }
   }
 
   return {
     maxM,
-    level: Math.max(0, Math.min(maxM, level)),
-    low: Math.max(0, Math.min(maxM, low)),
-    high: Math.max(0, Math.min(maxM, high)),
+    level: Math.max(0, Math.min(maxM, levelM)),
+    low: Math.max(0, Math.min(maxM, lowM)),
+    high: Math.max(0, Math.min(maxM, highM)),
   };
 }
 

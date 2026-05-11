@@ -10,6 +10,7 @@ export const controls: WidgetControls = {
           path: 'maxMeters',
           kind: 'number',
           label: 'controls.industrial-tank.maxMeters',
+          description: 'controls.industrial-tank.maxMetersHint',
           default: 3,
           min: 0.1,
           max: 100,

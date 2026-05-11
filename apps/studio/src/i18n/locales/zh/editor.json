@@ -445,6 +445,9 @@
         "restPollingHint": "提示：0 表示不轮询，仅执行一次。",
         "wsUrl": "WebSocket 地址",
         "transformation": "数据转换 (JS)",
+        "transformationPreviewOutput": "预览输出",
+        "transformationPreviewWaiting": "等待输入…",
+        "transformationTestData": "测试数据:",
         "transformationHint": "可用变量: data (原始数据)"
     },
     "props": {

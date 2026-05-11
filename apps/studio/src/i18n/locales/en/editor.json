@@ -461,6 +461,9 @@
         "restPollingHint": "Note: 0 means no polling, only fetch once.",
         "wsUrl": "WebSocket URL",
         "transformation": "Transformation (JS)",
+        "transformationPreviewOutput": "Preview output",
+        "transformationPreviewWaiting": "Waiting…",
+        "transformationTestData": "Sample data:",
         "transformationHint": "Available: data (raw input)"
     },
     "props": {
