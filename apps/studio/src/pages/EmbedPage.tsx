@@ -101,7 +101,7 @@ function normalizeEmbeddedProviderDataSources(
   const groups =
     context === 'dashboard'
       ? (['dashboard'] as const)
-      : context === 'device-template'
+      : context === 'device-template' || context === 'current-device'
         ? (['current-device', 'current-device-history'] as const)
         : undefined;
   const providerDefaults = buildEmbeddedProviderDataSources(
@@ -128,13 +128,6 @@ function normalizeEmbeddedProviderDataSources(
           : definition.id,
     };
   });
-
-  if (context === 'dashboard') {
-    providerDefaults.forEach((definition) => {
-      if (normalized.some((dataSource: any) => dataSource?.id === definition.id)) return;
-      normalized.push(definition);
-    });
-  }
 
   return normalized;
 }

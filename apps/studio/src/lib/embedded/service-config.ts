@@ -1,6 +1,6 @@
 export type EditorServiceMode = 'standalone' | 'embedded';
 export type IntegrationLevel = 'full' | 'minimal';
-export type EmbeddedEditorContext = 'dashboard' | 'device-template';
+export type EmbeddedEditorContext = 'dashboard' | 'device-template' | 'current-device';
 
 export type EditorUiConfig = {
   /** Left panel (component library / layers) */
@@ -119,7 +119,11 @@ export function resolveEditorServiceConfig(): EditorServiceConfig {
   const providerParam = (getParam('provider') || '').trim().toLowerCase();
   const contextParam = (getParam('context') || '').trim().toLowerCase();
   const context: EmbeddedEditorContext | undefined =
-    contextParam === 'dashboard' || contextParam === 'device-template' ? contextParam : undefined;
+    contextParam === 'dashboard' ||
+    contextParam === 'device-template' ||
+    contextParam === 'current-device'
+      ? contextParam
+      : undefined;
   let integrationLevel: IntegrationLevel = mode === 'embedded' ? 'full' : 'full';
   if (integrationParam) {
     if (integrationParam === 'minimal') integrationLevel = 'minimal';

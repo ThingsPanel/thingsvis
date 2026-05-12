@@ -64,7 +64,7 @@ function normalizeEmbeddedProviderDataSources(
   const definitionGroups =
     serviceConfig.context === 'dashboard'
       ? (['dashboard'] as const)
-      : serviceConfig.context === 'device-template'
+      : serviceConfig.context === 'device-template' || serviceConfig.context === 'current-device'
         ? (['current-device', 'current-device-history'] as const)
         : undefined;
 
@@ -88,13 +88,6 @@ function normalizeEmbeddedProviderDataSources(
         typeof dataSource?.mode === 'string' && dataSource.mode ? dataSource.mode : definition.mode,
     };
   });
-
-  if (serviceConfig.context === 'dashboard') {
-    providerDefaults.forEach((definition) => {
-      if (normalized.some((dataSource) => dataSource.id === definition.id)) return;
-      normalized.push(definition);
-    });
-  }
 
   return normalized;
 }
