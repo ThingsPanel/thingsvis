@@ -382,7 +382,9 @@
         "transformDocsData": "`data` — 完整的数据源快照",
         "fieldValueRaw": "原始:",
         "fieldValueTransformed": "变换:",
-        "fieldValueCurrent": "当前值:"
+        "fieldValueCurrent": "当前值:",
+        "previewExpand": "展开",
+        "previewCollapse": "收起"
     },
     "upload": {
         "onlyImages": "只支持图片文件",

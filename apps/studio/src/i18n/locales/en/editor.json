@@ -389,7 +389,9 @@
         "transformDocsData": "`data` — full data source snapshot",
         "fieldValueRaw": "Raw:",
         "fieldValueTransformed": "Result:",
-        "fieldValueCurrent": "Current:"
+        "fieldValueCurrent": "Current:",
+        "previewExpand": "Expand",
+        "previewCollapse": "Collapse"
     },
     "upload": {
         "onlyImages": "Only image files are supported",

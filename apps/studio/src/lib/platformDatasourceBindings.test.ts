@@ -87,7 +87,7 @@ describe('platformDatasourceBindings', () => {
     expect((nextConfigs[0]?.config as any)?.bufferSize).toBe(24);
   });
 
-  it('does not create missing platform data sources from bindings alone', () => {
+  it('creates missing platform data sources from node bindings', () => {
     const nextConfigs = augmentPlatformDataSourcesForNodes(
       [],
       [
@@ -103,6 +103,19 @@ describe('platformDatasourceBindings', () => {
       ],
     );
 
-    expect(nextConfigs).toEqual([]);
+    expect(nextConfigs).toEqual([
+      {
+        id: '__platform_dev-3__',
+        name: 'Device dev-3',
+        type: 'PLATFORM_FIELD',
+        config: {
+          source: 'platform',
+          fieldMappings: {},
+          deviceId: 'dev-3',
+          requestedFields: ['cpu_usage'],
+          bufferSize: DEFAULT_HISTORY_BUFFER_SIZE,
+        },
+      },
+    ]);
   });
 });
