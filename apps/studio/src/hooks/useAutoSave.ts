@@ -27,6 +27,7 @@ import { notifyChange, requestSave as sendToHost } from '../embed/message-router
 import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import { sanitizeDataSourcesForHostSave } from '../lib/embedded/hostDataSourcePolicy';
+import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 
 // =============================================================================
 // Hook Options
@@ -72,9 +73,13 @@ export function useAutoSave(options: UseAutoSaveOptions) {
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
         setEmbedSessionSnapshot(project.meta.id, project, 'host-save');
+        const augmentedDataSources = augmentPlatformDataSourcesForNodes(
+          project.dataSources as Parameters<typeof augmentPlatformDataSourcesForNodes>[0],
+          project.nodes as Array<Record<string, unknown>>,
+        );
         const dataSources = sanitizeDataSourcesForHostSave(
           project.nodes,
-          project.dataSources,
+          augmentedDataSources,
           resolveEditorServiceConfig().context,
         );
         const payload: SavePayload = {

@@ -107,16 +107,72 @@ function applyTransform(
   }
 }
 
-function formatPreview(val: unknown): string {
+/** Full preview string for UI only (objects pretty-printed). Does not change transform evaluation. */
+function formatPreviewFull(val: unknown): string {
   if (val === undefined || val === null) return 'null';
   if (typeof val === 'object') {
     try {
-      return JSON.stringify(val).slice(0, 80);
+      return JSON.stringify(val, null, 2);
     } catch {
       return '[object]';
     }
   }
-  return String(val).slice(0, 80);
+  return String(val);
+}
+
+const PREVIEW_FOLD_MAX_CHARS = 280;
+const PREVIEW_FOLD_MAX_LINES = 5;
+
+type FoldablePreviewTextProps = {
+  text: string;
+  tone?: 'default' | 'success' | 'destructive';
+  expandLabel: string;
+  collapseLabel: string;
+};
+
+function FoldablePreviewText({
+  text,
+  tone = 'default',
+  expandLabel,
+  collapseLabel,
+}: FoldablePreviewTextProps) {
+  const [expanded, setExpanded] = useState(false);
+  const lineCount = text === '' ? 0 : text.split('\n').length;
+  const needsFold = text.length > PREVIEW_FOLD_MAX_CHARS || lineCount > PREVIEW_FOLD_MAX_LINES;
+
+  const toneClass =
+    tone === 'success'
+      ? 'text-emerald-600 dark:text-emerald-400'
+      : tone === 'destructive'
+        ? 'text-destructive'
+        : 'text-foreground';
+
+  return (
+    <div className="min-w-0">
+      <pre
+        className={[
+          'mt-0.5 whitespace-pre-wrap break-all rounded-sm bg-background/40 px-1.5 py-1 text-[11px] leading-relaxed',
+          toneClass,
+          needsFold && !expanded ? 'max-h-[5.75rem] overflow-hidden' : '',
+          needsFold && expanded ? 'max-h-[min(45vh,20rem)] overflow-y-auto overflow-x-auto' : '',
+          !needsFold ? 'max-h-[min(45vh,20rem)] overflow-x-auto' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {text}
+      </pre>
+      {needsFold ? (
+        <button
+          type="button"
+          className="mt-1 text-[11px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? collapseLabel : expandLabel}
+        </button>
+      ) : null}
+    </div>
+  );
 }
 
 function getDeviceDataSourceId(deviceId: string): string {
@@ -135,6 +191,36 @@ function getRequestedFieldId(fieldPath: string): string | null {
 
 function isHistoryFieldPath(fieldPath: string): boolean {
   return fieldPath.endsWith(HISTORY_FIELD_SUFFIX);
+}
+
+function getRootPathSegment(path: string): string {
+  if (!path || path === '(root)') return path;
+  return path.split(/[.[\]]/).filter(Boolean)[0] ?? path;
+}
+
+function normalizeHistoryFieldPath(path: string): string {
+  const root = getRootPathSegment(path);
+  return root.endsWith(HISTORY_FIELD_SUFFIX) ? root : path;
+}
+
+function sanitizeDeviceFallbackFieldInfos(
+  infos: FieldPathInfo[],
+  bindingKind: DeviceBindingKind,
+): FieldPathInfo[] {
+  if (bindingKind === 'history') {
+    return infos.filter((info) => {
+      if (info.path === '(root)') return false;
+      const root = getRootPathSegment(info.path);
+      if (!root.endsWith(HISTORY_FIELD_SUFFIX)) return false;
+      return info.path === root;
+    });
+  }
+
+  return infos.filter((info) => {
+    if (info.path === '(root)') return true;
+    const root = getRootPathSegment(info.path);
+    return !root.endsWith(HISTORY_FIELD_SUFFIX);
+  });
 }
 
 function isTemplateDeviceSource(device: { deviceId?: string } | undefined): boolean {
@@ -352,6 +438,7 @@ export function FieldPicker({
   const selectedFieldPath = value?.fieldPath || '';
   const selectedTransform = value?.transform || '';
   const selectedHistoryConfig = value?.historyConfig;
+  const selectedPlatformDeviceId = parseDeviceDataSourceId(selectedDataSourceId);
   const safeOnChange = useCallback((next: FieldPickerValue | null) => onChange(next), [onChange]);
   const [embeddedSourceGroup, setEmbeddedSourceGroup] = useState<SourceGroup>(() =>
     serviceConfig.mode === 'embedded' ? 'device' : 'custom',
@@ -463,7 +550,11 @@ export function FieldPicker({
 
     if (selectedDataSourceId && parseDeviceDataSourceId(selectedDataSourceId)) {
       const fieldRoot = getRequestedFieldId(selectedFieldPath) ?? '';
-      if (isHistoryFieldPath(fieldRoot)) {
+      if (!fieldRoot) {
+        if (selectedHistoryConfig) {
+          setDeviceBindingKind('history');
+        }
+      } else if (isHistoryFieldPath(fieldRoot)) {
         setDeviceBindingKind('history');
       } else if (DEVICE_ALARM_STATUS_FIELD_IDS.has(fieldRoot)) {
         setDeviceBindingKind('alarmStatus');
@@ -509,6 +600,7 @@ export function FieldPicker({
     runtimeDeviceFieldIds,
     selectedDataSourceId,
     selectedFieldPath,
+    selectedHistoryConfig,
   ]);
 
   const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
@@ -546,25 +638,61 @@ export function FieldPicker({
     }
   }, [isDeviceScopedGroup, platformDeviceGroups, selectedPlatformGroupId]);
 
-  const selectedDeviceSource = isDeviceScopedGroup
-    ? deviceSources.find((device) => device.dataSourceId === selectedDataSourceId) ||
-      (hasTemplateFieldCatalog ? deviceSources[0] : undefined)
-    : undefined;
+  const selectedDeviceSource = useMemo(() => {
+    if (!isDeviceScopedGroup) return undefined;
+
+    const catalogDevice = deviceSources.find(
+      (device) => device.dataSourceId === selectedDataSourceId,
+    );
+    if (catalogDevice) return catalogDevice;
+
+    if (hasTemplateFieldCatalog) return deviceSources[0];
+
+    const deviceId = parseDeviceDataSourceId(selectedDataSourceId);
+    if (!deviceId) return undefined;
+
+    const dataSourceName = dataSourceManager
+      .getAllConfigs()
+      .find((config) => config.id === selectedDataSourceId)?.name;
+
+    return {
+      deviceId,
+      label: dataSourceName || `Device ${deviceId}`,
+      groupId: '',
+      groupName: '',
+      deviceConfigId: undefined,
+      templateId: undefined,
+      dataSourceId: selectedDataSourceId,
+      fields: [],
+    };
+  }, [deviceSources, hasTemplateFieldCatalog, isDeviceScopedGroup, selectedDataSourceId]);
   const isTemplateDeviceSelection =
     hasTemplateFieldCatalog && isDeviceScopedGroup && isTemplateDeviceSource(selectedDeviceSource);
   const pendingPlatformGroupIds = useMemo(() => {
     if (!isEmbeddedMode || !isDeviceScopedGroup || isTemplateDeviceSelection) return [];
-    if (hasHostDeviceCatalog) return [];
     if (window.parent === window) return [];
-    if (!selectedPlatformGroupId) return [];
     const loadedGroupIds = new Set(loadedPlatformGroupIds);
+
+    const selectedDeviceNeedsLookup =
+      Boolean(selectedPlatformDeviceId) &&
+      !platformDevices.some((device) => device.deviceId === selectedPlatformDeviceId);
+
+    if (selectedDeviceNeedsLookup && platformDeviceGroups.length > 0) {
+      return platformDeviceGroups
+        .map((group) => group.groupId)
+        .filter((groupId) => groupId && !loadedGroupIds.has(groupId));
+    }
+
+    if (!selectedPlatformGroupId) return [];
     return loadedGroupIds.has(selectedPlatformGroupId) ? [] : [selectedPlatformGroupId];
   }, [
     isDeviceScopedGroup,
     isEmbeddedMode,
     isTemplateDeviceSelection,
-    hasHostDeviceCatalog,
     loadedPlatformGroupIds,
+    platformDeviceGroups,
+    platformDevices,
+    selectedPlatformDeviceId,
     selectedPlatformGroupId,
   ]);
   const isPlatformDeviceListLoading =
@@ -591,8 +719,7 @@ export function FieldPicker({
     };
 
     window.addEventListener('message', handleMessage);
-    const [groupId] = pendingPlatformGroupIds;
-    if (groupId) {
+    pendingPlatformGroupIds.forEach((groupId) => {
       window.parent.postMessage(
         {
           type: 'thingsvis:requestDevicesByGroup',
@@ -600,7 +727,7 @@ export function FieldPicker({
         },
         '*',
       );
-    }
+    });
 
     return () => {
       window.removeEventListener('message', handleMessage);
@@ -637,6 +764,11 @@ export function FieldPicker({
     selectedGroup,
     targetKind,
   ]);
+
+  const selectedFieldPathForPicker =
+    deviceBindingKind === 'history'
+      ? normalizeHistoryFieldPath(selectedFieldPath)
+      : selectedFieldPath;
 
   const selectedDeviceStatusFields = useMemo(() => {
     if (selectedGroup !== 'device' || deviceBindingKind !== 'status') return [];
@@ -752,7 +884,8 @@ export function FieldPicker({
       ? selectedDataSourceId
       : (customDataSourceIds[0] ?? '')
     : isDeviceScopedGroup
-      ? (selectedDeviceSource?.dataSourceId ?? '')
+      ? (selectedDeviceSource?.dataSourceId ??
+        (parseDeviceDataSourceId(selectedDataSourceId) ? selectedDataSourceId : ''))
       : selectedGroup === 'global'
         ? (selectedPlatformSource?.id ?? '')
         : selectedDataSourceId || customDataSourceIds[0] || '';
@@ -767,12 +900,24 @@ export function FieldPicker({
   // Prefer cached fieldSchema (offline-friendly); fall back to static device fields or live snapshot traversal.
   const { paths, pathInfos, truncated, filteredOutCount } = useMemo(() => {
     const finalize = (infos: FieldPathInfo[], isTruncated = false) => {
-      const filtered = infos.filter((info) => isFieldTypeCompatible(info.type, targetKind));
+      const selectedPath =
+        deviceBindingKind === 'history'
+          ? normalizeHistoryFieldPath(selectedFieldPath)
+          : selectedFieldPath;
+      const selectedInfo: FieldPathInfo | null =
+        selectedPath && !infos.some((info) => info.path === selectedPath)
+          ? {
+              path: selectedPath,
+              type: deviceBindingKind === 'history' ? 'array' : 'unknown',
+            }
+          : null;
+      const sourceInfos = selectedInfo ? [...infos, selectedInfo] : infos;
+      const filtered = sourceInfos.filter((info) => isFieldTypeCompatible(info.type, targetKind));
       return {
         paths: filtered.map((info) => info.path),
         pathInfos: filtered,
         truncated: isTruncated,
-        filteredOutCount: infos.length - filtered.length,
+        filteredOutCount: sourceInfos.length - filtered.length,
       };
     };
 
@@ -853,10 +998,31 @@ export function FieldPicker({
       }));
       return finalize(staticInfos);
     }
+    if (selectedGroup === 'device' && Array.isArray(fieldSchema) && fieldSchema.length > 0) {
+      const infos: FieldPathInfo[] = fieldSchema.map((e: any) => ({
+        path: e.path,
+        type: (e.type === 'array'
+          ? 'array'
+          : e.type === 'number'
+            ? 'number'
+            : e.type === 'boolean'
+              ? 'boolean'
+              : e.type === 'object'
+                ? 'object'
+                : 'string') as FieldPathInfo['type'],
+      }));
+      return finalize(sanitizeDeviceFallbackFieldInfos(infos, deviceBindingKind));
+    }
     const live = listFieldPaths(snapshot, {
       maxDepth: maxDepth ?? 5,
       maxNodes: maxNodes ?? 200,
     });
+    if (selectedGroup === 'device') {
+      return finalize(
+        sanitizeDeviceFallbackFieldInfos(live.pathInfos, deviceBindingKind),
+        live.truncated,
+      );
+    }
     return finalize(live.pathInfos, live.truncated);
   }, [
     fieldSchema,
@@ -870,15 +1036,16 @@ export function FieldPicker({
     selectedDeviceHistoryFields,
     selectedDeviceStatusFields,
     selectedPlatformFields,
+    selectedFieldPath,
     targetKind,
   ]);
 
   // 🆕 当前值预览
   const rawPreviewValue = useMemo(() => {
-    if (!selectedFieldPath) return undefined;
+    if (!selectedFieldPathForPicker) return undefined;
     if (!snapshot) return undefined;
-    return resolveFieldPath(snapshot, selectedFieldPath);
-  }, [snapshot, selectedFieldPath]);
+    return resolveFieldPath(snapshot, selectedFieldPathForPicker);
+  }, [snapshot, selectedFieldPathForPicker]);
 
   const previewDisplay = useMemo(() => {
     if (rawPreviewValue === undefined) return null;
@@ -886,12 +1053,13 @@ export function FieldPicker({
       // Pass full DS snapshot as `data` so the preview matches runtime behaviour
       const { ok, result } = applyTransform(selectedTransform, rawPreviewValue, snapshot);
       return {
-        raw: formatPreview(rawPreviewValue),
-        transformed: ok ? formatPreview(result) : '⚠ transform error',
+        raw: formatPreviewFull(rawPreviewValue),
+        transformed: ok ? formatPreviewFull(result) : null,
         hasTransform: true,
+        transformOk: ok,
       };
     }
-    return { raw: formatPreview(rawPreviewValue), transformed: null, hasTransform: false };
+    return { raw: formatPreviewFull(rawPreviewValue), transformed: null, hasTransform: false };
   }, [rawPreviewValue, selectedTransform, snapshot]);
 
   const requestFieldPreview = useCallback(
@@ -972,10 +1140,10 @@ export function FieldPicker({
   }, [isDeviceScopedGroup, selectedDeviceSource]);
 
   const handleTransformChange = (code: string) => {
-    if (!effectiveDataSourceId || !selectedFieldPath) return;
+    if (!effectiveDataSourceId || !selectedFieldPathForPicker) return;
     safeOnChange({
       dataSourceId: effectiveDataSourceId,
-      fieldPath: selectedFieldPath,
+      fieldPath: selectedFieldPathForPicker,
       transform: code || undefined,
       ...(deviceBindingKind === 'history'
         ? {
@@ -1015,7 +1183,7 @@ export function FieldPicker({
   const handleHistoryConfigChange = (
     patch: Partial<NonNullable<FieldPickerValue['historyConfig']>>,
   ) => {
-    if (!effectiveDataSourceId || !selectedFieldPath) return;
+    if (!effectiveDataSourceId || !selectedFieldPathForPicker) return;
     const nextHistoryConfig = {
       timeRange: selectedHistoryConfig?.timeRange ?? 'last_30d',
       aggFunction: selectedHistoryConfig?.aggFunction ?? 'NONE_RAW',
@@ -1024,11 +1192,11 @@ export function FieldPicker({
     };
     safeOnChange({
       dataSourceId: effectiveDataSourceId,
-      fieldPath: selectedFieldPath,
+      fieldPath: selectedFieldPathForPicker,
       transform: selectedTransform || undefined,
       historyConfig: nextHistoryConfig,
     });
-    requestFieldPreview(effectiveDataSourceId, selectedFieldPath, nextHistoryConfig);
+    requestFieldPreview(effectiveDataSourceId, selectedFieldPathForPicker, nextHistoryConfig);
   };
 
   return (
@@ -1228,9 +1396,12 @@ export function FieldPicker({
           )}
         </div>
         <select
-          value={selectedFieldPath}
+          value={selectedFieldPathForPicker}
           onChange={(e) => {
-            const nextPath = e.target.value;
+            const nextPath =
+              deviceBindingKind === 'history'
+                ? normalizeHistoryFieldPath(e.target.value)
+                : e.target.value;
             if (isDeviceScopedGroup && selectedDeviceSource?.deviceId && nextPath) {
               ensurePlatformDeviceDataSource({
                 deviceId: selectedDeviceSource.deviceId,
@@ -1328,7 +1499,7 @@ export function FieldPicker({
       {isEmbeddedMode &&
         isDeviceScopedGroup &&
         deviceBindingKind === 'history' &&
-        selectedFieldPath && (
+        selectedFieldPathForPicker && (
           <div className="grid grid-cols-1 gap-2 rounded-sm border border-input bg-muted/20 p-2">
             <div className="space-y-1">
               <label className="text-xs font-medium text-muted-foreground">
@@ -1393,32 +1564,54 @@ export function FieldPicker({
 
       {/* current value preview */}
       {previewDisplay && (
-        <div className="rounded-sm border border-input bg-muted/30 px-2 py-1 text-xs font-mono">
+        <div className="rounded-sm border border-input bg-muted/30 px-2 py-2 text-xs font-mono min-w-0">
           {previewDisplay.hasTransform ? (
-            <>
-              <span className="text-muted-foreground">{t('binding.fieldValueRaw', 'Raw:')} </span>
-              <span className="text-foreground">{previewDisplay.raw}</span>
-              <br />
-              <span className="text-muted-foreground">
-                {t('binding.fieldValueTransformed', 'Result:')}{' '}
-              </span>
-              <span className="text-emerald-600 dark:text-emerald-400">
-                {previewDisplay.transformed}
-              </span>
-            </>
+            <div className="space-y-2">
+              <div className="min-w-0">
+                <div className="text-muted-foreground text-[11px]">
+                  {t('binding.fieldValueRaw', 'Raw:')}
+                </div>
+                <FoldablePreviewText
+                  text={previewDisplay.raw}
+                  expandLabel={t('binding.previewExpand', 'Expand')}
+                  collapseLabel={t('binding.previewCollapse', 'Collapse')}
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="text-muted-foreground text-[11px]">
+                  {t('binding.fieldValueTransformed', 'Result:')}
+                </div>
+                {previewDisplay.transformOk === false ? (
+                  <p className="mt-0.5 text-[11px] text-destructive">
+                    {t('binding.transformError', '⚠ Transform expression error')}
+                  </p>
+                ) : (
+                  <FoldablePreviewText
+                    text={previewDisplay.transformed ?? ''}
+                    tone="success"
+                    expandLabel={t('binding.previewExpand', 'Expand')}
+                    collapseLabel={t('binding.previewCollapse', 'Collapse')}
+                  />
+                )}
+              </div>
+            </div>
           ) : (
-            <>
-              <span className="text-muted-foreground">
-                {t('binding.fieldValueCurrent', 'Current:')}{' '}
-              </span>
-              <span className="text-foreground">{previewDisplay.raw}</span>
-            </>
+            <div className="min-w-0">
+              <div className="text-muted-foreground text-[11px]">
+                {t('binding.fieldValueCurrent', 'Current:')}
+              </div>
+              <FoldablePreviewText
+                text={previewDisplay.raw}
+                expandLabel={t('binding.previewExpand', 'Expand')}
+                collapseLabel={t('binding.previewCollapse', 'Collapse')}
+              />
+            </div>
           )}
         </div>
       )}
 
       {/* Data Transform — trigger button + Dialog editor */}
-      {effectiveDataSourceId && selectedFieldPath && (
+      {effectiveDataSourceId && selectedFieldPathForPicker && (
         <>
           <button
             type="button"
@@ -1501,31 +1694,40 @@ export function FieldPicker({
                   </p>
                 </div>
 
-                {/* Live preview */}
+                {/* Live preview — same visibility as before: needs field value + non-empty draft */}
                 {rawPreviewValue !== undefined &&
                   draftCode.trim() &&
                   (() => {
                     const { ok, result } = applyTransform(draftCode, rawPreviewValue, snapshot);
+                    const expandLbl = t('binding.previewExpand', 'Expand');
+                    const collapseLbl = t('binding.previewCollapse', 'Collapse');
                     return (
-                      <div className="rounded-md border border-input bg-muted/30 px-3 py-2 text-xs font-mono space-y-1">
-                        <div>
-                          <span className="text-muted-foreground">
-                            {t('binding.fieldValueRaw', 'Raw:')}{' '}
-                          </span>
-                          <span>{formatPreview(rawPreviewValue)}</span>
+                      <div className="rounded-md border border-input bg-muted/30 px-3 py-2 text-xs font-mono space-y-2 min-w-0">
+                        <div className="min-w-0">
+                          <div className="text-muted-foreground text-[11px]">
+                            {t('binding.fieldValueRaw', 'Raw:')}
+                          </div>
+                          <FoldablePreviewText
+                            text={formatPreviewFull(rawPreviewValue)}
+                            expandLabel={expandLbl}
+                            collapseLabel={collapseLbl}
+                          />
                         </div>
-                        <div>
-                          <span className="text-muted-foreground">
-                            {t('binding.fieldValueTransformed', 'Result:')}{' '}
-                          </span>
+                        <div className="min-w-0">
+                          <div className="text-muted-foreground text-[11px]">
+                            {t('binding.fieldValueTransformed', 'Result:')}
+                          </div>
                           {ok ? (
-                            <span className="text-emerald-600 dark:text-emerald-400">
-                              {formatPreview(result)}
-                            </span>
+                            <FoldablePreviewText
+                              text={formatPreviewFull(result)}
+                              tone="success"
+                              expandLabel={expandLbl}
+                              collapseLabel={collapseLbl}
+                            />
                           ) : (
-                            <span className="text-destructive">
+                            <p className="mt-0.5 text-[11px] text-destructive">
                               {t('binding.transformError', '⚠ Transform expression error')}
-                            </span>
+                            </p>
                           )}
                         </div>
                       </div>

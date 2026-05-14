@@ -114,6 +114,37 @@ function normalizeDevices(devices: PlatformDevice[]): PlatformDevice[] {
   });
 }
 
+function hasFields(device: PlatformDevice | undefined): boolean {
+  return Array.isArray(device?.fields) && device.fields.length > 0;
+}
+
+function mergeDeviceMetadata(
+  nextDevice: PlatformDevice,
+  existingDevice: PlatformDevice | undefined,
+): PlatformDevice {
+  if (!existingDevice) return nextDevice;
+
+  return {
+    ...existingDevice,
+    ...nextDevice,
+    templateId: nextDevice.templateId ?? existingDevice.templateId,
+    deviceConfigId: nextDevice.deviceConfigId ?? existingDevice.deviceConfigId,
+    deviceConfigName: nextDevice.deviceConfigName ?? existingDevice.deviceConfigName,
+    presets: Array.isArray(nextDevice.presets) ? nextDevice.presets : existingDevice.presets,
+    fields: hasFields(nextDevice) ? nextDevice.fields : existingDevice.fields,
+  };
+}
+
+function mergeDevicesWithExisting(
+  devices: PlatformDevice[],
+  existingDevices: PlatformDevice[],
+): PlatformDevice[] {
+  const existingById = new Map(existingDevices.map((device) => [device.deviceId, device]));
+  return normalizeDevices(devices).map((device) =>
+    mergeDeviceMetadata(device, existingById.get(device.deviceId)),
+  );
+}
+
 function deriveGroupsFromDevices(devices: PlatformDevice[]): PlatformDeviceGroup[] {
   const groups: PlatformDeviceGroup[] = devices.map((device) => {
     const groupId = normalizeGroupId(device.groupId, device.groupName);
@@ -132,20 +163,29 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
   devices: [],
 
   setGroups: (groups) =>
-    set({
-      groups: normalizeGroups(groups),
-      devices: [],
-      loadedGroupIds: [],
+    set((state) => {
+      const normalizedGroups = normalizeGroups(groups);
+      const validGroupIds = new Set(normalizedGroups.map((group) => group.groupId));
+      const retainedLoadedGroupIds = state.loadedGroupIds.filter((groupId) =>
+        validGroupIds.has(normalizeGroupId(groupId)),
+      );
+
+      return {
+        groups: normalizedGroups,
+        devices: state.devices,
+        loadedGroupIds: retainedLoadedGroupIds,
+      };
     }),
 
   setDevices: (devices) => {
     const normalizedDevices = normalizeDevices(devices);
     const derivedGroups = deriveGroupsFromDevices(normalizedDevices);
     set((state) => {
+      const mergedDevices = mergeDevicesWithExisting(normalizedDevices, state.devices);
       const mergedGroups = normalizeGroups([...state.groups, ...derivedGroups]);
       return {
         groups: mergedGroups,
-        devices: normalizedDevices,
+        devices: mergedDevices,
         loadedGroupIds: Array.from(
           new Set([...state.loadedGroupIds, ...derivedGroups.map((group) => group.groupId)]),
         ),
@@ -155,14 +195,15 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
 
   setDevicesForGroup: (groupId, devices) => {
     const normalizedGroupId = normalizeGroupId(groupId);
-    const normalizedDevices = normalizeDevices(
-      devices.map((device) => ({
-        ...device,
-        groupId: device.groupId || normalizedGroupId,
-      })),
-    );
 
     set((state) => {
+      const normalizedDevices = mergeDevicesWithExisting(
+        devices.map((device) => ({
+          ...device,
+          groupId: device.groupId || normalizedGroupId,
+        })),
+        state.devices,
+      );
       const retainedDevices = state.devices.filter(
         (device) => normalizeGroupId(device.groupId, device.groupName) !== normalizedGroupId,
       );

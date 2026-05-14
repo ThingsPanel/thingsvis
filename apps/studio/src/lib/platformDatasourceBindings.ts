@@ -28,6 +28,11 @@ function isPlatformDataSourceId(dataSourceId: string): boolean {
   return /^__platform_(.+)__$/.test(dataSourceId);
 }
 
+function getPlatformDeviceId(dataSourceId: string): string | null {
+  const match = /^__platform_(.+)__$/.exec(dataSourceId);
+  return match?.[1] ?? null;
+}
+
 function getFieldRoot(fieldPath?: string): string | null {
   if (!fieldPath) return null;
   const [root] = fieldPath.split(/[.[\]]/).filter(Boolean);
@@ -115,24 +120,32 @@ export function augmentPlatformDataSourcesForNodes(
 
   requirements.forEach((requirement, dataSourceId) => {
     const baseDataSource = nextById.get(dataSourceId);
-    if (!baseDataSource) return;
+    const deviceId = getPlatformDeviceId(dataSourceId);
+    if (!baseDataSource && !deviceId) return;
 
-    const baseConfig = (baseDataSource.config ?? {}) as PlatformFieldConfig;
+    const baseConfig = (baseDataSource?.config ?? {}) as PlatformFieldConfig;
     const existingBufferSize = normalizeBufferSize(baseConfig.bufferSize);
+    const nextBufferSize = requirement.needsHistory
+      ? Math.max(existingBufferSize, inferredBufferSize)
+      : existingBufferSize;
 
     nextById.set(dataSourceId, {
-      ...baseDataSource,
+      ...(baseDataSource ?? {
+        id: dataSourceId,
+        name: `Device ${deviceId}`,
+      }),
       type: 'PLATFORM_FIELD',
       config: {
+        source: 'platform',
+        fieldMappings: {},
         ...baseConfig,
+        ...(deviceId ? { deviceId } : {}),
         requestedFields: Array.from(
           new Set([...(baseConfig.requestedFields ?? []), ...requirement.requestedFields]),
         ),
-        bufferSize: requirement.needsHistory
-          ? Math.max(existingBufferSize, inferredBufferSize)
-          : existingBufferSize,
+        bufferSize: nextBufferSize,
       },
-    });
+    } as DataSource);
   });
 
   return Array.from(nextById.values());
