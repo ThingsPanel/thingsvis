@@ -20,4 +20,30 @@ describe('SafeExecutor transformation utils', () => {
       /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
     );
   });
+
+  it('does not treat identifiers containing return as return statements', () => {
+    const result = SafeExecutor.executeScript(
+      `[
+        {
+          name: '供水压力',
+          data: (data.supplyPressure__history ?? []).map((e) => ({ value: e.value, time: e.ts })),
+        },
+        {
+          name: '回水压力',
+          data: (data.returnPressure__history ?? []).map((e) => ({ value: e.value, time: e.ts })),
+        },
+      ]`,
+      {
+        data: {
+          supplyPressure__history: [{ ts: 1, value: 0.38 }],
+          returnPressure__history: [{ ts: 1, value: 0.32 }],
+        },
+      },
+    );
+
+    expect(result).toEqual([
+      { name: '供水压力', data: [{ value: 0.38, time: 1 }] },
+      { name: '回水压力', data: [{ value: 0.32, time: 1 }] },
+    ]);
+  });
 });

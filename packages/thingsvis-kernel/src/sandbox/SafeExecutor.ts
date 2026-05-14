@@ -184,9 +184,9 @@ export class SafeExecutor {
       ) as (sandbox: unknown) => unknown;
 
     try {
-      return createFn(code.includes('return') ? code : `return (${code})`);
+      return createFn(`return (${code})`);
     } catch (e) {
-      if (e instanceof SyntaxError && !code.includes('return')) {
+      if (e instanceof SyntaxError) {
         return createFn(code);
       }
       throw e;
