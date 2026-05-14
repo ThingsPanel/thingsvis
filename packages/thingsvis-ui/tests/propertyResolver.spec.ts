@@ -254,4 +254,74 @@ describe('PropertyResolver', () => {
       expect(resultV2.value).toBe(200); // must reflect new value
     });
   });
+  describe('DataBinding with historyConfig', () => {
+    const base = Date.parse('2026-05-14T10:00:00Z');
+    const series = [
+      { ts: base - 2 * 60 * 60 * 1000, value: 10 },
+      { ts: base - 40 * 60 * 1000, value: 20 },
+      { ts: base - 20 * 60 * 1000, value: 40 },
+      { ts: base, value: 80 },
+    ];
+
+    it('filters history arrays by the selected time range', () => {
+      const node = makeNode({}, [
+        {
+          targetProp: 'data',
+          expression: '{{ ds.meter.data.temperature__history }}',
+          historyConfig: {
+            timeRange: 'last_1h',
+            aggFunction: 'NONE_RAW',
+            aggWindow: 'no_aggregate',
+          },
+        },
+      ]);
+
+      const result = PropertyResolver.resolve(node, {
+        meter: { data: { temperature__history: series } },
+      });
+
+      expect(result.data).toEqual(series.slice(1));
+    });
+
+    it('aggregates filtered history arrays before widget props are updated', () => {
+      const node = makeNode({}, [
+        {
+          targetProp: 'data',
+          expression: '{{ ds.meter.data.temperature__history }}',
+          historyConfig: {
+            timeRange: 'last_1h',
+            aggFunction: 'AVG',
+            aggWindow: '1h',
+          },
+        },
+      ]);
+
+      const result = PropertyResolver.resolve(node, {
+        meter: { data: { temperature__history: series } },
+      });
+
+      expect(result.data).toEqual([{ ts: base - 60 * 60 * 1000, value: (20 + 40 + 80) / 3 }]);
+    });
+
+    it('runs custom transforms against history-filtered values', () => {
+      const node = makeNode({}, [
+        {
+          targetProp: 'count',
+          expression: '{{ ds.meter.data.temperature__history }}',
+          transform: 'value.length',
+          historyConfig: {
+            timeRange: 'last_1h',
+            aggFunction: 'NONE_RAW',
+            aggWindow: 'no_aggregate',
+          },
+        },
+      ]);
+
+      const result = PropertyResolver.resolve(node, {
+        meter: { data: { temperature__history: series } },
+      });
+
+      expect(result.count).toBe(3);
+    });
+  });
 });

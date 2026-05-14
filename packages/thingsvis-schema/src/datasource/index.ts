@@ -109,6 +109,14 @@ export const DataBindingSchema = z.object({
   expression: z.string().regex(/^\{\{.*\}\}$/, 'Expression must be wrapped in {{ }}'),
   /** Optional JS transform snippet, receives `value`, must return transformed value */
   transform: z.string().optional(),
+  /** Optional history controls for time-series bindings. */
+  historyConfig: z
+    .object({
+      timeRange: z.string(),
+      aggFunction: z.enum(['AVG', 'MIN', 'MAX', 'SUM', 'COUNT', 'NONE_RAW']).optional(),
+      aggWindow: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type DataSource = z.infer<typeof DataSourceSchema>;

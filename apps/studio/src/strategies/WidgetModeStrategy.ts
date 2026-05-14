@@ -18,6 +18,7 @@ import { dataSourceManager } from '../lib/store';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
 import { normalizeCanvasBackground } from '../lib/canvasBackground';
+import { stripStaticPropsForBoundProject } from '../lib/storage/sanitizeBoundProps';
 // =============================================================================
 // Interfaces & Types
 // =============================================================================
@@ -180,14 +181,15 @@ export class WidgetModeStrategy implements EditorStrategy {
    * Save: Send the saved state data to the Host via postMessage.
    */
   async save(projectState: ProjectFile): Promise<void> {
+    const projectForSave = stripStaticPropsForBoundProject(projectState);
     const exportData = {
-      canvas: projectState.canvas,
-      nodes: projectState.nodes,
-      dataSources: projectState.dataSources,
-      variables: projectState.variables,
-      thumbnail: projectState.meta.thumbnail,
+      canvas: projectForSave.canvas,
+      nodes: projectForSave.nodes,
+      dataSources: projectForSave.dataSources,
+      variables: projectForSave.variables,
+      thumbnail: projectForSave.meta.thumbnail,
       meta: {
-        ...projectState.meta,
+        ...projectForSave.meta,
       },
     };
 

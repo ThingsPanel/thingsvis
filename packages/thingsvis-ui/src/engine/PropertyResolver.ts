@@ -2,6 +2,169 @@ import { type NodeState } from '@thingsvis/kernel';
 import { SafeExecutor } from '@thingsvis/kernel';
 import { ExpressionEvaluator } from '@thingsvis/utils';
 
+type HistoryConfig = {
+  timeRange?: unknown;
+  aggFunction?: unknown;
+  aggWindow?: unknown;
+};
+
+type ParsedHistoryPoint = {
+  timeMs: number;
+  value: number;
+  source: unknown;
+};
+
+const HISTORY_TIME_RANGE_MS: Record<string, number> = {
+  last_15m: 15 * 60 * 1000,
+  last_1h: 60 * 60 * 1000,
+  last_24h: 24 * 60 * 60 * 1000,
+  last_7d: 7 * 24 * 60 * 60 * 1000,
+  last_30d: 30 * 24 * 60 * 60 * 1000,
+  '1h': 60 * 60 * 1000,
+  '6h': 6 * 60 * 60 * 1000,
+  '24h': 24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '30d': 30 * 24 * 60 * 60 * 1000,
+};
+
+const HISTORY_AGG_WINDOW_MS: Record<string, number> = {
+  '1m': 60 * 1000,
+  '5m': 5 * 60 * 1000,
+  '15m': 15 * 60 * 1000,
+  '1h': 60 * 60 * 1000,
+  '1d': 24 * 60 * 60 * 1000,
+};
+
+function parseNumber(raw: unknown): number | null {
+  if (typeof raw === 'number') return Number.isFinite(raw) ? raw : null;
+  if (typeof raw === 'string') {
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function parseTimestampMs(raw: unknown): number | null {
+  if (raw instanceof Date) {
+    const ms = raw.getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  if (typeof raw === 'number') {
+    if (!Number.isFinite(raw)) return null;
+    if (raw > 1e11) return raw;
+    if (raw > 1e9) return raw * 1000;
+    return null;
+  }
+
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    const numeric = Number(trimmed);
+    if (Number.isFinite(numeric)) {
+      if (numeric > 1e11) return numeric;
+      if (numeric > 1e9) return numeric * 1000;
+    }
+
+    const parsed = Date.parse(trimmed);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function parseHistoryPoint(entry: unknown): ParsedHistoryPoint | null {
+  if (Array.isArray(entry)) {
+    const [timeRaw, valueRaw] = entry;
+    const timeMs = parseTimestampMs(timeRaw);
+    const value = parseNumber(valueRaw);
+    if (timeMs === null || value === null) return null;
+    return { timeMs, value, source: entry };
+  }
+
+  if (entry && typeof entry === 'object') {
+    const record = entry as Record<string, unknown>;
+    const timeMs = parseTimestampMs(record.time ?? record.timestamp ?? record.ts ?? record.x);
+    const value = parseNumber(record.value ?? record.y);
+    if (timeMs === null || value === null) return null;
+    return { timeMs, value, source: entry };
+  }
+
+  return null;
+}
+
+function writeHistoryPoint(source: unknown, timeMs: number, value: number): unknown {
+  if (Array.isArray(source)) return [timeMs, value];
+
+  if (source && typeof source === 'object') {
+    const next: Record<string, unknown> = { ...(source as Record<string, unknown>), value };
+    if ('ts' in next) next.ts = timeMs;
+    else if ('timestamp' in next) next.timestamp = timeMs;
+    else if ('time' in next) next.time = timeMs;
+    else if ('x' in next) next.x = timeMs;
+    else next.ts = timeMs;
+    return next;
+  }
+
+  return { ts: timeMs, value };
+}
+
+function aggregateValues(values: number[], aggFunction: string): number {
+  if (aggFunction === 'COUNT') return values.length;
+  if (aggFunction === 'MIN') return Math.min(...values);
+  if (aggFunction === 'MAX') return Math.max(...values);
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  if (aggFunction === 'SUM') return sum;
+  return sum / values.length;
+}
+
+function applyHistoryConfig(value: unknown, config: HistoryConfig | undefined): unknown {
+  if (!config || !Array.isArray(value)) return value;
+
+  const points = value
+    .map(parseHistoryPoint)
+    .filter((point): point is ParsedHistoryPoint => point !== null)
+    .sort((a, b) => a.timeMs - b.timeMs);
+  if (points.length === 0) return value;
+
+  const timeRange = typeof config.timeRange === 'string' ? config.timeRange : '';
+  const rangeMs = HISTORY_TIME_RANGE_MS[timeRange];
+  const endMs = points[points.length - 1]!.timeMs;
+  const rangeStartMs = rangeMs ? endMs - rangeMs : points[0]!.timeMs;
+  const ranged = rangeMs ? points.filter((point) => point.timeMs >= rangeStartMs) : points;
+  const visiblePoints = ranged.length > 0 ? ranged : [points[points.length - 1]!];
+
+  const aggFunction = typeof config.aggFunction === 'string' ? config.aggFunction : 'NONE_RAW';
+  const aggWindow = typeof config.aggWindow === 'string' ? config.aggWindow : 'no_aggregate';
+  const windowMs = HISTORY_AGG_WINDOW_MS[aggWindow];
+
+  if (aggFunction === 'NONE_RAW' || !windowMs) {
+    return visiblePoints.map((point) => point.source);
+  }
+
+  const buckets = new Map<number, ParsedHistoryPoint[]>();
+  visiblePoints.forEach((point) => {
+    const offsetMs =
+      point.timeMs === rangeStartMs ? 0 : Math.max(0, point.timeMs - rangeStartMs - 1);
+    const bucketStart = rangeStartMs + Math.floor(offsetMs / windowMs) * windowMs;
+    const bucket = buckets.get(bucketStart);
+    if (bucket) bucket.push(point);
+    else buckets.set(bucketStart, [point]);
+  });
+
+  return Array.from(buckets.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([bucketStart, bucket]) => {
+      const values = bucket.map((point) => point.value);
+      return writeHistoryPoint(
+        bucket[bucket.length - 1]!.source,
+        bucketStart,
+        aggregateValues(values, aggFunction),
+      );
+    });
+}
+
 /**
  * PropertyResolver: A utility to resolve dynamic property bindings in a node's props.
  * It follows the "React Bypass" philosophy by providing a way to get raw resolved props
@@ -53,8 +216,7 @@ export class PropertyResolver {
       return ExpressionEvaluator.evaluate(`{{ ${explicitPath} }}`, context);
     }
 
-    const expression =
-      typeof binding.expression === 'string' ? binding.expression.trim() : '';
+    const expression = typeof binding.expression === 'string' ? binding.expression.trim() : '';
     const match = this.FIELD_BINDING_EXPR_RE.exec(expression);
     if (!match?.[1]) return undefined;
 
@@ -98,6 +260,7 @@ export class PropertyResolver {
           const resolvedValue = ExpressionEvaluator.evaluate(binding.expression, context);
           // 只有当解析出结果时才覆盖
           if (resolvedValue !== undefined && resolvedValue !== null) {
+            const historyResolvedValue = applyHistoryConfig(resolvedValue, binding.historyConfig);
             // Apply optional JS transform snippet.
             // Receives: `value` (the resolved field value), `data` (full DS snapshot for cross-field access)
             if (
@@ -111,16 +274,16 @@ export class PropertyResolver {
                 const dsSnapshot = this.resolveBindingDataSnapshot(binding, context);
                 // Use SafeExecutor sandbox (blocks window/document/fetch access)
                 const result = SafeExecutor.executeScript(binding.transform.trim(), {
-                  value: resolvedValue,
+                  value: historyResolvedValue,
                   data: dsSnapshot,
                 });
-                resolvedProps[binding.targetProp] = result ?? resolvedValue;
+                resolvedProps[binding.targetProp] = result ?? historyResolvedValue;
               } catch {
                 /* transform eval failed — use raw resolved value */
-                resolvedProps[binding.targetProp] = resolvedValue;
+                resolvedProps[binding.targetProp] = historyResolvedValue;
               }
             } else {
-              resolvedProps[binding.targetProp] = resolvedValue;
+              resolvedProps[binding.targetProp] = historyResolvedValue;
             }
           }
         }

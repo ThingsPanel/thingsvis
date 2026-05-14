@@ -28,6 +28,7 @@ import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import { sanitizeDataSourcesForHostSave } from '../lib/embedded/hostDataSourcePolicy';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
+import { stripStaticPropsForBoundProject } from '../lib/storage/sanitizeBoundProps';
 
 // =============================================================================
 // Hook Options
@@ -70,31 +71,33 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
   const saveProject = useCallback(
     async (project: ProjectFile) => {
+      const projectForSave = stripStaticPropsForBoundProject(project);
+
       // 场景2: 嵌入物模型 - 保存到宿主平台
       if (shouldSaveToHost()) {
-        setEmbedSessionSnapshot(project.meta.id, project, 'host-save');
+        setEmbedSessionSnapshot(projectForSave.meta.id, projectForSave, 'host-save');
         const augmentedDataSources = augmentPlatformDataSourcesForNodes(
-          project.dataSources as Parameters<typeof augmentPlatformDataSourcesForNodes>[0],
-          project.nodes as Array<Record<string, unknown>>,
+          projectForSave.dataSources as Parameters<typeof augmentPlatformDataSourcesForNodes>[0],
+          projectForSave.nodes as Array<Record<string, unknown>>,
         );
         const dataSources = sanitizeDataSourcesForHostSave(
-          project.nodes,
+          projectForSave.nodes,
           augmentedDataSources,
           resolveEditorServiceConfig().context,
         );
         const payload: SavePayload = {
           meta: {
-            id: project.meta.id,
-            name: project.meta.name,
-            version: project.meta.version,
-            thumbnail: project.meta.thumbnail,
+            id: projectForSave.meta.id,
+            name: projectForSave.meta.name,
+            version: projectForSave.meta.version,
+            thumbnail: projectForSave.meta.thumbnail,
           },
-          thumbnail: project.meta.thumbnail,
-          canvas: project.canvas,
-          nodes: project.nodes,
+          thumbnail: projectForSave.meta.thumbnail,
+          canvas: projectForSave.canvas,
+          nodes: projectForSave.nodes,
           dataSources,
-          variables: project.variables,
-          dataBindings: extractDataBindings(project.nodes),
+          variables: projectForSave.variables,
+          dataBindings: extractDataBindings(projectForSave.nodes),
         };
         sendToHost(payload);
         return;
@@ -102,26 +105,26 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
       // 场景1 & 场景3: 保存到 ThingsVis (云端或本地)
       // 使用嵌入模式传来的有效 ID
-      const effectiveId = getEffectiveProjectId(project.meta.id);
+      const effectiveId = getEffectiveProjectId(projectForSave.meta.id);
 
       if (storage.isCloud) {
         const storageProject: StorageProject = {
           meta: {
             id: effectiveId,
-            name: project.meta.name,
-            thumbnail: project.meta.thumbnail,
-            createdAt: project.meta.createdAt,
-            updatedAt: project.meta.updatedAt,
+            name: projectForSave.meta.name,
+            thumbnail: projectForSave.meta.thumbnail,
+            createdAt: projectForSave.meta.createdAt,
+            updatedAt: projectForSave.meta.updatedAt,
           },
           schema: {
-            canvas: project.canvas,
-            nodes: project.nodes,
-            dataSources: project.dataSources,
-            variables: project.variables,
+            canvas: projectForSave.canvas,
+            nodes: projectForSave.nodes,
+            dataSources: projectForSave.dataSources,
+            variables: projectForSave.variables,
           },
         };
         const result = await storage.save(storageProject);
-        if (result?.id && result.id !== project.meta.id) {
+        if (result?.id && result.id !== projectForSave.meta.id) {
           onIdChange?.(result.id);
         }
         return;
@@ -129,7 +132,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
       // 本地存储 (未登录独立运行)
 
-      await projectStorage.save(project);
+      await projectStorage.save(projectForSave);
     },
     [storage, onIdChange, saveStrategy],
   );
@@ -262,6 +265,7 @@ function extractDataBindings(nodes: any[]): any[] {
       targetProp: binding.targetProp,
       expression: binding.expression,
       transform: binding.transform,
+      historyConfig: binding.historyConfig,
     }));
   });
 }

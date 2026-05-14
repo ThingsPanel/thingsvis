@@ -13,6 +13,7 @@ import type { EditorStrategy, UIVisibilityConfig } from './EditorStrategy';
 import type { ProjectFile } from '../lib/storage/schemas';
 import type { StorageAdapter, StorageProject } from '../lib/storage/adapter';
 import { projectStorage } from '../lib/storage/projectStorage';
+import { stripStaticPropsForBoundProject } from '../lib/storage/sanitizeBoundProps';
 
 // =============================================================================
 // Helper Functions
@@ -79,25 +80,27 @@ export class AppModeStrategy implements EditorStrategy {
   }
 
   async save(projectState: ProjectFile): Promise<void> {
+    const projectForSave = stripStaticPropsForBoundProject(projectState);
+
     if (this.cloudAdapter) {
       const storageProject: StorageProject = {
         meta: {
-          id: projectState.meta.id,
-          name: projectState.meta.name,
-          thumbnail: projectState.meta.thumbnail,
-          createdAt: projectState.meta.createdAt,
+          id: projectForSave.meta.id,
+          name: projectForSave.meta.name,
+          thumbnail: projectForSave.meta.thumbnail,
+          createdAt: projectForSave.meta.createdAt,
           updatedAt: Date.now(),
         },
         schema: {
-          canvas: projectState.canvas,
-          nodes: projectState.nodes,
-          dataSources: projectState.dataSources,
-          variables: projectState.variables,
+          canvas: projectForSave.canvas,
+          nodes: projectForSave.nodes,
+          dataSources: projectForSave.dataSources,
+          variables: projectForSave.variables,
         },
       };
       await this.cloudAdapter.save(storageProject);
     } else {
-      await projectStorage.save(projectState);
+      await projectStorage.save(projectForSave);
     }
   }
 
