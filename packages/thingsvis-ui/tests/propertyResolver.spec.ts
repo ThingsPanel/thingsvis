@@ -323,5 +323,39 @@ describe('PropertyResolver', () => {
 
       expect(result.count).toBe(3);
     });
+
+    it('applies history controls to the datasource snapshot used by transforms', () => {
+      const node = makeNode({}, [
+        {
+          targetProp: 'data',
+          expression: '{{ ds.meter.data.supplyPressure__history }}',
+          transform:
+            'data.returnPressure__history.map((point) => ({ time: point.ts, value: point.value }))',
+          historyConfig: {
+            timeRange: 'last_1h',
+            aggFunction: 'NONE_RAW',
+            aggWindow: 'no_aggregate',
+          },
+        },
+      ]);
+
+      const result = PropertyResolver.resolve(node, {
+        meter: {
+          data: {
+            supplyPressure__history: series,
+            returnPressure__history: series.map((point) => ({
+              ...point,
+              value: point.value / 10,
+            })),
+          },
+        },
+      });
+
+      expect(result.data).toEqual([
+        { time: base - 40 * 60 * 1000, value: 2 },
+        { time: base - 20 * 60 * 1000, value: 4 },
+        { time: base, value: 8 },
+      ]);
+    });
   });
 });

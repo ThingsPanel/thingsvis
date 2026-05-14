@@ -15,11 +15,22 @@ type ParsedHistoryPoint = {
 };
 
 const HISTORY_TIME_RANGE_MS: Record<string, number> = {
+  last_5m: 5 * 60 * 1000,
   last_15m: 15 * 60 * 1000,
+  last_30m: 30 * 60 * 1000,
   last_1h: 60 * 60 * 1000,
+  last_3h: 3 * 60 * 60 * 1000,
+  last_6h: 6 * 60 * 60 * 1000,
+  last_12h: 12 * 60 * 60 * 1000,
   last_24h: 24 * 60 * 60 * 1000,
+  last_3d: 3 * 24 * 60 * 60 * 1000,
   last_7d: 7 * 24 * 60 * 60 * 1000,
+  last_15d: 15 * 24 * 60 * 60 * 1000,
   last_30d: 30 * 24 * 60 * 60 * 1000,
+  last_60d: 60 * 24 * 60 * 60 * 1000,
+  last_90d: 90 * 24 * 60 * 60 * 1000,
+  last_6m: 183 * 24 * 60 * 60 * 1000,
+  last_1y: 365 * 24 * 60 * 60 * 1000,
   '1h': 60 * 60 * 1000,
   '6h': 6 * 60 * 60 * 1000,
   '24h': 24 * 60 * 60 * 1000,
@@ -28,11 +39,19 @@ const HISTORY_TIME_RANGE_MS: Record<string, number> = {
 };
 
 const HISTORY_AGG_WINDOW_MS: Record<string, number> = {
+  '30s': 30 * 1000,
   '1m': 60 * 1000,
+  '2m': 2 * 60 * 1000,
   '5m': 5 * 60 * 1000,
+  '10m': 10 * 60 * 1000,
   '15m': 15 * 60 * 1000,
+  '30m': 30 * 60 * 1000,
   '1h': 60 * 60 * 1000,
+  '3h': 3 * 60 * 60 * 1000,
+  '6h': 6 * 60 * 60 * 1000,
   '1d': 24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+  '1mo': 30 * 24 * 60 * 60 * 1000,
 };
 
 function parseNumber(raw: unknown): number | null {
@@ -110,12 +129,24 @@ function writeHistoryPoint(source: unknown, timeMs: number, value: number): unkn
   return { ts: timeMs, value };
 }
 
+function normalizeAggregateFunction(aggFunction: string): string {
+  const normalized = aggFunction.trim().toUpperCase();
+  if (normalized === 'AVG') return 'AVG';
+  if (normalized === 'MAX') return 'MAX';
+  if (normalized === 'MIN' || normalized === 'MIX') return 'MIN';
+  if (normalized === 'SUM') return 'SUM';
+  if (normalized === 'COUNT') return 'COUNT';
+  if (normalized === 'NONE_RAW' || normalized === 'NO_AGGREGATE') return 'NONE_RAW';
+  return normalized;
+}
+
 function aggregateValues(values: number[], aggFunction: string): number {
-  if (aggFunction === 'COUNT') return values.length;
-  if (aggFunction === 'MIN') return Math.min(...values);
-  if (aggFunction === 'MAX') return Math.max(...values);
+  const normalizedAggFunction = normalizeAggregateFunction(aggFunction);
+  if (normalizedAggFunction === 'COUNT') return values.length;
+  if (normalizedAggFunction === 'MIN') return Math.min(...values);
+  if (normalizedAggFunction === 'MAX') return Math.max(...values);
   const sum = values.reduce((acc, value) => acc + value, 0);
-  if (aggFunction === 'SUM') return sum;
+  if (normalizedAggFunction === 'SUM') return sum;
   return sum / values.length;
 }
 
@@ -135,7 +166,10 @@ function applyHistoryConfig(value: unknown, config: HistoryConfig | undefined): 
   const ranged = rangeMs ? points.filter((point) => point.timeMs >= rangeStartMs) : points;
   const visiblePoints = ranged.length > 0 ? ranged : [points[points.length - 1]!];
 
-  const aggFunction = typeof config.aggFunction === 'string' ? config.aggFunction : 'NONE_RAW';
+  const aggFunction =
+    typeof config.aggFunction === 'string'
+      ? normalizeAggregateFunction(config.aggFunction)
+      : 'NONE_RAW';
   const aggWindow = typeof config.aggWindow === 'string' ? config.aggWindow : 'no_aggregate';
   const windowMs = HISTORY_AGG_WINDOW_MS[aggWindow];
 
@@ -163,6 +197,29 @@ function applyHistoryConfig(value: unknown, config: HistoryConfig | undefined): 
         aggregateValues(values, aggFunction),
       );
     });
+}
+
+function applyHistoryConfigToSnapshot(
+  snapshot: unknown,
+  config: HistoryConfig | undefined,
+): unknown {
+  if (!config || !snapshot || typeof snapshot !== 'object' || Array.isArray(snapshot)) {
+    return snapshot;
+  }
+
+  let changed = false;
+  const nextSnapshot: Record<string, unknown> = { ...(snapshot as Record<string, unknown>) };
+
+  Object.entries(nextSnapshot).forEach(([key, value]) => {
+    if (!key.endsWith('__history') || !Array.isArray(value)) return;
+    const nextValue = applyHistoryConfig(value, config);
+    if (nextValue !== value) {
+      nextSnapshot[key] = nextValue;
+      changed = true;
+    }
+  });
+
+  return changed ? nextSnapshot : snapshot;
 }
 
 /**
@@ -275,7 +332,7 @@ export class PropertyResolver {
                 // Use SafeExecutor sandbox (blocks window/document/fetch access)
                 const result = SafeExecutor.executeScript(binding.transform.trim(), {
                   value: historyResolvedValue,
-                  data: dsSnapshot,
+                  data: applyHistoryConfigToSnapshot(dsSnapshot, binding.historyConfig),
                 });
                 resolvedProps[binding.targetProp] = result ?? historyResolvedValue;
               } catch {
