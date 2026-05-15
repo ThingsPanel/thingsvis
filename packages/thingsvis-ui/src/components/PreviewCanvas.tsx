@@ -1,7 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { KernelStore } from '@thingsvis/kernel';
+import { validateCanvasTheme } from '@thingsvis/schema';
 import type { ActionRuntime } from '../engine/executeActions';
 import { VisualEngine } from '../engine/VisualEngine';
+import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
 
 
 interface PreviewCanvasProps {
@@ -37,6 +40,17 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
 }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const engineRef = useRef<VisualEngine | undefined>(undefined);
+    const kernelState = useSyncExternalStore(
+        useCallback((subscribe) => store.subscribe(subscribe), [store]),
+        () => store.getState(),
+        () => store.getState()
+    );
+    const pageConfig = ((kernelState as any)?.page?.config ?? {}) as Record<string, unknown>;
+    const normalizedTheme = useMemo(() => validateCanvasTheme(pageConfig.theme), [pageConfig.theme]);
+    const backgroundStyle = useMemo(
+        () => resolveCanvasBackgroundStyle(pageConfig.background),
+        [pageConfig.background]
+    );
 
     // Mount VisualEngine once on store/resolveWidget change
     useEffect(() => {
@@ -69,7 +83,14 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
     return (
         <div
             ref={containerRef}
-            style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
+            data-canvas-theme={normalizedTheme}
+            style={{
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                overflow: 'hidden',
+                ...backgroundStyle,
+            }}
         />
     );
 };
