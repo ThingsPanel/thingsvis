@@ -98,6 +98,12 @@ function hasConfiguredBackground(ctx: WidgetOverlayContext): boolean {
   return !isTransparentColor(background.color) || !!String(background.image ?? '').trim();
 }
 
+function shouldCollapseDefaultPadding(ctx: WidgetOverlayContext): boolean {
+  const background = ctx.baseStyle?.background;
+  if (!background) return false;
+  return !hasConfiguredBackground(ctx);
+}
+
 function iconComponentNameFromValue(icon: string): string {
   const trimmed = icon.trim();
   if (!trimmed) return '';
@@ -215,9 +221,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     align
   } = props;
 
-  const hasBackground = hasConfiguredBackground(ctx);
-  const paddingX = hasBackground ? DEFAULT_CARD_PADDING_X : 0;
-  const paddingY = hasBackground ? DEFAULT_CARD_PADDING_Y : 0;
+  const collapseDefaultPadding = shouldCollapseDefaultPadding(ctx);
+  const paddingX = collapseDefaultPadding ? 0 : DEFAULT_CARD_PADDING_X;
+  const paddingY = collapseDefaultPadding ? 0 : DEFAULT_CARD_PADDING_Y;
   const titleSize = titleFontSize;
   const mainValueSize = valueFontSize;
   const unitSize = suffixFontSize;

@@ -13,10 +13,19 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
 import type { KernelState } from '@thingsvis/kernel';
 import type { PageSchemaType, DataSource } from '@thingsvis/schema';
 import { DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
+import { Maximize, Minimize, RefreshCw } from 'lucide-react';
 import { getDashboard } from '@/lib/api/dashboards';
 import { apiClient } from '@/lib/api/client';
 import { actionRuntime, dataSourceManager, store } from '@/lib/store';
@@ -46,6 +55,7 @@ import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import LoadingScreen from '@/components/LoadingScreen';
 import type { PreviewAlignY, PreviewScaleMode } from './PreviewPage';
+import * as previewSession from '@/lib/storage/previewSession';
 
 /** Padding applied around the grid canvas in embed mode (px). */
 const GRID_CANVAS_PADDING = 0;
@@ -196,7 +206,7 @@ function normalizePreviewScaleMode(value: unknown): PreviewScaleMode {
 }
 
 export default function EmbedPage() {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const [searchParams] = useSearchParams();
   const [state, setState] = useState<EmbedState>({
@@ -205,6 +215,8 @@ export default function EmbedPage() {
     schema: null,
     variables: {},
   });
+  const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
+  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
   const cleanupRef = useRef<Array<() => void>>([]);
   const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
@@ -290,12 +302,42 @@ export default function EmbedPage() {
     return schema?.canvas ?? schema?.canvasConfig ?? null;
   }, [state.schema]);
 
-  const scaleMode: PreviewScaleMode = normalizePreviewScaleMode(
+  const resolvedScaleMode: PreviewScaleMode = normalizePreviewScaleMode(
     (kernelState?.page as any)?.config?.scaleMode ?? schemaCanvas?.scaleMode,
   );
   const previewAlignY: PreviewAlignY = normalizePreviewAlignY(
     (kernelState?.page as any)?.config?.previewAlignY ?? schemaCanvas?.previewAlignY,
   );
+  const [scaleMode, setScaleMode] = useState<PreviewScaleMode>(resolvedScaleMode);
+
+  useEffect(() => {
+    setScaleMode(resolvedScaleMode);
+  }, [resolvedScaleMode]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(previewSession.isFullscreen());
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  useEffect(() => {
+    let idleTimer: ReturnType<typeof setTimeout>;
+    const onPointerActivity = () => {
+      setIsToolbarVisible(true);
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => setIsToolbarVisible(false), 2000);
+    };
+
+    onPointerActivity();
+    window.addEventListener('mousemove', onPointerActivity);
+    window.addEventListener('touchstart', onPointerActivity, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', onPointerActivity);
+      window.removeEventListener('touchstart', onPointerActivity);
+      clearTimeout(idleTimer);
+    };
+  }, []);
 
   const gridSettings = kernelState?.gridState?.settings ?? {
     cols: 24,
@@ -325,6 +367,14 @@ export default function EmbedPage() {
   const resolveWidget = useCallback(async (type: string) => {
     const { entry } = await loadWidget(type);
     return entry;
+  }, []);
+
+  const handleToggleFullscreen = useCallback(() => {
+    void previewSession.toggleFullscreen(document.documentElement);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    window.location.reload();
   }, []);
 
   // Load dashboard from API by ID with optional share token
@@ -1040,6 +1090,71 @@ export default function EmbedPage() {
         backgroundRepeat: pageBackground.repeat || 'no-repeat',
       }}
     >
+      <div
+        className="absolute top-4 right-4 z-50 pointer-events-auto transition-opacity duration-300"
+        style={{
+          opacity: isToolbarVisible ? 1 : 0,
+          pointerEvents: isToolbarVisible ? 'auto' : 'none',
+        }}
+      >
+        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+            onClick={handleRefresh}
+            disabled={state.isLoading}
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+            onClick={handleToggleFullscreen}
+            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+          </Button>
+
+          <div className="w-px h-4 mx-2 bg-neutral-300 dark:bg-neutral-600" />
+
+          {isGridLayout ? (
+            <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground select-none">
+              {t('preview.scaleMode.responsive', { ns: 'pages' })}
+            </span>
+          ) : (
+            <Select
+              value={scaleMode}
+              onValueChange={(v: string) => setScaleMode(v as PreviewScaleMode)}
+            >
+              <SelectTrigger className="w-auto min-w-[140px] px-2 h-8 bg-transparent border-0 ring-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none shadow-none text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end">
+                <SelectItem value="fit-min">
+                  {t('preview.scaleMode.fitMin', { ns: 'pages' })}
+                </SelectItem>
+                <SelectItem value="fit-width">
+                  {t('preview.scaleMode.fitWidth', { ns: 'pages' })}
+                </SelectItem>
+                <SelectItem value="fit-height">
+                  {t('preview.scaleMode.fitHeight', { ns: 'pages' })}
+                </SelectItem>
+                <SelectItem value="stretch">
+                  {t('preview.scaleMode.stretch', { ns: 'pages' })}
+                </SelectItem>
+                <SelectItem value="original">
+                  {t('preview.scaleMode.original', { ns: 'pages' })}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      </div>
+
       <ErrorBoundary>
         {isGridLayout ? (
           <div
