@@ -1,0 +1,24 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-toggle-button": {
+                "name": "切换按钮",
+                "groupContent": "内容",
+                "groupStyle": "样式",
+                "groupBehavior": "行为",
+                "value": "开关状态",
+                "onLabel": "开启文字",
+                "offLabel": "关闭文字",
+                "onColor": "开启颜色",
+                "offColor": "关闭颜色",
+                "onTextColor": "开启文字颜色",
+                "offTextColor": "关闭文字颜色",
+                "fontSize": "字体大小",
+                "borderRadius": "圆角",
+                "disabled": "禁用",
+                "confirmToggle": "确认后切换",
+                "confirmMessage": "确认提示语"
+            }
+        }
+    }
+}

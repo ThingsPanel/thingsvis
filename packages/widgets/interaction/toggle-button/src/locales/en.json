@@ -1,0 +1,24 @@
+{
+    "editor": {
+        "widgets": {
+            "thingsvis-widget-interaction-toggle-button": {
+                "name": "Toggle Button",
+                "groupContent": "Content",
+                "groupStyle": "Style",
+                "groupBehavior": "Behavior",
+                "value": "Switch Status",
+                "onLabel": "On Text",
+                "offLabel": "Off Text",
+                "onColor": "On Color",
+                "offColor": "Off Color",
+                "onTextColor": "On Text Color",
+                "offTextColor": "Off Text Color",
+                "fontSize": "Font Size",
+                "borderRadius": "Border Radius",
+                "disabled": "Disabled",
+                "confirmToggle": "Confirm Before Toggle",
+                "confirmMessage": "Confirmation Message"
+            }
+        }
+    }
+}

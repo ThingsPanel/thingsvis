@@ -49,6 +49,7 @@ function allowedModes(field: ControlField): BindingMode[] {
 }
 
 const DEFAULT_WRITE_EVENT_BY_COMPONENT: Record<string, string> = {
+  'interaction/toggle-button': 'change',
   'interaction/basic-switch': 'change',
   'interaction/basic-slider': 'change',
   'interaction/basic-select': 'change',

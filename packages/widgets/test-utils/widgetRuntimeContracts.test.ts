@@ -200,6 +200,7 @@ const expectedWidgetModulePaths = [
   '../interaction/basic-select/src/index.ts',
   '../interaction/basic-slider/src/index.ts',
   '../interaction/basic-switch/src/index.ts',
+  '../interaction/toggle-button/src/index.ts',
   '../interaction/value-card/src/index.ts',
   '../interaction/value-card-simple/src/index.ts',
   '../interaction/date-range-picker/src/index.ts',

@@ -65,6 +65,13 @@
       "version": "0.0.1",
       "name": "开关"
     },
+    "interaction/toggle-button": {
+      "remoteName": "thingsvis_widget_interaction_toggle_button",
+      "remoteEntryUrl": "http://localhost:3215/remoteEntry.js",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "name": "切换按钮"
+    },
     "interaction/basic-select": {
       "remoteName": "thingsvis_widget_interaction_basic_select",
       "remoteEntryUrl": "http://localhost:3213/remoteEntry.js",
