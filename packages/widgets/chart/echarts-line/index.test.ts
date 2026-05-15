@@ -150,7 +150,7 @@ describe('chart/echarts-line widget', () => {
 
     expect(latestOption?.xAxis?.type).toBe('time');
     expect(latestOption?.series).toHaveLength(2);
-    expect(latestOption?.series?.[0]?.encode).toEqual({ x: 0, y: 1 });
+    expect(latestOption?.series?.[0]?.encode).toEqual({ x: 0, y: 1, tooltip: [1] });
     expect(latestOption?.series?.[0]?.data).toEqual([
       { name: '2026-03-19T09:00:00.000Z', value: [1773910800000, 47.2] },
       { name: '2026-03-19T10:00:00.000Z', value: [1773914400000, 47.8] },

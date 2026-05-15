@@ -492,8 +492,9 @@ function buildOption(
       return {
         type: 'line',
         name,
-        // Only x + y: adding tooltip: [1] duplicates the Y dimension in axis tooltips (same series shown twice).
-        encode: isTimeSeries ? { x: 0, y: 1 } : undefined,
+        // Time points use value: [timeMs, y]. Axis tooltip otherwise lists both dimensions as separate rows
+        // under the same series name (duplicate lines). Restrict tooltip to the Y dimension only.
+        encode: isTimeSeries ? { x: 0, y: 1, tooltip: [1] } : undefined,
         data: buildSeriesData(normalized),
         smooth: smooth,
         showSymbol: false,
