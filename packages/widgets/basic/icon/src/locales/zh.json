@@ -5,7 +5,10 @@
         "name": "图标",
         "groupContent": "内容",
         "groupStyle": "样式",
-        "groupFrame": "边框",
+        "localIconId": "本地图标",
+        "iconSource": "图标来源",
+        "iconSourceLocal": "本地图库",
+        "iconSourceBuiltin": "Lucide 图标",
         "iconName": "图标",
         "iconSquare": "方形",
         "iconCircle": "圆形",
@@ -21,23 +24,14 @@
         "iconDroplet": "水滴",
         "iconGauge": "仪表",
         "iconZap": "闪电",
-        "iconAlertTriangle": "告警",
+        "iconAlertTriangle": "警告",
         "iconCheckCircle": "正常",
         "iconXCircle": "错误",
         "iconTrendingUp": "趋势上升",
         "iconTrendingDown": "趋势下降",
         "iconClock": "时钟",
         "iconCpu": "CPU",
-        "paddingSize": "内边距",
-        "strokeWidth": "线宽",
-        "color": "图标颜色",
-        "backgroundColor": "背景色",
-        "backgroundOpacity": "背景透明度",
-        "cornerRadius": "圆角",
-        "opacity": "透明度",
-        "showFrame": "显示边框",
-        "frameColor": "边框颜色",
-        "frameWidth": "边框宽度"
+        "color": "图标颜色"
       }
     }
   }

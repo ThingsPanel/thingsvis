@@ -54,6 +54,7 @@ export const ControlKindSchema = z.enum([
   // 特殊
   'image',
   'icon',
+  'localIcon',
   'font',
   // 数据
   'dataField',

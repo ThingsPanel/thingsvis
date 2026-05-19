@@ -539,6 +539,8 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
                           propsSchemaDefaults,
                         )}
                         bindings={schema.data}
+                        currentSize={schema.size}
+                        currentPosition={schema.position}
                         updateNode={updateNode}
                       />
                     ))}

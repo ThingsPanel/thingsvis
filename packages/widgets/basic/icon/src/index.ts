@@ -5,22 +5,6 @@ import { controls } from './controls';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(value, max));
-}
-
-function withAlpha(color: string, alpha: number): string {
-  const normalized = color.trim();
-  if (!normalized || normalized === 'transparent') return 'transparent';
-  const clamped = clamp(alpha, 0, 1);
-  const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (!hexMatch) return normalized;
-  const raw = hexMatch[1] ?? '';
-  const full = raw.length === 3 ? raw.split('').map((part) => part + part).join('') : raw;
-  const int = Number.parseInt(full, 16);
-  return `rgba(${(int >> 16) & 255}, ${(int >> 8) & 255}, ${int & 255}, ${clamped})`;
-}
-
 function resolveColor(value: string | undefined, fallback: string): string {
   const normalized = String(value ?? '').trim();
   return normalized && normalized.toLowerCase() !== 'auto' ? normalized : fallback;
@@ -74,33 +58,101 @@ function getIconMarkup(name: Props['iconName']): string {
   }
 }
 
-function renderIcon(element: HTMLElement, props: Props): void {
-  const colors = resolveWidgetColors(element);
-  const shell = element.firstElementChild as HTMLDivElement | null;
-  const svg = shell?.querySelector('svg');
-  if (!shell || !svg) return;
+function normalizeSvgMarkup(svg: string): string {
+  const trimmed = svg.trim();
+  if (!trimmed.includes('<svg')) return trimmed;
+  return trimmed.replace(/<svg\b([^>]*)>/i, (match, attrs: string) => {
+    let nextAttrs = attrs ?? '';
+    if (!/\bwidth=/i.test(nextAttrs)) nextAttrs += ' width="100%"';
+    if (!/\bheight=/i.test(nextAttrs)) nextAttrs += ' height="100%"';
+    if (!/\bpreserveAspectRatio=/i.test(nextAttrs)) {
+      nextAttrs += ' preserveAspectRatio="xMidYMid meet"';
+    }
+    return `<svg${nextAttrs}>`;
+  });
+}
 
+function renderBuiltinIcon(shell: HTMLDivElement, props: Props, fg: string): void {
+  const svg = shell.querySelector('svg');
+  if (!svg) return;
+
+  svg.setAttribute('viewBox', '0 0 48 48');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('stroke', resolveColor(props.color, fg));
+  svg.setAttribute('stroke-width', '2');
+  svg.setAttribute('stroke-linecap', 'round');
+  svg.setAttribute('stroke-linejoin', 'round');
+  svg.style.width = '100%';
+  svg.style.height = '100%';
+  svg.innerHTML = getIconMarkup(props.iconName);
+}
+
+function renderLocalIcon(shell: HTMLDivElement, svgText: string, color: string): void {
+  shell.innerHTML = normalizeSvgMarkup(svgText);
+  const svg = shell.querySelector('svg');
+  if (!svg) return;
+  svg.style.width = '100%';
+  svg.style.height = '100%';
+  svg.style.display = 'block';
+  svg.style.color = color;
+}
+
+function renderLocalImage(shell: HTMLDivElement, assetUrl: string): void {
+  shell.innerHTML = '';
+  if (!assetUrl) return;
+
+  const img = document.createElement('img');
+  img.src = assetUrl;
+  img.alt = '';
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.objectFit = 'contain';
+  img.style.display = 'block';
+  shell.appendChild(img);
+}
+
+function applyShellStyle(element: HTMLElement, shell: HTMLDivElement, props: Props): void {
+  const colors = resolveWidgetColors(element);
+
+  // Fill the widget container absolutely so the icon doesn't flow into the top-left corner
+  shell.style.position = 'absolute';
+  shell.style.inset = '0';
   shell.style.width = '100%';
   shell.style.height = '100%';
   shell.style.boxSizing = 'border-box';
   shell.style.display = 'flex';
   shell.style.alignItems = 'center';
   shell.style.justifyContent = 'center';
-  shell.style.padding = `${props.paddingSize}px`;
-  shell.style.opacity = String(props.opacity);
-  shell.style.borderRadius = `${props.cornerRadius}px`;
-  shell.style.background = withAlpha(props.backgroundColor, props.backgroundOpacity);
-  shell.style.border = props.showFrame ? `${props.frameWidth}px solid ${props.frameColor}` : 'none';
+  shell.style.padding = '0';
+  shell.style.background = 'transparent';
+  shell.style.border = 'none';
+  shell.style.color = resolveColor(props.color, colors.fg || '#0f172a');
+}
 
-  svg.setAttribute('viewBox', '0 0 48 48');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', resolveColor(props.color, colors.fg || '#0f172a'));
-  svg.setAttribute('stroke-width', String(props.strokeWidth));
-  svg.setAttribute('stroke-linecap', 'round');
-  svg.setAttribute('stroke-linejoin', 'round');
-  svg.style.width = '100%';
-  svg.style.height = '100%';
-  svg.innerHTML = getIconMarkup(props.iconName);
+function renderIcon(element: HTMLElement, shell: HTMLDivElement, props: Props): void {
+  applyShellStyle(element, shell, props);
+  const fg = shell.style.color || '#0f172a';
+
+  if (props.iconSource === 'local') {
+    if (props.assetKind === 'image') {
+      renderLocalImage(shell, props.assetUrl);
+      return;
+    }
+
+    const svgText = props.svgContent;
+    if (svgText?.trim()) {
+      renderLocalIcon(shell, svgText, fg);
+      return;
+    }
+
+    shell.innerHTML = '';
+    return;
+  }
+
+  shell.innerHTML = '';
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  shell.appendChild(svg);
+  renderBuiltinIcon(shell, props, fg);
 }
 
 export const Main = defineWidget({
@@ -109,17 +161,29 @@ export const Main = defineWidget({
   locales: { zh, en },
   controls,
   render: (element: HTMLElement, props: Props) => {
-    let currentProps = props;
-    const shell = document.createElement('div');
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    shell.appendChild(svg);
-    element.appendChild(shell);
-    renderIcon(element, currentProps);
+    // Ensure the host element is a positioning context so the shell can use position:absolute
+    if (getComputedStyle(element).position === 'static') {
+      element.style.position = 'relative';
+    }
+
+    // Reuse existing shell if present (hot-reload or double-render guard)
+    let shell = element.querySelector<HTMLDivElement>('.thingsvis-basic-icon-shell');
+    if (!shell) {
+      shell = document.createElement('div');
+      shell.className = 'thingsvis-basic-icon-shell';
+      element.appendChild(shell);
+    }
+
+    const shellEl = shell;
+    const sync = (nextProps: Props) => {
+      renderIcon(element, shellEl, nextProps);
+    };
+
+    sync(props);
 
     return {
       update: (nextProps: Props) => {
-        currentProps = nextProps;
-        renderIcon(element, currentProps);
+        sync(nextProps);
       },
       destroy: () => {
         element.innerHTML = '';

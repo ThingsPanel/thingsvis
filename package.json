@@ -22,6 +22,7 @@
     "build:widgets": "pnpm -r --if-present --filter=\"thingsvis-widget-*...\" build && pnpm run deploy:widgets",
     "build:widgets:safe": "node scripts/build-widgets-safe.mjs",
     "deploy:widgets": "node scripts/deploy-widgets.mjs",
+    "icons:generate": "node scripts/generate-local-icons-manifest.mjs",
     "lint": "pnpm -r --if-present lint",
     "typecheck": "pnpm -r --if-present typecheck",
     "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js",

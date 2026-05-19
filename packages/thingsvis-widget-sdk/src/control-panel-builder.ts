@@ -299,6 +299,21 @@ export class FieldBuilder {
     return this;
   }
 
+  /** 添加本地图库图标选择器（按目录分类） */
+  addLocalIconPicker(path: string, options: AddControlOptions = {}): this {
+    this.fields.push({
+      path,
+      label: options.label ?? path,
+      kind: 'localIcon',
+      default: options.default ?? '',
+      description: options.description,
+      binding: this.resolveBinding(options.binding),
+      disabled: options.disabled,
+      showWhen: options.showWhen,
+    });
+    return this;
+  }
+
   /** 添加滑块 */
   addSlider(path: string, options: AddSliderOptions): this {
     this.fields.push({

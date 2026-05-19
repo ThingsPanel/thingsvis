@@ -26,6 +26,7 @@ import {
   normalizePlatformBufferSize,
 } from '../embed/platformDeviceCompat';
 import { PipeProxyHits, buildPipeProxySegmentsForNode } from './CanvasView.pipeProxy';
+import { openLocalIconPicker } from '@/lib/local-icons/pickerStore';
 
 function generateId(prefix = 'node') {
   try {
@@ -75,8 +76,42 @@ function getNodeProps(
   return node?.schemaRef?.props ?? {};
 }
 
+function fitNodeBoxToAsset(
+  node: { schemaRef?: NodeSchemaType } | null | undefined,
+  assetWidth: number | undefined,
+  assetHeight: number | undefined,
+) {
+  const size = node?.schemaRef?.size;
+  const position = node?.schemaRef?.position;
+  if (!size || !position || !assetWidth || !assetHeight || assetWidth <= 0 || assetHeight <= 0) {
+    return {};
+  }
+
+  const maxSide = Math.max(size.width, size.height);
+  const aspect = assetWidth / assetHeight;
+  const nextSize =
+    aspect >= 1
+      ? { width: maxSide, height: maxSide / aspect }
+      : { width: maxSide * aspect, height: maxSide };
+  return {
+    size: nextSize,
+    position: {
+      x: position.x + (size.width - nextSize.width) / 2,
+      y: position.y + (size.height - nextSize.height) / 2,
+    },
+  };
+}
+
 function isTextNode(node: { schemaRef?: NodeSchemaType } | null | undefined): boolean {
   return node?.schemaRef?.type === 'basic/text';
+}
+
+function isLocalIconNode(node: { schemaRef?: NodeSchemaType } | null | undefined): boolean {
+  return node?.schemaRef?.type === 'basic/icon';
+}
+
+function shouldAutoOpenLocalIconPicker(type: string | undefined): boolean {
+  return type === 'basic/icon';
 }
 
 function isConnectorNodeType(type: string | undefined): boolean {
@@ -316,46 +351,6 @@ const CanvasView = forwardRef<
     [closeInlineTextEditor, store],
   );
 
-  const handleProxyMouseDownCapture = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (formatBrushActive) return;
-      if (event.button !== 0 || event.detail < 2) return;
-
-      const target = event.target as HTMLElement | null;
-      if (!target || target.closest('textarea')) return;
-
-      const nodeTarget = target.closest('[data-node-id]') as HTMLElement | null;
-      const nodeId = nodeTarget?.dataset.nodeId;
-      if (!nodeId) return;
-
-      const currentNode = state.nodesById[nodeId];
-      if (!isTextNode(currentNode)) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      openInlineTextEditor(nodeId);
-    },
-    [formatBrushActive, openInlineTextEditor, state.nodesById],
-  );
-
-  const handleFormatBrushMouseDownCapture = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (!formatBrushActive) return;
-
-      const target = event.target as HTMLElement | null;
-      const nodeTarget = target?.closest('[data-node-id]') as HTMLElement | null;
-      const nodeId = nodeTarget?.dataset.nodeId;
-      if (!nodeId) return;
-
-      const applied = onApplyFormatBrush?.(nodeId);
-      if (!applied) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-    },
-    [formatBrushActive, onApplyFormatBrush],
-  );
-
   const hydratePlatformDataSourcesForNodes = useCallback(
     async (nodes: NodeSchemaType[], presetDataSources: DataSource[] = []) => {
       const currentConfigs = dataSourceManager.getAllConfigs();
@@ -375,6 +370,79 @@ const CanvasView = forwardRef<
       }
     },
     [],
+  );
+
+  const openLocalIconPickerForNode = useCallback(
+    (nodeId: string, currentProps: Record<string, unknown>) => {
+      store.getState().selectNode?.(nodeId);
+      openLocalIconPicker({
+        value: typeof currentProps.localIconId === 'string' ? currentProps.localIconId : '',
+        onConfirm: (result) => {
+          const currentNode = (store.getState() as KernelState).nodesById[nodeId];
+          store.getState().updateNode?.(nodeId, {
+            props: {
+              ...currentProps,
+              iconSource: 'local',
+              localIconId: result.id,
+              assetKind: result.kind,
+              assetUrl: result.assetUrl,
+              svgContent: result.svgContent ?? '',
+            },
+            ...fitNodeBoxToAsset(currentNode, result.width, result.height),
+          });
+          onUserEdit?.();
+        },
+      });
+    },
+    [onUserEdit, store],
+  );
+
+  const handleProxyMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (formatBrushActive) return;
+      if (event.button !== 0 || event.detail < 2) return;
+
+      const target = event.target as HTMLElement | null;
+      if (!target || target.closest('textarea')) return;
+
+      const nodeTarget = target.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const currentNode = state.nodesById[nodeId];
+      if (isTextNode(currentNode)) {
+        event.preventDefault();
+        event.stopPropagation();
+        openInlineTextEditor(nodeId);
+        return;
+      }
+
+      if (!isLocalIconNode(currentNode)) return;
+
+      const currentProps = getNodeProps(currentNode);
+      event.preventDefault();
+      event.stopPropagation();
+      openLocalIconPickerForNode(nodeId, currentProps);
+    },
+    [formatBrushActive, openInlineTextEditor, openLocalIconPickerForNode, state.nodesById],
+  );
+
+  const handleFormatBrushMouseDownCapture = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      if (!formatBrushActive) return;
+
+      const target = event.target as HTMLElement | null;
+      const nodeTarget = target?.closest('[data-node-id]') as HTMLElement | null;
+      const nodeId = nodeTarget?.dataset.nodeId;
+      if (!nodeId) return;
+
+      const applied = onApplyFormatBrush?.(nodeId);
+      if (!applied) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    [formatBrushActive, onApplyFormatBrush],
   );
 
   // Detect grid layout mode
@@ -635,6 +703,9 @@ const CanvasView = forwardRef<
       await hydratePlatformDataSourcesForNodes([node]);
       // Ensure autosave is scheduled even if this mutation doesn't hit temporal.
       onUserEdit?.();
+      if (shouldAutoOpenLocalIconPicker(node.type)) {
+        openLocalIconPickerForNode(nodeId, node.props ?? {});
+      }
     } catch {
       // eslint-disable-next-line no-console
     }
@@ -751,11 +822,14 @@ const CanvasView = forwardRef<
           store.getState().addNodes([node as any]);
         }
         onUserEdit?.();
+        if (shouldAutoOpenLocalIconPicker(node.type)) {
+          openLocalIconPickerForNode(nodeId, node.props ?? {});
+        }
       } catch (e) {
         console.error('[CanvasView] Failed to add grid node', nodeId, e);
       }
     },
-    [resolveWidget, state.gridState?.settings, store, onUserEdit],
+    [openLocalIconPickerForNode, onUserEdit, resolveWidget, state.gridState?.settings, store],
   );
 
   // ── Grid mode: GridCanvas is the sole renderer (same engine for edit and preview) ──

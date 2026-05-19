@@ -8,6 +8,7 @@ import * as LucideIcons from 'lucide-react';
 
 import FieldPicker, { type FieldPickerValue } from './FieldPicker';
 import { IconPicker } from './IconPicker';
+import { LocalIconField } from './LocalIconField';
 import ImageSourceInput from './ImageSourceInput';
 import ModelSourceInput from './ModelSourceInput';
 import { ColorInput } from '@/components/ui/color-input';
@@ -30,6 +31,8 @@ type Props = {
   field: ControlField;
   propsValue: unknown;
   bindings: DataBinding[] | undefined;
+  currentSize?: { width: number; height: number };
+  currentPosition?: { x: number; y: number };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateNode: (changes: any) => void;
 };
@@ -105,6 +108,31 @@ function createDefaultWriteAction(dataSourceId: string, fieldId: string): Action
     dataSourceId,
     payload: `({ ${JSON.stringify(fieldId)}: payload })`,
     __thingsvisAutoWrite: AUTO_WRITE_MARKER,
+  };
+}
+
+function fitNodeBoxToAsset(
+  size: { width: number; height: number } | undefined,
+  position: { x: number; y: number } | undefined,
+  assetWidth: number | undefined,
+  assetHeight: number | undefined,
+) {
+  if (!size || !position || !assetWidth || !assetHeight || assetWidth <= 0 || assetHeight <= 0) {
+    return {};
+  }
+
+  const maxSide = Math.max(size.width, size.height);
+  const aspect = assetWidth / assetHeight;
+  const nextSize =
+    aspect >= 1
+      ? { width: maxSide, height: maxSide / aspect }
+      : { width: maxSide * aspect, height: maxSide };
+  return {
+    size: nextSize,
+    position: {
+      x: position.x + (size.width - nextSize.width) / 2,
+      y: position.y + (size.height - nextSize.height) / 2,
+    },
   };
 }
 
@@ -211,6 +239,8 @@ export function ControlFieldRow({
   field,
   propsValue,
   bindings,
+  currentSize,
+  currentPosition,
   updateNode,
 }: Props) {
   const { t, i18n } = useTranslation('editor');
@@ -354,6 +384,7 @@ export function ControlFieldRow({
       (candidate) => typeof candidate === 'number' && !Number.isInteger(candidate),
     ) ||
     (typeof field.step === 'number' && field.step > 0 && field.step < 1);
+  const showSelectPlaceholder = !(componentType === 'basic/icon' && field.path === 'iconSource');
 
   const modeLabel = (m: BindingMode) => {
     switch (m) {
@@ -493,7 +524,9 @@ export function ControlFieldRow({
                 onChange={(e) => setStatic(e.target.value)}
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
               >
-                <option value="">{t('common.pleaseSelect')}</option>
+                {showSelectPlaceholder ? (
+                  <option value="">{t('common.pleaseSelect', { defaultValue: '(请选择)' })}</option>
+                ) : null}
                 {field.options.map((opt, optIdx) => (
                   <option key={`${field.path}:${optIdx}:${String(opt.value)}`} value={opt.value}>
                     {selectOptionCaption(opt, field.showOptionValues, locale, t)}
@@ -621,6 +654,24 @@ export function ControlFieldRow({
               />
             )}
 
+            {field.kind === 'localIcon' && (
+              <LocalIconField
+                value={typeof propsValue === 'string' ? propsValue : ''}
+                onPick={(result) => {
+                  updateNode({
+                    props: {
+                      iconSource: 'local',
+                      localIconId: result.id,
+                      assetKind: result.kind,
+                      assetUrl: result.assetUrl,
+                      svgContent: result.svgContent ?? '',
+                    },
+                    ...fitNodeBoxToAsset(currentSize, currentPosition, result.width, result.height),
+                  });
+                }}
+              />
+            )}
+
             {/* Fallback for unknown kinds */}
             {![
               'string',
@@ -636,6 +687,7 @@ export function ControlFieldRow({
               'textarea',
               'image',
               'icon',
+              'localIcon',
             ].includes(field.kind) && (
               <Input
                 value={propsValue === undefined ? '' : String(propsValue)}

@@ -76,6 +76,7 @@ import {
 import { initEmbedModeFromUrl } from '../embed/message-router';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
 import EditorStartupOverlay from './LoadingScreen/EditorStartupOverlay';
+import { LocalIconPickerHost } from './RightPanel/LocalIconPicker';
 
 type Language = string;
 function DataPanel(_props: { store: typeof store; language: Language }) {
@@ -901,6 +902,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         }}
       />
       <HelpDialog open={showHelpDialog} onOpenChange={setShowHelpDialog} />
+      <LocalIconPickerHost />
 
       {projectId && (
         <ShareDashboardDialog

@@ -5,7 +5,10 @@
         "name": "Icon",
         "groupContent": "Content",
         "groupStyle": "Style",
-        "groupFrame": "Frame",
+        "localIconId": "Local icon",
+        "iconSource": "Icon source",
+        "iconSourceLocal": "Local library",
+        "iconSourceBuiltin": "Lucide icons",
         "iconName": "Icon",
         "iconSquare": "Square",
         "iconCircle": "Circle",
@@ -28,16 +31,7 @@
         "iconTrendingDown": "Trend Down",
         "iconClock": "Clock",
         "iconCpu": "CPU",
-        "paddingSize": "Padding",
-        "strokeWidth": "Stroke width",
-        "color": "Icon color",
-        "backgroundColor": "Background",
-        "backgroundOpacity": "Background opacity",
-        "cornerRadius": "Corner radius",
-        "opacity": "Opacity",
-        "showFrame": "Show frame",
-        "frameColor": "Frame color",
-        "frameWidth": "Frame width"
+        "color": "Icon color"
       }
     }
   }

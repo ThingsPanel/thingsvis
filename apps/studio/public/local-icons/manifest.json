@@ -1,0 +1,9193 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-19T01:22:10.425Z",
+  "basePath": "/local-icons/icons",
+  "categories": [
+    {
+      "id": "常用",
+      "name": "常用"
+    },
+    {
+      "id": "电力",
+      "name": "电力"
+    },
+    {
+      "id": "工程",
+      "name": "工程"
+    },
+    {
+      "id": "能源",
+      "name": "能源"
+    },
+    {
+      "id": "智慧城市",
+      "name": "智慧城市"
+    },
+    {
+      "id": "IT&互联网",
+      "name": "IT&互联网"
+    }
+  ],
+  "icons": [
+    {
+      "id": "常用/安全通道",
+      "categoryId": "常用",
+      "name": "安全通道",
+      "file": "安全通道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "常用/定位",
+      "categoryId": "常用",
+      "name": "定位",
+      "file": "定位.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "常用/定位_1",
+      "categoryId": "常用",
+      "name": "定位_1",
+      "file": "定位_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "常用/风扇",
+      "categoryId": "常用",
+      "name": "风扇",
+      "file": "风扇.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "常用/机器",
+      "categoryId": "常用",
+      "name": "机器",
+      "file": "机器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "常用/集成器",
+      "categoryId": "常用",
+      "name": "集成器",
+      "file": "集成器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "常用/检测器",
+      "categoryId": "常用",
+      "name": "检测器",
+      "file": "检测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "常用/搅碎机",
+      "categoryId": "常用",
+      "name": "搅碎机",
+      "file": "搅碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "常用/紧急出口L",
+      "categoryId": "常用",
+      "name": "紧急出口L",
+      "file": "紧急出口L.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/紧急出口R",
+      "categoryId": "常用",
+      "name": "紧急出口R",
+      "file": "紧急出口R.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/禁止吸烟",
+      "categoryId": "常用",
+      "name": "禁止吸烟",
+      "file": "禁止吸烟.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "常用/均化库",
+      "categoryId": "常用",
+      "name": "均化库",
+      "file": "均化库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "常用/冷却塔",
+      "categoryId": "常用",
+      "name": "冷却塔",
+      "file": "冷却塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "常用/灭火器01",
+      "categoryId": "常用",
+      "name": "灭火器01",
+      "file": "灭火器01.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "常用/摄像头",
+      "categoryId": "常用",
+      "name": "摄像头",
+      "file": "摄像头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/生料库",
+      "categoryId": "常用",
+      "name": "生料库",
+      "file": "生料库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "常用/疏散通道 1",
+      "categoryId": "常用",
+      "name": "疏散通道 1",
+      "file": "疏散通道 1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/疏散通道 2",
+      "categoryId": "常用",
+      "name": "疏散通道 2",
+      "file": "疏散通道 2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/水表",
+      "categoryId": "常用",
+      "name": "水表",
+      "file": "水表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/图标",
+      "categoryId": "常用",
+      "name": "图标",
+      "file": "图标.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 2.5
+    },
+    {
+      "id": "常用/微型消防站",
+      "categoryId": "常用",
+      "name": "微型消防站",
+      "file": "微型消防站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "常用/微型消防站_1",
+      "categoryId": "常用",
+      "name": "微型消防站_1",
+      "file": "微型消防站_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "常用/消防栓",
+      "categoryId": "常用",
+      "name": "消防栓",
+      "file": "消防栓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "常用/仪表盘",
+      "categoryId": "常用",
+      "name": "仪表盘",
+      "file": "仪表盘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "常用/右跑",
+      "categoryId": "常用",
+      "name": "右跑",
+      "file": "右跑.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "常用/原料磨",
+      "categoryId": "常用",
+      "name": "原料磨",
+      "file": "原料磨.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "常用/自定义组件1",
+      "categoryId": "常用",
+      "name": "自定义组件1",
+      "file": "自定义组件1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "常用/左跑",
+      "categoryId": "常用",
+      "name": "左跑",
+      "file": "左跑.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "常用/aaa",
+      "categoryId": "常用",
+      "name": "aaa",
+      "file": "aaa.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "常用/bbb",
+      "categoryId": "常用",
+      "name": "bbb",
+      "file": "bbb.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "常用/bbb_1",
+      "categoryId": "常用",
+      "name": "bbb_1",
+      "file": "bbb_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "常用/test",
+      "categoryId": "常用",
+      "name": "test",
+      "file": "test.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "电力/电气/11",
+      "categoryId": "电力/电气",
+      "name": "11",
+      "file": "11.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/1112",
+      "categoryId": "电力/电气",
+      "name": "1112",
+      "file": "1112.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/123",
+      "categoryId": "电力/电气",
+      "name": "123",
+      "file": "123.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/123_1",
+      "categoryId": "电力/电气",
+      "name": "123_1",
+      "file": "123_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/2221",
+      "categoryId": "电力/电气",
+      "name": "2221",
+      "file": "2221.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/3333",
+      "categoryId": "电力/电气",
+      "name": "3333",
+      "file": "3333.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/避雷器",
+      "categoryId": "电力/电气",
+      "name": "避雷器",
+      "file": "避雷器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/避雷器2",
+      "categoryId": "电力/电气",
+      "name": "避雷器2",
+      "file": "避雷器2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/边框",
+      "categoryId": "电力/电气",
+      "name": "边框",
+      "file": "边框.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/变压器",
+      "categoryId": "电力/电气",
+      "name": "变压器",
+      "file": "变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/变压器-三圈压变",
+      "categoryId": "电力/电气",
+      "name": "变压器-三圈压变",
+      "file": "变压器-三圈压变.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/测试啊",
+      "categoryId": "电力/电气",
+      "name": "测试啊",
+      "file": "测试啊.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/电气/充电器",
+      "categoryId": "电力/电气",
+      "name": "充电器",
+      "file": "充电器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/充电头",
+      "categoryId": "电力/电气",
+      "name": "充电头",
+      "file": "充电头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/错误",
+      "categoryId": "电力/电气",
+      "name": "错误",
+      "file": "错误.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电感",
+      "categoryId": "电力/电气",
+      "name": "电感",
+      "file": "电感.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电架",
+      "categoryId": "电力/电气",
+      "name": "电架",
+      "file": "电架.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "电力/电气/电抗器",
+      "categoryId": "电力/电气",
+      "name": "电抗器",
+      "file": "电抗器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流",
+      "categoryId": "电力/电气",
+      "name": "电流",
+      "file": "电流.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流2",
+      "categoryId": "电力/电气",
+      "name": "电流2",
+      "file": "电流2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流2_1",
+      "categoryId": "电力/电气",
+      "name": "电流2_1",
+      "file": "电流2_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流3",
+      "categoryId": "电力/电气",
+      "name": "电流3",
+      "file": "电流3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流4",
+      "categoryId": "电力/电气",
+      "name": "电流4",
+      "file": "电流4.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流5",
+      "categoryId": "电力/电气",
+      "name": "电流5",
+      "file": "电流5.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电流6",
+      "categoryId": "电力/电气",
+      "name": "电流6",
+      "file": "电流6.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "电力/电气/电流7",
+      "categoryId": "电力/电气",
+      "name": "电流7",
+      "file": "电流7.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "电力/电气/电流8",
+      "categoryId": "电力/电气",
+      "name": "电流8",
+      "file": "电流8.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "电力/电气/电气1",
+      "categoryId": "电力/电气",
+      "name": "电气1",
+      "file": "电气1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气2",
+      "categoryId": "电力/电气",
+      "name": "电气2",
+      "file": "电气2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气3",
+      "categoryId": "电力/电气",
+      "name": "电气3",
+      "file": "电气3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气4",
+      "categoryId": "电力/电气",
+      "name": "电气4",
+      "file": "电气4.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气5",
+      "categoryId": "电力/电气",
+      "name": "电气5",
+      "file": "电气5.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电气/电气6",
+      "categoryId": "电力/电气",
+      "name": "电气6",
+      "file": "电气6.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气支路",
+      "categoryId": "电力/电气",
+      "name": "电气支路",
+      "file": "电气支路.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电气转",
+      "categoryId": "电力/电气",
+      "name": "电气转",
+      "file": "电气转.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电容器",
+      "categoryId": "电力/电气",
+      "name": "电容器",
+      "file": "电容器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压",
+      "categoryId": "电力/电气",
+      "name": "电压",
+      "file": "电压.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压_1",
+      "categoryId": "电力/电气",
+      "name": "电压_1",
+      "file": "电压_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压1",
+      "categoryId": "电力/电气",
+      "name": "电压1",
+      "file": "电压1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压2",
+      "categoryId": "电力/电气",
+      "name": "电压2",
+      "file": "电压2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压3",
+      "categoryId": "电力/电气",
+      "name": "电压3",
+      "file": "电压3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压4",
+      "categoryId": "电力/电气",
+      "name": "电压4",
+      "file": "电压4.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压5",
+      "categoryId": "电力/电气",
+      "name": "电压5",
+      "file": "电压5.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电压6",
+      "categoryId": "电力/电气",
+      "name": "电压6",
+      "file": "电压6.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电阻12",
+      "categoryId": "电力/电气",
+      "name": "电阻12",
+      "file": "电阻12.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/电阻2",
+      "categoryId": "电力/电气",
+      "name": "电阻2",
+      "file": "电阻2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/电气/断电",
+      "categoryId": "电力/电气",
+      "name": "断电",
+      "file": "断电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/断路",
+      "categoryId": "电力/电气",
+      "name": "断路",
+      "file": "断路.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/二极管",
+      "categoryId": "电力/电气",
+      "name": "二极管",
+      "file": "二极管.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/电气/二极管2",
+      "categoryId": "电力/电气",
+      "name": "二极管2",
+      "file": "二极管2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "电力/电气/横电阻",
+      "categoryId": "电力/电气",
+      "name": "横电阻",
+      "file": "横电阻.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "电力/电气/互感器2",
+      "categoryId": "电力/电气",
+      "name": "互感器2",
+      "file": "互感器2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/互感器3",
+      "categoryId": "电力/电气",
+      "name": "互感器3",
+      "file": "互感器3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/电气/互感器3_1",
+      "categoryId": "电力/电气",
+      "name": "互感器3_1",
+      "file": "互感器3_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/电气/箭头_1",
+      "categoryId": "电力/电气",
+      "name": "箭头_1",
+      "file": "箭头_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "电力/电气/箭头_3",
+      "categoryId": "电力/电气",
+      "name": "箭头_3",
+      "file": "箭头_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/接地变压器",
+      "categoryId": "电力/电气",
+      "name": "接地变压器",
+      "file": "接地变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/接地符号1",
+      "categoryId": "电力/电气",
+      "name": "接地符号1",
+      "file": "接地符号1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关",
+      "categoryId": "电力/电气",
+      "name": "开关",
+      "file": "开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关 334",
+      "categoryId": "电力/电气",
+      "name": "开关 334",
+      "file": "开关 334.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关_2",
+      "categoryId": "电力/电气",
+      "name": "开关_2",
+      "file": "开关_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关_3",
+      "categoryId": "电力/电气",
+      "name": "开关_3",
+      "file": "开关_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/电气/开关1",
+      "categoryId": "电力/电气",
+      "name": "开关1",
+      "file": "开关1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关2",
+      "categoryId": "电力/电气",
+      "name": "开关2",
+      "file": "开关2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关2_1",
+      "categoryId": "电力/电气",
+      "name": "开关2_1",
+      "file": "开关2_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关2_2",
+      "categoryId": "电力/电气",
+      "name": "开关2_2",
+      "file": "开关2_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关2l",
+      "categoryId": "电力/电气",
+      "name": "开关2l",
+      "file": "开关2l.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关3",
+      "categoryId": "电力/电气",
+      "name": "开关3",
+      "file": "开关3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/开关3_1",
+      "categoryId": "电力/电气",
+      "name": "开关3_1",
+      "file": "开关3_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/配电_接地刀开关",
+      "categoryId": "电力/电气",
+      "name": "配电_接地刀开关",
+      "file": "配电_接地刀开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/配电_熔断器",
+      "categoryId": "电力/电气",
+      "name": "配电_熔断器",
+      "file": "配电_熔断器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/热力发电厂",
+      "categoryId": "电力/电气",
+      "name": "热力发电厂",
+      "file": "热力发电厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/熔断器",
+      "categoryId": "电力/电气",
+      "name": "熔断器",
+      "file": "熔断器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/三角形",
+      "categoryId": "电力/电气",
+      "name": "三角形",
+      "file": "三角形.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "电力/电气/三绕组变压器",
+      "categoryId": "电力/电气",
+      "name": "三绕组变压器",
+      "file": "三绕组变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/三绕组变压器_1",
+      "categoryId": "电力/电气",
+      "name": "三绕组变压器_1",
+      "file": "三绕组变压器_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/四绕组变压器",
+      "categoryId": "电力/电气",
+      "name": "四绕组变压器",
+      "file": "四绕组变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电气/四绕组电压互感器",
+      "categoryId": "电力/电气",
+      "name": "四绕组电压互感器",
+      "file": "四绕组电压互感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/天线",
+      "categoryId": "电力/电气",
+      "name": "天线",
+      "file": "天线.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/圆箭头-上",
+      "categoryId": "电力/电气",
+      "name": "圆箭头-上",
+      "file": "圆箭头-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/圆箭头-下",
+      "categoryId": "电力/电气",
+      "name": "圆箭头-下",
+      "file": "圆箭头-下.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/组合1",
+      "categoryId": "电力/电气",
+      "name": "组合1",
+      "file": "组合1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/组合开关",
+      "categoryId": "电力/电气",
+      "name": "组合开关",
+      "file": "组合开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/S1",
+      "categoryId": "电力/电气",
+      "name": "S1",
+      "file": "S1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电气/S2",
+      "categoryId": "电力/电气",
+      "name": "S2",
+      "file": "S2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/闭路电视",
+      "categoryId": "电力/电网",
+      "name": "闭路电视",
+      "file": "闭路电视.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电网/变电",
+      "categoryId": "电力/电网",
+      "name": "变电",
+      "file": "变电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/变电设备",
+      "categoryId": "电力/电网",
+      "name": "变电设备",
+      "file": "变电设备.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/变电所",
+      "categoryId": "电力/电网",
+      "name": "变电所",
+      "file": "变电所.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/变电站",
+      "categoryId": "电力/电网",
+      "name": "变电站",
+      "file": "变电站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/变配电管理系统",
+      "categoryId": "电力/电网",
+      "name": "变配电管理系统",
+      "file": "变配电管理系统.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/电网/采购电量",
+      "categoryId": "电力/电网",
+      "name": "采购电量",
+      "file": "采购电量.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/抄电表记录",
+      "categoryId": "电力/电网",
+      "name": "抄电表记录",
+      "file": "抄电表记录.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/大工业用电",
+      "categoryId": "电力/电网",
+      "name": "大工业用电",
+      "file": "大工业用电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/电网/大工业直购电",
+      "categoryId": "电力/电网",
+      "name": "大工业直购电",
+      "file": "大工业直购电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电网/带电危险",
+      "categoryId": "电力/电网",
+      "name": "带电危险",
+      "file": "带电危险.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/电网/低压配电箱",
+      "categoryId": "电力/电网",
+      "name": "低压配电箱",
+      "file": "低压配电箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电表管理",
+      "categoryId": "电力/电网",
+      "name": "电表管理",
+      "file": "电表管理.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电表箱",
+      "categoryId": "电力/电网",
+      "name": "电表箱",
+      "file": "电表箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电池",
+      "categoryId": "电力/电网",
+      "name": "电池",
+      "file": "电池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/电网/电池包",
+      "categoryId": "电力/电网",
+      "name": "电池包",
+      "file": "电池包.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电网/电池房",
+      "categoryId": "电力/电网",
+      "name": "电池房",
+      "file": "电池房.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电导率",
+      "categoryId": "电力/电网",
+      "name": "电导率",
+      "file": "电导率.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电工电气",
+      "categoryId": "电力/电网",
+      "name": "电工电气",
+      "file": "电工电气.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电耗分析",
+      "categoryId": "电力/电网",
+      "name": "电耗分析",
+      "file": "电耗分析.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力01",
+      "categoryId": "电力/电网",
+      "name": "电力01",
+      "file": "电力01.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力01_1",
+      "categoryId": "电力/电网",
+      "name": "电力01_1",
+      "file": "电力01_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力02",
+      "categoryId": "电力/电网",
+      "name": "电力02",
+      "file": "电力02.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力02_1",
+      "categoryId": "电力/电网",
+      "name": "电力02_1",
+      "file": "电力02_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03",
+      "categoryId": "电力/电网",
+      "name": "电力03",
+      "file": "电力03.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03_1",
+      "categoryId": "电力/电网",
+      "name": "电力03_1",
+      "file": "电力03_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03_2",
+      "categoryId": "电力/电网",
+      "name": "电力03_2",
+      "file": "电力03_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03_3",
+      "categoryId": "电力/电网",
+      "name": "电力03_3",
+      "file": "电力03_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03_4",
+      "categoryId": "电力/电网",
+      "name": "电力03_4",
+      "file": "电力03_4.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力03_5",
+      "categoryId": "电力/电网",
+      "name": "电力03_5",
+      "file": "电力03_5.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电力线勘测",
+      "categoryId": "电力/电网",
+      "name": "电力线勘测",
+      "file": "电力线勘测.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电流",
+      "categoryId": "电力/电网",
+      "name": "电流",
+      "file": "电流.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电流_1",
+      "categoryId": "电力/电网",
+      "name": "电流_1",
+      "file": "电流_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电流_2",
+      "categoryId": "电力/电网",
+      "name": "电流_2",
+      "file": "电流_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电路故障",
+      "categoryId": "电力/电网",
+      "name": "电路故障",
+      "file": "电路故障.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电摩",
+      "categoryId": "电力/电网",
+      "name": "电摩",
+      "file": "电摩.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电器火灾控制",
+      "categoryId": "电力/电网",
+      "name": "电器火灾控制",
+      "file": "电器火灾控制.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电网",
+      "categoryId": "电力/电网",
+      "name": "电网",
+      "file": "电网.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/电站",
+      "categoryId": "电力/电网",
+      "name": "电站",
+      "file": "电站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/光伏",
+      "categoryId": "电力/电网",
+      "name": "光伏",
+      "file": "光伏.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/电网/开关接地",
+      "categoryId": "电力/电网",
+      "name": "开关接地",
+      "file": "开关接地.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/开关接地2",
+      "categoryId": "电力/电网",
+      "name": "开关接地2",
+      "file": "开关接地2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/电网/锂电池",
+      "categoryId": "电力/电网",
+      "name": "锂电池",
+      "file": "锂电池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/电网/土",
+      "categoryId": "电力/电网",
+      "name": "土",
+      "file": "土.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/电网/小交流电",
+      "categoryId": "电力/电网",
+      "name": "小交流电",
+      "file": "小交流电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/火电/采矿车",
+      "categoryId": "电力/火电",
+      "name": "采矿车",
+      "file": "采矿车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/火电/发电机",
+      "categoryId": "电力/火电",
+      "name": "发电机",
+      "file": "发电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/火电/热电厂",
+      "categoryId": "电力/火电",
+      "name": "热电厂",
+      "file": "热电厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/火电/aa",
+      "categoryId": "电力/火电",
+      "name": "aa",
+      "file": "aa.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "电力/火电/ups电源",
+      "categoryId": "电力/火电",
+      "name": "ups电源",
+      "file": "ups电源.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/11",
+      "categoryId": "电力/其他",
+      "name": "11",
+      "file": "11.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流01",
+      "categoryId": "电力/其他",
+      "name": "电流01",
+      "file": "电流01.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流01_1",
+      "categoryId": "电力/其他",
+      "name": "电流01_1",
+      "file": "电流01_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流02",
+      "categoryId": "电力/其他",
+      "name": "电流02",
+      "file": "电流02.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流02_1",
+      "categoryId": "电力/其他",
+      "name": "电流02_1",
+      "file": "电流02_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流02_2",
+      "categoryId": "电力/其他",
+      "name": "电流02_2",
+      "file": "电流02_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流03",
+      "categoryId": "电力/其他",
+      "name": "电流03",
+      "file": "电流03.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流03_1",
+      "categoryId": "电力/其他",
+      "name": "电流03_1",
+      "file": "电流03_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流03_2",
+      "categoryId": "电力/其他",
+      "name": "电流03_2",
+      "file": "电流03_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流04",
+      "categoryId": "电力/其他",
+      "name": "电流04",
+      "file": "电流04.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流04_1",
+      "categoryId": "电力/其他",
+      "name": "电流04_1",
+      "file": "电流04_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流04_2",
+      "categoryId": "电力/其他",
+      "name": "电流04_2",
+      "file": "电流04_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流5",
+      "categoryId": "电力/其他",
+      "name": "电流5",
+      "file": "电流5.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电流5_1",
+      "categoryId": "电力/其他",
+      "name": "电流5_1",
+      "file": "电流5_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/电脑",
+      "categoryId": "电力/其他",
+      "name": "电脑",
+      "file": "电脑.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/其他/三圈互感器",
+      "categoryId": "电力/其他",
+      "name": "三圈互感器",
+      "file": "三圈互感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/其他/三圈互感器_1",
+      "categoryId": "电力/其他",
+      "name": "三圈互感器_1",
+      "file": "三圈互感器_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/其他/三圈互感器_2",
+      "categoryId": "电力/其他",
+      "name": "三圈互感器_2",
+      "file": "三圈互感器_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "电力/其他/图",
+      "categoryId": "电力/其他",
+      "name": "图",
+      "file": "图.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/图_1",
+      "categoryId": "电力/其他",
+      "name": "图_1",
+      "file": "图_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/图_2",
+      "categoryId": "电力/其他",
+      "name": "图_2",
+      "file": "图_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/外边框",
+      "categoryId": "电力/其他",
+      "name": "外边框",
+      "file": "外边框.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/其他/外边框_1",
+      "categoryId": "电力/其他",
+      "name": "外边框_1",
+      "file": "外边框_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/其他/线框",
+      "categoryId": "电力/其他",
+      "name": "线框",
+      "file": "线框.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/线框_1",
+      "categoryId": "电力/其他",
+      "name": "线框_1",
+      "file": "线框_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/线框_2",
+      "categoryId": "电力/其他",
+      "name": "线框_2",
+      "file": "线框_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/其他/选项框001",
+      "categoryId": "电力/其他",
+      "name": "选项框001",
+      "file": "选项框001.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/其他/选项框001_1",
+      "categoryId": "电力/其他",
+      "name": "选项框001_1",
+      "file": "选项框001_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/其他/选项框001_2",
+      "categoryId": "电力/其他",
+      "name": "选项框001_2",
+      "file": "选项框001_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "电力/水电/ 电杆",
+      "categoryId": "电力/水电",
+      "name": " 电杆",
+      "file": " 电杆.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/电表",
+      "categoryId": "电力/水电",
+      "name": "电表",
+      "file": "电表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/电表_1",
+      "categoryId": "电力/水电",
+      "name": "电表_1",
+      "file": "电表_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/电表_2",
+      "categoryId": "电力/水电",
+      "name": "电表_2",
+      "file": "电表_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "电力/水电/电池-满电",
+      "categoryId": "电力/水电",
+      "name": "电池-满电",
+      "file": "电池-满电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "电力/水电/电度",
+      "categoryId": "电力/水电",
+      "name": "电度",
+      "file": "电度.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/电力",
+      "categoryId": "电力/水电",
+      "name": "电力",
+      "file": "电力.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/电压",
+      "categoryId": "电力/水电",
+      "name": "电压",
+      "file": "电压.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/开关组合2",
+      "categoryId": "电力/水电",
+      "name": "开关组合2",
+      "file": "开关组合2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/组件_1",
+      "categoryId": "电力/水电",
+      "name": "组件_1",
+      "file": "组件_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/水电/组件_1_1",
+      "categoryId": "电力/水电",
+      "name": "组件_1_1",
+      "file": "组件_1_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/把手1",
+      "categoryId": "电力/新能源",
+      "name": "把手1",
+      "file": "把手1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/新能源/充电桩",
+      "categoryId": "电力/新能源",
+      "name": "充电桩",
+      "file": "充电桩.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/地刀",
+      "categoryId": "电力/新能源",
+      "name": "地刀",
+      "file": "地刀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/电池堆",
+      "categoryId": "电力/新能源",
+      "name": "电池堆",
+      "file": "电池堆.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/电加热",
+      "categoryId": "电力/新能源",
+      "name": "电加热",
+      "file": "电加热.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/断路器1",
+      "categoryId": "电力/新能源",
+      "name": "断路器1",
+      "file": "断路器1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/断路器1_1",
+      "categoryId": "电力/新能源",
+      "name": "断路器1_1",
+      "file": "断路器1_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/风机",
+      "categoryId": "电力/新能源",
+      "name": "风机",
+      "file": "风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "电力/新能源/风机_1",
+      "categoryId": "电力/新能源",
+      "name": "风机_1",
+      "file": "风机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/风力在电机",
+      "categoryId": "电力/新能源",
+      "name": "风力在电机",
+      "file": "风力在电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/风能",
+      "categoryId": "电力/新能源",
+      "name": "风能",
+      "file": "风能.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/隔刀",
+      "categoryId": "电力/新能源",
+      "name": "隔刀",
+      "file": "隔刀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/隔刀_1",
+      "categoryId": "电力/新能源",
+      "name": "隔刀_1",
+      "file": "隔刀_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/隔刀1",
+      "categoryId": "电力/新能源",
+      "name": "隔刀1",
+      "file": "隔刀1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/流能图",
+      "categoryId": "电力/新能源",
+      "name": "流能图",
+      "file": "流能图.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/氢能",
+      "categoryId": "电力/新能源",
+      "name": "氢能",
+      "file": "氢能.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/升压站",
+      "categoryId": "电力/新能源",
+      "name": "升压站",
+      "file": "升压站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/新能源/生物质能源",
+      "categoryId": "电力/新能源",
+      "name": "生物质能源",
+      "file": "生物质能源.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/手车分",
+      "categoryId": "电力/新能源",
+      "name": "手车分",
+      "file": "手车分.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/水能.",
+      "categoryId": "电力/新能源",
+      "name": "水能.",
+      "file": "水能..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "电力/新能源/四角",
+      "categoryId": "电力/新能源",
+      "name": "四角",
+      "file": "四角.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/太阳能",
+      "categoryId": "电力/新能源",
+      "name": "太阳能",
+      "file": "太阳能.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/太阳能电池",
+      "categoryId": "电力/新能源",
+      "name": "太阳能电池",
+      "file": "太阳能电池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/文字框1",
+      "categoryId": "电力/新能源",
+      "name": "文字框1",
+      "file": "文字框1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/文字框3",
+      "categoryId": "电力/新能源",
+      "name": "文字框3",
+      "file": "文字框3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "电力/新能源/PCS",
+      "categoryId": "电力/新能源",
+      "name": "PCS",
+      "file": "PCS.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/泵",
+      "categoryId": "工程/工厂",
+      "name": "泵",
+      "file": "泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/篦冷机",
+      "categoryId": "工程/工厂",
+      "name": "篦冷机",
+      "file": "篦冷机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/篦冷机_1",
+      "categoryId": "工程/工厂",
+      "name": "篦冷机_1",
+      "file": "篦冷机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/篦冷机_2",
+      "categoryId": "工程/工厂",
+      "name": "篦冷机_2",
+      "file": "篦冷机_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/篦冷机_3",
+      "categoryId": "工程/工厂",
+      "name": "篦冷机_3",
+      "file": "篦冷机_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/篦冷机2",
+      "categoryId": "工程/工厂",
+      "name": "篦冷机2",
+      "file": "篦冷机2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/冰水箱",
+      "categoryId": "工程/工厂",
+      "name": "冰水箱",
+      "file": "冰水箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/布袋除尘器",
+      "categoryId": "工程/工厂",
+      "name": "布袋除尘器",
+      "file": "布袋除尘器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/采样探头",
+      "categoryId": "工程/工厂",
+      "name": "采样探头",
+      "file": "采样探头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/仓",
+      "categoryId": "工程/工厂",
+      "name": "仓",
+      "file": "仓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/储气罐",
+      "categoryId": "工程/工厂",
+      "name": "储气罐",
+      "file": "储气罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/船运",
+      "categoryId": "工程/工厂",
+      "name": "船运",
+      "file": "船运.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/单转子",
+      "categoryId": "工程/工厂",
+      "name": "单转子",
+      "file": "单转子.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/电表",
+      "categoryId": "工程/工厂",
+      "name": "电表",
+      "file": "电表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/电加热器",
+      "categoryId": "工程/工厂",
+      "name": "电加热器",
+      "file": "电加热器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/兜",
+      "categoryId": "工程/工厂",
+      "name": "兜",
+      "file": "兜.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/发电机",
+      "categoryId": "工程/工厂",
+      "name": "发电机",
+      "file": "发电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/阀",
+      "categoryId": "工程/工厂",
+      "name": "阀",
+      "file": "阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/阀-上",
+      "categoryId": "工程/工厂",
+      "name": "阀-上",
+      "file": "阀-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/阀-下",
+      "categoryId": "工程/工厂",
+      "name": "阀-下",
+      "file": "阀-下.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/阀-右",
+      "categoryId": "工程/工厂",
+      "name": "阀-右",
+      "file": "阀-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/阀-左",
+      "categoryId": "工程/工厂",
+      "name": "阀-左",
+      "file": "阀-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/反吹阀",
+      "categoryId": "工程/工厂",
+      "name": "反吹阀",
+      "file": "反吹阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/反吹阀-右",
+      "categoryId": "工程/工厂",
+      "name": "反吹阀-右",
+      "file": "反吹阀-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/反吹阀-左",
+      "categoryId": "工程/工厂",
+      "name": "反吹阀-左",
+      "file": "反吹阀-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/沸腾床",
+      "categoryId": "工程/工厂",
+      "name": "沸腾床",
+      "file": "沸腾床.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/分离器",
+      "categoryId": "工程/工厂",
+      "name": "分离器",
+      "file": "分离器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/粉尘",
+      "categoryId": "工程/工厂",
+      "name": "粉尘",
+      "file": "粉尘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/工厂/高炉",
+      "categoryId": "工程/工厂",
+      "name": "高炉",
+      "file": "高炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/高温气体室",
+      "categoryId": "工程/工厂",
+      "name": "高温气体室",
+      "file": "高温气体室.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/隔膜泵",
+      "categoryId": "工程/工厂",
+      "name": "隔膜泵",
+      "file": "隔膜泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/工具",
+      "categoryId": "工程/工厂",
+      "name": "工具",
+      "file": "工具.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/罐",
+      "categoryId": "工程/工厂",
+      "name": "罐",
+      "file": "罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/罐1",
+      "categoryId": "工程/工厂",
+      "name": "罐1",
+      "file": "罐1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/罐2",
+      "categoryId": "工程/工厂",
+      "name": "罐2",
+      "file": "罐2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/光谱仪",
+      "categoryId": "工程/工厂",
+      "name": "光谱仪",
+      "file": "光谱仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/光源",
+      "categoryId": "工程/工厂",
+      "name": "光源",
+      "file": "光源.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/锅炉",
+      "categoryId": "工程/工厂",
+      "name": "锅炉",
+      "file": "锅炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/锅炉_1",
+      "categoryId": "工程/工厂",
+      "name": "锅炉_1",
+      "file": "锅炉_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/过滤机",
+      "categoryId": "工程/工厂",
+      "name": "过滤机",
+      "file": "过滤机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/工厂/红外探检测器",
+      "categoryId": "工程/工厂",
+      "name": "红外探检测器",
+      "file": "红外探检测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/换热器",
+      "categoryId": "工程/工厂",
+      "name": "换热器",
+      "file": "换热器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/混合仓",
+      "categoryId": "工程/工厂",
+      "name": "混合仓",
+      "file": "混合仓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/机器",
+      "categoryId": "工程/工厂",
+      "name": "机器",
+      "file": "机器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/箭头",
+      "categoryId": "工程/工厂",
+      "name": "箭头",
+      "file": "箭头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/焦炭干式淬火",
+      "categoryId": "工程/工厂",
+      "name": "焦炭干式淬火",
+      "file": "焦炭干式淬火.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/进水阀",
+      "categoryId": "工程/工厂",
+      "name": "进水阀",
+      "file": "进水阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/工厂/矩形",
+      "categoryId": "工程/工厂",
+      "name": "矩形",
+      "file": "矩形.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/开关",
+      "categoryId": "工程/工厂",
+      "name": "开关",
+      "file": "开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/刻度",
+      "categoryId": "工程/工厂",
+      "name": "刻度",
+      "file": "刻度.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "工程/工厂/空调",
+      "categoryId": "工程/工厂",
+      "name": "空调",
+      "file": "空调.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/空压机",
+      "categoryId": "工程/工厂",
+      "name": "空压机",
+      "file": "空压机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/冷冻式干燥机",
+      "categoryId": "工程/工厂",
+      "name": "冷冻式干燥机",
+      "file": "冷冻式干燥机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/冷却水泵",
+      "categoryId": "工程/工厂",
+      "name": "冷却水泵",
+      "file": "冷却水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/冷却水塔",
+      "categoryId": "工程/工厂",
+      "name": "冷却水塔",
+      "file": "冷却水塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/炼焦炉",
+      "categoryId": "工程/工厂",
+      "name": "炼焦炉",
+      "file": "炼焦炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/料仓",
+      "categoryId": "工程/工厂",
+      "name": "料仓",
+      "file": "料仓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/煤化学工厂",
+      "categoryId": "工程/工厂",
+      "name": "煤化学工厂",
+      "file": "煤化学工厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/排水阀",
+      "categoryId": "工程/工厂",
+      "name": "排水阀",
+      "file": "排水阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/破碎机",
+      "categoryId": "工程/工厂",
+      "name": "破碎机",
+      "file": "破碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/气罐",
+      "categoryId": "工程/工厂",
+      "name": "气罐",
+      "file": "气罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/熔硫",
+      "categoryId": "工程/工厂",
+      "name": "熔硫",
+      "file": "熔硫.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/熔硫釜",
+      "categoryId": "工程/工厂",
+      "name": "熔硫釜",
+      "file": "熔硫釜.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/融合机",
+      "categoryId": "工程/工厂",
+      "name": "融合机",
+      "file": "融合机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/工厂/筛选",
+      "categoryId": "工程/工厂",
+      "name": "筛选",
+      "file": "筛选.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/手动阀",
+      "categoryId": "工程/工厂",
+      "name": "手动阀",
+      "file": "手动阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/数据处理",
+      "categoryId": "工程/工厂",
+      "name": "数据处理",
+      "file": "数据处理.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/工厂/水泵",
+      "categoryId": "工程/工厂",
+      "name": "水泵",
+      "file": "水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/工厂/水泵_1",
+      "categoryId": "工程/工厂",
+      "name": "水泵_1",
+      "file": "水泵_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/水泵2",
+      "categoryId": "工程/工厂",
+      "name": "水泵2",
+      "file": "水泵2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/塔",
+      "categoryId": "工程/工厂",
+      "name": "塔",
+      "file": "塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/脱硫塔",
+      "categoryId": "工程/工厂",
+      "name": "脱硫塔",
+      "file": "脱硫塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/温度变送器",
+      "categoryId": "工程/工厂",
+      "name": "温度变送器",
+      "file": "温度变送器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/温式淬火",
+      "categoryId": "工程/工厂",
+      "name": "温式淬火",
+      "file": "温式淬火.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/吸附式干燥机",
+      "categoryId": "工程/工厂",
+      "name": "吸附式干燥机",
+      "file": "吸附式干燥机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/小风扇",
+      "categoryId": "工程/工厂",
+      "name": "小风扇",
+      "file": "小风扇.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/压力变送机-右",
+      "categoryId": "工程/工厂",
+      "name": "压力变送机-右",
+      "file": "压力变送机-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/压力变送机-左",
+      "categoryId": "工程/工厂",
+      "name": "压力变送机-左",
+      "file": "压力变送机-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/工厂/压力监测器",
+      "categoryId": "工程/工厂",
+      "name": "压力监测器",
+      "file": "压力监测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/烟筒",
+      "categoryId": "工程/工厂",
+      "name": "烟筒",
+      "file": "烟筒.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/药剂罐",
+      "categoryId": "工程/工厂",
+      "name": "药剂罐",
+      "file": "药剂罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/工厂/一级喷淋",
+      "categoryId": "工程/工厂",
+      "name": "一级喷淋",
+      "file": "一级喷淋.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/一级旋风",
+      "categoryId": "工程/工厂",
+      "name": "一级旋风",
+      "file": "一级旋风.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 7,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/引风机",
+      "categoryId": "工程/工厂",
+      "name": "引风机",
+      "file": "引风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/原料场",
+      "categoryId": "工程/工厂",
+      "name": "原料场",
+      "file": "原料场.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/工厂/原料磨机",
+      "categoryId": "工程/工厂",
+      "name": "原料磨机",
+      "file": "原料磨机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/原水箱",
+      "categoryId": "工程/工厂",
+      "name": "原水箱",
+      "file": "原水箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/工厂/再生成降槽",
+      "categoryId": "工程/工厂",
+      "name": "再生成降槽",
+      "file": "再生成降槽.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/工厂/闸",
+      "categoryId": "工程/工厂",
+      "name": "闸",
+      "file": "闸.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/工厂/转换",
+      "categoryId": "工程/工厂",
+      "name": "转换",
+      "file": "转换.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "工程/工厂/ding",
+      "categoryId": "工程/工厂",
+      "name": "ding",
+      "file": "ding.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/保护器",
+      "categoryId": "工程/环境工程",
+      "name": "保护器",
+      "file": "保护器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/保护器_1",
+      "categoryId": "工程/环境工程",
+      "name": "保护器_1",
+      "file": "保护器_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/报警",
+      "categoryId": "工程/环境工程",
+      "name": "报警",
+      "file": "报警.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/参数",
+      "categoryId": "工程/环境工程",
+      "name": "参数",
+      "file": "参数.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/电池恒温箱",
+      "categoryId": "工程/环境工程",
+      "name": "电池恒温箱",
+      "file": "电池恒温箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/环境工程/电磁流量计",
+      "categoryId": "工程/环境工程",
+      "name": "电磁流量计",
+      "file": "电磁流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/电动葫芦",
+      "categoryId": "工程/环境工程",
+      "name": "电动葫芦",
+      "file": "电动葫芦.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/电动闸阀",
+      "categoryId": "工程/环境工程",
+      "name": "电动闸阀",
+      "file": "电动闸阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/蝶阀",
+      "categoryId": "工程/环境工程",
+      "name": "蝶阀",
+      "file": "蝶阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/蝶阀2",
+      "categoryId": "工程/环境工程",
+      "name": "蝶阀2",
+      "file": "蝶阀2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/断电器.",
+      "categoryId": "工程/环境工程",
+      "name": "断电器.",
+      "file": "断电器..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/二沉池刮吸泥机",
+      "categoryId": "工程/环境工程",
+      "name": "二沉池刮吸泥机",
+      "file": "二沉池刮吸泥机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/二次暖风机",
+      "categoryId": "工程/环境工程",
+      "name": "二次暖风机",
+      "file": "二次暖风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/阀",
+      "categoryId": "工程/环境工程",
+      "name": "阀",
+      "file": "阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/方闸门",
+      "categoryId": "工程/环境工程",
+      "name": "方闸门",
+      "file": "方闸门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/方闸门2",
+      "categoryId": "工程/环境工程",
+      "name": "方闸门2",
+      "file": "方闸门2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/粉碎格栅",
+      "categoryId": "工程/环境工程",
+      "name": "粉碎格栅",
+      "file": "粉碎格栅.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/粉碎格栅2",
+      "categoryId": "工程/环境工程",
+      "name": "粉碎格栅2",
+      "file": "粉碎格栅2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/割草机",
+      "categoryId": "工程/环境工程",
+      "name": "割草机",
+      "file": "割草机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/环境工程/格栅",
+      "categoryId": "工程/环境工程",
+      "name": "格栅",
+      "file": "格栅.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/环境工程/格栅2",
+      "categoryId": "工程/环境工程",
+      "name": "格栅2",
+      "file": "格栅2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/环境工程/隔离开关",
+      "categoryId": "工程/环境工程",
+      "name": "隔离开关",
+      "file": "隔离开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/鼓风机",
+      "categoryId": "工程/环境工程",
+      "name": "鼓风机",
+      "file": "鼓风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/过力矩",
+      "categoryId": "工程/环境工程",
+      "name": "过力矩",
+      "file": "过力矩.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/过力矩2",
+      "categoryId": "工程/环境工程",
+      "name": "过力矩2",
+      "file": "过力矩2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/环境工程/过力矩3",
+      "categoryId": "工程/环境工程",
+      "name": "过力矩3",
+      "file": "过力矩3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/环境工程/箭头-上",
+      "categoryId": "工程/环境工程",
+      "name": "箭头-上",
+      "file": "箭头-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/箭头-下",
+      "categoryId": "工程/环境工程",
+      "name": "箭头-下",
+      "file": "箭头-下.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/箭头-右",
+      "categoryId": "工程/环境工程",
+      "name": "箭头-右",
+      "file": "箭头-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/箭头-左",
+      "categoryId": "工程/环境工程",
+      "name": "箭头-左",
+      "file": "箭头-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/卷扬机",
+      "categoryId": "工程/环境工程",
+      "name": "卷扬机",
+      "file": "卷扬机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/空气压缩机",
+      "categoryId": "工程/环境工程",
+      "name": "空气压缩机",
+      "file": "空气压缩机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/空气压缩机_1",
+      "categoryId": "工程/环境工程",
+      "name": "空气压缩机_1",
+      "file": "空气压缩机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/离心机",
+      "categoryId": "工程/环境工程",
+      "name": "离心机",
+      "file": "离心机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/流箭头-上",
+      "categoryId": "工程/环境工程",
+      "name": "流箭头-上",
+      "file": "流箭头-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/流箭头-下",
+      "categoryId": "工程/环境工程",
+      "name": "流箭头-下",
+      "file": "流箭头-下.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/流箭头-右",
+      "categoryId": "工程/环境工程",
+      "name": "流箭头-右",
+      "file": "流箭头-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/环境工程/流箭头-左",
+      "categoryId": "工程/环境工程",
+      "name": "流箭头-左",
+      "file": "流箭头-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/环境工程/流量计",
+      "categoryId": "工程/环境工程",
+      "name": "流量计",
+      "file": "流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/路灯",
+      "categoryId": "工程/环境工程",
+      "name": "路灯",
+      "file": "路灯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/路灯2",
+      "categoryId": "工程/环境工程",
+      "name": "路灯2",
+      "file": "路灯2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/绿化喷洒车",
+      "categoryId": "工程/环境工程",
+      "name": "绿化喷洒车",
+      "file": "绿化喷洒车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/罗茨鼓风机",
+      "categoryId": "工程/环境工程",
+      "name": "罗茨鼓风机",
+      "file": "罗茨鼓风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/潜水泵",
+      "categoryId": "工程/环境工程",
+      "name": "潜水泵",
+      "file": "潜水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/潜水泵2",
+      "categoryId": "工程/环境工程",
+      "name": "潜水泵2",
+      "file": "潜水泵2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/清污机",
+      "categoryId": "工程/环境工程",
+      "name": "清污机",
+      "file": "清污机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/热交换器",
+      "categoryId": "工程/环境工程",
+      "name": "热交换器",
+      "file": "热交换器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/输出带2",
+      "categoryId": "工程/环境工程",
+      "name": "输出带2",
+      "file": "输出带2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "工程/环境工程/输送带",
+      "categoryId": "工程/环境工程",
+      "name": "输送带",
+      "file": "输送带.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/环境工程/水表",
+      "categoryId": "工程/环境工程",
+      "name": "水表",
+      "file": "水表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/送风机",
+      "categoryId": "工程/环境工程",
+      "name": "送风机",
+      "file": "送风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/污泥泵",
+      "categoryId": "工程/环境工程",
+      "name": "污泥泵",
+      "file": "污泥泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/污水泵",
+      "categoryId": "工程/环境工程",
+      "name": "污水泵",
+      "file": "污水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/压力",
+      "categoryId": "工程/环境工程",
+      "name": "压力",
+      "file": "压力.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/液位",
+      "categoryId": "工程/环境工程",
+      "name": "液位",
+      "file": "液位.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/环境工程/液位计",
+      "categoryId": "工程/环境工程",
+      "name": "液位计",
+      "file": "液位计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/环境工程/一次风机",
+      "categoryId": "工程/环境工程",
+      "name": "一次风机",
+      "file": "一次风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/一次暖风机",
+      "categoryId": "工程/环境工程",
+      "name": "一次暖风机",
+      "file": "一次暖风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/环境工程/引风机",
+      "categoryId": "工程/环境工程",
+      "name": "引风机",
+      "file": "引风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/环境工程/运输车辆",
+      "categoryId": "工程/环境工程",
+      "name": "运输车辆",
+      "file": "运输车辆.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/机械工程/泵",
+      "categoryId": "工程/机械工程",
+      "name": "泵",
+      "file": "泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/变压器",
+      "categoryId": "工程/机械工程",
+      "name": "变压器",
+      "file": "变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/叉车",
+      "categoryId": "工程/机械工程",
+      "name": "叉车",
+      "file": "叉车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/产品包装机台",
+      "categoryId": "工程/机械工程",
+      "name": "产品包装机台",
+      "file": "产品包装机台.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/电动机",
+      "categoryId": "工程/机械工程",
+      "name": "电动机",
+      "file": "电动机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/机械工程/电机底座",
+      "categoryId": "工程/机械工程",
+      "name": "电机底座",
+      "file": "电机底座.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/电机底座_1",
+      "categoryId": "工程/机械工程",
+      "name": "电机底座_1",
+      "file": "电机底座_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/锻压机",
+      "categoryId": "工程/机械工程",
+      "name": "锻压机",
+      "file": "锻压机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/发电机",
+      "categoryId": "工程/机械工程",
+      "name": "发电机",
+      "file": "发电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/机械工程/风机",
+      "categoryId": "工程/机械工程",
+      "name": "风机",
+      "file": "风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/化工机械",
+      "categoryId": "工程/机械工程",
+      "name": "化工机械",
+      "file": "化工机械.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/混凝土机械",
+      "categoryId": "工程/机械工程",
+      "name": "混凝土机械",
+      "file": "混凝土机械.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/货车",
+      "categoryId": "工程/机械工程",
+      "name": "货车",
+      "file": "货车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/机械工程/机床1",
+      "categoryId": "工程/机械工程",
+      "name": "机床1",
+      "file": "机床1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/紧固密封件",
+      "categoryId": "工程/机械工程",
+      "name": "紧固密封件",
+      "file": "紧固密封件.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/矿车",
+      "categoryId": "工程/机械工程",
+      "name": "矿车",
+      "file": "矿车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/机械工程/矿车_1",
+      "categoryId": "工程/机械工程",
+      "name": "矿车_1",
+      "file": "矿车_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/矿山机械",
+      "categoryId": "工程/机械工程",
+      "name": "矿山机械",
+      "file": "矿山机械.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/炼油",
+      "categoryId": "工程/机械工程",
+      "name": "炼油",
+      "file": "炼油.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/炼油厂区",
+      "categoryId": "工程/机械工程",
+      "name": "炼油厂区",
+      "file": "炼油厂区.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/模具",
+      "categoryId": "工程/机械工程",
+      "name": "模具",
+      "file": "模具.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/木工工程",
+      "categoryId": "工程/机械工程",
+      "name": "木工工程",
+      "file": "木工工程.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/破碎机",
+      "categoryId": "工程/机械工程",
+      "name": "破碎机",
+      "file": "破碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/破碎机_1",
+      "categoryId": "工程/机械工程",
+      "name": "破碎机_1",
+      "file": "破碎机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/机械工程/起重机",
+      "categoryId": "工程/机械工程",
+      "name": "起重机",
+      "file": "起重机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/起重机_1",
+      "categoryId": "工程/机械工程",
+      "name": "起重机_1",
+      "file": "起重机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/起重机械",
+      "categoryId": "工程/机械工程",
+      "name": "起重机械",
+      "file": "起重机械.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/起重机械_1",
+      "categoryId": "工程/机械工程",
+      "name": "起重机械_1",
+      "file": "起重机械_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/收割机",
+      "categoryId": "工程/机械工程",
+      "name": "收割机",
+      "file": "收割机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/机械工程/输送机",
+      "categoryId": "工程/机械工程",
+      "name": "输送机",
+      "file": "输送机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/脱水机",
+      "categoryId": "工程/机械工程",
+      "name": "脱水机",
+      "file": "脱水机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/机械工程/脱水机_1",
+      "categoryId": "工程/机械工程",
+      "name": "脱水机_1",
+      "file": "脱水机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/相机",
+      "categoryId": "工程/机械工程",
+      "name": "相机",
+      "file": "相机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/液压支架",
+      "categoryId": "工程/机械工程",
+      "name": "液压支架",
+      "file": "液压支架.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/仪表盘",
+      "categoryId": "工程/机械工程",
+      "name": "仪表盘",
+      "file": "仪表盘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/机械工程/运煤车",
+      "categoryId": "工程/机械工程",
+      "name": "运煤车",
+      "file": "运煤车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/转载机",
+      "categoryId": "工程/机械工程",
+      "name": "转载机",
+      "file": "转载机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/机械工程/转载机_1",
+      "categoryId": "工程/机械工程",
+      "name": "转载机_1",
+      "file": "转载机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/建筑工程/拌和机",
+      "categoryId": "工程/建筑工程",
+      "name": "拌和机",
+      "file": "拌和机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/锤子",
+      "categoryId": "工程/建筑工程",
+      "name": "锤子",
+      "file": "锤子.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/电焊机",
+      "categoryId": "工程/建筑工程",
+      "name": "电焊机",
+      "file": "电焊机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/电锯",
+      "categoryId": "工程/建筑工程",
+      "name": "电锯",
+      "file": "电锯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/建筑工程/电梯",
+      "categoryId": "工程/建筑工程",
+      "name": "电梯",
+      "file": "电梯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/锅炉",
+      "categoryId": "工程/建筑工程",
+      "name": "锅炉",
+      "file": "锅炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/混凝土搅拌机",
+      "categoryId": "工程/建筑工程",
+      "name": "混凝土搅拌机",
+      "file": "混凝土搅拌机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/建筑工程/检测仪器",
+      "categoryId": "工程/建筑工程",
+      "name": "检测仪器",
+      "file": "检测仪器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/角磨机",
+      "categoryId": "工程/建筑工程",
+      "name": "角磨机",
+      "file": "角磨机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/脚手架",
+      "categoryId": "工程/建筑工程",
+      "name": "脚手架",
+      "file": "脚手架.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/龙门架",
+      "categoryId": "工程/建筑工程",
+      "name": "龙门架",
+      "file": "龙门架.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/建筑工程/起重吊装",
+      "categoryId": "工程/建筑工程",
+      "name": "起重吊装",
+      "file": "起重吊装.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/起重机械",
+      "categoryId": "工程/建筑工程",
+      "name": "起重机械",
+      "file": "起重机械.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/切割机",
+      "categoryId": "工程/建筑工程",
+      "name": "切割机",
+      "file": "切割机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/施工升降机",
+      "categoryId": "工程/建筑工程",
+      "name": "施工升降机",
+      "file": "施工升降机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/手锯",
+      "categoryId": "工程/建筑工程",
+      "name": "手锯",
+      "file": "手锯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/水池",
+      "categoryId": "工程/建筑工程",
+      "name": "水池",
+      "file": "水池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/建筑工程/水塔",
+      "categoryId": "工程/建筑工程",
+      "name": "水塔",
+      "file": "水塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/塔吊",
+      "categoryId": "工程/建筑工程",
+      "name": "塔吊",
+      "file": "塔吊.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/提升机",
+      "categoryId": "工程/建筑工程",
+      "name": "提升机",
+      "file": "提升机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/建筑工程/铁锹",
+      "categoryId": "工程/建筑工程",
+      "name": "铁锹",
+      "file": "铁锹.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/蓄能水塔",
+      "categoryId": "工程/建筑工程",
+      "name": "蓄能水塔",
+      "file": "蓄能水塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/压力管道",
+      "categoryId": "工程/建筑工程",
+      "name": "压力管道",
+      "file": "压力管道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/压力容器",
+      "categoryId": "工程/建筑工程",
+      "name": "压力容器",
+      "file": "压力容器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/建筑工程/test",
+      "categoryId": "工程/建筑工程",
+      "name": "test",
+      "file": "test.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/仓库",
+      "categoryId": "工程/交通工程",
+      "name": "仓库",
+      "file": "仓库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/车辆",
+      "categoryId": "工程/交通工程",
+      "name": "车辆",
+      "file": "车辆.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/交通工程/车轮锁",
+      "categoryId": "工程/交通工程",
+      "name": "车轮锁",
+      "file": "车轮锁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/车位锁",
+      "categoryId": "工程/交通工程",
+      "name": "车位锁",
+      "file": "车位锁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/车站",
+      "categoryId": "工程/交通工程",
+      "name": "车站",
+      "file": "车站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/城市公交",
+      "categoryId": "工程/交通工程",
+      "name": "城市公交",
+      "file": "城市公交.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/船舶",
+      "categoryId": "工程/交通工程",
+      "name": "船舶",
+      "file": "船舶.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/道闸",
+      "categoryId": "工程/交通工程",
+      "name": "道闸",
+      "file": "道闸.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/交通工程/地铁",
+      "categoryId": "工程/交通工程",
+      "name": "地铁",
+      "file": "地铁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/灯塔",
+      "categoryId": "工程/交通工程",
+      "name": "灯塔",
+      "file": "灯塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/定位器",
+      "categoryId": "工程/交通工程",
+      "name": "定位器",
+      "file": "定位器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/防撞桶",
+      "categoryId": "工程/交通工程",
+      "name": "防撞桶",
+      "file": "防撞桶.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/飞机",
+      "categoryId": "工程/交通工程",
+      "name": "飞机",
+      "file": "飞机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/公路",
+      "categoryId": "工程/交通工程",
+      "name": "公路",
+      "file": "公路.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/轨道",
+      "categoryId": "工程/交通工程",
+      "name": "轨道",
+      "file": "轨道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/航道",
+      "categoryId": "工程/交通工程",
+      "name": "航道",
+      "file": "航道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/航空器",
+      "categoryId": "工程/交通工程",
+      "name": "航空器",
+      "file": "航空器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/护栏",
+      "categoryId": "工程/交通工程",
+      "name": "护栏",
+      "file": "护栏.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/交通工程/火车",
+      "categoryId": "工程/交通工程",
+      "name": "火车",
+      "file": "火车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/交通工程/机场",
+      "categoryId": "工程/交通工程",
+      "name": "机场",
+      "file": "机场.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/路桩",
+      "categoryId": "工程/交通工程",
+      "name": "路桩",
+      "file": "路桩.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/民用航空",
+      "categoryId": "工程/交通工程",
+      "name": "民用航空",
+      "file": "民用航空.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/汽车",
+      "categoryId": "工程/交通工程",
+      "name": "汽车",
+      "file": "汽车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/交通工程/三角路锥",
+      "categoryId": "工程/交通工程",
+      "name": "三角路锥",
+      "file": "三角路锥.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/售票处",
+      "categoryId": "工程/交通工程",
+      "name": "售票处",
+      "file": "售票处.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/线路",
+      "categoryId": "工程/交通工程",
+      "name": "线路",
+      "file": "线路.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/交通工程/压路机",
+      "categoryId": "工程/交通工程",
+      "name": "压路机",
+      "file": "压路机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/交通工程/压路机_1",
+      "categoryId": "工程/交通工程",
+      "name": "压路机_1",
+      "file": "压路机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/交通工程/智能三角架",
+      "categoryId": "工程/交通工程",
+      "name": "智能三角架",
+      "file": "智能三角架.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/补水泵",
+      "categoryId": "工程/热能与动力工程",
+      "name": "补水泵",
+      "file": "补水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/热能与动力工程/除氧器.",
+      "categoryId": "工程/热能与动力工程",
+      "name": "除氧器.",
+      "file": "除氧器..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/热能与动力工程/大门",
+      "categoryId": "工程/热能与动力工程",
+      "name": "大门",
+      "file": "大门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/热能与动力工程/电磁阀",
+      "categoryId": "工程/热能与动力工程",
+      "name": "电磁阀",
+      "file": "电磁阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/电机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "电机",
+      "file": "电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/热能与动力工程/发动机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "发动机",
+      "file": "发动机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/热能与动力工程/反应釜",
+      "categoryId": "工程/热能与动力工程",
+      "name": "反应釜",
+      "file": "反应釜.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/房子",
+      "categoryId": "工程/热能与动力工程",
+      "name": "房子",
+      "file": "房子.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/分气阀",
+      "categoryId": "工程/热能与动力工程",
+      "name": "分气阀",
+      "file": "分气阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/给水泵",
+      "categoryId": "工程/热能与动力工程",
+      "name": "给水泵",
+      "file": "给水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/热能与动力工程/换热器",
+      "categoryId": "工程/热能与动力工程",
+      "name": "换热器",
+      "file": "换热器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/加热器.",
+      "categoryId": "工程/热能与动力工程",
+      "name": "加热器.",
+      "file": "加热器..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/热能与动力工程/空调",
+      "categoryId": "工程/热能与动力工程",
+      "name": "空调",
+      "file": "空调.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/热能与动力工程/空预器",
+      "categoryId": "工程/热能与动力工程",
+      "name": "空预器",
+      "file": "空预器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/热能与动力工程/冷凝器",
+      "categoryId": "工程/热能与动力工程",
+      "name": "冷凝器",
+      "file": "冷凝器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/磨煤机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "磨煤机",
+      "file": "磨煤机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/热能与动力工程/内燃机泵",
+      "categoryId": "工程/热能与动力工程",
+      "name": "内燃机泵",
+      "file": "内燃机泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/凝汽器",
+      "categoryId": "工程/热能与动力工程",
+      "name": "凝汽器",
+      "file": "凝汽器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/热能与动力工程/汽轮机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "汽轮机",
+      "file": "汽轮机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/热能与动力工程/燃气分管",
+      "categoryId": "工程/热能与动力工程",
+      "name": "燃气分管",
+      "file": "燃气分管.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/燃油系统",
+      "categoryId": "工程/热能与动力工程",
+      "name": "燃油系统",
+      "file": "燃油系统.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/水泵",
+      "categoryId": "工程/热能与动力工程",
+      "name": "水泵",
+      "file": "水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/热能与动力工程/水阀",
+      "categoryId": "工程/热能与动力工程",
+      "name": "水阀",
+      "file": "水阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/热能与动力工程/水罐",
+      "categoryId": "工程/热能与动力工程",
+      "name": "水罐",
+      "file": "水罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/水箱",
+      "categoryId": "工程/热能与动力工程",
+      "name": "水箱",
+      "file": "水箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/水压表",
+      "categoryId": "工程/热能与动力工程",
+      "name": "水压表",
+      "file": "水压表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/四通阀",
+      "categoryId": "工程/热能与动力工程",
+      "name": "四通阀",
+      "file": "四通阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/循环泵",
+      "categoryId": "工程/热能与动力工程",
+      "name": "循环泵",
+      "file": "循环泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/热能与动力工程/压缩机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "压缩机",
+      "file": "压缩机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/引风机",
+      "categoryId": "工程/热能与动力工程",
+      "name": "引风机",
+      "file": "引风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/热能与动力工程/油分",
+      "categoryId": "工程/热能与动力工程",
+      "name": "油分",
+      "file": "油分.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/闸",
+      "categoryId": "工程/热能与动力工程",
+      "name": "闸",
+      "file": "闸.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/热能与动力工程/蒸发器",
+      "categoryId": "工程/热能与动力工程",
+      "name": "蒸发器",
+      "file": "蒸发器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/热能与动力工程/自流井",
+      "categoryId": "工程/热能与动力工程",
+      "name": "自流井",
+      "file": "自流井.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/泵1",
+      "categoryId": "工程/水利工程",
+      "name": "泵1",
+      "file": "泵1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/泵车",
+      "categoryId": "工程/水利工程",
+      "name": "泵车",
+      "file": "泵车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/水利工程/泵房2",
+      "categoryId": "工程/水利工程",
+      "name": "泵房2",
+      "file": "泵房2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/泵房3",
+      "categoryId": "工程/水利工程",
+      "name": "泵房3",
+      "file": "泵房3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/变送器",
+      "categoryId": "工程/水利工程",
+      "name": "变送器",
+      "file": "变送器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/车",
+      "categoryId": "工程/水利工程",
+      "name": "车",
+      "file": "车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/水利工程/沉沙间",
+      "categoryId": "工程/水利工程",
+      "name": "沉沙间",
+      "file": "沉沙间.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/冲击钻",
+      "categoryId": "工程/水利工程",
+      "name": "冲击钻",
+      "file": "冲击钻.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/初次沉淀池",
+      "categoryId": "工程/水利工程",
+      "name": "初次沉淀池",
+      "file": "初次沉淀池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/打磨机",
+      "categoryId": "工程/水利工程",
+      "name": "打磨机",
+      "file": "打磨机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/大型推土机",
+      "categoryId": "工程/水利工程",
+      "name": "大型推土机",
+      "file": "大型推土机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/大用户水表",
+      "categoryId": "工程/水利工程",
+      "name": "大用户水表",
+      "file": "大用户水表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/电锤-锤钻",
+      "categoryId": "工程/水利工程",
+      "name": "电锤-锤钻",
+      "file": "电锤-锤钻.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/水利工程/电锤-锤钻_1",
+      "categoryId": "工程/水利工程",
+      "name": "电锤-锤钻_1",
+      "file": "电锤-锤钻_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/水利工程/电焊机",
+      "categoryId": "工程/水利工程",
+      "name": "电焊机",
+      "file": "电焊机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/电烙铁",
+      "categoryId": "工程/水利工程",
+      "name": "电烙铁",
+      "file": "电烙铁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/二次沉淀池",
+      "categoryId": "工程/水利工程",
+      "name": "二次沉淀池",
+      "file": "二次沉淀池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/水利工程/二次供水加压站",
+      "categoryId": "工程/水利工程",
+      "name": "二次供水加压站",
+      "file": "二次供水加压站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/发电机",
+      "categoryId": "工程/水利工程",
+      "name": "发电机",
+      "file": "发电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/发电机 ",
+      "categoryId": "工程/水利工程",
+      "name": "发电机 ",
+      "file": "发电机 .svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/水利工程/阀门",
+      "categoryId": "工程/水利工程",
+      "name": "阀门",
+      "file": "阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/翻斗车",
+      "categoryId": "工程/水利工程",
+      "name": "翻斗车",
+      "file": "翻斗车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/水利工程/分区测量点-上",
+      "categoryId": "工程/水利工程",
+      "name": "分区测量点-上",
+      "file": "分区测量点-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/分区测量点-右",
+      "categoryId": "工程/水利工程",
+      "name": "分区测量点-右",
+      "file": "分区测量点-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/分区测量点-左",
+      "categoryId": "工程/水利工程",
+      "name": "分区测量点-左",
+      "file": "分区测量点-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/钢锯",
+      "categoryId": "工程/水利工程",
+      "name": "钢锯",
+      "file": "钢锯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/格栅",
+      "categoryId": "工程/水利工程",
+      "name": "格栅",
+      "file": "格栅.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/工厂",
+      "categoryId": "工程/水利工程",
+      "name": "工厂",
+      "file": "工厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/管路",
+      "categoryId": "工程/水利工程",
+      "name": "管路",
+      "file": "管路.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/锅炉",
+      "categoryId": "工程/水利工程",
+      "name": "锅炉",
+      "file": "锅炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/混凝土搅拌机",
+      "categoryId": "工程/水利工程",
+      "name": "混凝土搅拌机",
+      "file": "混凝土搅拌机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/尖嘴钳",
+      "categoryId": "工程/水利工程",
+      "name": "尖嘴钳",
+      "file": "尖嘴钳.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/搅拌机",
+      "categoryId": "工程/水利工程",
+      "name": "搅拌机",
+      "file": "搅拌机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/搅拌站",
+      "categoryId": "工程/水利工程",
+      "name": "搅拌站",
+      "file": "搅拌站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/经纬仪",
+      "categoryId": "工程/水利工程",
+      "name": "经纬仪",
+      "file": "经纬仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/酒精喷灯",
+      "categoryId": "工程/水利工程",
+      "name": "酒精喷灯",
+      "file": "酒精喷灯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/居民小区",
+      "categoryId": "工程/水利工程",
+      "name": "居民小区",
+      "file": "居民小区.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/空压机",
+      "categoryId": "工程/水利工程",
+      "name": "空压机",
+      "file": "空压机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/励磁",
+      "categoryId": "工程/水利工程",
+      "name": "励磁",
+      "file": "励磁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/流量计",
+      "categoryId": "工程/水利工程",
+      "name": "流量计",
+      "file": "流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/螺丝刀",
+      "categoryId": "工程/水利工程",
+      "name": "螺丝刀",
+      "file": "螺丝刀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/碾压机",
+      "categoryId": "工程/水利工程",
+      "name": "碾压机",
+      "file": "碾压机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/浓缩池",
+      "categoryId": "工程/水利工程",
+      "name": "浓缩池",
+      "file": "浓缩池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/排水泵",
+      "categoryId": "工程/水利工程",
+      "name": "排水泵",
+      "file": "排水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/抛光机",
+      "categoryId": "工程/水利工程",
+      "name": "抛光机",
+      "file": "抛光机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/配电箱",
+      "categoryId": "工程/水利工程",
+      "name": "配电箱",
+      "file": "配电箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/皮带机",
+      "categoryId": "工程/水利工程",
+      "name": "皮带机",
+      "file": "皮带机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/破碎机",
+      "categoryId": "工程/水利工程",
+      "name": "破碎机",
+      "file": "破碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/曝气沉沙池",
+      "categoryId": "工程/水利工程",
+      "name": "曝气沉沙池",
+      "file": "曝气沉沙池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/曝气池",
+      "categoryId": "工程/水利工程",
+      "name": "曝气池",
+      "file": "曝气池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/企事业单位",
+      "categoryId": "工程/水利工程",
+      "name": "企事业单位",
+      "file": "企事业单位.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/起重机",
+      "categoryId": "工程/水利工程",
+      "name": "起重机",
+      "file": "起重机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/汽车吊",
+      "categoryId": "工程/水利工程",
+      "name": "汽车吊",
+      "file": "汽车吊.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/潜水泵",
+      "categoryId": "工程/水利工程",
+      "name": "潜水泵",
+      "file": "潜水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/切割机",
+      "categoryId": "工程/水利工程",
+      "name": "切割机",
+      "file": "切割机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/取水泵站",
+      "categoryId": "工程/水利工程",
+      "name": "取水泵站",
+      "file": "取水泵站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/取水栓",
+      "categoryId": "工程/水利工程",
+      "name": "取水栓",
+      "file": "取水栓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/燃油泵",
+      "categoryId": "工程/水利工程",
+      "name": "燃油泵",
+      "file": "燃油泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/商场写字楼",
+      "categoryId": "工程/水利工程",
+      "name": "商场写字楼",
+      "file": "商场写字楼.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/射出成型机",
+      "categoryId": "工程/水利工程",
+      "name": "射出成型机",
+      "file": "射出成型机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/施工升降机",
+      "categoryId": "工程/水利工程",
+      "name": "施工升降机",
+      "file": "施工升降机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/水泵",
+      "categoryId": "工程/水利工程",
+      "name": "水泵",
+      "file": "水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/水罐",
+      "categoryId": "工程/水利工程",
+      "name": "水罐",
+      "file": "水罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/水轮机",
+      "categoryId": "工程/水利工程",
+      "name": "水轮机",
+      "file": "水轮机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/水轮机_1",
+      "categoryId": "工程/水利工程",
+      "name": "水轮机_1",
+      "file": "水轮机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/水源井",
+      "categoryId": "工程/水利工程",
+      "name": "水源井",
+      "file": "水源井.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/推土机",
+      "categoryId": "工程/水利工程",
+      "name": "推土机",
+      "file": "推土机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/脱水机房",
+      "categoryId": "工程/水利工程",
+      "name": "脱水机房",
+      "file": "脱水机房.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/挖掘机",
+      "categoryId": "工程/水利工程",
+      "name": "挖掘机",
+      "file": "挖掘机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/万用表",
+      "categoryId": "工程/水利工程",
+      "name": "万用表",
+      "file": "万用表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/网管侧测压点",
+      "categoryId": "工程/水利工程",
+      "name": "网管侧测压点",
+      "file": "网管侧测压点.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/网管侧测压点-右",
+      "categoryId": "工程/水利工程",
+      "name": "网管侧测压点-右",
+      "file": "网管侧测压点-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/网管侧测压点-左",
+      "categoryId": "工程/水利工程",
+      "name": "网管侧测压点-左",
+      "file": "网管侧测压点-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/水利工程/污泥消化池",
+      "categoryId": "工程/水利工程",
+      "name": "污泥消化池",
+      "file": "污泥消化池.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/消防栓",
+      "categoryId": "工程/水利工程",
+      "name": "消防栓",
+      "file": "消防栓.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/卸车",
+      "categoryId": "工程/水利工程",
+      "name": "卸车",
+      "file": "卸车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/压力表 ",
+      "categoryId": "工程/水利工程",
+      "name": "压力表 ",
+      "file": "压力表 .svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/压力表 _1",
+      "categoryId": "工程/水利工程",
+      "name": "压力表 _1",
+      "file": "压力表 _1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/液压钳子",
+      "categoryId": "工程/水利工程",
+      "name": "液压钳子",
+      "file": "液压钳子.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/油缸",
+      "categoryId": "工程/水利工程",
+      "name": "油缸",
+      "file": "油缸.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/水利工程/圆柱卧蓄水罐",
+      "categoryId": "工程/水利工程",
+      "name": "圆柱卧蓄水罐",
+      "file": "圆柱卧蓄水罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "工程/水利工程/闸门",
+      "categoryId": "工程/水利工程",
+      "name": "闸门",
+      "file": "闸门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/中途加压站",
+      "categoryId": "工程/水利工程",
+      "name": "中途加压站",
+      "file": "中途加压站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/主变压器",
+      "categoryId": "工程/水利工程",
+      "name": "主变压器",
+      "file": "主变压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/水利工程/自来水厂",
+      "categoryId": "工程/水利工程",
+      "name": "自来水厂",
+      "file": "自来水厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/水利工程/自然水域",
+      "categoryId": "工程/水利工程",
+      "name": "自然水域",
+      "file": "自然水域.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "工程/水利工程/总泵房",
+      "categoryId": "工程/水利工程",
+      "name": "总泵房",
+      "file": "总泵房.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/水利工程/钻孔机",
+      "categoryId": "工程/水利工程",
+      "name": "钻孔机",
+      "file": "钻孔机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/报警阀",
+      "categoryId": "工程/消防工程",
+      "name": "报警阀",
+      "file": "报警阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/变频泵",
+      "categoryId": "工程/消防工程",
+      "name": "变频泵",
+      "file": "变频泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/测温枪",
+      "categoryId": "工程/消防工程",
+      "name": "测温枪",
+      "file": "测温枪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/催泪瓦斯",
+      "categoryId": "工程/消防工程",
+      "name": "催泪瓦斯",
+      "file": "催泪瓦斯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/电磁阀",
+      "categoryId": "工程/消防工程",
+      "name": "电磁阀",
+      "file": "电磁阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/电流互感器",
+      "categoryId": "工程/消防工程",
+      "name": "电流互感器",
+      "file": "电流互感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/电脑客户端",
+      "categoryId": "工程/消防工程",
+      "name": "电脑客户端",
+      "file": "电脑客户端.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/消防工程/蝶阀",
+      "categoryId": "工程/消防工程",
+      "name": "蝶阀",
+      "file": "蝶阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/阀-上",
+      "categoryId": "工程/消防工程",
+      "name": "阀-上",
+      "file": "阀-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/阀-右",
+      "categoryId": "工程/消防工程",
+      "name": "阀-右",
+      "file": "阀-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/阀-左",
+      "categoryId": "工程/消防工程",
+      "name": "阀-左",
+      "file": "阀-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/防火窗",
+      "categoryId": "工程/消防工程",
+      "name": "防火窗",
+      "file": "防火窗.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/防火卷帘",
+      "categoryId": "工程/消防工程",
+      "name": "防火卷帘",
+      "file": "防火卷帘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/防火门",
+      "categoryId": "工程/消防工程",
+      "name": "防火门",
+      "file": "防火门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/风口",
+      "categoryId": "工程/消防工程",
+      "name": "风口",
+      "file": "风口.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/风速仪",
+      "categoryId": "工程/消防工程",
+      "name": "风速仪",
+      "file": "风速仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/消防工程/红外对射探测器",
+      "categoryId": "工程/消防工程",
+      "name": "红外对射探测器",
+      "file": "红外对射探测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/红外探测器",
+      "categoryId": "工程/消防工程",
+      "name": "红外探测器",
+      "file": "红外探测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/红外栅栏",
+      "categoryId": "工程/消防工程",
+      "name": "红外栅栏",
+      "file": "红外栅栏.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/混流风机",
+      "categoryId": "工程/消防工程",
+      "name": "混流风机",
+      "file": "混流风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/火灾主机",
+      "categoryId": "工程/消防工程",
+      "name": "火灾主机",
+      "file": "火灾主机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/救护工具箱",
+      "categoryId": "工程/消防工程",
+      "name": "救护工具箱",
+      "file": "救护工具箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/离心泵",
+      "categoryId": "工程/消防工程",
+      "name": "离心泵",
+      "file": "离心泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/满电流互感器",
+      "categoryId": "工程/消防工程",
+      "name": "满电流互感器",
+      "file": "满电流互感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/灭火装置",
+      "categoryId": "工程/消防工程",
+      "name": "灭火装置",
+      "file": "灭火装置.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/模拟末端试水装置",
+      "categoryId": "工程/消防工程",
+      "name": "模拟末端试水装置",
+      "file": "模拟末端试水装置.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/软梯",
+      "categoryId": "工程/消防工程",
+      "name": "软梯",
+      "file": "软梯.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/声光警报",
+      "categoryId": "工程/消防工程",
+      "name": "声光警报",
+      "file": "声光警报.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/水流指示器",
+      "categoryId": "工程/消防工程",
+      "name": "水流指示器",
+      "file": "水流指示器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/水压探测器",
+      "categoryId": "工程/消防工程",
+      "name": "水压探测器",
+      "file": "水压探测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/通风机",
+      "categoryId": "工程/消防工程",
+      "name": "通风机",
+      "file": "通风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/万用表",
+      "categoryId": "工程/消防工程",
+      "name": "万用表",
+      "file": "万用表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/网络摄像头",
+      "categoryId": "工程/消防工程",
+      "name": "网络摄像头",
+      "file": "网络摄像头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/微信端",
+      "categoryId": "工程/消防工程",
+      "name": "微信端",
+      "file": "微信端.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/消防工程/温度传感器",
+      "categoryId": "工程/消防工程",
+      "name": "温度传感器",
+      "file": "温度传感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/温感",
+      "categoryId": "工程/消防工程",
+      "name": "温感",
+      "file": "温感.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/消防工程/温感_1",
+      "categoryId": "工程/消防工程",
+      "name": "温感_1",
+      "file": "温感_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/无线玻璃震动传感器",
+      "categoryId": "工程/消防工程",
+      "name": "无线玻璃震动传感器",
+      "file": "无线玻璃震动传感器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/无线紧急按钮",
+      "categoryId": "工程/消防工程",
+      "name": "无线紧急按钮",
+      "file": "无线紧急按钮.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/无线门磁",
+      "categoryId": "工程/消防工程",
+      "name": "无线门磁",
+      "file": "无线门磁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/无线烟感",
+      "categoryId": "工程/消防工程",
+      "name": "无线烟感",
+      "file": "无线烟感.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/消防工程/系统主机",
+      "categoryId": "工程/消防工程",
+      "name": "系统主机",
+      "file": "系统主机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/箱式泵房",
+      "categoryId": "工程/消防工程",
+      "name": "箱式泵房",
+      "file": "箱式泵房.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/消防泵房",
+      "categoryId": "工程/消防工程",
+      "name": "消防泵房",
+      "file": "消防泵房.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/消防水泵",
+      "categoryId": "工程/消防工程",
+      "name": "消防水泵",
+      "file": "消防水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/消防水泵_1",
+      "categoryId": "工程/消防工程",
+      "name": "消防水泵_1",
+      "file": "消防水泵_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "工程/消防工程/烟感",
+      "categoryId": "工程/消防工程",
+      "name": "烟感",
+      "file": "烟感.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "工程/消防工程/液位探测器",
+      "categoryId": "工程/消防工程",
+      "name": "液位探测器",
+      "file": "液位探测器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/有线紧急按钮",
+      "categoryId": "工程/消防工程",
+      "name": "有线紧急按钮",
+      "file": "有线紧急按钮.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "工程/消防工程/增压泵",
+      "categoryId": "工程/消防工程",
+      "name": "增压泵",
+      "file": "增压泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/正压送风机",
+      "categoryId": "工程/消防工程",
+      "name": "正压送风机",
+      "file": "正压送风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/智慧消防",
+      "categoryId": "工程/消防工程",
+      "name": "智慧消防",
+      "file": "智慧消防.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/轴流管道泵",
+      "categoryId": "工程/消防工程",
+      "name": "轴流管道泵",
+      "file": "轴流管道泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/主机编程键盘",
+      "categoryId": "工程/消防工程",
+      "name": "主机编程键盘",
+      "file": "主机编程键盘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/消防工程/主机编程键盘_1",
+      "categoryId": "工程/消防工程",
+      "name": "主机编程键盘_1",
+      "file": "主机编程键盘_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "工程/消防工程/总塔",
+      "categoryId": "工程/消防工程",
+      "name": "总塔",
+      "file": "总塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/app-01",
+      "categoryId": "工程/消防工程",
+      "name": "app-01",
+      "file": "app-01.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "工程/消防工程/l冷却塔",
+      "categoryId": "工程/消防工程",
+      "name": "l冷却塔",
+      "file": "l冷却塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/采掘",
+      "categoryId": "能源/矿产",
+      "name": "采掘",
+      "file": "采掘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/矿产/采煤机",
+      "categoryId": "能源/矿产",
+      "name": "采煤机",
+      "file": "采煤机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/采煤机_1",
+      "categoryId": "能源/矿产",
+      "name": "采煤机_1",
+      "file": "采煤机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "能源/矿产/柴油机",
+      "categoryId": "能源/矿产",
+      "name": "柴油机",
+      "file": "柴油机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/电动机",
+      "categoryId": "能源/矿产",
+      "name": "电动机",
+      "file": "电动机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/矿产/颚式破碎机",
+      "categoryId": "能源/矿产",
+      "name": "颚式破碎机",
+      "file": "颚式破碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/矿产/机械手",
+      "categoryId": "能源/矿产",
+      "name": "机械手",
+      "file": "机械手.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/绞车",
+      "categoryId": "能源/矿产",
+      "name": "绞车",
+      "file": "绞车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "能源/矿产/绞车运行监控系统",
+      "categoryId": "能源/矿产",
+      "name": "绞车运行监控系统",
+      "file": "绞车运行监控系统.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/掘进机",
+      "categoryId": "能源/矿产",
+      "name": "掘进机",
+      "file": "掘进机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/矿产/矿产拉车",
+      "categoryId": "能源/矿产",
+      "name": "矿产拉车",
+      "file": "矿产拉车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/矿产/矿产企业",
+      "categoryId": "能源/矿产",
+      "name": "矿产企业",
+      "file": "矿产企业.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/矿产/离心通风机",
+      "categoryId": "能源/矿产",
+      "name": "离心通风机",
+      "file": "离心通风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/矿产/磨煤机",
+      "categoryId": "能源/矿产",
+      "name": "磨煤机",
+      "file": "磨煤机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/矿产/泥浆泵",
+      "categoryId": "能源/矿产",
+      "name": "泥浆泵",
+      "file": "泥浆泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/排水阀门",
+      "categoryId": "能源/矿产",
+      "name": "排水阀门",
+      "file": "排水阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/排水机",
+      "categoryId": "能源/矿产",
+      "name": "排水机",
+      "file": "排水机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/皮带输送机",
+      "categoryId": "能源/矿产",
+      "name": "皮带输送机",
+      "file": "皮带输送机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/皮带输送机_1",
+      "categoryId": "能源/矿产",
+      "name": "皮带输送机_1",
+      "file": "皮带输送机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/破碎机",
+      "categoryId": "能源/矿产",
+      "name": "破碎机",
+      "file": "破碎机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/破碎机_1",
+      "categoryId": "能源/矿产",
+      "name": "破碎机_1",
+      "file": "破碎机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/矿产/起重工具车",
+      "categoryId": "能源/矿产",
+      "name": "起重工具车",
+      "file": "起重工具车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/起重机",
+      "categoryId": "能源/矿产",
+      "name": "起重机",
+      "file": "起重机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/脱水机",
+      "categoryId": "能源/矿产",
+      "name": "脱水机",
+      "file": "脱水机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/矿产/脱水机_1",
+      "categoryId": "能源/矿产",
+      "name": "脱水机_1",
+      "file": "脱水机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/矿产/挖掘机",
+      "categoryId": "能源/矿产",
+      "name": "挖掘机",
+      "file": "挖掘机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/矿产/钻石",
+      "categoryId": "能源/矿产",
+      "name": "钻石",
+      "file": "钻石.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/1",
+      "categoryId": "能源/煤炭",
+      "name": "1",
+      "file": "1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/11",
+      "categoryId": "能源/煤炭",
+      "name": "11",
+      "file": "11.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/111",
+      "categoryId": "能源/煤炭",
+      "name": "111",
+      "file": "111.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/安全帽",
+      "categoryId": "能源/煤炭",
+      "name": "安全帽",
+      "file": "安全帽.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/变频器",
+      "categoryId": "能源/煤炭",
+      "name": "变频器",
+      "file": "变频器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/标题箭头",
+      "categoryId": "能源/煤炭",
+      "name": "标题箭头",
+      "file": "标题箭头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/煤炭/采矿",
+      "categoryId": "能源/煤炭",
+      "name": "采矿",
+      "file": "采矿.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/采矿_3",
+      "categoryId": "能源/煤炭",
+      "name": "采矿_3",
+      "file": "采矿_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/采矿(5)",
+      "categoryId": "能源/煤炭",
+      "name": "采矿(5)",
+      "file": "采矿(5).svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/采矿(6)",
+      "categoryId": "能源/煤炭",
+      "name": "采矿(6)",
+      "file": "采矿(6).svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/采矿车",
+      "categoryId": "能源/煤炭",
+      "name": "采矿车",
+      "file": "采矿车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/采矿车(1)",
+      "categoryId": "能源/煤炭",
+      "name": "采矿车(1)",
+      "file": "采矿车(1).svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/测试组件02",
+      "categoryId": "能源/煤炭",
+      "name": "测试组件02",
+      "file": "测试组件02.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/测试组件02_1",
+      "categoryId": "能源/煤炭",
+      "name": "测试组件02_1",
+      "file": "测试组件02_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/铲子",
+      "categoryId": "能源/煤炭",
+      "name": "铲子",
+      "file": "铲子.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/铲子_1",
+      "categoryId": "能源/煤炭",
+      "name": "铲子_1",
+      "file": "铲子_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/秤",
+      "categoryId": "能源/煤炭",
+      "name": "秤",
+      "file": "秤.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "能源/煤炭/齿轮",
+      "categoryId": "能源/煤炭",
+      "name": "齿轮",
+      "file": "齿轮.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/电机",
+      "categoryId": "能源/煤炭",
+      "name": "电机",
+      "file": "电机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/电机2",
+      "categoryId": "能源/煤炭",
+      "name": "电机2",
+      "file": "电机2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/电机3",
+      "categoryId": "能源/煤炭",
+      "name": "电机3",
+      "file": "电机3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/防毒面具",
+      "categoryId": "能源/煤炭",
+      "name": "防毒面具",
+      "file": "防毒面具.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/风机",
+      "categoryId": "能源/煤炭",
+      "name": "风机",
+      "file": "风机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/负压计",
+      "categoryId": "能源/煤炭",
+      "name": "负压计",
+      "file": "负压计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/给煤机",
+      "categoryId": "能源/煤炭",
+      "name": "给煤机",
+      "file": "给煤机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/工厂",
+      "categoryId": "能源/煤炭",
+      "name": "工厂",
+      "file": "工厂.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/机器",
+      "categoryId": "能源/煤炭",
+      "name": "机器",
+      "file": "机器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/箭头",
+      "categoryId": "能源/煤炭",
+      "name": "箭头",
+      "file": "箭头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/接头",
+      "categoryId": "能源/煤炭",
+      "name": "接头",
+      "file": "接头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/矿工",
+      "categoryId": "能源/煤炭",
+      "name": "矿工",
+      "file": "矿工.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/煤炭/矿业",
+      "categoryId": "能源/煤炭",
+      "name": "矿业",
+      "file": "矿业.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/煤球",
+      "categoryId": "能源/煤炭",
+      "name": "煤球",
+      "file": "煤球.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/球阀",
+      "categoryId": "能源/煤炭",
+      "name": "球阀",
+      "file": "球阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/三角形",
+      "categoryId": "能源/煤炭",
+      "name": "三角形",
+      "file": "三角形.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/上仓皮带",
+      "categoryId": "能源/煤炭",
+      "name": "上仓皮带",
+      "file": "上仓皮带.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "能源/煤炭/水泵",
+      "categoryId": "能源/煤炭",
+      "name": "水泵",
+      "file": "水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/顺槽皮带",
+      "categoryId": "能源/煤炭",
+      "name": "顺槽皮带",
+      "file": "顺槽皮带.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/挖煤",
+      "categoryId": "能源/煤炭",
+      "name": "挖煤",
+      "file": "挖煤.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/煤炭/小箭头-上",
+      "categoryId": "能源/煤炭",
+      "name": "小箭头-上",
+      "file": "小箭头-上.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/小箭头-下",
+      "categoryId": "能源/煤炭",
+      "name": "小箭头-下",
+      "file": "小箭头-下.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/煤炭/摇臂车",
+      "categoryId": "能源/煤炭",
+      "name": "摇臂车",
+      "file": "摇臂车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "能源/煤炭/仪表盘",
+      "categoryId": "能源/煤炭",
+      "name": "仪表盘",
+      "file": "仪表盘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/煤炭/闸阀",
+      "categoryId": "能源/煤炭",
+      "name": "闸阀",
+      "file": "闸阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/煤炭/装满煤的手推车",
+      "categoryId": "能源/煤炭",
+      "name": "装满煤的手推车",
+      "file": "装满煤的手推车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/煤炭/自定义组件",
+      "categoryId": "能源/煤炭",
+      "name": "自定义组件",
+      "file": "自定义组件.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/自定义组件_1",
+      "categoryId": "能源/煤炭",
+      "name": "自定义组件_1",
+      "file": "自定义组件_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/煤炭/AAS",
+      "categoryId": "能源/煤炭",
+      "name": "AAS",
+      "file": "AAS.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "能源/石油/泵",
+      "categoryId": "能源/石油",
+      "name": "泵",
+      "file": "泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/石油/测试",
+      "categoryId": "能源/石油",
+      "name": "测试",
+      "file": "测试.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "能源/石油/阀",
+      "categoryId": "能源/石油",
+      "name": "阀",
+      "file": "阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/石油/阀1",
+      "categoryId": "能源/石油",
+      "name": "阀1",
+      "file": "阀1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/阀2",
+      "categoryId": "能源/石油",
+      "name": "阀2",
+      "file": "阀2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/石油/阀开关",
+      "categoryId": "能源/石油",
+      "name": "阀开关",
+      "file": "阀开关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/阀门",
+      "categoryId": "能源/石油",
+      "name": "阀门",
+      "file": "阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/石油/阀门_1",
+      "categoryId": "能源/石油",
+      "name": "阀门_1",
+      "file": "阀门_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/石油/阀门_2",
+      "categoryId": "能源/石油",
+      "name": "阀门_2",
+      "file": "阀门_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/石油/阀门_3",
+      "categoryId": "能源/石油",
+      "name": "阀门_3",
+      "file": "阀门_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/供油泵",
+      "categoryId": "能源/石油",
+      "name": "供油泵",
+      "file": "供油泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/管道疏通",
+      "categoryId": "能源/石油",
+      "name": "管道疏通",
+      "file": "管道疏通.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/管道头",
+      "categoryId": "能源/石油",
+      "name": "管道头",
+      "file": "管道头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/罐区",
+      "categoryId": "能源/石油",
+      "name": "罐区",
+      "file": "罐区.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/机器",
+      "categoryId": "能源/石油",
+      "name": "机器",
+      "file": "机器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/石油/空气阀门",
+      "categoryId": "能源/石油",
+      "name": "空气阀门",
+      "file": "空气阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/石油/流量计",
+      "categoryId": "能源/石油",
+      "name": "流量计",
+      "file": "流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/排放",
+      "categoryId": "能源/石油",
+      "name": "排放",
+      "file": "排放.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "能源/石油/汽车-01",
+      "categoryId": "能源/石油",
+      "name": "汽车-01",
+      "file": "汽车-01.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/石油/输油变压",
+      "categoryId": "能源/石油",
+      "name": "输油变压",
+      "file": "输油变压.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/水泵",
+      "categoryId": "能源/石油",
+      "name": "水泵",
+      "file": "水泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/弯管道",
+      "categoryId": "能源/石油",
+      "name": "弯管道",
+      "file": "弯管道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/卧罐",
+      "categoryId": "能源/石油",
+      "name": "卧罐",
+      "file": "卧罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/吸附塔",
+      "categoryId": "能源/石油",
+      "name": "吸附塔",
+      "file": "吸附塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/吸附塔_1",
+      "categoryId": "能源/石油",
+      "name": "吸附塔_1",
+      "file": "吸附塔_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/吸收塔",
+      "categoryId": "能源/石油",
+      "name": "吸收塔",
+      "file": "吸收塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 9.5,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/吸收塔_1",
+      "categoryId": "能源/石油",
+      "name": "吸收塔_1",
+      "file": "吸收塔_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/消防泡沫塔",
+      "categoryId": "能源/石油",
+      "name": "消防泡沫塔",
+      "file": "消防泡沫塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/卸油泵",
+      "categoryId": "能源/石油",
+      "name": "卸油泵",
+      "file": "卸油泵.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/压力表",
+      "categoryId": "能源/石油",
+      "name": "压力表",
+      "file": "压力表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/石油/压力计",
+      "categoryId": "能源/石油",
+      "name": "压力计",
+      "file": "压力计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/仪表",
+      "categoryId": "能源/石油",
+      "name": "仪表",
+      "file": "仪表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/油阀",
+      "categoryId": "能源/石油",
+      "name": "油阀",
+      "file": "油阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/石油/油罐",
+      "categoryId": "能源/石油",
+      "name": "油罐",
+      "file": "油罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/石油/油罐车",
+      "categoryId": "能源/石油",
+      "name": "油罐车",
+      "file": "油罐车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/石油/油罐阀",
+      "categoryId": "能源/石油",
+      "name": "油罐阀",
+      "file": "油罐阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/石油/油库",
+      "categoryId": "能源/石油",
+      "name": "油库",
+      "file": "油库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/油塔",
+      "categoryId": "能源/石油",
+      "name": "油塔",
+      "file": "油塔.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/油田",
+      "categoryId": "能源/石油",
+      "name": "油田",
+      "file": "油田.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/油田_1",
+      "categoryId": "能源/石油",
+      "name": "油田_1",
+      "file": "油田_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/石油/真空阀门",
+      "categoryId": "能源/石油",
+      "name": "真空阀门",
+      "file": "真空阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/石油/直管道",
+      "categoryId": "能源/石油",
+      "name": "直管道",
+      "file": "直管道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/石油/test",
+      "categoryId": "能源/石油",
+      "name": "test",
+      "file": "test.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/测试",
+      "categoryId": "能源/天然气",
+      "name": "测试",
+      "file": "测试.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "能源/天然气/储气罐",
+      "categoryId": "能源/天然气",
+      "name": "储气罐",
+      "file": "储气罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/天然气/储气罐_1",
+      "categoryId": "能源/天然气",
+      "name": "储气罐_1",
+      "file": "储气罐_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/天然气/储气罐_2",
+      "categoryId": "能源/天然气",
+      "name": "储气罐_2",
+      "file": "储气罐_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/储气罐_3",
+      "categoryId": "能源/天然气",
+      "name": "储气罐_3",
+      "file": "储气罐_3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/调压",
+      "categoryId": "能源/天然气",
+      "name": "调压",
+      "file": "调压.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/调压器",
+      "categoryId": "能源/天然气",
+      "name": "调压器",
+      "file": "调压器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/天然气/调压器_1",
+      "categoryId": "能源/天然气",
+      "name": "调压器_1",
+      "file": "调压器_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/调压箱",
+      "categoryId": "能源/天然气",
+      "name": "调压箱",
+      "file": "调压箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "能源/天然气/叠片过滤器",
+      "categoryId": "能源/天然气",
+      "name": "叠片过滤器",
+      "file": "叠片过滤器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/天然气/阀-3",
+      "categoryId": "能源/天然气",
+      "name": "阀-3",
+      "file": "阀-3.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/过滤器",
+      "categoryId": "能源/天然气",
+      "name": "过滤器",
+      "file": "过滤器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/过滤器_1",
+      "categoryId": "能源/天然气",
+      "name": "过滤器_1",
+      "file": "过滤器_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/机器",
+      "categoryId": "能源/天然气",
+      "name": "机器",
+      "file": "机器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/加臭机",
+      "categoryId": "能源/天然气",
+      "name": "加臭机",
+      "file": "加臭机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/加臭器",
+      "categoryId": "能源/天然气",
+      "name": "加臭器",
+      "file": "加臭器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/减压阀",
+      "categoryId": "能源/天然气",
+      "name": "减压阀",
+      "file": "减压阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/可燃气体报警仪",
+      "categoryId": "能源/天然气",
+      "name": "可燃气体报警仪",
+      "file": "可燃气体报警仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/流量计",
+      "categoryId": "能源/天然气",
+      "name": "流量计",
+      "file": "流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/流量计_1",
+      "categoryId": "能源/天然气",
+      "name": "流量计_1",
+      "file": "流量计_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/流量计_2",
+      "categoryId": "能源/天然气",
+      "name": "流量计_2",
+      "file": "流量计_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/清管站",
+      "categoryId": "能源/天然气",
+      "name": "清管站",
+      "file": "清管站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "能源/天然气/燃气储罐站",
+      "categoryId": "能源/天然气",
+      "name": "燃气储罐站",
+      "file": "燃气储罐站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/天然气/燃气阀门",
+      "categoryId": "能源/天然气",
+      "name": "燃气阀门",
+      "file": "燃气阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/天然气/燃气罐车",
+      "categoryId": "能源/天然气",
+      "name": "燃气罐车",
+      "file": "燃气罐车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/天然气/燃烧器",
+      "categoryId": "能源/天然气",
+      "name": "燃烧器",
+      "file": "燃烧器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "能源/天然气/热处理器",
+      "categoryId": "能源/天然气",
+      "name": "热处理器",
+      "file": "热处理器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/天然气/热处理设备",
+      "categoryId": "能源/天然气",
+      "name": "热处理设备",
+      "file": "热处理设备.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/天然气/热气锅炉",
+      "categoryId": "能源/天然气",
+      "name": "热气锅炉",
+      "file": "热气锅炉.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "能源/天然气/温度计",
+      "categoryId": "能源/天然气",
+      "name": "温度计",
+      "file": "温度计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 14.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/消防灭火器",
+      "categoryId": "能源/天然气",
+      "name": "消防灭火器",
+      "file": "消防灭火器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/压力表",
+      "categoryId": "能源/天然气",
+      "name": "压力表",
+      "file": "压力表.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/压力阀",
+      "categoryId": "能源/天然气",
+      "name": "压力阀",
+      "file": "压力阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "能源/天然气/压力器",
+      "categoryId": "能源/天然气",
+      "name": "压力器",
+      "file": "压力器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/压缩机",
+      "categoryId": "能源/天然气",
+      "name": "压缩机",
+      "file": "压缩机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/油罐",
+      "categoryId": "能源/天然气",
+      "name": "油罐",
+      "file": "油罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/油罐箱",
+      "categoryId": "能源/天然气",
+      "name": "油罐箱",
+      "file": "油罐箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "能源/天然气/智能阀门",
+      "categoryId": "能源/天然气",
+      "name": "智能阀门",
+      "file": "智能阀门.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "能源/天然气/CNG加气站",
+      "categoryId": "能源/天然气",
+      "name": "CNG加气站",
+      "file": "CNG加气站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "智慧城市/智慧交通/办公用电",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "办公用电",
+      "file": "办公用电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 190,
+      "height": 150
+    },
+    {
+      "id": "智慧城市/智慧交通/变流配电箱",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "变流配电箱",
+      "file": "变流配电箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 192,
+      "height": 115
+    },
+    {
+      "id": "智慧城市/智慧交通/查询机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "查询机",
+      "file": "查询机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/车位引导牌",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "车位引导牌",
+      "file": "车位引导牌.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "智慧城市/智慧交通/充电桩",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "充电桩",
+      "file": "充电桩.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/充电桩2",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "充电桩2",
+      "file": "充电桩2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "智慧城市/智慧交通/出口扫码机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "出口扫码机",
+      "file": "出口扫码机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/出口闸机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "出口闸机",
+      "file": "出口闸机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "智慧城市/智慧交通/储能变流",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "储能变流",
+      "file": "储能变流.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/储能箱",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "储能箱",
+      "file": "储能箱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "智慧城市/智慧交通/服务器",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "服务器",
+      "file": "服务器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/公共用电",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "公共用电",
+      "file": "公共用电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/光伏逆变",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "光伏逆变",
+      "file": "光伏逆变.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/光伏组件",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "光伏组件",
+      "file": "光伏组件.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/合作单位",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "合作单位",
+      "file": "合作单位.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/户外照明",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "户外照明",
+      "file": "户外照明.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "智慧城市/智慧交通/箭头-右",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "箭头-右",
+      "file": "箭头-右.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "智慧城市/智慧交通/箭头-左",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "箭头-左",
+      "file": "箭头-左.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 7.5
+    },
+    {
+      "id": "智慧城市/智慧交通/交换机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "交换机",
+      "file": "交换机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 5
+    },
+    {
+      "id": "智慧城市/智慧交通/临时车主",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "临时车主",
+      "file": "临时车主.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/路由器",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "路由器",
+      "file": "路由器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/入口出票机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "入口出票机",
+      "file": "入口出票机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/入口闸机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "入口闸机",
+      "file": "入口闸机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/扫码用电",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "扫码用电",
+      "file": "扫码用电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/商户",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "商户",
+      "file": "商户.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/摄像头",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "摄像头",
+      "file": "摄像头.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/收费处",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "收费处",
+      "file": "收费处.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/刷卡充电",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "刷卡充电",
+      "file": "刷卡充电.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/网络",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "网络",
+      "file": "网络.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "智慧城市/智慧交通/显示屏",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "显示屏",
+      "file": "显示屏.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧交通/小车",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "小车",
+      "file": "小车.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "智慧城市/智慧交通/小车2",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "小车2",
+      "file": "小车2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "智慧城市/智慧交通/云",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "云",
+      "file": "云.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧交通/自动缴费机",
+      "categoryId": "智慧城市/智慧交通",
+      "name": "自动缴费机",
+      "file": "自动缴费机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/储气罐",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "储气罐",
+      "file": "储气罐.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/阀",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "阀",
+      "file": "阀.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/过滤器",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "过滤器",
+      "file": "过滤器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "智慧城市/智慧园区/哈哈",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "哈哈",
+      "file": "哈哈.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "智慧城市/智慧园区/空压机2",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "空压机2",
+      "file": "空压机2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "智慧城市/智慧园区/冷干机",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "冷干机",
+      "file": "冷干机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/流量计",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "流量计",
+      "file": "流量计.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 12,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/露点仪",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "露点仪",
+      "file": "露点仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/test",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "test",
+      "file": "test.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "智慧城市/智慧园区/test_1",
+      "categoryId": "智慧城市/智慧园区",
+      "name": "test_1",
+      "file": "test_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/分隔符",
+      "categoryId": "IT&互联网/流程图",
+      "name": "分隔符",
+      "file": "分隔符.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 4.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/分隔符-垂直",
+      "categoryId": "IT&互联网/流程图",
+      "name": "分隔符-垂直",
+      "file": "分隔符-垂直.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 2.5
+    },
+    {
+      "id": "IT&互联网/流程图/服务器",
+      "categoryId": "IT&互联网/流程图",
+      "name": "服务器",
+      "file": "服务器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/流程图/工作站",
+      "categoryId": "IT&互联网/流程图",
+      "name": "工作站",
+      "file": "工作站.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 19.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/加密装置",
+      "categoryId": "IT&互联网/流程图",
+      "name": "加密装置",
+      "file": "加密装置.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/流程图/交换机",
+      "categoryId": "IT&互联网/流程图",
+      "name": "交换机",
+      "file": "交换机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/流程图/结束",
+      "categoryId": "IT&互联网/流程图",
+      "name": "结束",
+      "file": "结束.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "IT&互联网/流程图/结束_1",
+      "categoryId": "IT&互联网/流程图",
+      "name": "结束_1",
+      "file": "结束_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/开始",
+      "categoryId": "IT&互联网/流程图",
+      "name": "开始",
+      "file": "开始.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "IT&互联网/流程图/开始事件",
+      "categoryId": "IT&互联网/流程图",
+      "name": "开始事件",
+      "file": "开始事件.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/流程",
+      "categoryId": "IT&互联网/流程图",
+      "name": "流程",
+      "file": "流程.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "IT&互联网/流程图/路由器",
+      "categoryId": "IT&互联网/流程图",
+      "name": "路由器",
+      "file": "路由器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/流程图/判定",
+      "categoryId": "IT&互联网/流程图",
+      "name": "判定",
+      "file": "判定.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "IT&互联网/流程图/任务",
+      "categoryId": "IT&互联网/流程图",
+      "name": "任务",
+      "file": "任务.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/数据",
+      "categoryId": "IT&互联网/流程图",
+      "name": "数据",
+      "file": "数据.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/流程图/数据存储",
+      "categoryId": "IT&互联网/流程图",
+      "name": "数据存储",
+      "file": "数据存储.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/流程图/数据对象",
+      "categoryId": "IT&互联网/流程图",
+      "name": "数据对象",
+      "file": "数据对象.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/数据库",
+      "categoryId": "IT&互联网/流程图",
+      "name": "数据库",
+      "file": "数据库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/网关",
+      "categoryId": "IT&互联网/流程图",
+      "name": "网关",
+      "file": "网关.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/流程图/泳道",
+      "categoryId": "IT&互联网/流程图",
+      "name": "泳道",
+      "file": "泳道.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/ 显示器",
+      "categoryId": "IT&互联网/网络图",
+      "name": " 显示器",
+      "file": " 显示器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/笔记本电脑",
+      "categoryId": "IT&互联网/网络图",
+      "name": "笔记本电脑",
+      "file": "笔记本电脑.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/传真",
+      "categoryId": "IT&互联网/网络图",
+      "name": "传真",
+      "file": "传真.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/打印机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "打印机",
+      "file": "打印机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/大型机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "大型机",
+      "file": "大型机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/电话",
+      "categoryId": "IT&互联网/网络图",
+      "name": "电话",
+      "file": "电话.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/防火墙_1",
+      "categoryId": "IT&互联网/网络图",
+      "name": "防火墙_1",
+      "file": "防火墙_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 27,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/防火墙_2",
+      "categoryId": "IT&互联网/网络图",
+      "name": "防火墙_2",
+      "file": "防火墙_2.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/网络图/服务器",
+      "categoryId": "IT&互联网/网络图",
+      "name": "服务器",
+      "file": "服务器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/工作组交换机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "工作组交换机",
+      "file": "工作组交换机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/关系数据库",
+      "categoryId": "IT&互联网/网络图",
+      "name": "关系数据库",
+      "file": "关系数据库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 22,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/光驱",
+      "categoryId": "IT&互联网/网络图",
+      "name": "光驱",
+      "file": "光驱.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/机器人",
+      "categoryId": "IT&互联网/网络图",
+      "name": "机器人",
+      "file": "机器人.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/集线器",
+      "categoryId": "IT&互联网/网络图",
+      "name": "集线器",
+      "file": "集线器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 15
+    },
+    {
+      "id": "IT&互联网/网络图/建筑物.",
+      "categoryId": "IT&互联网/网络图",
+      "name": "建筑物.",
+      "file": "建筑物..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/交换机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "交换机",
+      "file": "交换机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/交换机_1",
+      "categoryId": "IT&互联网/网络图",
+      "name": "交换机_1",
+      "file": "交换机_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 10
+    },
+    {
+      "id": "IT&互联网/网络图/路由器",
+      "categoryId": "IT&互联网/网络图",
+      "name": "路由器",
+      "file": "路由器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/秘钥",
+      "categoryId": "IT&互联网/网络图",
+      "name": "秘钥",
+      "file": "秘钥.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/屏幕",
+      "categoryId": "IT&互联网/网络图",
+      "name": "屏幕",
+      "file": "屏幕.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/扫描仪",
+      "categoryId": "IT&互联网/网络图",
+      "name": "扫描仪",
+      "file": "扫描仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/摄像机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "摄像机",
+      "file": "摄像机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "IT&互联网/网络图/视频电话",
+      "categoryId": "IT&互联网/网络图",
+      "name": "视频电话",
+      "file": "视频电话.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "IT&互联网/网络图/视频电话_1",
+      "categoryId": "IT&互联网/网络图",
+      "name": "视频电话_1",
+      "file": "视频电话_1.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 12.5
+    },
+    {
+      "id": "IT&互联网/网络图/手机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "手机",
+      "file": "手机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 17,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/数据库",
+      "categoryId": "IT&互联网/网络图",
+      "name": "数据库",
+      "file": "数据库.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/数据中心",
+      "categoryId": "IT&互联网/网络图",
+      "name": "数据中心",
+      "file": "数据中心.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/数码-相机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "数码-相机",
+      "file": "数码-相机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/锁",
+      "categoryId": "IT&互联网/网络图",
+      "name": "锁",
+      "file": "锁.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/投影仪",
+      "categoryId": "IT&互联网/网络图",
+      "name": "投影仪",
+      "file": "投影仪.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/显示器",
+      "categoryId": "IT&互联网/网络图",
+      "name": "显示器",
+      "file": "显示器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 20
+    },
+    {
+      "id": "IT&互联网/网络图/虚拟服务器",
+      "categoryId": "IT&互联网/网络图",
+      "name": "虚拟服务器",
+      "file": "虚拟服务器.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/以太网",
+      "categoryId": "IT&互联网/网络图",
+      "name": "以太网",
+      "file": "以太网.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/硬盘",
+      "categoryId": "IT&互联网/网络图",
+      "name": "硬盘",
+      "file": "硬盘.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/用户",
+      "categoryId": "IT&互联网/网络图",
+      "name": "用户",
+      "file": "用户.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/云",
+      "categoryId": "IT&互联网/网络图",
+      "name": "云",
+      "file": "云.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 17.5
+    },
+    {
+      "id": "IT&互联网/网络图/主机",
+      "categoryId": "IT&互联网/网络图",
+      "name": "主机",
+      "file": "主机.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/住宅",
+      "categoryId": "IT&互联网/网络图",
+      "name": "住宅",
+      "file": "住宅.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 22.5
+    },
+    {
+      "id": "IT&互联网/网络图/scu",
+      "categoryId": "IT&互联网/网络图",
+      "name": "scu",
+      "file": "scu.svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 24.5,
+      "height": 25
+    },
+    {
+      "id": "IT&互联网/网络图/WAN.",
+      "categoryId": "IT&互联网/网络图",
+      "name": "WAN.",
+      "file": "WAN..svg",
+      "kind": "svg",
+      "ext": "svg",
+      "width": 25,
+      "height": 25
+    }
+  ]
+}

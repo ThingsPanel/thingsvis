@@ -639,6 +639,20 @@
             "changeShort": "改变"
         }
     },
+    "localIconPicker": {
+        "title": "本地图库",
+        "searchGroup": "搜索分组",
+        "searchIcon": "请输入图片名称",
+        "empty": "暂无数据",
+        "loading": "加载中…",
+        "loadFailed": "图标加载失败",
+        "notSelected": "未选择图标",
+        "open": "打开本地图库"
+    },
+    "common": {
+        "cancel": "取消",
+        "confirm": "确定"
+    },
     "contextMenu": {
         "copy": "复制",
         "paste": "粘贴",

@@ -1,0 +1,16 @@
+<svg data-v-9833e8b2="" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="25" viewBox="0 0 12 25">
+  <g data-v-9833e8b2="" transform="scale(0.15527950310559005)">
+    <!-- 下部开关（空心） -->    
+    <path data-v-9833e8b2="" fill="currentColor" d="M42.00076,99c-10.75,0-19.5,8.75-19.5,19.5c0,9.38,6.66,17.23,15.5,19.08v18.42c0,2.21,1.79,4,4,4s4-1.79,4-4v-18.42c8.84-1.85,15.5-9.7,15.5-19.08C61.50076,107.75,52.75076,99,42.00076,99z M42.00076,130c-6.34,0-11.5-5.16-11.5-11.5s5.16-11.5,11.5-11.5s11.5,5.16,11.5,11.5S48.34076,130,42.00076,130z"/>
+    
+    <!-- 分为三个独立部分 -->
+    <!-- 1. 上部竖线 -->
+    <line data-v-9833e8b2="" x1="42.00076" y1="5" x2="42.00076" y2="23" stroke="currentColor" stroke-width="8" />
+    
+    <!-- 2. 上部空心圆 - 调整为与下部圆形相同大小 -->
+    <circle data-v-9833e8b2="" cx="42.00076" cy="42.5" r="19.5" fill="none" stroke="currentColor" stroke-width="8" />
+    
+    <!-- 3. 右斜线 -->
+    <line data-v-9833e8b2="" x1="58" y1="55" x2="78" y2="98" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
+  </g>
+</svg>

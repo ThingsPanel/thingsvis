@@ -130,6 +130,7 @@ export const COMPONENT_CATEGORY_DEFS = [
 type CategoryMap = Record<string, RegistryListEntry[]>;
 const HIDDEN_COMPONENT_IDS = new Set([
   'basic/analog-clock',
+  'basic/container',
   'basic/line',
   'basic/luxury-clock',
   'geo/map-china',

@@ -655,6 +655,20 @@
             "changeShort": "Change"
         }
     },
+    "localIconPicker": {
+        "title": "Local Icon Library",
+        "searchGroup": "Search groups",
+        "searchIcon": "Search icon name",
+        "empty": "No icons",
+        "loading": "Loading…",
+        "loadFailed": "Failed to load icon",
+        "notSelected": "No icon selected",
+        "open": "Open local library"
+    },
+    "common": {
+        "cancel": "Cancel",
+        "confirm": "Confirm"
+    },
     "contextMenu": {
         "copy": "Copy",
         "paste": "Paste",
