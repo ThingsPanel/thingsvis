@@ -20,6 +20,7 @@
                 "showStripe": "Show Stripes",
                 "stripeColor": "Stripe Color",
                 "showBorder": "Show Border",
+                "rowBorderColor": "Row Border Color",
                 "cellPadding": "Cell Padding",
                 "weightNormal": "Normal (400)",
                 "weightMedium": "Medium (500)",

@@ -43,7 +43,11 @@ function getRuntimeMessages(locale?: string): RuntimeMessages {
 }
 
 function resolveDisplayText(props: Props, ctx: WidgetOverlayContext) {
-  const rawText = typeof props.text === 'string' ? props.text : String(props.text ?? '');
+  const activeText =
+    props.simulateTextEnabled && props.alternateText && elementSimulationPhase.get(ctx.id ?? '') === 'alternate'
+      ? props.alternateText
+      : props.text;
+  const rawText = typeof activeText === 'string' ? activeText : String(activeText ?? '');
   if (rawText.trim()) {
     return { text: rawText, isPlaceholder: false };
   }
@@ -53,6 +57,8 @@ function resolveDisplayText(props: Props, ctx: WidgetOverlayContext) {
     isPlaceholder: true,
   };
 }
+
+const elementSimulationPhase = new Map<string, 'base' | 'alternate'>();
 
 function resolveTextColor(props: Props, colors: WidgetColors, isPlaceholder: boolean) {
   if (isPlaceholder) {
@@ -156,6 +162,7 @@ export const Main = defineWidget({
     let currentCtx = ctx;
     let currentProps = props;
     let colors = resolveWidgetColors(element);
+    let simulationTimer: number | null = null;
 
     const textEl = document.createElement('div');
     textEl.style.width = 'fit-content';
@@ -171,7 +178,32 @@ export const Main = defineWidget({
       element.style.alignItems = getVerticalAlign(currentProps.verticalAlign);
     };
 
-    renderText();
+    const stopSimulation = () => {
+      if (simulationTimer !== null) {
+        window.clearInterval(simulationTimer);
+        simulationTimer = null;
+      }
+    };
+
+    const syncSimulation = () => {
+      stopSimulation();
+      const nodeId = currentCtx.id ?? '';
+      if (!currentProps.simulateTextEnabled || !currentProps.alternateText || !nodeId) {
+        if (nodeId) elementSimulationPhase.set(nodeId, 'base');
+        renderText();
+        return;
+      }
+
+      elementSimulationPhase.set(nodeId, 'base');
+      simulationTimer = window.setInterval(() => {
+        const phase = elementSimulationPhase.get(nodeId) === 'alternate' ? 'base' : 'alternate';
+        elementSimulationPhase.set(nodeId, phase);
+        renderText();
+      }, currentProps.simulateIntervalMs);
+      renderText();
+    };
+
+    syncSimulation();
 
     let themeObserver: MutationObserver | null = null;
     const themeTarget = element.closest('[data-canvas-theme]');
@@ -184,9 +216,10 @@ export const Main = defineWidget({
       update: (nextProps: Props, nextCtx: WidgetOverlayContext) => {
         currentProps = nextProps;
         currentCtx = nextCtx;
-        renderText();
+        syncSimulation();
       },
       destroy: () => {
+        stopSimulation();
         themeObserver?.disconnect();
         element.innerHTML = '';
       },

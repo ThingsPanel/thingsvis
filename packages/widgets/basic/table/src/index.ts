@@ -69,14 +69,23 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
   const { 
     columns, data, 
     showHeader, headerFontSize, headerWeight, headerColor, headerBgColor,
-    bodyFontSize, bodyWeight, bodyColor, showBorder, showStripe, stripeColor,
+    bodyFontSize, bodyWeight, bodyColor, showBorder, rowBorderColor, showStripe, stripeColor,
     cellPadding
   } = props;
+
+  // Legacy: `borderColor` was filtered out of the props panel (BaseStyle collision); accept old saves.
+  const rowBorderColorRaw =
+    rowBorderColor ||
+    (props as unknown as { borderColor?: string }).borderColor ||
+    'auto';
   
   // Resolve Auto Colors
   const textPrimary = colors.fg;
   const textSecondary = withAlpha(textPrimary, 0.75);
-  const borderColor = withAlpha(textPrimary, 0.08);
+  const borderColor =
+    rowBorderColorRaw === 'auto' || !rowBorderColorRaw
+      ? withAlpha(textPrimary, 0.08)
+      : rowBorderColorRaw;
   const rowHoverBg = withAlpha(textPrimary, 0.04);
   
   const finalHeaderColor = headerColor === 'auto' ? textSecondary : headerColor;

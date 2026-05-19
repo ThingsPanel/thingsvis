@@ -649,10 +649,6 @@
         "notSelected": "未选择图标",
         "open": "打开本地图库"
     },
-    "common": {
-        "cancel": "取消",
-        "confirm": "确定"
-    },
     "contextMenu": {
         "copy": "复制",
         "paste": "粘贴",

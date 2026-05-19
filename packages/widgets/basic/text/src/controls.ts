@@ -16,6 +16,23 @@ export const controls = createControlPanel()
       binding: true,
       placeholder: 'widgets.thingsvis-widget-basic-text.label_59',
     });
+    builder
+      .addCustom('alternateText', 'textarea', {
+        label: 'Alternate text',
+        binding: true,
+        placeholder: 'Optional simulated value',
+      })
+      .addSwitch('simulateTextEnabled', {
+        label: 'Simulate text',
+        default: false,
+      })
+      .addNumberInput('simulateIntervalMs', {
+        label: 'Simulate interval (ms)',
+        min: 500,
+        max: 60000,
+        default: 2000,
+        showWhen: { field: 'simulateTextEnabled', value: true },
+      });
   })
 
   // ============================================

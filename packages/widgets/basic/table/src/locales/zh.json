@@ -20,6 +20,7 @@
                 "showStripe": "显示斑马纹",
                 "stripeColor": "斑马纹颜色",
                 "showBorder": "显示行边框",
+                "rowBorderColor": "行边框颜色",
                 "cellPadding": "单元格内边距",
                 "weightNormal": "常规 (400)",
                 "weightMedium": "中等 (500)",

@@ -665,10 +665,6 @@
         "notSelected": "No icon selected",
         "open": "Open local library"
     },
-    "common": {
-        "cancel": "Cancel",
-        "confirm": "Confirm"
-    },
     "contextMenu": {
         "copy": "Copy",
         "paste": "Paste",

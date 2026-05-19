@@ -58,13 +58,40 @@ function getIconMarkup(name: Props['iconName']): string {
   }
 }
 
+function readSvgLength(attrs: string, name: 'width' | 'height'): number | null {
+  const match = attrs.match(new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, 'i'));
+  if (!match) return null;
+
+  const rawValue = match[1];
+  if (!rawValue) return null;
+
+  const value = Number.parseFloat(rawValue.trim());
+  return Number.isFinite(value) && value > 0 ? value : null;
+}
+
+function setSvgAttr(attrs: string, name: string, value: string): string {
+  const pattern = new RegExp(`\\b${name}\\s*=\\s*["'][^"']*["']`, 'i');
+  if (pattern.test(attrs)) {
+    return attrs.replace(pattern, `${name}="${value}"`);
+  }
+
+  return `${attrs} ${name}="${value}"`;
+}
+
 function normalizeSvgMarkup(svg: string): string {
   const trimmed = svg.trim();
   if (!trimmed.includes('<svg')) return trimmed;
   return trimmed.replace(/<svg\b([^>]*)>/i, (match, attrs: string) => {
     let nextAttrs = attrs ?? '';
-    if (!/\bwidth=/i.test(nextAttrs)) nextAttrs += ' width="100%"';
-    if (!/\bheight=/i.test(nextAttrs)) nextAttrs += ' height="100%"';
+    if (!/\bviewBox=/i.test(nextAttrs)) {
+      const width = readSvgLength(nextAttrs, 'width');
+      const height = readSvgLength(nextAttrs, 'height');
+      if (width && height) {
+        nextAttrs += ` viewBox="0 0 ${width} ${height}"`;
+      }
+    }
+    nextAttrs = setSvgAttr(nextAttrs, 'width', '100%');
+    nextAttrs = setSvgAttr(nextAttrs, 'height', '100%');
     if (!/\bpreserveAspectRatio=/i.test(nextAttrs)) {
       nextAttrs += ' preserveAspectRatio="xMidYMid meet"';
     }

@@ -34,6 +34,11 @@ export const PropsSchema = z.object({
   bodyWeight: z.string().default('400').describe('props.bodyWeight'),
   bodyColor: z.string().default('auto').describe('props.bodyColor'),
   showBorder: z.boolean().default(true).describe('props.showBorder'),
+  /**
+   * Row/header divider line color (`auto` = theme-derived).
+   * Must not be named `borderColor` — that path is reserved for BaseStylePanel.
+   */
+  rowBorderColor: z.string().default('auto').describe('props.rowBorderColor'),
   showStripe: z.boolean().default(false).describe('props.showStripe'),
   stripeColor: z.string().default('auto').describe('props.stripeColor'),
   

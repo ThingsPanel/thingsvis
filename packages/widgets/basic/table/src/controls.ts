@@ -62,6 +62,7 @@ export const controls = createControlPanel()
     b.addSwitch('showStripe', { label: `${W}.showStripe` });
     b.addColorPicker('stripeColor', { label: `${W}.stripeColor` });
     b.addSwitch('showBorder', { label: `${W}.showBorder` });
+    b.addColorPicker('rowBorderColor', { label: `${W}.rowBorderColor`, binding: true });
   }, { label: `${W}.groupBody` })
 
   // Density Group
