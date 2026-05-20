@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Label } from '@/components/ui/label';
 import CodeMirror from '@uiw/react-codemirror';
@@ -44,31 +44,17 @@ export const TransformationEditor: React.FC<TransformationEditorProps> = ({
 }) => {
   const { t } = useTranslation('editor');
   const [preview, setPreview] = useState<{ ok: boolean; value: string } | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const schedulePreview = useCallback(
-    (latestCode: string) => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(() => {
-        setPreview(runPreview(latestCode, previewData));
-      }, 500);
-    },
-    [previewData],
-  );
 
   useEffect(() => {
-    schedulePreview(code);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-  }, [code, schedulePreview]);
+    setPreview(runPreview(code, previewData));
+  }, [code, previewData]);
 
   const handleChange = useCallback(
     (value: string) => {
       onChange(value);
-      schedulePreview(value);
+      setPreview(runPreview(value, previewData));
     },
-    [onChange, schedulePreview],
+    [onChange, previewData],
   );
 
   return (

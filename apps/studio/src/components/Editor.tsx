@@ -77,6 +77,11 @@ import { initEmbedModeFromUrl } from '../embed/message-router';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
 import EditorStartupOverlay from './LoadingScreen/EditorStartupOverlay';
 import { LocalIconPickerHost } from './RightPanel/LocalIconPicker';
+import {
+  getBackendProjectIdFromEditorUrl,
+  getMergedEditorUrlParams,
+  isEmbeddedEditorUrl,
+} from '../lib/embed/editorUrlParams';
 
 type Language = string;
 function DataPanel(_props: { store: typeof store; language: Language }) {
@@ -161,8 +166,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   }>({ open: false, newMode: 'fixed', onConfirm: () => {} });
 
   const embedVisibility = useMemo(() => {
-    const params = new URLSearchParams(window.location.hash.split('?')[1] || '');
-    const isEmbedded = params.get('mode') === 'embedded' || !!props.embedVisibility;
+    const params = getMergedEditorUrlParams();
+    const isEmbedded = isEmbeddedEditorUrl() || !!props.embedVisibility;
     return {
       isEmbedded,
       showLibrary: props.embedVisibility?.showLibrary ?? params.get('showLibrary') !== '0',
@@ -173,6 +178,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       hideProjectDialog: props.embedVisibility?.hideProjectDialog ?? false,
     };
   }, [props.embedVisibility]);
+  const urlBackendProjectId = useMemo(() => getBackendProjectIdFromEditorUrl() ?? undefined, []);
 
   const kernelState = useSyncExternalStore(
     useCallback((subscribe) => store.subscribe(subscribe), []),
@@ -309,7 +315,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   const { saveState, markDirty, saveNow } = useEditorSync({
     projectId,
-    cloudProjectId: currentProject?.id,
+    cloudProjectId: currentProject?.id ?? urlBackendProjectId,
     getProjectState,
     isBootstrapping,
     isEmbedded: embedVisibility.isEmbedded,

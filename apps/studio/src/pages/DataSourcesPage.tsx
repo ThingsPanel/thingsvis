@@ -725,6 +725,7 @@ export default function DataSourcesPage() {
                       onChange={(code) =>
                         setEditingSource({ ...editingSource, transformation: code })
                       }
+                      previewData={selectedId ? states[selectedId]?.data : undefined}
                     />
                   </section>
                 </div>

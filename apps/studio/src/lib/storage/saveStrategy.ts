@@ -18,6 +18,7 @@
 
 import { useSyncExternalStore, useCallback } from 'react';
 import { isEmbedMode, requestSave as sendToHost } from '../../embed/message-router';
+import { getDashboardIdFromEditorUrl, getMergedEditorUrlParams } from '../embed/editorUrlParams';
 
 // =============================================================================
 // Types
@@ -80,22 +81,13 @@ function parseUrlParams(): Partial<SaveStrategyConfig> {
   const config: Partial<SaveStrategyConfig> = {};
 
   try {
-    const hash = window.location.hash || '';
-    const queryIndex = hash.indexOf('?');
-
-    if (queryIndex >= 0) {
-      const params = new URLSearchParams(hash.slice(queryIndex + 1));
-      const saveTarget = params.get('saveTarget');
-      if (saveTarget === 'host' || saveTarget === 'self') config.saveTarget = saveTarget;
-
-      if (params.get('mode') === 'embedded') config.isEmbedded = true;
+    const params = getMergedEditorUrlParams();
+    const saveTarget = params.get('saveTarget');
+    if (saveTarget === 'host' || saveTarget === 'self') config.saveTarget = saveTarget;
+    if (params.get('mode') === 'embedded' || params.get('embedded') === 'true') {
+      config.isEmbedded = true;
     }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchTarget = urlParams.get('saveTarget');
-    if (searchTarget === 'host' || searchTarget === 'self') {
-      config.saveTarget = searchTarget;
-    }
+    config.embeddedProjectId = getDashboardIdFromEditorUrl() ?? undefined;
   } catch (e) {
     console.error('[SaveStrategy] Failed to parse URL params:', e);
   }
@@ -157,7 +149,7 @@ class SaveStrategyStore {
       saveTarget: urlConfig.saveTarget || 'self',
       storageBackend,
       isEmbedded,
-      embeddedProjectId: options?.embeddedProjectId,
+      embeddedProjectId: options?.embeddedProjectId || urlConfig.embeddedProjectId,
       embeddedProjectName: options?.embeddedProjectName,
     };
 

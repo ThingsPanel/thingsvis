@@ -412,6 +412,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                         onChange={(code) =>
                           setEditingSource({ ...editingSource, transformation: code })
                         }
+                        previewData={selectedId ? states[selectedId]?.data : undefined}
                       />
                     </section>
                   </div>

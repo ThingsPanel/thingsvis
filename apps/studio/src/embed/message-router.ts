@@ -13,8 +13,7 @@ const IS_DEBUG = process.env.NODE_ENV === 'development';
 
 export function isEmbedMode(): boolean {
   if (typeof window === 'undefined') return false;
-  if (window !== window.parent) return true;
-  return new URLSearchParams(window.location.hash.split('?')[1] || '').get('mode') === 'embedded';
+  return isEmbeddedEditorUrl();
 }
 
 // =============================================================================
@@ -437,50 +436,52 @@ import { normalizeCanvasBackground } from '../lib/canvasBackground';
 import { platformFieldStore } from '../lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import { NodeSchema, type NodeSchemaType } from '@thingsvis/schema';
+import {
+  getDashboardIdFromEditorUrl,
+  getMergedEditorUrlParams,
+  isEmbeddedEditorUrl,
+} from '../lib/embed/editorUrlParams';
 
 /**
  * Parse embed config from URL params and initialize the SaveStrategy.
  * Called from Editor.tsx on mount.
  */
 export function initEmbedModeFromUrl(isAuthenticated: boolean): void {
-  const hash = window.location.hash || '';
-  const queryIndex = hash.indexOf('?');
+  if (!isEmbeddedEditorUrl()) return;
 
-  if (queryIndex >= 0) {
-    const params = new URLSearchParams(hash.slice(queryIndex + 1));
-    const saveTarget = params.get('saveTarget');
-    const mode = params.get('mode');
-    const token = params.get('token');
+  const params = getMergedEditorUrlParams();
+  const saveTarget = params.get('saveTarget');
+  const token = params.get('token');
+  const dashboardId = getDashboardIdFromEditorUrl() ?? undefined;
 
-    if (mode === 'embedded') {
-      if (token) {
-        _embedToken = token;
-        apiClient.configure({ getToken: () => _embedToken });
-      }
-
-      initSaveStrategy({
-        isAuthenticated: isAuthenticated || !!token,
-        embeddedProjectId: undefined,
-      });
-
-      if (saveTarget === 'host' || saveTarget === 'self') {
-        updateEmbeddedConfig({ saveTarget: saveTarget as SaveTarget });
-      }
-
-      // Load platform fields from URL-injected service config (backward compat)
-      const serviceConfig = resolveEditorServiceConfig();
-      if (serviceConfig.platformFields && serviceConfig.platformFields.length > 0) {
-        platformFieldStore.setFields(serviceConfig.platformFields as never);
-      }
-
-      // Listen for dynamic schema updates from the host
-      onEmbedEvent('updateSchema', (eventPayload: unknown) => {
-        const p = eventPayload as Record<string, unknown>;
-        const fields = p?.payload || eventPayload;
-        if (Array.isArray(fields) && fields.length > 0) {
-          platformFieldStore.setFields(fields);
-        }
-      });
-    }
+  if (token) {
+    _embedToken = token;
+    apiClient.configure({ getToken: () => _embedToken });
   }
+
+  initSaveStrategy({
+    isAuthenticated: isAuthenticated || !!token,
+    embeddedProjectId: dashboardId,
+  });
+
+  updateEmbeddedConfig({
+    projectId: dashboardId,
+    saveTarget:
+      saveTarget === 'host' || saveTarget === 'self' ? (saveTarget as SaveTarget) : 'self',
+  });
+
+  // Load platform fields from URL-injected service config (backward compat)
+  const serviceConfig = resolveEditorServiceConfig();
+  if (serviceConfig.platformFields && serviceConfig.platformFields.length > 0) {
+    platformFieldStore.setFields(serviceConfig.platformFields as never);
+  }
+
+  // Listen for dynamic schema updates from the host
+  onEmbedEvent('updateSchema', (eventPayload: unknown) => {
+    const p = eventPayload as Record<string, unknown>;
+    const fields = p?.payload || eventPayload;
+    if (Array.isArray(fields) && fields.length > 0) {
+      platformFieldStore.setFields(fields);
+    }
+  });
 }

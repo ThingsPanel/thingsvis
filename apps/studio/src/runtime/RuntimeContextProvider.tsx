@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/auth';
 import { getConfiguredEmbedToken } from '@/embed/message-router';
 import { deriveRuntimeContext } from './deriveRuntimeContext';
 import type { RuntimeContext } from './RuntimeContext';
+import { getMergedEditorUrlParams, isWindowEmbedded } from '@/lib/embed/editorUrlParams';
 
 const RuntimeCtx = createContext<RuntimeContext | null>(null);
 
@@ -26,24 +27,14 @@ export function RuntimeContextProvider({ children }: { children: React.ReactNode
   const { isAuthenticated } = useAuth();
 
   const runtimeContext = useMemo(() => {
-    // Collect URL params from hash-router query string or search params
-    const hash = window.location.hash || '';
-    const queryIndex = hash.indexOf('?');
-    const urlParams =
-      queryIndex >= 0
-        ? new URLSearchParams(hash.slice(queryIndex + 1))
-        : new URLSearchParams(window.location.search);
+    // Collect URL params from both hash-router query string and search params.
+    const urlParams = getMergedEditorUrlParams();
 
     // Embed token from URL params or message-router config
     const urlToken = urlParams.get('token');
     const embedToken = urlToken || getConfiguredEmbedToken() || undefined;
 
-    let isInIframe = false;
-    try {
-      isInIframe = window.self !== window.top;
-    } catch {
-      isInIframe = true;
-    }
+    const isInIframe = isWindowEmbedded();
 
     return deriveRuntimeContext({ isInIframe, urlParams, isAuthenticated, embedToken });
   }, [isAuthenticated]);

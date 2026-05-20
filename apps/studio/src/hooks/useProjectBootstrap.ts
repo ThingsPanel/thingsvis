@@ -40,6 +40,10 @@ import {
 } from '../embed/runtimeVariables';
 import { sanitizeDataSourcesForHostSave } from '../lib/embedded/hostDataSourcePolicy';
 import { mergeActionVariableDefinitions } from '../lib/eventVariables';
+import {
+  getDashboardIdFromEditorUrl,
+  getMergedEditorUrlParams,
+} from '../lib/embed/editorUrlParams';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -219,9 +223,7 @@ function normalizePreviewAlignY(value: unknown): PreviewAlignY {
 function isHostManagedEmbedMode(isEmbedded: boolean): boolean {
   if (!isEmbedded || typeof window === 'undefined') return false;
   try {
-    const hashQuery = window.location.hash.split('?')[1] || '';
-    const hashParams = new URLSearchParams(hashQuery);
-    return (hashParams.get('saveTarget') || '') === 'host';
+    return (getMergedEditorUrlParams().get('saveTarget') || '') === 'host';
   } catch {
     return false;
   }
@@ -261,6 +263,8 @@ export function useProjectBootstrap({
   // Resolve initial project id from URL/hash, last-opened id, or recents.
   const resolveInitialProjectId = useCallback((): string => {
     if (dashboardId) return dashboardId;
+    const urlDashboardId = getDashboardIdFromEditorUrl();
+    if (urlDashboardId) return urlDashboardId;
     try {
       const hash = window.location.hash || '';
       const qIndex = hash.indexOf('?');
@@ -513,8 +517,7 @@ export function useProjectBootstrap({
           // NOT from projectId — because tv:init overwrites projectId with the real
           // dashboard ID, which would cause a second bootstrap if we only checked
           // the string pattern ('widget' / 'embed-*').
-          const hashQuery = window.location.hash.split('?')[1] || '';
-          const hashParams = new URLSearchParams(hashQuery);
+          const hashParams = getMergedEditorUrlParams();
           const urlSaveTarget = hashParams.get('saveTarget') || '';
           const shouldResumeFromSession = hashParams.get('resumeSession') === '1';
           const isHostProject =
