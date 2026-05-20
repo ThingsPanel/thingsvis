@@ -8,6 +8,8 @@ import { oneDark } from '@codemirror/theme-one-dark';
 interface TransformationEditorProps {
   code: string;
   onChange: (code: string) => void;
+  /** Triggered before running preview, typically to request fresh source data. */
+  onBeforePreviewRun?: () => void;
   /** Sample data to run the script against for live preview. */
   previewData?: unknown;
 }
@@ -17,6 +19,9 @@ const EXTENSIONS = [javascript()];
 /** Run script in a Function sandbox with `data` bound, returning result or error. */
 function runPreview(code: string, data: unknown): { ok: boolean; value: string } {
   if (!code.trim()) return { ok: true, value: '// (empty)' };
+  if (data === undefined || data === null) {
+    return { ok: true, value: '// waiting for live data...' };
+  }
   try {
     // eslint-disable-next-line no-new-func
     const fn = new Function('data', `"use strict";\n${code}`);
@@ -40,6 +45,7 @@ const DEFAULT_PREVIEW_DATA = { items: [{ value: 42 }, { value: 18 }] };
 export const TransformationEditor: React.FC<TransformationEditorProps> = ({
   code,
   onChange,
+  onBeforePreviewRun,
   previewData = DEFAULT_PREVIEW_DATA,
 }) => {
   const { t } = useTranslation('editor');
@@ -52,9 +58,10 @@ export const TransformationEditor: React.FC<TransformationEditorProps> = ({
   const handleChange = useCallback(
     (value: string) => {
       onChange(value);
+      onBeforePreviewRun?.();
       setPreview(runPreview(value, previewData));
     },
-    [onChange, previewData],
+    [onBeforePreviewRun, onChange, previewData],
   );
 
   return (

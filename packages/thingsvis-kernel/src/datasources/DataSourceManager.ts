@@ -352,7 +352,7 @@ export class DataSourceManager {
     }
 
     // Wire up adapter events to store
-    adapter.onData((data) => {
+    adapter.onData((data, rawData) => {
       // Apply FieldMapping rules (DSP v2) if configured
       const fieldMappings =
         'fieldMappings' in config
@@ -362,7 +362,7 @@ export class DataSourceManager {
         fieldMappings && fieldMappings.rules && fieldMappings.rules.length > 0
           ? FieldMappingExecutor.apply(data, fieldMappings)
           : data;
-      this.store?.getState().updateDataSourceData(config.id, processedData);
+      this.store?.getState().updateDataSourceData(config.id, processedData, rawData);
     });
 
     adapter.onError((error) => {

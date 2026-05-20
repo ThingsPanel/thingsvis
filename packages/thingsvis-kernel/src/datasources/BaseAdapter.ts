@@ -19,7 +19,8 @@ export interface WriteResult {
 export abstract class BaseAdapter {
   protected config?: DataSource;
   protected currentData: unknown = null;
-  protected dataCallbacks: Set<(data: unknown) => void> = new Set();
+  protected currentRawData: unknown = null;
+  protected dataCallbacks: Set<(data: unknown, rawData?: unknown) => void> = new Set();
   protected errorCallbacks: Set<(error: unknown) => void> = new Set();
 
   constructor(public readonly type: DataSourceType) {}
@@ -81,15 +82,15 @@ export abstract class BaseAdapter {
     };
   }
 
-  public onData(callback: (data: unknown) => void): void {
+  public onData(callback: (data: unknown, rawData?: unknown) => void): void {
     this.dataCallbacks.add(callback);
     // Send current data immediately if available
     if (this.currentData !== null) {
-      callback(this.currentData);
+      callback(this.currentData, this.currentRawData);
     }
   }
 
-  public offData(callback: (data: unknown) => void): void {
+  public offData(callback: (data: unknown, rawData?: unknown) => void): void {
     this.dataCallbacks.delete(callback);
   }
 
@@ -109,8 +110,9 @@ export abstract class BaseAdapter {
     if (this.config?.transformation) {
       finalData = SafeExecutor.execute(this.config.transformation, rawData);
     }
+    this.currentRawData = rawData;
     this.currentData = finalData;
-    this.dataCallbacks.forEach((cb) => cb(finalData));
+    this.dataCallbacks.forEach((cb) => cb(finalData, rawData));
   }
 
   protected emitError(error: unknown): void {
@@ -120,5 +122,9 @@ export abstract class BaseAdapter {
 
   public getData(): unknown {
     return this.currentData;
+  }
+
+  public getRawData(): unknown {
+    return this.currentRawData;
   }
 }

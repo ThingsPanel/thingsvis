@@ -40,6 +40,7 @@ export const createDataSourceSlice: StateCreator<
       const nextState = {
         id,
         data: existing?.data ?? null,
+        rawData: existing?.rawData ?? null,
         status: existing?.status ?? 'loading',
         lastUpdated: existing?.lastUpdated ?? Date.now(),
         fieldSchema: existing?.fieldSchema,
@@ -52,6 +53,7 @@ export const createDataSourceSlice: StateCreator<
         existing.status === nextState.status &&
         existing.error === nextState.error &&
         isSameValue(existing.data, nextState.data) &&
+        isSameValue(existing.rawData, nextState.rawData) &&
         isSameValue(existing.fieldSchema, nextState.fieldSchema)
       ) {
         return;
@@ -61,7 +63,7 @@ export const createDataSourceSlice: StateCreator<
     });
   },
 
-  updateDataSourceData: (id, data) => {
+  updateDataSourceData: (id, data, rawData) => {
     set((state) => {
       const fieldSchema = extractFieldSchema(data);
       const fieldSchemaUpdatedAt = Date.now();
@@ -70,6 +72,7 @@ export const createDataSourceSlice: StateCreator<
         state.dataSources[id] = {
           id,
           data,
+          rawData,
           status: 'connected',
           lastUpdated: fieldSchemaUpdatedAt,
           fieldSchema,
@@ -79,11 +82,13 @@ export const createDataSourceSlice: StateCreator<
         if (
           state.dataSources[id].status === 'connected' &&
           isSameValue(state.dataSources[id].data, data) &&
+          isSameValue(state.dataSources[id].rawData, rawData) &&
           isSameValue(state.dataSources[id].fieldSchema, fieldSchema)
         ) {
           return;
         }
         state.dataSources[id].data = data;
+        state.dataSources[id].rawData = rawData;
         state.dataSources[id].lastUpdated = fieldSchemaUpdatedAt;
         state.dataSources[id].status = 'connected';
         state.dataSources[id].fieldSchema = fieldSchema;

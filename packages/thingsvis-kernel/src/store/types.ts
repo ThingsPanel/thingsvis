@@ -63,6 +63,7 @@ export type ConnectionState = {
 export type DataSourceRuntimeState = {
   id: string;
   data: unknown;
+  rawData?: unknown;
   status: 'idle' | 'connected' | 'disconnected' | 'error' | 'loading';
   error?: string;
   lastUpdated: number;
@@ -119,7 +120,7 @@ export type KernelActions = {
   updateCanvas: (changes: Partial<CanvasState>) => void;
 
   setDataSourceState: (id: string, state: Partial<DataSourceRuntimeState>) => void;
-  updateDataSourceData: (id: string, data: unknown) => void;
+  updateDataSourceData: (id: string, data: unknown, rawData?: unknown) => void;
   removeDataSourceFromStore: (id: string) => void;
 
   setNodeVisible: (nodeId: string, visible: boolean) => void;

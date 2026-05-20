@@ -412,7 +412,14 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                         onChange={(code) =>
                           setEditingSource({ ...editingSource, transformation: code })
                         }
-                        previewData={selectedId ? states[selectedId]?.data : undefined}
+                        onBeforePreviewRun={() => {
+                          if (selectedId) {
+                            dataSourceManager.refreshDataSource(selectedId).catch(() => {
+                              // best effort: preview will still use latest cached raw data
+                            });
+                          }
+                        }}
+                        previewData={selectedId ? (states[selectedId]?.rawData ?? null) : null}
                       />
                     </section>
                   </div>
