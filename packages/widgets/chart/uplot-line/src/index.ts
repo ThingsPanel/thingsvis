@@ -19,6 +19,7 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 16;
+const DEFAULT_TITLE_FONT_SIZE = 14;
 /** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT` / `LEGEND_FONT_SIZE`. */
 const LEGEND_BLOCK_HEIGHT = 20;
 const LEGEND_FONT_SIZE = 12;
@@ -494,7 +495,6 @@ export const Main = defineWidget({
     headerEl.style.justifyContent = 'flex-start';
     headerEl.style.gap = '8px';
     headerEl.style.flex = '0 0 auto';
-    headerEl.style.padding = `${WIDGET_PADDING}px ${WIDGET_PADDING}px 8px ${WIDGET_PADDING}px`;
     element.appendChild(headerEl);
 
     const titleEl = document.createElement('div');
@@ -529,6 +529,8 @@ export const Main = defineWidget({
       const showTitle = !!currentProps.title;
       headerEl.style.display = showTitle ? 'flex' : 'none';
 
+      const padding = Math.round(WIDGET_PADDING * scale);
+      headerEl.style.padding = `${padding}px ${padding}px ${Math.round(10 * scale)}px ${padding}px`;
       titleEl.textContent = currentProps.title || '';
       titleEl.style.display = showTitle ? 'block' : 'none';
       titleEl.style.color = resolveLayeredColor({
@@ -536,8 +538,10 @@ export const Main = defineWidget({
         theme: colors.fg,
         fallback: colors.fg,
       });
-      titleEl.style.fontSize = `${Math.round(14 * scale)}px`;
+      titleEl.style.fontSize = `${Math.max(12, Math.round((currentProps.titleFontSize ?? DEFAULT_TITLE_FONT_SIZE) * scale))}px`;
       titleEl.style.fontWeight = '600';
+      titleEl.style.lineHeight = '1.35';
+      titleEl.style.fontFamily = 'Inter, "Noto Sans SC", "Noto Sans", sans-serif';
       titleEl.style.textAlign = getTitleAlignment(currentProps.titleAlign);
     };
 

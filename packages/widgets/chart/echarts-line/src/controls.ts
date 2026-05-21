@@ -4,7 +4,7 @@ import { generateControls } from '@thingsvis/widget-sdk';
 export const controls = generateControls(PropsSchema, {
   groups: {
     Content: ['title', 'titleAlign', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
-    Style: ['primaryColor', 'titleColor', 'axisLabelColor', 'smooth', 'showArea'],
+    Style: ['primaryColor', 'titleColor', 'titleFontSize', 'axisLabelColor', 'smooth', 'showArea'],
     Data: ['data'],
   },
   overrides: {
@@ -19,6 +19,13 @@ export const controls = generateControls(PropsSchema, {
     titleColor: {
       kind: 'color',
       label: 'widgets.thingsvis-widget-chart-echarts-line.controls.titleColor',
+    },
+    titleFontSize: {
+      kind: 'slider',
+      label: 'widgets.thingsvis-widget-chart-echarts-line.controls.titleFontSize',
+      min: 12,
+      max: 32,
+      step: 1,
     },
     axisLabelColor: {
       kind: 'color',
@@ -59,6 +66,7 @@ export const controls = generateControls(PropsSchema, {
     showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
     primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
     titleColor: { enabled: true, modes: ['static', 'field', 'expr'] },
+    titleFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
     axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
     data: { enabled: true, modes: ['static', 'field', 'expr'] },
   },

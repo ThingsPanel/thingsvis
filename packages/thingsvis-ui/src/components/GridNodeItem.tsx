@@ -12,6 +12,7 @@ interface PluginOverlayInstance {
 import { PropertyResolver } from '../engine/PropertyResolver';
 import { buildEmit, type ActionRuntime } from '../engine/executeActions';
 import { WidgetErrorBoundary } from './WidgetErrorBoundary';
+import { createWidgetThemeColorOverrideStyle } from '../utils/widgetThemeColorOverrides';
 
 /** Known shape of node baseStyle coming from schema */
 interface NodeBaseStyle {
@@ -310,6 +311,9 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         ? nodeBaseStyle.border.width
         : 0;
     const innerClipRadius = Math.max(outerBorderRadius - outerBorderWidth, 0);
+    const themeColorOverrides = createWidgetThemeColorOverrideStyle(
+        nodeBaseStyle.background?.color,
+    );
     const [isInlineEditing, setIsInlineEditing] = React.useState(false);
     const [draftText, setDraftText] = React.useState(liveText);
     const inlineEditorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -563,6 +567,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                         ? `${nodeBaseStyle.shadow.offsetX ?? 0}px ${nodeBaseStyle.shadow.offsetY ?? 0}px ${nodeBaseStyle.shadow.blur}px ${nodeBaseStyle.shadow.color ?? 'rgba(0,0,0,0.2)'}`
                         : undefined,
                     opacity: nodeBaseStyle.opacity != null ? nodeBaseStyle.opacity : undefined,
+                    ...themeColorOverrides,
                 }}
             >
                 <div

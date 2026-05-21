@@ -12,6 +12,7 @@
           "timeRangePreset": "Time Range",
           "primaryColor": "Primary Color",
           "titleColor": "Title Color",
+          "titleFontSize": "Title Font Size",
           "axisLabelColor": "Axis Label Color",
           "smooth": "Smooth Curve",
           "showArea": "Show Area Fill",

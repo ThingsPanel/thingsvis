@@ -70,6 +70,31 @@ describe('chart/echarts-line widget', () => {
     harness.destroy();
   });
 
+  it('renders the title in a dedicated header with equal top and left padding', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: {
+        title: '实时温度曲线',
+        titleFontSize: 16,
+      },
+    });
+
+    const header = harness.element.firstElementChild as HTMLElement | null;
+    const title = header?.firstElementChild as HTMLElement | null;
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(header?.style.display).not.toBe('none');
+    expect(title?.textContent).toBe('实时温度曲线');
+    expect(title?.style.fontWeight).toBe('600');
+    expect(latestOption?.title).toBeUndefined();
+
+    expect(header?.style.paddingTop).toBe(header?.style.paddingLeft);
+    expect(Number.parseFloat(header?.style.paddingTop || '0')).toBeGreaterThan(0);
+
+    harness.destroy();
+  });
+
   it('renders multiple category line series from grouped data', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {

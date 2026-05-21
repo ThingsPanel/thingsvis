@@ -13,6 +13,7 @@ import React from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
+import { syncWidgetThemeColorOverrides } from '../utils/widgetThemeColorOverrides';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -1505,6 +1506,7 @@ export class VisualEngine {
 
     // Opacity
     box.style.opacity = typeof baseStyle.opacity === 'number' ? String(baseStyle.opacity) : '1';
+    syncWidgetThemeColorOverrides(box, baseStyle.background?.color);
   }
 
   private toRectProps(node: NodeState) {

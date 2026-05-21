@@ -6,7 +6,7 @@ export const controls = generateControls(PropsSchema, {
         Content: ['title', 'titleAlign', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
         Style: [
             'primaryColor', 'titleColor', 'axisLabelColor',
-            'xAxisFontSize', 'yAxisFontSize',
+            'titleFontSize', 'xAxisFontSize', 'yAxisFontSize',
             'lineWidth', 'showArea', 'areaFillAlpha', 'smooth',
         ],
         Data: ['data'],
@@ -15,6 +15,13 @@ export const controls = generateControls(PropsSchema, {
     overrides: {
         primaryColor: { kind: 'color' },
         titleColor: { kind: 'color', label: { zh: '标题颜色', en: 'Title Color' } },
+        titleFontSize: {
+            kind: 'slider',
+            label: { zh: '标题字号', en: 'Title Font Size' },
+            min: 12,
+            max: 32,
+            step: 1,
+        },
         axisLabelColor: { kind: 'color', label: { zh: '坐标文字颜色', en: 'Axis Label Color' } },
         data: { kind: 'json' },
         titleAlign: {
@@ -94,6 +101,7 @@ export const controls = generateControls(PropsSchema, {
         titleAlign: { enabled: true, modes: ['static', 'field', 'expr'] },
         primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         titleColor: { enabled: true, modes: ['static', 'field', 'expr'] },
+        titleFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
         axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         showLegend: { enabled: true, modes: ['static', 'field', 'expr'] },
         showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },

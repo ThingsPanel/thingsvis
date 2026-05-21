@@ -23,6 +23,24 @@ describe('interaction/value-card widget', () => {
     harness.destroy();
   });
 
+  it('shows only icon, title, value, and suffix by default', () => {
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: Main.schema.parse({}),
+    });
+
+    const html = harness.element.innerHTML;
+    expect(html).toContain('总览数值');
+    expect(html).toContain('0.00');
+    expect(html).toContain('元');
+    expect(html).not.toContain('较上月');
+    expect(html).not.toContain('▲');
+    expect(html).not.toContain('▼');
+    expect(html).not.toContain('￥');
+
+    harness.destroy();
+  });
+
   it('collapses the default padding only for explicitly transparent backgrounds', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',

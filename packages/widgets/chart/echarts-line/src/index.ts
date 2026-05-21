@@ -21,10 +21,9 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const CHART_PADDING = 16;
-const TITLE_FONT_SIZE = 14;
+const DEFAULT_TITLE_FONT_SIZE = 14;
 const LEGEND_FONT_SIZE = 12;
 const MIN_AXIS_LABEL_FONT_SIZE = 12;
-const TITLE_LINE_HEIGHT = 18;
 const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
@@ -299,16 +298,15 @@ function getEmptyTimeWindow(timeRangePreset: Props['timeRangePreset']): {
   return { startMs: endMs - fallbackRangeMs, endMs };
 }
 
-function resolveChartLeft(align: Props['titleAlign']): 'left' | 'center' | 'right' {
+function getTitleAlignment(align: Props['titleAlign']): 'left' | 'center' | 'right' {
   if (align === 'center') return 'center';
   if (align === 'right') return 'right';
   return 'left';
 }
 
-function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 'right' {
-  if (align === 'center') return 'center';
-  if (align === 'right') return 'right';
-  return 'left';
+function computeScale(width: number, height: number): number {
+  const minDim = Math.min(width, height);
+  return Math.max(0.6, Math.min(1.5, minDim / 300));
 }
 
 /**
@@ -322,10 +320,8 @@ function buildOption(
 ): echarts.EChartsOption {
   const {
     title,
-    titleAlign,
     data,
     primaryColor,
-    titleColor,
     axisLabelColor,
     showLegend,
     smooth,
@@ -335,11 +331,6 @@ function buildOption(
     timeRangePreset,
   } = props;
 
-  const resolvedTitleColor = resolveLayeredColor({
-    instance: titleColor,
-    theme: colors.fg,
-    fallback: colors.fg,
-  });
   const resolvedAxisLabelColor = resolveLayeredColor({
     instance: axisLabelColor,
     theme: colors.fg,
@@ -349,7 +340,6 @@ function buildOption(
   const baseSeriesColor = pickSeriesColor(primaryColor, colors);
   const padding = Math.round(CHART_PADDING * scale);
   const axisLabelFontSize = Math.max(MIN_AXIS_LABEL_FONT_SIZE, Math.round(12 * scale));
-  const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const seriesName = title || messages.runtime?.defaultSeriesName || 'Value';
   const normalizedSeries = normalizeLineData(data, timeRangePreset, seriesName);
@@ -440,15 +430,6 @@ function buildOption(
             fontSize: Math.round(12 * scale),
           },
         },
-    title: title
-      ? {
-          text: title,
-          left: resolveChartLeft(titleAlign),
-          textAlign: resolveTitleTextAlign(titleAlign),
-          textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
-          top: padding,
-        }
-      : undefined,
     tooltip: {
       trigger: 'axis',
     },
@@ -465,7 +446,7 @@ function buildOption(
       left: padding,
       right: padding,
       bottom: padding + legendSpace,
-      top: padding + titleSpace,
+      top: padding,
       containLabel: true,
     },
     xAxis,
@@ -521,14 +502,64 @@ function buildOption(
 function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayContext) {
   element.style.width = '100%';
   element.style.height = '100%';
+  element.style.display = 'flex';
+  element.style.flexDirection = 'column';
+  element.style.boxSizing = 'border-box';
+  element.style.overflow = 'hidden';
   element.style.pointerEvents = 'auto';
+
+  const headerEl = document.createElement('div');
+  headerEl.style.flex = '0 0 auto';
+  headerEl.style.boxSizing = 'border-box';
+
+  const titleEl = document.createElement('div');
+  titleEl.style.minWidth = '0';
+  titleEl.style.whiteSpace = 'nowrap';
+  titleEl.style.overflow = 'hidden';
+  titleEl.style.textOverflow = 'ellipsis';
+  titleEl.style.lineHeight = '1.35';
+  titleEl.style.fontFamily = 'Inter, "Noto Sans SC", "Noto Sans", sans-serif';
+  headerEl.appendChild(titleEl);
+
+  const chartHost = document.createElement('div');
+  chartHost.style.flex = '1 1 auto';
+  chartHost.style.minHeight = '0';
+  chartHost.style.width = '100%';
+
+  element.appendChild(headerEl);
+  element.appendChild(chartHost);
 
   let currentCtx = ctx;
   let currentProps = props;
   let colors: WidgetColors = resolveWidgetColors(element);
   let messages = getRuntimeMessages(ctx.locale);
 
-  const chart = echarts.init(element);
+  const applyHeader = (scale: number) => {
+    colors = resolveWidgetColors(element);
+    const showTitle = !!currentProps.title;
+    headerEl.style.display = showTitle ? 'block' : 'none';
+    if (!showTitle) return;
+
+    const padding = Math.round(CHART_PADDING * scale);
+    const titleFontPx = Math.max(
+      MIN_AXIS_LABEL_FONT_SIZE,
+      Math.round((currentProps.titleFontSize ?? DEFAULT_TITLE_FONT_SIZE) * scale),
+    );
+
+    headerEl.style.padding = `${padding}px ${padding}px ${Math.round(10 * scale)}px ${padding}px`;
+    titleEl.textContent = currentProps.title;
+    titleEl.style.fontSize = `${titleFontPx}px`;
+    titleEl.style.fontWeight = '600';
+    titleEl.style.textAlign = getTitleAlignment(currentProps.titleAlign);
+    titleEl.style.color = resolveLayeredColor({
+      instance: currentProps.titleColor,
+      theme: colors.fg,
+      fallback: colors.fg,
+    });
+  };
+
+  const chart = echarts.init(chartHost);
+  applyHeader(1);
   chart.setOption(buildOption(currentProps, colors, messages, 1));
 
   const scheduleResize = () => {
@@ -538,10 +569,10 @@ function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayConte
           chart.resize();
           const cw = element.clientWidth || 300;
           const ch = element.clientHeight || 200;
-          const minDim = Math.min(cw, ch);
-          const scale = Math.max(0.6, Math.min(1.5, minDim / 300));
+          const scale = computeScale(cw, ch);
+          applyHeader(scale);
           chart.setOption(buildOption(currentProps, colors, messages, scale), {
-            replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis', 'graphic', 'legend', 'title'],
+            replaceMerge: ['dataset', 'series', 'xAxis', 'yAxis', 'graphic', 'legend'],
           });
         }
       });

@@ -12,6 +12,7 @@
           "timeRangePreset": "时间范围",
           "primaryColor": "主色",
           "titleColor": "标题颜色",
+          "titleFontSize": "标题字号",
           "axisLabelColor": "坐标文字颜色",
           "smooth": "平滑曲线",
           "showArea": "显示面积填充",
