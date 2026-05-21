@@ -87,6 +87,30 @@ describe('platformDatasourceBindings', () => {
     expect((nextConfigs[0]?.config as any)?.bufferSize).toBe(24);
   });
 
+  it('preserves host-injected deviceId for template platform data sources', () => {
+    const nextConfigs = augmentPlatformDataSourcesForNodes(
+      [
+        createPlatformDataSource('__platform___template____', {
+          deviceId: 'real-device-1',
+        }),
+      ],
+      [
+        {
+          type: 'interaction/value-card-simple',
+          data: [
+            {
+              targetProp: 'value',
+              expression: '{{ ds.__platform___template____.data.temperature }}',
+            },
+          ],
+        },
+      ],
+    );
+
+    expect((nextConfigs[0]?.config as any)?.deviceId).toBe('real-device-1');
+    expect((nextConfigs[0]?.config as any)?.requestedFields).toEqual(['temperature']);
+  });
+
   it('creates missing platform data sources from node bindings', () => {
     const nextConfigs = augmentPlatformDataSourcesForNodes(
       [],

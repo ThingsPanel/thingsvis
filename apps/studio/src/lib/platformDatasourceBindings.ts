@@ -139,7 +139,7 @@ export function augmentPlatformDataSourcesForNodes(
         source: 'platform',
         fieldMappings: {},
         ...baseConfig,
-        ...(deviceId ? { deviceId } : {}),
+        ...(deviceId && !baseConfig.deviceId ? { deviceId } : {}),
         requestedFields: Array.from(
           new Set([...(baseConfig.requestedFields ?? []), ...requirement.requestedFields]),
         ),
