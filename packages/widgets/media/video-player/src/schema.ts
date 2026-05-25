@@ -5,7 +5,7 @@ export const PropsSchema = z.object({
   showTitle: z.boolean().default(false).describe('props.showTitle'),
   src: z.string().default('').describe('props.src'),
   mode: z.string().default('webrtc,mse,hls,mjpeg').describe('props.mode'),
-  background: z.boolean().default(false).describe('props.background'),
+  autoplay: z.boolean().default(true).describe('props.autoplay'),
   visibilityThreshold: z.number().min(0).max(1).default(0).describe('props.visibilityThreshold'),
 
   // Style
