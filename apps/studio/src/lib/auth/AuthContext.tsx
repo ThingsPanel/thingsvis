@@ -445,9 +445,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     if (!isLoading) {
-      initDataSourceSync(!!token && !!user);
+      initDataSourceSync(!embedContext && !!token && !!user);
     }
-  }, [token, user, isLoading]);
+  }, [embedContext, token, user, isLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -14,6 +14,7 @@
  */
 
 import { PropertyResolver } from '../src/engine/PropertyResolver';
+import { ExpressionEvaluator } from '../../thingsvis-utils/src/ExpressionEvaluator';
 import type { NodeState } from '@thingsvis/kernel';
 
 // Helper to construct a minimal NodeState
@@ -174,6 +175,43 @@ describe('PropertyResolver', () => {
       const result = PropertyResolver.resolve(node, dataSources);
       expect(result.current).toBe(3.7);
       expect(result.voltage).toBe(220);
+    });
+
+    it('resolves ThingsPanel platform datasource ids that contain dashes', () => {
+      const platformDataSourceId = '__platform_4474b112-6b89-f139-4dc7-c6e4db31ba99__';
+      const node = makeNode({ value: 0 }, [
+        {
+          targetProp: 'value',
+          expression: `{{ ds.${platformDataSourceId}.data.temperature }}`,
+        },
+      ]);
+
+      const result = PropertyResolver.resolve(node, {
+        [platformDataSourceId]: {
+          data: { temperature: 24.88, switch: true },
+          status: 'connected',
+        },
+      });
+
+      expect(result.value).toBe(24.88);
+    });
+  });
+
+  describe('platform datasource expressions', () => {
+    it('evaluates JS expressions for datasource ids that are not valid identifiers', () => {
+      const platformDataSourceId = '__platform_4474b112-6b89-f139-4dc7-c6e4db31ba99__';
+      const result = ExpressionEvaluator.evaluate(
+        `{{ ds.${platformDataSourceId}.data.switch ? '1' : '0' }}`,
+        {
+          ds: {
+            [platformDataSourceId]: {
+              data: { switch: true },
+            },
+          },
+        },
+      );
+
+      expect(result).toBe('1');
     });
   });
 

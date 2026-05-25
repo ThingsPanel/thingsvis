@@ -225,7 +225,13 @@ export default function EmbedPage() {
   const lastInitFingerprintRef = useRef<string>('');
   /** Buffer for tv:platform-data messages that arrive before adapters are ready. */
   const pendingPlatformDataRef = useRef<
-    Array<{ fieldId: string; value: unknown; timestamp: number; deviceId?: string }>
+    Array<{
+      fieldId: string;
+      value: unknown;
+      timestamp: number;
+      deviceId?: string;
+      dataSourceId?: string;
+    }>
   >([]);
   /** Latest platform field snapshot, retained across repeated tv:init re-registration. */
   const latestPlatformDataRef = useRef<PlatformDataSnapshot>({});
@@ -855,13 +861,14 @@ export default function EmbedPage() {
             platformFieldStore.setFields(initPlatformFields as never);
           }
 
-          // Register data sources sequentially and AWAIT before loading schema.
-          // This ensures PlatformFieldAdapter.subscribeToHostData() has installed its
-          // window.addEventListener before any tv:platform-data messages arrive.
-          // Reset init-done flag so that messages arriving during re-init are buffered.
+          // Reset init-done before loading the page and registering datasources.
+          // loadFromSchema/loadPage resets kernel runtime state, so it must happen before
+          // PlatformFieldAdapter requests initial telemetry and writes datasource runtime data.
           initDoneRef.current = false;
           pendingPlatformDataRef.current = [];
           const registerAndLoad = async () => {
+            loadFromSchema(schema, { skipVariableInitialization: true });
+
             if (schema.dataSources && Array.isArray(schema.dataSources)) {
               for (const ds of schema.dataSources as any[]) {
                 try {
@@ -871,16 +878,15 @@ export default function EmbedPage() {
                 }
               }
             }
-            loadFromSchema(schema, { skipVariableInitialization: true });
 
             // Replay any platform-data messages that arrived before adapters were ready.
             if (pendingPlatformDataRef.current.length > 0) {
               const buffered = pendingPlatformDataRef.current.splice(0);
-              buffered.forEach(({ fieldId, value, timestamp, deviceId }) => {
+              buffered.forEach(({ fieldId, value, timestamp, deviceId, dataSourceId }) => {
                 window.postMessage(
                   {
                     type: MSG_TYPES.PLATFORM_DATA,
-                    payload: { fieldId, value, timestamp, deviceId },
+                    payload: { fieldId, value, timestamp, deviceId, dataSourceId },
                   },
                   '*',
                 );
@@ -927,12 +933,19 @@ export default function EmbedPage() {
                     value,
                     timestamp,
                     deviceId: payload.deviceId,
+                    dataSourceId: payload.dataSourceId,
                   });
                 } else {
                   window.postMessage(
                     {
                       type: MSG_TYPES.PLATFORM_DATA,
-                      payload: { fieldId, value, timestamp, deviceId: payload.deviceId },
+                      payload: {
+                        fieldId,
+                        value,
+                        timestamp,
+                        deviceId: payload.deviceId,
+                        dataSourceId: payload.dataSourceId,
+                      },
                     },
                     '*',
                   );
@@ -972,6 +985,16 @@ export default function EmbedPage() {
             platformFieldStore.setFields(fields);
           }
         }
+      }),
+    );
+
+    // tv:device-by-id: 宿主主动推送或响应 thingsvis:requestDeviceById，将设备元数据写入 store
+    cleanups.push(
+      messageRouter.on('tv:device-by-id', (payload: any) => {
+        if (!payload?.device) return;
+        const device = payload.device;
+        if (!device?.deviceId) return;
+        platformDeviceStore.setDevices([device]);
       }),
     );
 

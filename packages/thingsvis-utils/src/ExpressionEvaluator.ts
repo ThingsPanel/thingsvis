@@ -3,6 +3,24 @@
  * Supports both simple path access and JavaScript expressions.
  */
 export class ExpressionEvaluator {
+  private static readonly SIMPLE_PATH_RE =
+    /^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z0-9_[\]-]*)*$/;
+  private static readonly BRACKET_SAFE_KEY_RE = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
+
+  /**
+   * Host-provided data source ids may contain dashes. JavaScript parses
+   * ds.__platform_abc-123__.data as subtraction, so normalize those root
+   * context accesses before evaluating expressions.
+   */
+  private static normalizeContextAccessForJs(expr: string): string {
+    return expr.replace(/\b(ds|var)\.([a-zA-Z0-9_-]+)/g, (_match, root: string, key: string) => {
+      if (this.BRACKET_SAFE_KEY_RE.test(key)) {
+        return `${root}.${key}`;
+      }
+      return `${root}[${JSON.stringify(key)}]`;
+    });
+  }
+
   /**
    * Evaluates an expression against a context object.
    * @param expression The string containing {{ ... }}
@@ -32,7 +50,7 @@ export class ExpressionEvaluator {
   private static evaluateExpression(expr: string, context: any): any {
     // First, try simple path access (for backward compatibility and performance)
     // Simple path: only contains letters, numbers, dots, underscores, and [] array selector
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z0-9_[\]]*)*$/.test(expr)) {
+    if (this.SIMPLE_PATH_RE.test(expr)) {
       return this.get(context, expr);
     }
     // Also handle paths that start with [] (e.g. ds.myDs.data.[].field)
@@ -64,7 +82,8 @@ export class ExpressionEvaluator {
       const values = keys.map(k => sandbox[k]);
 
       // Use Function constructor to evaluate the expression
-      const fn = new Function(...keys, `return (${expr})`);
+      const safeExpr = this.normalizeContextAccessForJs(expr);
+      const fn = new Function(...keys, `return (${safeExpr})`);
       return fn(...values);
     } catch (error) {
 
