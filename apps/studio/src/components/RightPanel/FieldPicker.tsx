@@ -1369,12 +1369,12 @@ export function FieldPicker({
             }}
             className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
           >
-            <option value="model">{t('binding.modelFields', '物模型字段')}</option>
-            {hasDeviceStatusCatalog && (
-              <option value="status">{t('binding.runtimeStatus', '运行状态')}</option>
-            )}
+            <option value="model">{t('binding.modelFields', '当前值')}</option>
             {hasDeviceHistoryCatalog && (
               <option value="history">{t('binding.historyData', '历史数据')}</option>
+            )}
+            {hasDeviceStatusCatalog && (
+              <option value="status">{t('binding.runtimeStatus', '运行状态')}</option>
             )}
             {hasDeviceAlarmStatusCatalog && (
               <option value="alarmStatus">{t('binding.alarmStatus', '告警状态')}</option>
