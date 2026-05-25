@@ -96,6 +96,32 @@ function buildExpressionContext(
   };
 }
 
+function getFieldRoot(fieldPath: string): string {
+  return fieldPath.split(/[.[\]\s?:+\-*/=!<>&|(),]/).filter(Boolean)[0]?.trim() ?? fieldPath;
+}
+
+function normalizeLegacyAutoWritePayload(raw: string): string {
+  const unescaped = raw.replace(/\\"/g, '"');
+  const match = /^\s*\(\{\s*"([^"]+)"\s*:\s*payload\s*\}\)\s*$/.exec(unescaped);
+  if (!match?.[1]) return unescaped;
+
+  return `({ ${JSON.stringify(getFieldRoot(match[1]))}: payload })`;
+}
+
+function canCompileScript(code: string): boolean {
+  try {
+    new Function(`return (${code})`);
+    return true;
+  } catch {
+    try {
+      new Function(code);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
 /**
  * Resolve `{{expression}}` mustache-style templates inside a string.
  *
@@ -127,17 +153,18 @@ function resolveTemplateExpressions(template: string, context: Record<string, un
 function resolvePayload(raw: unknown, context: Record<string, unknown>): unknown {
   if (typeof raw !== 'string') return raw;
 
-  const hasMustache = /\{\{.+?\}\}/s.test(raw);
+  const normalizedRaw = normalizeLegacyAutoWritePayload(raw);
+  const hasMustache = /\{\{.+?\}\}/s.test(normalizedRaw);
 
   if (hasMustache) {
-    const singleExpression = raw.match(/^\s*\{\{([\s\S]+?)\}\}\s*$/);
+    const singleExpression = normalizedRaw.match(/^\s*\{\{([\s\S]+?)\}\}\s*$/);
     if (singleExpression) {
       const evaluated = SafeExecutor.executeScript((singleExpression[1] ?? '').trim(), context);
       if (evaluated !== undefined && evaluated !== null) return evaluated;
       return '';
     }
 
-    const resolved = resolveTemplateExpressions(raw, context);
+    const resolved = resolveTemplateExpressions(normalizedRaw, context);
     try {
       return JSON.parse(resolved);
     } catch {
@@ -152,16 +179,18 @@ function resolvePayload(raw: unknown, context: Record<string, unknown>): unknown
 
   // No mustache — try static JSON first (most common case for callWrite payloads)
   try {
-    return JSON.parse(raw);
+    return JSON.parse(normalizedRaw);
   } catch {
     /* not valid JSON */
   }
 
   // Not JSON — try as full JS expression (e.g. `payload ? {...} : {...}`)
-  const evaluated = SafeExecutor.executeScript(raw, context);
-  if (evaluated !== undefined && evaluated !== null) return evaluated;
+  if (canCompileScript(normalizedRaw)) {
+    const evaluated = SafeExecutor.executeScript(normalizedRaw, context);
+    if (evaluated !== undefined && evaluated !== null) return evaluated;
+  }
 
-  return raw;
+  return normalizedRaw;
 }
 
 // Exported for testing

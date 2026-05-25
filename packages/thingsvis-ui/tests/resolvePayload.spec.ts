@@ -122,8 +122,17 @@ describe('resolvePayload', () => {
 
   it('passes through plain strings that are not valid JSON or expressions', () => {
     const result = resolvePayload('hello world', baseContext);
-    // SafeExecutor will fail on this, JSON.parse will fail, returned as-is
     expect(result).toBe('hello world');
+  });
+
+  it('normalizes legacy escaped auto-write object expressions', () => {
+    const result = resolvePayload('({ \\"switch\\": payload })', baseContext);
+    expect(result).toEqual({ switch: true });
+  });
+
+  it('normalizes legacy expression-derived auto-write keys', () => {
+    const result = resolvePayload(`({ "switch ? '1' : '0'": payload })`, baseContext);
+    expect(result).toEqual({ switch: true });
   });
 
   it('handles complex IoT control payload with full JS expression', () => {

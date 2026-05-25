@@ -35,7 +35,7 @@ function getPlatformDeviceId(dataSourceId: string): string | null {
 
 function getFieldRoot(fieldPath?: string): string | null {
   if (!fieldPath) return null;
-  const [root] = fieldPath.split(/[.[\]]/).filter(Boolean);
+  const [root] = fieldPath.split(/[.[\]\s?:+\-*/=!<>&|(),]/).filter(Boolean);
   return root?.trim() ? root.trim() : null;
 }
 
@@ -136,9 +136,9 @@ export function augmentPlatformDataSourcesForNodes(
       }),
       type: 'PLATFORM_FIELD',
       config: {
-        source: 'platform',
-        fieldMappings: {},
         ...baseConfig,
+        source: baseConfig.source ?? 'platform',
+        fieldMappings: baseConfig.fieldMappings ?? {},
         ...(deviceId && !baseConfig.deviceId ? { deviceId } : {}),
         requestedFields: Array.from(
           new Set([...(baseConfig.requestedFields ?? []), ...requirement.requestedFields]),
