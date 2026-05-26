@@ -11,6 +11,9 @@ name: Deploy to CLOUD
 # =============================================================================
 
 on:
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 env:
@@ -234,20 +237,27 @@ jobs:
 
             # --- Create .env file from secrets ---
             echo ">>> Creating .env file..."
-            cat > /opt/thingsvis/server/.env << 'EOF'
+            cat > /opt/thingsvis/server/.env << ENVEOF
             # ============================================================
             # ThingsVis Server Environment Variables (Auto-generated)
             # ============================================================
-            DATABASE_URL="$DATABASE_URL_CLOUD"
-            AUTH_SECRET="$AUTH_SECRET"
-            AUTH_URL="http://127.0.0.1:3000"
+            DATABASE_URL=${DATABASE_URL_CLOUD}
+            AUTH_SECRET=${AUTH_SECRET}
+            AUTH_URL=http://127.0.0.1:3000
             AUTH_TRUST_HOST=true
             PORT=8000
-            EOF
+            ENVEOF
             echo "✅ .env file created"
+            
+            # Debug: Check DATABASE_URL
+            echo "🔍 DATABASE_URL value: ${DATABASE_URL_CLOUD:0:30}..."
 
-            # Source .env
-            export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            # Source .env and export variables
+            set -a
+            source /opt/thingsvis/server/.env
+            set +a
+            
+            echo "🔍 Loaded DATABASE_URL: ${DATABASE_URL:0:20}..."
 
             # Apply database migrations
             cd apps/server
