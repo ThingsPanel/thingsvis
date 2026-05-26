@@ -5,12 +5,12 @@
 [English](./README_EN.md) · [官方文档](./apps/docs/guide/introduction.md) · [Widget 开发规范](./apps/docs/development/quick-start.md)
 
 <p align="center">
-  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-16-50.png" alt="ThingsVis Screenshot 1" width="48%" />
-  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-17-34.png" alt="ThingsVis Screenshot 2" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-05-26_09-10-32.png" alt="ThingsVis Screenshot 1" width="48%" />
+  <img src="./apps/docs/public/images/readme/831d95fc-9f46-4c6a-b9e0-eed55b96edb9.png" alt="ThingsVis Screenshot 2" width="48%" />
 </p>
 <p align="center">
-  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-04.png" alt="ThingsVis Screenshot 3" width="48%" />
-  <img src="./apps/docs/public/images/readme/Snipaste_2026-04-10_16-21-29.png" alt="ThingsVis Screenshot 4" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-05-26_09-10-57.png" alt="ThingsVis Screenshot 3" width="48%" />
+  <img src="./apps/docs/public/images/readme/Snipaste_2026-05-26_15-41-54.png" alt="ThingsVis Screenshot 4" width="48%" />
 </p>
 
 ## 什么是 ThingsVis？
