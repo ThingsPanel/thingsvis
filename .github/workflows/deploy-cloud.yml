@@ -45,18 +45,15 @@ jobs:
 # ========================================
       # Build all packages via turbo
       # ========================================
-      # DATABASE_URL_CLOUD: 数据库连接地址（如 mysql://user:pass@host:3306/thingsvis）
       - name: Generate Prisma Client
         working-directory: apps/server
         env:
-          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
-        run: npx prisma@5.22.0 generate
+          DATABASE_URL: ${{ secrets.DATABASE_URL_CLOUD }}
+        run: npx prisma generate
 
-      # DATABASE_URL_CLOUD: 数据库连接地址
-      # AUTH_SECRET: 认证加密密钥（用于 session/token 签名，建议 32+ 字符随机字符串）
       - name: Build Server + Studio
         env:
-          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL_CLOUD }}
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
@@ -106,8 +103,6 @@ jobs:
             exit 1
           fi
 
-
-
           # --- Widgets (two-level: packages/widgets/category/name/dist) ---
           for dir in packages/widgets/*/*/; do
             if [ -d "${dir}dist" ]; then
@@ -142,7 +137,7 @@ jobs:
                   client_max_body_size 50m;
               }
 
-                location ^~ /uploads/ {
+              location ^~ /uploads/ {
                   proxy_pass http://127.0.0.1:8000;
                   proxy_http_version 1.1;
                   proxy_set_header Host $host;
@@ -151,7 +146,7 @@ jobs:
                   proxy_set_header X-Forwarded-Proto $scheme;
               }
 
-                location ^~ /widgets/ {
+              location ^~ /widgets/ {
                   alias /var/www/thingsvis-plugins/;
               }
 
@@ -171,23 +166,9 @@ jobs:
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
-      - name: Create env file locally
-        run: |
-          cat > .env << 'EOF'
-          DATABASE_URL=${{ secrets.DATABASE_URL_CLOUD }}
-          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
-          AUTH_URL=http://127.0.0.1:3000
-          AUTH_TRUST_HOST=true
-          PORT=8000
-          EOF
-          echo "✅ .env file created locally"
-
       # ========================================
       # Deploy to server via SSH key
       # ========================================
-      # DEPLOY_HOST_CLOUD: 目标服务器 IP 地址或域名
-      # DEPLOY_USER_CLOUD: SSH 登录用户名（需有 /var/www 和 /opt/thingsvis 目录写入权限）
-      # DEPLOY_SSH_KEY_CLOUD: 部署用的 SSH 私钥（建议创建专用 deploy 用户并配置仅允许 key 登录）
       - name: Upload to server
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -195,7 +176,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER_CLOUD }}
           key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
           port: 22
-          source: "thingsvis-deploy.tar.gz,.env"
+          source: "thingsvis-deploy.tar.gz"
           target: "/tmp"
 
       - name: Deploy and restart services
@@ -206,20 +187,15 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
           port: 22
           script: |
-            NODE_VERSION="v20.19.0"
-            NODE_INSTALL_DIR="/usr/local/lib/nodejs"
-            if [ ! -d "$NODE_INSTALL_DIR/node-$NODE_VERSION-linux-x64" ]; then
-              echo ">>> Installing Node.js $NODE_VERSION..."
-              mkdir -p $NODE_INSTALL_DIR
-              curl -fsSL https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz | tar -xzC $NODE_INSTALL_DIR
-            fi
-            export PATH="$NODE_INSTALL_DIR/node-$NODE_VERSION-linux-x64/bin:$PATH"
-            echo "Node.js version: $(node -v)"
+            set -e
+
+            export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
+
+            echo "=== Deploying ThingsVis ==="
 
             # Ensure directories exist
             mkdir -p /opt/thingsvis/server
             mkdir -p /var/www/thingsvis-studio
-
             mkdir -p /var/www/thingsvis-plugins
 
             # Extract
@@ -228,7 +204,7 @@ jobs:
 
             # --- Deploy Nginx Config ---
             cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
-            
+
             # --- Deploy Server ---
             echo ">>> Deploying Server..."
             pm2 stop thingsvis-server 2>/dev/null || true
@@ -237,11 +213,15 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # Copy .env file (for Node.js server)
-            cp /tmp/.env /opt/thingsvis/server/apps/server/.env
+            # Source .env if exists (same as deploy-e.yml)
+            if [ -f /opt/thingsvis/server/.env ]; then
+              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            fi
 
-            # Note: Database migrations are handled during CI build, not needed here
-            echo "✅ .env file deployed"
+            # Apply database migrations
+            cd apps/server
+            npx prisma db push --accept-data-loss || true
+            cd ../..
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
@@ -251,8 +231,6 @@ jobs:
             echo ">>> Deploying Studio..."
             rm -rf /var/www/thingsvis-studio/*
             cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
-
-
 
             # --- Deploy Widgets ---
             echo ">>> Deploying Widgets..."
