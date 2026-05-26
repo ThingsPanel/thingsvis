@@ -187,8 +187,7 @@ jobs:
           source: "thingsvis-deploy.tar.gz"
           target: "/tmp"
 
-      # 同上：DEPLOY_HOST_CLOUD / DEPLOY_USER_CLOUD / DEPLOY_SSH_KEY_CLOUD
-      - name: Deploy and restart services
+      - name: Create env file on server
         uses: appleboy/ssh-action@v1.0.3
         env:
           DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
@@ -199,11 +198,19 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
           port: 22
           script: |
-            set -e
+            printf 'DATABASE_URL=%s\nAUTH_SECRET=%s\nAUTH_URL=http://127.0.0.1:3000\nAUTH_TRUST_HOST=true\nPORT=8000\n' "$DATABASE_URL_CLOUD" "$AUTH_SECRET" > /opt/thingsvis/server/.env
+            echo "✅ .env created"
+            head -2 /opt/thingsvis/server/.env
 
-            echo "=== Deploying ThingsVis ==="
-
-            # Install Node.js v20 if not present
+      # 同上：DEPLOY_HOST_CLOUD / DEPLOY_USER_CLOUD / DEPLOY_SSH_KEY_CLOUD
+      - name: Deploy and restart services
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          username: ${{ secrets.DEPLOY_USER_CLOUD }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
+          port: 22
+          script: |
             NODE_VERSION="v20.19.0"
             NODE_INSTALL_DIR="/usr/local/lib/nodejs"
             if [ ! -d "$NODE_INSTALL_DIR/node-$NODE_VERSION-linux-x64" ]; then
@@ -235,29 +242,9 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # --- Create .env file from secrets ---
-            echo ">>> Creating .env file..."
-            cat > /opt/thingsvis/server/.env << ENVEOF
-            # ============================================================
-            # ThingsVis Server Environment Variables (Auto-generated)
-            # ============================================================
-            DATABASE_URL=${DATABASE_URL_CLOUD}
-            AUTH_SECRET=${AUTH_SECRET}
-            AUTH_URL=http://127.0.0.1:3000
-            AUTH_TRUST_HOST=true
-            PORT=8000
-            ENVEOF
-            echo "✅ .env file created"
-            
-            # Debug: Check DATABASE_URL
-            echo "🔍 DATABASE_URL value: ${DATABASE_URL_CLOUD:0:30}..."
-
-            # Source .env and export variables
-            set -a
-            source /opt/thingsvis/server/.env
-            set +a
-            
-            echo "🔍 Loaded DATABASE_URL: ${DATABASE_URL:0:20}..."
+            # .env file is already created in previous step
+            echo ">>> Using existing .env file:"
+            cat /opt/thingsvis/server/.env | grep -v "^#" | grep -v "^$" | head -3
 
             # Apply database migrations
             cd apps/server
