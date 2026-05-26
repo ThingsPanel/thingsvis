@@ -195,7 +195,7 @@ jobs:
           script: |
             set -e
 
-            export PATH="/usr/local/lib/nodejs/node-v16.14.2-linux-x64/bin:$PATH"
+            export PATH="/usr/local/lib/nodejs/node-v18.5.0-linux-x64/bin:$PATH"
 
             echo "=== Deploying ThingsVis ==="
 
