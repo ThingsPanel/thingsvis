@@ -47,7 +47,7 @@ jobs:
         working-directory: apps/server
         env:
           DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
-        run: npx prisma generate
+        run: npx prisma@5.22.0 generate
 
       # DATABASE_URL_CLOUD: 数据库连接地址
       # AUTH_SECRET: 认证加密密钥（用于 session/token 签名，建议 32+ 字符随机字符串）
@@ -251,7 +251,7 @@ jobs:
 
             # Apply database migrations
             cd apps/server
-            npx prisma db push --accept-data-loss
+            npx prisma@5.22.0 db push --accept-data-loss
             if [ $? -ne 0 ]; then
               echo "❌ Database initialization failed! Check DATABASE_URL in .env"
               exit 1
