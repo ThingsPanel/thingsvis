@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { EMBED_SSO_LOGIN_SOURCE, SSO_AUTH_TYPE, SSOExchangeSchema } from '@/lib/validators/auth';
 import { ensureDefaultDashboardForUser } from '@/lib/dashboard-helpers';
 
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
 
       body = JSON.parse(text);
     } catch (parseError) {
-      console.error('[SSO] JSON parse error:', parseError);
+      logger.error({ err: parseError, path: '/api/v1/auth/sso' }, 'JSON parse error');
       return addCorsHeaders(
         NextResponse.json({ error: 'Invalid JSON in request body' }, { status: 400 }),
       );
@@ -42,7 +43,10 @@ export async function POST(request: NextRequest) {
 
     const result = SSOExchangeSchema.safeParse(body);
     if (!result.success) {
-      console.error('[SSO] Validation failed:', result.error.flatten());
+      logger.warn(
+        { err: result.error.flatten(), path: '/api/v1/auth/sso' },
+        'SSO validation failed',
+      );
       return addCorsHeaders(
         NextResponse.json(
           {
@@ -169,7 +173,7 @@ export async function POST(request: NextRequest) {
       }),
     );
   } catch (error) {
-    console.error('[SSO] Token exchange error:', error);
+    logger.error({ err: error, path: '/api/v1/auth/sso' }, 'SSO token exchange error');
     return addCorsHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }));
   }
 }

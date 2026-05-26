@@ -33,7 +33,7 @@ export const SSOExchangeSchema = z.object({
     name: z.string().optional(),
     tenantId: z.string().min(1),
   }),
-  role: z.enum(['SUPER_ADMIN', 'TENANT_ADMIN']).optional(),
+  role: z.enum(['SUPER_ADMIN', 'TENANT_ADMIN', 'EDITOR', 'VIEWER']).optional(),
 });
 
 export type SSOExchangeInput = z.infer<typeof SSOExchangeSchema>;

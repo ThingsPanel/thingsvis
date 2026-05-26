@@ -83,22 +83,15 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error({
-      msg: 'Login API Error',
-      err: error,
-      path: '/api/v1/auth/login',
-    });
-
-    // Check if it's a Prisma connection error
-    if (error && typeof error === 'object' && 'code' in error) {
-      if (error.code === 'P1001') {
-        return NextResponse.json(
-          { error: 'Database connection failed. Is the database running?' },
-          { status: 503 },
-        );
-      }
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P1001') {
+      logger.error({ msg: 'Database connection failed', err: error, path: '/api/v1/auth/login' });
+      return NextResponse.json(
+        { error: 'Database connection failed. Is the database running?' },
+        { status: 503 },
+      );
     }
 
+    logger.error({ msg: 'Login API Error', err: error, path: '/api/v1/auth/login' });
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -3,11 +3,11 @@ name: Deploy to CLOUD
 # =============================================================================
 # 所需 Secrets 清单（请在 GitHub 仓库 Settings → Secrets and variables → Actions 中配置）
 # =============================================================================
-# 1. DATABASE_URL_CLOUD        — 数据库连接地址，格式如 mysql://user:password@host:3306/dbname
-# 2. AUTH_SECRET         — 认证加密密钥，用于 session / JWT 签名，建议 32+ 位随机字符串
-# 3. DEPLOY_HOST_CLOUD         — 目标服务器 IP 或域名（如 192.168.1.100 或 test.example.com）
-# 4. DEPLOY_USER_CLOUD         — SSH 登录用户名（需对该服务器 /var/www 和 /opt/thingsvis 有写权限）
-# 5. DEPLOY_SSH_KEY_CLOUD      — SSH 私钥（建议为部署专用用户生成独立 key pair，仅允许 key 登录）
+# 1. DATABASE_URL_CLOUD        — 数据库连接地址（如 postgresql://user:pass@host:5432/dbname）
+# 2. AUTH_SECRET              — 认证加密密钥，用于 session / JWT 签名，建议 32+ 位随机字符串
+# 3. DEPLOY_HOST_CLOUD        — 目标服务器 IP 或域名（如 192.168.1.100 或 cloud.example.com）
+# 4. DEPLOY_USER_CLOUD        — SSH 登录用户名（需对该服务器 /var/www 和 /opt/thingsvis 有写权限）
+# 5. DEPLOY_SSH_KEY_CLOUD     — SSH 私钥（建议为部署专用用户生成独立 key pair，仅允许 key 登录）
 # =============================================================================
 
 on:
@@ -187,6 +187,9 @@ jobs:
       # 同上：DEPLOY_HOST_CLOUD / DEPLOY_USER_CLOUD / DEPLOY_SSH_KEY_CLOUD
       - name: Deploy and restart services
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         with:
           host: ${{ secrets.DEPLOY_HOST_CLOUD }}
           username: ${{ secrets.DEPLOY_USER_CLOUD }}
@@ -220,15 +223,40 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # Source .env if exists
-            if [ -f /opt/thingsvis/server/.env ]; then
-              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
-            fi
+            # --- Create .env file from secrets ---
+            echo ">>> Creating .env file..."
+            cat > /opt/thingsvis/server/.env << 'EOF'
+            # ============================================================
+            # ThingsVis Server Environment Variables (Auto-generated)
+            # ============================================================
+            DATABASE_URL="$DATABASE_URL_CLOUD"
+            AUTH_SECRET="$AUTH_SECRET"
+            AUTH_URL="http://127.0.0.1:3000"
+            AUTH_TRUST_HOST=true
+            PORT=8000
+            EOF
+            echo "✅ .env file created"
+
+            # Source .env
+            export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
 
             # Apply database migrations
             cd apps/server
-            npx prisma db push --accept-data-loss || true
-            cd ../..
+            npx prisma db push --accept-data-loss
+            if [ $? -ne 0 ]; then
+              echo "❌ Database initialization failed! Check DATABASE_URL in .env"
+              exit 1
+            fi
+            
+            # Verify database connection with simple query
+            echo "🔍 Verifying database connection..."
+            node -e "
+              const { PrismaClient } = require('@prisma/client');
+              const prisma = new PrismaClient();
+              prisma.\$connect()
+                .then(() => { console.log('✅ Database connected'); prisma.\$disconnect(); })
+                .catch(e => { console.error('❌ Database connection failed:', e.message); process.exit(1); });
+            "
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
