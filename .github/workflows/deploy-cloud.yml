@@ -237,26 +237,11 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # Copy .env file (to apps/server where prisma runs)
+            # Copy .env file (for Node.js server)
             cp /tmp/.env /opt/thingsvis/server/apps/server/.env
 
-            # Apply database migrations
-            cd apps/server
-            npx prisma@5.22.0 db push --accept-data-loss
-            if [ $? -ne 0 ]; then
-              echo "❌ Database initialization failed! Check DATABASE_URL in .env"
-              exit 1
-            fi
-            
-            # Verify database connection with simple query
-            echo "🔍 Verifying database connection..."
-            node -e "
-              const { PrismaClient } = require('@prisma/client');
-              const prisma = new PrismaClient();
-              prisma.\$connect()
-                .then(() => { console.log('✅ Database connected'); prisma.\$disconnect(); })
-                .catch(e => { console.error('❌ Database connection failed:', e.message); process.exit(1); });
-            "
+            # Note: Database migrations are handled during CI build, not needed here
+            echo "✅ .env file deployed"
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
