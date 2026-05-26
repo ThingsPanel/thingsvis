@@ -1,133 +1,106 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Server, Search, AlertCircle, Box } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionTrigger,
-  AccordionContent,
-} from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
 
 import {
   usePlatformDeviceStore,
-  type PlatformDeviceGroup,
   type PlatformDevice,
   type PlatformDevicePreset,
 } from '@/lib/stores/platformDeviceStore';
 import { hydrateDevicePresetSchema, hydrateDevicePresetWidget } from '@/lib/devicePresetHydration';
+import { DeviceSelectorModal } from '@/components/RightPanel/DeviceSelectorModal';
+import {
+  ensureRegistryLoaded,
+  getRegistrySnapshot,
+  subscribeRegistry,
+} from '@/lib/registry/registry-store';
+import { ICON_MAP } from './ComponentsList';
 
 export default function DeviceLibraryPanel() {
   const { t } = useTranslation('editor');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
+  const [selectedDevice, setSelectedDevice] = useState<PlatformDevice | null>(null);
+  const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
+  const [groupsRequested, setGroupsRequested] = useState(false);
+  const groupsRequestedRef = React.useRef(false);
+  const registrySnapshot = useSyncExternalStore(
+    subscribeRegistry,
+    getRegistrySnapshot,
+    getRegistrySnapshot,
+  );
 
   // Read the devices from the store
   const groups = usePlatformDeviceStore((state) => state.groups);
-  const loadedGroupIds = usePlatformDeviceStore((state) => state.loadedGroupIds);
   const devices = usePlatformDeviceStore((state) => state.devices);
 
-  const visibleGroups = useMemo<PlatformDeviceGroup[]>(() => {
-    if (groups.length > 0) return groups;
-
-    const derived = new Map<string, PlatformDeviceGroup>();
-    devices.forEach((device) => {
-      const groupId = String(device.groupId || device.groupName || '__ungrouped__');
-      if (!derived.has(groupId)) {
-        derived.set(groupId, {
-          groupId,
-          groupName: device.groupName || groupId,
-        });
-      }
+  useEffect(() => {
+    ensureRegistryLoaded().catch((error) => {
+      console.error('[DeviceLibraryPanel] Failed to load component registry', error);
     });
-    return Array.from(derived.values());
-  }, [devices, groups]);
+  }, []);
 
   React.useEffect(() => {
-    if (visibleGroups.length === 0) {
-      setSelectedGroupId('');
-      return;
-    }
-    if (!selectedGroupId || !visibleGroups.some((group) => group.groupId === selectedGroupId)) {
-      setSelectedGroupId(visibleGroups[0]?.groupId || '');
-    }
-  }, [selectedGroupId, visibleGroups]);
-
-  React.useEffect(() => {
-    if (!selectedGroupId || loadedGroupIds.includes(selectedGroupId) || window.parent === window) {
+    if (groups.length > 0 || groupsRequestedRef.current || window.parent === window) {
       return;
     }
 
     const handleMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; payload?: { groupId?: string; devices?: unknown[] } }
-        | undefined;
-      if (data?.type !== 'tv:devices-by-group') return;
-      const payload = data.payload;
-      if (payload?.groupId !== selectedGroupId || !Array.isArray(payload.devices)) return;
-      usePlatformDeviceStore.getState().setDevicesForGroup(selectedGroupId, payload.devices as any);
+      const data = event.data as { type?: string; payload?: { groups?: unknown[] } } | undefined;
+      if (data?.type !== 'tv:device-groups') return;
+      const payloadGroups = Array.isArray(data.payload?.groups) ? data.payload.groups : [];
+      usePlatformDeviceStore.getState().setGroups(payloadGroups as any);
     };
 
     window.addEventListener('message', handleMessage);
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestDevicesByGroup',
-        payload: {
-          groupId: selectedGroupId,
-        },
-      },
-      '*',
-    );
+    window.parent.postMessage({ type: 'thingsvis:requestDeviceGroups', payload: {} }, '*');
+    groupsRequestedRef.current = true;
+    setGroupsRequested(true);
 
     return () => {
       window.removeEventListener('message', handleMessage);
     };
-  }, [loadedGroupIds, selectedGroupId]);
+  }, [groups.length]);
 
-  const groupDevices = useMemo(
-    () => devices.filter((device) => device.groupId === selectedGroupId),
-    [devices, selectedGroupId],
+  const selectedDeviceSource = useMemo(
+    () => devices.find((device) => device.deviceId === selectedDeviceId) ?? selectedDevice,
+    [devices, selectedDevice, selectedDeviceId],
   );
-  const isSelectedGroupLoaded =
-    !selectedGroupId || loadedGroupIds.includes(selectedGroupId) || window.parent === window;
 
-  React.useEffect(() => {
-    if (groupDevices.length === 0) {
-      setSelectedDeviceId('');
-      return;
-    }
-    if (!selectedDeviceId || !groupDevices.some((device) => device.deviceId === selectedDeviceId)) {
-      setSelectedDeviceId(groupDevices[0]?.deviceId || '');
-    }
-  }, [groupDevices, selectedDeviceId]);
-
-  // Filter devices/presets based on search query
-  const filteredDevices = useMemo(() => {
-    const scopedDevices = selectedDeviceId
-      ? groupDevices.filter((device) => device.deviceId === selectedDeviceId)
-      : groupDevices;
-
-    if (!searchQuery.trim()) return scopedDevices;
+  const visiblePresets = useMemo(() => {
+    const presets = Array.isArray(selectedDeviceSource?.presets)
+      ? selectedDeviceSource.presets
+      : [];
+    if (!searchQuery.trim()) return presets;
     const query = searchQuery.toLowerCase();
 
-    return scopedDevices
-      .map((device) => {
-        // If device name matches, keep all its presets
-        if (device.deviceName.toLowerCase().includes(query)) {
-          return device;
-        }
-        // Otherwise filter its presets
-        const matchedPresets = (device.presets || []).filter((preset) =>
-          preset.name.toLowerCase().includes(query),
-        );
-        if (matchedPresets.length > 0) {
-          return { ...device, presets: matchedPresets };
-        }
-        return null;
-      })
-      .filter(Boolean) as PlatformDevice[];
-  }, [groupDevices, searchQuery, selectedDeviceId]);
+    return presets.filter((preset) => preset.name.toLowerCase().includes(query));
+  }, [searchQuery, selectedDeviceSource]);
+
+  const registryEntryByType = useMemo(() => {
+    const map = new Map<string, NonNullable<typeof registrySnapshot>['entries'][number]>();
+    (registrySnapshot?.entries ?? []).forEach((entry) => {
+      map.set(entry.componentId, entry);
+    });
+    return map;
+  }, [registrySnapshot]);
+
+  const handleDevicesLoaded = React.useCallback(
+    (_groupId: string, nextDevices: PlatformDevice[]) => {
+      usePlatformDeviceStore.getState().setDevices(nextDevices);
+    },
+    [],
+  );
+
+  const handleDeviceSelect = React.useCallback((device: PlatformDevice) => {
+    setSelectedDevice(device);
+    setSelectedDeviceId(device.deviceId);
+    setDeviceSelectorOpen(false);
+    usePlatformDeviceStore.getState().setDevices([device]);
+  }, []);
 
   // Handle dragging a preset out of the library
   const handleDragStart = (
@@ -160,58 +133,29 @@ export default function DeviceLibraryPanel() {
     }
   };
 
-  if (visibleGroups.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground gap-3">
-        <Server className="w-12 h-12 opacity-20" />
-        <p className="text-sm">暂无设备或设备未配置组件预设</p>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col h-full">
-      {/* Search Input */}
       <div className="p-2 pb-3 border-b border-border space-y-3">
         <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">
-            {t('binding.deviceGroup')}
-          </label>
-          <select
-            value={selectedGroupId}
-            onChange={(e) => setSelectedGroupId(e.target.value)}
-            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
+          <label className="text-xs font-medium text-muted-foreground">设备</label>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 w-full justify-start overflow-hidden px-3"
+            onClick={() => setDeviceSelectorOpen(true)}
           >
-            {visibleGroups.map((group) => (
-              <option key={group.groupId} value={group.groupId}>
-                {group.groupName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-medium text-muted-foreground">{t('binding.device')}</label>
-          <select
-            value={selectedDeviceId}
-            onChange={(e) => setSelectedDeviceId(e.target.value)}
-            className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset"
-            disabled={groupDevices.length === 0}
-          >
-            {groupDevices.length === 0 ? (
-              <option value="">
-                {isSelectedGroupLoaded
-                  ? t('binding.noDevicesInGroup', '该分组下暂无设备')
-                  : t('binding.loadingData', 'Loading data...')}
-              </option>
-            ) : (
-              groupDevices.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.deviceName}
-                </option>
-              ))
-            )}
-          </select>
+            <span className="truncate">{selectedDeviceSource?.deviceName || '选择设备'}</span>
+          </Button>
+          <DeviceSelectorModal
+            open={deviceSelectorOpen}
+            onOpenChange={setDeviceSelectorOpen}
+            groups={groups}
+            selectedGroupId={selectedGroupId}
+            selectedDeviceId={selectedDeviceSource?.deviceId}
+            onGroupChange={setSelectedGroupId}
+            onDevicesLoaded={handleDevicesLoaded}
+            onSelect={handleDeviceSelect}
+          />
         </div>
 
         <div className="relative">
@@ -226,71 +170,78 @@ export default function DeviceLibraryPanel() {
         </div>
       </div>
 
-      {/* Devices List */}
       <div className="flex-1 overflow-y-auto p-2">
-        {filteredDevices.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            {groupDevices.length === 0 && isSelectedGroupLoaded
-              ? t('components.noDevicesInGroup', '当前分组下暂无设备')
-              : t('components.noResults', '无匹配结果')}
+        {!selectedDeviceSource ? (
+          <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-center text-muted-foreground">
+            <Server className="h-10 w-10 opacity-20" />
+            <p className="text-sm">
+              {groupsRequested ? '请选择设备' : t('common.loadingData', 'Loading data...')}
+            </p>
+          </div>
+        ) : visiblePresets.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center text-muted-foreground">
+            <AlertCircle className="h-8 w-8 opacity-30" />
+            <p className="text-sm">
+              {Array.isArray(selectedDeviceSource.presets) &&
+              selectedDeviceSource.presets.length > 0
+                ? t('components.noResults', '无匹配结果')
+                : '该设备模板未配置 Web 图表组件预设'}
+            </p>
           </div>
         ) : (
-          <Accordion
-            type="multiple"
-            defaultValue={filteredDevices.map((d) => d.deviceId)}
-            className="space-y-2"
-          >
-            {filteredDevices.map((device) => (
-              <AccordionItem key={device.deviceId} value={device.deviceId} className="border-0">
-                <AccordionTrigger className="px-2 py-1.5 hover:bg-accent rounded-md text-sm font-semibold hover:no-underline text-left">
-                  <div className="flex items-center gap-2">
-                    <Server className="w-4 h-4 text-primary" />
-                    <span className="truncate">{device.deviceName}</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-2 pb-1 px-2">
-                  {!device.presets || device.presets.length === 0 ? (
-                    <div className="text-xs text-muted-foreground px-2 py-1.5 flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" />
-                      未配置预设组件
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-2">
-                        {device.presets.map((preset) => (
-                          <button
-                            key={preset.id}
-                            type="button"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, device, preset)}
-                            className="h-20 rounded border border-border hover:border-primary hover:bg-accent flex flex-col items-center justify-center gap-2 transition-colors p-2"
-                            title={preset.name}
-                          >
-                            <div className="h-8 w-8 text-foreground flex items-center justify-center bg-background rounded border border-border/50 shadow-sm">
-                              {preset.thumbnail ? (
-                                <img
-                                  src={preset.thumbnail}
-                                  alt={preset.name}
-                                  className="max-w-full max-h-full object-contain"
-                                />
-                              ) : (
-                                <Box className="w-5 h-5 text-muted-foreground" />
-                              )}
-                            </div>
-                            <div className="leading-tight text-center w-full">
-                              <div className="text-xs text-foreground font-medium truncate px-0.5">
-                                {preset.name}
-                              </div>
-                            </div>
-                          </button>
-                        ))}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1 text-sm font-semibold">
+              <Server className="h-4 w-4 text-primary" />
+              <span className="truncate">{selectedDeviceSource.deviceName}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {visiblePresets.map((preset) =>
+                (() => {
+                  const componentType =
+                    typeof preset.widget?.type === 'string' ? preset.widget.type : '';
+                  const registryEntry = componentType
+                    ? registryEntryByType.get(componentType)
+                    : null;
+                  const iconName = registryEntry?.icon ?? '';
+                  const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
+
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, selectedDeviceSource, preset)}
+                      className="flex h-20 flex-col items-center justify-center gap-2 rounded border border-border p-2 transition-colors hover:border-primary hover:bg-accent"
+                      title={preset.name}
+                    >
+                      <div className="flex h-8 w-8 items-center justify-center rounded border border-border/50 bg-background text-foreground shadow-sm">
+                        {registryEntry?.iconUrl ? (
+                          <img
+                            src={registryEntry.iconUrl}
+                            alt={preset.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : preset.thumbnail ? (
+                          <img
+                            src={preset.thumbnail}
+                            alt={preset.name}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        ) : (
+                          <IconComponent className="h-5 w-5 text-muted-foreground" />
+                        )}
                       </div>
-                    </div>
-                  )}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+                      <div className="w-full text-center leading-tight">
+                        <div className="truncate px-0.5 text-xs font-medium text-foreground">
+                          {preset.name}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })(),
+              )}
+            </div>
+          </div>
         )}
       </div>
     </div>

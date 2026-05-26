@@ -733,13 +733,18 @@ export class VisualEngine {
   }
 
   private isSyncing = false;
+  private hasPendingSync = false;
 
   sync(
     nodes: Record<string, NodeState>,
     connections: ConnectionState[] = [],
     layerOrder: string[] = [],
   ) {
-    if (!this.app || !this.root || this.isSyncing) return;
+    if (!this.app || !this.root) return;
+    if (this.isSyncing) {
+      this.hasPendingSync = true;
+      return;
+    }
     this.isSyncing = true;
 
     try {
@@ -822,6 +827,14 @@ export class VisualEngine {
       this.connectionManager?.sync(nodes, connections);
     } finally {
       this.isSyncing = false;
+      if (this.hasPendingSync) {
+        this.hasPendingSync = false;
+        queueMicrotask(() => {
+          if (!this.app || !this.root) return;
+          const state = this.store.getState() as KernelState;
+          this.sync(state.nodesById, state.connections, state.layerOrder);
+        });
+      }
     }
   }
 

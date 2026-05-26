@@ -27,8 +27,8 @@ export const controls = createControlPanel()
           ],
           default: 'webrtc,mse,hls,mjpeg',
         })
-        .addSwitch('background', {
-          label: `${W}.background`,
+        .addSwitch('autoplay', {
+          label: `${W}.autoplay`,
         });
     },
     { label: `${W}.groupContent` },

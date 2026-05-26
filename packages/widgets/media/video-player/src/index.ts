@@ -11,6 +11,7 @@ const localeCatalog = { en, zh } as const;
 type RuntimeMessages = {
   runtime: {
     empty: string;
+    idle: string;
     loading: string;
     error: string;
   };
@@ -35,7 +36,8 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
     let currentLocale = ctx.locale;
-    let status: 'empty' | 'loading' | 'error' | 'ready' = 'empty';
+    let currentMode = ctx.mode ?? 'edit';
+    let status: 'empty' | 'idle' | 'loading' | 'error' | 'ready' = 'empty';
     let currentSrc = '';
     let internalVideo: HTMLVideoElement | null = null;
     let attachVideoListenersRaf = 0;
@@ -122,7 +124,7 @@ export const Main = defineWidget({
     placeholder.appendChild(placeholderText);
     container.appendChild(placeholder);
 
-    const updatePlaceholder = (nextStatus: 'empty' | 'loading' | 'error' | 'ready') => {
+    const updatePlaceholder = (nextStatus: 'empty' | 'idle' | 'loading' | 'error' | 'ready') => {
       const runtimeMessages = getRuntimeMessages(currentLocale).runtime;
       status = nextStatus;
       if (nextStatus === 'ready') {
@@ -133,6 +135,10 @@ export const Main = defineWidget({
       placeholder.style.display = 'flex';
       if (nextStatus === 'loading') {
         placeholderText.textContent = runtimeMessages.loading;
+        return;
+      }
+      if (nextStatus === 'idle') {
+        placeholderText.textContent = runtimeMessages.idle;
         return;
       }
 
@@ -189,7 +195,7 @@ export const Main = defineWidget({
     bindInternalVideo();
 
     const updateView = () => {
-      const { src, mode, background, visibilityThreshold, objectFit, borderWidth, borderColor, borderRadius, showTitle, title } = currentProps;
+      const { src, mode, autoplay, visibilityThreshold, objectFit, borderWidth, borderColor, borderRadius, showTitle, title } = currentProps;
       const normalizedSrc = normalizeSource(src);
 
       // Title
@@ -201,12 +207,27 @@ export const Main = defineWidget({
         titleEl.style.display = 'none';
       }
 
-      // Update placeholder vs video visibility
+      // 编辑模式：不建连、不拉流，显示 idle 占位
+      if (currentMode === 'edit') {
+        stopReadyPoll();
+        videoEl.style.display = 'none';
+        videoEl.removeAttribute('src');
+        currentSrc = '';
+        updatePlaceholder(normalizedSrc ? 'idle' : 'empty');
+        videoEl.style.objectFit = objectFit;
+        styleEl.innerHTML = `video-rtc video { object-fit: ${objectFit} !important; }`;
+        container.style.border = `${borderWidth}px solid ${borderColor}`;
+        container.style.borderRadius = `${borderRadius}px`;
+        container.style.boxSizing = 'border-box';
+        return;
+      }
+
+      // 视图/预览模式：正常拉流
       if (!normalizedSrc) {
         currentSrc = '';
         updatePlaceholder('empty');
         videoEl.style.display = 'none';
-        videoEl.removeAttribute('src'); // clear if empty
+        videoEl.removeAttribute('src');
       } else {
         videoEl.style.display = 'block';
         const sourceChanged = currentSrc !== normalizedSrc;
@@ -216,13 +237,23 @@ export const Main = defineWidget({
           if (videoEl.src !== normalizedSrc) {
             videoEl.src = normalizedSrc;
           }
-          startReadyPoll(); // fallback for streams that don't fire standard events
+          // autoplay=false 时等 internalVideo 绑定后暂停
+          if (!autoplay) {
+            const pauseWhenReady = () => {
+              if (internalVideo) {
+                internalVideo.pause();
+              } else {
+                requestAnimationFrame(pauseWhenReady);
+              }
+            };
+            requestAnimationFrame(pauseWhenReady);
+          }
+          startReadyPoll();
         } else {
           markReadyIfPlayable();
         }
       }
       videoEl.mode = mode;
-      videoEl.background = background;
       videoEl.visibilityThreshold = visibilityThreshold;
 
       // Update styles
@@ -239,6 +270,7 @@ export const Main = defineWidget({
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
         currentLocale = newCtx.locale;
+        currentMode = newCtx.mode ?? currentMode;
         colors = resolveWidgetColors(element);
         updateView();
       },

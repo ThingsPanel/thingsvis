@@ -7,7 +7,7 @@
                 "groupStyle": "样式",
                 "src": "视频流地址",
                 "mode": "播放模式",
-                "background": "后台运行",
+                "autoplay": "自动播放",
                 "visibilityThreshold": "可见度阈值",
                 "objectFit": "视频适配",
                 "borderWidth": "边框宽度",
@@ -18,6 +18,7 @@
     },
     "runtime": {
         "empty": "请配置视频地址",
+        "idle": "编辑模式下不播放",
         "loading": "视频加载中",
         "error": "视频加载失败"
     }

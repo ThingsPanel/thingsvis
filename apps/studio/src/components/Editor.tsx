@@ -34,7 +34,6 @@ import { Button } from '@/components/ui/button';
 import ComponentsList from './LeftPanel/ComponentsList';
 import LayerPanel from './LeftPanel/LayerPanel';
 import DeviceLibraryPanel from './LeftPanel/DeviceLibraryPanel';
-import { usePlatformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import PropsPanel from './RightPanel/PropsPanel';
 import { CanvasSettingsPanel } from './RightPanel/CanvasSettingsPanel';
 import { WorkspaceEngine, type Tool } from './WorkspaceEngine';
@@ -71,7 +70,7 @@ import {
   Layers,
   Grid3x3,
   X,
-  Box,
+  Server,
 } from 'lucide-react';
 import { initEmbedModeFromUrl } from '../embed/message-router';
 import { STORAGE_CONSTANTS } from '../lib/storage/constants';
@@ -188,10 +187,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const selectedNode = selectedElement
     ? ((kernelState.nodesById[selectedElement]?.schemaRef as NodeSchemaType | undefined) ?? null)
     : null;
-
-  const hasDevices = usePlatformDeviceStore(
-    (state) => state.devices.length > 0 || state.groups.length > 0,
-  );
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -647,6 +642,13 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   <Grid3x3 className="h-4 w-4" />
                 </button>
                 <button
+                  onClick={() => setLeftPanelTab('devices')}
+                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'devices' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                  title={t('leftPanel.devices', '设备图表')}
+                >
+                  <Server className="h-4 w-4" />
+                </button>
+                <button
                   onClick={() => setLeftPanelTab('layers')}
                   className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'layers' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
                   title={t('leftPanel.layers')}
@@ -669,6 +671,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                 <div>
                   <ComponentsList onInsert={handleAddNode} />
                 </div>
+              ) : leftPanelTab === 'devices' ? (
+                <DeviceLibraryPanel />
               ) : leftPanelTab === 'layers' ? (
                 <LayerPanel
                   store={store}

@@ -66,7 +66,7 @@ import {
 import type { RegistryListEntry } from '@/lib/registry/registryClient';
 import { useTranslation } from 'react-i18next';
 
-const ICON_MAP: Record<string, LucideIcon> = {
+export const ICON_MAP: Record<string, LucideIcon> = {
   Box,
   BarChart3,
   Film,

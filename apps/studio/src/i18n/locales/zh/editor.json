@@ -344,7 +344,7 @@
         "globalData": "系统数据",
         "singleDeviceData": "设备数据",
         "dataType": "数据类型",
-        "modelFields": "物模型字段",
+        "modelFields": "当前值",
         "runtimeStatus": "运行状态",
         "historyData": "历史数据",
         "alarmStatus": "告警状态",

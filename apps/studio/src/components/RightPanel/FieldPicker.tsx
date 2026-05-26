@@ -734,6 +734,43 @@ export function FieldPicker({
     };
   }, [isPlatformDeviceListLoading, pendingPlatformGroupIds]);
 
+  // 当选中的设备不在 store 中时，主动向宿主请求该设备元数据，无需等待缓慢的"加载全部分组"流程
+  useEffect(() => {
+    if (!isEmbeddedMode || !isDeviceScopedGroup || isTemplateDeviceSelection) return;
+    if (!selectedPlatformDeviceId) return;
+    if (platformDevices.some((d) => d.deviceId === selectedPlatformDeviceId)) return;
+    if (window.parent === window) return;
+
+    const reqId = `field-picker-${selectedPlatformDeviceId}`;
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { deviceId?: string; device?: unknown } }
+        | undefined;
+      if (data?.type !== 'tv:device-by-id') return;
+      const device = data.payload?.device as any;
+      if (!device?.deviceId) return;
+      usePlatformDeviceStore.getState().setDevices([device]);
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.parent.postMessage(
+      {
+        type: 'thingsvis:requestDeviceById',
+        payload: { reqId, deviceId: selectedPlatformDeviceId },
+      },
+      '*',
+    );
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [
+    isDeviceScopedGroup,
+    isEmbeddedMode,
+    isTemplateDeviceSelection,
+    platformDevices,
+    selectedPlatformDeviceId,
+  ]);
+
   const selectedDeviceBaseFields = useMemo(() => {
     if (!isDeviceScopedGroup) return [];
     const fields = Array.isArray(selectedDeviceSource?.fields)
@@ -1369,12 +1406,12 @@ export function FieldPicker({
             }}
             className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset "
           >
-            <option value="model">{t('binding.modelFields', '物模型字段')}</option>
-            {hasDeviceStatusCatalog && (
-              <option value="status">{t('binding.runtimeStatus', '运行状态')}</option>
-            )}
+            <option value="model">{t('binding.modelFields', '当前值')}</option>
             {hasDeviceHistoryCatalog && (
               <option value="history">{t('binding.historyData', '历史数据')}</option>
+            )}
+            {hasDeviceStatusCatalog && (
+              <option value="status">{t('binding.runtimeStatus', '运行状态')}</option>
             )}
             {hasDeviceAlarmStatusCatalog && (
               <option value="alarmStatus">{t('binding.alarmStatus', '告警状态')}</option>

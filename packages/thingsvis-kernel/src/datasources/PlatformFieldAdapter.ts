@@ -94,19 +94,23 @@ export class PlatformFieldAdapter extends BaseAdapter {
 
       // ── Real-time single-point push ──────────────────────────────────────────
       if (msgType !== 'tv:platform-data') return;
-      const { fieldId, value, timestamp, fields, deviceId } = event.data.payload as {
+      const { fieldId, value, timestamp, fields, deviceId, dataSourceId } = event.data.payload as {
         fieldId?: string;
         value?: unknown;
         timestamp?: number;
         fields?: Record<string, unknown>; // 批量字段推送
         deviceId?: string;
+        dataSourceId?: string;
       };
 
       const platformConfig = this.config?.config as PlatformFieldConfig | undefined;
       // Strict routing:
+      // - datasource-scoped message: only accept the exact target datasource
       // - device-scoped datasource: only accept matching deviceId
       // - unscoped datasource: only accept messages without deviceId
-      if (platformConfig?.deviceId) {
+      if (dataSourceId !== undefined) {
+        if (this.config?.id !== dataSourceId) return;
+      } else if (platformConfig?.deviceId) {
         if (platformConfig.deviceId !== deviceId) return;
       } else if (deviceId !== undefined) {
         return;
