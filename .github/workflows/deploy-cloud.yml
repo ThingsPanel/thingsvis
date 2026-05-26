@@ -171,6 +171,17 @@ jobs:
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
+      - name: Create env file locally
+        run: |
+          cat > .env << 'EOF'
+          DATABASE_URL=${{ secrets.DATABASE_URL_CLOUD }}
+          AUTH_SECRET=${{ secrets.AUTH_SECRET }}
+          AUTH_URL=http://127.0.0.1:3000
+          AUTH_TRUST_HOST=true
+          PORT=8000
+          EOF
+          echo "✅ .env file created locally"
+
       # ========================================
       # Deploy to server via SSH key
       # ========================================
@@ -184,25 +195,9 @@ jobs:
           username: ${{ secrets.DEPLOY_USER_CLOUD }}
           key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
           port: 22
-          source: "thingsvis-deploy.tar.gz"
+          source: "thingsvis-deploy.tar.gz,.env"
           target: "/tmp"
 
-      - name: Create env file on server
-        uses: appleboy/ssh-action@v1.0.3
-        env:
-          DATABASE_URL_CLOUD: ${{ secrets.DATABASE_URL_CLOUD }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-        with:
-          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
-          username: ${{ secrets.DEPLOY_USER_CLOUD }}
-          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
-          port: 22
-          script: |
-            printf 'DATABASE_URL=%s\nAUTH_SECRET=%s\nAUTH_URL=http://127.0.0.1:3000\nAUTH_TRUST_HOST=true\nPORT=8000\n' "$DATABASE_URL_CLOUD" "$AUTH_SECRET" > /opt/thingsvis/server/.env
-            echo "✅ .env created"
-            head -2 /opt/thingsvis/server/.env
-
-      # 同上：DEPLOY_HOST_CLOUD / DEPLOY_USER_CLOUD / DEPLOY_SSH_KEY_CLOUD
       - name: Deploy and restart services
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -242,9 +237,8 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # .env file is already created in previous step
-            echo ">>> Using existing .env file:"
-            cat /opt/thingsvis/server/.env | grep -v "^#" | grep -v "^$" | head -3
+            # Copy .env file (to apps/server where prisma runs)
+            cp /tmp/.env /opt/thingsvis/server/apps/server/.env
 
             # Apply database migrations
             cd apps/server
