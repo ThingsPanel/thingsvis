@@ -28,32 +28,36 @@ if (!globalForPrisma.prisma) {
 
 // Startup diagnostic - log environment and test database connection
 async function startupDiagnostic() {
-  console.log('========================================');
-  console.log('=== ThingsVis Server Startup Diagnostic ===');
-  console.log('========================================');
+  logger.info('');
+  logger.info('ThingsVis Server Startup Diagnostic');
+  logger.info('----------------------------------------');
 
-  // Log environment
-  console.log(
-    '[ENV] DATABASE_URL:',
-    process.env.DATABASE_URL ? 'SET (length=' + process.env.DATABASE_URL.length + ')' : 'NOT SET',
-  );
-  console.log('[ENV] AUTH_SECRET:', process.env.AUTH_SECRET ? 'SET' : 'NOT SET');
-  console.log('[ENV] AUTH_URL:', process.env.AUTH_URL || 'NOT SET');
-  console.log('[ENV] NODE_ENV:', process.env.NODE_ENV || 'NOT SET');
-  console.log('[ENV] PORT:', process.env.PORT || 'NOT SET');
+  const dbUrlSet = !!process.env.DATABASE_URL;
+  const authSecretSet = !!process.env.AUTH_SECRET;
+  logger.debug('[ENV] DATABASE_URL: ' + (dbUrlSet ? 'SET' : 'NOT SET'));
+  logger.debug('[ENV] AUTH_SECRET: ' + (authSecretSet ? 'SET' : 'NOT SET'));
+  logger.info('[ENV] AUTH_URL: ' + (process.env.AUTH_URL || 'NOT SET'));
+  logger.info('[ENV] NODE_ENV: ' + (process.env.NODE_ENV || 'NOT SET'));
+  logger.info('[ENV] PORT: ' + (process.env.PORT || 'NOT SET'));
 
   // Test database connection
+  const startTime = Date.now();
   try {
-    console.log('[DB] Testing connection...');
+    logger.debug('[DB] Testing database connection...');
     await prisma.$connect();
-    console.log('[DB] ✓ Connected successfully');
+    const elapsed = Date.now() - startTime;
+    logger.info('[DB] Database connected successfully in ' + elapsed + 'ms');
     await prisma.$disconnect();
-    console.log('[DB] ✓ Disconnected');
   } catch (error) {
-    console.error('[DB] ✗ Connection FAILED:', error instanceof Error ? error.message : error);
+    const elapsed = Date.now() - startTime;
+    logger.error({
+      msg: '[DB] Database connection FAILED',
+      error: error instanceof Error ? error.message : String(error),
+      elapsed,
+    });
   }
 
-  console.log('========================================');
+  logger.info('----------------------------------------');
 }
 
 // Run diagnostic on module load (only in non-test environment)

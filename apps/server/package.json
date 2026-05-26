@@ -5,7 +5,7 @@
   "scripts": {
     "postinstall": "prisma generate --schema ./prisma/schema.prisma",
     "predev": "node scripts/dev-prisma-generate.mjs",
-    "dev": "next dev -p 8000",
+    "dev": "tsx scripts/warmup.ts && next dev -p 8000",
     "prebuild": "prisma generate --schema ./prisma/schema.prisma",
     "build": "next build",
     "start": "next start",
