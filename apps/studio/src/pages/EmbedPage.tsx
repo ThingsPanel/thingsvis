@@ -67,6 +67,24 @@ interface EmbedState {
   variables: Record<string, unknown>;
 }
 
+function parseEmbedBool(value: string | null): boolean | undefined {
+  if (value == null) return undefined;
+  const v = value.trim().toLowerCase();
+  if (v === '1' || v === 'true' || v === 'yes' || v === 'on') return true;
+  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
+  return undefined;
+}
+
+function resolveShowPreviewToolbar(searchParams: URLSearchParams): boolean {
+  const explicit = parseEmbedBool(searchParams.get('showPreviewToolbar'));
+  if (explicit !== undefined) return explicit;
+  const isThingsPanelHostEmbed =
+    searchParams.get('mode') === 'embedded' &&
+    searchParams.get('provider') === 'thingspanel' &&
+    searchParams.get('saveTarget') === 'host';
+  return !isThingsPanelHostEmbed;
+}
+
 function buildRuntimeConfigFromSearchParams(searchParams: URLSearchParams) {
   const config: Record<string, unknown> = {};
   ['platformApiBaseUrl', 'thingsvisApiBaseUrl', 'deviceId'].forEach((key) => {
@@ -252,6 +270,7 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
   const isHostManagedEmbed =
     searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
+  const showPreviewToolbar = useMemo(() => resolveShowPreviewToolbar(searchParams), [searchParams]);
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
@@ -1113,70 +1132,72 @@ export default function EmbedPage() {
         backgroundRepeat: pageBackground.repeat || 'no-repeat',
       }}
     >
-      <div
-        className="absolute top-4 right-4 z-50 pointer-events-auto transition-opacity duration-300"
-        style={{
-          opacity: isToolbarVisible ? 1 : 0,
-          pointerEvents: isToolbarVisible ? 'auto' : 'none',
-        }}
-      >
-        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-            onClick={handleRefresh}
-            disabled={state.isLoading}
-            title="Refresh"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-            onClick={handleToggleFullscreen}
-            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
-
-          <div className="w-px h-4 mx-2 bg-neutral-300 dark:bg-neutral-600" />
-
-          {isGridLayout ? (
-            <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground select-none">
-              {t('preview.scaleMode.responsive', { ns: 'pages' })}
-            </span>
-          ) : (
-            <Select
-              value={scaleMode}
-              onValueChange={(v: string) => setScaleMode(v as PreviewScaleMode)}
+      {showPreviewToolbar ? (
+        <div
+          className="absolute top-4 right-4 z-50 pointer-events-auto transition-opacity duration-300"
+          style={{
+            opacity: isToolbarVisible ? 1 : 0,
+            pointerEvents: isToolbarVisible ? 'auto' : 'none',
+          }}
+        >
+          <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+              onClick={handleRefresh}
+              disabled={state.isLoading}
+              title="Refresh"
             >
-              <SelectTrigger className="w-auto min-w-[140px] px-2 h-8 bg-transparent border-0 ring-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none shadow-none text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" align="end">
-                <SelectItem value="fit-min">
-                  {t('preview.scaleMode.fitMin', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="fit-width">
-                  {t('preview.scaleMode.fitWidth', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="fit-height">
-                  {t('preview.scaleMode.fitHeight', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="stretch">
-                  {t('preview.scaleMode.stretch', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="original">
-                  {t('preview.scaleMode.original', { ns: 'pages' })}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
+              onClick={handleToggleFullscreen}
+              title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+
+            <div className="w-px h-4 mx-2 bg-neutral-300 dark:bg-neutral-600" />
+
+            {isGridLayout ? (
+              <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground select-none">
+                {t('preview.scaleMode.responsive', { ns: 'pages' })}
+              </span>
+            ) : (
+              <Select
+                value={scaleMode}
+                onValueChange={(v: string) => setScaleMode(v as PreviewScaleMode)}
+              >
+                <SelectTrigger className="w-auto min-w-[140px] px-2 h-8 bg-transparent border-0 ring-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none shadow-none text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  <SelectItem value="fit-min">
+                    {t('preview.scaleMode.fitMin', { ns: 'pages' })}
+                  </SelectItem>
+                  <SelectItem value="fit-width">
+                    {t('preview.scaleMode.fitWidth', { ns: 'pages' })}
+                  </SelectItem>
+                  <SelectItem value="fit-height">
+                    {t('preview.scaleMode.fitHeight', { ns: 'pages' })}
+                  </SelectItem>
+                  <SelectItem value="stretch">
+                    {t('preview.scaleMode.stretch', { ns: 'pages' })}
+                  </SelectItem>
+                  <SelectItem value="original">
+                    {t('preview.scaleMode.original', { ns: 'pages' })}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <ErrorBoundary>
         {isGridLayout ? (
