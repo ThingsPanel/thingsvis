@@ -198,9 +198,18 @@ jobs:
           script: |
             set -e
 
-            export PATH="/usr/local/lib/nodejs/node-v18.5.0-linux-x64/bin:$PATH"
-
             echo "=== Deploying ThingsVis ==="
+
+            # Install Node.js v20 if not present
+            NODE_VERSION="v20.19.0"
+            NODE_INSTALL_DIR="/usr/local/lib/nodejs"
+            if [ ! -d "$NODE_INSTALL_DIR/node-$NODE_VERSION-linux-x64" ]; then
+              echo ">>> Installing Node.js $NODE_VERSION..."
+              mkdir -p $NODE_INSTALL_DIR
+              curl -fsSL https://nodejs.org/dist/$NODE_VERSION/node-$NODE_VERSION-linux-x64.tar.gz | tar -xzC $NODE_INSTALL_DIR
+            fi
+            export PATH="$NODE_INSTALL_DIR/node-$NODE_VERSION-linux-x64/bin:$PATH"
+            echo "Node.js version: $(node -v)"
 
             # Ensure directories exist
             mkdir -p /opt/thingsvis/server
