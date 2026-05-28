@@ -88,7 +88,7 @@ export default function ModelSourceInput({ value, onChange }: ModelSourceInputPr
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
+    if (file.size > 1000 * 1024 * 1024) {
       setError(t('upload.modelSizeLimit', '模型大小不能超过 100MB'));
       event.target.value = '';
       return;

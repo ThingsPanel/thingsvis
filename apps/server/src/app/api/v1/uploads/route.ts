@@ -6,7 +6,7 @@ import { jwtVerify } from 'jose';
 import { nanoid } from 'nanoid';
 
 const IMAGE_MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MODEL_MAX_FILE_SIZE = 100 * 1024 * 1024;
+const MODEL_MAX_FILE_SIZE = 1000 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
 const ALLOWED_MODEL_TYPES = [
   'model/gltf-binary',

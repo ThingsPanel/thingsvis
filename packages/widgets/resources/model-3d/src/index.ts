@@ -9,6 +9,19 @@ import { PropsSchema, type CameraPreset, type Props } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 import { resolveWidgetApiBaseUrl } from './api-base';
+import {
+  clearSceneLabels,
+  createSceneLabelRenderer,
+  mountSceneLabels,
+  syncSceneLabelValues,
+  type SceneLabelEntry,
+} from './scene-labels';
+import {
+  clearPipeFlow,
+  mountPipeFlow,
+  updatePipeFlow,
+  type FlowPipeEntry,
+} from './pipe-flow';
 
 type RuntimeMessages = (typeof zh)['runtime'];
 type RequestMode = Props['requestMode'];
@@ -269,6 +282,53 @@ function applyMaterialOptions(root: THREE.Object3D, props: Props) {
   });
 }
 
+function computeFitTarget(box: THREE.Box3, props: Props): THREE.Vector3 {
+  const min = box.min;
+  const max = box.max;
+  const anchorY = min.y + (max.y - min.y) * props.fitAnchorY;
+  const center = box.getCenter(new THREE.Vector3());
+  return new THREE.Vector3(
+    center.x + props.cameraTargetX,
+    anchorY + props.cameraTargetY,
+    center.z + props.cameraTargetZ,
+  );
+}
+
+function computeFitDistance(
+  size: THREE.Vector3,
+  fovDeg: number,
+  aspect: number,
+  multiplier: number,
+): number {
+  const vFov = THREE.MathUtils.degToRad(fovDeg);
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * aspect);
+  const fitHeight = (size.y / 2) / Math.tan(vFov / 2);
+  const fitWidth = (size.x / 2) / Math.tan(hFov / 2);
+  const fitDepth = (size.z / 2) / Math.tan(hFov / 2);
+  return Math.max(fitHeight, fitWidth, fitDepth, 0.01) * multiplier;
+}
+
+function applyOrbitAngleLimits(controls: OrbitControls, props: Props) {
+  if (!props.limitCameraAngle) {
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI;
+    controls.minAzimuthAngle = Number.NEGATIVE_INFINITY;
+    controls.maxAzimuthAngle = Number.POSITIVE_INFINITY;
+    return;
+  }
+
+  const minElevation = Math.min(props.minCameraElevation, props.maxCameraElevation);
+  const maxElevation = Math.max(props.minCameraElevation, props.maxCameraElevation);
+  const minAzimuth = Math.min(props.minCameraAzimuth, props.maxCameraAzimuth);
+  const maxAzimuth = Math.max(props.minCameraAzimuth, props.maxCameraAzimuth);
+  const halfPi = Math.PI / 2;
+
+  controls.minPolarAngle = halfPi - THREE.MathUtils.degToRad(maxElevation);
+  controls.maxPolarAngle = halfPi - THREE.MathUtils.degToRad(minElevation);
+  controls.minAzimuthAngle = THREE.MathUtils.degToRad(minAzimuth);
+  controls.maxAzimuthAngle = THREE.MathUtils.degToRad(maxAzimuth);
+}
+
 function fitCameraToObject(
   camera: THREE.PerspectiveCamera,
   controls: OrbitControls,
@@ -278,20 +338,21 @@ function fitCameraToObject(
   fillLight: THREE.DirectionalLight,
 ) {
   const box = new THREE.Box3().setFromObject(object);
-  const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
-  const maxDim = Math.max(size.x, size.y, size.z, 1);
-  const target = center.clone().add(
-    new THREE.Vector3(props.cameraTargetX, props.cameraTargetY, props.cameraTargetZ),
-  );
+  const target = computeFitTarget(box, props);
 
   let pose: CameraPose;
   if (props.autoFitCamera) {
-    const fov = THREE.MathUtils.degToRad(props.cameraFov);
-    const baseDistance = (maxDim / 2) / Math.tan(fov / 2);
-    const distance = Math.max(baseDistance * props.cameraDistanceMultiplier, 0.01);
+    const distance = computeFitDistance(
+      size,
+      props.cameraFov,
+      camera.aspect,
+      props.cameraDistanceMultiplier,
+    );
     const azimuth = THREE.MathUtils.degToRad(props.cameraAzimuth);
-    const elevation = THREE.MathUtils.degToRad(props.cameraElevation);
+    const elevation = THREE.MathUtils.degToRad(
+      THREE.MathUtils.clamp(props.cameraElevation, props.minCameraElevation, props.maxCameraElevation),
+    );
     const planar = Math.cos(elevation);
 
     pose = {
@@ -323,7 +384,7 @@ function fitCameraToObject(
     };
   }
 
-  applyCameraPose(camera, controls, pose, mainLight, fillLight);
+  applyCameraPose(camera, controls, pose, mainLight, fillLight, props);
 }
 
 function applyCameraPose(
@@ -332,6 +393,7 @@ function applyCameraPose(
   pose: CameraPose,
   mainLight: THREE.DirectionalLight,
   fillLight: THREE.DirectionalLight,
+  props: Props,
 ) {
   camera.fov = pose.fov;
   camera.position.copy(pose.position);
@@ -342,6 +404,7 @@ function applyCameraPose(
   controls.target.copy(pose.target);
   controls.minDistance = Math.max(pose.minDistance, 0.001);
   controls.maxDistance = Math.max(pose.maxDistance, controls.minDistance + 0.01);
+  applyOrbitAngleLimits(controls, props);
   controls.update();
 
   const lightDistance = Math.max(camera.position.distanceTo(pose.target), 0.01);
@@ -525,19 +588,6 @@ export const Main = defineWidget({
     element.style.overflow = 'hidden';
     element.style.background = getCanvasBackgroundColor(currentProps);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-      powerPreference: 'high-performance',
-    });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setSize(element.clientWidth || 1, element.clientHeight || 1, false);
-    renderer.domElement.style.width = '100%';
-    renderer.domElement.style.height = '100%';
-    renderer.domElement.style.display = 'block';
-    renderer.domElement.style.touchAction = 'none';
-    element.appendChild(renderer.domElement);
-
     const placeholder = document.createElement('div');
     placeholder.style.position = 'absolute';
     placeholder.style.inset = '0';
@@ -547,7 +597,7 @@ export const Main = defineWidget({
     placeholder.style.padding = '16px';
     placeholder.style.boxSizing = 'border-box';
     placeholder.style.pointerEvents = 'none';
-    placeholder.style.background = 'linear-gradient(135deg, rgba(15,23,42,0.08), rgba(15,23,42,0.02))';
+    placeholder.style.background = 'linear-gradient(135deg, rgba(3, 21, 43, 0.92), rgba(7, 38, 74, 0.84))';
     element.appendChild(placeholder);
 
     const placeholderCard = document.createElement('div');
@@ -557,10 +607,11 @@ export const Main = defineWidget({
     placeholderCard.style.gap = '6px';
     placeholderCard.style.padding = '14px 16px';
     placeholderCard.style.borderRadius = '12px';
-    placeholderCard.style.background = 'rgba(255,255,255,0.88)';
+    placeholderCard.style.background = 'rgba(8, 38, 74, 0.9)';
     placeholderCard.style.backdropFilter = 'blur(8px)';
-    placeholderCard.style.color = '#0f172a';
-    placeholderCard.style.boxShadow = '0 12px 30px rgba(15, 23, 42, 0.12)';
+    placeholderCard.style.color = '#eaf6ff';
+    placeholderCard.style.border = '1px solid rgba(23, 166, 255, 0.45)';
+    placeholderCard.style.boxShadow = '0 12px 30px rgba(0, 172, 255, 0.18)';
     placeholder.appendChild(placeholderCard);
 
     const placeholderTitle = document.createElement('div');
@@ -580,6 +631,71 @@ export const Main = defineWidget({
     placeholderUrl.style.opacity = '0.66';
     placeholderUrl.style.wordBreak = 'break-all';
     placeholderCard.appendChild(placeholderUrl);
+
+    const updatePlaceholder = (state: 'empty' | 'loading' | 'error' | 'ready') => {
+      if (state === 'ready') {
+        placeholder.style.display = 'none';
+        return;
+      }
+
+      placeholder.style.display = 'flex';
+      placeholderUrl.textContent = currentUrl;
+      placeholderUrl.style.display = currentUrl ? 'block' : 'none';
+
+      if (state === 'empty') {
+        placeholderTitle.textContent = messages().emptyTitle;
+        placeholderDescription.textContent = messages().emptyDescription;
+        return;
+      }
+
+      if (state === 'loading') {
+        placeholderTitle.textContent = messages().loadingTitle;
+        placeholderDescription.textContent = messages().loadingDescription;
+        return;
+      }
+
+      placeholderTitle.textContent = messages().errorTitle;
+      placeholderDescription.textContent = currentErrorMessage || messages().errorDescription;
+    };
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        alpha: true,
+        powerPreference: 'high-performance',
+      });
+    } catch (error) {
+      currentErrorMessage = formatLoadError(error) || messages().errorDescription;
+      updatePlaceholder('error');
+
+      return {
+        update: (newProps: Props, newCtx: WidgetOverlayContext) => {
+          currentProps = newProps;
+          currentLocale = newCtx.locale;
+          currentUrl = normalizeModelUrl(newProps.modelUrl);
+          element.style.background = getCanvasBackgroundColor(currentProps);
+          currentErrorMessage = formatLoadError(error) || messages().errorDescription;
+          updatePlaceholder('error');
+        },
+        destroy: () => {
+          destroyed = true;
+          element.innerHTML = '';
+        },
+      };
+    }
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(element.clientWidth || 1, element.clientHeight || 1, false);
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.display = 'block';
+    renderer.domElement.style.touchAction = 'none';
+    element.appendChild(renderer.domElement);
+
+    const labelRenderer = createSceneLabelRenderer(element);
+    const labelEntries: SceneLabelEntry[] = [];
+    const pipeFlowEntries: FlowPipeEntry[] = [];
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(currentProps.cameraFov, 1, 0.01, 1000);
@@ -608,6 +724,8 @@ export const Main = defineWidget({
     const clearModel = () => {
       stopAnimations();
       currentAnimations = [];
+      clearSceneLabels(labelEntries);
+      clearPipeFlow(pipeFlowEntries);
       if (currentModel) {
         scene.remove(currentModel);
         disposeObject3D(currentModel);
@@ -629,32 +747,6 @@ export const Main = defineWidget({
       });
     };
 
-    const updatePlaceholder = (state: 'empty' | 'loading' | 'error' | 'ready') => {
-      if (state === 'ready') {
-        placeholder.style.display = 'none';
-        return;
-      }
-
-      placeholder.style.display = 'flex';
-      placeholderUrl.textContent = currentUrl;
-      placeholderUrl.style.display = currentUrl ? 'block' : 'none';
-
-      if (state === 'empty') {
-        placeholderTitle.textContent = messages().emptyTitle;
-        placeholderDescription.textContent = messages().emptyDescription;
-        return;
-      }
-
-      if (state === 'loading') {
-        placeholderTitle.textContent = messages().loadingTitle;
-        placeholderDescription.textContent = messages().loadingDescription;
-        return;
-      }
-
-      placeholderTitle.textContent = messages().errorTitle;
-      placeholderDescription.textContent = currentErrorMessage || messages().errorDescription;
-    };
-
     const syncSceneSettings = () => {
       element.style.background = getCanvasBackgroundColor(currentProps);
       ambientLight.intensity = currentProps.ambientLightIntensity;
@@ -672,7 +764,7 @@ export const Main = defineWidget({
         applyMaterialOptions(currentModel, currentProps);
         const activePreset = resolveActiveCameraPreset(currentProps);
         if (activePreset) {
-          applyCameraPose(camera, controls3d, toCameraPose(currentProps, activePreset), mainLight, fillLight);
+          applyCameraPose(camera, controls3d, toCameraPose(currentProps, activePreset), mainLight, fillLight, currentProps);
         } else {
           fitCameraToObject(camera, controls3d, currentModel, currentProps, mainLight, fillLight);
         }
@@ -681,13 +773,16 @@ export const Main = defineWidget({
         const pose = activePreset
           ? toCameraPose(currentProps, activePreset)
           : createManualCameraPose(currentProps);
-        applyCameraPose(camera, controls3d, pose, mainLight, fillLight);
+        applyCameraPose(camera, controls3d, pose, mainLight, fillLight, currentProps);
       }
 
       if (currentMixer) {
         currentMixer.timeScale = currentProps.animationSpeed;
       }
       syncHelpers(scene, currentModel, currentProps, helperState);
+      syncSceneLabelValues(currentProps, labelEntries);
+      applyOrbitAngleLimits(controls3d, currentProps);
+      controls3d.update();
     };
 
     const resizeRenderer = () => {
@@ -695,8 +790,13 @@ export const Main = defineWidget({
       const height = Math.max(element.clientHeight, 1);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      if (currentModel && currentProps.autoFitCamera && !resolveActiveCameraPreset(currentProps)) {
+        fitCameraToObject(camera, controls3d, currentModel, currentProps, mainLight, fillLight);
+      }
       renderer.setSize(width, height, false);
+      labelRenderer.setSize(width, height);
       renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
     };
 
     const pickObjectAt = (clientX: number, clientY: number) => {
@@ -743,10 +843,12 @@ export const Main = defineWidget({
       const delta = clock.getDelta();
       currentMixer?.update(delta);
       controls3d.update();
+      updatePipeFlow(pipeFlowEntries, delta, currentProps.showPipeFlow, currentProps.pipeFlowSpeed);
       if (helperState.box) {
         helperState.box.update();
       }
       renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
     };
 
     const loadModel = (source: string) => {
@@ -797,6 +899,9 @@ export const Main = defineWidget({
                   currentAnimations = gltf.animations ?? [];
                   scene.add(currentModel);
                   applyMaterialOptions(currentModel, currentProps);
+                  mountSceneLabels(currentModel, currentProps, labelEntries);
+                  mountPipeFlow(currentModel, currentProps, pipeFlowEntries);
+                  syncSceneLabelValues(currentProps, labelEntries);
                   syncAnimations();
                   syncSceneSettings();
                   resizeRenderer();
@@ -839,6 +944,14 @@ export const Main = defineWidget({
         const urlChanged = nextUrl !== currentUrl;
         const requestModeChanged = newProps.requestMode !== currentProps.requestMode;
         const playAnimationsChanged = newProps.playAnimations !== currentProps.playAnimations;
+        const labelsStructureChanged =
+          newProps.showSceneLabels !== currentProps.showSceneLabels
+          || newProps.labelAnchorPrefix !== currentProps.labelAnchorPrefix
+          || newProps.labelOffsetY !== currentProps.labelOffsetY;
+
+        const pipeFlowStructureChanged =
+          newProps.showPipeFlow !== currentProps.showPipeFlow
+          || newProps.pipeNamePrefix !== currentProps.pipeNamePrefix;
 
         currentProps = newProps;
         currentMode = newCtx.mode ?? currentMode;
@@ -853,7 +966,16 @@ export const Main = defineWidget({
           syncAnimations();
         }
 
+        if (labelsStructureChanged && currentModel) {
+          mountSceneLabels(currentModel, currentProps, labelEntries);
+        }
+
+        if (pipeFlowStructureChanged && currentModel) {
+          mountPipeFlow(currentModel, currentProps, pipeFlowEntries);
+        }
+
         syncSceneSettings();
+        syncSceneLabelValues(currentProps, labelEntries);
         resizeRenderer();
 
         if (!currentModel) {
@@ -868,6 +990,7 @@ export const Main = defineWidget({
         renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
         renderer.domElement.removeEventListener('pointerup', handlePointerUp);
         clearModel();
+        labelRenderer.domElement.remove();
         if (helperState.axes) {
           scene.remove(helperState.axes);
           disposeHelper(helperState.axes);

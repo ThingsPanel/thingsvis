@@ -1,5 +1,21 @@
 import { z } from 'zod';
 
+export const SceneLabelSchema = z.object({
+  anchor: z.string().default('anchor_pv').describe('Anchor node name in GLB'),
+  title: z.string().default('').describe('Label title'),
+  value: z.string().default('--').describe('Label value'),
+  unit: z.string().default('').describe('Label unit'),
+  visible: z.boolean().default(true).describe('Label visibility'),
+});
+
+export const DEFAULT_SCENE_LABELS: z.infer<typeof SceneLabelSchema>[] = [
+  { anchor: 'anchor_pv', title: '光伏系统', value: '--', unit: 'MW', visible: true },
+  { anchor: 'anchor_storage', title: '储能系统', value: '--', unit: '%', visible: true },
+  { anchor: 'anchor_substation', title: '变配电', value: '--', unit: 'MW', visible: true },
+  { anchor: 'anchor_workshop', title: '生产车间', value: '--', unit: 'MW', visible: true },
+  { anchor: 'anchor_pump', title: '水泵系统', value: '--', unit: 'MW', visible: true },
+];
+
 export const CameraPresetSchema = z.object({
   id: z.string().default('preset-1').describe('Camera preset id'),
   name: z.string().default('').describe('Camera preset name'),
@@ -33,10 +49,16 @@ export const PropsSchema = z.object({
   cameraDistanceMultiplier: z.number().min(0.02).max(20).default(1).describe('Camera fit multiplier'),
   cameraAzimuth: z.number().min(-180).max(180).default(35).describe('Auto-fit camera azimuth'),
   cameraElevation: z.number().min(-85).max(85).default(22).describe('Auto-fit camera elevation'),
-  cameraFov: z.number().min(10).max(120).default(45).describe('Camera field of view'),
+  limitCameraAngle: z.boolean().default(true).describe('Limit orbit rotation range'),
+  minCameraElevation: z.number().min(-85).max(85).default(12).describe('Minimum camera elevation in degrees'),
+  maxCameraElevation: z.number().min(-85).max(85).default(34).describe('Maximum camera elevation in degrees'),
+  minCameraAzimuth: z.number().min(-180).max(180).default(5).describe('Minimum camera azimuth in degrees'),
+  maxCameraAzimuth: z.number().min(-180).max(180).default(75).describe('Maximum camera azimuth in degrees'),
+  fitAnchorY: z.number().min(0).max(1).default(0.38).describe('Vertical anchor ratio inside model bounds'),
   cameraTargetX: z.number().min(-1000).max(1000).default(0).describe('Camera target X offset'),
   cameraTargetY: z.number().min(-1000).max(1000).default(0).describe('Camera target Y offset'),
   cameraTargetZ: z.number().min(-1000).max(1000).default(0).describe('Camera target Z offset'),
+  cameraFov: z.number().min(10).max(120).default(45).describe('Camera field of view'),
   cameraPositionX: z.number().min(-1000).max(1000).default(4).describe('Manual camera X'),
   cameraPositionY: z.number().min(-1000).max(1000).default(2).describe('Manual camera Y'),
   cameraPositionZ: z.number().min(-1000).max(1000).default(6).describe('Manual camera Z'),
@@ -61,10 +83,23 @@ export const PropsSchema = z.object({
   gridSize: z.number().min(1).max(1000).default(20).describe('Grid helper size'),
   gridDivisions: z.number().min(1).max(200).default(20).describe('Grid helper divisions'),
   showBoundingBox: z.boolean().default(false).describe('Show bounding box helper'),
+  showSceneLabels: z.boolean().default(true).describe('Show labels on anchor nodes'),
+  labelAnchorPrefix: z.string().default('anchor_').describe('Anchor node name prefix'),
+  labelOffsetY: z.number().min(-50).max(50).default(0.3).describe('Label offset above anchor'),
+  labelValue_pv: z.union([z.string(), z.number()]).default('').describe('PV label value'),
+  labelValue_storage: z.union([z.string(), z.number()]).default('').describe('Storage label value'),
+  labelValue_substation: z.union([z.string(), z.number()]).default('').describe('Substation label value'),
+  labelValue_workshop: z.union([z.string(), z.number()]).default('').describe('Workshop label value'),
+  labelValue_pump: z.union([z.string(), z.number()]).default('').describe('Pump label value'),
+  sceneLabels: z.array(SceneLabelSchema).default(() => DEFAULT_SCENE_LABELS.map((item) => ({ ...item }))).describe('Scene label configs'),
+  showPipeFlow: z.boolean().default(true).describe('Animate energy pipe flow in viewer'),
+  pipeNamePrefix: z.string().default('能量线_').describe('Pipe mesh name prefix'),
+  pipeFlowSpeed: z.number().min(0.1).max(10).default(1.8).describe('Pipe flow animation speed'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;
 export type CameraPreset = z.infer<typeof CameraPresetSchema>;
+export type SceneLabel = z.infer<typeof SceneLabelSchema>;
 
 export function getDefaultProps(): Props {
   return PropsSchema.parse({});
