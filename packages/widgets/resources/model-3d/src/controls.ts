@@ -19,19 +19,36 @@ export const controls = createControlPanel()
       });
   })
   .addGroup(
-    'Display',
+    'Transform',
     (builder) => {
       builder
-        .addColorPicker('canvasBackgroundColor', {
-          label: { zh: '画布背景', en: 'Canvas Background' },
-          default: 'transparent',
-        })
         .addSlider('modelScale', {
           label: { zh: '模型缩放', en: 'Model Scale' },
           min: 0.01,
           max: 20,
           step: 0.01,
           default: 1,
+        })
+        .addNumberInput('positionX', {
+          label: { zh: '位置 X', en: 'Position X' },
+          min: -1000,
+          max: 1000,
+          step: 0.1,
+          default: 0,
+        })
+        .addNumberInput('positionY', {
+          label: { zh: '位置 Y', en: 'Position Y' },
+          min: -1000,
+          max: 1000,
+          step: 0.1,
+          default: 0,
+        })
+        .addNumberInput('positionZ', {
+          label: { zh: '位置 Z', en: 'Position Z' },
+          min: -1000,
+          max: 1000,
+          step: 0.1,
+          default: 0,
         })
         .addNumberInput('rotationX', {
           label: { zh: '旋转 X', en: 'Rotation X' },
@@ -53,17 +70,24 @@ export const controls = createControlPanel()
           max: 180,
           step: 1,
           default: 0,
+        });
+    },
+    { label: { zh: '变换', en: 'Transform' } },
+  )
+  .addGroup(
+    'Display',
+    (builder) => {
+      builder
+        .addColorPicker('canvasBackgroundColor', {
+          label: { zh: '画布背景', en: 'Canvas Background' },
+          default: 'transparent',
         })
-        .addSwitch('autoFitCamera', {
-          label: { zh: '自动拟合镜头', en: 'Auto-fit Camera' },
-          default: true,
+        .addSwitch('wireframe', {
+          label: { zh: '线框模式', en: 'Wireframe' },
+          default: false,
         })
         .addSwitch('enableInteraction', {
           label: { zh: '允许交互', en: 'Enable Interaction' },
-          default: true,
-        })
-        .addSwitch('playAnimations', {
-          label: { zh: '播放动画', en: 'Play Animations' },
           default: true,
         });
     },
@@ -73,6 +97,10 @@ export const controls = createControlPanel()
     'Camera',
     (builder) => {
       builder
+        .addSwitch('autoFitCamera', {
+          label: { zh: '自动拟合镜头', en: 'Auto-fit Camera' },
+          default: true,
+        })
         .addSlider('cameraDistanceMultiplier', {
           label: { zh: '镜头距离', en: 'Camera Distance' },
           min: 0.02,
@@ -159,6 +187,72 @@ export const controls = createControlPanel()
     { label: { zh: '镜头', en: 'Camera' } },
   )
   .addGroup(
+    'Lighting',
+    (builder) => {
+      builder
+        .addSlider('ambientLightIntensity', {
+          label: { zh: '环境光强度', en: 'Ambient Light' },
+          min: 0,
+          max: 10,
+          step: 0.1,
+          default: 1.2,
+        })
+        .addSlider('directionalLightIntensity', {
+          label: { zh: '主光强度', en: 'Main Light' },
+          min: 0,
+          max: 10,
+          step: 0.1,
+          default: 2.4,
+        })
+        .addSlider('fillLightIntensity', {
+          label: { zh: '补光强度', en: 'Fill Light' },
+          min: 0,
+          max: 10,
+          step: 0.1,
+          default: 0.8,
+        })
+        .addSlider('exposure', {
+          label: { zh: '曝光', en: 'Exposure' },
+          min: 0.1,
+          max: 5,
+          step: 0.05,
+          default: 1.05,
+        });
+    },
+    { label: { zh: '灯光', en: 'Lighting' } },
+  )
+  .addGroup(
+    'Animation',
+    (builder) => {
+      builder
+        .addSwitch('playAnimations', {
+          label: { zh: '播放模型动画', en: 'Play Model Animations' },
+          default: true,
+        })
+        .addSlider('animationSpeed', {
+          label: { zh: '动画速度', en: 'Animation Speed' },
+          min: 0.1,
+          max: 5,
+          step: 0.1,
+          default: 1,
+          showWhen: { field: 'playAnimations', value: true },
+        })
+        .addSwitch('autoRotate', {
+          label: { zh: '自动旋转', en: 'Auto Rotate' },
+          default: false,
+        })
+        .addSlider('rotationSpeed', {
+          label: { zh: '旋转速度', en: 'Rotation Speed' },
+          min: 0.1,
+          max: 10,
+          step: 0.1,
+          default: 1.2,
+          showWhen: { field: 'autoRotate', value: true },
+        });
+    },
+    { label: { zh: '动画', en: 'Animation' } },
+  )
+  .addGroup(
     'Labels',
     (builder) => {
       builder
@@ -170,42 +264,9 @@ export const controls = createControlPanel()
           label: { zh: '锚点前缀', en: 'Anchor Prefix' },
           default: 'anchor_',
         })
-        .addNumberInput('labelOffsetY', {
-          label: { zh: '标签高度偏移', en: 'Label Offset Y' },
-          min: -50,
-          max: 50,
-          step: 0.1,
-          default: 0.3,
-        })
-        .addTextInput('labelValue_pv', {
-          label: { zh: '光伏数值', en: 'PV Value' },
-          default: '',
-          placeholder: '{{ ds.<id>.data.<field> }}',
-          binding: true,
-        })
-        .addTextInput('labelValue_storage', {
-          label: { zh: '储能数值', en: 'Storage Value' },
-          default: '',
-          placeholder: '{{ ds.<id>.data.<field> }}',
-          binding: true,
-        })
-        .addTextInput('labelValue_substation', {
-          label: { zh: '变配电数值', en: 'Substation Value' },
-          default: '',
-          placeholder: '{{ ds.<id>.data.<field> }}',
-          binding: true,
-        })
-        .addTextInput('labelValue_workshop', {
-          label: { zh: '车间数值', en: 'Workshop Value' },
-          default: '',
-          placeholder: '{{ ds.<id>.data.<field> }}',
-          binding: true,
-        })
-        .addTextInput('labelValue_pump', {
-          label: { zh: '水泵数值', en: 'Pump Value' },
-          default: '',
-          placeholder: '{{ ds.<id>.data.<field> }}',
-          binding: true,
+        .addCustom('sceneLabels', 'model3dLabels' as any, {
+          label: { zh: '标签配置', en: 'Labels' },
+          default: [],
         });
     },
     { label: { zh: '标签', en: 'Labels' } },
@@ -215,22 +276,58 @@ export const controls = createControlPanel()
     (builder) => {
       builder
         .addSwitch('showPipeFlow', {
-          label: { zh: '管道流动', en: 'Pipe Flow' },
+          label: { zh: '管线流动', en: 'Pipe Flow' },
           default: true,
         })
-        .addTextInput('pipeNamePrefix', {
-          label: { zh: '管道名称前缀', en: 'Pipe Name Prefix' },
-          default: '能量线_',
-        })
-        .addSlider('pipeFlowSpeed', {
-          label: { zh: '流动速度', en: 'Flow Speed' },
-          min: 0.1,
-          max: 10,
-          step: 0.1,
-          default: 1.8,
+        .addCustom('pipeFlowRules', 'model3dPipeRules' as any, {
+          label: { zh: '管线规则', en: 'Pipe Rules' },
+          default: [],
           showWhen: { field: 'showPipeFlow', value: true },
         });
     },
-    { label: { zh: '管道', en: 'Pipes' } },
+    { label: { zh: '管线', en: 'Pipes' } },
+  )
+  .addGroup(
+    'Debug',
+    (builder) => {
+      builder
+        .addSwitch('showAxes', {
+          label: { zh: '显示坐标轴', en: 'Show Axes' },
+          default: false,
+        })
+        .addNumberInput('axesSize', {
+          label: { zh: '坐标轴尺寸', en: 'Axes Size' },
+          min: 0.1,
+          max: 1000,
+          step: 1,
+          default: 5,
+          showWhen: { field: 'showAxes', value: true },
+        })
+        .addSwitch('showGrid', {
+          label: { zh: '显示网格', en: 'Show Grid' },
+          default: false,
+        })
+        .addNumberInput('gridSize', {
+          label: { zh: '网格尺寸', en: 'Grid Size' },
+          min: 1,
+          max: 1000,
+          step: 1,
+          default: 20,
+          showWhen: { field: 'showGrid', value: true },
+        })
+        .addNumberInput('gridDivisions', {
+          label: { zh: '网格分段', en: 'Grid Divisions' },
+          min: 1,
+          max: 200,
+          step: 1,
+          default: 20,
+          showWhen: { field: 'showGrid', value: true },
+        })
+        .addSwitch('showBoundingBox', {
+          label: { zh: '显示包围盒', en: 'Show Bounding Box' },
+          default: false,
+        });
+    },
+    { label: { zh: '调试', en: 'Debug' }, expanded: false },
   )
   .build();

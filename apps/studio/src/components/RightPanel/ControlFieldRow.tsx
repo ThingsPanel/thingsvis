@@ -75,6 +75,89 @@ type ActionLike = {
   [key: string]: unknown;
 };
 
+type Model3dSceneLabel = {
+  id: string;
+  anchor: string;
+  title: string;
+  value: string | number;
+  unit: string;
+  visible: boolean;
+  offsetX: number;
+  offsetY: number;
+  offsetZ: number;
+};
+
+type Model3dPipeRule = {
+  id: string;
+  matcherType: 'prefix' | 'contains' | 'exact';
+  matcher: string;
+  color: string;
+  speed: number;
+  visible: boolean;
+};
+
+const PIPE_MATCHER_OPTIONS: Array<{ value: Model3dPipeRule['matcherType']; label: string }> = [
+  { value: 'prefix', label: '前缀' },
+  { value: 'contains', label: '包含' },
+  { value: 'exact', label: '精确' },
+];
+
+function makeStableItemId(prefix: string): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `${prefix}-${crypto.randomUUID()}`;
+  }
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function toNumber(value: unknown, fallback: number): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function normalizeSceneLabel(value: unknown, index: number): Model3dSceneLabel {
+  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  return {
+    id: typeof record.id === 'string' && record.id ? record.id : `label-${index + 1}`,
+    anchor: typeof record.anchor === 'string' ? record.anchor : '',
+    title: typeof record.title === 'string' ? record.title : '',
+    value:
+      typeof record.value === 'number' || typeof record.value === 'string' ? record.value : '--',
+    unit: typeof record.unit === 'string' ? record.unit : '',
+    visible: typeof record.visible === 'boolean' ? record.visible : true,
+    offsetX: toNumber(record.offsetX, 0),
+    offsetY: toNumber(record.offsetY, 0.3),
+    offsetZ: toNumber(record.offsetZ, 0),
+  };
+}
+
+function normalizeSceneLabels(value: unknown): Model3dSceneLabel[] {
+  return Array.isArray(value) ? value.map(normalizeSceneLabel) : [];
+}
+
+function normalizePipeRule(value: unknown, index: number): Model3dPipeRule {
+  const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const matcherType =
+    record.matcherType === 'contains' || record.matcherType === 'exact'
+      ? record.matcherType
+      : 'prefix';
+  return {
+    id: typeof record.id === 'string' && record.id ? record.id : `pipe-rule-${index + 1}`,
+    matcherType,
+    matcher: typeof record.matcher === 'string' ? record.matcher : '',
+    color: typeof record.color === 'string' && record.color ? record.color : '#38bdf8',
+    speed: toNumber(record.speed, 1.8),
+    visible: typeof record.visible === 'boolean' ? record.visible : true,
+  };
+}
+
+function normalizePipeRules(value: unknown): Model3dPipeRule[] {
+  return Array.isArray(value) ? value.map(normalizePipeRule) : [];
+}
+
 function isDefaultWriteBindingTarget(
   componentType: string | undefined,
   targetProp: string,
@@ -672,6 +755,14 @@ export function ControlFieldRow({
               />
             )}
 
+            {field.kind === 'model3dLabels' && (
+              <Model3dLabelsEditor value={propsValue} onChange={setStatic} />
+            )}
+
+            {field.kind === 'model3dPipeRules' && (
+              <Model3dPipeRulesEditor value={propsValue} onChange={setStatic} />
+            )}
+
             {/* Fallback for unknown kinds */}
             {![
               'string',
@@ -688,6 +779,8 @@ export function ControlFieldRow({
               'image',
               'icon',
               'localIcon',
+              'model3dLabels',
+              'model3dPipeRules',
             ].includes(field.kind) && (
               <Input
                 value={propsValue === undefined ? '' : String(propsValue)}
@@ -782,6 +875,219 @@ export function ControlFieldRow({
           <p className="text-xs text-muted-foreground leading-relaxed">{fieldDescription}</p>
         )}
       </div>
+    </div>
+  );
+}
+
+function Model3dLabelsEditor({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (nextValue: Model3dSceneLabel[]) => void;
+}) {
+  const labels = normalizeSceneLabels(value);
+
+  const updateAt = (index: number, patch: Partial<Model3dSceneLabel>) => {
+    onChange(labels.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+  };
+
+  const removeAt = (index: number) => {
+    onChange(labels.filter((_, idx) => idx !== index));
+  };
+
+  const addLabel = () => {
+    onChange([
+      ...labels,
+      {
+        id: makeStableItemId('label'),
+        anchor: '',
+        title: '标签',
+        value: '--',
+        unit: '',
+        visible: true,
+        offsetX: 0,
+        offsetY: 0.3,
+        offsetZ: 0,
+      },
+    ]);
+  };
+
+  return (
+    <div className="space-y-2">
+      {labels.map((item, index) => (
+        <div key={item.id} className="space-y-2 rounded-md border border-border bg-muted/20 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={item.visible}
+                onChange={(e) => updateAt(index, { visible: e.target.checked })}
+                className="w-3.5 h-3.5 rounded border-input accent-[#6965db]"
+              />
+              显示
+            </label>
+            <button
+              type="button"
+              onClick={() => removeAt(index)}
+              className="h-6 px-2 text-xs rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              删除
+            </button>
+          </div>
+          <Input
+            value={item.anchor}
+            onChange={(e) => updateAt(index, { anchor: e.target.value })}
+            className="h-8 text-xs"
+            placeholder="锚点节点名，例如 anchor_1"
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              value={item.title}
+              onChange={(e) => updateAt(index, { title: e.target.value })}
+              className="h-8 text-xs"
+              placeholder="标题"
+            />
+            <Input
+              value={String(item.value)}
+              onChange={(e) => updateAt(index, { value: e.target.value })}
+              className="h-8 text-xs"
+              placeholder="数值或绑定结果"
+            />
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            <Input
+              value={item.unit}
+              onChange={(e) => updateAt(index, { unit: e.target.value })}
+              className="h-8 text-xs"
+              placeholder="单位"
+            />
+            <NumericInput
+              value={item.offsetX}
+              onValueChange={(next) => updateAt(index, { offsetX: next ?? 0 })}
+              className="h-8 text-xs"
+              mode="float"
+            />
+            <NumericInput
+              value={item.offsetY}
+              onValueChange={(next) => updateAt(index, { offsetY: next ?? 0 })}
+              className="h-8 text-xs"
+              mode="float"
+            />
+            <NumericInput
+              value={item.offsetZ}
+              onValueChange={(next) => updateAt(index, { offsetZ: next ?? 0 })}
+              className="h-8 text-xs"
+              mode="float"
+            />
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addLabel}
+        className="w-full h-8 text-xs rounded-md border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+      >
+        添加标签
+      </button>
+    </div>
+  );
+}
+
+function Model3dPipeRulesEditor({
+  value,
+  onChange,
+}: {
+  value: unknown;
+  onChange: (nextValue: Model3dPipeRule[]) => void;
+}) {
+  const rules = normalizePipeRules(value);
+
+  const updateAt = (index: number, patch: Partial<Model3dPipeRule>) => {
+    onChange(rules.map((item, idx) => (idx === index ? { ...item, ...patch } : item)));
+  };
+
+  const removeAt = (index: number) => {
+    onChange(rules.filter((_, idx) => idx !== index));
+  };
+
+  const addRule = () => {
+    onChange([
+      ...rules,
+      {
+        id: makeStableItemId('pipe-rule'),
+        matcherType: 'prefix',
+        matcher: '',
+        color: '#38bdf8',
+        speed: 1.8,
+        visible: true,
+      },
+    ]);
+  };
+
+  return (
+    <div className="space-y-2">
+      {rules.map((item, index) => (
+        <div key={item.id} className="space-y-2 rounded-md border border-border bg-muted/20 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={item.visible}
+                onChange={(e) => updateAt(index, { visible: e.target.checked })}
+                className="w-3.5 h-3.5 rounded border-input accent-[#6965db]"
+              />
+              启用
+            </label>
+            <button
+              type="button"
+              onClick={() => removeAt(index)}
+              className="h-6 px-2 text-xs rounded border border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              删除
+            </button>
+          </div>
+          <div className="grid grid-cols-[92px_1fr] gap-2">
+            <select
+              value={item.matcherType}
+              onChange={(e) =>
+                updateAt(index, { matcherType: e.target.value as Model3dPipeRule['matcherType'] })
+              }
+              className="h-8 px-2 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
+            >
+              {PIPE_MATCHER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <Input
+              value={item.matcher}
+              onChange={(e) => updateAt(index, { matcher: e.target.value })}
+              className="h-8 text-xs"
+              placeholder="mesh 名称匹配值"
+            />
+          </div>
+          <div className="grid grid-cols-[1fr_96px] gap-2">
+            <ColorInput value={item.color} onChange={(next) => updateAt(index, { color: next })} />
+            <NumericInput
+              value={item.speed}
+              onValueChange={(next) => updateAt(index, { speed: next ?? 1.8 })}
+              className="h-8 text-xs"
+              min={0.1}
+              max={10}
+              mode="float"
+            />
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={addRule}
+        className="w-full h-8 text-xs rounded-md border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+      >
+        添加规则
+      </button>
     </div>
   );
 }

@@ -2,6 +2,7 @@ function resolveApiBaseFromLocation(sourceHref: string): string | null {
   try {
     const url = new URL(sourceHref);
     const fromSearch =
+      url.searchParams.get('thingsvisApiBaseUrl') ||
       url.searchParams.get('apiBaseUrl') ||
       url.searchParams.get('apiUrl') ||
       url.searchParams.get('backendUrl');
@@ -14,6 +15,7 @@ function resolveApiBaseFromLocation(sourceHref: string): string | null {
     if (queryIndex >= 0) {
       const hashParams = new URLSearchParams(hash.slice(queryIndex + 1));
       const fromHash =
+        hashParams.get('thingsvisApiBaseUrl') ||
         hashParams.get('apiBaseUrl') ||
         hashParams.get('apiUrl') ||
         hashParams.get('backendUrl');

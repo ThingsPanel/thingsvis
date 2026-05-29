@@ -179,7 +179,9 @@ function resolveWidgetStaticBaseUrl(): string {
 
   try {
     const apiBaseUrl = new URL(resolveWidgetApiBaseUrl(), window.location.origin);
-    apiBaseUrl.pathname = apiBaseUrl.pathname.replace(/\/api\/v1\/?$/, '/');
+    apiBaseUrl.pathname = apiBaseUrl.pathname
+      .replace(/\/api\/v1\/?$/, '/')
+      .replace(/\/thingsvis-api\/?$/, '/');
     return apiBaseUrl.toString();
   } catch {
     return `${window.location.origin}/`;
@@ -661,9 +663,9 @@ export const Main = defineWidget({
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
-        antialias: true,
+        antialias: false,
         alpha: true,
-        powerPreference: 'high-performance',
+        powerPreference: 'default',
       });
     } catch (error) {
       currentErrorMessage = formatLoadError(error) || messages().errorDescription;
@@ -685,12 +687,19 @@ export const Main = defineWidget({
       };
     }
 
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    const handleContextLost = (event: Event) => {
+      event.preventDefault();
+      currentErrorMessage = 'WebGL 上下文已丢失，请刷新页面或关闭其他 3D 预览页后重试。';
+      updatePlaceholder('error');
+    };
+
+    renderer.setPixelRatio(1);
     renderer.setSize(element.clientWidth || 1, element.clientHeight || 1, false);
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
     renderer.domElement.style.display = 'block';
     renderer.domElement.style.touchAction = 'none';
+    renderer.domElement.addEventListener('webglcontextlost', handleContextLost);
     element.appendChild(renderer.domElement);
 
     const labelRenderer = createSceneLabelRenderer(element);
@@ -843,7 +852,7 @@ export const Main = defineWidget({
       const delta = clock.getDelta();
       currentMixer?.update(delta);
       controls3d.update();
-      updatePipeFlow(pipeFlowEntries, delta, currentProps.showPipeFlow, currentProps.pipeFlowSpeed);
+      updatePipeFlow(pipeFlowEntries, currentProps.showPipeFlow);
       if (helperState.box) {
         helperState.box.update();
       }
@@ -947,11 +956,11 @@ export const Main = defineWidget({
         const labelsStructureChanged =
           newProps.showSceneLabels !== currentProps.showSceneLabels
           || newProps.labelAnchorPrefix !== currentProps.labelAnchorPrefix
-          || newProps.labelOffsetY !== currentProps.labelOffsetY;
+          || newProps.sceneLabels !== currentProps.sceneLabels;
 
         const pipeFlowStructureChanged =
           newProps.showPipeFlow !== currentProps.showPipeFlow
-          || newProps.pipeNamePrefix !== currentProps.pipeNamePrefix;
+          || newProps.pipeFlowRules !== currentProps.pipeFlowRules;
 
         currentProps = newProps;
         currentMode = newCtx.mode ?? currentMode;
@@ -989,6 +998,7 @@ export const Main = defineWidget({
         resizeObserver?.disconnect();
         renderer.domElement.removeEventListener('pointerdown', handlePointerDown);
         renderer.domElement.removeEventListener('pointerup', handlePointerUp);
+        renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
         clearModel();
         labelRenderer.domElement.remove();
         if (helperState.axes) {

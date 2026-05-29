@@ -1,20 +1,31 @@
 import { z } from 'zod';
 
 export const SceneLabelSchema = z.object({
-  anchor: z.string().default('anchor_pv').describe('Anchor node name in GLB'),
+  id: z.string().default('label-1').describe('Label id'),
+  anchor: z.string().default('anchor_1').describe('Anchor node name in GLB'),
   title: z.string().default('').describe('Label title'),
-  value: z.string().default('--').describe('Label value'),
+  value: z.union([z.string(), z.number()]).default('--').describe('Label value'),
   unit: z.string().default('').describe('Label unit'),
   visible: z.boolean().default(true).describe('Label visibility'),
+  offsetX: z.number().min(-50).max(50).default(0).describe('Label X offset'),
+  offsetY: z.number().min(-50).max(50).default(0.3).describe('Label Y offset'),
+  offsetZ: z.number().min(-50).max(50).default(0).describe('Label Z offset'),
 });
 
-export const DEFAULT_SCENE_LABELS: z.infer<typeof SceneLabelSchema>[] = [
-  { anchor: 'anchor_pv', title: '光伏系统', value: '--', unit: 'MW', visible: true },
-  { anchor: 'anchor_storage', title: '储能系统', value: '--', unit: '%', visible: true },
-  { anchor: 'anchor_substation', title: '变配电', value: '--', unit: 'MW', visible: true },
-  { anchor: 'anchor_workshop', title: '生产车间', value: '--', unit: 'MW', visible: true },
-  { anchor: 'anchor_pump', title: '水泵系统', value: '--', unit: 'MW', visible: true },
-];
+export const PipeFlowMatcherSchema = z.enum(['prefix', 'contains', 'exact']);
+
+export const PipeFlowRuleSchema = z.object({
+  id: z.string().default('pipe-rule-1').describe('Pipe flow rule id'),
+  matcherType: PipeFlowMatcherSchema.default('prefix').describe('Pipe mesh name matcher type'),
+  matcher: z.string().default('pipe_').describe('Pipe mesh name matcher'),
+  color: z.string().default('#38bdf8').describe('Pipe flow color'),
+  speed: z.number().min(0.1).max(10).default(1.8).describe('Pipe flow speed'),
+  visible: z.boolean().default(true).describe('Pipe flow rule visibility'),
+});
+
+export const DEFAULT_SCENE_LABELS: z.infer<typeof SceneLabelSchema>[] = [];
+
+export const DEFAULT_PIPE_FLOW_RULES: z.infer<typeof PipeFlowRuleSchema>[] = [];
 
 export const CameraPresetSchema = z.object({
   id: z.string().default('preset-1').describe('Camera preset id'),
@@ -85,21 +96,16 @@ export const PropsSchema = z.object({
   showBoundingBox: z.boolean().default(false).describe('Show bounding box helper'),
   showSceneLabels: z.boolean().default(true).describe('Show labels on anchor nodes'),
   labelAnchorPrefix: z.string().default('anchor_').describe('Anchor node name prefix'),
-  labelOffsetY: z.number().min(-50).max(50).default(0.3).describe('Label offset above anchor'),
-  labelValue_pv: z.union([z.string(), z.number()]).default('').describe('PV label value'),
-  labelValue_storage: z.union([z.string(), z.number()]).default('').describe('Storage label value'),
-  labelValue_substation: z.union([z.string(), z.number()]).default('').describe('Substation label value'),
-  labelValue_workshop: z.union([z.string(), z.number()]).default('').describe('Workshop label value'),
-  labelValue_pump: z.union([z.string(), z.number()]).default('').describe('Pump label value'),
   sceneLabels: z.array(SceneLabelSchema).default(() => DEFAULT_SCENE_LABELS.map((item) => ({ ...item }))).describe('Scene label configs'),
-  showPipeFlow: z.boolean().default(true).describe('Animate energy pipe flow in viewer'),
-  pipeNamePrefix: z.string().default('能量线_').describe('Pipe mesh name prefix'),
-  pipeFlowSpeed: z.number().min(0.1).max(10).default(1.8).describe('Pipe flow animation speed'),
+  showPipeFlow: z.boolean().default(true).describe('Animate pipe flow in viewer'),
+  pipeFlowRules: z.array(PipeFlowRuleSchema).default(() => DEFAULT_PIPE_FLOW_RULES.map((item) => ({ ...item }))).describe('Pipe flow rules'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;
 export type CameraPreset = z.infer<typeof CameraPresetSchema>;
 export type SceneLabel = z.infer<typeof SceneLabelSchema>;
+export type PipeFlowRule = z.infer<typeof PipeFlowRuleSchema>;
+export type PipeFlowMatcher = z.infer<typeof PipeFlowMatcherSchema>;
 
 export function getDefaultProps(): Props {
   return PropsSchema.parse({});

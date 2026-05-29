@@ -392,6 +392,16 @@ export class FieldBuilder {
     });
     return this;
   }
+
+  /** 添加 3D 模型标签列表编辑器 */
+  addModel3dLabels(path: string, options: AddControlOptions = {}): this {
+    return this.addCustom(path, 'model3dLabels' as ControlKind, options);
+  }
+
+  /** 添加 3D 管线流动规则列表编辑器 */
+  addModel3dPipeRules(path: string, options: AddControlOptions = {}): this {
+    return this.addCustom(path, 'model3dPipeRules' as ControlKind, options);
+  }
 }
 
 // ============================================================================

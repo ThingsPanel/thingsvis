@@ -222,6 +222,95 @@ function applyHistoryConfigToSnapshot(
   return changed ? nextSnapshot : snapshot;
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function resolveTemplateValues(value: unknown, context: Record<string, unknown>): unknown {
+  if (typeof value === 'string') {
+    return value.includes('{{') ? ExpressionEvaluator.evaluate(value, context) : value;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveTemplateValues(item, context));
+  }
+
+  if (isPlainObject(value)) {
+    let changed = false;
+    const next: Record<string, unknown> = {};
+    Object.entries(value).forEach(([key, item]) => {
+      const resolved = resolveTemplateValues(item, context);
+      next[key] = resolved;
+      if (resolved !== item) changed = true;
+    });
+    return changed ? next : value;
+  }
+
+  return value;
+}
+
+function cloneForPath(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(cloneForPath);
+  if (isPlainObject(value)) {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cloneForPath(item)]));
+  }
+  return value;
+}
+
+function setResolvedProp(target: Record<string, unknown>, path: string, value: unknown) {
+  if (!path.includes('.')) {
+    target[path] = value;
+    return;
+  }
+
+  const segments = path.split('.').filter(Boolean);
+  if (segments.length === 0) return;
+
+  const rootKey = segments[0]!;
+  const rootValue = cloneForPath(target[rootKey]);
+  const nextRoot =
+    rootValue !== undefined
+      ? rootValue
+      : /^\d+$/.test(segments[1] ?? '')
+        ? []
+        : {};
+
+  let cursor: unknown = nextRoot;
+  for (let idx = 1; idx < segments.length; idx += 1) {
+    const segment = segments[idx]!;
+    const isLast = idx === segments.length - 1;
+    const nextSegment = segments[idx + 1];
+
+    if (Array.isArray(cursor)) {
+      const arrayIndex = Number(segment);
+      if (!Number.isInteger(arrayIndex) || arrayIndex < 0) return;
+      if (isLast) {
+        cursor[arrayIndex] = value;
+        break;
+      }
+      if (cursor[arrayIndex] === undefined || cursor[arrayIndex] === null) {
+        cursor[arrayIndex] = /^\d+$/.test(nextSegment ?? '') ? [] : {};
+      }
+      cursor = cursor[arrayIndex];
+      continue;
+    }
+
+    if (!isPlainObject(cursor)) return;
+
+    if (isLast) {
+      cursor[segment] = value;
+      break;
+    }
+
+    if (cursor[segment] === undefined || cursor[segment] === null) {
+      cursor[segment] = /^\d+$/.test(nextSegment ?? '') ? [] : {};
+    }
+    cursor = cursor[segment];
+  }
+
+  target[rootKey] = nextRoot;
+}
+
 /**
  * PropertyResolver: A utility to resolve dynamic property bindings in a node's props.
  * It follows the "React Bypass" philosophy by providing a way to get raw resolved props
@@ -299,14 +388,9 @@ export class PropertyResolver {
       var: variableValues ?? {},
     };
 
-    // 1. Resolve standard property bindings (legacy/simple)
+    // 1. Resolve template strings inside props, including nested arrays used by 3D labels.
     Object.keys(resolvedProps).forEach((key) => {
-      let val = resolvedProps[key];
-      if (typeof val === 'string') {
-        if (val.includes('{{')) {
-          resolvedProps[key] = ExpressionEvaluator.evaluate(val, context);
-        }
-      }
+      resolvedProps[key] = resolveTemplateValues(resolvedProps[key], context);
     });
 
     // 2. Resolve explicit DataBindings (from node.data)
@@ -334,13 +418,13 @@ export class PropertyResolver {
                   value: historyResolvedValue,
                   data: applyHistoryConfigToSnapshot(dsSnapshot, binding.historyConfig),
                 });
-                resolvedProps[binding.targetProp] = result ?? historyResolvedValue;
+                setResolvedProp(resolvedProps, binding.targetProp, result ?? historyResolvedValue);
               } catch {
                 /* transform eval failed — use raw resolved value */
-                resolvedProps[binding.targetProp] = historyResolvedValue;
+                setResolvedProp(resolvedProps, binding.targetProp, historyResolvedValue);
               }
             } else {
-              resolvedProps[binding.targetProp] = historyResolvedValue;
+              setResolvedProp(resolvedProps, binding.targetProp, historyResolvedValue);
             }
           }
         }

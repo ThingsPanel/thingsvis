@@ -4,14 +4,6 @@ import type { Props, SceneLabel } from './schema';
 
 const LABEL_STYLE_ID = 'tv-model-3d-scene-label-styles';
 
-const LABEL_VALUE_PROP_BY_ANCHOR: Record<string, keyof Props> = {
-  anchor_pv: 'labelValue_pv',
-  anchor_storage: 'labelValue_storage',
-  anchor_substation: 'labelValue_substation',
-  anchor_workshop: 'labelValue_workshop',
-  anchor_pump: 'labelValue_pump',
-};
-
 function formatLabelValue(value: unknown): string {
   if (value === undefined || value === null || value === '') {
     return '';
@@ -22,15 +14,8 @@ function formatLabelValue(value: unknown): string {
   return String(value);
 }
 
-function resolveDisplayedValue(anchor: string, cfg: SceneLabel, props: Props): string {
-  const boundProp = LABEL_VALUE_PROP_BY_ANCHOR[anchor];
-  if (boundProp) {
-    const boundValue = formatLabelValue(props[boundProp]);
-    if (boundValue) {
-      return boundValue;
-    }
-  }
-  return cfg.value || '--';
+function resolveDisplayedValue(cfg: SceneLabel): string {
+  return formatLabelValue(cfg.value) || '--';
 }
 
 export type SceneLabelEntry = {
@@ -108,9 +93,13 @@ function resolveLabelConfig(
   return {
     anchor: anchorName,
     title: anchorName.replace(/^anchor_/, '').replace(/_/g, ' '),
+    id: `label-${anchorName}`,
     value: '--',
     unit: '',
     visible: true,
+    offsetX: 0,
+    offsetY: 0.3,
+    offsetZ: 0,
   };
 }
 
@@ -127,7 +116,7 @@ function createLabelElement(cfg: SceneLabel) {
 
   const valueEl = document.createElement('span');
   valueEl.className = 'tv-scene-label__num';
-  valueEl.textContent = cfg.value || '--';
+  valueEl.textContent = formatLabelValue(cfg.value) || '--';
 
   const unitEl = document.createElement('span');
   unitEl.className = 'tv-scene-label__unit';
@@ -171,10 +160,10 @@ export function mountSceneLabels(
 
     const cfg = resolveLabelConfig(name, configMap);
     const { el, titleEl, valueEl, unitEl } = createLabelElement(cfg);
-    valueEl.textContent = resolveDisplayedValue(name, cfg, props);
+    valueEl.textContent = resolveDisplayedValue(cfg);
 
     const label = new CSS2DObject(el);
-    label.position.set(0, props.labelOffsetY, 0);
+    label.position.set(cfg.offsetX, cfg.offsetY, cfg.offsetZ);
     node.add(label);
 
     entries.push({
@@ -194,7 +183,7 @@ export function syncSceneLabelValues(props: Props, entries: SceneLabelEntry[]) {
   entries.forEach(({ anchor, rootEl, titleEl, valueEl, unitEl }) => {
     const cfg = resolveLabelConfig(anchor, configMap);
     titleEl.textContent = cfg.title;
-    valueEl.textContent = resolveDisplayedValue(anchor, cfg, props);
+    valueEl.textContent = resolveDisplayedValue(cfg);
     unitEl.textContent = cfg.unit;
     rootEl.style.display = props.showSceneLabels && cfg.visible ? '' : 'none';
   });
