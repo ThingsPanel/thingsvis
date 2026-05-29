@@ -12,7 +12,7 @@ import {
   readUpstreamError,
 } from '../shared';
 
-const MAX_IMPORT_SIZE = 100 * 1024 * 1024;
+const MAX_IMPORT_SIZE = 1000 * 1024 * 1024;
 const MODEL_UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'models');
 
 type ImportRequestBody = {

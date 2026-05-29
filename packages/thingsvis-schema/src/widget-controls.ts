@@ -65,6 +65,9 @@ export const ControlKindSchema = z.enum([
   'rangeSlider',
   'margin',
   'padding',
+  // 3D
+  'model3dLabels',
+  'model3dPipeRules',
 ]);
 export type ControlKind = z.infer<typeof ControlKindSchema>;
 
