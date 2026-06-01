@@ -81,7 +81,7 @@ export default defineConfig({
       (middlewares, server) => {
         // Serve widgets directory at /widgets path
         const sirv = require('sirv');
-        const widgetsDir = path.resolve(__dirname, '../../widgets');
+        const widgetsDir = path.resolve(__dirname, '../../packages/widgets');
         const widgetsHandler = sirv(widgetsDir, { dev: true, etag: true });
         middlewares.unshift(
           (req: any, res: any, next: any) => {

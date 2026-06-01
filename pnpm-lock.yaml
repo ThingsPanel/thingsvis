@@ -1046,6 +1046,95 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
+  packages/widgets/custom/bridge-3d:
+    dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-sdk
+      leafer-ui:
+        specifier: ^1.0.0
+        version: 1.12.0
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+      three:
+        specifier: ^0.181.2
+        version: 0.181.2
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      '@rspack/cli':
+        specifier: ^1.0.0
+        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
+      '@rspack/core':
+        specifier: ^1.0.0
+        version: 1.6.7(@swc/helpers@0.5.15)
+      '@thingsvis/widget-config':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-config
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.27
+      '@types/react-dom':
+        specifier: ^18.2.0
+        version: 18.3.7(@types/react@18.3.27)
+      '@types/three':
+        specifier: ^0.181.0
+        version: 0.181.0
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/widgets/custom/device-status-card:
+    dependencies:
+      '@thingsvis/schema':
+        specifier: workspace:*
+        version: link:../../../thingsvis-schema
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-sdk
+      leafer-ui:
+        specifier: ^1.0.0
+        version: 1.12.0
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      '@rspack/cli':
+        specifier: ^1.0.0
+        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
+      '@rspack/core':
+        specifier: ^1.0.0
+        version: 1.6.7(@swc/helpers@0.5.15)
+      '@thingsvis/widget-config':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-config
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.27
+      '@types/react-dom':
+        specifier: ^18.2.0
+        version: 18.3.7(@types/react@18.3.27)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
   packages/widgets/decoration/border-corner:
     dependencies:
       '@thingsvis/schema':
@@ -1089,265 +1178,7 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/widgets/decoration/border-double:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/decoration/border-glow-pulse:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   packages/widgets/decoration/border-scanline:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/decoration/deco-divider:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/decoration/deco-particles:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/decoration/deco-scanbeam:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/decoration/deco-title-bar:
     dependencies:
       '@thingsvis/schema':
         specifier: workspace:*
@@ -5740,10 +5571,6 @@ packages:
 
   enhanced-resolve@5.12.0:
     resolution: {integrity: sha512-QHTXI/sZQmko1cbDoNAa3mJ5qhWUUNAq3vR0/YiD379fWQrcfuoX1+HW2S0MTt7XmoPLapdaDKUtelUSPic7hQ==}
-    engines: {node: '>=10.13.0'}
-
-  enhanced-resolve@5.18.4:
-    resolution: {integrity: sha512-LgQMM4WXU3QI+SYgEc2liRgznaD5ojbmY3sb8LxyguVkIg5FxdpTkvk72te2R38/TGKxH634oLxXRGY6d7AP+Q==}
     engines: {node: '>=10.13.0'}
 
   enhanced-resolve@5.20.1:
@@ -12088,11 +11915,6 @@ snapshots:
       graceful-fs: 4.2.11
       tapable: 2.3.0
 
-  enhanced-resolve@5.18.4:
-    dependencies:
-      graceful-fs: 4.2.11
-      tapable: 2.3.0
-
   enhanced-resolve@5.20.1:
     dependencies:
       graceful-fs: 4.2.11
@@ -14662,7 +14484,7 @@ snapshots:
   ts-loader@9.5.4(typescript@5.9.3)(webpack@5.105.4):
     dependencies:
       chalk: 4.1.2
-      enhanced-resolve: 5.18.4
+      enhanced-resolve: 5.20.1
       micromatch: 4.0.8
       semver: 7.7.3
       source-map: 0.7.6
