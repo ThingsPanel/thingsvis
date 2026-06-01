@@ -204,6 +204,7 @@ const expectedWidgetModulePaths = [
   '../interaction/value-card/src/index.ts',
   '../interaction/value-card-simple/src/index.ts',
   '../interaction/date-range-picker/src/index.ts',
+  '../media/camera-control/src/index.ts',
   '../media/iframe/src/index.ts',
   '../media/image/src/index.ts',
   '../media/video-player/src/index.ts',
