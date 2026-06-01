@@ -198,8 +198,23 @@ jobs:
             echo ">>> Deploying Server..."
             pm2 stop thingsvis-server 2>/dev/null || true
             sleep 1
-            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+            # Clean the deployed standalone tree before copying new artifacts.
+            # Keep the server-local .env, but remove stale apps/server/.next and node_modules.
+            find /opt/thingsvis/server -mindepth 1 -maxdepth 1 ! -name '.env' -exec rm -rf {} +
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+            cd /opt/thingsvis/server
+
+            # pino resolves transport targets at runtime and Next standalone may not trace pino-pretty.
+            # Keep it outside the cleaned server tree and link it into the app's node_modules.
+            mkdir -p /opt/thingsvis/pino-hotfix
+            cd /opt/thingsvis/pino-hotfix
+            if [ ! -f package.json ]; then
+              npm init -y >/dev/null
+            fi
+            npm install pino-pretty@13.1.3 --no-audit --no-fund --registry=https://registry.npmmirror.com
+            mkdir -p /opt/thingsvis/server/apps/server/node_modules
+            rm -rf /opt/thingsvis/server/apps/server/node_modules/pino-pretty
+            ln -s /opt/thingsvis/pino-hotfix/node_modules/pino-pretty /opt/thingsvis/server/apps/server/node_modules/pino-pretty
             cd /opt/thingsvis/server
 
             # Source .env if exists
