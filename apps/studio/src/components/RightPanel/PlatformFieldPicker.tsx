@@ -10,20 +10,17 @@ interface PlatformFieldPickerProps {
   onSelectField: (field: PlatformField) => void;
 }
 
-/**
- * Platform Field Picker Component
- * Displays available platform fields (e.g., IoT device attributes/telemetry)
- * and allows users to select them for data binding
- */
+const FIELD_GROUPS = ['telemetry', 'attribute', 'command', 'event'] as const;
+
 export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformFieldPickerProps) {
   const { t } = useTranslation('editor');
 
-  // Group fields by dataType
   const groupedFields = useMemo(() => {
     const groups: Record<string, PlatformField[]> = {
       telemetry: [],
       attribute: [],
       command: [],
+      event: [],
     };
 
     platformFields.forEach((field) => {
@@ -40,26 +37,28 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
     telemetry: t('platformPicker.telemetry'),
     attribute: t('platformPicker.attributes'),
     command: t('platformPicker.commands'),
+    event: t('platformPicker.events', '事件'),
   };
 
   const dataTypeColors = {
     telemetry: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     attribute: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
     command: 'bg-green-500/10 text-green-600 border-green-500/20',
+    event: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
   };
 
   const getTypeIcon = (type: string) => {
     switch (type) {
       case 'number':
-        return '🔢';
+        return '#';
       case 'string':
-        return '📝';
+        return 'T';
       case 'boolean':
-        return '✓';
+        return '01';
       case 'json':
         return '{}';
       default:
-        return '•';
+        return '-';
     }
   };
 
@@ -75,7 +74,6 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
 
   return (
     <div className="space-y-4">
-      {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 rounded-md">
         <Database className="h-4 w-4 text-primary" />
         <span className="text-sm font-medium">{t('platformPicker.title')}</span>
@@ -84,15 +82,15 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
         </Badge>
       </div>
 
-      {/* Field Groups */}
-      {Object.entries(groupedFields).map(([dataType, fields]) => {
+      {FIELD_GROUPS.map((dataType) => {
+        const fields = groupedFields[dataType];
         if (fields.length === 0) return null;
 
         return (
           <div key={dataType} className="space-y-2">
             <div className="flex items-center gap-2 px-2">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                {dataTypeLabels[dataType as keyof typeof dataTypeLabels]}
+                {dataTypeLabels[dataType]}
               </span>
               <div className="flex-1 h-px bg-border" />
             </div>
@@ -101,7 +99,7 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
               {fields.map((field) => (
                 <Card
                   key={field.id}
-                  className={`px-3 py-2.5 cursor-pointer transition-all hover:shadow-md hover:border-primary/30 ${dataTypeColors[dataType as keyof typeof dataTypeColors]}`}
+                  className={`px-3 py-2.5 cursor-pointer transition-all hover:shadow-md hover:border-primary/30 ${dataTypeColors[dataType]}`}
                   onClick={() => onSelectField(field)}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -119,7 +117,7 @@ export function PlatformFieldPicker({ platformFields, onSelectField }: PlatformF
                         <code className="px-1.5 py-0.5 bg-muted/50 rounded text-xs">
                           {field.id}
                         </code>
-                        <span>•</span>
+                        <span>/</span>
                         <span className="opacity-60">{field.type}</span>
                       </div>
                       {field.description && (

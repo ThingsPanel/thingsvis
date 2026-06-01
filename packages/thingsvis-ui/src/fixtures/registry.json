@@ -1,111 +1,1322 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "dev-fallback",
+  "generatedAt": "2026-06-01T06:45:48.607Z",
   "components": {
-    "basic/rect": {
-      "remoteName": "thingsvis_widget_basic_rect",
-      "remoteEntryUrl": "http://localhost:3101/remoteEntry.js",
+    "basic/analog-clock": {
+      "remoteName": "thingsvis_widget_basic_analog_clock",
+      "remoteEntryUrl": "http://localhost:3225/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/analog-clock/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "GaugeCircle",
+      "name": "表盘时钟",
+      "i18n": {
+        "zh": "表盘时钟",
+        "en": "Analog Clock"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 150,
+        "height": 150
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 100
+      },
+      "order": 6
+    },
+    "basic/badge": {
+      "remoteName": "thingsvis_widget_basic_badge",
+      "remoteEntryUrl": "http://localhost:3234/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/badge/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "矩形"
+      "icon": "Tag",
+      "name": "标签",
+      "i18n": {
+        "zh": "标签",
+        "en": "Badge"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 140,
+        "height": 48
+      },
+      "constraints": {
+        "minWidth": 72,
+        "minHeight": 32
+      }
     },
-    "layout/text": {
-      "remoteName": "thingsvis_widget_layout_text",
-      "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
+    "basic/card": {
+      "remoteName": "thingsvis_widget_basic_card",
+      "remoteEntryUrl": "http://localhost:3231/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/card/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "文本"
+      "icon": "CreditCard",
+      "name": "卡片",
+      "i18n": {
+        "zh": "卡片",
+        "en": "Card"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 300,
+        "height": 180
+      },
+      "constraints": {
+        "minWidth": 140,
+        "minHeight": 100
+      }
     },
-    "basic/switch": {
-      "remoteName": "thingsvis_widget_basic_switch",
-      "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+    "basic/circle": {
+      "remoteName": "thingsvis_widget_basic_circle",
+      "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/circle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Circle",
+      "name": "圆形",
+      "i18n": {
+        "zh": "圆形",
+        "en": "Circle"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 100,
+        "height": 100
+      },
+      "constraints": {
+        "minWidth": 20,
+        "minHeight": 20
+      },
+      "order": 2
+    },
+    "basic/container": {
+      "remoteName": "thingsvis_widget_basic_container",
+      "remoteEntryUrl": "http://localhost:3229/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/container/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "开关"
+      "icon": "Frame",
+      "name": "容器",
+      "i18n": {
+        "zh": "容器",
+        "en": "Container"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 360,
+        "height": 220
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 80
+      }
     },
-    "media/image": {
-      "remoteName": "thingsvis_widget_media_image",
-      "remoteEntryUrl": "http://localhost:3103/remoteEntry.js",
+    "basic/digital-clock": {
+      "remoteName": "thingsvis_widget_basic_digital_clock",
+      "remoteEntryUrl": "http://localhost:3223/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/digital-clock/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Clock",
+      "name": "数字时钟",
+      "i18n": {
+        "zh": "数字时钟",
+        "en": "Digital Clock"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 265,
+        "height": 80
+      },
+      "constraints": {
+        "minWidth": 180,
+        "minHeight": 88
+      },
+      "order": 5
+    },
+    "basic/glass-panel": {
+      "remoteName": "thingsvis_widget_basic_glass_panel",
+      "remoteEntryUrl": "http://localhost:3222/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/glass-panel/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "AppWindow",
+      "name": "磨砂面板",
+      "i18n": {
+        "zh": "磨砂面板",
+        "en": "Glass"
+      },
+      "category": "decoration",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 320,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 80
+      },
+      "order": 7
+    },
+    "basic/icon": {
+      "remoteName": "thingsvis_widget_basic_icon",
+      "remoteEntryUrl": "http://localhost:3232/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/icon/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "图片"
+      "icon": "Shapes",
+      "name": "图标",
+      "i18n": {
+        "zh": "图标",
+        "en": "Icon"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 96,
+        "height": 96
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
     },
-    "custom/cyber-clock": {
-      "remoteName": "thingsvis_widget_custom_cyber_clock",
+    "basic/line": {
+      "remoteName": "thingsvis_widget_basic_line",
+      "remoteEntryUrl": "http://localhost:3110/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Minus",
+      "name": "连接线",
+      "i18n": {
+        "zh": "连接线",
+        "en": "Connector"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 180,
+        "height": 24
+      },
+      "constraints": {
+        "minWidth": 24,
+        "minHeight": 12
+      }
+    },
+    "basic/list": {
+      "remoteName": "thingsvis_widget_basic_list",
+      "remoteEntryUrl": "http://localhost:3235/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/list/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "List",
+      "name": "列表",
+      "i18n": {
+        "zh": "列表",
+        "en": "List"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 260,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 140,
+        "minHeight": 100
+      }
+    },
+    "basic/luxury-clock": {
+      "remoteName": "thingsvis_widget_basic_luxury_clock",
+      "remoteEntryUrl": "http://localhost:3226/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/luxury-clock/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Crown",
+      "name": "奢华表盘",
+      "i18n": {
+        "zh": "奢华表盘",
+        "en": "Luxury Clock"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 150,
+        "height": 150
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 100
+      },
+      "order": 7
+    },
+    "basic/placeholder": {
+      "remoteName": "thingsvis_widget_basic_placeholder",
+      "remoteEntryUrl": "http://localhost:3236/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/placeholder/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "0.0.1",
+      "icon": "LayoutGrid",
+      "name": "占位块",
+      "i18n": {
+        "zh": "占位块",
+        "en": "Placeholder"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 240,
+        "height": 160
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 80
+      }
+    },
+    "basic/rectangle": {
+      "remoteName": "thingsvis_widget_basic_rectangle",
       "remoteEntryUrl": "http://localhost:3104/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/rectangle/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Square",
+      "name": "矩形",
+      "i18n": {
+        "zh": "矩形",
+        "en": "Rectangle"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 160,
+        "height": 100
+      },
+      "constraints": {
+        "minWidth": 20,
+        "minHeight": 20
+      },
+      "order": 1
+    },
+    "basic/rich-text": {
+      "remoteName": "thingsvis_widget_basic_rich_text",
+      "remoteEntryUrl": "http://localhost:3233/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/rich-text/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "赛博时钟"
+      "icon": "FileText",
+      "name": "富文本",
+      "i18n": {
+        "zh": "富文本",
+        "en": "Rich Text"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 320,
+        "height": 220
+      },
+      "constraints": {
+        "minWidth": 160,
+        "minHeight": 120
+      }
+    },
+    "basic/table": {
+      "remoteName": "thingsvis_widget_basic_table",
+      "remoteEntryUrl": "http://localhost:3206/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/table/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Table2",
+      "name": "表格",
+      "i18n": {
+        "zh": "表格",
+        "en": "Table"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "description": "Clean data table with theme-aware styling",
+      "defaultSize": {
+        "width": 300,
+        "height": 160
+      },
+      "constraints": {
+        "minWidth": 180,
+        "minHeight": 100
+      },
+      "order": 4
+    },
+    "basic/text": {
+      "remoteName": "thingsvis_widget_basic_text",
+      "remoteEntryUrl": "http://localhost:3102/remoteEntry.js",
+      "staticEntryUrl": "/widgets/basic/text/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Type",
+      "name": "文本",
+      "i18n": {
+        "zh": "文本",
+        "en": "Text"
+      },
+      "category": "basic",
+      "displayCategory": "basic",
+      "defaultSize": {
+        "width": 160,
+        "height": 40
+      },
+      "constraints": {
+        "minWidth": 20,
+        "minHeight": 12
+      },
+      "order": 3
     },
     "chart/echarts-bar": {
       "remoteName": "thingsvis_widget_chart_echarts_bar",
-      "remoteEntryUrl": "http://localhost:3105/remoteEntry.js",
+      "remoteEntryUrl": "http://localhost:3202/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-bar/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "ECharts 柱状图"
+      "version": "1.0.1",
+      "icon": "BarChart3",
+      "name": "ECharts 柱状图",
+      "i18n": {
+        "zh": "柱状图",
+        "en": "Bar Chart"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
     },
-    "interaction/value-card": {
-      "remoteName": "thingsvis_widget_interaction_value_card",
-      "remoteEntryUrl": "http://localhost:3210/remoteEntry.js",
+    "chart/echarts-gauge": {
+      "remoteName": "thingsvis_widget_chart_echarts_gauge",
+      "remoteEntryUrl": "http://localhost:3204/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-gauge/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Gauge",
+      "name": "Gauge",
+      "i18n": {
+        "zh": "仪表盘",
+        "en": "Gauge"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "description": "ECharts gauge chart",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
+    },
+    "chart/echarts-line": {
+      "remoteName": "thingsvis_widget_chart_echarts_line",
+      "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "LineChart",
+      "name": "折线图",
+      "i18n": {
+        "zh": "折线图",
+        "en": "Line Chart"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "defaultSize": {
+        "width": 600,
+        "height": 220
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
+    },
+    "chart/echarts-pie": {
+      "remoteName": "thingsvis_widget_chart_echarts_pie",
+      "remoteEntryUrl": "http://localhost:3203/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/echarts-pie/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "PieChart",
+      "name": "ECharts 饼图",
+      "i18n": {
+        "zh": "饼图",
+        "en": "Pie Chart"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
+    },
+    "chart/uplot-line": {
+      "remoteName": "thingsvis_widget_chart_uplot_line",
+      "remoteEntryUrl": "http://localhost:3209/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/uplot-line/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Activity",
+      "name": "Time Series",
+      "i18n": {
+        "zh": "时序图",
+        "en": "Time Series"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "description": "uPlot time series chart",
+      "defaultSize": {
+        "width": 600,
+        "height": 220
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
+    },
+    "custom/alert-list": {
+      "remoteName": "thingsvis_widget_custom_alert_list",
+      "remoteEntryUrl": "http://localhost:3224/remoteEntry.js",
+      "staticEntryUrl": "/widgets/custom/alert-list/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Bell",
+      "name": "告警列表",
+      "i18n": {
+        "zh": "告警列表",
+        "en": "Alerts"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 340,
+        "height": 280
+      },
+      "constraints": {
+        "minWidth": 220,
+        "minHeight": 140
+      }
+    },
+    "custom/device-status-card": {
+      "remoteName": "thingsvis_widget_custom_device_status_card",
+      "remoteEntryUrl": "http://localhost:3327/remoteEntry.js",
+      "staticEntryUrl": "/widgets/custom/device-status-card/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "GaugeCircle",
+      "name": "设备状态卡",
+      "i18n": {
+        "zh": "设备状态卡",
+        "en": "Device Status Card"
+      },
+      "category": "custom",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 240,
+        "height": 168
+      },
+      "constraints": {
+        "minWidth": 180,
+        "minHeight": 120
+      }
+    },
+    "custom/guidance-steps": {
+      "remoteName": "thingsvis_widget_custom_guidance_steps",
+      "remoteEntryUrl": "http://localhost:3230/remoteEntry.js",
+      "staticEntryUrl": "/widgets/custom/guidance-steps/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "ListOrdered",
+      "name": "引导步骤",
+      "i18n": {
+        "zh": "引导步骤",
+        "en": "Guidance Steps"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 400,
+        "height": 600
+      },
+      "constraints": {
+        "minWidth": 200,
+        "minHeight": 200
+      },
+      "order": 10
+    },
+    "decoration/border-corner": {
+      "remoteName": "thingsvis_widget_decoration_border_corner",
+      "remoteEntryUrl": "http://localhost:3401/remoteEntry.js",
+      "staticEntryUrl": "/widgets/decoration/border-corner/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Maximize2",
+      "name": "四角边框",
+      "i18n": {
+        "zh": "四角边框",
+        "en": "Corner Border"
+      },
+      "category": "decoration",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 20,
+        "minHeight": 20
+      },
+      "order": 1
+    },
+    "decoration/border-scanline": {
+      "remoteName": "thingsvis_widget_decoration_border_scanline",
+      "remoteEntryUrl": "http://localhost:3402/remoteEntry.js",
+      "staticEntryUrl": "/widgets/decoration/border-scanline/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "ScanLine",
+      "name": "流光边框",
+      "i18n": {
+        "zh": "流光边框",
+        "en": "Scanline Border"
+      },
+      "category": "decoration",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 20,
+        "minHeight": 20
+      },
+      "order": 1
+    },
+    "decoration/section-divider": {
+      "remoteName": "thingsvis_widget_decoration_divider",
+      "remoteEntryUrl": "http://localhost:3303/remoteEntry.js",
+      "staticEntryUrl": "/widgets/decoration/section-divider/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Minus",
+      "name": "分隔装饰",
+      "i18n": {
+        "zh": "分隔装饰",
+        "en": "Section Divider"
+      },
+      "category": "decoration",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 500,
+        "height": 20
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 8
+      },
+      "order": 3
+    },
+    "decoration/tech-border": {
+      "remoteName": "thingsvis_widget_decoration_tech_border",
+      "remoteEntryUrl": "http://localhost:3301/remoteEntry.js",
+      "staticEntryUrl": "/widgets/decoration/tech-border/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Frame",
+      "name": "科技边框",
+      "i18n": {
+        "zh": "科技边框",
+        "en": "Tech Border"
+      },
+      "category": "decoration",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 300,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 60,
+        "minHeight": 40
+      },
+      "order": 1
+    },
+    "decoration/title-decoration": {
+      "remoteName": "thingsvis_widget_decoration_title",
+      "remoteEntryUrl": "http://localhost:3302/remoteEntry.js",
+      "staticEntryUrl": "/widgets/decoration/title-decoration/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Heading",
+      "name": "标题装饰",
+      "i18n": {
+        "zh": "标题装饰",
+        "en": "Title Decoration"
+      },
+      "category": "decoration",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 500,
+        "height": 40
+      },
+      "order": 2
+    },
+    "geo/map": {
+      "remoteName": "thingsvis_widget_geo_map",
+      "remoteEntryUrl": "http://localhost:3227/remoteEntry.js",
+      "staticEntryUrl": "/widgets/geo/map/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "MapPin",
+      "name": "地图定位",
+      "i18n": {
+        "zh": "地图定位",
+        "en": "Map Location"
+      },
+      "category": "charts",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 400,
+        "height": 300
+      },
+      "constraints": {
+        "minWidth": 200,
+        "minHeight": 150
+      },
+      "order": 8
+    },
+    "geo/map-china": {
+      "remoteName": "thingsvis_widget_geo_map_china",
+      "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+      "staticEntryUrl": "/widgets/geo/map-china/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
       "version": "0.0.1",
-      "name": "数值卡"
+      "icon": "Box",
+      "name": "map-china",
+      "i18n": {
+        "zh": "map-china",
+        "en": "geo/map-china"
+      },
+      "category": "charts",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 200,
+        "height": 150
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
+    },
+    "industrial/flow-meter": {
+      "remoteName": "thingsvis_widget_industrial_flow_meter",
+      "remoteEntryUrl": "http://localhost:3209/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/flow-meter/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Activity",
+      "name": "流量计",
+      "i18n": {
+        "zh": "流量计",
+        "en": "Flow Meter"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 120,
+        "height": 60
+      },
+      "constraints": {
+        "minWidth": 60,
+        "minHeight": 30
+      }
+    },
+    "industrial/motor": {
+      "remoteName": "thingsvis_widget_industrial_motor",
+      "remoteEntryUrl": "http://localhost:3206/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/motor/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Zap",
+      "name": "电动机",
+      "i18n": {
+        "zh": "电动机",
+        "en": "Electric Motor"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 120,
+        "height": 60
+      },
+      "constraints": {
+        "minWidth": 60,
+        "minHeight": 30
+      }
+    },
+    "industrial/pipe": {
+      "remoteName": "thingsvis_widget_industrial_pipe",
+      "remoteEntryUrl": "http://localhost:3207/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/pipe/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Minus",
+      "name": "Industrial Pipe",
+      "i18n": {
+        "zh": "工业管道",
+        "en": "Industrial Pipe"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 100,
+        "height": 30
+      },
+      "constraints": {
+        "minWidth": 10,
+        "minHeight": 10
+      }
+    },
+    "industrial/pressure-gauge": {
+      "remoteName": "thingsvis_widget_industrial_pressure_gauge",
+      "remoteEntryUrl": "http://localhost:3207/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/pressure-gauge/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Gauge",
+      "name": "压力表",
+      "i18n": {
+        "zh": "压力表",
+        "en": "Pressure Gauge"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 60,
+        "height": 60
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
+    },
+    "industrial/pump": {
+      "remoteName": "thingsvis_widget_industrial_pump",
+      "remoteEntryUrl": "http://localhost:3202/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/pump/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Cog",
+      "name": "离心泵",
+      "i18n": {
+        "zh": "离心泵",
+        "en": "Centrifugal Pump"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 100,
+        "height": 60
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
+    },
+    "industrial/svg-symbol": {
+      "remoteName": "thingsvis_widget_industrial_svg_symbol",
+      "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/svg-symbol/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Shapes",
+      "name": "图形符号",
+      "i18n": {
+        "zh": "图形符号",
+        "en": "Graphic Symbol"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 60,
+        "height": 60
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
+    },
+    "industrial/tank": {
+      "remoteName": "thingsvis_widget_industrial_tank",
+      "remoteEntryUrl": "http://localhost:3208/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/tank/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Cylinder",
+      "name": "液位罐",
+      "i18n": {
+        "zh": "液位罐",
+        "en": "Liquid Tank"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 60,
+        "height": 100
+      },
+      "constraints": {
+        "minWidth": 30,
+        "minHeight": 50
+      }
+    },
+    "industrial/valve": {
+      "remoteName": "thingsvis_widget_industrial_valve",
+      "remoteEntryUrl": "http://localhost:3203/remoteEntry.js",
+      "staticEntryUrl": "/widgets/industrial/valve/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Filter",
+      "name": "管路阀门",
+      "i18n": {
+        "zh": "管路阀门",
+        "en": "Pipe Valve"
+      },
+      "category": "industrial",
+      "displayCategory": "industrial",
+      "defaultSize": {
+        "width": 100,
+        "height": 76
+      },
+      "constraints": {
+        "minWidth": 50,
+        "minHeight": 38
+      }
     },
     "interaction/basic-button": {
       "remoteName": "thingsvis_widget_interaction_basic_button",
       "remoteEntryUrl": "http://localhost:3211/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-button/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "按钮"
-    },
-    "interaction/basic-switch": {
-      "remoteName": "thingsvis_widget_interaction_basic_switch",
-      "remoteEntryUrl": "http://localhost:3212/remoteEntry.js",
-      "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "开关"
-    },
-    "interaction/toggle-button": {
-      "remoteName": "thingsvis_widget_interaction_toggle_button",
-      "remoteEntryUrl": "http://localhost:3215/remoteEntry.js",
-      "exposedModule": "./Main",
-      "version": "1.0.0",
-      "name": "切换按钮"
-    },
-    "interaction/basic-select": {
-      "remoteName": "thingsvis_widget_interaction_basic_select",
-      "remoteEntryUrl": "http://localhost:3213/remoteEntry.js",
-      "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "下拉选择"
-    },
-    "interaction/basic-slider": {
-      "remoteName": "thingsvis_widget_interaction_basic_slider",
-      "remoteEntryUrl": "http://localhost:3214/remoteEntry.js",
-      "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "滑块"
-    },
-    "interaction/date-range-picker": {
-      "remoteName": "thingsvis_widget_interaction_date_range_picker",
-      "remoteEntryUrl": "http://localhost:3218/remoteEntry.js",
-      "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "时间选择"
+      "version": "1.0.1",
+      "icon": "MousePointerClick",
+      "name": "Button",
+      "i18n": {
+        "zh": "按钮",
+        "en": "Button"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 120,
+        "height": 36
+      },
+      "constraints": {
+        "minWidth": 60,
+        "minHeight": 28
+      }
     },
     "interaction/basic-input": {
       "remoteName": "thingsvis_widget_interaction_basic_input",
       "remoteEntryUrl": "http://localhost:3219/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-input/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "输入框"
+      "version": "1.0.1",
+      "icon": "TextCursor",
+      "name": "Input",
+      "i18n": {
+        "zh": "输入框",
+        "en": "Input"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 200,
+        "height": 40
+      },
+      "constraints": {
+        "minWidth": 80,
+        "minHeight": 32
+      }
     },
     "interaction/basic-progress": {
       "remoteName": "thingsvis_widget_interaction_basic_progress",
       "remoteEntryUrl": "http://localhost:3220/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-progress/dist/remoteEntry.js",
+      "debugSource": "static",
       "exposedModule": "./Main",
-      "version": "0.0.1",
-      "name": "进度条"
+      "version": "1.0.1",
+      "icon": "GaugeCircle",
+      "name": "Progress Bar",
+      "i18n": {
+        "zh": "进度条",
+        "en": "Progress Bar"
+      },
+      "category": "controls",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 200,
+        "height": 40
+      },
+      "constraints": {
+        "minWidth": 80,
+        "minHeight": 24
+      }
+    },
+    "interaction/basic-select": {
+      "remoteName": "thingsvis_widget_interaction_basic_select",
+      "remoteEntryUrl": "http://localhost:3213/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-select/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "ChevronDown",
+      "name": "Select",
+      "i18n": {
+        "zh": "下拉选择",
+        "en": "Select"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 160,
+        "height": 36
+      },
+      "constraints": {
+        "minWidth": 80,
+        "minHeight": 32
+      }
+    },
+    "interaction/basic-slider": {
+      "remoteName": "thingsvis_widget_interaction_basic_slider",
+      "remoteEntryUrl": "http://localhost:3214/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-slider/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "SlidersHorizontal",
+      "name": "Slider",
+      "i18n": {
+        "zh": "滑块",
+        "en": "Slider"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 200,
+        "height": 44
+      },
+      "constraints": {
+        "minWidth": 80,
+        "minHeight": 24
+      }
+    },
+    "interaction/basic-switch": {
+      "remoteName": "thingsvis_widget_interaction_basic_switch",
+      "remoteEntryUrl": "http://localhost:3212/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/basic-switch/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "ToggleLeft",
+      "name": "Switch",
+      "i18n": {
+        "zh": "开关",
+        "en": "Switch"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 100,
+        "height": 36
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 20
+      }
+    },
+    "interaction/date-range-picker": {
+      "remoteName": "thingsvis_widget_interaction_date_range_picker",
+      "remoteEntryUrl": "http://localhost:3218/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/date-range-picker/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "CalendarRange",
+      "name": "Date Range Picker",
+      "i18n": {
+        "zh": "时间选择",
+        "en": "Date Picker"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 350,
+        "height": 100
+      },
+      "constraints": {
+        "minWidth": 200,
+        "minHeight": 40
+      }
+    },
+    "interaction/toggle-button": {
+      "remoteName": "thingsvis_widget_interaction_toggle_button",
+      "remoteEntryUrl": "http://localhost:3215/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/toggle-button/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "ToggleRight",
+      "name": "Toggle Button",
+      "i18n": {
+        "zh": "切换按钮",
+        "en": "Toggle Button"
+      },
+      "category": "controls",
+      "displayCategory": "controls",
+      "defaultSize": {
+        "width": 120,
+        "height": 36
+      },
+      "constraints": {
+        "minWidth": 60,
+        "minHeight": 28
+      }
+    },
+    "interaction/value-card": {
+      "remoteName": "thingsvis_widget_interaction_value_card",
+      "remoteEntryUrl": "http://localhost:3210/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/value-card/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Activity",
+      "name": "Value",
+      "i18n": {
+        "zh": "数值",
+        "en": "Value"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 320,
+        "height": 160
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 70
+      }
+    },
+    "interaction/value-card-simple": {
+      "remoteName": "thingsvis_widget_interaction_value_card_simple",
+      "remoteEntryUrl": "http://localhost:3221/remoteEntry.js",
+      "staticEntryUrl": "/widgets/interaction/value-card-simple/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Activity",
+      "name": "Value Lite",
+      "i18n": {
+        "zh": "数值-简",
+        "en": "Value Lite"
+      },
+      "category": "basic",
+      "displayCategory": "indicator",
+      "defaultSize": {
+        "width": 160,
+        "height": 80
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 70
+      }
+    },
+    "media/camera-control": {
+      "remoteName": "thingsvis_widget_media_camera_control",
+      "remoteEntryUrl": "http://localhost:3201/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/camera-control/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Cctv",
+      "name": "Camera Control",
+      "i18n": {
+        "zh": "摄像头控制",
+        "en": "Camera Control"
+      },
+      "category": "media",
+      "displayCategory": "mediaDecoration",
+      "tags": [
+        "camera",
+        "video",
+        "ptz"
+      ],
+      "defaultSize": {
+        "width": 560,
+        "height": 360
+      },
+      "constraints": {
+        "minWidth": 260,
+        "minHeight": 220
+      }
+    },
+    "media/iframe": {
+      "remoteName": "thingsvis_widget_media_iframe",
+      "remoteEntryUrl": "http://localhost:3208/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/iframe/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "AppWindow",
+      "name": "Iframe",
+      "i18n": {
+        "zh": "网页",
+        "en": "iframe"
+      },
+      "category": "media",
+      "displayCategory": "mediaDecoration",
+      "description": "Embeddable web container",
+      "defaultSize": {
+        "width": 400,
+        "height": 300
+      },
+      "constraints": {
+        "minWidth": 100,
+        "minHeight": 80
+      }
+    },
+    "media/image": {
+      "remoteName": "thingsvis_widget_media_image",
+      "remoteEntryUrl": "http://localhost:3106/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/image/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Image",
+      "name": "图片",
+      "i18n": {
+        "zh": "图片",
+        "en": "Image"
+      },
+      "category": "media",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 200,
+        "height": 200
+      },
+      "constraints": {
+        "minWidth": 40,
+        "minHeight": 40
+      }
+    },
+    "media/video-player": {
+      "remoteName": "thingsvis_widget_media_video_player",
+      "remoteEntryUrl": "http://localhost:3200/remoteEntry.js",
+      "staticEntryUrl": "/widgets/media/video-player/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.1",
+      "icon": "Video",
+      "name": "Video",
+      "i18n": {
+        "zh": "视频",
+        "en": "Video"
+      },
+      "category": "media",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 400,
+        "height": 300
+      },
+      "constraints": {
+        "minWidth": 120,
+        "minHeight": 80
+      }
+    },
+    "resources/model-3d": {
+      "remoteName": "thingsvis_widget_resources_model_3d",
+      "remoteEntryUrl": "http://localhost:3325/remoteEntry.js",
+      "staticEntryUrl": "/widgets/resources/model-3d/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "Box",
+      "name": "3D模型",
+      "i18n": {
+        "zh": "3D模型",
+        "en": "3D Model"
+      },
+      "category": "media",
+      "displayCategory": "mediaDecoration",
+      "defaultSize": {
+        "width": 680,
+        "height": 360
+      },
+      "constraints": {
+        "minWidth": 240,
+        "minHeight": 180
+      }
     }
   }
 }
