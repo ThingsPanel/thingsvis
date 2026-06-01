@@ -217,6 +217,45 @@ async function readErrorResponse(response: Response): Promise<string> {
   }
 }
 
+async function readResponseArrayBufferWithProgress(
+  response: Response,
+  onProgress?: (percent: number) => void,
+): Promise<ArrayBuffer> {
+  const body = response.body;
+  if (!body) {
+    return response.arrayBuffer();
+  }
+
+  const contentLength = Number(response.headers.get('Content-Length'));
+  const reader = body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    chunks.push(value);
+    received += value.byteLength;
+
+    if (contentLength > 0 && onProgress) {
+      onProgress(Math.min(99, Math.round((received / contentLength) * 100)));
+    }
+  }
+
+  const merged = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    merged.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  onProgress?.(100);
+  return merged.buffer;
+}
+
 function disposeMaterial(material: THREE.Material | THREE.Material[]) {
   if (Array.isArray(material)) {
     material.forEach((item) => disposeMaterial(item));
@@ -560,6 +599,7 @@ export const Main = defineWidget({
     let currentAnimations: THREE.AnimationClip[] = [];
     let currentMixer: THREE.AnimationMixer | null = null;
     let currentErrorMessage = '';
+    let isModelLoading = false;
     let activeResourceBaseUrl = '';
     let frameId = 0;
     let destroyed = false;
@@ -627,6 +667,36 @@ export const Main = defineWidget({
     placeholderDescription.style.opacity = '0.78';
     placeholderCard.appendChild(placeholderDescription);
 
+    const loadingIndicator = document.createElement('div');
+    loadingIndicator.style.display = 'none';
+    loadingIndicator.style.alignItems = 'center';
+    loadingIndicator.style.gap = '10px';
+    loadingIndicator.style.marginTop = '4px';
+    placeholderCard.appendChild(loadingIndicator);
+
+    const loadingSpinner = document.createElement('div');
+    loadingSpinner.style.width = '18px';
+    loadingSpinner.style.height = '18px';
+    loadingSpinner.style.borderRadius = '50%';
+    loadingSpinner.style.border = '2px solid rgba(23, 166, 255, 0.28)';
+    loadingSpinner.style.borderTopColor = 'rgba(23, 166, 255, 0.95)';
+    loadingSpinner.style.animation = 'tv-model-3d-spin 0.9s linear infinite';
+    loadingSpinner.style.flexShrink = '0';
+    loadingIndicator.appendChild(loadingSpinner);
+
+    const loadingProgress = document.createElement('div');
+    loadingProgress.style.fontSize = '11px';
+    loadingProgress.style.lineHeight = '1.4';
+    loadingProgress.style.opacity = '0.72';
+    loadingIndicator.appendChild(loadingProgress);
+
+    if (typeof document !== 'undefined' && !document.getElementById('tv-model-3d-keyframes')) {
+      const style = document.createElement('style');
+      style.id = 'tv-model-3d-keyframes';
+      style.textContent = '@keyframes tv-model-3d-spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(style);
+    }
+
     const placeholderUrl = document.createElement('div');
     placeholderUrl.style.fontSize = '11px';
     placeholderUrl.style.lineHeight = '1.4';
@@ -634,28 +704,36 @@ export const Main = defineWidget({
     placeholderUrl.style.wordBreak = 'break-all';
     placeholderCard.appendChild(placeholderUrl);
 
+    const formatLoadingProgress = (percent: number) =>
+      messages().loadingProgress.replace('{percent}', String(percent));
+
     const updatePlaceholder = (state: 'empty' | 'loading' | 'error' | 'ready') => {
       if (state === 'ready') {
         placeholder.style.display = 'none';
+        loadingIndicator.style.display = 'none';
         return;
       }
 
       placeholder.style.display = 'flex';
       placeholderUrl.textContent = currentUrl;
-      placeholderUrl.style.display = currentUrl ? 'block' : 'none';
+      placeholderUrl.style.display = currentUrl && state !== 'loading' ? 'block' : 'none';
 
       if (state === 'empty') {
+        loadingIndicator.style.display = 'none';
         placeholderTitle.textContent = messages().emptyTitle;
         placeholderDescription.textContent = messages().emptyDescription;
         return;
       }
 
       if (state === 'loading') {
+        loadingIndicator.style.display = 'flex';
+        loadingProgress.textContent = '';
         placeholderTitle.textContent = messages().loadingTitle;
         placeholderDescription.textContent = messages().loadingDescription;
         return;
       }
 
+      loadingIndicator.style.display = 'none';
       placeholderTitle.textContent = messages().errorTitle;
       placeholderDescription.textContent = currentErrorMessage || messages().errorDescription;
     };
@@ -866,6 +944,7 @@ export const Main = defineWidget({
 
       if (!currentUrl) {
         loadRequestId += 1;
+        isModelLoading = false;
         clearModel();
         updatePlaceholder('empty');
         return;
@@ -875,6 +954,7 @@ export const Main = defineWidget({
       const resourceBaseUrl = getResourceBaseUrl(currentUrl);
       const requestUrl = getRequestUrl(currentUrl, currentProps.requestMode);
       clearModel();
+      isModelLoading = true;
       updatePlaceholder('loading');
       activeResourceBaseUrl = resourceBaseUrl;
 
@@ -889,7 +969,13 @@ export const Main = defineWidget({
             );
           }
 
-          return response.arrayBuffer();
+          return readResponseArrayBufferWithProgress(response, (percent) => {
+            if (destroyed || requestId !== loadRequestId || !isModelLoading) {
+              return;
+            }
+
+            loadingProgress.textContent = formatLoadingProgress(percent);
+          });
         })
         .then(
           (buffer) =>
@@ -914,6 +1000,7 @@ export const Main = defineWidget({
                   syncAnimations();
                   syncSceneSettings();
                   resizeRenderer();
+                  isModelLoading = false;
                   updatePlaceholder('ready');
                   resolve();
                 },
@@ -928,6 +1015,7 @@ export const Main = defineWidget({
             return;
           }
 
+          isModelLoading = false;
           currentErrorMessage = formatLoadError(error);
           clearModel();
           updatePlaceholder('error');
@@ -988,11 +1076,12 @@ export const Main = defineWidget({
         resizeRenderer();
 
         if (!currentModel) {
-          updatePlaceholder(currentUrl ? 'error' : 'empty');
+          updatePlaceholder(isModelLoading ? 'loading' : currentUrl ? 'error' : 'empty');
         }
       },
       destroy: () => {
         destroyed = true;
+        isModelLoading = false;
         loadRequestId += 1;
         window.cancelAnimationFrame(frameId);
         resizeObserver?.disconnect();

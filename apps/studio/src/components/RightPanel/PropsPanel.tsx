@@ -119,11 +119,13 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
 
   const [widgetEntry, setWidgetEntry] = useState<WidgetMainModule | null>(null);
   const [widgetError, setWidgetError] = useState<string | null>(null);
+  const [widgetLoading, setWidgetLoading] = useState(false);
 
   useEffect(() => {
-    if (!node || !componentType) {
+    if (!nodeId || !componentType) {
       setWidgetEntry(null);
       setWidgetError(null);
+      setWidgetLoading(false);
       return;
     }
 
@@ -131,28 +133,36 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     if (cachedWidget) {
       setWidgetEntry(cachedWidget);
       setWidgetError(null);
+      setWidgetLoading(false);
       return;
     }
 
     let cancelled = false;
     setWidgetEntry(null);
     setWidgetError(null);
+    setWidgetLoading(true);
 
-    (async () => {
+    void (async () => {
       try {
         const loaded = await loadWidget(componentType);
         if (cancelled) return;
         setWidgetEntry(loaded.entry);
+        setWidgetError(null);
       } catch (e) {
         if (cancelled) return;
+        setWidgetEntry(null);
         setWidgetError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) {
+          setWidgetLoading(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [componentType, node]);
+  }, [componentType, nodeId]);
 
   const controlsParse = useMemo(() => getWidgetControls(widgetEntry ?? undefined), [widgetEntry]);
   const controls = controlsParse.controls;
@@ -173,7 +183,11 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     if (!controlsParse.issues?.length) return;
 
     // eslint-disable-next-line no-console
-  }, [widgetEntry, controls, controlsParse.issues]);
+    console.warn(
+      `[PropsPanel] Controls invalid for "${componentType}". Falling back to legacy panel.`,
+      controlsParse.issues,
+    );
+  }, [widgetEntry, controls, controlsParse.issues, componentType]);
 
   // Early return ????????Hook ?????ules of Hooks??
   if (!node) return null;
@@ -560,6 +574,46 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     );
   };
 
+  const renderWidgetLoadingPanel = () => (
+    <Tabs defaultValue="style" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsTrigger value="style" className="text-sm">
+          {t('propsPanel.style')}
+        </TabsTrigger>
+        <TabsTrigger value="events" className="text-sm">
+          {t('propsPanel.events')}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="style" className="space-y-4">
+        {renderGeometry()}
+        <p className="px-1 text-sm text-muted-foreground">{t('propsPanel.widgetLoading')}</p>
+      </TabsContent>
+      <TabsContent value="events" className="space-y-4">
+        <EventsTab nodeId={nodeId} kernelStore={kernelStore} onUserEdit={onUserEdit} />
+      </TabsContent>
+    </Tabs>
+  );
+
+  const renderWidgetIssuePanel = (message: string) => (
+    <Tabs defaultValue="style" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsTrigger value="style" className="text-sm">
+          {t('propsPanel.style')}
+        </TabsTrigger>
+        <TabsTrigger value="events" className="text-sm">
+          {t('propsPanel.events')}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="style" className="space-y-4">
+        {renderGeometry()}
+        <p className="px-1 text-sm text-destructive">{message}</p>
+      </TabsContent>
+      <TabsContent value="events" className="space-y-4">
+        <EventsTab nodeId={nodeId} kernelStore={kernelStore} onUserEdit={onUserEdit} />
+      </TabsContent>
+    </Tabs>
+  );
+
   const renderLegacyPanel = () => {
     const hasPlatformFields = (serviceConfig.platformFields || []).length > 0;
     const showPlatformTab = showEmbeddedHostUi && hasPlatformFields;
@@ -810,8 +864,21 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
     );
   };
 
+  if (widgetLoading && !widgetEntry) {
+    return renderWidgetLoadingPanel();
+  }
+
   if (controls) {
     return renderControlsPanel();
+  }
+
+  if (widgetError) {
+    return renderWidgetIssuePanel(widgetError);
+  }
+
+  if (widgetEntry && !controls) {
+    const issueMessage = controlsParse.issues?.join('; ');
+    return renderWidgetIssuePanel(issueMessage || t('propsPanel.widgetControlsMissing'));
   }
 
   return renderLegacyPanel();

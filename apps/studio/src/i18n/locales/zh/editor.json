@@ -134,6 +134,8 @@
         "locked": "锁定",
         "visible": "可见",
         "geometryTitle": "基础属性",
+        "widgetLoading": "正在加载组件属性面板…",
+        "widgetControlsMissing": "组件属性定义缺失，请重新构建 widgets 后刷新页面。",
         "platform": "平台",
         "contentTitle": "内容",
         "textContent": "静态文本",

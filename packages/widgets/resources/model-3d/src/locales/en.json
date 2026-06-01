@@ -11,6 +11,7 @@
     "emptyDescription": "Provide a reachable GLB or GLTF URL in the editor.",
     "loadingTitle": "Loading model",
     "loadingDescription": "Large model files may take a little longer.",
+    "loadingProgress": "Downloaded {percent}%",
     "errorTitle": "Failed to load model",
     "errorDescription": "Check the model URL, CORS policy, or switch to proxy mode."
   }

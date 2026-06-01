@@ -138,6 +138,8 @@
         "locked": "Locked",
         "visible": "Visible",
         "geometryTitle": "Base Properties",
+        "widgetLoading": "Loading component property panel…",
+        "widgetControlsMissing": "Component controls are missing. Rebuild widgets and refresh the page.",
         "platform": "Platform",
         "contentTitle": "Content",
         "textContent": "Static Text",

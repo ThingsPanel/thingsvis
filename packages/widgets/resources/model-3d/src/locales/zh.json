@@ -11,6 +11,7 @@
     "emptyDescription": "请在右侧输入可访问的 GLB/GLTF 地址。",
     "loadingTitle": "正在加载模型",
     "loadingDescription": "模型资源较大时会稍慢一些。",
+    "loadingProgress": "已下载 {percent}%",
     "errorTitle": "模型加载失败",
     "errorDescription": "请检查模型地址、跨域策略或改用代理加载。"
   }
