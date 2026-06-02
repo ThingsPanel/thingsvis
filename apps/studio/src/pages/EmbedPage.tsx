@@ -67,22 +67,23 @@ interface EmbedState {
   variables: Record<string, unknown>;
 }
 
-function parseEmbedBool(value: string | null): boolean | undefined {
-  if (value == null) return undefined;
-  const v = value.trim().toLowerCase();
-  if (v === '1' || v === 'true' || v === 'yes' || v === 'on') return true;
-  if (v === '0' || v === 'false' || v === 'no' || v === 'off') return false;
-  return undefined;
-}
+/** Match Tailwind `md` — preview toolbar is desktop-only. */
+const PREVIEW_TOOLBAR_MIN_WIDTH_PX = 768;
 
-function resolveShowPreviewToolbar(searchParams: URLSearchParams): boolean {
-  const explicit = parseEmbedBool(searchParams.get('showPreviewToolbar'));
-  if (explicit !== undefined) return explicit;
-  const isThingsPanelHostEmbed =
-    searchParams.get('mode') === 'embedded' &&
-    searchParams.get('provider') === 'thingspanel' &&
-    searchParams.get('saveTarget') === 'host';
-  return !isThingsPanelHostEmbed;
+function usePreviewToolbarEnabled(): boolean {
+  const [enabled, setEnabled] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= PREVIEW_TOOLBAR_MIN_WIDTH_PX,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(`(min-width: ${PREVIEW_TOOLBAR_MIN_WIDTH_PX}px)`);
+    const sync = () => setEnabled(mediaQuery.matches);
+    sync();
+    mediaQuery.addEventListener('change', sync);
+    return () => mediaQuery.removeEventListener('change', sync);
+  }, []);
+
+  return enabled;
 }
 
 function buildRuntimeConfigFromSearchParams(searchParams: URLSearchParams) {
@@ -234,7 +235,7 @@ export default function EmbedPage() {
     variables: {},
   });
   const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
-  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
+  const showPreviewToolbar = usePreviewToolbarEnabled();
   const cleanupRef = useRef<Array<() => void>>([]);
   const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
@@ -270,7 +271,6 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
   const isHostManagedEmbed =
     searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
-  const showPreviewToolbar = useMemo(() => resolveShowPreviewToolbar(searchParams), [searchParams]);
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
@@ -343,25 +343,6 @@ export default function EmbedPage() {
     const onFullscreenChange = () => setIsFullscreen(previewSession.isFullscreen());
     document.addEventListener('fullscreenchange', onFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
-  }, []);
-
-  useEffect(() => {
-    let idleTimer: ReturnType<typeof setTimeout>;
-    const onPointerActivity = () => {
-      setIsToolbarVisible(true);
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => setIsToolbarVisible(false), 2000);
-    };
-
-    onPointerActivity();
-    window.addEventListener('mousemove', onPointerActivity);
-    window.addEventListener('touchstart', onPointerActivity, { passive: true });
-
-    return () => {
-      window.removeEventListener('mousemove', onPointerActivity);
-      window.removeEventListener('touchstart', onPointerActivity);
-      clearTimeout(idleTimer);
-    };
   }, []);
 
   const gridSettings = kernelState?.gridState?.settings ?? {
@@ -1133,13 +1114,7 @@ export default function EmbedPage() {
       }}
     >
       {showPreviewToolbar ? (
-        <div
-          className="absolute top-4 right-4 z-50 pointer-events-auto transition-opacity duration-300"
-          style={{
-            opacity: isToolbarVisible ? 1 : 0,
-            pointerEvents: isToolbarVisible ? 'auto' : 'none',
-          }}
-        >
+        <div className="absolute top-4 right-4 z-50 pointer-events-auto">
           <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
             <Button
               variant="ghost"

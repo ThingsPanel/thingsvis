@@ -17,6 +17,7 @@ const TEMPLATE_PLATFORM_DATA_SOURCE_ID = getPlatformDeviceDataSourceId(TEMPLATE_
 const TEMPLATE_PLATFORM_BINDING_RE =
   /\bds\.(?:__device_platform_template__|__platform___template____)(?=\.data\b)/g;
 const AUTO_WRITE_MARKER = 'field-binding';
+const AUTO_WRITE_VALUE_TYPE_KEY = '__thingsvisAutoWriteValueType';
 const FIELD_BINDING_EXPR_RE = /\{\{\s*ds\.[^.\s}]+\.data(?:\.([^}]+?))?\s*\}\}/g;
 
 function cloneValue<T>(value: T): T {
@@ -108,12 +109,13 @@ function normalizeAutoWritePayloads<T>(value: T, fieldId: string | null): T {
     record.type === 'callWrite' &&
     record.__thingsvisAutoWrite === AUTO_WRITE_MARKER &&
     typeof record.payload === 'string';
+  const autoWriteValueType = record[AUTO_WRITE_VALUE_TYPE_KEY];
 
   const next = Object.fromEntries(
     Object.entries(record).map(([key, entry]) => [
       key,
       key === 'payload' && isAutoWriteAction
-        ? `({ ${JSON.stringify(fieldId)}: payload })`
+        ? `({ ${JSON.stringify(fieldId)}: ${autoWriteValueType === 'number' ? 'payload ? 1 : 0' : 'payload'} })`
         : normalizeAutoWritePayloads(entry, fieldId),
     ]),
   );

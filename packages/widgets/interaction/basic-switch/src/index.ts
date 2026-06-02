@@ -39,6 +39,44 @@ function ensureSpinnerCSS(): void {
   document.head.appendChild(style);
 }
 
+function coerceBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (
+      normalized === 'false' ||
+      normalized === '0' ||
+      normalized === 'off' ||
+      normalized === 'no'
+    ) {
+      return false;
+    }
+    if (
+      normalized === 'true' ||
+      normalized === '1' ||
+      normalized === 'on' ||
+      normalized === 'yes'
+    ) {
+      return true;
+    }
+  }
+  return value == null ? fallback : Boolean(value);
+}
+
+function shouldEmitNumericPayload(value: unknown): boolean {
+  if (typeof value === 'number') return true;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    return normalized === '0' || normalized === '1';
+  }
+  return false;
+}
+
+function toSwitchEventPayload(checked: boolean, sourceValue: unknown): boolean | number {
+  return shouldEmitNumericPayload(sourceValue) ? (checked ? 1 : 0) : checked;
+}
+
 function renderSwitch(
   element: HTMLElement,
   props: Props,
@@ -53,6 +91,8 @@ function renderSwitch(
   const onColor = colors.primary || '#22c55e';
   const offColor = colors.axis || '#d1d5db';
   const trackColor = internalChecked ? onColor : offColor;
+  const showLabel = coerceBoolean(props.showLabel, true);
+  const disabled = coerceBoolean(props.disabled, false);
 
   element.style.cssText = `
     width: 100%;
@@ -63,7 +103,7 @@ function renderSwitch(
     font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
   `;
 
-  const labelHtml = props.showLabel
+  const labelHtml = showLabel
     ? `
     <span style="
       font-size: ${t.labelFontSize}px;
@@ -137,7 +177,7 @@ function renderSwitch(
       transition: background 0.2s;
       flex-shrink: 0;
       overflow: hidden;
-      cursor: ${props.disabled || isLoading ? 'not-allowed' : 'pointer'};
+      cursor: ${disabled || isLoading ? 'not-allowed' : 'pointer'};
     ">
       ${onTextHtml}
       ${offTextHtml}
@@ -181,7 +221,7 @@ function renderSwitch(
   const track = element.querySelector('#track');
   if (track) {
     track.addEventListener('click', () => {
-      if (!props.disabled && !isLoading) {
+      if (!disabled && !isLoading) {
         onToggle();
       }
     });
@@ -209,20 +249,19 @@ export const Main = defineWidget({
     let currentProps = props;
     let colors = resolveWidgetColors(element);
     // Coerce initial value so numeric 0/1 from IoT bindings works as boolean.
-    let internalChecked =
-      typeof props.value === 'number' ? props.value !== 0 : Boolean(props.value);
-    let isLoading = props.loading;
+    let internalChecked = coerceBoolean(props.value);
+    let isLoading = coerceBoolean(props.loading);
     let rollbackTimer: ReturnType<typeof setTimeout> | null = null;
 
     const handleToggle = () => {
-      if (currentProps.confirmToggle) {
+      if (coerceBoolean(currentProps.confirmToggle)) {
         if (!confirm(currentProps.confirmMessage)) return;
       }
 
       internalChecked = !internalChecked;
       isLoading = true;
 
-      ctx.emit?.('change', internalChecked);
+      ctx.emit?.('change', toSwitchEventPayload(internalChecked, currentProps.value));
 
       if (rollbackTimer) clearTimeout(rollbackTimer);
       rollbackTimer = setTimeout(() => {
@@ -252,8 +291,7 @@ export const Main = defineWidget({
         // Accept any non-null value and coerce to boolean so the switch stays
         // in sync with the real device state.
         if (newProps.value !== undefined && newProps.value !== null) {
-          internalChecked =
-            typeof newProps.value === 'number' ? newProps.value !== 0 : Boolean(newProps.value);
+          internalChecked = coerceBoolean(newProps.value);
           isLoading = false;
           if (rollbackTimer) {
             clearTimeout(rollbackTimer);
@@ -261,8 +299,8 @@ export const Main = defineWidget({
           }
         }
 
-        if (typeof newProps.loading === 'boolean') {
-          isLoading = newProps.loading;
+        if (newProps.loading !== undefined && newProps.loading !== null) {
+          isLoading = coerceBoolean(newProps.loading);
         }
 
         colors = resolveWidgetColors(element);

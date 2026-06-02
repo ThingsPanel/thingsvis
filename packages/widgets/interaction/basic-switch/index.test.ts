@@ -32,4 +32,41 @@ describe('interaction/basic-switch widget', () => {
 
     harness.destroy();
   });
+
+  it('emits numeric 0/1 payloads when the current value is numeric', async () => {
+    const { default: Main } = await import('./src/index');
+    const emit = vi.fn();
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { value: 0, showLabel: false },
+      emit,
+    });
+
+    harness.element.querySelector<HTMLElement>('#track')?.click();
+
+    expect(emit).toHaveBeenCalledWith('change', 1);
+
+    harness.update({ props: { value: 1 } });
+    harness.element.querySelector<HTMLElement>('#track')?.click();
+
+    expect(emit).toHaveBeenLastCalledWith('change', 0);
+
+    harness.destroy();
+  });
+
+  it('hides the external label when showLabel is false-like', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { label: '开关状态', showLabel: 'false' },
+    });
+
+    expect(harness.element.textContent).not.toContain('开关状态');
+
+    harness.update({ props: { label: '开关状态', showLabel: true } });
+
+    expect(harness.element.textContent).toContain('开关状态');
+
+    harness.destroy();
+  });
 });

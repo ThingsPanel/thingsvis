@@ -22,6 +22,7 @@ export interface ActionConfigItem {
   url?: string;
   script?: string;
   __thingsvisAutoWrite?: unknown;
+  __thingsvisAutoWriteValueType?: unknown;
 }
 
 interface ActionConfigEditorProps {
@@ -67,6 +68,7 @@ function ActionRow({
     const next: ActionConfigItem = { ...action, ...partial };
     if (Object.prototype.hasOwnProperty.call(partial, 'payload')) {
       delete next.__thingsvisAutoWrite;
+      delete next.__thingsvisAutoWriteValueType;
     }
     onChange(index, next);
   };

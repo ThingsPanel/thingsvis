@@ -26,6 +26,7 @@ import { DeviceSelectorModal } from './DeviceSelectorModal';
 export type FieldPickerValue = {
   dataSourceId: string;
   fieldPath: string;
+  fieldType?: FieldPathInfo['type'];
   transform?: string;
   historyConfig?: {
     timeRange: string;
@@ -234,9 +235,10 @@ function isTelemetryField(field: unknown): boolean {
 }
 
 function isFieldTypeCompatible(type: FieldPathInfo['type'], targetKind?: string): boolean {
-  if (!targetKind || type === 'unknown') return true;
+  if (!targetKind) return true;
 
   if (targetKind === 'boolean') return type === 'boolean' || type === 'number';
+  if (type === 'unknown') return true;
   if (targetKind === 'number' || targetKind === 'slider' || targetKind === 'rangeSlider') {
     return type === 'number';
   }
@@ -1099,6 +1101,11 @@ export function FieldPicker({
     return { raw: formatPreviewFull(rawPreviewValue), transformed: null, hasTransform: false };
   }, [rawPreviewValue, selectedTransform, snapshot]);
 
+  const selectedFieldType = useMemo<FieldPathInfo['type'] | undefined>(() => {
+    if (!selectedFieldPathForPicker) return undefined;
+    return pathInfos.find((info) => info.path === selectedFieldPathForPicker)?.type;
+  }, [pathInfos, selectedFieldPathForPicker]);
+
   const requestFieldPreview = useCallback(
     (
       dataSourceId: string,
@@ -1181,6 +1188,7 @@ export function FieldPicker({
     safeOnChange({
       dataSourceId: effectiveDataSourceId,
       fieldPath: selectedFieldPathForPicker,
+      fieldType: selectedFieldType,
       transform: code || undefined,
       ...(deviceBindingKind === 'history'
         ? {
@@ -1230,6 +1238,7 @@ export function FieldPicker({
     safeOnChange({
       dataSourceId: effectiveDataSourceId,
       fieldPath: selectedFieldPathForPicker,
+      fieldType: selectedFieldType,
       transform: selectedTransform || undefined,
       historyConfig: nextHistoryConfig,
     });
@@ -1460,6 +1469,7 @@ export function FieldPicker({
                 ? {
                     dataSourceId: effectiveDataSourceId,
                     fieldPath: nextPath,
+                    fieldType: pathInfos.find((info) => info.path === nextPath)?.type,
                     transform: selectedTransform || undefined,
                     ...(deviceBindingKind === 'history'
                       ? {

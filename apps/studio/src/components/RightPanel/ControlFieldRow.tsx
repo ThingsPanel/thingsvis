@@ -72,6 +72,7 @@ type ActionLike = {
   dataSourceId?: unknown;
   payload?: unknown;
   __thingsvisAutoWrite?: unknown;
+  __thingsvisAutoWriteValueType?: unknown;
   [key: string]: unknown;
 };
 
@@ -116,6 +117,31 @@ function toNumber(value: unknown, fallback: number): number {
     if (Number.isFinite(parsed)) return parsed;
   }
   return fallback;
+}
+
+function toBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (
+      normalized === 'false' ||
+      normalized === '0' ||
+      normalized === 'off' ||
+      normalized === 'no'
+    ) {
+      return false;
+    }
+    if (
+      normalized === 'true' ||
+      normalized === '1' ||
+      normalized === 'on' ||
+      normalized === 'yes'
+    ) {
+      return true;
+    }
+  }
+  return value == null ? fallback : Boolean(value);
 }
 
 function normalizeSceneLabel(value: unknown, index: number): Model3dSceneLabel {
@@ -185,12 +211,31 @@ function selectOptionCaption(
   return `${labelText} (${valueHint})`;
 }
 
-function createDefaultWriteAction(dataSourceId: string, fieldId: string): ActionLike {
+function createDefaultWritePayload(
+  componentType: string | undefined,
+  fieldId: string,
+  fieldType: FieldPickerValue['fieldType'] | undefined,
+): string {
+  if (componentType === 'interaction/basic-switch' && fieldType === 'number') {
+    return `({ ${JSON.stringify(fieldId)}: payload ? 1 : 0 })`;
+  }
+  return `({ ${JSON.stringify(fieldId)}: payload })`;
+}
+
+function createDefaultWriteAction(
+  componentType: string | undefined,
+  dataSourceId: string,
+  fieldId: string,
+  fieldType: FieldPickerValue['fieldType'] | undefined,
+): ActionLike {
   return {
     type: 'callWrite',
     dataSourceId,
-    payload: `({ ${JSON.stringify(fieldId)}: payload })`,
+    payload: createDefaultWritePayload(componentType, fieldId, fieldType),
     __thingsvisAutoWrite: AUTO_WRITE_MARKER,
+    ...(fieldType === 'boolean' || fieldType === 'number'
+      ? { __thingsvisAutoWriteValueType: fieldType }
+      : {}),
   };
 }
 
@@ -231,11 +276,13 @@ function isAutoWriteAction(action: unknown): action is ActionLike {
 function ensureDefaultWriteEvent(
   events: EventHandlerLike[] | undefined,
   eventName: string,
+  componentType: string | undefined,
   dataSourceId: string,
   fieldId: string,
+  fieldType: FieldPickerValue['fieldType'] | undefined,
 ): EventHandlerLike[] | null {
   const sourceEvents = Array.isArray(events) ? events : [];
-  const defaultAction = createDefaultWriteAction(dataSourceId, fieldId);
+  const defaultAction = createDefaultWriteAction(componentType, dataSourceId, fieldId, fieldType);
   let found = false;
   let changed = false;
 
@@ -256,6 +303,7 @@ function ensureDefaultWriteEvent(
       !hasAutoAction ||
       currentAuto?.dataSourceId !== defaultAction.dataSourceId ||
       currentAuto?.payload !== defaultAction.payload ||
+      currentAuto?.__thingsvisAutoWriteValueType !== defaultAction.__thingsvisAutoWriteValueType ||
       nextActions.length !== actions.length;
 
     return {
@@ -312,7 +360,14 @@ function buildDefaultWriteEventsForSelection(
   const fieldId = getRootFieldPath(selection.fieldPath);
   if (!fieldId) return null;
 
-  return ensureDefaultWriteEvent(events, eventName, selection.dataSourceId, fieldId);
+  return ensureDefaultWriteEvent(
+    events,
+    eventName,
+    componentType,
+    selection.dataSourceId,
+    fieldId,
+    selection.fieldType,
+  );
 }
 
 export function ControlFieldRow({
@@ -623,12 +678,12 @@ export function ControlFieldRow({
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
-                  checked={Boolean(propsValue)}
+                  checked={toBoolean(propsValue)}
                   onChange={(e) => setStatic(e.target.checked)}
                   className="w-4 h-4 rounded border-input accent-[#6965db]"
                 />
                 <span className="text-sm text-muted-foreground">
-                  {propsValue ? t('common.on') : t('common.off')}
+                  {toBoolean(propsValue) ? t('common.on') : t('common.off')}
                 </span>
               </label>
             )}

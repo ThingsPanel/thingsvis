@@ -103,6 +103,38 @@ describe('devicePresetHydration', () => {
     expect(hydrated.events?.[0]?.actions?.[0]?.payload).toBe('({ "switch": payload })');
   });
 
+  it('preserves numeric switch auto-write payloads when normalizing field keys', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      {
+        id: 'node-1',
+        type: 'interaction/basic-switch',
+        data: [
+          {
+            targetProp: 'value',
+            expression: '{{ ds.__device_platform_template__.data.switch }}',
+          },
+        ],
+        events: [
+          {
+            event: 'change',
+            actions: [
+              {
+                type: 'callWrite',
+                dataSourceId: '__device_platform_template__',
+                payload: `({ "switch": payload })`,
+                __thingsvisAutoWrite: 'field-binding',
+                __thingsvisAutoWriteValueType: 'number',
+              },
+            ],
+          },
+        ],
+      },
+      'dev-202',
+    ) as any;
+
+    expect(hydrated.events?.[0]?.actions?.[0]?.payload).toBe('({ "switch": payload ? 1 : 0 })');
+  });
+
   it('rewrites template-device platform data sources saved by the embedded editor', () => {
     const templateDataSourceId = getPlatformDeviceDataSourceId('__template__');
     const hydrated = hydrateDevicePresetSchema(
