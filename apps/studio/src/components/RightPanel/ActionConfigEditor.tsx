@@ -21,6 +21,7 @@ export interface ActionConfigItem {
   payload?: string;
   url?: string;
   script?: string;
+  __thingsvisAutoWrite?: unknown;
 }
 
 interface ActionConfigEditorProps {
@@ -62,7 +63,13 @@ function ActionRow({
   dataSources: string[];
 }) {
   const { t } = useTranslation('editor');
-  const update = (partial: Partial<ActionConfigItem>) => onChange(index, { ...action, ...partial });
+  const update = (partial: Partial<ActionConfigItem>) => {
+    const next: ActionConfigItem = { ...action, ...partial };
+    if (Object.prototype.hasOwnProperty.call(partial, 'payload')) {
+      delete next.__thingsvisAutoWrite;
+    }
+    onChange(index, next);
+  };
   const variableName = action.variableName ?? '';
   const variableInputListId = `event-variable-options-${index}`;
 

@@ -399,7 +399,7 @@
         "onlyImages": "Only image files are supported",
         "sizeLimit": "Image size cannot exceed 10MB",
         "onlyModels": "Only GLB or GLTF model files are supported",
-        "modelSizeLimit": "Model size cannot exceed 100MB",
+        "modelSizeLimit": "Model size cannot exceed 1000MB",
         "failed": "Upload failed",
         "button": "Upload Image",
         "action": "Upload",
