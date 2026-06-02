@@ -198,9 +198,8 @@ jobs:
             echo ">>> Deploying Server..."
             pm2 stop thingsvis-server 2>/dev/null || true
             sleep 1
-            # Clean the deployed standalone tree before copying new artifacts.
-            # Keep the server-local .env, but remove stale apps/server/.next and node_modules.
-            find /opt/thingsvis/server -mindepth 1 -maxdepth 1 ! -name '.env' -exec rm -rf {} +
+            # Remove stale build artifacts only; keep .env and public/uploads (same as deploy-cloud/e).
+            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
