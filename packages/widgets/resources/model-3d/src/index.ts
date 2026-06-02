@@ -38,6 +38,7 @@ type CameraPose = {
 const localeCatalog = { zh, en } as const;
 const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+.-]*:/;
 const POINTER_CLICK_THRESHOLD_PX = 6;
+const LEGACY_DEFAULT_CANVAS_BACKGROUNDS = new Set(['#14264a']);
 
 type HelperState = {
   axes: THREE.AxesHelper | null;
@@ -57,7 +58,11 @@ function resolveMessages(locale: string | undefined): RuntimeMessages {
 }
 
 function getCanvasBackgroundColor(value: Props): string {
-  return value.canvasBackgroundColor || value.backgroundColor || 'transparent';
+  const color = value.canvasBackgroundColor?.trim().toLowerCase();
+  if (!color || LEGACY_DEFAULT_CANVAS_BACKGROUNDS.has(color)) {
+    return 'transparent';
+  }
+  return value.canvasBackgroundColor;
 }
 
 function normalizeModelUrl(source: string): string {
@@ -66,10 +71,13 @@ function normalizeModelUrl(source: string): string {
     !trimmed ||
     trimmed.startsWith('blob:') ||
     trimmed.startsWith('data:') ||
-    trimmed.startsWith('//') ||
-    ABSOLUTE_URL_RE.test(trimmed)
+    trimmed.startsWith('//')
   ) {
     return trimmed;
+  }
+
+  if (ABSOLUTE_URL_RE.test(trimmed)) {
+    return normalizePublicUploadUrl(trimmed);
   }
 
   const base = (() => {
@@ -90,9 +98,26 @@ function normalizeModelUrl(source: string): string {
   if (!base) return trimmed;
 
   try {
-    return new URL(trimmed, base).toString();
+    return normalizePublicUploadUrl(new URL(trimmed, base).toString());
   } catch {
     return trimmed;
+  }
+}
+
+function normalizePublicUploadUrl(source: string): string {
+  try {
+    const url = new URL(source, typeof window === 'undefined' ? undefined : window.location.href);
+    if (url.pathname.startsWith('/thingsvis-api/uploads/')) {
+      url.pathname = url.pathname.replace(/^\/thingsvis-api\/uploads\//, '/uploads/');
+      return url.toString();
+    }
+    if (url.pathname.startsWith('/api/v1/uploads/')) {
+      url.pathname = url.pathname.replace(/^\/api\/v1\/uploads\//, '/uploads/');
+      return url.toString();
+    }
+    return source;
+  } catch {
+    return source;
   }
 }
 
@@ -152,15 +177,7 @@ function shouldProxyRequest(source: string, requestMode: RequestMode): boolean {
     return false;
   }
 
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    return new URL(source).origin !== window.location.origin;
-  } catch {
-    return false;
-  }
+  return false;
 }
 
 function buildProxyUrl(source: string): string {
@@ -177,15 +194,27 @@ function resolveWidgetStaticBaseUrl(): string {
     return '/';
   }
 
-  try {
-    const apiBaseUrl = new URL(resolveWidgetApiBaseUrl(), window.location.origin);
-    apiBaseUrl.pathname = apiBaseUrl.pathname
-      .replace(/\/api\/v1\/?$/, '/')
-      .replace(/\/thingsvis-api\/?$/, '/');
-    return apiBaseUrl.toString();
-  } catch {
-    return `${window.location.origin}/`;
+  const marker = '/widgets/resources/model-3d/dist/';
+  const resolveFromScriptUrl = (src: string | null | undefined) => {
+    if (!src) return '';
+    const markerIndex = src.indexOf(marker);
+    return markerIndex >= 0 ? src.slice(0, markerIndex + marker.length) : '';
+  };
+
+  const currentScript = typeof document === 'undefined'
+    ? ''
+    : resolveFromScriptUrl((document.currentScript as HTMLScriptElement | null)?.src);
+  if (currentScript) return currentScript;
+
+  if (typeof document !== 'undefined') {
+    const scriptBase = Array.from(document.scripts)
+      .reverse()
+      .map((script) => resolveFromScriptUrl(script.src))
+      .find(Boolean);
+    if (scriptBase) return scriptBase;
   }
+
+  return new URL(marker, window.location.origin).toString();
 }
 
 function getRequestUrl(source: string, requestMode: RequestMode): string {
@@ -200,60 +229,6 @@ function formatLoadError(error: unknown): string {
     return error.trim();
   }
   return '';
-}
-
-async function readErrorResponse(response: Response): Promise<string> {
-  try {
-    const contentType = response.headers.get('content-type') ?? '';
-    if (contentType.includes('application/json')) {
-      const payload = (await response.json()) as { error?: string; details?: string };
-      return [payload.error, payload.details].filter(Boolean).join(' ');
-    }
-
-    const text = await response.text();
-    return text.trim().slice(0, 400);
-  } catch {
-    return '';
-  }
-}
-
-async function readResponseArrayBufferWithProgress(
-  response: Response,
-  onProgress?: (percent: number) => void,
-): Promise<ArrayBuffer> {
-  const body = response.body;
-  if (!body) {
-    return response.arrayBuffer();
-  }
-
-  const contentLength = Number(response.headers.get('Content-Length'));
-  const reader = body.getReader();
-  const chunks: Uint8Array[] = [];
-  let received = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-
-    chunks.push(value);
-    received += value.byteLength;
-
-    if (contentLength > 0 && onProgress) {
-      onProgress(Math.min(99, Math.round((received / contentLength) * 100)));
-    }
-  }
-
-  const merged = new Uint8Array(received);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
-  onProgress?.(100);
-  return merged.buffer;
 }
 
 function disposeMaterial(material: THREE.Material | THREE.Material[]) {
@@ -706,6 +681,7 @@ export const Main = defineWidget({
 
     const formatLoadingProgress = (percent: number) =>
       messages().loadingProgress.replace('{percent}', String(percent));
+    const getParsingMessage = () => (currentLocale === 'zh' ? '正在解析模型...' : 'Parsing model...');
 
     const updatePlaceholder = (state: 'empty' | 'loading' | 'error' | 'ready') => {
       if (state === 'ready') {
@@ -958,59 +934,41 @@ export const Main = defineWidget({
       updatePlaceholder('loading');
       activeResourceBaseUrl = resourceBaseUrl;
 
-      fetch(requestUrl, { mode: 'cors', credentials: 'same-origin' })
-        .then(async (response) => {
-          if (!response.ok) {
-            const details = await readErrorResponse(response);
-            throw new Error(
-              [`Request failed with ${response.status} ${response.statusText}`.trim(), details]
-                .filter(Boolean)
-                .join(': '),
-            );
+      loader.load(
+        requestUrl,
+        (gltf) => {
+          if (destroyed || requestId !== loadRequestId) {
+            disposeObject3D(gltf.scene);
+            return;
           }
 
-          return readResponseArrayBufferWithProgress(response, (percent) => {
-            if (destroyed || requestId !== loadRequestId || !isModelLoading) {
-              return;
-            }
+          currentModel = gltf.scene;
+          currentAnimations = gltf.animations ?? [];
+          scene.add(currentModel);
+          applyMaterialOptions(currentModel, currentProps);
+          mountSceneLabels(currentModel, currentProps, labelEntries);
+          mountPipeFlow(currentModel, currentProps, pipeFlowEntries);
+          syncSceneLabelValues(currentProps, labelEntries);
+          syncAnimations();
+          syncSceneSettings();
+          resizeRenderer();
+          isModelLoading = false;
+          updatePlaceholder('ready');
+        },
+        (event) => {
+          if (destroyed || requestId !== loadRequestId || !isModelLoading) {
+            return;
+          }
 
-            loadingProgress.textContent = formatLoadingProgress(percent);
-          });
-        })
-        .then(
-          (buffer) =>
-            new Promise<void>((resolve, reject) => {
-              loader.parse(
-                buffer,
-                resourceBaseUrl,
-                (gltf) => {
-                  if (destroyed || requestId !== loadRequestId) {
-                    disposeObject3D(gltf.scene);
-                    resolve();
-                    return;
-                  }
-
-                  currentModel = gltf.scene;
-                  currentAnimations = gltf.animations ?? [];
-                  scene.add(currentModel);
-                  applyMaterialOptions(currentModel, currentProps);
-                  mountSceneLabels(currentModel, currentProps, labelEntries);
-                  mountPipeFlow(currentModel, currentProps, pipeFlowEntries);
-                  syncSceneLabelValues(currentProps, labelEntries);
-                  syncAnimations();
-                  syncSceneSettings();
-                  resizeRenderer();
-                  isModelLoading = false;
-                  updatePlaceholder('ready');
-                  resolve();
-                },
-                (error: unknown) => {
-                  reject(error);
-                },
-              );
-            }),
-        )
-        .catch((error) => {
+          const total = event.total || 0;
+          if (total > 0) {
+            const percent = Math.round((event.loaded / total) * 100);
+            loadingProgress.textContent = percent >= 100
+              ? getParsingMessage()
+              : formatLoadingProgress(Math.min(99, percent));
+          }
+        },
+        (error) => {
           if (destroyed || requestId !== loadRequestId) {
             return;
           }
@@ -1019,7 +977,8 @@ export const Main = defineWidget({
           currentErrorMessage = formatLoadError(error);
           clearModel();
           updatePlaceholder('error');
-        });
+        },
+      );
     };
 
     renderer.domElement.addEventListener('pointerdown', handlePointerDown);
