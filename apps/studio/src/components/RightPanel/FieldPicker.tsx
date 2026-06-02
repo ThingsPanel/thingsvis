@@ -236,7 +236,7 @@ function isTelemetryField(field: unknown): boolean {
 function isFieldTypeCompatible(type: FieldPathInfo['type'], targetKind?: string): boolean {
   if (!targetKind || type === 'unknown') return true;
 
-  if (targetKind === 'boolean') return type === 'boolean';
+  if (targetKind === 'boolean') return type === 'boolean' || type === 'number';
   if (targetKind === 'number' || targetKind === 'slider' || targetKind === 'rangeSlider') {
     return type === 'number';
   }
