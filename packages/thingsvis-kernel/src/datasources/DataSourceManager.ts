@@ -249,33 +249,14 @@ export class DataSourceManager {
   /**
    * Determine the effective trigger mode for a data source.
    *
-   * Smart inference for backward compatibility with legacy configs that
-   * have no explicit `mode` field:
-   *   - REST data sources with a mutating HTTP method (POST/PUT/DELETE)
-   *     and no polling are inferred as 'manual' (control/write endpoint).
-   *   - All other data sources default to 'auto' (read/telemetry endpoint).
-   *
-   * An explicitly set `mode: 'manual'` always takes precedence.
+   * Only an explicit `mode: 'manual'` makes a source write-only/control.
+   * Legacy configs without `mode` default to `auto`; inferring control from
+   * REST method caused normal POST query sources to flip to control after save.
    */
-  private resolveEffectiveMode(
-    config: DataSource,
-    normalizedType: DataSourceType,
-  ): 'auto' | 'manual' {
+  private resolveEffectiveMode(config: DataSource): 'auto' | 'manual' {
     // Explicit settings always win
     if ('mode' in config && config.mode === 'manual') return 'manual';
     if ('mode' in config && config.mode === 'auto') return 'auto';
-
-    // Smart inference for legacy configs without explicit mode:
-    // REST + mutating method + no polling → manual
-    if (normalizedType === 'REST') {
-      const rc = config.config as { method?: string; pollingInterval?: number };
-      const method = (rc.method ?? 'GET').toUpperCase();
-      const polling = rc.pollingInterval ?? 0;
-      if (method !== 'GET' && polling <= 0) {
-        return 'manual';
-      }
-    }
-
     return 'auto';
   }
 
@@ -381,7 +362,7 @@ export class DataSourceManager {
     }
 
     // Determine trigger mode: 'manual' data sources only prepare (no fetch/polling on load)
-    const effectiveMode = this.resolveEffectiveMode(config, normalizedType);
+    const effectiveMode = this.resolveEffectiveMode(config);
     this.resolvedModes.set(config.id, effectiveMode);
 
     try {

@@ -96,30 +96,6 @@ function normalizeEmbeddedProviderDataSources(
   return normalized;
 }
 
-// Builtin dashboard provider data sources (e.g. thingspanel_device_summary) are
-// always auto-polled; they should never be suppressed to manual mode in the editor.
-const BUILTIN_PROVIDER_DS_RE = /^thingspanel_/;
-
-function applyEmbeddedEditorDataSourcePolicy(
-  dataSources: Array<Record<string, any>>,
-): Array<Record<string, any>> {
-  const serviceConfig = resolveEditorServiceConfig();
-  if (!(serviceConfig.mode === 'embedded' && serviceConfig.context === 'dashboard')) {
-    return dataSources;
-  }
-
-  return dataSources.map((dataSource) => {
-    if (String(dataSource?.type ?? '').toUpperCase() !== 'REST') return dataSource;
-    // Builtin provider sources always run in auto mode; skip manual suppression.
-    if (BUILTIN_PROVIDER_DS_RE.test(String(dataSource?.id ?? ''))) return dataSource;
-    return {
-      ...dataSource,
-      mode: 'manual',
-      __editorAutoManual: true,
-    };
-  });
-}
-
 export type CanvasConfigSchema = {
   // Meta - 基础身份
   id: string;
@@ -816,7 +792,6 @@ export function useProjectBootstrap({
         mergedDataSources,
         embedRuntimeVariableValues,
       );
-      mergedDataSources = applyEmbeddedEditorDataSourcePolicy(mergedDataSources);
       setCanvasConfig((prev) => ({
         ...prev,
         dataSources: mergedDataSources as any,
