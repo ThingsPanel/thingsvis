@@ -301,6 +301,20 @@ export const Main = defineWidget({
       });
     };
 
+    const isShellFullscreen = () => document.fullscreenElement === shell;
+
+    const toggleFullscreen = () => {
+      if (isShellFullscreen()) {
+        void document.exitFullscreen?.();
+        return;
+      }
+      void shell.requestFullscreen?.();
+    };
+
+    const handleFullscreenChange = () => {
+      renderControls();
+    };
+
     const renderStatusBar = () => {
       const messages = getMessages(currentLocale).runtime;
       statusBar.innerHTML = '';
@@ -432,9 +446,10 @@ export const Main = defineWidget({
       }
 
       if (currentProps.showFullscreen) {
-        addAction(buttonTitle('fullscreen', 'Fullscreen'), buttonTitle('fullscreen', 'Fullscreen'), () => {
-          void shell.requestFullscreen?.();
-        });
+        const fullscreenLabel = isShellFullscreen()
+          ? buttonTitle('exitFullscreen', currentLocale?.startsWith('zh') ? '退出全屏' : 'Exit fullscreen')
+          : buttonTitle('fullscreen', 'Fullscreen');
+        addAction(fullscreenLabel, fullscreenLabel, toggleFullscreen);
       }
 
       if (currentProps.showPlaybackControls) {
@@ -559,6 +574,7 @@ export const Main = defineWidget({
     updateView();
 
     window.addEventListener('blur', sendStop);
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
 
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
@@ -572,6 +588,7 @@ export const Main = defineWidget({
       destroy: () => {
         sendStop();
         window.removeEventListener('blur', sendStop);
+        document.removeEventListener('fullscreenchange', handleFullscreenChange);
         if (attachVideoRaf) cancelAnimationFrame(attachVideoRaf);
         stopReadyPoll();
         element.innerHTML = '';

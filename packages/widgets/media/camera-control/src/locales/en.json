@@ -24,6 +24,7 @@
     "preset": "Go to preset",
     "snapshot": "Snapshot",
     "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen",
     "playbackRequest": "Request playback",
     "mute": "Mute",
     "unmute": "Unmute"

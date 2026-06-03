@@ -18,6 +18,12 @@ describe('media/camera-control widget', () => {
 
   afterEach(() => {
     document.body.innerHTML = '';
+    delete (HTMLElement.prototype as { requestFullscreen?: unknown }).requestFullscreen;
+    delete (document as { exitFullscreen?: unknown }).exitFullscreen;
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: null,
+    });
     vi.unstubAllGlobals();
   });
 
@@ -63,6 +69,46 @@ describe('media/camera-control widget', () => {
     expect(buttons.some((button) => button.title === 'Snapshot')).toBe(true);
     expect(buttons.some((button) => button.title === 'Fullscreen')).toBe(true);
     expect(buttons.some((button) => button.title === 'Request playback')).toBe(true);
+
+    harness.destroy();
+  });
+
+  it('toggles the camera shell fullscreen state from the toolbar button', async () => {
+    const { default: Main } = await import('./src/index');
+    const requestFullscreen = vi.fn();
+    const exitFullscreen = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, 'requestFullscreen', {
+      configurable: true,
+      value: requestFullscreen,
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      configurable: true,
+      value: exitFullscreen,
+    });
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: null,
+    });
+
+    const harness = mountWidget(Main, { locale: 'en', mode: 'view' });
+    const fullscreenButton = () =>
+      Array.from(harness.element.querySelectorAll('button')).find(
+        (button) => button.title === 'Fullscreen' || button.title === 'Exit fullscreen',
+      );
+
+    fullscreenButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(requestFullscreen).toHaveBeenCalledTimes(1);
+
+    const shell = harness.element.children.item(2);
+    Object.defineProperty(document, 'fullscreenElement', {
+      configurable: true,
+      value: shell,
+    });
+    document.dispatchEvent(new Event('fullscreenchange'));
+
+    expect(fullscreenButton()?.title).toBe('Exit fullscreen');
+    fullscreenButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(exitFullscreen).toHaveBeenCalledTimes(1);
 
     harness.destroy();
   });
