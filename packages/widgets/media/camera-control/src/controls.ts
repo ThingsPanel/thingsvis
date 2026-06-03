@@ -69,7 +69,6 @@ export const controls = createControlPanel()
     'Advanced Control',
     (builder) => {
       builder
-        .addSwitch('showPtz', { label: `${W}.controls.showPtz` })
         .addSwitch('showZoomControls', { label: `${W}.controls.showZoomControls` })
         .addSwitch('showFocusControls', { label: `${W}.controls.showFocusControls` })
         .addSwitch('showPresetControl', { label: `${W}.controls.showPresetControl` })

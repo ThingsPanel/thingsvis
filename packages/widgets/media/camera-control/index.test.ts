@@ -36,7 +36,7 @@ describe('media/camera-control widget', () => {
     harness.destroy();
   });
 
-  it('emits command-shaped PTZ payloads', async () => {
+  it('hides the PTZ pad even when legacy configs enable it', async () => {
     const { default: Main } = await import('./src/index');
     const emit = vi.fn();
     const harness = mountWidget(Main, {
@@ -49,11 +49,9 @@ describe('media/camera-control widget', () => {
     const leftButton = Array.from(harness.element.querySelectorAll('button')).find(
       (button) => button.title === 'Left',
     );
-    leftButton?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
-    leftButton?.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
 
-    expect(emit).toHaveBeenCalledWith('ptzMove', { ptz_move: { direction: 'left', speed: 3 } });
-    expect(emit).toHaveBeenCalledWith('ptzStop', { ptz_stop: {} });
+    expect(leftButton).toBeUndefined();
+    expect(emit).not.toHaveBeenCalled();
 
     harness.destroy();
   });

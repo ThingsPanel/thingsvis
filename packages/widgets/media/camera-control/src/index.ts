@@ -350,11 +350,12 @@ export const Main = defineWidget({
       ptzPanel.innerHTML = '';
       actionPanel.innerHTML = '';
       const showToolbar = currentMode !== 'edit';
+      const showPtzPad = false;
       toolbar.style.display = showToolbar ? 'flex' : 'none';
-      ptzPanel.style.display = currentProps.showPtz && !isPlayback ? 'grid' : 'none';
+      ptzPanel.style.display = showPtzPad && !isPlayback ? 'grid' : 'none';
       if (currentMode === 'edit') return;
 
-      if (currentProps.showPtz) {
+      if (showPtzPad) {
         const buttonClass = 'tv-camera-control-button';
         const positions: Array<[number, string | null, string, Direction | null]> = [
           [1, 'up', '↑', 'up'],
