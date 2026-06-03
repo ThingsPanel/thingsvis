@@ -276,16 +276,23 @@ export const controls = createControlPanel()
     (builder) => {
       builder
         .addSwitch('showPipeFlow', {
-          label: { zh: '管线流动', en: 'Pipe Flow' },
+          label: { zh: '管道流动', en: 'Pipe Flow' },
           default: true,
         })
-        .addCustom('pipeFlowRules', 'model3dPipeRules' as any, {
-          label: { zh: '管线规则', en: 'Pipe Rules' },
-          default: [],
+        .addTextInput('pipeNamePrefix', {
+          label: { zh: '管道名称前缀', en: 'Pipe Name Prefix' },
+          default: '能量线_',
+        })
+        .addSlider('pipeFlowSpeed', {
+          label: { zh: '流动速度', en: 'Flow Speed' },
+          min: 0.1,
+          max: 10,
+          step: 0.1,
+          default: 1.8,
           showWhen: { field: 'showPipeFlow', value: true },
         });
     },
-    { label: { zh: '管线', en: 'Pipes' } },
+    { label: { zh: '管道', en: 'Pipes' } },
   )
   .addGroup(
     'Debug',

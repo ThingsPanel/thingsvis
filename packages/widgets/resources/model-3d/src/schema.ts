@@ -25,8 +25,6 @@ export const PipeFlowRuleSchema = z.object({
 
 export const DEFAULT_SCENE_LABELS: z.infer<typeof SceneLabelSchema>[] = [];
 
-export const DEFAULT_PIPE_FLOW_RULES: z.infer<typeof PipeFlowRuleSchema>[] = [];
-
 export const CameraPresetSchema = z.object({
   id: z.string().default('preset-1').describe('Camera preset id'),
   name: z.string().default('').describe('Camera preset name'),
@@ -97,8 +95,11 @@ export const PropsSchema = z.object({
   showSceneLabels: z.boolean().default(true).describe('Show labels on anchor nodes'),
   labelAnchorPrefix: z.string().default('anchor_').describe('Anchor node name prefix'),
   sceneLabels: z.array(SceneLabelSchema).default(() => DEFAULT_SCENE_LABELS.map((item) => ({ ...item }))).describe('Scene label configs'),
-  showPipeFlow: z.boolean().default(true).describe('Animate pipe flow in viewer'),
-  pipeFlowRules: z.array(PipeFlowRuleSchema).default(() => DEFAULT_PIPE_FLOW_RULES.map((item) => ({ ...item }))).describe('Pipe flow rules'),
+  showPipeFlow: z.boolean().default(true).describe('Animate energy pipe flow in viewer'),
+  pipeNamePrefix: z.string().default('能量线_').describe('Pipe mesh name prefix'),
+  pipeFlowSpeed: z.number().min(0.1).max(10).default(1.8).describe('Pipe flow animation speed'),
+  /** @deprecated Migrated dashboards may still carry pipeFlowRules; runtime reads matcher/speed as fallback. */
+  pipeFlowRules: z.array(PipeFlowRuleSchema).optional().describe('Legacy pipe flow rules'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;

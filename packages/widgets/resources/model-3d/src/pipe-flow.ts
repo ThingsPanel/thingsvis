@@ -1,112 +1,128 @@
 import * as THREE from 'three';
 
-import type { PipeFlowRule, Props } from './schema';
+import type { Props } from './schema';
 
 export type FlowPipeEntry = {
   mesh: THREE.Mesh;
-  material: THREE.MeshStandardMaterial;
-  originalMaterial: THREE.Material | THREE.Material[] | null;
-  baseColor: THREE.Color;
-  speed: number;
-  phase: number;
+  material: THREE.ShaderMaterial;
 };
 
-function normalizeColor(value: string): THREE.Color {
-  try {
-    return new THREE.Color(value || '#ffffff');
-  } catch {
-    return new THREE.Color('#ffffff');
+const PIPE_COLOR_MAP: Record<string, number> = {
+  光伏: 0x3399ff,
+  储能: 0xffaa00,
+  车间: 0x3399ff,
+  水泵: 0x22ee55,
+};
+
+function resolvePipeColor(name: string): THREE.Color {
+  for (const [key, hex] of Object.entries(PIPE_COLOR_MAP)) {
+    if (name.includes(key)) {
+      return new THREE.Color(hex);
+    }
   }
+  return new THREE.Color(0xffffff);
 }
 
-function createFlowMaterial(color: THREE.Color) {
-  return new THREE.MeshStandardMaterial({
-    color: color.clone(),
-    emissive: color.clone(),
-    emissiveIntensity: 0.75,
+function createFlowMaterial(color: THREE.Color, speed: number) {
+  return new THREE.ShaderMaterial({
     transparent: true,
-    opacity: 0.92,
-    roughness: 0.35,
-    metalness: 0.05,
     depthWrite: true,
+    uniforms: {
+      uTime: { value: 0 },
+      uColor: { value: color.clone() },
+      uSpeed: { value: speed },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying float vAlong;
+      void main() {
+        vUv = uv;
+        vAlong = position.x + position.y * 0.37 + position.z * 0.19;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform float uTime;
+      uniform vec3 uColor;
+      uniform float uSpeed;
+      varying vec2 vUv;
+      varying float vAlong;
+      void main() {
+        float coord = mix(vAlong * 8.0, vUv.x * 14.0, step(0.001, vUv.x + vUv.y));
+        float pulse = step(0.42, fract(coord - uTime * uSpeed));
+        vec3 segmentColor = mix(vec3(1.0), uColor, pulse);
+        gl_FragColor = vec4(segmentColor, 0.96);
+      }
+    `,
   });
 }
 
-function ruleMatches(rule: PipeFlowRule, meshName: string): boolean {
-  if (!rule.visible || !rule.matcher) return false;
-
-  if (rule.matcherType === 'exact') {
-    return meshName === rule.matcher;
+function resolvePipeNamePrefix(props: Props): string {
+  const prefix = props.pipeNamePrefix?.trim();
+  if (prefix) {
+    return prefix;
   }
 
-  if (rule.matcherType === 'contains') {
-    return meshName.includes(rule.matcher);
-  }
-
-  return meshName.startsWith(rule.matcher);
+  const migratedMatcher = props.pipeFlowRules?.find((rule) => rule.visible && rule.matcher)?.matcher;
+  return migratedMatcher?.trim() || '能量线_';
 }
 
-function resolveRule(meshName: string, rules: PipeFlowRule[]): PipeFlowRule | null {
-  return rules.find((rule) => ruleMatches(rule, meshName)) ?? null;
+function resolvePipeFlowSpeed(props: Props): number {
+  if (typeof props.pipeFlowSpeed === 'number' && Number.isFinite(props.pipeFlowSpeed)) {
+    return props.pipeFlowSpeed;
+  }
+
+  const migratedSpeed = props.pipeFlowRules?.find((rule) => rule.visible)?.speed;
+  return typeof migratedSpeed === 'number' && Number.isFinite(migratedSpeed) ? migratedSpeed : 1.8;
 }
 
 export function clearPipeFlow(entries: FlowPipeEntry[]) {
-  entries.forEach(({ mesh, material, originalMaterial }) => {
-    if (originalMaterial) {
-      mesh.material = originalMaterial;
-    }
-
+  entries.forEach(({ mesh, material }) => {
+    mesh.material = new THREE.MeshStandardMaterial({ color: 0xffffff });
     material.dispose();
   });
-
   entries.length = 0;
 }
 
 export function mountPipeFlow(root: THREE.Object3D, props: Props, entries: FlowPipeEntry[]) {
   clearPipeFlow(entries);
-
-  if (!props.showPipeFlow || props.pipeFlowRules.length === 0) {
+  if (!props.showPipeFlow) {
     return;
   }
 
+  const pipeNamePrefix = resolvePipeNamePrefix(props);
+  const pipeFlowSpeed = resolvePipeFlowSpeed(props);
+
   root.traverse((node) => {
     const mesh = node as THREE.Mesh;
-    if (!mesh.isMesh || !mesh.name) {
+    if (!mesh.isMesh || !mesh.name.startsWith(pipeNamePrefix)) {
       return;
     }
 
-    const rule = resolveRule(mesh.name, props.pipeFlowRules);
-    if (!rule) {
-      return;
-    }
-
-    const baseColor = normalizeColor(rule.color);
-    const material = createFlowMaterial(baseColor);
-    const originalMaterial = mesh.material ?? null;
+    const material = createFlowMaterial(resolvePipeColor(mesh.name), pipeFlowSpeed);
     mesh.material = material;
-    entries.push({
-      mesh,
-      material,
-      originalMaterial,
-      baseColor,
-      speed: rule.speed,
-      phase: entries.length * 0.7,
-    });
+    entries.push({ mesh, material });
   });
 }
 
-export function updatePipeFlow(entries: FlowPipeEntry[], enabled: boolean) {
+export function updatePipeFlow(
+  entries: FlowPipeEntry[],
+  delta: number,
+  enabled: boolean,
+  speed: number,
+) {
   if (!enabled) {
     return;
   }
 
-  entries.forEach(({ material, baseColor, phase, speed }) => {
-    const pulse =
-      0.55 + Math.sin((performance.now() / 1000) * Math.max(speed, 0.1) * 3 + phase) * 0.25;
+  entries.forEach(({ material }) => {
+    const timeUniform = material.uniforms.uTime;
+    const speedUniform = material.uniforms.uSpeed;
+    if (!timeUniform || !speedUniform) {
+      return;
+    }
 
-    material.color.copy(baseColor).multiplyScalar(0.8 + pulse * 0.45);
-    material.emissive.copy(baseColor);
-    material.emissiveIntensity = 0.45 + pulse;
-    material.opacity = 0.82 + pulse * 0.14;
+    timeUniform.value += delta * speed;
+    speedUniform.value = speed;
   });
 }

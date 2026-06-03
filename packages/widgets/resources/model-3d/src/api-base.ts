@@ -45,6 +45,16 @@ export function resolveWidgetApiBaseUrl(): string {
     if (fromReferrer) {
       return fromReferrer;
     }
+
+    try {
+      const referrer = new URL(document.referrer);
+      const isEmbedded = typeof window.parent !== 'undefined' && window.parent !== window;
+      if (isEmbedded && referrer.origin) {
+        return `${referrer.origin}/thingsvis-api`;
+      }
+    } catch {
+      // ignore invalid referrer
+    }
   }
 
   return `${window.location.origin}/api/v1`;

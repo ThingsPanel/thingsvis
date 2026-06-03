@@ -104,18 +104,29 @@ function normalizeModelUrl(source: string): string {
   }
 }
 
+function extractUploadPathname(pathname: string): string | null {
+  if (pathname.startsWith('/thingsvis-api/uploads/')) {
+    return pathname.replace(/^\/thingsvis-api/, '');
+  }
+  if (pathname.startsWith('/api/v1/uploads/')) {
+    return pathname.replace(/^\/api\/v1/, '');
+  }
+  if (pathname.startsWith('/uploads/')) {
+    return pathname;
+  }
+  return null;
+}
+
 function normalizePublicUploadUrl(source: string): string {
   try {
     const url = new URL(source, typeof window === 'undefined' ? undefined : window.location.href);
-    if (url.pathname.startsWith('/thingsvis-api/uploads/')) {
-      url.pathname = url.pathname.replace(/^\/thingsvis-api\/uploads\//, '/uploads/');
-      return url.toString();
+    const uploadPath = extractUploadPathname(url.pathname);
+    if (!uploadPath) {
+      return source;
     }
-    if (url.pathname.startsWith('/api/v1/uploads/')) {
-      url.pathname = url.pathname.replace(/^\/api\/v1\/uploads\//, '/uploads/');
-      return url.toString();
-    }
-    return source;
+
+    const apiBaseUrl = resolveWidgetApiBaseUrl().replace(/\/$/, '');
+    return `${apiBaseUrl}${uploadPath}${url.search}${url.hash}`;
   } catch {
     return source;
   }
@@ -906,7 +917,12 @@ export const Main = defineWidget({
       const delta = clock.getDelta();
       currentMixer?.update(delta);
       controls3d.update();
-      updatePipeFlow(pipeFlowEntries, currentProps.showPipeFlow);
+      updatePipeFlow(
+        pipeFlowEntries,
+        delta,
+        currentProps.showPipeFlow,
+        currentProps.pipeFlowSpeed,
+      );
       if (helperState.box) {
         helperState.box.update();
       }
@@ -1007,7 +1023,8 @@ export const Main = defineWidget({
 
         const pipeFlowStructureChanged =
           newProps.showPipeFlow !== currentProps.showPipeFlow
-          || newProps.pipeFlowRules !== currentProps.pipeFlowRules;
+          || newProps.pipeNamePrefix !== currentProps.pipeNamePrefix
+          || newProps.pipeFlowSpeed !== currentProps.pipeFlowSpeed;
 
         currentProps = newProps;
         currentMode = newCtx.mode ?? currentMode;
