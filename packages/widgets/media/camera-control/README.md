@@ -6,7 +6,8 @@ The default UI is optimized for customer-facing video monitoring:
 
 - live or playback video fills the widget
 - live/playback, online, and recording state are shown as chips
-- snapshot, fullscreen, and request-playback actions are shown as readable actions
+- snapshot, fullscreen, and playback actions are shown as readable actions
+- playback opens a compact time-range panel, then plays through `playbackUrl` with a custom transport bar
 - PTZ, zoom, focus, and preset controls are hidden until enabled in advanced controls
 
 The widget does not create per-device REST data sources. Bind `streamUrl` and
@@ -60,9 +61,10 @@ Publish telemetry with the same HLS URL for live and playback:
 python .\publish-camera-telemetry.py
 ```
 
-Then switch the widget `mode` to `playback`. The video should load through
-`playbackUrl`, the status chip should read `Playback`, and native video controls
-should be visible.
+Open runtime view, click **Playback**, pick dates on the month calendar (second click sets the end date for multi-day ranges), adjust start/end times, and click **Play**.
+The widget emits `playback_open`, loads `playbackUrl` when the platform updates it,
+shows the status chip `Playback`, and renders the bottom transport bar (play/pause,
+scrub, speed, return to live).
 
 ## Testing controls
 

@@ -66,7 +66,58 @@ describe('media/camera-control widget', () => {
     expect(buttons.some((button) => button.title === 'Go to preset')).toBe(false);
     expect(buttons.some((button) => button.title === 'Snapshot')).toBe(true);
     expect(buttons.some((button) => button.title === 'Fullscreen')).toBe(true);
-    expect(buttons.some((button) => button.title === 'Request playback')).toBe(true);
+    expect(buttons.some((button) => button.title === 'Playback')).toBe(true);
+
+    harness.destroy();
+  });
+
+  it('opens the playback panel and emits playback_open with selected times', async () => {
+    const { default: Main } = await import('./src/index');
+    const emit = vi.fn();
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      mode: 'view',
+      emit,
+      props: {
+        playbackStart: '2026-06-04T08:00:00.000Z',
+        playbackEnd: '2026-06-04T09:00:00.000Z',
+      },
+    });
+
+    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Playback',
+    );
+    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const panel = harness.element.querySelector('.tv-camera-playback-panel');
+    expect(panel).toBeTruthy();
+    expect(getComputedStyle(panel as HTMLElement).display).not.toBe('none');
+    expect(harness.element.querySelector('.tv-camera-playback-calendar')).toBeTruthy();
+
+    const dayButton = Array.from(harness.element.querySelectorAll('.tv-camera-calendar-day')).find(
+      (button) => button.textContent === '4',
+    );
+    expect(dayButton).toBeTruthy();
+
+    const playButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Play' && button.textContent === 'Play',
+    );
+    playButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(emit).toHaveBeenCalledWith(
+      'playbackRequest',
+      expect.objectContaining({
+        playback_open: expect.objectContaining({
+          start: expect.any(String),
+          end: expect.any(String),
+        }),
+      }),
+    );
+
+    const returnButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Return to live',
+    );
+    expect(returnButton).toBeTruthy();
 
     harness.destroy();
   });

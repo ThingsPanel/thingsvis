@@ -42,6 +42,7 @@ export const controls = createControlPanel()
             { label: 'WebRTC', value: 'webrtc' },
             { label: 'MSE', value: 'mse' },
             { label: 'HLS', value: 'hls' },
+            { label: 'HTTP-FLV', value: 'flv' },
             { label: 'MJPEG', value: 'mjpeg' },
           ],
           default: 'webrtc,mse,hls,mjpeg',

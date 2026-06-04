@@ -15,6 +15,7 @@
  * - Autoplay for WebRTC in Safari
  */
 import Hls from 'hls.js';
+import mpegts from 'mpegts.js';
 
 export class VideoRTC extends HTMLElement {
   constructor() {
@@ -145,6 +146,22 @@ export class VideoRTC extends HTMLElement {
 
     /** @type {import('hls.js').default|null} */
     this.hls = null;
+
+    this.flvPlayer = null;
+  }
+
+  stopDirectPlayers() {
+    if (this.hls) {
+      this.hls.destroy();
+      this.hls = null;
+    }
+
+    if (this.flvPlayer) {
+      this.flvPlayer.unload();
+      this.flvPlayer.detachMediaElement();
+      this.flvPlayer.destroy();
+      this.flvPlayer = null;
+    }
   }
 
   /**
@@ -152,14 +169,43 @@ export class VideoRTC extends HTMLElement {
    * @param {string} url
    */
   playDirectHls(url) {
-    if (this.hls) {
-      this.hls.destroy();
-      this.hls = null;
+    this.stopDirectPlayers();
+
+    this.wsURL = '';
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    if (this.pc) {
+      this.pc.getSenders().forEach((sender) => {
+        if (sender.track) sender.track.stop();
+      });
+      this.pc.close();
+      this.pc = null;
     }
 
+    this.video.muted = true;
+    this.video.autoplay = true;
+    this.video.playsInline = true;
     this.video.srcObject = null;
     this.video.removeAttribute('src');
     this.video.load();
+
+    const startPlayback = () => {
+      const result = this.video.play();
+      if (result && typeof result.catch === 'function') {
+        result.catch((error) => {
+          console.warn('[VideoRTC] HLS autoplay failed:', error);
+        });
+      }
+    };
+    let readyNotified = false;
+    const notifyReady = () => {
+      if (readyNotified) return;
+      readyNotified = true;
+      this.dispatchEvent(new CustomEvent('video-rtc-ready'));
+      startPlayback();
+    };
 
     if (Hls.isSupported()) {
       this.hls = new Hls({
@@ -184,18 +230,94 @@ export class VideoRTC extends HTMLElement {
       });
       this.hls.loadSource(url);
       this.hls.attachMedia(this.video);
-      this.hls.on(Hls.Events.MANIFEST_PARSED, () => this.play());
+      this.hls.on(Hls.Events.MANIFEST_PARSED, notifyReady);
+      this.hls.on(Hls.Events.LEVEL_LOADED, notifyReady);
+      this.hls.on(Hls.Events.FRAG_LOADED, notifyReady);
+      this.hls.on(Hls.Events.FRAG_BUFFERED, notifyReady);
       return;
     }
 
     const nativeHls = this.video.canPlayType('application/vnd.apple.mpegurl');
     if (nativeHls === 'probably' || nativeHls === 'maybe') {
+      this.video.addEventListener('loadedmetadata', notifyReady, { once: true });
+      this.video.addEventListener('canplay', notifyReady, { once: true });
       this.video.src = url;
-      this.play();
+      startPlayback();
       return;
     }
 
     console.warn('[VideoRTC] HLS is not supported in this browser');
+  }
+
+  /**
+   * Play a direct HTTP-FLV URL with MSE.
+   * @param {string} url
+   */
+  playDirectFlv(url) {
+    this.stopDirectPlayers();
+
+    this.wsURL = '';
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+    if (this.pc) {
+      this.pc.getSenders().forEach((sender) => {
+        if (sender.track) sender.track.stop();
+      });
+      this.pc.close();
+      this.pc = null;
+    }
+
+    if (!mpegts.getFeatureList().mseLivePlayback) {
+      console.warn('[VideoRTC] HTTP-FLV live playback is not supported in this browser');
+      return;
+    }
+
+    this.video.muted = true;
+    this.video.autoplay = true;
+    this.video.playsInline = true;
+    this.video.srcObject = null;
+    this.video.removeAttribute('src');
+    this.video.load();
+
+    let readyNotified = false;
+    const startPlayback = () => {
+      const result = this.video.play();
+      if (result && typeof result.catch === 'function') {
+        result.catch((error) => {
+          console.warn('[VideoRTC] FLV autoplay failed:', error);
+        });
+      }
+    };
+    const notifyReady = () => {
+      if (readyNotified) return;
+      readyNotified = true;
+      this.dispatchEvent(new CustomEvent('video-rtc-ready'));
+      startPlayback();
+    };
+
+    this.video.addEventListener('loadeddata', notifyReady, { once: true });
+    this.video.addEventListener('canplay', notifyReady, { once: true });
+
+    this.flvPlayer = mpegts.createPlayer(
+      {
+        type: 'flv',
+        isLive: true,
+        url,
+      },
+      {
+        enableWorker: true,
+        liveBufferLatencyChasing: true,
+      },
+    );
+    this.flvPlayer.on(mpegts.Events.MEDIA_INFO, notifyReady);
+    this.flvPlayer.on(mpegts.Events.ERROR, (type, detail, info) => {
+      console.error('[VideoRTC] FLV error:', { type, detail, info });
+    });
+    this.flvPlayer.attachMediaElement(this.video);
+    this.flvPlayer.load();
+    startPlayback();
   }
 
   /**
@@ -232,6 +354,20 @@ export class VideoRTC extends HTMLElement {
         }
       };
       playHls();
+      return;
+    }
+
+    // Direct HTTP-FLV playback for SRS / MediaMTX FLV endpoints.
+    if (value.match(/\.flv(\?.*)?$/i)) {
+      this.wsURL = '';
+      const playFlv = () => {
+        if (this.video) {
+          this.playDirectFlv(value);
+        } else {
+          setTimeout(playFlv, 100);
+        }
+      };
+      playFlv();
       return;
     }
     // --------------------------------------------------
@@ -431,10 +567,7 @@ export class VideoRTC extends HTMLElement {
       this.pc = null;
     }
 
-    if (this.hls) {
-      this.hls.destroy();
-      this.hls = null;
-    }
+    this.stopDirectPlayers();
 
     if (this.video) {
       this.video.src = '';
