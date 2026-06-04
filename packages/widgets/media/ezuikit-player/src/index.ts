@@ -12,7 +12,8 @@ import { buildEzopenUrl, playbackFingerprint } from './ezopen';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-type RuntimeState = 'empty' | 'idle' | 'loading' | 'error' | 'ready';
+type RuntimeState = 'empty' | 'idle' | 'loading' | 'error';
+type PlayerState = RuntimeState | 'ready';
 
 type RuntimeMessages = {
   runtime: Record<RuntimeState, string>;
@@ -49,8 +50,12 @@ function loadEzUIKitModule(): Promise<EzUIKitModule> {
 
 function resolveStaticPath(): string {
   if (typeof document === 'undefined') return '/ezuikit_static';
-  const scripts = Array.from(document.querySelectorAll('script[src]'));
-  const remoteEntry = scripts.find((script) => script.src.includes('ezuikit-player/dist/remoteEntry.js'));
+  const scripts = Array.from(
+    document.querySelectorAll<HTMLScriptElement>('script[src]'),
+  );
+  const remoteEntry = scripts.find((script) =>
+    script.src.includes('ezuikit-player/dist/remoteEntry.js'),
+  );
   if (remoteEntry) {
     return remoteEntry.src.replace(/\/remoteEntry\.js(?:\?.*)?$/, '/ezuikit_static');
   }
@@ -74,7 +79,7 @@ export const Main = defineWidget({
     let currentCtx = ctx;
     let currentLocale = ctx.locale;
     let currentMode = ctx.mode ?? 'edit';
-    let state: RuntimeState = 'empty';
+    let state: PlayerState = 'empty';
     let colors = resolveWidgetColors(element);
     let player: EzUIKitPlayerInstance | null = null;
     let playerFingerprint = '';
@@ -127,7 +132,7 @@ export const Main = defineWidget({
     placeholder.appendChild(placeholderText);
     shell.appendChild(placeholder);
 
-    const setState = (next: RuntimeState, message?: string) => {
+    const setState = (next: PlayerState, message?: string) => {
       state = next;
       const messages = getMessages(currentLocale).runtime;
       if (next === 'ready') {
