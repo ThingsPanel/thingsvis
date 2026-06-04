@@ -1,0 +1,89 @@
+{
+  "runtime": {
+    "empty": "Bind EZVIZ accessToken and ezopen URL or device serial",
+    "idle": "Player is disabled in edit mode",
+    "loading": "Loading EZVIZ player",
+    "error": "EZVIZ player failed to load"
+  },
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-media-ezuikit-player": {
+        "name": "EZVIZ Player",
+        "groups": {
+          "title": "Title",
+          "auth": "Auth",
+          "source": "Source",
+          "player": "Player",
+          "style": "Style"
+        },
+        "controls": {
+          "showTitle": "Show title",
+          "title": "Title",
+          "accessToken": "Access token",
+          "ezopenUrl": "Full ezopen URL",
+          "deviceSerial": "Device serial",
+          "channelNo": "Channel",
+          "validCode": "Device verification code",
+          "streamSuffix": "Stream type",
+          "playbackBegin": "Playback begin",
+          "playbackEnd": "Playback end",
+          "template": "UI template",
+          "themeId": "Theme ID",
+          "autoplay": "Autoplay",
+          "audio": "Enable audio",
+          "domain": "Open platform domain",
+          "borderRadius": "Border radius",
+          "borderWidth": "Border width",
+          "borderColor": "Border color"
+        },
+        "options": {
+          "streamSuffix": {
+            "live": "Live",
+            "rec": "Recording playback"
+          },
+          "template": {
+            "simple": "Simple",
+            "standard": "Standard",
+            "security": "Security (live + playback)",
+            "pcLive": "PC live",
+            "mobileLive": "Mobile live",
+            "voice": "Voice talk",
+            "theme": "Theme"
+          }
+        }
+      }
+    }
+  },
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.title": "Title",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.auth": "Auth",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.source": "Source",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.player": "Player",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.style": "Style",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.showTitle": "Show title",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.title": "Title",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.accessToken": "Access token",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.ezopenUrl": "Full ezopen URL",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.deviceSerial": "Device serial",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.channelNo": "Channel",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.validCode": "Device verification code",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.streamSuffix": "Stream type",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackBegin": "Playback begin",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackEnd": "Playback end",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.template": "UI template",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.themeId": "Theme ID",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.autoplay": "Autoplay",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.audio": "Enable audio",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.domain": "Open platform domain",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderRadius": "Border radius",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderWidth": "Border width",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderColor": "Border color",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.live": "Live",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.rec": "Recording playback",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.simple": "Simple",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.standard": "Standard",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.security": "Security (live + playback)",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.pcLive": "PC live",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.mobileLive": "Mobile live",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.voice": "Voice talk",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.theme": "Theme"
+}

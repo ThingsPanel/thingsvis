@@ -1,0 +1,89 @@
+{
+  "runtime": {
+    "empty": "请绑定萤石 accessToken 与 ezopen 地址或设备序列号",
+    "idle": "编辑模式不加载萤石播放器",
+    "loading": "正在加载萤石播放器",
+    "error": "萤石播放器加载失败"
+  },
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-media-ezuikit-player": {
+        "name": "萤石云播放器",
+        "groups": {
+          "title": "标题",
+          "auth": "鉴权",
+          "source": "视频源",
+          "player": "播放器",
+          "style": "样式"
+        },
+        "controls": {
+          "showTitle": "显示标题",
+          "title": "标题",
+          "accessToken": "Access Token",
+          "ezopenUrl": "ezopen 完整地址",
+          "deviceSerial": "设备序列号",
+          "channelNo": "通道号",
+          "validCode": "设备验证码",
+          "streamSuffix": "流类型",
+          "playbackBegin": "回放开始",
+          "playbackEnd": "回放结束",
+          "template": "UI 模板",
+          "themeId": "主题 ID",
+          "autoplay": "自动播放",
+          "audio": "默认开声音",
+          "domain": "开放平台域名",
+          "borderRadius": "圆角",
+          "borderWidth": "边框宽度",
+          "borderColor": "边框颜色"
+        },
+        "options": {
+          "streamSuffix": {
+            "live": "实时",
+            "rec": "录像回放"
+          },
+          "template": {
+            "simple": "极简",
+            "standard": "标准",
+            "security": "安防（预览+回放）",
+            "pcLive": "PC 直播",
+            "mobileLive": "移动端直播",
+            "voice": "语音对讲",
+            "theme": "可配置主题"
+          }
+        }
+      }
+    }
+  },
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.title": "标题",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.auth": "鉴权",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.source": "视频源",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.player": "播放器",
+  "widgets.thingsvis-widget-media-ezuikit-player.groups.style": "样式",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.showTitle": "显示标题",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.title": "标题",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.accessToken": "Access Token",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.ezopenUrl": "ezopen 完整地址",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.deviceSerial": "设备序列号",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.channelNo": "通道号",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.validCode": "设备验证码",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.streamSuffix": "流类型",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackBegin": "回放开始",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackEnd": "回放结束",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.template": "UI 模板",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.themeId": "主题 ID",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.autoplay": "自动播放",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.audio": "默认开声音",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.domain": "开放平台域名",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderRadius": "圆角",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderWidth": "边框宽度",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.borderColor": "边框颜色",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.live": "实时",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.rec": "录像回放",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.simple": "极简",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.standard": "标准",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.security": "安防（预览+回放）",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.pcLive": "PC 直播",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.mobileLive": "移动端直播",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.voice": "语音对讲",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.theme": "可配置主题"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "thingsvis-widget-media-ezuikit-player",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "rspack serve --port 3237",
+    "build": "rspack build && node ./scripts/copy-static.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "leafer-ui": "^1.0.0",
+    "@thingsvis/schema": "workspace:*"
+  },
+  "dependencies": {
+    "@thingsvis/widget-sdk": "workspace:*",
+    "ezuikit-js": "^8.2.7",
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@rspack/cli": "^1.0.0",
+    "@rspack/core": "^1.0.0",
+    "@thingsvis/widget-config": "workspace:*",
+    "@types/react": "^18.2.41",
+    "@types/react-dom": "^18.2.17",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3"
+  },
+  "thingsvis": {
+    "displayName": "EZVIZ Player",
+    "icon": "Cctv",
+    "i18n": {
+      "zh": "萤石云播放器",
+      "en": "EZVIZ Player"
+    }
+  }
+}
