@@ -2455,7 +2455,7 @@ importers:
         specifier: workspace:*
         version: link:../../../thingsvis-widget-sdk
       ezuikit-js:
-        specifier: ^8.1.16
+        specifier: ^8.2.7
         version: 8.2.7
       leafer-ui:
         specifier: ^1.0.0
