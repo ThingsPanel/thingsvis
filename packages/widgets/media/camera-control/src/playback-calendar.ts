@@ -107,6 +107,7 @@ export type PlaybackCalendarMount = {
 type MountOptions = {
   locale?: string;
   labels: PlaybackCalendarLabels;
+  showTimeInputs?: boolean;
   onChange: (range: PlaybackDateRange) => void;
 };
 
@@ -119,7 +120,7 @@ export function mountPlaybackCalendar(
   let selectingEnd = false;
 
   host.className = 'tv-camera-playback-calendar';
-  host.style.cssText = 'display:flex;flex-direction:column;gap:8px;min-width:0;';
+  host.style.cssText = 'display:flex;flex-direction:column;gap:10px;min-width:0;min-height:0;';
 
   const header = document.createElement('div');
   header.className = 'tv-camera-calendar-header';
@@ -134,7 +135,7 @@ export function mountPlaybackCalendar(
   const monthLabel = document.createElement('div');
   monthLabel.className = 'tv-camera-calendar-month';
   monthLabel.style.cssText =
-    'flex:1 1 0;text-align:center;font-size:13px;font-weight:600;color:#fff;';
+    'flex:1 1 0;text-align:center;font-size:15px;font-weight:750;color:#fff;';
 
   const nextButton = document.createElement('button');
   nextButton.type = 'button';
@@ -146,12 +147,12 @@ export function mountPlaybackCalendar(
   const weekdayRow = document.createElement('div');
   weekdayRow.className = 'tv-camera-calendar-weekdays';
   weekdayRow.style.cssText =
-    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;';
+    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;';
 
   const grid = document.createElement('div');
   grid.className = 'tv-camera-calendar-grid';
   grid.style.cssText =
-    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;';
+    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px 8px;min-height:0;';
 
   const timeRow = document.createElement('div');
   timeRow.className = 'tv-camera-calendar-times';
@@ -188,12 +189,14 @@ export function mountPlaybackCalendar(
       const cell = document.createElement('div');
       cell.textContent = label;
       cell.style.cssText =
-        'text-align:center;font-size:10px;color:rgba(255,255,255,0.55);line-height:16px;';
+        'text-align:center;font-size:12px;font-weight:600;color:rgba(255,255,255,0.56);line-height:16px;';
       weekdayRow.appendChild(cell);
     });
   };
 
   const renderTimeFields = () => {
+    timeRow.style.display = options.showTimeInputs === false ? 'none' : 'grid';
+    if (options.showTimeInputs === false) return;
     timeRow.innerHTML = '';
     const addField = (label: string, input: HTMLInputElement) => {
       const field = document.createElement('label');
@@ -222,7 +225,7 @@ export function mountPlaybackCalendar(
 
     for (let i = 0; i < firstWeekday; i += 1) {
       const spacer = document.createElement('div');
-      spacer.style.minHeight = '30px';
+      spacer.style.minHeight = '34px';
       grid.appendChild(spacer);
     }
 
@@ -241,32 +244,46 @@ export function mountPlaybackCalendar(
 
       let background = 'transparent';
       let borderColor = 'transparent';
-      let color = 'rgba(255,255,255,0.88)';
+      let color = 'rgba(255,255,255,0.9)';
 
       if (inRange) {
-        background = 'rgba(64, 158, 255, 0.22)';
-        borderColor = 'rgba(64, 158, 255, 0.35)';
+        background = 'rgba(59, 130, 246, 0.16)';
+        borderColor = 'rgba(59, 130, 246, 0.26)';
       }
       if (isStart || isEnd) {
-        background = 'rgba(64, 158, 255, 0.55)';
-        borderColor = 'rgba(64, 158, 255, 0.85)';
+        background = 'linear-gradient(180deg, #3b82f6 0%, #2563eb 100%)';
+        borderColor = 'rgba(96, 165, 250, 0.9)';
         color = '#fff';
       }
       if (isToday && !isStart && !isEnd) {
         borderColor = 'rgba(255,255,255,0.35)';
       }
 
+      const dayWrap = document.createElement('div');
+      dayWrap.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:34px;gap:3px;';
+
       button.style.cssText = `
-        min-height:30px;
+        width:30px;height:30px;
         border:1px solid ${borderColor};
         border-radius:8px;
         background:${background};
         color:${color};
-        font-size:12px;
-        font-weight:600;
+        font-size:13px;
+        font-weight:700;
         cursor:pointer;
         padding:0;
+        box-shadow:${isStart || isEnd ? '0 6px 18px rgba(37,99,235,0.42)' : 'none'};
       `;
+
+      if (!isStart && !isEnd && inRange) {
+        const dot = document.createElement('span');
+        dot.style.cssText =
+          'width:5px;height:5px;border-radius:999px;background:#3b82f6;box-shadow:0 0 8px rgba(59,130,246,0.5);';
+        dayWrap.append(button, dot);
+      } else {
+        dayWrap.append(button);
+      }
 
       button.addEventListener('click', () => {
         const clicked = startOfDay(date);
@@ -290,7 +307,7 @@ export function mountPlaybackCalendar(
         notify();
       });
 
-      grid.appendChild(button);
+      grid.appendChild(dayWrap);
     }
   };
 

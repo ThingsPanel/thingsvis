@@ -89,10 +89,11 @@ describe('media/camera-control widget', () => {
     );
     playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-    const panel = harness.element.querySelector('.tv-camera-playback-panel');
+    const panel = harness.element.querySelector('.tv-camera-playback-modal');
     expect(panel).toBeTruthy();
     expect(getComputedStyle(panel as HTMLElement).display).not.toBe('none');
     expect(harness.element.querySelector('.tv-camera-playback-calendar')).toBeTruthy();
+    expect(harness.element.textContent).toContain('Video playback');
 
     const dayButton = Array.from(harness.element.querySelectorAll('.tv-camera-calendar-day')).find(
       (button) => button.textContent === '4',
@@ -100,7 +101,7 @@ describe('media/camera-control widget', () => {
     expect(dayButton).toBeTruthy();
 
     const playButton = Array.from(harness.element.querySelectorAll('button')).find(
-      (button) => button.title === 'Play' && button.textContent === 'Play',
+      (button) => button.textContent === 'Start playback',
     );
     playButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 

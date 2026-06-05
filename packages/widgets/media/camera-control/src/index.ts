@@ -8,12 +8,8 @@ import {
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
 import './lib/video-rtc.js';
-import {
-  buildPlaybackIso,
-  mountPlaybackCalendar,
-  parsePlaybackRange,
-  type PlaybackCalendarMount,
-} from './playback-calendar';
+import { mountPlaybackModal, buildPlaybackIso } from './playback-modal';
+import { mountPlaybackChrome, PLAYBACK_SPEEDS } from './playback-chrome';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -40,6 +36,40 @@ type RuntimeMessages = {
     endTime: string;
     hint: string;
     weekdays: string[];
+  };
+  playbackModal: {
+    title: string;
+    subtitle: string;
+    close: string;
+    preview: string;
+    dateSelect: string;
+    timeRange: string;
+    selectionPrefix: string;
+    cancel: string;
+    startPlayback: string;
+  };
+  playbackChrome: {
+    modePlayback: string;
+    online: string;
+    offline: string;
+    recording: string;
+    idleRecord: string;
+    snapshot: string;
+    fullscreen: string;
+    exitFullscreen: string;
+    returnToLive: string;
+    play: string;
+    pause: string;
+    mute: string;
+    unmute: string;
+    quality: string;
+    qualityValue: string;
+    speed: string;
+    statOnline: string;
+    statQuality: string;
+    statNetwork: string;
+    statTime: string;
+    networkGood: string;
   };
 };
 
@@ -79,22 +109,6 @@ function statusToBool(value: string): boolean | undefined {
 }
 
 type StreamMode = 'live' | 'playback';
-
-const PLAYBACK_SPEEDS = [1, 2, 4] as const;
-
-function pad2(value: number): string {
-  return String(value).padStart(2, '0');
-}
-
-function formatMediaTime(seconds: number): string {
-  if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
-  const total = Math.floor(seconds);
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const secs = total % 60;
-  if (hours > 0) return `${pad2(hours)}:${pad2(minutes)}:${pad2(secs)}`;
-  return `${pad2(minutes)}:${pad2(secs)}`;
-}
 
 function makeButton(label: string, title: string, className: string): HTMLButtonElement {
   const button = document.createElement('button');
@@ -163,18 +177,22 @@ export const Main = defineWidget({
     toolbar.className = 'tv-camera-toolbar';
     toolbar.style.cssText = `
       position:absolute;
-      top:8px;
-      right:8px;
+      top:10px;
+      right:10px;
       z-index:4;
       display:none;
       align-items:center;
       justify-content:flex-end;
       flex-wrap:wrap;
-      gap:6px;
-      padding:0;
+      gap:8px;
+      padding:6px;
       box-sizing:border-box;
-      background:transparent;
-      max-width:52%;
+      background:rgba(8,12,20,0.58);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:10px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.28);
+      backdrop-filter:blur(8px);
+      max-width:58%;
     `;
     shell.appendChild(toolbar);
 
@@ -184,6 +202,7 @@ export const Main = defineWidget({
     shell.appendChild(videoEl);
 
     const placeholder = document.createElement('div');
+    placeholder.className = 'tv-camera-live-placeholder';
     placeholder.style.cssText = `
       position:absolute;
       inset:0;
@@ -194,11 +213,13 @@ export const Main = defineWidget({
       padding:16px;
       box-sizing:border-box;
       color:rgba(255,255,255,0.72);
-      background:rgba(5,7,13,0.72);
+      background:
+        radial-gradient(circle at 50% 42%, rgba(255,255,255,0.08), transparent 30%),
+        rgba(3,6,13,0.82);
       text-align:center;
-      font-size:13px;
     `;
     const placeholderText = document.createElement('div');
+    placeholderText.className = 'tv-camera-live-placeholder-text';
     placeholder.appendChild(placeholderText);
     shell.appendChild(placeholder);
 
@@ -213,7 +234,7 @@ export const Main = defineWidget({
       align-items:center;
       flex-wrap:wrap;
       gap:8px;
-      max-width:calc(48% - 12px);
+      max-width:calc(42% - 12px);
       pointer-events:none;
     `;
     shell.appendChild(statusBar);
@@ -238,131 +259,12 @@ export const Main = defineWidget({
       'display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:6px;min-width:0;';
     toolbar.appendChild(actionPanel);
 
-    const playbackPanel = document.createElement('div');
-    playbackPanel.className = 'tv-camera-playback-panel';
-    playbackPanel.style.cssText = `
-      position:absolute;
-      left:8px;
-      right:8px;
-      bottom:8px;
-      z-index:5;
-      display:none;
-      flex-direction:column;
-      gap:8px;
-      padding:10px;
-      box-sizing:border-box;
-      border-radius:10px;
-      background:rgba(0,0,0,0.78);
-      border:1px solid rgba(255,255,255,0.12);
-      pointer-events:auto;
-    `;
-    shell.appendChild(playbackPanel);
-
-    const playbackFields = document.createElement('div');
-    playbackFields.className = 'tv-camera-playback-fields';
-    playbackFields.style.cssText = 'display:flex;flex-direction:column;gap:6px;min-width:0;';
-    playbackPanel.appendChild(playbackFields);
-
-    const playbackHint = document.createElement('div');
-    playbackHint.className = 'tv-camera-playback-hint';
-    playbackHint.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.55);line-height:16px;';
-    playbackPanel.appendChild(playbackHint);
-
-    const playbackActions = document.createElement('div');
-    playbackActions.style.cssText = 'display:flex;justify-content:flex-end;gap:6px;';
-    playbackPanel.appendChild(playbackActions);
-
-    const transportBar = document.createElement('div');
-    transportBar.className = 'tv-camera-transport-bar';
-    transportBar.style.cssText = `
-      position:absolute;
-      left:8px;
-      right:8px;
-      bottom:8px;
-      z-index:5;
-      display:none;
-      align-items:center;
-      gap:8px;
-      padding:8px 10px;
-      box-sizing:border-box;
-      border-radius:10px;
-      background:rgba(0,0,0,0.78);
-      border:1px solid rgba(255,255,255,0.12);
-      pointer-events:auto;
-    `;
-    shell.appendChild(transportBar);
-
-    const transportPlayButton = makeButton('▶', 'Play', 'tv-camera-action-button');
-    transportPlayButton.style.minWidth = '36px';
-    transportPlayButton.style.maxWidth = '36px';
-    transportPlayButton.style.padding = '0';
-
-    const transportRange = document.createElement('input');
-    transportRange.type = 'range';
-    transportRange.className = 'tv-camera-transport-range';
-    transportRange.min = '0';
-    transportRange.max = '1000';
-    transportRange.value = '0';
-    transportRange.style.cssText = 'flex:1 1 0;min-width:0;height:4px;margin:0;';
-
-    const transportTime = document.createElement('span');
-    transportTime.className = 'tv-camera-transport-time';
-    transportTime.style.cssText =
-      'flex:0 0 auto;font-size:11px;color:rgba(255,255,255,0.85);font-variant-numeric:tabular-nums;white-space:nowrap;';
-
-    const transportSpeedButton = makeButton('1x', 'Speed', 'tv-camera-action-button');
-    transportSpeedButton.style.minWidth = '44px';
-    transportSpeedButton.style.maxWidth = '44px';
-    transportSpeedButton.style.padding = '0';
-
-    transportBar.append(
-      transportPlayButton,
-      transportRange,
-      transportTime,
-      transportSpeedButton,
-    );
-
     const stopTransportTimer = () => {
       if (transportTimer) {
         clearInterval(transportTimer);
         transportTimer = null;
       }
     };
-
-    transportPlayButton.addEventListener('click', () => {
-      if (!internalVideo) return;
-      if (internalVideo.paused) {
-        void internalVideo.play();
-      } else {
-        internalVideo.pause();
-      }
-      updateTransport();
-    });
-
-    transportRange.addEventListener('pointerdown', () => {
-      scrubbingTransport = true;
-    });
-    transportRange.addEventListener('pointerup', () => {
-      scrubbingTransport = false;
-    });
-    transportRange.addEventListener('pointercancel', () => {
-      scrubbingTransport = false;
-    });
-    transportRange.addEventListener('input', () => {
-      if (!internalVideo) return;
-      const duration = internalVideo.duration;
-      if (!Number.isFinite(duration) || duration <= 0) return;
-      internalVideo.currentTime = (Number(transportRange.value) / 1000) * duration;
-      updateTransport();
-    });
-
-    transportSpeedButton.addEventListener('click', () => {
-      playbackSpeedIndex = (playbackSpeedIndex + 1) % PLAYBACK_SPEEDS.length;
-      if (internalVideo) {
-        internalVideo.playbackRate = PLAYBACK_SPEEDS[playbackSpeedIndex] ?? 1;
-      }
-      updateTransport();
-    });
 
     const stopReadyPoll = () => {
       if (readyPoll) {
@@ -426,17 +328,40 @@ export const Main = defineWidget({
       };
     };
 
-    const playbackCalendar: PlaybackCalendarMount = mountPlaybackCalendar(playbackFields, {
+    const getModalLabels = () => {
+      const messages = getMessages(currentLocale).playbackModal;
+      return { ...messages };
+    };
+
+    const getChromeLabels = () => {
+      const messages = getMessages(currentLocale).playbackChrome;
+      return { ...messages };
+    };
+
+    const closePlaybackModal = () => {
+      playbackPanelOpen = false;
+      renderPlaybackPanel();
+      updatePlaybackChrome();
+    };
+
+    const playbackModal = mountPlaybackModal(shell, {
       locale: currentLocale,
-      labels: getCalendarLabels(),
-      onChange: () => {},
+      labels: getModalLabels(),
+      calendarLabels: getCalendarLabels(),
+      previewElement: videoEl,
+      onStart: () => {
+        const iso = buildPlaybackIso(playbackModal.getRange());
+        if (!iso) return;
+        runtimeStreamMode = 'playback';
+        playbackPanelOpen = false;
+        emitCommand('playbackRequest', currentProps.playbackOpenCommand, iso);
+        updateView();
+      },
+      onCancel: closePlaybackModal,
     });
 
     const syncPlaybackInputs = () => {
-      playbackCalendar.setRange(
-        parsePlaybackRange(currentProps.playbackStart, currentProps.playbackEnd),
-      );
-      playbackHint.textContent = getMessages(currentLocale).calendar.hint;
+      playbackModal.setRangeFromProps(currentProps.playbackStart, currentProps.playbackEnd);
     };
 
     const syncVideoTransport = () => {
@@ -453,92 +378,51 @@ export const Main = defineWidget({
     const returnToLive = () => {
       runtimeStreamMode = 'live';
       playbackPanelOpen = false;
+      playbackSpeedIndex = 0;
       stopTransportTimer();
       if (internalVideo) {
         internalVideo.playbackRate = 1;
       }
+      playbackChrome.setSpeedIndex(0);
       updateView();
     };
 
-    const requestPlayback = () => {
-      const iso = buildPlaybackIso(playbackCalendar.getRange());
-      if (!iso) return;
-      runtimeStreamMode = 'playback';
-      playbackPanelOpen = false;
-      emitCommand('playbackRequest', currentProps.playbackOpenCommand, iso);
-      updateView();
-    };
+    const updatePlaybackChrome = () => {
+      const showChrome =
+        isPlaybackActive() && currentMode !== 'edit' && !playbackPanelOpen && state === 'ready';
+      playbackChrome.setActive(showChrome);
+      if (!showChrome || !internalVideo) return;
 
-    const updateTransport = () => {
-      if (!internalVideo || !isPlaybackActive() || currentMode === 'edit') {
-        transportBar.style.display = 'none';
-        return;
-      }
-      const messages = getMessages(currentLocale).buttons;
-      transportBar.style.display = state === 'ready' ? 'flex' : 'none';
-      playbackPanel.style.display =
-        !isPlaybackActive() && playbackPanelOpen && currentProps.showPlaybackControls
-          ? 'flex'
-          : 'none';
-      if (state !== 'ready') return;
-
-      const duration = internalVideo.duration;
-      const current = internalVideo.currentTime;
-      const hasDuration = Number.isFinite(duration) && duration > 0;
-      if (!scrubbingTransport && hasDuration) {
-        transportRange.value = String(Math.round((current / duration) * 1000));
-      } else if (!scrubbingTransport) {
-        transportRange.value = '0';
-      }
-      transportRange.disabled = !hasDuration;
-      const speed = PLAYBACK_SPEEDS[playbackSpeedIndex] ?? 1;
-      transportSpeedButton.textContent = `${speed}x`;
-      transportSpeedButton.title = messages.speed ?? 'Speed';
-      transportPlayButton.textContent = internalVideo.paused ? '▶' : '⏸';
-      transportPlayButton.title = internalVideo.paused
-        ? (messages.play ?? 'Play')
-        : (messages.pause ?? 'Pause');
-      transportTime.textContent = hasDuration
-        ? `${formatMediaTime(current)} / ${formatMediaTime(duration)}`
-        : formatMediaTime(current);
+      const online = statusToBool(currentProps.onlineStatus);
+      const recording = statusToBool(currentProps.recordingStatus);
+      playbackChrome.updateState({
+        deviceTitle: currentProps.title || 'Camera',
+        online,
+        recording,
+        paused: internalVideo.paused,
+        muted: internalVideo.muted,
+        volume: internalVideo.volume,
+        currentTime: internalVideo.currentTime,
+        duration: internalVideo.duration,
+        speedIndex: playbackSpeedIndex,
+        ready: true,
+        scrubbing: scrubbingTransport,
+      });
     };
 
     const renderPlaybackPanel = () => {
-      const messages = getMessages(currentLocale).buttons;
-      const show = currentMode !== 'edit' && currentProps.showPlaybackControls && playbackPanelOpen;
-      playbackPanel.style.display = show ? 'flex' : 'none';
-      playbackHint.style.display = show ? 'block' : 'none';
-      if (!show) return;
-
-      playbackHint.textContent = getMessages(currentLocale).calendar.hint;
-      playbackCalendar.setRange(
-        parsePlaybackRange(currentProps.playbackStart, currentProps.playbackEnd),
-      );
-
-      playbackActions.innerHTML = '';
-      const playButton = makeButton(
-        messages.playbackPlay ?? 'Play',
-        messages.playbackPlay ?? 'Play',
-        'tv-camera-action-button',
-      );
-      playButton.addEventListener('click', requestPlayback);
-      const cancelButton = makeButton(
-        messages.playbackCancel ?? 'Cancel',
-        messages.playbackCancel ?? 'Cancel',
-        'tv-camera-action-button',
-      );
-      cancelButton.addEventListener('click', () => {
-        playbackPanelOpen = false;
-        renderPlaybackPanel();
-        updateTransport();
-      });
-      playbackActions.append(playButton, cancelButton);
+      const show =
+        currentMode !== 'edit' && currentProps.showPlaybackControls && playbackPanelOpen;
+      playbackModal.setOpen(show);
+      if (show) {
+        playbackModal.setRangeFromProps(currentProps.playbackStart, currentProps.playbackEnd);
+      }
     };
 
     const startTransportTimer = () => {
       stopTransportTimer();
       if (!isPlaybackActive() || currentMode === 'edit') return;
-      transportTimer = setInterval(updateTransport, 250);
+      transportTimer = setInterval(updatePlaybackChrome, 250);
     };
 
     const bindInternalVideo = () => {
@@ -556,19 +440,20 @@ export const Main = defineWidget({
       markReadyIfPlayable();
       internalVideo.addEventListener('loadeddata', () => {
         updatePlaceholder('ready');
-        updateTransport();
+        updatePlaybackChrome();
       });
       internalVideo.addEventListener('canplay', () => {
         updatePlaceholder('ready');
-        updateTransport();
+        updatePlaybackChrome();
       });
       internalVideo.addEventListener('playing', () => {
         updatePlaceholder('ready');
-        updateTransport();
+        updatePlaybackChrome();
       });
-      internalVideo.addEventListener('pause', updateTransport);
-      internalVideo.addEventListener('timeupdate', updateTransport);
-      internalVideo.addEventListener('durationchange', updateTransport);
+      internalVideo.addEventListener('pause', updatePlaybackChrome);
+      internalVideo.addEventListener('timeupdate', updatePlaybackChrome);
+      internalVideo.addEventListener('durationchange', updatePlaybackChrome);
+      internalVideo.addEventListener('volumechange', updatePlaybackChrome);
       internalVideo.addEventListener('error', () => updatePlaceholder('error'));
       internalVideo.addEventListener('stalled', () => {
         if (state !== 'ready') updatePlaceholder('error');
@@ -612,6 +497,55 @@ export const Main = defineWidget({
       renderControls();
     };
 
+    const playbackChrome = mountPlaybackChrome(shell, {
+      videoElement: videoEl,
+      placeholderElement: placeholder,
+      labels: getChromeLabels(),
+      onPlayPause: () => {
+        if (!internalVideo) return;
+        if (internalVideo.paused) {
+          void internalVideo.play();
+        } else {
+          internalVideo.pause();
+        }
+        updatePlaybackChrome();
+      },
+      onVolumeChange: (volume) => {
+        if (!internalVideo) return;
+        internalVideo.volume = Math.max(0, Math.min(1, volume / 100));
+        if (internalVideo.volume > 0) internalVideo.muted = false;
+        updatePlaybackChrome();
+      },
+      onMuteToggle: () => {
+        if (!internalVideo) return;
+        internalVideo.muted = !internalVideo.muted;
+        updatePlaybackChrome();
+      },
+      onSeek: (ratio) => {
+        if (!internalVideo) return;
+        const duration = internalVideo.duration;
+        if (!Number.isFinite(duration) || duration <= 0) return;
+        internalVideo.currentTime = ratio * duration;
+        updatePlaybackChrome();
+      },
+      onSpeedChange: (index) => {
+        playbackSpeedIndex = index;
+        if (internalVideo) {
+          internalVideo.playbackRate = PLAYBACK_SPEEDS[playbackSpeedIndex] ?? 1;
+        }
+        updatePlaybackChrome();
+      },
+      onSnapshot: () => emitCommand('snapshot', currentProps.snapshotCommand, {}),
+      onFullscreen: toggleFullscreen,
+      onReturnToLive: returnToLive,
+      onScrubStart: () => {
+        scrubbingTransport = true;
+      },
+      onScrubEnd: () => {
+        scrubbingTransport = false;
+      },
+    });
+
     const renderStatusBar = () => {
       const messages = getMessages(currentLocale).runtime;
       statusBar.innerHTML = '';
@@ -620,23 +554,32 @@ export const Main = defineWidget({
       const streamMode = isPlaybackActive() ? messages.playback : messages.live;
       const online = statusToBool(currentProps.onlineStatus);
       const recording = statusToBool(currentProps.recordingStatus);
-      const items = [
-        streamMode,
-        online === undefined ? '' : online ? messages.online : messages.offline,
-        recording === undefined ? '' : recording ? messages.recording : messages.idleRecord,
-      ].filter(Boolean);
+      const items: Array<{ label: string; className: string }> = [
+        { label: streamMode, className: isPlaybackActive() ? 'is-playback' : 'is-live' },
+      ];
+
+      if (online !== undefined) {
+        items.push({
+          label: online ? messages.online : messages.offline,
+          className: online ? 'is-online' : 'is-offline',
+        });
+      }
+
+      if (recording !== undefined) {
+        items.push({
+          label: recording ? messages.recording : messages.idleRecord,
+          className: recording ? 'is-recording' : 'is-idle-record',
+        });
+      }
 
       items.forEach((item) => {
         const chip = document.createElement('span');
-        chip.textContent = item;
-        chip.style.cssText = `
-          padding:3px 8px;
-          border-radius:999px;
-          color:#fff;
-          background:rgba(0,0,0,${currentProps.panelOpacity});
-          font-size:12px;
-          line-height:18px;
-        `;
+        chip.className = `tv-camera-status-chip ${item.className}`;
+        const dot = document.createElement('span');
+        dot.className = 'tv-camera-status-dot';
+        const label = document.createElement('span');
+        label.textContent = item.label;
+        chip.append(dot, label);
         statusBar.appendChild(chip);
       });
     };
@@ -646,15 +589,16 @@ export const Main = defineWidget({
       const isPlayback = isPlaybackActive();
       ptzPanel.innerHTML = '';
       actionPanel.innerHTML = '';
-      const showToolbar = currentMode !== 'edit';
+      const showToolbar = currentMode !== 'edit' && !playbackPanelOpen && !isPlayback;
       const showPtzPad = false;
       toolbar.style.display = showToolbar ? 'flex' : 'none';
+      statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
       ptzPanel.style.display = showPtzPad && !isPlayback ? 'grid' : 'none';
       renderPlaybackPanel();
-      updateTransport();
+      updatePlaybackChrome();
       if (currentMode === 'edit') {
-        playbackPanel.style.display = 'none';
-        transportBar.style.display = 'none';
+        playbackModal.setOpen(false);
+        playbackChrome.setActive(false);
         return;
       }
 
@@ -756,27 +700,18 @@ export const Main = defineWidget({
         addAction(fullscreenLabel, fullscreenLabel, toggleFullscreen);
       }
 
-      if (isPlayback) {
-        addAction(
-          buttonTitle('returnToLive', 'Return to live'),
-          buttonTitle('returnToLive', 'Return to live'),
-          returnToLive,
-        );
-      } else if (currentProps.showPlaybackControls) {
+      if (!isPlayback && currentProps.showPlaybackControls) {
         addAction(buttonTitle('playback', 'Playback'), buttonTitle('playback', 'Playback'), () => {
           syncPlaybackInputs();
           playbackPanelOpen = true;
           renderPlaybackPanel();
-          updateTransport();
+          updatePlaybackChrome();
         });
       }
     };
 
     const updateStyles = () => {
       titleEl.style.color = colors.fg;
-      const panelBottom = isPlaybackActive() && currentMode !== 'edit' ? '56px' : '8px';
-      playbackPanel.style.bottom = panelBottom;
-      transportBar.style.bottom = '8px';
       shell.style.border = `${currentProps.borderWidth}px solid ${currentProps.borderColor}`;
       shell.style.borderRadius =
         currentProps.borderRadius === 0 ? '0' : `${currentProps.borderRadius}px`;
@@ -789,29 +724,285 @@ export const Main = defineWidget({
           display: none !important;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-toolbar,
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-panel,
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-transport-bar {
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-chrome {
           opacity: ${currentProps.panelOpacity};
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal {
+          opacity: 1;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          font-size: 12px;
+          line-height: 18px;
+          color: rgba(255,255,255,0.88);
+          background: rgba(255,255,255,0.08);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-online.is-online {
+          color: #4ade80;
+          background: rgba(34, 197, 94, 0.18);
+          border-color: rgba(34, 197, 94, 0.35);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-online.is-offline {
+          color: rgba(255,255,255,0.55);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-recording.is-recording {
+          color: #fff;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-rec-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #ef4444;
+          display: inline-block;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-action {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          height: 32px;
+          padding: 0 12px;
+          border-radius: 8px;
+          border: 1px solid rgba(255,255,255,0.14);
+          color: #fff;
+          background: rgba(0,0,0,0.45);
+          cursor: pointer;
+          font-size: 12px;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-action:hover {
+          background: rgba(255,255,255,0.1);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn {
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 8px;
+          color: #fff;
+          background: transparent;
+          cursor: pointer;
+          font-size: 14px;
+          line-height: 1;
+          padding: 0;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn:hover {
+          background: rgba(255,255,255,0.08);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-progress,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-volume {
+          flex: 1 1 0;
+          min-width: 0;
+          height: 4px;
+          margin: 0;
+          accent-color: #2d7cf6;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-select {
+          height: 28px;
+          padding: 0 8px;
+          border-radius: 6px;
+          border: 1px solid rgba(255,255,255,0.14);
+          color: #fff;
+          background: rgba(0,0,0,0.45);
+          font-size: 12px;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn {
+          height: 46px;
+          min-width: 112px;
+          padding: 0 22px;
+          border-radius: 8px;
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+          border: 1px solid rgba(255,255,255,0.14);
+          transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-secondary {
+          color: rgba(255,255,255,0.86);
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.2);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-secondary:hover {
+          color: #fff;
+          background: rgba(255,255,255,0.14);
+          border-color: rgba(255,255,255,0.34);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-primary {
+          color: #fff;
+          background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+          border-color: rgba(96,165,250,0.8);
+          box-shadow: 0 10px 28px rgba(37,99,235,0.36);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-primary:hover {
+          background: linear-gradient(180deg, #60a5fa 0%, #2f7dff 100%);
+          box-shadow: 0 12px 34px rgba(47,125,255,0.46);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn:active {
+          transform: translateY(1px);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-thumb {
+          position: absolute;
+          left: 0;
+          width: 100%;
+          height: 10px;
+          margin: 0;
+          background: transparent;
+          pointer-events: none;
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-thumb-start {
+          z-index: 2;
+          pointer-events: auto;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-thumb-end {
+          z-index: 3;
+          pointer-events: auto;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-thumb::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 999px;
+          background: #fff;
+          border: 2px solid #60a5fa;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.36), 0 0 0 1px rgba(255,255,255,0.5);
+          pointer-events: auto;
+          cursor: pointer;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-thumb::-moz-range-thumb {
+          width: 18px;
+          height: 18px;
+          border-radius: 999px;
+          background: #fff;
+          border: 2px solid #60a5fa;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.36), 0 0 0 1px rgba(255,255,255,0.5);
+          pointer-events: auto;
+          cursor: pointer;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-close:hover {
+          background: rgba(255,255,255,0.14);
+          border-color: rgba(255,255,255,0.3);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-preview-play {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 72px;
+          height: 72px;
+          border-radius: 999px;
+          color: #fff;
+          background: rgba(255,255,255,0.15);
+          border: 1px solid rgba(255,255,255,0.18);
+          box-shadow: 0 12px 34px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+          font-size: 34px;
+          line-height: 1;
+          text-indent: 5px;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-track::before {
+          content: "";
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 16px;
+          height: 8px;
+          background: repeating-linear-gradient(
+            90deg,
+            rgba(255,255,255,0.18) 0,
+            rgba(255,255,255,0.18) 1px,
+            transparent 1px,
+            transparent calc(100% / 48)
+          );
+          pointer-events: none;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-placeholder {
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-placeholder-text {
+          max-width: min(360px, 86%);
+          padding: 12px 16px;
+          border-radius: 10px;
+          color: rgba(255,255,255,0.82);
+          background: rgba(0,0,0,0.34);
+          border: 1px solid rgba(255,255,255,0.1);
+          box-shadow: 0 14px 36px rgba(0,0,0,0.28);
+          font-size: 13px;
+          font-weight: 600;
+          line-height: 1.45;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          min-height: 28px;
+          padding: 4px 10px;
+          border-radius: 999px;
+          color: rgba(255,255,255,0.9);
+          background: rgba(8,12,20,0.66);
+          border: 1px solid rgba(255,255,255,0.14);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.26);
+          font-size: 12px;
+          font-weight: 700;
+          line-height: 18px;
+          backdrop-filter: blur(8px);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 999px;
+          background: rgba(255,255,255,0.48);
+          box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-live .tv-camera-status-dot {
+          background: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.16), 0 0 14px rgba(59,130,246,0.48);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-online {
+          color: #d9ffe8;
+          background: rgba(21,128,61,0.3);
+          border-color: rgba(74,222,128,0.34);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-online .tv-camera-status-dot {
+          background: #4ade80;
+          box-shadow: 0 0 0 3px rgba(74,222,128,0.14), 0 0 14px rgba(74,222,128,0.48);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-offline,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-idle-record {
+          color: rgba(255,255,255,0.68);
+          background: rgba(15,23,42,0.58);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-recording {
+          color: #fff;
+          background: rgba(185,28,28,0.32);
+          border-color: rgba(248,113,113,0.38);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-recording .tv-camera-status-dot {
+          background: #ef4444;
+          box-shadow: 0 0 0 3px rgba(239,68,68,0.15), 0 0 14px rgba(239,68,68,0.58);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
-          height: 36px;
-          min-width: 36px;
-          border: 1px solid rgba(255,255,255,0.14);
+          height: 38px;
+          min-width: 38px;
+          border: 1px solid rgba(255,255,255,0.16);
           border-radius: 8px;
           color: #fff;
-          background: rgba(0,0,0,0.58);
+          background: rgba(15,23,42,0.74);
           cursor: pointer;
-          font-size: 12px;
-          font-weight: 600;
+          font-size: 13px;
+          font-weight: 700;
           line-height: 1;
           box-sizing: border-box;
-          transition: background 0.15s ease, border-color 0.15s ease;
+          box-shadow: 0 8px 22px rgba(0,0,0,0.24);
+          transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
           width: auto;
-          max-width: 112px;
-          padding: 0 10px;
+          max-width: 128px;
+          padding: 0 12px;
           white-space: nowrap;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-datetime-input {
@@ -830,36 +1021,65 @@ export const Main = defineWidget({
           border-color: rgba(64, 158, 255, 0.55);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-nav {
-          width: 32px;
-          height: 32px;
-          border: 1px solid rgba(255,255,255,0.14);
+          width: 36px;
+          height: 36px;
+          border: 1px solid rgba(255,255,255,0.12);
           border-radius: 8px;
           color: #fff;
-          background: rgba(0,0,0,0.58);
+          background: rgba(255,255,255,0.08);
           cursor: pointer;
-          font-size: 18px;
+          font-size: 24px;
           line-height: 1;
           padding: 0;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-nav:hover {
-          background: rgba(255,255,255,0.12);
-          border-color: rgba(255,255,255,0.28);
+          background: rgba(255,255,255,0.16);
+          border-color: rgba(255,255,255,0.3);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-day:hover {
-          border-color: rgba(64, 158, 255, 0.55) !important;
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-transport-range {
-          accent-color: rgba(64, 158, 255, 0.9);
+          border-color: rgba(96, 165, 250, 0.82) !important;
+          background: rgba(59, 130, 246, 0.24) !important;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:hover,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:hover {
-          background: rgba(255,255,255,0.12);
-          border-color: rgba(255,255,255,0.28);
+          background: rgba(30,41,59,0.9);
+          border-color: rgba(96,165,250,0.38);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.28), 0 0 0 1px rgba(96,165,250,0.12);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:active,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:active {
-          background: rgba(64, 158, 255, 0.28);
-          border-color: rgba(64, 158, 255, 0.55);
+          transform: translateY(1px);
+          background: rgba(37, 99, 235, 0.45);
+          border-color: rgba(96, 165, 250, 0.68);
+        }
+        @media (max-width: 720px) {
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal {
+            padding: 8px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-header {
+            padding: 14px 14px 10px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-body {
+            flex-direction: column !important;
+            gap: 14px !important;
+            padding: 0 14px 14px !important;
+            overflow: auto;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-preview {
+            min-height: 180px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-section,
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-footer {
+            padding-left: 14px !important;
+            padding-right: 14px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-footer {
+            align-items: stretch !important;
+            flex-direction: column !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-selection {
+            font-size: 12px !important;
+          }
         }
       `;
     };
@@ -929,11 +1149,9 @@ export const Main = defineWidget({
         currentProps = newProps;
         currentCtx = newCtx;
         currentLocale = newCtx.locale;
-        playbackCalendar.updateLabels(getCalendarLabels(), currentLocale);
-        playbackCalendar.setRange(
-          parsePlaybackRange(currentProps.playbackStart, currentProps.playbackEnd),
-        );
-        playbackHint.textContent = getMessages(currentLocale).calendar.hint;
+        playbackModal.updateLabels(getModalLabels(), getCalendarLabels(), currentLocale);
+        playbackChrome.updateLabels(getChromeLabels());
+        playbackModal.setRangeFromProps(currentProps.playbackStart, currentProps.playbackEnd);
         const nextMode = newCtx.mode ?? currentMode;
         if (nextMode === 'edit' && currentMode !== 'edit') {
           runtimeStreamMode = newProps.mode === 'playback' ? 'playback' : 'live';
@@ -958,7 +1176,8 @@ export const Main = defineWidget({
         if (attachVideoRaf) cancelAnimationFrame(attachVideoRaf);
         stopReadyPoll();
         stopTransportTimer();
-        playbackCalendar.destroy();
+        playbackModal.destroy();
+        playbackChrome.destroy();
         element.innerHTML = '';
       },
     };
