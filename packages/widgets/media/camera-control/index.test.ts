@@ -60,6 +60,10 @@ describe('media/camera-control widget', () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, { locale: 'en', mode: 'view' });
 
+    expect(harness.element.querySelector('.tv-camera-topbar')).toBeTruthy();
+    expect(harness.element.querySelector('.tv-camera-live-header')).toBeTruthy();
+    expect(harness.element.querySelector('.tv-camera-live-chrome')).toBeTruthy();
+
     const buttons = Array.from(harness.element.querySelectorAll('button'));
     expect(buttons.some((button) => button.title === 'Left')).toBe(false);
     expect(buttons.some((button) => button.title === 'Focus near')).toBe(false);
@@ -149,7 +153,7 @@ describe('media/camera-control widget', () => {
     fullscreenButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(requestFullscreen).toHaveBeenCalledTimes(1);
 
-    const shell = harness.element.children.item(2);
+    const shell = harness.element.querySelector('.tv-camera-shell');
     Object.defineProperty(document, 'fullscreenElement', {
       configurable: true,
       value: shell,
