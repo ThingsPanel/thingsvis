@@ -213,7 +213,7 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   statsPanel.style.cssText =
     'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.03);';
 
-  const statCells: Array<{ icon: string; label: HTMLElement; value: HTMLElement }> = [];
+  const statCells: Array<{ icon: HTMLElement; label: HTMLElement; value: HTMLElement }> = [];
   for (let i = 0; i < 4; i += 1) {
     const cell = document.createElement('div');
     cell.className = 'tv-camera-chrome-stat-cell';
