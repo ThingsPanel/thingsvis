@@ -205,6 +205,7 @@ const expectedWidgetModulePaths = [
   '../interaction/value-card-simple/src/index.ts',
   '../interaction/date-range-picker/src/index.ts',
   '../media/camera-control/src/index.ts',
+  '../media/ezuikit-player/src/index.ts',
   '../media/iframe/src/index.ts',
   '../media/image/src/index.ts',
   '../media/video-player/src/index.ts',
@@ -214,6 +215,7 @@ const runtimeContractModulePaths = widgetModulePaths.filter(
   (modulePath) =>
     !modulePath.includes('../chart/') &&
     !modulePath.includes('../media/video-player/') &&
+    !modulePath.includes('../media/ezuikit-player/') &&
     !modulePath.includes('../resources/model-3d/'),
 );
 const dataPreviewModulePaths = [
@@ -248,6 +250,7 @@ describe('widget runtime contracts', () => {
       '../chart/echarts-line/src/index.ts',
       '../chart/echarts-pie/src/index.ts',
       '../chart/uplot-line/src/index.ts',
+      '../media/ezuikit-player/src/index.ts',
       '../media/video-player/src/index.ts',
       '../resources/model-3d/src/index.ts',
     ]);
