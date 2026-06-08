@@ -58,6 +58,8 @@ type RuntimeMessages = {
     fullscreen: string;
     exitFullscreen: string;
     returnToLive: string;
+    selectRange?: string;
+    loading?: string;
     play: string;
     pause: string;
     mute: string;
@@ -162,7 +164,7 @@ export const Main = defineWidget({
         radial-gradient(circle at 28% 18%, rgba(43, 78, 125, 0.2), transparent 34%),
         linear-gradient(135deg, #0b111b 0%, #090d14 48%, #070a10 100%);
       color: #f8fafc;
-      padding: 18px 36px 24px;
+      padding: 10px 24px 16px;
     `;
 
     const styleEl = document.createElement('style');
@@ -180,8 +182,8 @@ export const Main = defineWidget({
       align-items:center;
       justify-content:space-between;
       gap:16px;
-      min-height:48px;
-      margin-bottom:18px;
+      min-height:32px;
+      margin-bottom:8px;
     `;
     element.appendChild(topBar);
 
@@ -191,7 +193,7 @@ export const Main = defineWidget({
       display:flex;
       align-items:center;
       flex-wrap:wrap;
-      gap:12px;
+      gap:18px;
       min-width:0;
       pointer-events:none;
     `;
@@ -204,7 +206,7 @@ export const Main = defineWidget({
       align-items:center;
       justify-content:flex-end;
       flex-wrap:wrap;
-      gap:16px;
+      gap:10px;
       min-width:0;
       box-sizing:border-box;
     `;
@@ -223,13 +225,13 @@ export const Main = defineWidget({
       z-index:3;
       display:flex;
       align-items:center;
-      gap:12px;
-      height:56px;
-      padding:0 20px;
+      gap:8px;
+      height:44px;
+      padding:0 14px;
       box-sizing:border-box;
       color:rgba(255,255,255,0.92);
-      font-size:18px;
-      font-weight:700;
+      font-size:14px;
+      font-weight:600;
       line-height:1;
     `;
     shell.appendChild(liveHeader);
@@ -249,8 +251,8 @@ export const Main = defineWidget({
       position:absolute;
       left:18px;
       right:18px;
-      top:72px;
-      bottom:80px;
+      top:8px;
+      bottom:8px;
       overflow:hidden;
       border-radius:8px;
       background:#030712;
@@ -294,9 +296,9 @@ export const Main = defineWidget({
       z-index:3;
       display:none;
       align-items:center;
-      gap:18px;
-      height:64px;
-      padding:0 22px;
+      gap:12px;
+      height:52px;
+      padding:0 14px;
       box-sizing:border-box;
       color:#fff;
       background:linear-gradient(180deg, rgba(21,27,38,0.72), rgba(15,20,30,0.92));
@@ -356,7 +358,7 @@ export const Main = defineWidget({
     const actionPanel = document.createElement('div');
     actionPanel.className = 'tv-camera-action-panel';
     actionPanel.style.cssText =
-      'display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:16px;min-width:0;';
+      'display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;min-width:0;';
     toolbar.appendChild(actionPanel);
 
     const stopTransportTimer = () => {
@@ -435,7 +437,12 @@ export const Main = defineWidget({
 
     const getChromeLabels = () => {
       const messages = getMessages(currentLocale).playbackChrome;
-      return { ...messages };
+      const isZh = currentLocale?.startsWith('zh');
+      return {
+        ...messages,
+        selectRange: isZh ? '重新选择时间' : 'Select time',
+        loading: isZh ? '正在连接回放视频' : 'Connecting playback video',
+      };
     };
 
     const closePlaybackModal = () => {
@@ -464,6 +471,13 @@ export const Main = defineWidget({
       playbackModal.setRangeFromProps(currentProps.playbackStart, currentProps.playbackEnd);
     };
 
+    const openPlaybackSelector = () => {
+      syncPlaybackInputs();
+      playbackPanelOpen = true;
+      renderPlaybackPanel();
+      updatePlaybackChrome();
+    };
+
     const syncVideoTransport = () => {
       if (!internalVideo) return;
       internalVideo.controls = false;
@@ -489,23 +503,24 @@ export const Main = defineWidget({
 
     const updatePlaybackChrome = () => {
       const showChrome =
-        isPlaybackActive() && currentMode !== 'edit' && !playbackPanelOpen && state === 'ready';
+        isPlaybackActive() && currentMode !== 'edit' && !playbackPanelOpen;
       playbackChrome.setActive(showChrome);
-      if (!showChrome || !internalVideo) return;
+      if (!showChrome) return;
 
       const online = statusToBool(currentProps.onlineStatus);
       const recording = statusToBool(currentProps.recordingStatus);
+      const ready = state === 'ready' && !!internalVideo;
       playbackChrome.updateState({
         deviceTitle: currentProps.title || 'Camera',
         online,
         recording,
-        paused: internalVideo.paused,
-        muted: internalVideo.muted,
-        volume: internalVideo.volume,
-        currentTime: internalVideo.currentTime,
-        duration: internalVideo.duration,
+        paused: internalVideo?.paused ?? true,
+        muted: internalVideo?.muted ?? false,
+        volume: internalVideo?.volume ?? 0,
+        currentTime: internalVideo?.currentTime ?? 0,
+        duration: internalVideo?.duration ?? Number.NaN,
         speedIndex: playbackSpeedIndex,
-        ready: true,
+        ready,
         scrubbing: scrubbingTransport,
       });
     };
@@ -699,6 +714,7 @@ export const Main = defineWidget({
       onSnapshot: () => emitCommand('snapshot', currentProps.snapshotCommand, {}),
       onFullscreen: toggleFullscreen,
       onReturnToLive: returnToLive,
+      onSelectRange: openPlaybackSelector,
       onScrubStart: () => {
         scrubbingTransport = true;
       },
@@ -754,7 +770,13 @@ export const Main = defineWidget({
       const showPtzPad = false;
       toolbar.style.display = showToolbar ? 'flex' : 'none';
       statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
-      liveHeader.style.display = isPlayback ? 'none' : 'flex';
+      const showLiveTitle = !isPlayback && currentProps.showTitle;
+      liveHeader.style.display = showLiveTitle ? 'flex' : 'none';
+      videoStage.style.left = isPlayback ? '0' : '18px';
+      videoStage.style.right = isPlayback ? '0' : '18px';
+      videoStage.style.top = isPlayback ? '0' : showLiveTitle ? '52px' : '8px';
+      videoStage.style.bottom = isPlayback ? '0' : '8px';
+      videoStage.style.borderRadius = isPlayback ? '0' : '8px';
       syncLiveChrome();
       ptzPanel.style.display = showPtzPad && !isPlayback ? 'grid' : 'none';
       renderPlaybackPanel();
@@ -852,12 +874,7 @@ export const Main = defineWidget({
       }
 
       if (!isPlayback && currentProps.showPlaybackControls) {
-        addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), () => {
-          syncPlaybackInputs();
-          playbackPanelOpen = true;
-          renderPlaybackPanel();
-          updatePlaybackChrome();
-        });
+        addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), openPlaybackSelector);
       }
     };
 
@@ -948,6 +965,13 @@ export const Main = defineWidget({
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn:hover {
           background: rgba(255,255,255,0.08);
         }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn:disabled,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-select:disabled,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-progress:disabled,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-volume:disabled {
+          cursor: not-allowed;
+          opacity: 0.45;
+        }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-progress,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-volume {
           flex: 1 1 0;
@@ -966,12 +990,12 @@ export const Main = defineWidget({
           font-size: 12px;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn {
-          height: 46px;
-          min-width: 112px;
-          padding: 0 22px;
-          border-radius: 8px;
-          font-size: 15px;
-          font-weight: 700;
+          height: 40px;
+          min-width: 96px;
+          padding: 0 18px;
+          border-radius: 7px;
+          font-size: 14px;
+          font-weight: 600;
           cursor: pointer;
           border: 1px solid rgba(255,255,255,0.14);
           transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
@@ -1044,21 +1068,6 @@ export const Main = defineWidget({
           background: rgba(255,255,255,0.14);
           border-color: rgba(255,255,255,0.3);
         }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-preview-play {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 72px;
-          height: 72px;
-          border-radius: 999px;
-          color: #fff;
-          background: rgba(255,255,255,0.15);
-          border: 1px solid rgba(255,255,255,0.18);
-          box-shadow: 0 12px 34px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-          font-size: 34px;
-          line-height: 1;
-          text-indent: 5px;
-        }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-track::before {
           content: "";
           position: absolute;
@@ -1082,10 +1091,10 @@ export const Main = defineWidget({
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 30px;
-          height: 30px;
-          border-radius: 8px;
-          font-size: 22px;
+          width: 22px;
+          height: 22px;
+          border-radius: 6px;
+          font-size: 13px;
           line-height: 1;
           color: rgba(255,255,255,0.96);
         }
@@ -1096,8 +1105,8 @@ export const Main = defineWidget({
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 34px;
-          height: 34px;
+          width: 30px;
+          height: 30px;
           flex: 0 0 auto;
           padding: 0;
           border: none;
@@ -1105,7 +1114,7 @@ export const Main = defineWidget({
           color: #fff;
           background: transparent;
           cursor: pointer;
-          font-size: 24px;
+          font-size: 20px;
           font-weight: 800;
           line-height: 1;
         }
@@ -1114,10 +1123,10 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track {
           position: relative;
-          width: 170px;
+          width: 130px;
           max-width: 14vw;
-          height: 8px;
-          flex: 0 1 170px;
+          height: 6px;
+          flex: 0 1 130px;
           border-radius: 999px;
           background: rgba(148,163,184,0.28);
         }
@@ -1135,8 +1144,8 @@ export const Main = defineWidget({
           position: absolute;
           left: 76%;
           top: 50%;
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           border-radius: 999px;
           background: #fff;
           transform: translate(-50%, -50%);
@@ -1151,8 +1160,8 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-progress {
           position: relative;
-          height: 8px;
-          flex: 1 1 260px;
+          height: 6px;
+          flex: 1 1 220px;
           min-width: 120px;
           border-radius: 999px;
           background: rgba(148,163,184,0.22);
@@ -1170,8 +1179,8 @@ export const Main = defineWidget({
           position: absolute;
           left: 34%;
           top: 50%;
-          width: 20px;
-          height: 20px;
+          width: 16px;
+          height: 16px;
           border-radius: 999px;
           background: #2f7dff;
           transform: translate(-50%, -50%);
@@ -1179,15 +1188,15 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-select {
           flex: 0 0 auto;
-          min-width: 70px;
-          height: 34px;
+          min-width: 64px;
+          height: 32px;
           padding: 0 8px;
           border: none;
-          border-radius: 8px;
+          border-radius: 7px;
           color: rgba(255,255,255,0.84);
           background: transparent;
           cursor: pointer;
-          font-size: 16px;
+          font-size: 13px;
           font-weight: 700;
           line-height: 1;
           white-space: nowrap;
@@ -1214,21 +1223,19 @@ export const Main = defineWidget({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          min-height: 48px;
-          padding: 0 18px;
-          border-radius: 999px;
+          min-height: 22px;
+          padding: 0;
           color: rgba(255,255,255,0.74);
-          background: rgba(28,35,48,0.72);
-          border: 1px solid rgba(255,255,255,0.05);
-          box-shadow: 0 12px 32px rgba(0,0,0,0.22);
-          font-size: 18px;
-          font-weight: 700;
+          background: transparent;
+          border: 0;
+          box-shadow: none;
+          font-size: 13px;
+          font-weight: 600;
           line-height: 1;
-          backdrop-filter: blur(8px);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-dot {
-          width: 12px;
-          height: 12px;
+          width: 8px;
+          height: 8px;
           border-radius: 999px;
           background: rgba(255,255,255,0.48);
           box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
@@ -1239,8 +1246,6 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-online {
           color: #35df72;
-          background: rgba(20,83,45,0.54);
-          border-color: rgba(74,222,128,0.18);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-online .tv-camera-status-dot {
           background: #4ade80;
@@ -1249,12 +1254,9 @@ export const Main = defineWidget({
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-offline,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-idle-record {
           color: rgba(255,255,255,0.68);
-          background: rgba(15,23,42,0.58);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-recording {
           color: #fff;
-          background: rgba(28,35,48,0.72);
-          border-color: rgba(255,255,255,0.05);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip.is-recording .tv-camera-status-dot {
           background: #ef4444;
@@ -1262,24 +1264,24 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
-          height: 54px;
-          min-width: 54px;
-          border: 1px solid rgba(255,255,255,0.14);
-          border-radius: 12px;
-          color: #fff;
-          background: rgba(13,18,29,0.62);
+          height: 38px;
+          min-width: 38px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 10px;
+          color: rgba(255,255,255,0.86);
+          background: rgba(13,18,29,0.38);
           cursor: pointer;
-          font-size: 18px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
           line-height: 1;
           box-sizing: border-box;
-          box-shadow: 0 12px 28px rgba(0,0,0,0.18);
+          box-shadow: none;
           transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
           width: auto;
-          max-width: 148px;
-          padding: 0 22px;
+          max-width: 116px;
+          padding: 0 14px;
           white-space: nowrap;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-datetime-input {
@@ -1298,14 +1300,14 @@ export const Main = defineWidget({
           border-color: rgba(64, 158, 255, 0.55);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-nav {
-          width: 36px;
-          height: 36px;
+          width: 32px;
+          height: 32px;
           border: 1px solid rgba(255,255,255,0.12);
           border-radius: 8px;
           color: #fff;
           background: rgba(255,255,255,0.08);
           cursor: pointer;
-          font-size: 24px;
+          font-size: 18px;
           line-height: 1;
           padding: 0;
         }
@@ -1319,9 +1321,9 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:hover,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:hover {
-          background: rgba(30,41,59,0.9);
-          border-color: rgba(96,165,250,0.38);
-          box-shadow: 0 10px 28px rgba(0,0,0,0.28), 0 0 0 1px rgba(96,165,250,0.12);
+          background: rgba(30,41,59,0.64);
+          border-color: rgba(96,165,250,0.3);
+          box-shadow: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:active,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:active {
@@ -1340,18 +1342,18 @@ export const Main = defineWidget({
             margin-bottom: 12px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip {
-            min-height: 36px !important;
-            padding: 0 12px !important;
-            font-size: 14px !important;
+            min-height: 22px !important;
+            padding: 0 !important;
+            font-size: 13px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
             gap: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
-            height: 40px !important;
-            min-width: 40px !important;
+            height: 36px !important;
+            min-width: 36px !important;
             padding: 0 12px !important;
-            font-size: 14px !important;
+            font-size: 13px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-header {
             height: 44px !important;
@@ -1361,8 +1363,8 @@ export const Main = defineWidget({
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-video-stage {
             left: 10px !important;
             right: 10px !important;
-            top: 54px !important;
-            bottom: 58px !important;
+            top: 8px !important;
+            bottom: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome {
             left: 10px !important;
@@ -1378,19 +1380,14 @@ export const Main = defineWidget({
             display: none !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal {
-            padding: 8px !important;
+            padding: 6px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-header {
-            padding: 14px 14px 10px !important;
+            padding: 12px 14px 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-body {
-            flex-direction: column !important;
-            gap: 14px !important;
-            padding: 0 14px 14px !important;
-            overflow: auto;
-          }
-          [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-preview {
-            min-height: 180px !important;
+            padding: 0 14px 8px !important;
+            overflow: hidden !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-section,
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-footer {
@@ -1442,6 +1439,11 @@ export const Main = defineWidget({
         videoEl.style.display = 'none';
         videoEl.removeAttribute('src');
         updatePlaceholder('empty');
+        if (isPlaybackActive()) {
+          placeholderText.textContent = currentLocale?.startsWith('zh')
+            ? '等待平台返回回放流'
+            : 'Waiting for playback stream';
+        }
         return;
       }
 
@@ -1449,6 +1451,11 @@ export const Main = defineWidget({
       if (currentSrc !== normalizedSrc) {
         currentSrc = normalizedSrc;
         updatePlaceholder('loading');
+        if (isPlaybackActive()) {
+          placeholderText.textContent = currentLocale?.startsWith('zh')
+            ? '正在连接回放视频'
+            : 'Connecting playback video';
+        }
         videoEl.src = normalizedSrc;
         if (!currentProps.autoplay) {
           requestAnimationFrame(() => internalVideo?.pause());

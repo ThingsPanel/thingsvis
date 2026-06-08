@@ -27,6 +27,8 @@ export type PlaybackChromeLabels = {
   fullscreen: string;
   exitFullscreen: string;
   returnToLive: string;
+  selectRange?: string;
+  loading?: string;
   play: string;
   pause: string;
   mute: string;
@@ -76,6 +78,7 @@ type MountOptions = {
   onSnapshot: () => void;
   onFullscreen: () => void;
   onReturnToLive: () => void;
+  onSelectRange?: () => void;
   onScrubStart?: () => void;
   onScrubEnd?: () => void;
 };
@@ -97,13 +100,16 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   const root = document.createElement('div');
   root.className = 'tv-camera-playback-chrome';
   root.style.cssText = `
-    position:absolute;inset:0;z-index:5;display:none;flex-direction:column;gap:8px;
-    padding:10px;box-sizing:border-box;background:#0b101a;pointer-events:auto;
+    position:absolute;inset:0;z-index:5;display:none;
+    padding:0;box-sizing:border-box;background:transparent;pointer-events:auto;overflow:hidden;
   `;
 
   const topBar = document.createElement('div');
   topBar.className = 'tv-camera-chrome-top';
-  topBar.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;';
+  topBar.style.cssText = `
+    position:absolute;left:10px;right:10px;top:10px;z-index:4;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+  `;
 
   const statusGroup = document.createElement('div');
   statusGroup.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
@@ -126,21 +132,22 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   const snapshotButton = makeIconAction('', '📷', 'tv-camera-chrome-action');
   const fullscreenButton = makeIconAction('', '⛶', 'tv-camera-chrome-action');
   const returnButton = makeIconAction('', '↩', 'tv-camera-chrome-action');
-  actionGroup.append(snapshotButton, fullscreenButton, returnButton);
+  const selectRangeButton = makeIconAction('', '◷', 'tv-camera-chrome-action');
+  actionGroup.append(snapshotButton, fullscreenButton, selectRangeButton, returnButton);
 
   topBar.append(statusGroup, actionGroup);
 
   const videoFrame = document.createElement('div');
   videoFrame.className = 'tv-camera-chrome-video-frame';
   videoFrame.style.cssText = `
-    position:relative;flex:1 1 0;min-height:0;border-radius:12px;overflow:hidden;
-    background:#05070d;border:1px solid rgba(255,255,255,0.08);
+    position:absolute;inset:0;z-index:1;border-radius:0;overflow:hidden;
+    background:transparent;border:0;pointer-events:none;
   `;
 
   const deviceBadge = document.createElement('div');
   deviceBadge.className = 'tv-camera-chrome-device-badge';
   deviceBadge.style.cssText = `
-    position:absolute;top:10px;left:10px;z-index:2;display:flex;align-items:center;gap:6px;
+    position:absolute;top:10px;left:10px;z-index:2;display:none;align-items:center;gap:6px;
     padding:5px 10px;border-radius:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:12px;
     pointer-events:none;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   `;
@@ -150,10 +157,23 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   deviceBadge.append(deviceIcon, deviceTitle);
   videoFrame.appendChild(deviceBadge);
 
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'tv-camera-chrome-loading';
+  loadingOverlay.style.cssText = `
+    position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,0.86);font-size:13px;font-weight:600;
+    background:transparent;
+    pointer-events:none;
+  `;
+  videoFrame.appendChild(loadingOverlay);
+
   const controlBar = document.createElement('div');
   controlBar.className = 'tv-camera-chrome-controls';
-  controlBar.style.cssText =
-    'display:flex;align-items:center;gap:10px;padding:4px 2px;flex-wrap:nowrap;';
+  controlBar.style.cssText = `
+    position:absolute;left:10px;right:10px;bottom:10px;z-index:4;
+    display:flex;align-items:center;gap:10px;padding:8px 10px;flex-wrap:nowrap;
+    border-radius:10px;background:rgba(5,10,18,0.78);border:1px solid rgba(255,255,255,0.08);
+  `;
 
   const playButton = document.createElement('button');
   playButton.type = 'button';
@@ -234,15 +254,18 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
     statCells.push({ icon, label, value });
   }
 
-  root.append(topBar, videoFrame, controlBar, statsPanel);
+  root.append(topBar, videoFrame, controlBar);
   shell.appendChild(root);
 
   const applyActionLabels = () => {
     snapshotButton.querySelector('span:last-child')!.textContent = labels.snapshot;
     fullscreenButton.querySelector('span:last-child')!.textContent = labels.fullscreen;
+    selectRangeButton.querySelector('span:last-child')!.textContent =
+      labels.selectRange ?? 'Select time';
     returnButton.querySelector('span:last-child')!.textContent = labels.returnToLive;
     snapshotButton.title = labels.snapshot;
     fullscreenButton.title = labels.fullscreen;
+    selectRangeButton.title = labels.selectRange ?? 'Select time';
     returnButton.title = labels.returnToLive;
     chipPlayback.textContent = labels.modePlayback;
     qualitySelect.options[0]!.text = labels.quality;
@@ -269,28 +292,11 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
     video.style.width = '100%';
     video.style.height = '100%';
     video.style.zIndex = '1';
-    video.style.borderRadius = '';
+    video.style.borderRadius = '0';
   };
 
   const syncVideoToFrame = () => {
-    const video = options.videoElement;
-    const shellRect = shell.getBoundingClientRect();
-    const frameRect = videoFrame.getBoundingClientRect();
-    if (shellRect.width <= 0 || frameRect.width <= 0) {
-      resetVideoLayout();
-      return;
-    }
-    const top = frameRect.top - shellRect.top;
-    const left = frameRect.left - shellRect.left;
-    video.style.position = 'absolute';
-    video.style.top = `${top}px`;
-    video.style.left = `${left}px`;
-    video.style.width = `${frameRect.width}px`;
-    video.style.height = `${frameRect.height}px`;
-    video.style.right = 'auto';
-    video.style.bottom = 'auto';
-    video.style.zIndex = '1';
-    video.style.borderRadius = '12px';
+    resetVideoLayout();
   };
 
   let frameObserver: ResizeObserver | null = null;
@@ -325,6 +331,7 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   });
   snapshotButton.addEventListener('click', options.onSnapshot);
   fullscreenButton.addEventListener('click', options.onFullscreen);
+  selectRangeButton.addEventListener('click', () => options.onSelectRange?.());
   fsButton.addEventListener('click', options.onFullscreen);
   returnButton.addEventListener('click', options.onReturnToLive);
 
@@ -365,6 +372,8 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
     },
     updateState: (state) => {
       deviceTitle.textContent = state.deviceTitle || 'Camera';
+      loadingOverlay.textContent = labels.loading ?? 'Connecting playback video';
+      loadingOverlay.style.display = state.ready ? 'none' : 'flex';
       chipOnline.textContent = state.online ? labels.online : labels.offline;
       chipOnline.classList.toggle('is-online', state.online === true);
       chipOnline.classList.toggle('is-offline', state.online === false);
@@ -376,9 +385,12 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
 
       playButton.textContent = state.paused ? '▶' : '⏸';
       playButton.title = state.paused ? labels.play : labels.pause;
+      playButton.disabled = !state.ready;
       muteButton.textContent = state.muted ? '🔇' : '🔊';
       muteButton.title = state.muted ? labels.unmute : labels.mute;
+      muteButton.disabled = !state.ready;
       volumeRange.value = String(Math.round(state.volume * 100));
+      volumeRange.disabled = !state.ready;
 
       const hasDuration = state.ready && Number.isFinite(state.duration) && state.duration > 0;
       progressRange.disabled = !hasDuration;
@@ -392,6 +404,8 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
       }
 
       speedSelect.value = String(state.speedIndex);
+      speedSelect.disabled = !state.ready;
+      fsButton.disabled = !state.ready;
       statCells[0]!.value.textContent = state.online ? labels.online : labels.offline;
       statCells[1]!.value.textContent = labels.qualityValue;
       statCells[2]!.value.textContent = labels.networkGood;

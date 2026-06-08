@@ -77,7 +77,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
     display:none;
     align-items:stretch;
     justify-content:stretch;
-    padding:12px;
+    padding:6px;
     box-sizing:border-box;
     background:rgba(1,4,10,0.9);
     backdrop-filter:blur(2px);
@@ -103,92 +103,56 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   const header = document.createElement('div');
   header.className = 'tv-camera-playback-modal-header';
   header.style.cssText =
-    'display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px 14px;';
+    'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 8px;';
 
   const headerText = document.createElement('div');
   const titleEl = document.createElement('div');
   titleEl.className = 'tv-camera-playback-modal-title';
-  titleEl.style.cssText = 'font-size:20px;font-weight:750;color:#fff;line-height:1.3;';
-  const subtitleEl = document.createElement('div');
-  subtitleEl.className = 'tv-camera-playback-modal-subtitle';
-  subtitleEl.style.cssText =
-    'margin-top:6px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.66);line-height:1.45;';
-  headerText.append(titleEl, subtitleEl);
+  titleEl.style.cssText = 'font-size:18px;font-weight:700;color:#fff;line-height:1.3;';
+  headerText.append(titleEl);
 
   const closeButton = document.createElement('button');
   closeButton.type = 'button';
   closeButton.className = 'tv-camera-playback-modal-close';
   closeButton.textContent = '×';
   closeButton.style.cssText = `
-    width:40px;height:40px;border:1px solid rgba(255,255,255,0.14);border-radius:9px;
-    background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.9);font-size:28px;line-height:1;cursor:pointer;padding:0;
+    width:34px;height:34px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;
+    background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.9);font-size:22px;line-height:1;cursor:pointer;padding:0;
   `;
   header.append(headerText, closeButton);
 
   const body = document.createElement('div');
   body.className = 'tv-camera-playback-modal-body';
   body.style.cssText =
-    'display:flex;gap:28px;flex:1 1 0;min-height:0;padding:0 24px 18px;';
-
-  const previewColumn = document.createElement('div');
-  previewColumn.style.cssText =
-    'flex:1.35 1 0;min-width:0;display:flex;flex-direction:column;gap:12px;';
-
-  const previewLabel = document.createElement('div');
-  previewLabel.style.cssText = 'font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);';
-
-  const previewHost = document.createElement('div');
-  previewHost.className = 'tv-camera-playback-preview';
-  previewHost.style.cssText = `
-    position:relative;flex:1 1 0;min-height:120px;border-radius:10px;overflow:hidden;
-    background:
-      radial-gradient(circle at 50% 48%, rgba(255,255,255,0.05), transparent 34%),
-      #010309;
-    border:1px solid rgba(255,255,255,0.12);
-    box-shadow:inset 0 0 0 1px rgba(0,0,0,0.45), inset 0 -40px 80px rgba(0,0,0,0.44);
-  `;
-
-  const previewPlaceholder = document.createElement('div');
-  previewPlaceholder.className = 'tv-camera-playback-preview-placeholder';
-  previewPlaceholder.style.cssText = `
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    pointer-events:none;
-  `;
-  const previewPlayCircle = document.createElement('div');
-  previewPlayCircle.className = 'tv-camera-playback-preview-play';
-  previewPlayCircle.textContent = '▶';
-  previewPlaceholder.appendChild(previewPlayCircle);
-  previewHost.appendChild(previewPlaceholder);
-
-  previewColumn.append(previewLabel, previewHost);
+    'display:block;flex:1 1 auto;min-height:0;overflow:hidden;padding:0 18px 8px;';
 
   const calendarColumn = document.createElement('div');
   calendarColumn.style.cssText =
-    'flex:0.9 1 0;min-width:300px;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:hidden;';
+    'min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:visible;';
 
   const calendarLabel = document.createElement('div');
-  calendarLabel.style.cssText = 'font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);';
+  calendarLabel.style.cssText = 'font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);';
 
   const calendarHost = document.createElement('div');
-  calendarHost.style.cssText = 'flex:1 1 0;min-height:0;overflow:hidden;';
+  calendarHost.style.cssText = 'flex:0 0 auto;min-height:0;overflow:visible;';
 
   calendarColumn.append(calendarLabel, calendarHost);
 
-  body.append(previewColumn, calendarColumn);
+  body.append(calendarColumn);
 
   const timeSection = document.createElement('div');
   timeSection.className = 'tv-camera-playback-time-section';
-  timeSection.style.cssText = 'padding:2px 24px 12px;display:flex;flex-direction:column;gap:10px;';
+  timeSection.style.cssText = 'padding:0 18px 8px;display:flex;flex-direction:column;gap:6px;';
 
   const timeTitle = document.createElement('div');
-  timeTitle.style.cssText = 'font-size:15px;font-weight:700;color:rgba(255,255,255,0.9);';
+  timeTitle.style.cssText = 'font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);';
 
   const timeTrackWrap = document.createElement('div');
-  timeTrackWrap.style.cssText = 'position:relative;height:68px;padding:8px 10px 0;';
+  timeTrackWrap.style.cssText = 'position:relative;height:52px;padding:5px 10px 0;';
 
   const timeLabels = document.createElement('div');
   timeLabels.style.cssText =
-    'display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:rgba(255,255,255,0.78);margin:0 -10px 8px;';
+    'display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:rgba(255,255,255,0.78);margin:0 -10px 6px;';
 
   const timeTrack = document.createElement('div');
   timeTrack.className = 'tv-camera-playback-time-track';
@@ -218,7 +182,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   const timeScale = document.createElement('div');
   timeScale.className = 'tv-camera-playback-time-scale';
   timeScale.style.cssText =
-    'display:flex;justify-content:space-between;margin:10px -10px 0;font-size:12px;font-weight:500;color:rgba(255,255,255,0.58);';
+    'display:flex;justify-content:space-between;margin:8px -10px 0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.58);';
 
   timeTrack.append(timeFill, startThumb, endThumb);
   timeLabels.innerHTML = '<span>00:00</span><span>23:59</span>';
@@ -234,13 +198,13 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   footer.className = 'tv-camera-playback-modal-footer';
   footer.style.cssText = `
     display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:14px 24px 16px;border-top:1px solid rgba(255,255,255,0.1);
+    padding:10px 18px 12px;border-top:1px solid rgba(255,255,255,0.1);
   `;
 
   const selectionSummary = document.createElement('div');
   selectionSummary.className = 'tv-camera-playback-selection';
   selectionSummary.style.cssText =
-    'font-size:14px;font-weight:600;color:rgba(255,255,255,0.74);line-height:1.4;flex:1 1 0;min-width:0;';
+    'font-size:13px;font-weight:600;color:rgba(255,255,255,0.74);line-height:1.4;flex:1 1 0;min-width:0;';
 
   const footerActions = document.createElement('div');
   footerActions.style.cssText = 'display:flex;gap:8px;flex-shrink:0;';
@@ -316,9 +280,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
 
   const applyLabels = () => {
     titleEl.textContent = options.labels.title;
-    subtitleEl.textContent = options.labels.subtitle;
     closeButton.title = options.labels.close;
-    previewLabel.textContent = options.labels.preview;
     calendarLabel.textContent = options.labels.dateSelect;
     timeTitle.textContent = options.labels.timeRange;
     cancelButton.textContent = options.labels.cancel;
@@ -337,9 +299,8 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
 
   applyLabels();
 
-  const syncPreview = (open: boolean) => {
-    previewPlaceholder.style.display = 'flex';
-    options.previewElement.style.visibility = open ? 'hidden' : 'visible';
+  const syncPreview = () => {
+    options.previewElement.style.visibility = 'visible';
   };
 
   startThumb.addEventListener('input', () => {
@@ -389,7 +350,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
     },
     setOpen: (open) => {
       overlay.style.display = open ? 'flex' : 'none';
-      syncPreview(open);
+      syncPreview();
       if (open) {
         requestAnimationFrame(updateTimeVisuals);
       }
@@ -397,7 +358,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
     getRange: () => calendar.getRange(),
     destroy: () => {
       resizeObserver?.disconnect();
-      syncPreview(false);
+      syncPreview();
       calendar.destroy();
       overlay.remove();
     },
