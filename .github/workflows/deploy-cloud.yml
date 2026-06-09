@@ -213,18 +213,32 @@ jobs:
             cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # Source .env if exists (same as deploy-e.yml)
-            if [ -f /opt/thingsvis/server/.env ]; then
-              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            # Source server env from the packaged app directory when available.
+            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/apps/server/.env
+              set +a
+            elif [ -f /opt/thingsvis/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/.env
+              set +a
             fi
+
+            # Fail fast when required secrets are missing to avoid PM2 persisting empty env.
+            : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
+            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
 
             # Apply database migrations
             cd apps/server
             npx prisma db push --accept-data-loss || true
             cd ../..
 
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 restart thingsvis-server --update-env
             pm2 save
 
             # --- Deploy Studio ---
