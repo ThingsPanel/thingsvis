@@ -253,6 +253,22 @@ export class VisualEngine {
   // Track the last canvas theme written to overlayRoot to avoid redundant DOM writes
   private lastAppliedCanvasTheme = '';
 
+  // Defer React root teardown so sync() never unmounts during an in-flight React render.
+  private pendingReactRootUnmounts = new Set<Root>();
+
+  private scheduleReactRootUnmount(root: Root) {
+    if (this.pendingReactRootUnmounts.has(root)) return;
+    this.pendingReactRootUnmounts.add(root);
+    queueMicrotask(() => {
+      this.pendingReactRootUnmounts.delete(root);
+      try {
+        root.unmount();
+      } catch {
+        /* already unmounted */
+      }
+    });
+  }
+
   private getAnchorWorldPoint(
     position: { x: number; y: number },
     size: { width: number; height: number },
@@ -702,11 +718,7 @@ export class VisualEngine {
     for (const entry of this.instanceMap.values()) {
       entry.overlayClickCleanup?.();
       if (entry.reactRoot) {
-        try {
-          entry.reactRoot.unmount();
-        } catch {
-          /* already unmounted */
-        }
+        this.scheduleReactRootUnmount(entry.reactRoot);
       }
     }
     this.instanceMap.clear();
@@ -779,11 +791,7 @@ export class VisualEngine {
           }
           // Unmount React root before removing DOM
           if (entry.reactRoot) {
-            try {
-              entry.reactRoot.unmount();
-            } catch {
-              /* already unmounted */
-            }
+            this.scheduleReactRootUnmount(entry.reactRoot);
           }
           if (entry.overlayBox?.parentElement)
             entry.overlayBox.parentElement.removeChild(entry.overlayBox);
@@ -1253,11 +1261,7 @@ export class VisualEngine {
 
         // 销毁旧的崩溃实例
         if (existing.reactRoot) {
-          try {
-            existing.reactRoot.unmount();
-          } catch {
-            /* teardown — already unmounted */
-          }
+          this.scheduleReactRootUnmount(existing.reactRoot);
         }
         if (existing.renderer.destroyOverlay) {
           try {

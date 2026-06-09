@@ -33,6 +33,7 @@ import type {
   DataSourceMode,
   RESTConfig,
   WSConfig,
+  NodeSchemaType,
 } from '@thingsvis/schema';
 import {
   DEFAULT_AUTH_CONFIG,
@@ -47,6 +48,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { json } from '@codemirror/lang-json';
 import { dataSourceManager, store } from '../lib/store';
 import { buildHashRoute } from '../lib/embed/navigation';
+import { requestSave as sendToHost } from '../embed/message-router';
 import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 import {
   buildEmbeddedProviderDataSources,
@@ -54,6 +56,13 @@ import {
   resolveEmbeddedProviderCatalog,
 } from '../lib/embedded/embedded-data-source-registry';
 import { resolveControlText } from '../lib/i18n/controlText';
+import { getDashboardIdFromEditorUrl } from '../lib/embed/editorUrlParams';
+import { getEmbedSessionSnapshot, setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
+import { shouldSaveToHost } from '../lib/storage/saveStrategy';
+import type { ProjectFile } from '../lib/storage/schemas';
+import { buildHostSavePayload } from '../lib/storage/hostSavePayload';
+import { normalizeCanvasBackground } from '../lib/canvasBackground';
+import { mergeActionVariableDefinitions } from '../lib/eventVariables';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -81,6 +90,53 @@ function getProviderGroups(context: string | undefined) {
     : context === 'device-template'
       ? ['dashboard', 'current-device', 'current-device-history']
       : undefined;
+}
+
+function getOrderedNodeSchemas(): NodeSchemaType[] {
+  const state = store.getState();
+  const orderedIds = [
+    ...state.layerOrder,
+    ...Object.keys(state.nodesById).filter((id) => !state.layerOrder.includes(id)),
+  ];
+
+  return orderedIds
+    .map((id) => state.nodesById[id]?.schemaRef)
+    .filter((schema): schema is NodeSchemaType => Boolean(schema));
+}
+
+function buildCurrentProjectForHostSave(): ProjectFile {
+  const state = store.getState();
+  const dashboardId = getDashboardIdFromEditorUrl() ?? undefined;
+  const snapshot =
+    getEmbedSessionSnapshot(dashboardId)?.project ?? getEmbedSessionSnapshot()?.project;
+  const nodes = getOrderedNodeSchemas();
+  const now = Date.now();
+  const snapshotCanvas = snapshot?.canvas ?? {};
+
+  return {
+    meta: {
+      version: '1.0.0',
+      id: snapshot?.meta.id ?? dashboardId ?? 'embed-host',
+      name: snapshot?.meta.name ?? 'Untitled Project',
+      thumbnail: snapshot?.meta.thumbnail,
+      createdAt: snapshot?.meta.createdAt ?? now,
+      updatedAt: now,
+    },
+    canvas: {
+      ...snapshotCanvas,
+      mode: state.canvas.mode,
+      width: state.canvas.width,
+      height: state.canvas.height,
+      background: normalizeCanvasBackground(snapshotCanvas.background),
+      gridEnabled: state.canvas.gridEnabled,
+      gridSize: state.canvas.gridSize,
+      layerOrder: state.layerOrder,
+      layerGroups: state.layerGroups,
+    },
+    nodes,
+    dataSources: dataSourceManager.getAllConfigs(),
+    variables: mergeActionVariableDefinitions(state.variableDefinitions ?? [], nodes),
+  };
 }
 
 export default function DataSourcesPage() {
@@ -238,6 +294,22 @@ export default function DataSourcesPage() {
     setTimeout(() => setToast((prev) => ({ ...prev, visible: false })), 3000);
   };
 
+  const persistEmbeddedHostProject = (): boolean => {
+    if (!shouldSaveToHost()) return true;
+
+    try {
+      const project = buildCurrentProjectForHostSave();
+      const { projectForSave, payload } = buildHostSavePayload(project);
+      setEmbedSessionSnapshot(projectForSave.meta.id, projectForSave, 'host-save');
+      sendToHost(payload);
+      return true;
+    } catch (error) {
+      console.error('[DataSourcesPage] Failed to persist embedded host project:', error);
+      showToast(t('dataSources.saveFailed') + String(error), 'error');
+      return false;
+    }
+  };
+
   function getDisplayName(dataSourceId: string): string {
     const config = dataSourceManager.getConfig(dataSourceId);
     const providerName = providerDataSourceNameMap.get(dataSourceId);
@@ -306,6 +378,7 @@ export default function DataSourcesPage() {
       setConfigVersion((version) => version + 1);
       setIsAdding(false);
       setSelectedId(editingSource.id);
+      if (!persistEmbeddedHostProject()) return;
       showToast(t('dataSources.saveSuccess'), 'success');
     } catch (e) {
       showToast(t('dataSources.saveFailed') + String(e), 'error');
@@ -377,6 +450,7 @@ export default function DataSourcesPage() {
       await dataSourceManager.unregisterDataSource(sourceToDelete);
       setConfigVersion((version) => version + 1);
       if (selectedId === sourceToDelete) setSelectedId(null);
+      if (!persistEmbeddedHostProject()) return;
 
       showToast(t('dataSources.deleted'), 'success');
     } catch (error) {
