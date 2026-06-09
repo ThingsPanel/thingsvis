@@ -77,7 +77,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
     display:none;
     align-items:stretch;
     justify-content:stretch;
-    padding:6px;
+    padding:0;
     box-sizing:border-box;
     background:rgba(1,4,10,0.9);
     backdrop-filter:blur(2px);
@@ -91,24 +91,24 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
     flex-direction:column;
     flex:1 1 0;
     min-height:0;
-    border-radius:12px;
+    border-radius:0;
     border:1px solid rgba(255,255,255,0.14);
     background:
       radial-gradient(circle at 26% 18%, rgba(255,255,255,0.09), transparent 32%),
       linear-gradient(180deg, rgba(24,30,42,0.99) 0%, rgba(11,15,23,0.99) 100%);
-    box-shadow:0 24px 80px rgba(0,0,0,0.46), inset 0 1px 0 rgba(255,255,255,0.06);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.06);
     overflow:hidden;
   `;
 
   const header = document.createElement('div');
   header.className = 'tv-camera-playback-modal-header';
   header.style.cssText =
-    'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px 8px;';
+    'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 14px 0;flex:0 0 auto;';
 
   const headerText = document.createElement('div');
   const titleEl = document.createElement('div');
   titleEl.className = 'tv-camera-playback-modal-title';
-  titleEl.style.cssText = 'font-size:18px;font-weight:700;color:#fff;line-height:1.3;';
+  titleEl.style.cssText = 'font-size:14px;font-weight:700;color:#fff;line-height:1.1;';
   headerText.append(titleEl);
 
   const closeButton = document.createElement('button');
@@ -116,22 +116,22 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   closeButton.className = 'tv-camera-playback-modal-close';
   closeButton.textContent = '×';
   closeButton.style.cssText = `
-    width:34px;height:34px;border:1px solid rgba(255,255,255,0.14);border-radius:8px;
-    background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.9);font-size:22px;line-height:1;cursor:pointer;padding:0;
+    width:22px;height:22px;border:0;border-radius:0;
+    background:transparent;color:rgba(255,255,255,0.9);font-size:18px;line-height:1;cursor:pointer;padding:0;
   `;
   header.append(headerText, closeButton);
 
   const body = document.createElement('div');
   body.className = 'tv-camera-playback-modal-body';
   body.style.cssText =
-    'display:block;flex:1 1 auto;min-height:0;overflow:hidden;padding:0 18px 8px;';
+    'display:block;flex:1 1 auto;min-height:0;overflow:auto;padding:0 14px 0;';
 
   const calendarColumn = document.createElement('div');
   calendarColumn.style.cssText =
-    'min-width:0;min-height:0;display:flex;flex-direction:column;gap:8px;overflow:visible;';
+    'min-width:0;min-height:0;display:flex;flex-direction:column;gap:2px;overflow:visible;';
 
   const calendarLabel = document.createElement('div');
-  calendarLabel.style.cssText = 'font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);';
+  calendarLabel.style.cssText = 'font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:13px;';
 
   const calendarHost = document.createElement('div');
   calendarHost.style.cssText = 'flex:0 0 auto;min-height:0;overflow:visible;';
@@ -142,17 +142,17 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
 
   const timeSection = document.createElement('div');
   timeSection.className = 'tv-camera-playback-time-section';
-  timeSection.style.cssText = 'padding:0 18px 8px;display:flex;flex-direction:column;gap:6px;';
+  timeSection.style.cssText = 'padding:4px 14px 8px;display:flex;flex:0 0 auto;flex-direction:column;gap:4px;';
 
   const timeTitle = document.createElement('div');
-  timeTitle.style.cssText = 'font-size:14px;font-weight:600;color:rgba(255,255,255,0.9);';
+  timeTitle.style.cssText = 'font-size:11px;font-weight:600;color:rgba(255,255,255,0.9);line-height:14px;';
 
   const timeTrackWrap = document.createElement('div');
-  timeTrackWrap.style.cssText = 'position:relative;height:52px;padding:5px 10px 0;';
+  timeTrackWrap.style.cssText = 'position:relative;height:46px;padding:4px 10px 0;';
 
   const timeLabels = document.createElement('div');
   timeLabels.style.cssText =
-    'display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:rgba(255,255,255,0.78);margin:0 -10px 6px;';
+    'display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:rgba(255,255,255,0.78);margin:0 -10px 4px;';
 
   const timeTrack = document.createElement('div');
   timeTrack.className = 'tv-camera-playback-time-track';
@@ -182,7 +182,7 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   const timeScale = document.createElement('div');
   timeScale.className = 'tv-camera-playback-time-scale';
   timeScale.style.cssText =
-    'display:flex;justify-content:space-between;margin:8px -10px 0;font-size:11px;font-weight:500;color:rgba(255,255,255,0.58);';
+    'display:flex;justify-content:space-between;margin:6px -10px 0;font-size:10px;font-weight:500;color:rgba(255,255,255,0.58);';
 
   timeTrack.append(timeFill, startThumb, endThumb);
   timeLabels.innerHTML = '<span>00:00</span><span>23:59</span>';
@@ -197,14 +197,14 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   const footer = document.createElement('div');
   footer.className = 'tv-camera-playback-modal-footer';
   footer.style.cssText = `
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:10px 18px 12px;border-top:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex:0 0 auto;
+    padding:8px 14px 9px;border-top:1px solid rgba(255,255,255,0.1);
   `;
 
   const selectionSummary = document.createElement('div');
   selectionSummary.className = 'tv-camera-playback-selection';
   selectionSummary.style.cssText =
-    'font-size:13px;font-weight:600;color:rgba(255,255,255,0.74);line-height:1.4;flex:1 1 0;min-width:0;';
+    'font-size:11px;font-weight:600;color:rgba(255,255,255,0.74);line-height:1.25;flex:1 1 0;min-width:0;';
 
   const footerActions = document.createElement('div');
   footerActions.style.cssText = 'display:flex;gap:8px;flex-shrink:0;';
@@ -281,8 +281,6 @@ export function mountPlaybackModal(shell: HTMLElement, options: MountOptions): P
   const applyLabels = () => {
     titleEl.textContent = options.labels.title;
     closeButton.title = options.labels.close;
-    calendarLabel.textContent = options.labels.dateSelect;
-    timeTitle.textContent = options.labels.timeRange;
     cancelButton.textContent = options.labels.cancel;
     startButton.textContent = options.labels.startPlayback;
   };

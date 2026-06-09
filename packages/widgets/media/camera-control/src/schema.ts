@@ -10,7 +10,7 @@ export const PropsSchema = z.object({
   autoplay: z.boolean().default(true).describe('props.autoplay'),
   objectFit: z
     .enum(['contain', 'cover', 'fill', 'none'])
-    .default('contain')
+    .default('cover')
     .describe('props.objectFit'),
   visibilityThreshold: z.number().min(0).max(1).default(0).describe('props.visibilityThreshold'),
 

@@ -120,12 +120,13 @@ export function mountPlaybackCalendar(
   let selectingEnd = false;
 
   host.className = 'tv-camera-playback-calendar';
-  host.style.cssText = 'display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;';
+  host.style.cssText =
+    'display:flex;flex-direction:column;gap:5px;min-width:0;min-height:0;width:min(560px,100%);margin:0 auto;';
 
   const header = document.createElement('div');
   header.className = 'tv-camera-calendar-header';
   header.style.cssText =
-    'display:flex;align-items:center;justify-content:space-between;gap:8px;';
+    'display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;';
 
   const prevButton = document.createElement('button');
   prevButton.type = 'button';
@@ -135,7 +136,7 @@ export function mountPlaybackCalendar(
   const monthLabel = document.createElement('div');
   monthLabel.className = 'tv-camera-calendar-month';
   monthLabel.style.cssText =
-    'flex:1 1 0;text-align:center;font-size:14px;font-weight:700;color:#fff;';
+    'flex:1 1 0;text-align:center;font-size:14px;font-weight:700;color:#fff;line-height:20px;';
 
   const nextButton = document.createElement('button');
   nextButton.type = 'button';
@@ -152,7 +153,7 @@ export function mountPlaybackCalendar(
   const grid = document.createElement('div');
   grid.className = 'tv-camera-calendar-grid';
   grid.style.cssText =
-    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px 6px;min-height:0;';
+    'display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px 8px;min-height:0;';
 
   const timeRow = document.createElement('div');
   timeRow.className = 'tv-camera-calendar-times';
@@ -225,7 +226,7 @@ export function mountPlaybackCalendar(
 
     for (let i = 0; i < firstWeekday; i += 1) {
       const spacer = document.createElement('div');
-      spacer.style.minHeight = '28px';
+      spacer.style.minHeight = '26px';
       grid.appendChild(spacer);
     }
 
@@ -261,10 +262,10 @@ export function mountPlaybackCalendar(
 
       const dayWrap = document.createElement('div');
       dayWrap.style.cssText =
-        'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:28px;gap:2px;';
+        'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:26px;gap:0;';
 
       button.style.cssText = `
-        width:26px;height:26px;
+        width:24px;height:24px;
         border:1px solid ${borderColor};
         border-radius:7px;
         background:${background};
@@ -276,14 +277,7 @@ export function mountPlaybackCalendar(
         box-shadow:${isStart || isEnd ? '0 6px 18px rgba(37,99,235,0.42)' : 'none'};
       `;
 
-      if (!isStart && !isEnd && inRange) {
-        const dot = document.createElement('span');
-        dot.style.cssText =
-          'width:5px;height:5px;border-radius:999px;background:#3b82f6;box-shadow:0 0 8px rgba(59,130,246,0.5);';
-        dayWrap.append(button, dot);
-      } else {
-        dayWrap.append(button);
-      }
+      dayWrap.append(button);
 
       button.addEventListener('click', () => {
         const clicked = startOfDay(date);

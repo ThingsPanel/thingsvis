@@ -121,6 +121,22 @@ function makeButton(label: string, title: string, className: string): HTMLButton
   return button;
 }
 
+const iconSvg = {
+  play:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.75v12.5c0 .78.86 1.26 1.53.85l9.5-6.25a1 1 0 0 0 0-1.7l-9.5-6.25A1 1 0 0 0 8 5.75z"/></svg>',
+  pause:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13M16 5.5v13" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg>',
+  volume:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5A1.5 1.5 0 0 1 5.5 8h3.1l4.15-3.45A1.35 1.35 0 0 1 15 5.6v12.8a1.35 1.35 0 0 1-2.25 1.05L8.6 16H5.5A1.5 1.5 0 0 1 4 14.5v-5zm13.2-.95a1 1 0 0 1 1.4.18 5.47 5.47 0 0 1 0 6.54 1 1 0 1 1-1.58-1.22 3.47 3.47 0 0 0 0-4.1 1 1 0 0 1 .18-1.4z"/></svg>',
+  muted:
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5A1.5 1.5 0 0 1 5.5 8h3.1l4.15-3.45A1.35 1.35 0 0 1 15 5.6v12.8a1.35 1.35 0 0 1-2.25 1.05L8.6 16H5.5A1.5 1.5 0 0 1 4 14.5v-5zm13.3.1a1 1 0 0 1 1.4 0L20 10.9l1.3-1.3a1 1 0 1 1 1.4 1.4l-1.3 1.3 1.3 1.3a1 1 0 0 1-1.4 1.4L20 13.7 18.7 15a1 1 0 1 1-1.4-1.4l1.3-1.3-1.3-1.3a1 1 0 0 1 0-1.4z"/></svg>',
+} as const;
+
+function setIconButton(button: HTMLButtonElement, icon: keyof typeof iconSvg, title: string) {
+  button.innerHTML = iconSvg[icon];
+  button.title = title;
+}
+
 export const Main = defineWidget({
   id: metadata.id,
   name: metadata.name,
@@ -164,7 +180,7 @@ export const Main = defineWidget({
         radial-gradient(circle at 28% 18%, rgba(43, 78, 125, 0.2), transparent 34%),
         linear-gradient(135deg, #0b111b 0%, #090d14 48%, #070a10 100%);
       color: #f8fafc;
-      padding: 10px 24px 16px;
+      padding: 8px 14px 10px;
     `;
 
     const styleEl = document.createElement('style');
@@ -215,7 +231,7 @@ export const Main = defineWidget({
     const shell = document.createElement('div');
     shell.className = 'tv-camera-shell';
     shell.style.cssText =
-      'position:relative;flex:1 1 0;min-height:0;overflow:hidden;background:rgba(20,28,42,0.78);box-sizing:border-box;';
+      'position:relative;flex:1 1 0;min-height:0;overflow:hidden;background:transparent;box-sizing:border-box;';
     element.appendChild(shell);
 
     const liveHeader = document.createElement('div');
@@ -249,10 +265,10 @@ export const Main = defineWidget({
     videoStage.className = 'tv-camera-video-stage';
     videoStage.style.cssText = `
       position:absolute;
-      left:18px;
-      right:18px;
-      top:8px;
-      bottom:8px;
+      left:0;
+      right:0;
+      top:0;
+      bottom:0;
       overflow:hidden;
       border-radius:8px;
       background:#030712;
@@ -290,9 +306,9 @@ export const Main = defineWidget({
     liveChrome.className = 'tv-camera-live-chrome';
     liveChrome.style.cssText = `
       position:absolute;
-      left:18px;
-      right:18px;
-      bottom:12px;
+      left:0;
+      right:0;
+      bottom:0;
       z-index:3;
       display:none;
       align-items:center;
@@ -302,41 +318,25 @@ export const Main = defineWidget({
       box-sizing:border-box;
       color:#fff;
       background:linear-gradient(180deg, rgba(21,27,38,0.72), rgba(15,20,30,0.92));
-      border:1px solid rgba(255,255,255,0.08);
-      border-radius:0 0 8px 8px;
+      border:0;
+      border-radius:0;
       box-shadow:0 -16px 32px rgba(0,0,0,0.26);
     `;
     shell.appendChild(liveChrome);
 
-    const livePlayButton = makeButton('▮▮', 'Pause', 'tv-camera-live-chrome-icon');
+    const livePlayButton = makeButton('', 'Pause', 'tv-camera-live-chrome-icon');
     liveChrome.appendChild(livePlayButton);
 
-    const liveVolumeButton = makeButton('◖', 'Mute', 'tv-camera-live-chrome-icon');
+    const liveVolumeButton = makeButton('', 'Mute', 'tv-camera-live-chrome-icon');
     liveChrome.appendChild(liveVolumeButton);
 
-    const liveVolumeTrack = document.createElement('div');
+    const liveVolumeTrack = document.createElement('input');
+    liveVolumeTrack.type = 'range';
     liveVolumeTrack.className = 'tv-camera-live-volume-track';
-    const liveVolumeFill = document.createElement('span');
-    liveVolumeTrack.appendChild(liveVolumeFill);
+    liveVolumeTrack.min = '0';
+    liveVolumeTrack.max = '100';
+    liveVolumeTrack.value = '80';
     liveChrome.appendChild(liveVolumeTrack);
-
-    const liveTime = document.createElement('span');
-    liveTime.className = 'tv-camera-live-time';
-    liveTime.textContent = '00:12:36 / 01:00:00';
-    liveChrome.appendChild(liveTime);
-
-    const liveProgress = document.createElement('div');
-    liveProgress.className = 'tv-camera-live-progress';
-    const liveProgressFill = document.createElement('span');
-    const liveProgressKnob = document.createElement('i');
-    liveProgress.append(liveProgressFill, liveProgressKnob);
-    liveChrome.appendChild(liveProgress);
-
-    const liveQualityButton = makeButton('HD⌄', 'HD', 'tv-camera-live-chrome-select');
-    liveChrome.appendChild(liveQualityButton);
-
-    const liveSpeedButton = makeButton('1.0x⌄', 'Speed', 'tv-camera-live-chrome-select');
-    liveChrome.appendChild(liveSpeedButton);
 
     const liveFullscreenButton = makeButton('⛶', 'Fullscreen', 'tv-camera-live-chrome-icon');
     liveChrome.appendChild(liveFullscreenButton);
@@ -447,8 +447,7 @@ export const Main = defineWidget({
 
     const closePlaybackModal = () => {
       playbackPanelOpen = false;
-      renderPlaybackPanel();
-      updatePlaybackChrome();
+      renderControls();
     };
 
     const playbackModal = mountPlaybackModal(shell, {
@@ -474,8 +473,7 @@ export const Main = defineWidget({
     const openPlaybackSelector = () => {
       syncPlaybackInputs();
       playbackPanelOpen = true;
-      renderPlaybackPanel();
-      updatePlaybackChrome();
+      renderControls();
     };
 
     const syncVideoTransport = () => {
@@ -612,6 +610,13 @@ export const Main = defineWidget({
       syncLiveChrome();
     });
 
+    liveVolumeTrack.addEventListener('input', () => {
+      if (!internalVideo) return;
+      internalVideo.volume = Math.max(0, Math.min(1, Number(liveVolumeTrack.value) / 100));
+      internalVideo.muted = internalVideo.volume === 0;
+      syncLiveChrome();
+    });
+
     liveFullscreenButton.addEventListener('click', () => toggleFullscreen());
 
     const sendStop = () => {
@@ -642,22 +647,24 @@ export const Main = defineWidget({
       liveFullscreenButton.title = fullscreenTitle;
 
       if (!internalVideo) {
-        livePlayButton.textContent = '▮▮';
-        livePlayButton.title = messages.pause ?? 'Pause';
-        liveVolumeButton.textContent = '◖';
-        liveVolumeButton.title = messages.mute ?? 'Mute';
+        setIconButton(livePlayButton, 'pause', messages.pause ?? 'Pause');
+        setIconButton(liveVolumeButton, 'volume', messages.mute ?? 'Mute');
+        liveVolumeTrack.value = '80';
         return;
       }
 
-      livePlayButton.textContent = internalVideo.paused ? '▶' : '▮▮';
-      livePlayButton.title = internalVideo.paused
-        ? messages.play ?? 'Play'
-        : messages.pause ?? 'Pause';
-      liveVolumeButton.textContent = internalVideo.muted || internalVideo.volume === 0 ? '◌' : '◖';
-      liveVolumeButton.title =
-        internalVideo.muted || internalVideo.volume === 0
-          ? messages.unmute ?? 'Unmute'
-          : messages.mute ?? 'Mute';
+      setIconButton(
+        livePlayButton,
+        internalVideo.paused ? 'play' : 'pause',
+        internalVideo.paused ? messages.play ?? 'Play' : messages.pause ?? 'Pause',
+      );
+      const isMuted = internalVideo.muted || internalVideo.volume === 0;
+      setIconButton(
+        liveVolumeButton,
+        isMuted ? 'muted' : 'volume',
+        isMuted ? messages.unmute ?? 'Unmute' : messages.mute ?? 'Mute',
+      );
+      liveVolumeTrack.value = String(Math.round((isMuted ? 0 : internalVideo.volume) * 100));
     };
 
     const toggleFullscreen = () => {
@@ -764,19 +771,25 @@ export const Main = defineWidget({
     const renderControls = () => {
       const messages = getMessages(currentLocale).buttons;
       const isPlayback = isPlaybackActive();
+      const usePlaybackLayout = isPlayback || playbackPanelOpen;
       ptzPanel.innerHTML = '';
       actionPanel.innerHTML = '';
       const showToolbar = currentMode !== 'edit' && !playbackPanelOpen && !isPlayback;
       const showPtzPad = false;
+      element.style.padding = usePlaybackLayout ? '0' : '8px 14px 10px';
+      topBar.style.display = usePlaybackLayout ? 'none' : 'flex';
       toolbar.style.display = showToolbar ? 'flex' : 'none';
       statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
-      const showLiveTitle = !isPlayback && currentProps.showTitle;
+      const showLiveTitle = !usePlaybackLayout && currentProps.showTitle;
       liveHeader.style.display = showLiveTitle ? 'flex' : 'none';
-      videoStage.style.left = isPlayback ? '0' : '18px';
-      videoStage.style.right = isPlayback ? '0' : '18px';
-      videoStage.style.top = isPlayback ? '0' : showLiveTitle ? '52px' : '8px';
-      videoStage.style.bottom = isPlayback ? '0' : '8px';
-      videoStage.style.borderRadius = isPlayback ? '0' : '8px';
+      if (usePlaybackLayout) {
+        placeholder.style.display = 'none';
+      }
+      videoStage.style.left = '0';
+      videoStage.style.right = '0';
+      videoStage.style.top = usePlaybackLayout ? '0' : showLiveTitle ? '44px' : '0';
+      videoStage.style.bottom = '0';
+      videoStage.style.borderRadius = '0';
       syncLiveChrome();
       ptzPanel.style.display = showPtzPad && !isPlayback ? 'grid' : 'none';
       renderPlaybackPanel();
@@ -880,19 +893,14 @@ export const Main = defineWidget({
 
     const updateStyles = () => {
       titleEl.style.color = colors.fg;
-      const shellRadius =
-        currentProps.borderRadius === 0 ? 0 : Math.max(currentProps.borderRadius, 16);
-      shell.style.border =
-        currentProps.borderWidth > 0
-          ? `${currentProps.borderWidth}px solid ${currentProps.borderColor}`
-          : '1px solid rgba(255,255,255,0.08)';
-      shell.style.borderRadius = shellRadius === 0 ? '0' : `${shellRadius}px`;
+      shell.style.border = '0';
+      shell.style.borderRadius = '0';
       shell.style.boxSizing = 'border-box';
-      shell.style.boxShadow =
-        '0 18px 48px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.04)';
+      shell.style.boxShadow = 'none';
+      const resolvedObjectFit = currentProps.objectFit || 'cover';
       styleEl.textContent = `
         [data-thingsvis-overlay="media-camera-control"] video-rtc video {
-          object-fit: ${currentProps.objectFit} !important;
+          object-fit: ${resolvedObjectFit} !important;
         }
         [data-thingsvis-overlay="media-camera-control"] video-rtc video::-webkit-media-controls {
           display: none !important;
@@ -908,53 +916,60 @@ export const Main = defineWidget({
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          padding: 4px 10px;
-          border-radius: 999px;
+          min-height: 22px;
+          padding: 0;
+          border-radius: 0;
           font-size: 12px;
-          line-height: 18px;
-          color: rgba(255,255,255,0.88);
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.1);
+          font-weight: 600;
+          line-height: 1;
+          color: rgba(255,255,255,0.74);
+          background: transparent;
+          border: 0;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-online.is-online {
-          color: #4ade80;
-          background: rgba(34, 197, 94, 0.18);
-          border-color: rgba(34, 197, 94, 0.35);
+          color: #35df72;
+          background: transparent;
+          border-color: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-online.is-offline {
-          color: rgba(255,255,255,0.55);
+          color: rgba(255,255,255,0.68);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-recording.is-recording {
           color: #fff;
         }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-rec-dot {
-          width: 8px;
-          height: 8px;
-          border-radius: 999px;
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-mode .tv-camera-status-dot {
+          background: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.16), 0 0 14px rgba(59,130,246,0.48);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-online.is-online .tv-camera-status-dot {
+          background: #4ade80;
+          box-shadow: 0 0 0 3px rgba(74,222,128,0.14), 0 0 14px rgba(74,222,128,0.48);
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-chip-recording.is-recording .tv-camera-status-dot {
           background: #ef4444;
-          display: inline-block;
+          box-shadow: 0 0 0 3px rgba(239,68,68,0.15), 0 0 14px rgba(239,68,68,0.58);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-action {
           display: inline-flex;
           align-items: center;
           gap: 6px;
-          height: 32px;
-          padding: 0 12px;
-          border-radius: 8px;
-          border: 1px solid rgba(255,255,255,0.14);
+          height: 28px;
+          padding: 0 8px;
+          border-radius: 0;
+          border: 0;
           color: #fff;
-          background: rgba(0,0,0,0.45);
+          background: transparent;
           cursor: pointer;
-          font-size: 12px;
+          font-size: 11px;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-action:hover {
-          background: rgba(255,255,255,0.1);
+          background: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn {
-          width: 32px;
-          height: 32px;
+          width: 26px;
+          height: 26px;
           border: none;
-          border-radius: 8px;
+          border-radius: 0;
           color: #fff;
           background: transparent;
           cursor: pointer;
@@ -962,8 +977,15 @@ export const Main = defineWidget({
           line-height: 1;
           padding: 0;
         }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn svg {
+          width: 18px;
+          height: 18px;
+          display: block;
+          margin: 0 auto;
+          fill: currentColor;
+        }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn:hover {
-          background: rgba(255,255,255,0.08);
+          background: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-icon-btn:disabled,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-select:disabled,
@@ -981,44 +1003,45 @@ export const Main = defineWidget({
           accent-color: #2d7cf6;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-chrome-select {
-          height: 28px;
-          padding: 0 8px;
-          border-radius: 6px;
-          border: 1px solid rgba(255,255,255,0.14);
+          height: 26px;
+          padding: 0 4px;
+          border-radius: 0;
+          border: 0;
           color: #fff;
-          background: rgba(0,0,0,0.45);
+          background: transparent;
           font-size: 12px;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn {
-          height: 40px;
-          min-width: 96px;
-          padding: 0 18px;
+          height: 32px;
+          min-width: 76px;
+          padding: 0 12px;
           border-radius: 7px;
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 600;
           cursor: pointer;
-          border: 1px solid rgba(255,255,255,0.14);
+          border: 1px solid rgba(255,255,255,0.16);
+          background: rgba(255,255,255,0.08);
           transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-secondary {
           color: rgba(255,255,255,0.86);
           background: rgba(255,255,255,0.08);
-          border-color: rgba(255,255,255,0.2);
+          border-color: rgba(255,255,255,0.18);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-secondary:hover {
           color: #fff;
           background: rgba(255,255,255,0.14);
-          border-color: rgba(255,255,255,0.34);
+          border-color: rgba(255,255,255,0.28);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-primary {
           color: #fff;
           background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
-          border-color: rgba(96,165,250,0.8);
-          box-shadow: 0 10px 28px rgba(37,99,235,0.36);
+          border-color: rgba(96,165,250,0.78);
+          box-shadow: 0 8px 20px rgba(37,99,235,0.28);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn-primary:hover {
           background: linear-gradient(180deg, #60a5fa 0%, #2f7dff 100%);
-          box-shadow: 0 12px 34px rgba(47,125,255,0.46);
+          box-shadow: 0 10px 24px rgba(47,125,255,0.36);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-btn:active {
           transform: translateY(1px);
@@ -1065,8 +1088,8 @@ export const Main = defineWidget({
           cursor: pointer;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-close:hover {
-          background: rgba(255,255,255,0.14);
-          border-color: rgba(255,255,255,0.3);
+          background: transparent;
+          border-color: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-track::before {
           content: "";
@@ -1099,122 +1122,73 @@ export const Main = defineWidget({
           color: rgba(255,255,255,0.96);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-video-stage {
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+          box-shadow: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-icon {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 30px;
-          height: 30px;
+          width: 26px;
+          height: 26px;
           flex: 0 0 auto;
           padding: 0;
           border: none;
-          border-radius: 8px;
+          border-radius: 0;
           color: #fff;
           background: transparent;
           cursor: pointer;
-          font-size: 20px;
+          font-size: 18px;
           font-weight: 800;
           line-height: 1;
         }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-icon svg {
+          width: 18px;
+          height: 18px;
+          display: block;
+          fill: currentColor;
+        }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-icon:hover {
-          background: rgba(255,255,255,0.08);
+          background: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track {
-          position: relative;
-          width: 130px;
-          max-width: 14vw;
-          height: 6px;
-          flex: 0 1 130px;
-          border-radius: 999px;
-          background: rgba(148,163,184,0.28);
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track span {
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 76%;
-          border-radius: inherit;
-          background: #2f7dff;
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track::after {
-          content: "";
-          position: absolute;
-          left: 76%;
-          top: 50%;
-          width: 14px;
-          height: 14px;
-          border-radius: 999px;
-          background: #fff;
-          transform: translate(-50%, -50%);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.38);
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-time {
-          flex: 0 0 auto;
-          color: rgba(255,255,255,0.78);
-          font-size: 16px;
-          font-weight: 600;
-          white-space: nowrap;
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-progress {
-          position: relative;
-          height: 6px;
-          flex: 1 1 220px;
-          min-width: 120px;
-          border-radius: 999px;
-          background: rgba(148,163,184,0.22);
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-progress span {
-          position: absolute;
-          left: 0;
-          top: 0;
-          bottom: 0;
-          width: 34%;
-          border-radius: inherit;
-          background: #2f7dff;
-        }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-progress i {
-          position: absolute;
-          left: 34%;
-          top: 50%;
-          width: 16px;
-          height: 16px;
-          border-radius: 999px;
-          background: #2f7dff;
-          transform: translate(-50%, -50%);
-          box-shadow: 0 0 0 3px rgba(47,125,255,0.18);
+          width: 86px;
+          max-width: 12vw;
+          height: 4px;
+          flex: 0 1 86px;
+          margin: 0;
+          accent-color: #2f7dff;
+          background: transparent;
+          cursor: pointer;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-select {
           flex: 0 0 auto;
-          min-width: 64px;
-          height: 32px;
-          padding: 0 8px;
+          min-width: 46px;
+          height: 26px;
+          padding: 0 4px;
           border: none;
-          border-radius: 7px;
+          border-radius: 0;
           color: rgba(255,255,255,0.84);
           background: transparent;
           cursor: pointer;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
           line-height: 1;
           white-space: nowrap;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-select:hover {
-          background: rgba(255,255,255,0.08);
+          background: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-placeholder {
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+          box-shadow: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-placeholder-text {
           max-width: min(360px, 86%);
-          padding: 12px 16px;
-          border-radius: 10px;
+          padding: 0;
+          border-radius: 0;
           color: rgba(255,255,255,0.82);
-          background: rgba(0,0,0,0.34);
-          border: 1px solid rgba(255,255,255,0.1);
-          box-shadow: 0 14px 36px rgba(0,0,0,0.28);
+          background: transparent;
+          border: 0;
+          box-shadow: none;
           font-size: 13px;
           font-weight: 600;
           line-height: 1.45;
@@ -1264,14 +1238,14 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
-          height: 38px;
-          min-width: 38px;
-          border: 1px solid rgba(255,255,255,0.1);
-          border-radius: 10px;
+          height: 30px;
+          min-width: 30px;
+          border: 0;
+          border-radius: 0;
           color: rgba(255,255,255,0.86);
-          background: rgba(13,18,29,0.38);
+          background: transparent;
           cursor: pointer;
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           line-height: 1;
           box-sizing: border-box;
@@ -1280,8 +1254,8 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
           width: auto;
-          max-width: 116px;
-          padding: 0 14px;
+          max-width: 96px;
+          padding: 0 8px;
           white-space: nowrap;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-datetime-input {
@@ -1300,20 +1274,20 @@ export const Main = defineWidget({
           border-color: rgba(64, 158, 255, 0.55);
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-nav {
-          width: 32px;
-          height: 32px;
-          border: 1px solid rgba(255,255,255,0.12);
-          border-radius: 8px;
+          width: 22px;
+          height: 22px;
+          border: 0;
+          border-radius: 0;
           color: #fff;
-          background: rgba(255,255,255,0.08);
+          background: transparent;
           cursor: pointer;
-          font-size: 18px;
+          font-size: 15px;
           line-height: 1;
           padding: 0;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-nav:hover {
-          background: rgba(255,255,255,0.16);
-          border-color: rgba(255,255,255,0.3);
+          background: transparent;
+          border-color: transparent;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-calendar-day:hover {
           border-color: rgba(96, 165, 250, 0.82) !important;
@@ -1321,19 +1295,19 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:hover,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:hover {
-          background: rgba(30,41,59,0.64);
-          border-color: rgba(96,165,250,0.3);
+          background: transparent;
+          border-color: transparent;
           box-shadow: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-control-button:active,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button:active {
           transform: translateY(1px);
-          background: rgba(37, 99, 235, 0.45);
-          border-color: rgba(96, 165, 250, 0.68);
+          background: transparent;
+          border-color: transparent;
         }
         @media (max-width: 720px) {
           [data-thingsvis-overlay="media-camera-control"] {
-            padding: 12px !important;
+            padding: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar {
             align-items: flex-start !important;
@@ -1350,10 +1324,10 @@ export const Main = defineWidget({
             gap: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
-            height: 36px !important;
-            min-width: 36px !important;
-            padding: 0 12px !important;
-            font-size: 13px !important;
+            height: 30px !important;
+            min-width: 30px !important;
+            padding: 0 8px !important;
+            font-size: 12px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-header {
             height: 44px !important;
@@ -1361,33 +1335,37 @@ export const Main = defineWidget({
             font-size: 14px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-video-stage {
-            left: 10px !important;
-            right: 10px !important;
-            top: 8px !important;
-            bottom: 8px !important;
+            left: 0 !important;
+            right: 0 !important;
+            top: 0 !important;
+            bottom: 0 !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome {
-            left: 10px !important;
-            right: 10px !important;
-            bottom: 8px !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
             height: 48px !important;
-            gap: 8px !important;
-            padding: 0 10px !important;
+            gap: 6px !important;
+            padding: 0 8px !important;
           }
-          [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track,
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-time,
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome-select {
             display: none !important;
           }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-volume-track {
+            width: 64px !important;
+            max-width: 18vw !important;
+            flex-basis: 64px !important;
+          }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal {
-            padding: 6px !important;
+            padding: 0 !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-header {
-            padding: 12px 14px 8px !important;
+            padding: 4px 12px 0 !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-body {
-            padding: 0 14px 8px !important;
-            overflow: hidden !important;
+            padding: 0 12px !important;
+            overflow: auto !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-time-section,
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-footer {
@@ -1395,11 +1373,13 @@ export const Main = defineWidget({
             padding-right: 14px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal-footer {
-            align-items: stretch !important;
-            flex-direction: column !important;
+            align-items: center !important;
+            flex-direction: row !important;
+            padding-top: 4px !important;
+            padding-bottom: 5px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-selection {
-            font-size: 12px !important;
+            font-size: 10px !important;
           }
         }
       `;
@@ -1431,7 +1411,7 @@ export const Main = defineWidget({
 
       videoEl.mode = currentProps.streamMode;
       videoEl.visibilityThreshold = currentProps.visibilityThreshold;
-      videoEl.style.objectFit = currentProps.objectFit;
+      videoEl.style.objectFit = currentProps.objectFit || 'cover';
 
       if (!normalizedSrc) {
         stopReadyPoll();
@@ -1440,6 +1420,7 @@ export const Main = defineWidget({
         videoEl.removeAttribute('src');
         updatePlaceholder('empty');
         if (isPlaybackActive()) {
+          placeholder.style.display = 'none';
           placeholderText.textContent = currentLocale?.startsWith('zh')
             ? '等待平台返回回放流'
             : 'Waiting for playback stream';
@@ -1452,6 +1433,7 @@ export const Main = defineWidget({
         currentSrc = normalizedSrc;
         updatePlaceholder('loading');
         if (isPlaybackActive()) {
+          placeholder.style.display = 'none';
           placeholderText.textContent = currentLocale?.startsWith('zh')
             ? '正在连接回放视频'
             : 'Connecting playback video';
