@@ -111,7 +111,7 @@ function buildCurrentProjectForHostSave(): ProjectFile {
     getEmbedSessionSnapshot(dashboardId)?.project ?? getEmbedSessionSnapshot()?.project;
   const nodes = getOrderedNodeSchemas();
   const now = Date.now();
-  const snapshotCanvas = snapshot?.canvas ?? {};
+  const snapshotCanvas = (snapshot?.canvas ?? {}) as Partial<ProjectFile['canvas']>;
 
   return {
     meta: {

@@ -77,7 +77,12 @@ describe('hostSavePayload', () => {
       {
         id: '__platform___template____',
         type: 'PLATFORM_FIELD',
-        config: { source: 'platform', requestedFields: [] },
+        config: {
+          source: 'platform',
+          fieldMappings: {},
+          bufferSize: 0,
+          requestedFields: ['temperature'],
+        },
       },
       {
         id: 'custom_rest',
