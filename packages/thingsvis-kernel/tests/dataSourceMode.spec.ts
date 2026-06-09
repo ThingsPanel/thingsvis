@@ -64,4 +64,71 @@ describe('DataSourceManager trigger mode', () => {
     expect(manager.getResolvedMode('write_command')).toBe('manual');
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('can register auto REST sources without waiting for the initial fetch', async () => {
+    const fetchMock = vi.fn(
+      () => new Promise<Response>(() => {
+        // Keep request pending to model a slow external data source during editor bootstrap.
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const manager = new DataSourceManager();
+    const store = createKernelStore();
+    (manager as any).store = store;
+
+    await expect(
+      manager.registerDataSource(
+        {
+          id: 'slow_query',
+          name: 'Slow Query',
+          type: 'REST',
+          config: {
+            url: 'https://example.com/api/slow',
+            method: 'GET',
+            pollingInterval: 0,
+            timeout: 30,
+          },
+        } as DataSource,
+        false,
+        { blocking: false },
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(store.getState().dataSources.slow_query?.status).toBe('loading');
+  });
+
+  it('records background activation failures without rejecting non-blocking registration', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('network down');
+      }),
+    );
+    const manager = new DataSourceManager();
+    const store = createKernelStore();
+    (manager as any).store = store;
+
+    await manager.registerDataSource(
+      {
+        id: 'failed_query',
+        name: 'Failed Query',
+        type: 'REST',
+        config: {
+          url: 'https://example.com/api/fail',
+          method: 'GET',
+          pollingInterval: 0,
+          timeout: 30,
+        },
+      } as DataSource,
+      false,
+      { blocking: false },
+    );
+
+    await vi.waitFor(() => {
+      expect(store.getState().dataSources.failed_query?.status).toBe('error');
+    });
+    expect(store.getState().dataSources.failed_query?.error).toContain('network down');
+  });
 });

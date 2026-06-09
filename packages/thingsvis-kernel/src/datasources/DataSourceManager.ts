@@ -15,6 +15,15 @@ type AdapterConstructor = new () => BaseAdapter;
 
 const STORAGE_KEY_PREFIX = 'thingsvis_ds_';
 
+export type RegisterDataSourceOptions = {
+  /**
+   * When false, registration stores the config immediately and activates the
+   * adapter in the background. This is intended for editor bootstrap so a slow
+   * or failing external data source cannot block page initialization.
+   */
+  blocking?: boolean;
+};
+
 /**
  * Maps legacy or variant type strings to canonical DataSourceType values.
  * Handles case-insensitive matching and alternative names.
@@ -266,7 +275,11 @@ export class DataSourceManager {
    *               In cloud mode → saves to backend API only.
    *               In local mode → saves to IndexedDB only.
    */
-  public async registerDataSource(config: DataSource, persist: boolean = true): Promise<void> {
+  public async registerDataSource(
+    config: DataSource,
+    persist: boolean = true,
+    options: RegisterDataSourceOptions = {},
+  ): Promise<void> {
     // Normalize type to canonical uppercase form (handles legacy lowercase types)
     const normalizedType = normalizeDataSourceType(config.type);
     if (normalizedType !== config.type) {
@@ -356,43 +369,57 @@ export class DataSourceManager {
       }
     });
 
-    const currentVariableValues = this.store?.getState().variableValues;
-    if (currentVariableValues) {
-      await adapter.refreshWithVariables(currentVariableValues);
-    }
+    const activateDataSource = async (): Promise<void> => {
+      const currentVariableValues = this.store?.getState().variableValues;
+      if (currentVariableValues) {
+        await adapter.refreshWithVariables(currentVariableValues);
+      }
 
-    // Determine trigger mode: 'manual' data sources only prepare (no fetch/polling on load)
-    const effectiveMode = this.resolveEffectiveMode(config);
-    this.resolvedModes.set(config.id, effectiveMode);
+      // Determine trigger mode: 'manual' data sources only prepare (no fetch/polling on load)
+      const effectiveMode = this.resolveEffectiveMode(config);
+      this.resolvedModes.set(config.id, effectiveMode);
 
-    try {
-      if (effectiveMode === 'manual') {
-        await adapter.prepare(config);
+      try {
+        if (effectiveMode === 'manual') {
+          await adapter.prepare(config);
+          if (shouldWriteLifecycleState) {
+            this.store?.getState().setDataSourceState(config.id, {
+              status: 'idle',
+              lastUpdated: Date.now(),
+            });
+          }
+        } else {
+          await adapter.connect(config);
+          if (shouldWriteLifecycleState) {
+            const currentStatus = this.store?.getState().dataSources?.[config.id]?.status;
+            if (currentStatus !== 'error') {
+              this.store?.getState().setDataSourceState(config.id, {
+                status: 'connected',
+                lastUpdated: Date.now(),
+              });
+            }
+          }
+        }
+      } catch (error) {
         if (shouldWriteLifecycleState) {
           this.store?.getState().setDataSourceState(config.id, {
-            status: 'idle',
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error),
             lastUpdated: Date.now(),
           });
         }
-      } else {
-        await adapter.connect(config);
-        if (shouldWriteLifecycleState) {
-          this.store?.getState().setDataSourceState(config.id, {
-            status: 'connected',
-            lastUpdated: Date.now(),
-          });
-        }
+        throw error;
       }
-    } catch (error) {
-      if (shouldWriteLifecycleState) {
-        this.store?.getState().setDataSourceState(config.id, {
-          status: 'error',
-          error: error instanceof Error ? error.message : String(error),
-          lastUpdated: Date.now(),
-        });
-      }
-      throw error;
+    };
+
+    if (options.blocking === false) {
+      void activateDataSource().catch((error) => {
+        console.warn(`[DataSourceManager] Background activation failed for "${config.id}":`, error);
+      });
+      return;
     }
+
+    await activateDataSource();
   }
 
   /**

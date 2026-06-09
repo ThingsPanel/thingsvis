@@ -805,7 +805,12 @@ export function useProjectBootstrap({
       if (mergedDataSources.length > 0) {
         for (const ds of mergedDataSources) {
           try {
-            await dataSourceManager.registerDataSource(ds as any, false);
+            const shouldBlockRegistration =
+              String((ds as Record<string, unknown>)?.type ?? '').toUpperCase() ===
+              'PLATFORM_FIELD';
+            await dataSourceManager.registerDataSource(ds as any, false, {
+              blocking: shouldBlockRegistration,
+            });
           } catch (e) {
             console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e);
           }
