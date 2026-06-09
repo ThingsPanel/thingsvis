@@ -1,7 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import { logger } from './logger';
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient;
+  dbStartupPromise?: Promise<void>;
+};
 
 export const prisma =
   globalForPrisma.prisma ||
@@ -26,7 +29,6 @@ if (!globalForPrisma.prisma) {
   });
 }
 
-// Startup diagnostic - log environment and test database connection
 async function startupDiagnostic() {
   logger.info('');
   logger.info('ThingsVis Server Startup Diagnostic');
@@ -40,29 +42,41 @@ async function startupDiagnostic() {
   logger.info('[ENV] NODE_ENV: ' + (process.env.NODE_ENV || 'NOT SET'));
   logger.info('[ENV] PORT: ' + (process.env.PORT || 'NOT SET'));
 
-  // Test database connection
   const startTime = Date.now();
+
   try {
     logger.debug('[DB] Testing database connection...');
     await prisma.$connect();
     const elapsed = Date.now() - startTime;
     logger.info('[DB] Database connected successfully in ' + elapsed + 'ms');
-    await prisma.$disconnect();
+    logger.info('----------------------------------------');
   } catch (error) {
     const elapsed = Date.now() - startTime;
-    logger.error({
-      msg: '[DB] Database connection FAILED',
-      error: error instanceof Error ? error.message : String(error),
+    const message = error instanceof Error ? error.message : String(error);
+
+    logger.fatal({
+      msg: '[DB] Database connection FAILED - refusing to start server',
+      error: message,
       elapsed,
     });
+    logger.info('----------------------------------------');
+
+    throw new Error(message);
+  }
+}
+
+export function ensureDatabaseStartup(): Promise<void> {
+  if (process.env.NODE_ENV === 'test') {
+    return Promise.resolve();
   }
 
-  logger.info('----------------------------------------');
+  if (!globalForPrisma.dbStartupPromise) {
+    globalForPrisma.dbStartupPromise = startupDiagnostic();
+  }
+
+  return globalForPrisma.dbStartupPromise;
 }
 
-// Run diagnostic on module load (only in non-test environment)
-if (process.env.NODE_ENV !== 'test') {
-  startupDiagnostic();
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

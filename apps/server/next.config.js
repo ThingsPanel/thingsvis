@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
+const isProduction = process.env.NODE_ENV === 'production';
+
 const nextConfig = {
-  output: 'standalone',
+  ...(isProduction ? { output: 'standalone' } : {}),
   experimental: {
     // Uploads allow model files up to 1000MB; leave room for multipart form overhead.
     middlewareClientMaxBodySize: '1000mb',
