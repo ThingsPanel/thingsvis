@@ -6,7 +6,7 @@ const isDev = process.env.NODE_ENV !== 'production';
 
 const logLevel = process.env.LOG_LEVEL || (isDev ? DEV_LOG_LEVEL : PROD_LOG_LEVEL);
 
-export const logger = pino({
+const loggerOptions: pino.LoggerOptions = {
   level: logLevel,
   formatters: {
     level: (label) => {
@@ -20,7 +20,10 @@ export const logger = pino({
   serializers: {
     err: pino.stdSerializers.err,
   },
-  transport: {
+};
+
+if (isDev) {
+  loggerOptions.transport = {
     target: 'pino-pretty',
     options: {
       colorize: true,
@@ -28,5 +31,7 @@ export const logger = pino({
       ignore: 'pid,hostname,service',
       singleLine: true,
     },
-  },
-});
+  };
+}
+
+export const logger = pino(loggerOptions);
