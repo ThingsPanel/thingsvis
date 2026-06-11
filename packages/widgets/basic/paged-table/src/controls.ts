@@ -1,36 +1,41 @@
 import { createControlPanel } from '@thingsvis/widget-sdk';
 
-const W = 'widgets.basic-table';
+const W = 'widgets.basic-paged-table';
 
 export const controls = createControlPanel()
-  // Data Group
   .addGroup('Data', (b) => {
-    b.addJsonEditor('columns', { 
+    b.addJsonEditor('columns', {
       label: `${W}.columns`,
-      placeholder: '[{"key":"name","title":"Name"}]',
-      binding: { enabled: true, modes: ['static', 'field', 'expr'] }
+      placeholder: '[{"key":"deviceName","title":"设备名称"}]',
+      binding: { enabled: false, modes: ['static'] },
     });
-    b.addJsonEditor('data', { 
-      label: `${W}.data`,
-      placeholder: '[{"name":"Item 1"}]',
-      binding: { enabled: true, modes: ['static', 'field', 'expr'] }
+    b.addSlider('pageSize', {
+      label: `${W}.pageSize`,
+      min: 5,
+      max: 50,
+      step: 5,
+      default: 10,
     });
+    b.addTextInput('groupId', { label: `${W}.groupId`, placeholder: '__all__' });
+    b.addTextInput('keyword', { label: `${W}.keyword`, placeholder: '' });
+    b.addTextInput('deviceConfigId', { label: `${W}.deviceConfigId`, placeholder: '' });
   }, { label: `${W}.groupData` })
 
-  // Title Group
   .addGroup('Title', (b) => {
-    b.addSwitch('showTitle', { label: '显示标题', binding: true });
-    b.addTextInput('title', { label: '组件标题', binding: true });
+    b.addSwitch('showTitle', { label: '显示标题' });
+    b.addTextInput('title', { label: '组件标题' });
   }, { label: '标题' })
-  
-  // Header Group
+
   .addGroup('Header', (b) => {
     b.addSwitch('showHeader', { label: `${W}.showHeader` });
     b.addColorPicker('headerColor', { label: `${W}.headerColor` });
     b.addColorPicker('headerBgColor', { label: `${W}.headerBgColor` });
-    b.addSlider('headerFontSize', { 
+    b.addSlider('headerFontSize', {
       label: `${W}.headerFontSize`,
-      min: 10, max: 40, step: 1, default: 14 
+      min: 10,
+      max: 40,
+      step: 1,
+      default: 14,
     });
     b.addSelect('headerWeight', {
       label: `${W}.headerWeight`,
@@ -43,12 +48,14 @@ export const controls = createControlPanel()
     });
   }, { label: `${W}.groupHeader` })
 
-  // Body Group
   .addGroup('Body', (b) => {
     b.addColorPicker('bodyColor', { label: `${W}.bodyColor` });
-    b.addSlider('bodyFontSize', { 
+    b.addSlider('bodyFontSize', {
       label: `${W}.bodyFontSize`,
-      min: 10, max: 40, step: 1, default: 13 
+      min: 10,
+      max: 40,
+      step: 1,
+      default: 13,
     });
     b.addSelect('bodyWeight', {
       label: `${W}.bodyWeight`,
@@ -62,16 +69,18 @@ export const controls = createControlPanel()
     b.addSwitch('showStripe', { label: `${W}.showStripe` });
     b.addColorPicker('stripeColor', { label: `${W}.stripeColor` });
     b.addSwitch('showBorder', { label: `${W}.showBorder` });
-    b.addColorPicker('rowBorderColor', { label: `${W}.rowBorderColor`, binding: true });
+    b.addColorPicker('rowBorderColor', { label: `${W}.rowBorderColor` });
   }, { label: `${W}.groupBody` })
 
-  // Density Group
   .addGroup('Density', (b) => {
-    b.addSlider('cellPadding', { 
+    b.addSlider('cellPadding', {
       label: `${W}.cellPadding`,
-      min: 0, max: 40, step: 1, default: 10 
+      min: 0,
+      max: 40,
+      step: 1,
+      default: 10,
     });
     b.addSwitch('scrollEnabled', { label: `${W}.scrollEnabled` });
   }, { label: `${W}.groupDensity` })
-  
+
   .build();

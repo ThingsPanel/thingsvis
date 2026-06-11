@@ -1,14 +1,17 @@
 {
     "editor": {
         "widgets": {
-            "basic-table": {
-                "name": "Basic Table",
-                "groupData": "Data",
+            "basic-paged-table": {
+                "name": "Paged Table",
+                "groupData": "Data & Pagination",
                 "groupHeader": "Header Styles",
                 "groupBody": "Body Styles",
                 "groupDensity": "Density",
                 "columns": "Column Config",
-                "data": "Table Data",
+                "pageSize": "Page Size",
+                "groupId": "Device Group ID",
+                "keyword": "Search Keyword",
+                "deviceConfigId": "Device Template ID",
                 "showHeader": "Show Header",
                 "headerColor": "Header Text Color",
                 "headerBgColor": "Header Background Color",
@@ -22,12 +25,11 @@
                 "showBorder": "Show Border",
                 "rowBorderColor": "Row Border Color",
                 "cellPadding": "Cell Padding",
-                "scrollEnabled": "Overflow Scroll",
+                "scrollEnabled": "Horizontal Overflow Scroll",
                 "weightNormal": "Normal (400)",
                 "weightMedium": "Medium (500)",
                 "weightSemibold": "Semibold (600)",
-                "weightBold": "Bold (700)",
-                "colorAuto": "Auto Theme"
+                "weightBold": "Bold (700)"
             }
         }
     }

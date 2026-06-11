@@ -450,7 +450,15 @@ export default function PreviewPage() {
       */}
       <ErrorBoundary>
         {canvasMode === 'grid' ? (
-          <div style={{ width: '100%', minHeight: '100%', padding: 16, boxSizing: 'border-box' }}>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              minHeight: '100%',
+              padding: 16,
+              boxSizing: 'border-box',
+            }}
+          >
             <GridCanvas
               store={store as any}
               resolveWidget={resolveWidget as any}

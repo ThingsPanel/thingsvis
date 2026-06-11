@@ -70,7 +70,7 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
     columns, data, 
     showHeader, headerFontSize, headerWeight, headerColor, headerBgColor,
     bodyFontSize, bodyWeight, bodyColor, showBorder, rowBorderColor, showStripe, stripeColor,
-    cellPadding
+    cellPadding, scrollEnabled
   } = props;
 
   // Legacy: `borderColor` was filtered out of the props panel (BaseStyle collision); accept old saves.
@@ -121,14 +121,13 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
     ">${escapeHtml(props.title)}</div>`;
   }
 
-  // table-layout: fixed 和 height: 100% 组合使其行高均匀撑满父级
-  // 外加一层 div 以免被父级的 display: flex 压扁
-  tableHtml += `<div style="flex: 1 1 0; overflow: hidden;"><table style="
+  const scrollOverflow = scrollEnabled !== false ? 'auto' : 'hidden';
+  // 滚动容器：内容超出组件区域时横/竖滚动；关闭时裁切
+  tableHtml += `<div style="flex: 1 1 0; min-height: 0; min-width: 0; overflow: ${scrollOverflow}; -webkit-overflow-scrolling: touch;"><table style="
     width: 100%;
-    height: 100%;
-    table-layout: fixed;
     border-collapse: collapse;
     margin: 0;
+    table-layout: auto;
   ">`;
   
   // Header

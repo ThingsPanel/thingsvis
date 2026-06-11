@@ -236,6 +236,9 @@ export default function EmbedPage() {
   });
   const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
   const showPreviewToolbar = usePreviewToolbarEnabled();
+  const [isPreviewHovered, setIsPreviewHovered] = useState(false);
+  const [isScaleMenuOpen, setIsScaleMenuOpen] = useState(false);
+  const isPreviewToolbarVisible = isPreviewHovered || isScaleMenuOpen;
   const cleanupRef = useRef<Array<() => void>>([]);
   const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
@@ -1112,9 +1115,17 @@ export default function EmbedPage() {
         backgroundSize: pageBackground.size || 'cover',
         backgroundRepeat: pageBackground.repeat || 'no-repeat',
       }}
+      onMouseEnter={() => setIsPreviewHovered(true)}
+      onMouseLeave={() => setIsPreviewHovered(false)}
     >
       {showPreviewToolbar ? (
-        <div className="absolute top-4 right-4 z-50 pointer-events-auto">
+        <div
+          className={`absolute top-4 right-4 z-50 ${
+            isPreviewToolbarVisible
+              ? 'visible opacity-100 pointer-events-auto'
+              : 'invisible opacity-0 pointer-events-none'
+          }`}
+        >
           <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
             <Button
               variant="ghost"
@@ -1146,6 +1157,8 @@ export default function EmbedPage() {
             ) : (
               <Select
                 value={scaleMode}
+                open={isScaleMenuOpen}
+                onOpenChange={setIsScaleMenuOpen}
                 onValueChange={(v: string) => setScaleMode(v as PreviewScaleMode)}
               >
                 <SelectTrigger className="w-auto min-w-[140px] px-2 h-8 bg-transparent border-0 ring-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none shadow-none text-xs">
@@ -1179,6 +1192,7 @@ export default function EmbedPage() {
           <div
             style={{
               width: '100%',
+              height: '100%',
               minHeight: '100%',
               padding: GRID_CANVAS_PADDING,
               boxSizing: 'border-box',

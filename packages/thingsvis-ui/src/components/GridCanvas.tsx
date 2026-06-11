@@ -67,6 +67,17 @@ export interface GridCanvasProps {
 /** Inset applied to the editor scroll-container so element borders/shadows are never clipped by overflow:hidden. */
 const CANVAS_EDITOR_PADDING = 16;
 
+export function resolveGridCanvasMinHeight(options: {
+    contentHeight: number;
+    explicitHeight?: number;
+    containerHeight: number;
+    fullWidth: boolean;
+}): number {
+    if (options.explicitHeight) return options.explicitHeight;
+    const viewportFloor = options.fullWidth ? options.containerHeight : 0;
+    return Math.max(options.contentHeight, viewportFloor, 300);
+}
+
 // ─── Default grid settings (mirrors GridSettingsSchema defaults) ──────────────
 
 const DEFAULT_SETTINGS: GridSettings = {
@@ -414,7 +425,12 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const effectiveTotalHeight =
         responsiveTotalRows * (effectiveSettings.rowHeight + effectiveSettings.gap) +
         effectiveSettings.gap;
-    const canvasMinH = height ? `${height}px` : `${Math.max(effectiveTotalHeight, 300)}px`;
+    const canvasMinH = `${resolveGridCanvasMinHeight({
+        contentHeight: effectiveTotalHeight,
+        explicitHeight: height,
+        containerHeight: canvasDimensions.height,
+        fullWidth,
+    })}px`;
 
     const innerCanvas = (
         <div

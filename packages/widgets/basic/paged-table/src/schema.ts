@@ -1,51 +1,36 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-  /** Column definitions: [{ key: 'name', title: 'Name', align: 'left' }] */
   columns: z.array(z.any()).default([
-    { key: 'name', title: '设备名称', align: 'left' },
-    { key: 'status', title: '运行状态', align: 'center' },
-    { key: 'value', title: '系统负载', align: 'right' }
+    { key: 'deviceName', title: '设备名称', align: 'left' },
+    { key: 'isOnline', title: '运行状态', align: 'center' },
+    { key: 'groupName', title: '设备分组', align: 'left' },
   ]).describe('props.tableColumns'),
 
-  /** Table data array */
-  data: z.array(z.any()).default([
-    { name: '1号冷水机组', status: '在线', value: '78.5%' },
-    { name: '2号冷却塔', status: '离线', value: '0%' },
-    { name: '3号空压机', status: '运行中', value: '87.2%' },
-    { name: '新风机组A', status: '在线', value: '42.1%' },
-    { name: '新风机组B', status: '告警', value: '96.3%' },
-    { name: '排风风机', status: '在线', value: '30.1%' }
-  ]).describe('props.tableData'),
-
-  // Widget Title
-  title: z.string().default('表格组件').describe('props.title'),
+  title: z.string().default('设备列表').describe('props.title'),
   showTitle: z.boolean().default(false).describe('props.showTitle'),
 
-  // Header Styles
+  pageSize: z.number().min(1).max(100).default(10).describe('props.pageSize'),
+  groupId: z.string().default('__all__').describe('props.groupId'),
+  keyword: z.string().default('').describe('props.keyword'),
+  deviceConfigId: z.string().default('').describe('props.deviceConfigId'),
+
   showHeader: z.boolean().default(true).describe('props.showHeader'),
   headerFontSize: z.number().default(14).describe('props.headerFontSize'),
   headerWeight: z.string().default('600').describe('props.headerWeight'),
   headerColor: z.string().default('auto').describe('props.headerColor'),
   headerBgColor: z.string().default('auto').describe('props.headerBgColor'),
 
-  // Body Styles & Layout
   bodyFontSize: z.number().default(13).describe('props.bodyFontSize'),
   bodyWeight: z.string().default('400').describe('props.bodyWeight'),
   bodyColor: z.string().default('auto').describe('props.bodyColor'),
   showBorder: z.boolean().default(true).describe('props.showBorder'),
-  /**
-   * Row/header divider line color (`auto` = theme-derived).
-   * Must not be named `borderColor` — that path is reserved for BaseStylePanel.
-   */
   rowBorderColor: z.string().default('auto').describe('props.rowBorderColor'),
   showStripe: z.boolean().default(false).describe('props.showStripe'),
   stripeColor: z.string().default('auto').describe('props.stripeColor'),
-  
-  // Density
   cellPadding: z.number().default(10).describe('props.cellPadding'),
 
-  /** 内容超出组件区域时显示横/竖滚动条 */
+  /** 表格区域横向溢出时显示滚动条 */
   scrollEnabled: z.boolean().default(true).describe('props.scrollEnabled'),
 });
 
