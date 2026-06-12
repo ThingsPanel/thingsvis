@@ -166,6 +166,7 @@ const expectedWidgetModulePaths = [
   '../basic/line/src/index.ts',
   '../basic/list/src/index.ts',
   '../basic/luxury-clock/src/index.ts',
+  '../basic/paged-table/src/index.ts',
   '../basic/placeholder/src/index.ts',
   '../basic/rectangle/src/index.ts',
   '../basic/rich-text/src/index.ts',
