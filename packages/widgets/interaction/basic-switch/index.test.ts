@@ -54,6 +54,40 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('applies onColor and offColor from props', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: {
+        value: true,
+        showLabel: false,
+        onColor: '#41d276',
+        offColor: '#d1d5db',
+      },
+    });
+
+    expect(harness.element.innerHTML).toContain('#41d276');
+
+    harness.update({ props: { value: false, showLabel: false, onColor: '#41d276', offColor: '#d1d5db' } });
+
+    expect(harness.element.innerHTML).toContain('#d1d5db');
+
+    harness.destroy();
+  });
+
+  it('uses theme primary when onColor is empty', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { value: true, showLabel: false, onColor: '', offColor: '#333333' },
+    });
+
+    expect(harness.element.innerHTML).toContain('background: #6965db');
+    expect(harness.element.innerHTML).not.toContain('#22c55e');
+
+    harness.destroy();
+  });
+
   it('hides the external label when showLabel is false-like', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {

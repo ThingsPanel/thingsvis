@@ -4,6 +4,7 @@ import { controls } from './controls';
 import {
   defineWidget,
   type WidgetOverlayContext,
+  resolveLayeredColor,
   resolveWidgetColors,
   type WidgetColors,
 } from '@thingsvis/widget-sdk';
@@ -88,8 +89,16 @@ function renderSwitch(
   const t = SIZE_TOKENS[props.size] ?? SIZE_TOKENS['default'];
   const thumbPos = internalChecked ? t.trackWidth - t.thumbSize - t.thumbOffset : t.thumbOffset;
 
-  const onColor = colors.primary || '#22c55e';
-  const offColor = colors.axis || '#d1d5db';
+  const onColor = resolveLayeredColor({
+    instance: props.onColor,
+    theme: colors.primary,
+    fallback: '#22c55e',
+  });
+  const offColor = resolveLayeredColor({
+    instance: props.offColor,
+    theme: colors.axis,
+    fallback: '#d1d5db',
+  });
   const trackColor = internalChecked ? onColor : offColor;
   const showLabel = coerceBoolean(props.showLabel, true);
   const disabled = coerceBoolean(props.disabled, false);
