@@ -76,9 +76,21 @@ type RuntimeMessages = {
 };
 
 const localeCatalog = { en, zh } as const;
+const LIVE_CHROME_HEIGHT = 52;
+const PLAYBACK_CHROME_HEIGHT = 44;
 
 function getMessages(locale: string | undefined): RuntimeMessages {
   return resolveLocaleRecord(localeCatalog, locale, 'zh') as RuntimeMessages;
+}
+
+function resolveDeviceTitle(locale: string | undefined, title: string): string {
+  const trimmed = title.trim();
+  if (trimmed) return trimmed;
+  return locale?.startsWith('zh') ? '摄像头设备' : 'Camera';
+}
+
+function resolveObjectPosition(objectFit: string): string {
+  return objectFit === 'fill' ? 'center center' : 'center top';
 }
 
 function normalizeSource(input: unknown): string {
@@ -233,18 +245,24 @@ export const Main = defineWidget({
     const liveHeader = document.createElement('div');
     liveHeader.className = 'tv-camera-live-header';
     liveHeader.style.cssText = `
-      position:relative;
+      position:absolute;
+      top:8px;
+      left:8px;
       z-index:3;
-      display:flex;
+      display:none;
       align-items:center;
       gap:8px;
-      height:44px;
-      padding:0 14px;
+      max-width:calc(100% - 16px);
+      padding:6px 10px;
       box-sizing:border-box;
-      color:rgba(255,255,255,0.92);
-      font-size:14px;
+      border-radius:8px;
+      color:rgba(255,255,255,0.96);
+      font-size:13px;
       font-weight:600;
       line-height:1;
+      pointer-events:none;
+      background:rgba(7,10,16,0.62);
+      backdrop-filter:blur(4px);
     `;
     shell.appendChild(liveHeader);
 
@@ -273,7 +291,7 @@ export const Main = defineWidget({
 
     const videoEl: any = document.createElement('video-rtc');
     videoEl.style.cssText =
-      'position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;';
+      'position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;z-index:1;';
     videoStage.appendChild(videoEl);
 
     const placeholder = document.createElement('div');
@@ -475,6 +493,17 @@ export const Main = defineWidget({
     const syncVideoTransport = () => {
       if (!internalVideo) return;
       internalVideo.controls = false;
+      const resolvedObjectFit = currentProps.objectFit || 'cover';
+      const resolvedObjectPosition = resolveObjectPosition(resolvedObjectFit);
+      internalVideo.style.position = 'absolute';
+      internalVideo.style.inset = '0';
+      internalVideo.style.display = 'block';
+      internalVideo.style.width = '100%';
+      internalVideo.style.height = '100%';
+      internalVideo.style.maxWidth = 'none';
+      internalVideo.style.maxHeight = 'none';
+      internalVideo.style.objectFit = resolvedObjectFit;
+      internalVideo.style.objectPosition = resolvedObjectPosition;
       if (runtimeStreamMode === 'playback') {
         internalVideo.muted = false;
         internalVideo.playbackRate = PLAYBACK_SPEEDS[playbackSpeedIndex] ?? 1;
@@ -505,7 +534,7 @@ export const Main = defineWidget({
       const recording = statusToBool(currentProps.recordingStatus);
       const ready = state === 'ready' && !!internalVideo;
       playbackChrome.updateState({
-        deviceTitle: currentLocale?.startsWith('zh') ? '摄像头设备' : 'Camera',
+        deviceTitle: resolveDeviceTitle(currentLocale, currentProps.title),
         online,
         recording,
         paused: internalVideo?.paused ?? true,
@@ -547,12 +576,16 @@ export const Main = defineWidget({
       internalVideo = maybeVideo;
       syncVideoTransport();
       markReadyIfPlayable();
+      const refreshVideoFit = () => syncVideoTransport();
       internalVideo.addEventListener('loadeddata', () => {
+        refreshVideoFit();
         updatePlaceholder('ready');
         updatePlaybackChrome();
         syncLiveChrome();
       });
+      internalVideo.addEventListener('loadedmetadata', refreshVideoFit);
       internalVideo.addEventListener('canplay', () => {
+        refreshVideoFit();
         updatePlaceholder('ready');
         updatePlaybackChrome();
         syncLiveChrome();
@@ -767,25 +800,37 @@ export const Main = defineWidget({
     const renderControls = () => {
       const messages = getMessages(currentLocale).buttons;
       const isPlayback = isPlaybackActive();
-      const usePlaybackLayout = isPlayback || playbackPanelOpen;
+      const usePlaybackModalLayout = playbackPanelOpen;
       ptzPanel.innerHTML = '';
       actionPanel.innerHTML = '';
-      const showToolbar = currentMode !== 'edit' && !playbackPanelOpen && !isPlayback;
+      const showToolbar = currentMode !== 'edit' && !playbackPanelOpen;
+      const showLiveChrome = currentMode !== 'edit' && !playbackPanelOpen && !isPlayback;
+      const showPlaybackChrome = isPlayback && currentMode !== 'edit' && !playbackPanelOpen;
       const showPtzPad = false;
-      element.style.padding = usePlaybackLayout ? '0' : '8px 14px 10px';
-      topBar.style.display = usePlaybackLayout ? 'none' : 'flex';
+      element.style.padding = usePlaybackModalLayout ? '0' : '8px 14px 10px';
+      topBar.style.display = usePlaybackModalLayout ? 'none' : 'flex';
       toolbar.style.display = showToolbar ? 'flex' : 'none';
       statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
-      const showLiveTitle = !usePlaybackLayout;
-      liveHeader.style.display = showLiveTitle ? 'flex' : 'none';
-      if (usePlaybackLayout) {
+      const showLiveTitle = !usePlaybackModalLayout && !isPlayback && currentProps.showTitle;
+      liveHeader.style.display = showLiveTitle ? 'inline-flex' : 'none';
+      if (usePlaybackModalLayout || isPlayback) {
         placeholder.style.display = 'none';
       }
       videoStage.style.left = '0';
       videoStage.style.right = '0';
-      videoStage.style.top = usePlaybackLayout ? '0' : showLiveTitle ? '44px' : '0';
-      videoStage.style.bottom = '0';
+      videoStage.style.top = '0';
+      videoStage.style.bottom = showLiveChrome
+        ? `${LIVE_CHROME_HEIGHT}px`
+        : showPlaybackChrome
+          ? `${PLAYBACK_CHROME_HEIGHT}px`
+          : '0';
       videoStage.style.borderRadius = '0';
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.zIndex = '1';
+      syncVideoTransport();
       syncLiveChrome();
       ptzPanel.style.display = showPtzPad && !isPlayback ? 'grid' : 'none';
       renderPlaybackPanel();
@@ -882,7 +927,19 @@ export const Main = defineWidget({
         addAction(`⛶ ${fullscreenLabel}`, fullscreenLabel, toggleFullscreen);
       }
 
-      if (!isPlayback && currentProps.showPlaybackControls) {
+      if (isPlayback) {
+        const chromeLabels = getChromeLabels();
+        addAction(
+          `▷ ${chromeLabels.selectRange ?? 'Select time'}`,
+          chromeLabels.selectRange ?? 'Select time',
+          openPlaybackSelector,
+        );
+        addAction(
+          `↩ ${buttonTitle('returnToLive', 'Return to live')}`,
+          buttonTitle('returnToLive', 'Return to live'),
+          returnToLive,
+        );
+      } else if (currentProps.showPlaybackControls) {
         addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), openPlaybackSelector);
       }
     };
@@ -893,9 +950,26 @@ export const Main = defineWidget({
       shell.style.boxSizing = 'border-box';
       shell.style.boxShadow = 'none';
       const resolvedObjectFit = currentProps.objectFit || 'cover';
+      const resolvedObjectPosition = resolveObjectPosition(resolvedObjectFit);
       styleEl.textContent = `
+        [data-thingsvis-overlay="media-camera-control"] video-rtc {
+          position: absolute !important;
+          inset: 0 !important;
+          display: block !important;
+          width: 100% !important;
+          height: 100% !important;
+          overflow: hidden !important;
+        }
         [data-thingsvis-overlay="media-camera-control"] video-rtc video {
+          position: absolute !important;
+          inset: 0 !important;
+          display: block !important;
+          width: 100% !important;
+          height: 100% !important;
+          max-width: none !important;
+          max-height: none !important;
           object-fit: ${resolvedObjectFit} !important;
+          object-position: ${resolvedObjectPosition} !important;
         }
         [data-thingsvis-overlay="media-camera-control"] video-rtc video::-webkit-media-controls {
           display: none !important;
@@ -1325,15 +1399,18 @@ export const Main = defineWidget({
             font-size: 12px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-header {
-            height: 44px !important;
-            padding: 0 12px !important;
-            font-size: 14px !important;
+            top: 8px !important;
+            left: 8px !important;
+            right: auto !important;
+            max-width: calc(100% - 16px) !important;
+            padding: 6px 10px !important;
+            font-size: 13px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-video-stage {
             left: 0 !important;
             right: 0 !important;
             top: 0 !important;
-            bottom: 0 !important;
+            bottom: 48px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-chrome {
             left: 0 !important;
@@ -1385,7 +1462,11 @@ export const Main = defineWidget({
       const source = isPlaybackActive() ? currentProps.playbackUrl : currentProps.streamUrl;
       const normalizedSrc = normalizeSource(source);
 
-      liveTitleLabel.textContent = currentLocale?.startsWith('zh') ? '摄像头设备' : 'Camera';
+      const showTitle =
+        currentProps.showTitle && !isPlaybackActive() && !playbackPanelOpen;
+      liveTitleLabel.textContent = showTitle
+        ? resolveDeviceTitle(currentLocale, currentProps.title)
+        : '';
 
       renderStatusBar();
       renderControls();
@@ -1404,7 +1485,6 @@ export const Main = defineWidget({
 
       videoEl.mode = currentProps.streamMode;
       videoEl.visibilityThreshold = currentProps.visibilityThreshold;
-      videoEl.style.objectFit = currentProps.objectFit || 'cover';
 
       if (!normalizedSrc) {
         stopReadyPoll();

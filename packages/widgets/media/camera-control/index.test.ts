@@ -56,12 +56,27 @@ describe('media/camera-control widget', () => {
     harness.destroy();
   });
 
+  it('hides the device title bar by default so video can fill the shell', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, { locale: 'zh', mode: 'view' });
+
+    const liveHeader = harness.element.querySelector('.tv-camera-live-header') as HTMLElement;
+    expect(liveHeader).toBeTruthy();
+    expect(liveHeader.style.display).toBe('none');
+    expect(harness.element.textContent).not.toContain('摄像头设备');
+
+    harness.update({ props: { showTitle: true, title: '一号摄像头' } });
+    expect(liveHeader.style.display).toBe('inline-flex');
+    expect(harness.element.textContent).toContain('一号摄像头');
+
+    harness.destroy();
+  });
+
   it('hides advanced camera controls by default', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, { locale: 'en', mode: 'view' });
 
     expect(harness.element.querySelector('.tv-camera-topbar')).toBeTruthy();
-    expect(harness.element.querySelector('.tv-camera-live-header')).toBeTruthy();
     expect(harness.element.querySelector('.tv-camera-live-chrome')).toBeTruthy();
 
     const buttons = Array.from(harness.element.querySelectorAll('button'));
@@ -163,6 +178,77 @@ describe('media/camera-control widget', () => {
     expect(fullscreenButton()?.title).toBe('Exit fullscreen');
     fullscreenButton()?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(exitFullscreen).toHaveBeenCalledTimes(1);
+
+    harness.destroy();
+  });
+
+  it('fills the video stage without a top offset and applies object-fit styles', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      mode: 'view',
+      props: { objectFit: 'fill' },
+    });
+
+    const videoStage = harness.element.querySelector('.tv-camera-video-stage') as HTMLElement;
+    const styleEl = harness.element.querySelector('style');
+
+    expect(videoStage.style.top).toBe('0px');
+    expect(videoStage.style.bottom).toBe('52px');
+    expect(styleEl?.textContent).toContain('object-fit: fill');
+    expect(styleEl?.textContent).toContain('object-position: center center');
+
+    harness.destroy();
+  });
+
+  it('keeps the live-style top bar visible during playback', async () => {
+    const { default: Main } = await import('./src/index');
+    const emit = vi.fn();
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      mode: 'view',
+      emit,
+      props: {
+        playbackStart: '2026-06-04T08:00:00.000Z',
+        playbackEnd: '2026-06-04T09:00:00.000Z',
+      },
+    });
+
+    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === '回放' || button.title === 'Playback',
+    );
+    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const startButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.textContent === '开始回放' || button.textContent === 'Start playback',
+    );
+    startButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    const topBar = harness.element.querySelector('.tv-camera-topbar') as HTMLElement;
+    const videoStage = harness.element.querySelector('.tv-camera-video-stage') as HTMLElement;
+    const videoRtc = harness.element.querySelector('video-rtc') as HTMLElement;
+
+    expect(topBar.style.display).not.toBe('none');
+    expect(harness.element.textContent).toContain('回放');
+    expect(videoStage.style.top).toBe('0px');
+    expect(videoRtc.style.top).not.toBe('44px');
+    expect(videoRtc.style.inset === '0' || videoRtc.style.inset === '0px' || videoRtc.style.top === '0px').toBe(true);
+    expect(harness.element.querySelector('.tv-camera-playback-chrome .tv-camera-chrome-top')).toBeNull();
+
+    harness.destroy();
+  });
+
+  it('aligns cover mode to the top to avoid a visible letterbox gap', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      mode: 'view',
+      props: { objectFit: 'cover' },
+    });
+
+    const styleEl = harness.element.querySelector('style');
+    expect(styleEl?.textContent).toContain('object-fit: cover');
+    expect(styleEl?.textContent).toContain('object-position: center top');
 
     harness.destroy();
   });

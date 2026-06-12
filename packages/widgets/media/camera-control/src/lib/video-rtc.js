@@ -469,8 +469,14 @@ export class VideoRTC extends HTMLElement {
     this.video.preload = 'auto';
 
     this.video.style.display = 'block'; // fix bottom margin 4px
+    this.video.style.position = 'absolute';
+    this.video.style.inset = '0';
     this.video.style.width = '100%';
     this.video.style.height = '100%';
+    this.video.style.maxWidth = 'none';
+    this.video.style.maxHeight = 'none';
+    this.video.style.objectFit = 'cover';
+    this.video.style.objectPosition = 'center top';
 
     this.appendChild(this.video);
 

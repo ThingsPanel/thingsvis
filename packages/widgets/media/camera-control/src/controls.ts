@@ -4,6 +4,15 @@ const W = 'widgets.thingsvis-widget-media-camera-control';
 
 export const controls = createControlPanel()
   .addGroup(
+    'Title',
+    (builder) => {
+      builder
+        .addSwitch('showTitle', { label: `${W}.controls.showTitle` })
+        .addTextInput('title', { label: `${W}.controls.title`, binding: true });
+    },
+    { label: `${W}.groups.title` },
+  )
+  .addGroup(
     'Source',
     (builder) => {
       builder
@@ -107,7 +116,7 @@ export const controls = createControlPanel()
             { label: `${W}.options.objectFit.fill`, value: 'fill' },
             { label: `${W}.options.objectFit.none`, value: 'none' },
           ],
-          default: 'contain',
+          default: 'cover',
         })
         .addNumberInput('borderRadius', {
           label: `${W}.controls.borderRadius`,

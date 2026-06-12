@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
+  showTitle: z.boolean().default(false).describe('props.showTitle'),
+  title: z.string().default('').describe('props.title'),
   mode: z.enum(['live', 'playback']).default('live').describe('props.mode'),
   streamUrl: z.string().default('').describe('props.streamUrl'),
   playbackUrl: z.string().default('').describe('props.playbackUrl'),

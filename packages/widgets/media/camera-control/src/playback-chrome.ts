@@ -4,10 +4,6 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-function formatClockTime(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`;
-}
-
 function formatProgressTime(seconds: number): string {
   if (!Number.isFinite(seconds) || seconds < 0) return '00:00:00';
   const total = Math.floor(seconds);
@@ -83,15 +79,6 @@ type MountOptions = {
   onScrubEnd?: () => void;
 };
 
-function makeIconAction(label: string, icon: string, className: string): HTMLButtonElement {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = className;
-  button.title = label;
-  button.innerHTML = `<span class="tv-camera-chrome-action-icon">${icon}</span><span>${label}</span>`;
-  return button;
-}
-
 const chromeIconSvg = {
   play:
     '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.75v12.5c0 .78.86 1.26 1.53.85l9.5-6.25a1 1 0 0 0 0-1.7l-9.5-6.25A1 1 0 0 0 8 5.75z"/></svg>',
@@ -115,85 +102,28 @@ function setChromeIconButton(
 export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): PlaybackChromeMount {
   let labels = options.labels;
   let speedIndex = 0;
-  let clockTimer: ReturnType<typeof setInterval> | null = null;
+  let active = false;
+
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.className = 'tv-camera-playback-loading';
+  loadingOverlay.style.cssText = `
+    position:absolute;inset:0;z-index:4;display:none;
+    align-items:center;justify-content:center;
+    color:rgba(255,255,255,0.86);font-size:13px;font-weight:600;
+    background:rgba(3,7,18,0.35);pointer-events:none;
+  `;
+  shell.appendChild(loadingOverlay);
 
   const root = document.createElement('div');
   root.className = 'tv-camera-playback-chrome';
   root.style.cssText = `
-    position:absolute;inset:0;z-index:5;display:none;
-    padding:0;box-sizing:border-box;background:transparent;pointer-events:auto;overflow:hidden;
+    position:absolute;left:0;right:0;bottom:0;z-index:5;display:none;
+    pointer-events:auto;box-sizing:border-box;
   `;
-
-  const topBar = document.createElement('div');
-  topBar.className = 'tv-camera-chrome-top';
-  topBar.style.cssText = `
-    position:absolute;left:0;right:0;top:0;z-index:4;
-    display:flex;align-items:center;justify-content:space-between;gap:8px;
-    padding:8px 10px;box-sizing:border-box;
-  `;
-
-  const statusGroup = document.createElement('div');
-  statusGroup.style.cssText = 'display:flex;align-items:center;gap:18px;flex-wrap:wrap;';
-
-  const chipPlayback = document.createElement('span');
-  chipPlayback.className = 'tv-camera-chrome-chip tv-camera-chrome-chip-mode';
-
-  const addDot = (chip: HTMLElement) => {
-    const dot = document.createElement('span');
-    dot.className = 'tv-camera-status-dot';
-    const label = document.createElement('span');
-    chip.append(dot, label);
-    return label;
-  };
-  const chipPlaybackLabel = addDot(chipPlayback);
-  statusGroup.append(chipPlayback);
-
-  const actionGroup = document.createElement('div');
-  actionGroup.className = 'tv-camera-chrome-actions';
-  actionGroup.style.cssText = 'display:flex;align-items:center;gap:8px;';
-
-  const snapshotButton = makeIconAction('', '▣', 'tv-camera-chrome-action');
-  const fullscreenButton = makeIconAction('', '⛶', 'tv-camera-chrome-action');
-  const returnButton = makeIconAction('', '↩', 'tv-camera-chrome-action');
-  const selectRangeButton = makeIconAction('', '▷', 'tv-camera-chrome-action');
-  actionGroup.append(snapshotButton, fullscreenButton, selectRangeButton, returnButton);
-
-  topBar.append(statusGroup, actionGroup);
-
-  const videoFrame = document.createElement('div');
-  videoFrame.className = 'tv-camera-chrome-video-frame';
-  videoFrame.style.cssText = `
-    position:absolute;left:0;right:0;top:44px;bottom:44px;z-index:1;border-radius:0;overflow:hidden;
-    background:transparent;border:0;pointer-events:none;
-  `;
-
-  const deviceBadge = document.createElement('div');
-  deviceBadge.className = 'tv-camera-chrome-device-badge';
-  deviceBadge.style.cssText = `
-    position:absolute;top:10px;left:10px;z-index:2;display:none;align-items:center;gap:6px;
-    padding:5px 10px;border-radius:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:12px;
-    pointer-events:none;max-width:calc(100% - 20px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  `;
-  const deviceIcon = document.createElement('span');
-  deviceIcon.textContent = '📹';
-  const deviceTitle = document.createElement('span');
-  deviceBadge.append(deviceIcon, deviceTitle);
-  videoFrame.appendChild(deviceBadge);
-
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.className = 'tv-camera-chrome-loading';
-  loadingOverlay.style.cssText = `
-    position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;
-    color:rgba(255,255,255,0.86);font-size:13px;font-weight:600;
-    background:transparent;
-    pointer-events:none;
-  `;
-  videoFrame.appendChild(loadingOverlay);
 
   const controlBar = document.createElement('div');
   controlBar.className = 'tv-camera-chrome-controls';
   controlBar.style.cssText = `
-    position:absolute;left:0;right:0;bottom:0;z-index:4;
     display:flex;align-items:center;gap:10px;padding:8px 10px;flex-wrap:nowrap;
     border-radius:0;background:rgba(5,10,18,0.78);border:0;
   `;
@@ -250,92 +180,8 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
   fsButton.textContent = '⛶';
 
   controlBar.append(playButton, volumeWrap, progressWrap, qualitySelect, speedSelect, fsButton);
-
-  const statsPanel = document.createElement('div');
-  statsPanel.className = 'tv-camera-chrome-stats';
-  statsPanel.style.cssText =
-    'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid rgba(255,255,255,0.08);border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.03);';
-
-  const statCells: Array<{ icon: HTMLElement; label: HTMLElement; value: HTMLElement }> = [];
-  for (let i = 0; i < 4; i += 1) {
-    const cell = document.createElement('div');
-    cell.className = 'tv-camera-chrome-stat-cell';
-    cell.style.cssText =
-      'display:flex;align-items:center;gap:8px;padding:10px 12px;min-width:0;' +
-      (i < 3 ? 'border-right:1px solid rgba(255,255,255,0.08);' : '');
-    const icon = document.createElement('span');
-    icon.style.cssText = 'font-size:16px;line-height:1;flex-shrink:0;';
-    const meta = document.createElement('div');
-    meta.style.cssText = 'min-width:0;display:flex;flex-direction:column;gap:2px;';
-    const label = document.createElement('div');
-    label.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.45);';
-    const value = document.createElement('div');
-    value.style.cssText = 'font-size:12px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-    meta.append(label, value);
-    cell.append(icon, meta);
-    statsPanel.appendChild(cell);
-    statCells.push({ icon, label, value });
-  }
-
-  root.append(topBar, videoFrame, controlBar);
+  root.append(controlBar);
   shell.appendChild(root);
-
-  const applyActionLabels = () => {
-    snapshotButton.querySelector('span:last-child')!.textContent = labels.snapshot;
-    fullscreenButton.querySelector('span:last-child')!.textContent = labels.fullscreen;
-    selectRangeButton.querySelector('span:last-child')!.textContent =
-      labels.selectRange ?? 'Select time';
-    returnButton.querySelector('span:last-child')!.textContent = labels.returnToLive;
-    snapshotButton.title = labels.snapshot;
-    fullscreenButton.title = labels.fullscreen;
-    selectRangeButton.title = labels.selectRange ?? 'Select time';
-    returnButton.title = labels.returnToLive;
-    chipPlaybackLabel.textContent = labels.modePlayback;
-    qualitySelect.options[0]!.text = labels.quality;
-    qualitySelect.options[0]!.textContent = labels.quality;
-    statCells[0]!.icon.textContent = '●';
-    statCells[1]!.icon.textContent = 'HD';
-    statCells[2]!.icon.textContent = '📶';
-    statCells[3]!.icon.textContent = '🕐';
-    statCells[0]!.label.textContent = labels.statOnline;
-    statCells[1]!.label.textContent = labels.statQuality;
-    statCells[2]!.label.textContent = labels.statNetwork;
-    statCells[3]!.label.textContent = labels.statTime;
-  };
-
-  applyActionLabels();
-
-  const resetVideoLayout = () => {
-    const video = options.videoElement;
-    video.style.position = 'absolute';
-    video.style.top = '44px';
-    video.style.right = '0';
-    video.style.bottom = '44px';
-    video.style.left = '0';
-    video.style.width = '100%';
-    video.style.height = 'auto';
-    video.style.zIndex = '1';
-    video.style.borderRadius = '0';
-  };
-
-  const syncVideoToFrame = () => {
-    resetVideoLayout();
-  };
-
-  let frameObserver: ResizeObserver | null = null;
-
-  const startFrameObserver = () => {
-    stopFrameObserver();
-    if (typeof ResizeObserver === 'undefined') return;
-    frameObserver = new ResizeObserver(() => syncVideoToFrame());
-    frameObserver.observe(root);
-    frameObserver.observe(videoFrame);
-  };
-
-  const stopFrameObserver = () => {
-    frameObserver?.disconnect();
-    frameObserver = null;
-  };
 
   playButton.addEventListener('click', options.onPlayPause);
   muteButton.addEventListener('click', options.onMuteToggle);
@@ -352,51 +198,24 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
     speedIndex = Number(speedSelect.value);
     options.onSpeedChange(speedIndex);
   });
-  snapshotButton.addEventListener('click', options.onSnapshot);
-  fullscreenButton.addEventListener('click', options.onFullscreen);
-  selectRangeButton.addEventListener('click', () => options.onSelectRange?.());
   fsButton.addEventListener('click', options.onFullscreen);
-  returnButton.addEventListener('click', options.onReturnToLive);
-
-  const startClock = () => {
-    stopClock();
-    const tick = () => {
-      statCells[3]!.value.textContent = formatClockTime(new Date());
-    };
-    tick();
-    clockTimer = setInterval(tick, 1000);
-  };
-
-  const stopClock = () => {
-    if (clockTimer) {
-      clearInterval(clockTimer);
-      clockTimer = null;
-    }
-  };
 
   return {
-    setActive: (active) => {
-      root.style.display = active ? 'flex' : 'none';
-      if (active) {
-        requestAnimationFrame(() => {
-          syncVideoToFrame();
-          startFrameObserver();
-        });
-        startClock();
-      } else {
-        stopFrameObserver();
-        resetVideoLayout();
-        stopClock();
+    setActive: (nextActive) => {
+      active = nextActive;
+      root.style.display = nextActive ? 'block' : 'none';
+      if (!nextActive) {
+        loadingOverlay.style.display = 'none';
       }
     },
     updateLabels: (next) => {
       labels = next;
-      applyActionLabels();
+      qualitySelect.options[0]!.text = labels.quality;
+      qualitySelect.options[0]!.textContent = labels.quality;
     },
     updateState: (state) => {
-      deviceTitle.textContent = state.deviceTitle || 'Camera';
       loadingOverlay.textContent = labels.loading ?? 'Connecting playback video';
-      loadingOverlay.style.display = state.ready ? 'none' : 'flex';
+      loadingOverlay.style.display = active && !state.ready ? 'flex' : 'none';
       setChromeIconButton(playButton, state.paused ? 'play' : 'pause', state.paused ? labels.play : labels.pause);
       playButton.disabled = !state.ready;
       setChromeIconButton(muteButton, state.muted ? 'muted' : 'volume', state.muted ? labels.unmute : labels.mute);
@@ -418,9 +237,6 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
       speedSelect.value = String(state.speedIndex);
       speedSelect.disabled = !state.ready;
       fsButton.disabled = !state.ready;
-      statCells[0]!.value.textContent = state.online ? labels.online : labels.offline;
-      statCells[1]!.value.textContent = labels.qualityValue;
-      statCells[2]!.value.textContent = labels.networkGood;
     },
     getSpeedIndex: () => speedIndex,
     setSpeedIndex: (index) => {
@@ -428,9 +244,7 @@ export function mountPlaybackChrome(shell: HTMLElement, options: MountOptions): 
       speedSelect.value = String(index);
     },
     destroy: () => {
-      stopClock();
-      stopFrameObserver();
-      resetVideoLayout();
+      loadingOverlay.remove();
       root.remove();
     },
   };
