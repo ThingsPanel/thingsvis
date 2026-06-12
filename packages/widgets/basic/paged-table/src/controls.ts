@@ -21,11 +21,6 @@ export const controls = createControlPanel()
     b.addTextInput('deviceConfigId', { label: `${W}.deviceConfigId`, placeholder: '' });
   }, { label: `${W}.groupData` })
 
-  .addGroup('Title', (b) => {
-    b.addSwitch('showTitle', { label: '显示标题' });
-    b.addTextInput('title', { label: '组件标题' });
-  }, { label: '标题' })
-
   .addGroup('Header', (b) => {
     b.addSwitch('showHeader', { label: `${W}.showHeader` });
     b.addColorPicker('headerColor', { label: `${W}.headerColor` });

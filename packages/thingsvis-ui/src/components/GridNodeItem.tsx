@@ -13,15 +13,12 @@ import { PropertyResolver } from '../engine/PropertyResolver';
 import { buildEmit, type ActionRuntime } from '../engine/executeActions';
 import { WidgetErrorBoundary } from './WidgetErrorBoundary';
 import { createWidgetThemeColorOverrideStyle } from '../utils/widgetThemeColorOverrides';
+import { isCardModeEnabled } from '../utils/cardStyle';
+import { WidgetCardHeader } from './WidgetCardHeader';
+import type { IBaseStyle } from '@thingsvis/schema';
 
 /** Known shape of node baseStyle coming from schema */
-interface NodeBaseStyle {
-    background?: { color?: string; image?: string };
-    border?: { width?: number; color?: string; style?: string; radius?: number };
-    shadow?: { blur?: number; offsetX?: number; offsetY?: number; color?: string };
-    opacity?: number;
-    padding?: number;
-}
+type NodeBaseStyle = Partial<IBaseStyle>;
 
 // ─── Resize handle direction type ───────────────────────────────────────────
 
@@ -314,6 +311,8 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     const themeColorOverrides = createWidgetThemeColorOverrideStyle(
         nodeBaseStyle.background?.color,
     );
+    const cardModeEnabled = isCardModeEnabled(nodeBaseStyle);
+    const nodeName = nodeState?.schemaRef?.name;
     const [isInlineEditing, setIsInlineEditing] = React.useState(false);
     const [draftText, setDraftText] = React.useState(liveText);
     const inlineEditorRef = useRef<HTMLTextAreaElement | null>(null);
@@ -580,12 +579,27 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                             : undefined,
                         overflow: 'hidden',
                         padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : undefined,
+                        display: cardModeEnabled ? 'flex' : undefined,
+                        flexDirection: cardModeEnabled ? 'column' : undefined,
                     }}
                 >
+                    {cardModeEnabled ? (
+                        <WidgetCardHeader
+                            card={nodeBaseStyle.card}
+                            nodeName={nodeName}
+                        />
+                    ) : null}
                     {/* Widget content mount point */}
                     <div
                         ref={contentRef}
-                        style={{ width: '100%', height: '100%', overflow: 'hidden', pointerEvents: interactive ? 'none' : 'auto' }}
+                        style={{
+                            width: '100%',
+                            height: cardModeEnabled ? undefined : '100%',
+                            flex: cardModeEnabled ? '1 1 auto' : undefined,
+                            minHeight: cardModeEnabled ? 0 : undefined,
+                            overflow: 'hidden',
+                            pointerEvents: interactive ? 'none' : 'auto',
+                        }}
                     />
 
                     {isInlineEditing && (

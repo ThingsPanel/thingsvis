@@ -110,17 +110,6 @@ function renderTable(element: HTMLElement, props: Props, colors: WidgetColors): 
   // Build HTML
   let tableHtml = '';
 
-  if (props.showTitle && props.title) {
-    tableHtml += `<div style="
-      flex: 0 0 auto;
-      margin-bottom: 8px;
-      font-size: 16px;
-      font-weight: 600;
-      color: ${textPrimary};
-      text-align: left;
-    ">${escapeHtml(props.title)}</div>`;
-  }
-
   const scrollOverflow = scrollEnabled !== false ? 'auto' : 'hidden';
   // 滚动容器：内容超出组件区域时横/竖滚动；关闭时裁切
   tableHtml += `<div style="flex: 1 1 0; min-height: 0; min-width: 0; overflow: ${scrollOverflow}; -webkit-overflow-scrolling: touch;"><table style="

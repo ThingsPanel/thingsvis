@@ -14,20 +14,8 @@ const DEFAULT_SAMPLE_DATA = [
 ] as const;
 
 export const PropsSchema = z.object({
-  /** 图表标题 */
-  title: z.string().default('').describe('props.chartTitle'),
-
-  /** 标题对齐 */
-  titleAlign: z.enum(['left', 'center', 'right']).default('left').describe('props.titleAlign'),
-
   /** 主色调 */
   primaryColor: z.string().default('').describe('props.primaryColor'),
-
-  /** 标题颜色 */
-  titleColor: z.string().default('').describe('props.titleColor'),
-
-  /** 标题字号 */
-  titleFontSize: z.number().min(12).max(32).default(14).describe('props.titleFontSize'),
 
   /** 轴文字颜色 */
   axisLabelColor: z.string().default('').describe('props.axisLabelColor'),

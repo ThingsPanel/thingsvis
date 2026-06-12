@@ -4,18 +4,6 @@ const W = 'widgets.thingsvis-widget-basic-container';
 
 export const controls = createControlPanel()
   .addGroup(
-    'Content',
-    (builder) => {
-      builder.addSwitch('showTitle', { label: `${W}.showTitle` });
-      builder.addTextInput('title', {
-        label: `${W}.title`,
-        binding: true,
-        showWhen: { field: 'showTitle', value: true },
-      });
-    },
-    { label: `${W}.groupContent` },
-  )
-  .addGroup(
     'Style',
     (builder) => {
       builder
@@ -54,39 +42,6 @@ export const controls = createControlPanel()
         });
     },
     { label: `${W}.groupStyle` },
-  )
-  .addGroup(
-    'Title',
-    (builder) => {
-      builder
-        .addSlider('titleHeight', {
-          label: `${W}.titleHeight`,
-          min: 24,
-          max: 80,
-          step: 1,
-          default: 36,
-          showWhen: { field: 'showTitle', value: true },
-        })
-        .addSlider('titleFontSize', {
-          label: `${W}.titleFontSize`,
-          min: 10,
-          max: 32,
-          step: 1,
-          default: 14,
-          showWhen: { field: 'showTitle', value: true },
-        })
-        .addColorPicker('titleColor', {
-          label: `${W}.titleColor`,
-          binding: true,
-          showWhen: { field: 'showTitle', value: true },
-        })
-        .addColorPicker('titleBackgroundColor', {
-          label: `${W}.titleBackgroundColor`,
-          binding: true,
-          showWhen: { field: 'showTitle', value: true },
-        });
-    },
-    { label: `${W}.groupTitle`, expanded: false },
   )
   .addGroup(
     'Shadow',

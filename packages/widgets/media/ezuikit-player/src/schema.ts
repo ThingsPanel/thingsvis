@@ -11,8 +11,6 @@ export const TemplateSchema = z.enum([
 ]);
 
 export const PropsSchema = z.object({
-  title: z.string().default('EZVIZ').describe('props.title'),
-  showTitle: z.boolean().default(false).describe('props.showTitle'),
   accessToken: z.string().default('').describe('props.accessToken'),
   ezopenUrl: z.string().default('').describe('props.ezopenUrl'),
   deviceSerial: z.string().default('').describe('props.deviceSerial'),

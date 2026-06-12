@@ -4,15 +4,6 @@ const W = 'widgets.thingsvis-widget-media-camera-control';
 
 export const controls = createControlPanel()
   .addGroup(
-    'Title',
-    (builder) => {
-      builder
-        .addSwitch('showTitle', { label: `${W}.controls.showTitle`, binding: true })
-        .addTextInput('title', { label: `${W}.controls.title`, binding: true });
-    },
-    { label: `${W}.groups.title` },
-  )
-  .addGroup(
     'Source',
     (builder) => {
       builder

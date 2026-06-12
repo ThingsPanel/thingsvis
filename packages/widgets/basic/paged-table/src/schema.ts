@@ -7,9 +7,6 @@ export const PropsSchema = z.object({
     { key: 'groupName', title: '设备分组', align: 'left' },
   ]).describe('props.tableColumns'),
 
-  title: z.string().default('设备列表').describe('props.title'),
-  showTitle: z.boolean().default(false).describe('props.showTitle'),
-
   pageSize: z.number().min(1).max(100).default(10).describe('props.pageSize'),
   groupId: z.string().default('__all__').describe('props.groupId'),
   keyword: z.string().default('').describe('props.keyword'),

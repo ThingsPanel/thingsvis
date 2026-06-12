@@ -7,12 +7,6 @@ export const controls = createControlPanel()
     'Content',
     (builder) => {
       builder
-        .addSwitch('showTitle', { label: `${W}.showTitle` })
-        .addTextInput('title', {
-          label: `${W}.title`,
-          binding: true,
-          showWhen: { field: 'showTitle', value: true },
-        })
         .addCustom('body', 'textarea', {
           label: `${W}.body`,
           binding: true,
@@ -24,14 +18,6 @@ export const controls = createControlPanel()
     'Typography',
     (builder) => {
       builder
-        .addSlider('titleFontSize', {
-          label: `${W}.titleFontSize`,
-          min: 12,
-          max: 32,
-          step: 1,
-          default: 18,
-          showWhen: { field: 'showTitle', value: true },
-        })
         .addSlider('bodyFontSize', {
           label: `${W}.bodyFontSize`,
           min: 10,
@@ -61,7 +47,6 @@ export const controls = createControlPanel()
     'Style',
     (builder) => {
       builder
-        .addColorPicker('titleColor', { label: `${W}.titleColor`, binding: true })
         .addColorPicker('bodyColor', { label: `${W}.bodyColor`, binding: true })
         .addColorPicker('backgroundColor', { label: `${W}.backgroundColor`, binding: true })
         .addSlider('backgroundOpacity', {

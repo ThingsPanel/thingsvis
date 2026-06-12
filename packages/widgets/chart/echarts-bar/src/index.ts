@@ -19,9 +19,7 @@ import en from './locales/en.json';
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const CHART_PADDING = 16;
-const TITLE_FONT_SIZE = 14;
 const LEGEND_FONT_SIZE = 12;
-const TITLE_LINE_HEIGHT = 18;
 const LEGEND_BLOCK_HEIGHT = 20;
 const STANDALONE_BAR_SERIES = [
   { name: 'Mon', value: 18 },
@@ -157,28 +155,13 @@ function normalizeCategoryData(data: Props['data']) {
   return [];
 }
 
-function resolveChartLeft(align: Props['titleAlign']): 'left' | 'center' | 'right' {
-  if (align === 'center') return 'center';
-  if (align === 'right') return 'right';
-  return 'left';
-}
-
-function resolveTitleTextAlign(align: Props['titleAlign']): 'left' | 'center' | 'right' {
-  if (align === 'center') return 'center';
-  if (align === 'right') return 'right';
-  return 'left';
-}
-
 /**
  * Build ECharts option from props and theme colors
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
   const {
-    title,
-    titleAlign,
     data,
     primaryColor,
-    titleColor,
     axisLabelColor,
     showLegend,
     showXAxis,
@@ -187,11 +170,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   const normalizedData = normalizeCategoryData(data);
   const hasData = normalizedData.length > 0;
 
-  const resolvedTitleColor = resolveLayeredColor({
-    instance: titleColor,
-    theme: colors.fg,
-    fallback: colors.fg,
-  });
   const resolvedAxisLabelColor = resolveLayeredColor({
     instance: axisLabelColor,
     theme: colors.fg,
@@ -205,9 +183,8 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     inheritValues: [LEGACY_DEFAULT_PRIMARY],
   });
   const padding = Math.round(CHART_PADDING * scale);
-  const titleSpace = title ? Math.round(TITLE_LINE_HEIGHT * scale) + padding : 0;
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
-  const seriesName = title || '数值';
+  const seriesName = '数值';
 
   const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
     { offset: 0, color: seriesColor },
@@ -231,15 +208,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             fontSize: Math.round(14 * scale),
           },
         },
-    title: title
-      ? {
-          text: title,
-          left: resolveChartLeft(titleAlign),
-          textAlign: resolveTitleTextAlign(titleAlign),
-          textStyle: { fontSize: Math.round(TITLE_FONT_SIZE * scale), color: resolvedTitleColor },
-          top: padding,
-        }
-      : undefined,
     tooltip: {
       trigger: 'axis',
       axisPointer: { type: 'shadow' },
@@ -257,7 +225,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       left: padding,
       right: padding,
       bottom: padding + legendSpace,
-      top: padding + titleSpace,
+      top: padding,
       containLabel: true,
     },
     dataset: hasData

@@ -5,17 +5,8 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-    /** 图表标题 */
-    title: z.string().default('').describe('props.chartTitle'),
-
-    /** 标题对齐 */
-    titleAlign: z.enum(['left', 'center', 'right']).default('left').describe('props.titleAlign'),
-
     /** 主色调 */
     primaryColor: z.string().default('').describe('props.primaryColor'),
-
-    /** 标题颜色 */
-    titleColor: z.string().default('').describe('props.titleColor'),
 
     /** 轴文字颜色 */
     axisLabelColor: z.string().default('').describe('props.axisLabelColor'),

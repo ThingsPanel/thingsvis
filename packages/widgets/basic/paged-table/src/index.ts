@@ -154,10 +154,6 @@ function renderPagedTable(
 
   let html = '';
 
-  if (props.showTitle && props.title) {
-    html += `<div style="flex:0 0 auto;margin-bottom:8px;font-size:16px;font-weight:600;color:${textPrimary};">${escapeHtml(props.title)}</div>`;
-  }
-
   html += `<div style="flex:1 1 0;min-height:0;min-width:0;overflow:${scrollOverflow};-webkit-overflow-scrolling:touch;position:relative;">`;
   if (state.loading) {
     html += `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:${withAlpha(colors.bg || '#000', 0.35)};color:${textSecondary};font-size:13px;z-index:2;">加载中...</div>`;

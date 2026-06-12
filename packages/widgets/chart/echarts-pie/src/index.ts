@@ -43,16 +43,11 @@ const SAMPLE_PIE_SERIES = [
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { title, data, primaryColor, titleColor, labelColor, showLegend, isDoughnut } = props;
+    const { data, primaryColor, labelColor, showLegend, isDoughnut } = props;
     const normalizedData = normalizePieData(data);
     const hasData = normalizedData.length > 0;
     const compactMode = scale < 0.85 || normalizedData.length > 6;
 
-    const resolvedTitleColor = resolveLayeredColor({
-        instance: titleColor,
-        theme: colors.fg,
-        fallback: colors.fg,
-    });
     const resolvedLabelColor = resolveLayeredColor({
         instance: labelColor,
         theme: colors.fg,
@@ -81,12 +76,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 fontSize: Math.round(14 * scale),
             },
         },
-        title: title ? {
-            text: title,
-            left: 'center',
-            textStyle: { fontSize: Math.round(14 * scale), color: resolvedTitleColor },
-            top: Math.round(10 * scale),
-        } : undefined,
         tooltip: {
             trigger: 'item',
         },

@@ -4,8 +4,6 @@ const W = "widgets.thingsvis-widget-custom-alert-list";
 
 export const controls = createControlPanel()
   .addContentGroup((builder) => {
-    builder.addSwitch("showTitle", { label: "显示标题" });
-    builder.addTextInput("title", { label: "组件标题", binding: true });
     builder.addJsonEditor("items", {
       label: `${W}.items`,
       binding: true

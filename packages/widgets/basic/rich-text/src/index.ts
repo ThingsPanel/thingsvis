@@ -29,9 +29,8 @@ function resolveColor(value: string | undefined, fallback: string): string {
 function renderRichText(element: HTMLElement, props: Props): void {
   const colors = resolveWidgetColors(element);
   const shell = element.firstElementChild as HTMLDivElement | null;
-  const title = shell?.querySelector<HTMLDivElement>('[data-rich-title]');
   const body = shell?.querySelector<HTMLDivElement>('[data-rich-body]');
-  if (!shell || !body || !title) return;
+  if (!shell || !body) return;
 
   shell.style.width = '100%';
   shell.style.height = '100%';
@@ -44,13 +43,6 @@ function renderRichText(element: HTMLElement, props: Props): void {
   shell.style.border = `${props.borderWidth}px solid ${props.borderColor}`;
   shell.style.background = withAlpha(props.backgroundColor, props.backgroundOpacity);
   shell.style.textAlign = props.align;
-
-  title.style.display = props.showTitle ? 'block' : 'none';
-  title.textContent = props.title;
-  title.style.fontSize = `${props.titleFontSize}px`;
-  title.style.fontWeight = '700';
-  title.style.lineHeight = '1.3';
-  title.style.color = resolveColor(props.titleColor, colors.fg || '#0f172a');
 
   body.textContent = props.body;
   body.style.flex = '1 1 auto';
@@ -69,11 +61,9 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props) => {
     let currentProps = props;
     const shell = document.createElement('div');
-    const title = document.createElement('div');
     const body = document.createElement('div');
-    title.dataset.richTitle = 'true';
     body.dataset.richBody = 'true';
-    shell.append(title, body);
+    shell.append(body);
     element.appendChild(shell);
     renderRichText(element, currentProps);
 

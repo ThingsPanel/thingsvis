@@ -17,7 +17,6 @@ import {
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
-const CHART_PADDING = 16;
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
@@ -82,7 +81,7 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-  const { title, data, primaryColor, titleColor, axisLabelColor, detailColor, max } = props;
+  const { data, primaryColor, axisLabelColor, detailColor, max } = props;
 
   const accentColor = resolveLayeredColor({
     instance: primaryColor,
@@ -93,11 +92,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   const accentTailColor = (primaryColor ?? '').trim()
     ? withAlpha(accentColor, 0.55)
     : (colors.series[1] ?? accentColor);
-  const resolvedTitleColor = resolveLayeredColor({
-    instance: titleColor,
-    theme: colors.fg,
-    fallback: colors.fg,
-  });
   const resolvedAxisLabelColor = resolveLayeredColor({
     instance: axisLabelColor,
     theme: colors.fg,
@@ -110,12 +104,11 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   });
   const splitLineColor = colors.axis;
   const axisLineColor = colors.axis;
-  const padding = Math.round(CHART_PADDING * scale);
 
   // Extract current value and name
-  const dataEntry = parseGaugeData(data, title || '');
+  const dataEntry = parseGaugeData(data, '');
   const val = dataEntry?.value ?? 0;
-  const itemName = dataEntry?.name ?? (title || '');
+  const itemName = dataEntry?.name ?? '';
   const hasData = dataEntry !== null;
 
   return {
@@ -135,23 +128,11 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             fontSize: Math.round(14 * scale),
           },
         },
-    title: title
-      ? {
-          text: title,
-          left: 'center',
-          textStyle: {
-            fontSize: Math.round(14 * scale),
-            color: resolvedTitleColor,
-            fontWeight: 'normal',
-          },
-          top: padding,
-        }
-      : undefined,
     series: hasData
       ? [
           {
             type: 'gauge',
-            center: ['50%', title ? '58%' : '54%'],
+            center: ['50%', '54%'],
             radius: '76%',
             startAngle: 210,
             endAngle: -30,

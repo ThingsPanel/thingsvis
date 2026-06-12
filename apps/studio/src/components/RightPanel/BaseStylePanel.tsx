@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
+import { applyCardStyleDefaults } from '@thingsvis/ui';
 
 type BaseStylePanelProps = {
   baseStyle: any;
@@ -30,8 +31,107 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
     });
   };
 
+  const updateCard = (subKey: string, value: any) => {
+    onChange({
+      ...baseStyle,
+      card: {
+        ...(baseStyle.card || {}),
+        [subKey]: value,
+      },
+    });
+  };
+
+  const handleCardEnabledChange = (enabled: boolean) => {
+    if (!enabled) {
+      onChange({
+        ...baseStyle,
+        card: {
+          ...(baseStyle.card || {}),
+          enabled: false,
+        },
+      });
+      return;
+    }
+
+    onChange(
+      applyCardStyleDefaults({
+        ...baseStyle,
+        card: {
+          ...(baseStyle.card || {}),
+          enabled: true,
+        },
+      }),
+    );
+  };
+
   return (
     <div className="w-full space-y-4 pb-4">
+      {/* Card mode */}
+      <div className="px-1 border-t border-border pt-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
+          {t('propsPanel.baseStyle.card', '卡片模式')}
+        </h3>
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={baseStyle.card?.enabled === true}
+              onChange={(e) => handleCardEnabledChange(e.target.checked)}
+            />
+            {t('propsPanel.baseStyle.cardEnabled', '启用卡片模式')}
+          </label>
+
+          {baseStyle.card?.enabled ? (
+            <>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.baseStyle.cardTitle', '标题')}
+                </label>
+                <input
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-3 text-sm"
+                  value={baseStyle.card?.title ?? ''}
+                  placeholder={t('propsPanel.baseStyle.cardTitlePlaceholder', '留空则使用图层名称')}
+                  onChange={(e) => updateCard('title', e.target.value)}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={baseStyle.card?.showSubtitle === true}
+                  onChange={(e) => updateCard('showSubtitle', e.target.checked)}
+                />
+                {t('propsPanel.baseStyle.cardShowSubtitle', '显示副标题')}
+              </label>
+              {baseStyle.card?.showSubtitle ? (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    {t('propsPanel.baseStyle.cardSubtitle', '副标题')}
+                  </label>
+                  <input
+                    className="flex h-8 w-full rounded-md border border-input bg-background px-3 text-sm"
+                    value={baseStyle.card?.subtitle ?? ''}
+                    onChange={(e) => updateCard('subtitle', e.target.value)}
+                  />
+                </div>
+              ) : null}
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.baseStyle.cardTitleFontSize', '标题字号')}
+                </label>
+                <NumericInput
+                  value={baseStyle.card?.titleFontSize ?? 16}
+                  onValueChange={(nextValue) => updateCard('titleFontSize', nextValue ?? 16)}
+                  className="h-8 text-sm"
+                  min={12}
+                  max={32}
+                  mode="int"
+                />
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
+
       {/* Background */}
       <div className="px-1 border-t border-border pt-4">
         <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">

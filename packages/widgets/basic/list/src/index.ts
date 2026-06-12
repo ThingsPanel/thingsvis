@@ -206,9 +206,8 @@ function renderList(element: HTMLElement, props: Props): void {
   const fg = colors.fg || '#e2e8f0';
   const primary = colors.primary || '#38bdf8';
   const shell = element.firstElementChild as HTMLDivElement | null;
-  const title = shell?.querySelector<HTMLDivElement>('[data-list-title]');
   const body = shell?.querySelector<HTMLDivElement>('[data-list-body]');
-  if (!shell || !title || !body) return;
+  if (!shell || !body) return;
 
   shell.style.cssText =
     [
@@ -223,13 +222,6 @@ function renderList(element: HTMLElement, props: Props): void {
       'padding:0',
       'font-family:inherit',
     ].join(';');
-
-  title.style.display = props.showTitle ? 'block' : 'none';
-  title.textContent = props.title;
-  title.style.marginBottom = props.showTitle ? '10px' : '0';
-  title.style.fontSize = `${props.titleFontSize}px`;
-  title.style.fontWeight = '700';
-  title.style.color = resolveColor(props.titleColor, fg);
 
   const rows = parseRowsFromItemsJson(props.itemsJson);
   body.innerHTML = '';
@@ -396,11 +388,9 @@ export const Main = defineWidget({
   render: (element: HTMLElement, props: Props) => {
     let currentProps = props;
     const shell = document.createElement('div');
-    const title = document.createElement('div');
     const body = document.createElement('div');
-    title.dataset.listTitle = 'true';
     body.dataset.listBody = 'true';
-    shell.append(title, body);
+    shell.append(body);
     element.appendChild(shell);
     renderList(element, currentProps);
 

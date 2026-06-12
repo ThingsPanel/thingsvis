@@ -186,10 +186,6 @@ export const Main = defineWidget({
     const styleEl = document.createElement('style');
     element.appendChild(styleEl);
 
-    const titleEl = document.createElement('div');
-    titleEl.style.cssText = 'display:none;';
-    element.appendChild(titleEl);
-
     const topBar = document.createElement('div');
     topBar.className = 'tv-camera-topbar';
     topBar.style.cssText = `
@@ -509,7 +505,7 @@ export const Main = defineWidget({
       const recording = statusToBool(currentProps.recordingStatus);
       const ready = state === 'ready' && !!internalVideo;
       playbackChrome.updateState({
-        deviceTitle: currentProps.title || 'Camera',
+        deviceTitle: currentLocale?.startsWith('zh') ? '摄像头设备' : 'Camera',
         online,
         recording,
         paused: internalVideo?.paused ?? true,
@@ -780,7 +776,7 @@ export const Main = defineWidget({
       topBar.style.display = usePlaybackLayout ? 'none' : 'flex';
       toolbar.style.display = showToolbar ? 'flex' : 'none';
       statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
-      const showLiveTitle = !usePlaybackLayout && currentProps.showTitle;
+      const showLiveTitle = !usePlaybackLayout;
       liveHeader.style.display = showLiveTitle ? 'flex' : 'none';
       if (usePlaybackLayout) {
         placeholder.style.display = 'none';
@@ -892,7 +888,6 @@ export const Main = defineWidget({
     };
 
     const updateStyles = () => {
-      titleEl.style.color = colors.fg;
       shell.style.border = '0';
       shell.style.borderRadius = '0';
       shell.style.boxSizing = 'border-box';
@@ -1390,9 +1385,7 @@ export const Main = defineWidget({
       const source = isPlaybackActive() ? currentProps.playbackUrl : currentProps.streamUrl;
       const normalizedSrc = normalizeSource(source);
 
-      titleEl.style.display = currentProps.showTitle ? 'block' : 'none';
-      titleEl.textContent = currentProps.title;
-      liveTitleLabel.textContent = currentProps.title || (currentLocale?.startsWith('zh') ? '摄像头设备' : 'Camera');
+      liveTitleLabel.textContent = currentLocale?.startsWith('zh') ? '摄像头设备' : 'Camera';
 
       renderStatusBar();
       renderControls();

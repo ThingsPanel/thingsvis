@@ -3,29 +3,17 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
   groups: {
-    Content: ['title', 'titleAlign', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
-    Style: ['primaryColor', 'titleColor', 'titleFontSize', 'axisLabelColor', 'smooth', 'showArea'],
+    Content: ['showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
+    Style: ['primaryColor', 'axisLabelColor', 'smooth', 'showArea'],
     Data: ['data'],
   },
   overrides: {
-    title: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.title' },
     showLegend: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showLegend' },
     showXAxis: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showXAxis' },
     showYAxis: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showYAxis' },
     primaryColor: {
       kind: 'color',
       label: 'widgets.thingsvis-widget-chart-echarts-line.controls.primaryColor',
-    },
-    titleColor: {
-      kind: 'color',
-      label: 'widgets.thingsvis-widget-chart-echarts-line.controls.titleColor',
-    },
-    titleFontSize: {
-      kind: 'slider',
-      label: 'widgets.thingsvis-widget-chart-echarts-line.controls.titleFontSize',
-      min: 12,
-      max: 32,
-      step: 1,
     },
     axisLabelColor: {
       kind: 'color',
@@ -36,15 +24,6 @@ export const controls = generateControls(PropsSchema, {
     data: {
       kind: 'json',
       label: 'widgets.thingsvis-widget-chart-echarts-line.controls.data',
-    },
-    titleAlign: {
-      kind: 'select',
-      label: 'widgets.thingsvis-widget-chart-echarts-line.controls.titleAlign',
-      options: [
-        { label: 'widgets.thingsvis-widget-chart-echarts-line.options.titleAlign.left', value: 'left' },
-        { label: 'widgets.thingsvis-widget-chart-echarts-line.options.titleAlign.center', value: 'center' },
-        { label: 'widgets.thingsvis-widget-chart-echarts-line.options.titleAlign.right', value: 'right' },
-      ],
     },
     timeRangePreset: {
       kind: 'select',
@@ -60,13 +39,9 @@ export const controls = generateControls(PropsSchema, {
     },
   },
   bindings: {
-    title: { enabled: true, modes: ['static', 'field', 'expr'] },
-    titleAlign: { enabled: true, modes: ['static', 'field', 'expr'] },
     showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
     showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
     primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
-    titleColor: { enabled: true, modes: ['static', 'field', 'expr'] },
-    titleFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
     axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
     data: { enabled: true, modes: ['static', 'field', 'expr'] },
   },

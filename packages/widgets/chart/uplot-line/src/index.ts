@@ -19,7 +19,6 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 16;
-const DEFAULT_TITLE_FONT_SIZE = 14;
 /** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT` / `LEGEND_FONT_SIZE`. */
 const LEGEND_BLOCK_HEIGHT = 20;
 const LEGEND_FONT_SIZE = 12;
@@ -311,12 +310,6 @@ function formatTick(tsSec: number, spanSec: number): string {
   return `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${hhmm}`;
 }
 
-function getTitleAlignment(align: Props['titleAlign']): 'left' | 'center' | 'right' {
-  if (align === 'center') return 'center';
-  if (align === 'right') return 'right';
-  return 'left';
-}
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, '&amp;')
@@ -489,24 +482,6 @@ export const Main = defineWidget({
         `;
     element.prepend(styleEl);
 
-    const headerEl = document.createElement('div');
-    headerEl.style.display = 'flex';
-    headerEl.style.alignItems = 'center';
-    headerEl.style.justifyContent = 'flex-start';
-    headerEl.style.gap = '8px';
-    headerEl.style.flex = '0 0 auto';
-    element.appendChild(headerEl);
-
-    const titleEl = document.createElement('div');
-    titleEl.style.flex = '1 1 auto';
-    titleEl.style.minWidth = '0';
-    titleEl.style.whiteSpace = 'nowrap';
-    titleEl.style.overflow = 'hidden';
-    titleEl.style.textOverflow = 'ellipsis';
-    titleEl.style.fontSize = '14px';
-    titleEl.style.fontWeight = 'bold';
-    headerEl.appendChild(titleEl);
-
     const chartContainer = document.createElement('div');
     chartContainer.style.position = 'relative';
     chartContainer.style.flex = '1 1 auto';
@@ -524,27 +499,6 @@ export const Main = defineWidget({
     emptyStateEl.style.pointerEvents = 'none';
     chartContainer.appendChild(emptyStateEl);
 
-    const applyHeader = (scale: number) => {
-      colors = resolveWidgetColors(element);
-      const showTitle = !!currentProps.title;
-      headerEl.style.display = showTitle ? 'flex' : 'none';
-
-      const padding = Math.round(WIDGET_PADDING * scale);
-      headerEl.style.padding = `${padding}px ${padding}px ${Math.round(10 * scale)}px ${padding}px`;
-      titleEl.textContent = currentProps.title || '';
-      titleEl.style.display = showTitle ? 'block' : 'none';
-      titleEl.style.color = resolveLayeredColor({
-        instance: currentProps.titleColor,
-        theme: colors.fg,
-        fallback: colors.fg,
-      });
-      titleEl.style.fontSize = `${Math.max(12, Math.round((currentProps.titleFontSize ?? DEFAULT_TITLE_FONT_SIZE) * scale))}px`;
-      titleEl.style.fontWeight = '600';
-      titleEl.style.lineHeight = '1.35';
-      titleEl.style.fontFamily = 'Inter, "Noto Sans SC", "Noto Sans", sans-serif';
-      titleEl.style.textAlign = getTitleAlignment(currentProps.titleAlign);
-    };
-
     const initChart = () => {
       if (chart) {
         chart.destroy();
@@ -553,8 +507,7 @@ export const Main = defineWidget({
 
       const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
       const runtimeMessages = getRuntimeMessages(currentLocale);
-      const seriesLabel =
-        currentProps.title || runtimeMessages.runtime?.defaultSeriesName || 'Value';
+      const seriesLabel = runtimeMessages.runtime?.defaultSeriesName || 'Value';
       const renderLineSeries = normalizeLineSeries(
         currentProps.data,
         currentProps.timeRangePreset,
@@ -619,7 +572,6 @@ export const Main = defineWidget({
       element.style.setProperty('--uplot-legend-color', currentAxisLabelColor);
       element.style.setProperty('--uplot-legend-axis-gap', `${legendAxisGapPx}px`);
 
-      applyHeader(scale);
       emptyStateEl.style.color = withAlpha(currentAxisLabelColor, 0.65);
       emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
       emptyStateEl.style.alignItems = 'center';
@@ -742,7 +694,6 @@ export const Main = defineWidget({
           chart.destroy();
           chart = null;
         }
-        applyHeader(lastScale > 0 ? lastScale : 1);
         const currentColors = resolveWidgetColors(element);
         const currentAxisLabelColor = resolveLayeredColor({
           instance: currentProps.axisLabelColor,

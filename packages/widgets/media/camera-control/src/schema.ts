@@ -1,8 +1,6 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-  title: z.string().default('Camera').describe('props.title'),
-  showTitle: z.boolean().default(false).describe('props.showTitle'),
   mode: z.enum(['live', 'playback']).default('live').describe('props.mode'),
   streamUrl: z.string().default('').describe('props.streamUrl'),
   playbackUrl: z.string().default('').describe('props.playbackUrl'),

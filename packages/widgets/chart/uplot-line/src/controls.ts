@@ -3,10 +3,10 @@ import { generateControls } from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['title', 'titleAlign', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
+        Content: ['showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
         Style: [
-            'primaryColor', 'titleColor', 'axisLabelColor',
-            'titleFontSize', 'xAxisFontSize', 'yAxisFontSize',
+            'primaryColor', 'axisLabelColor',
+            'xAxisFontSize', 'yAxisFontSize',
             'lineWidth', 'showArea', 'areaFillAlpha', 'smooth',
         ],
         Data: ['data'],
@@ -14,25 +14,8 @@ export const controls = generateControls(PropsSchema, {
     },
     overrides: {
         primaryColor: { kind: 'color' },
-        titleColor: { kind: 'color', label: { zh: '标题颜色', en: 'Title Color' } },
-        titleFontSize: {
-            kind: 'slider',
-            label: { zh: '标题字号', en: 'Title Font Size' },
-            min: 12,
-            max: 32,
-            step: 1,
-        },
         axisLabelColor: { kind: 'color', label: { zh: '坐标文字颜色', en: 'Axis Label Color' } },
         data: { kind: 'json' },
-        titleAlign: {
-            kind: 'select',
-            label: '标题对齐',
-            options: [
-                { label: '靠左', value: 'left' },
-                { label: '居中', value: 'center' },
-                { label: '靠右', value: 'right' },
-            ],
-        },
         timeRangePreset: {
             kind: 'select',
             label: '时间范围',
@@ -97,11 +80,7 @@ export const controls = generateControls(PropsSchema, {
         },
     },
     bindings: {
-        title: { enabled: true, modes: ['static', 'field', 'expr'] },
-        titleAlign: { enabled: true, modes: ['static', 'field', 'expr'] },
         primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
-        titleColor: { enabled: true, modes: ['static', 'field', 'expr'] },
-        titleFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
         axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
         showLegend: { enabled: true, modes: ['static', 'field', 'expr'] },
         showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },

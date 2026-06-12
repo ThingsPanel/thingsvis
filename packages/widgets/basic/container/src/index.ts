@@ -50,7 +50,6 @@ function renderContainer(element: HTMLElement, props: Props, colors: WidgetColor
   const shell = element.firstElementChild as HTMLDivElement | null;
   if (!shell) return;
 
-  const title = shell.querySelector<HTMLDivElement>('[data-container-title]');
   const body = shell.querySelector<HTMLDivElement>('[data-container-body]');
   const fill = withAlpha(resolveColor(props.fillColor, colors.bg || '#ffffff'), props.containerOpacity);
 
@@ -71,26 +70,6 @@ function renderContainer(element: HTMLElement, props: Props, colors: WidgetColor
   shell.style.boxShadow = props.shadowEnabled
     ? `0 ${props.shadowOffsetY}px ${props.shadowBlur}px ${props.shadowColor}`
     : 'none';
-
-  if (title) {
-    title.textContent = props.title;
-    title.style.display = props.showTitle ? 'flex' : 'none';
-    title.style.height = `${props.titleHeight}px`;
-    title.style.flex = `0 0 ${props.titleHeight}px`;
-    title.style.alignItems = 'center';
-    title.style.boxSizing = 'border-box';
-    title.style.padding = `0 ${props.contentPadding}px`;
-    title.style.fontSize = `${props.titleFontSize}px`;
-    title.style.fontWeight = '600';
-    title.style.lineHeight = '1';
-    title.style.whiteSpace = 'nowrap';
-    title.style.overflow = 'hidden';
-    title.style.textOverflow = 'ellipsis';
-    title.style.color = resolveColor(props.titleColor, colors.fg || '#111827');
-    title.style.background = resolveColor(props.titleBackgroundColor, 'transparent');
-    title.style.borderBottom =
-      props.containerBorderWidth > 0 ? `${props.containerBorderWidth}px solid ${props.containerBorderColor}` : '0';
-  }
 
   if (body) {
     body.style.flex = '1 1 auto';
@@ -113,12 +92,10 @@ export const Main = defineWidget({
     let colors = resolveWidgetColors(element);
 
     const shell = document.createElement('div');
-    const title = document.createElement('div');
     const body = document.createElement('div');
 
-    title.dataset.containerTitle = 'true';
     body.dataset.containerBody = 'true';
-    shell.append(title, body);
+    shell.append(body);
     element.appendChild(shell);
 
     renderContainer(element, currentProps, colors);

@@ -4,9 +4,6 @@ import { SAMPLE_LIST_ITEMS_JSON } from './sample-data';
 /** JSON：`[{ icon, left, right }]`，字段可用 leftText/rightText、label/value 等别名；`icon` 可为文字或图片 URL。 */
 
 export const PropsSchema = z.object({
-  title: z.string().default('列表').describe('Title'),
-  showTitle: z.boolean().default(true).describe('Show title'),
-
   /** JSON 数组字符串；每项含 icon / left / right（可选用别名）；数据源可绑定数组，预处理会序列化 */
   itemsJson: z
     .preprocess((raw) => {
@@ -36,10 +33,8 @@ export const PropsSchema = z.object({
   rightFontSize: z.number().min(8).max(36).default(14).describe('Right font size'),
   leadingFontSize: z.number().min(8).max(36).default(14).describe('Leading / bullet size'),
 
-  titleFontSize: z.number().min(12).max(28).default(16).describe('Title font size'),
   rowGap: z.number().min(0).max(64).default(10).describe('Row gap'),
 
-  titleColor: z.string().default('').describe('Title color'),
   leftColor: z.string().default('').describe('Left text color'),
   rightColor: z.string().default('').describe('Right text color'),
   leadingColor: z.string().default('').describe('Leading marker / icon tint'),

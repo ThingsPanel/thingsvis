@@ -4,7 +4,6 @@ import { controls } from './controls';
 import {
   defineWidget,
   resolveLocaleRecord,
-  resolveWidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
 import { buildEzopenUrl, playbackFingerprint } from './ezopen';
@@ -80,7 +79,6 @@ export const Main = defineWidget({
     let currentLocale = ctx.locale;
     let currentMode = ctx.mode ?? 'edit';
     let state: PlayerState = 'empty';
-    let colors = resolveWidgetColors(element);
     let player: EzUIKitPlayerInstance | null = null;
     let playerFingerprint = '';
     let mountGeneration = 0;
@@ -98,10 +96,6 @@ export const Main = defineWidget({
       font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
       background: transparent;
     `;
-
-    const titleEl = document.createElement('div');
-    titleEl.style.cssText = 'flex:0 0 auto;font-size:15px;font-weight:600;margin-bottom:6px;';
-    element.appendChild(titleEl);
 
     const shell = document.createElement('div');
     shell.style.cssText =
@@ -230,11 +224,6 @@ export const Main = defineWidget({
     };
 
     const updateView = () => {
-      colors = resolveWidgetColors(element);
-      titleEl.style.display = currentProps.showTitle ? 'block' : 'none';
-      titleEl.style.color = colors.fg;
-      titleEl.textContent = currentProps.title;
-
       shell.style.border = `${currentProps.borderWidth}px solid ${currentProps.borderColor}`;
       shell.style.borderRadius =
         currentProps.borderRadius === 0 ? '0' : `${currentProps.borderRadius}px`;

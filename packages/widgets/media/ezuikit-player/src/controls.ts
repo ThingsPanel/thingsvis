@@ -10,15 +10,6 @@ const templateOptions = TemplateSchema.options.map((value) => ({
 
 export const controls = createControlPanel()
   .addGroup(
-    'Title',
-    (builder) => {
-      builder
-        .addSwitch('showTitle', { label: `${W}.controls.showTitle`, binding: true })
-        .addTextInput('title', { label: `${W}.controls.title`, binding: true });
-    },
-    { label: `${W}.groups.title` },
-  )
-  .addGroup(
     'Auth',
     (builder) => {
       builder.addTextInput('accessToken', {

@@ -14,6 +14,11 @@ import { createRoot, type Root } from 'react-dom/client';
 import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
 import { syncWidgetThemeColorOverrides } from '../utils/widgetThemeColorOverrides';
+import {
+  createCardHeaderElement,
+  isCardModeEnabled,
+  syncCardHeaderElement,
+} from '../utils/cardStyle';
 
 function isLineNodeType(type: string | undefined): boolean {
   return type === 'basic/line';
@@ -985,8 +990,10 @@ export class VisualEngine {
           // This ensures runtime errors inside widgets are caught and isolated
           const widgetType = (node.schemaRef as any)?.type ?? 'unknown';
           const wrapperEl = document.createElement('div');
+          wrapperEl.dataset.overlayWidgetHost = 'true';
           wrapperEl.style.cssText = 'width:100%;height:100%';
           overlayBox.appendChild(wrapperEl);
+          this.syncOverlayCardShell(overlayBox, node);
 
           const reactRoot = createRoot(wrapperEl);
           reactRoot.render(
@@ -1120,6 +1127,7 @@ export class VisualEngine {
     if (existing.overlayBox) {
       existing.overlayBox.style.pointerEvents = this.getOverlayPointerEvents(node.id);
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
+      this.syncOverlayCardShell(existing.overlayBox, node);
       this.syncOverlayClickFallback(node, existing);
 
       // 对于自适应尺寸组件，同步占位符尺寸
@@ -1435,6 +1443,70 @@ export class VisualEngine {
       const { x, y } = rect;
       updateNode(nodeId, { position: { x, y } });
     });
+  }
+
+  private syncOverlayCardShell(box: HTMLDivElement, node: NodeState): void {
+    const cardEnabled = isCardModeEnabled(node.schemaRef?.baseStyle);
+    let widgetHost = box.querySelector<HTMLDivElement>('[data-overlay-widget-host]');
+    if (!widgetHost) {
+      const firstChild = box.firstElementChild;
+      if (firstChild instanceof HTMLDivElement) {
+        widgetHost = firstChild;
+        widgetHost.dataset.overlayWidgetHost = 'true';
+      }
+    }
+    if (!widgetHost) return;
+
+    const removeCardShell = () => {
+      box.querySelector('[data-overlay-inner-shell]')?.remove();
+      box.querySelector('[data-card-shell-header]')?.remove();
+      box.querySelector('[data-overlay-content-host]')?.remove();
+      if (widgetHost && widgetHost.parentElement !== box) {
+        box.appendChild(widgetHost);
+      }
+      widgetHost.style.cssText = 'width:100%;height:100%';
+    };
+
+    if (!cardEnabled) {
+      removeCardShell();
+      return;
+    }
+
+    let innerShell = box.querySelector<HTMLDivElement>('[data-overlay-inner-shell]');
+    if (!innerShell) {
+      innerShell = document.createElement('div');
+      innerShell.dataset.overlayInnerShell = 'true';
+      innerShell.style.cssText =
+        'display:flex;flex-direction:column;width:100%;height:100%;box-sizing:border-box;overflow:hidden';
+    }
+
+    let headerEl = box.querySelector<HTMLDivElement>('[data-card-shell-header]');
+    if (!headerEl) {
+      headerEl = createCardHeaderElement();
+    }
+
+    let contentHost = box.querySelector<HTMLDivElement>('[data-overlay-content-host]');
+    if (!contentHost) {
+      contentHost = document.createElement('div');
+      contentHost.dataset.overlayContentHost = 'true';
+      contentHost.style.cssText = 'flex:1 1 auto;min-height:0;overflow:hidden';
+    }
+
+    if (innerShell.parentElement !== box) {
+      box.appendChild(innerShell);
+    }
+    if (headerEl.parentElement !== innerShell) {
+      innerShell.insertBefore(headerEl, innerShell.firstChild);
+    }
+    if (contentHost.parentElement !== innerShell) {
+      innerShell.appendChild(contentHost);
+    }
+    if (widgetHost.parentElement !== contentHost) {
+      contentHost.appendChild(widgetHost);
+    }
+    widgetHost.style.cssText = 'width:100%;height:100%';
+
+    syncCardHeaderElement(headerEl, node.schemaRef?.baseStyle?.card, node.schemaRef?.name);
   }
 
   private positionOverlayBox(box: HTMLDivElement, node: NodeState, isResizable: boolean = true) {

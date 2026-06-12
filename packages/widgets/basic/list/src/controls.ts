@@ -7,12 +7,6 @@ export const controls = createControlPanel()
     'Content',
     (builder) => {
       builder
-        .addSwitch('showTitle', { label: `${W}.showTitle` })
-        .addTextInput('title', {
-          label: `${W}.title`,
-          binding: true,
-          showWhen: { field: 'showTitle', value: true },
-        })
         .addCustom('itemsJson', 'textarea', {
           label: `${W}.itemsJson`,
           binding: true,
@@ -72,14 +66,6 @@ export const controls = createControlPanel()
     'Typography',
     (builder) => {
       builder
-        .addSlider('titleFontSize', {
-          label: `${W}.titleFontSize`,
-          min: 12,
-          max: 28,
-          step: 1,
-          default: 16,
-          showWhen: { field: 'showTitle', value: true },
-        })
         .addSlider('leftFontSize', {
           label: `${W}.leftFontSize`,
           min: 8,
@@ -118,11 +104,6 @@ export const controls = createControlPanel()
     'Color',
     (builder) => {
       builder
-        .addColorPicker('titleColor', {
-          label: `${W}.titleColor`,
-          binding: true,
-          showWhen: { field: 'showTitle', value: true },
-        })
         .addColorPicker('leftColor', {
           label: `${W}.leftColor`,
           binding: true,
