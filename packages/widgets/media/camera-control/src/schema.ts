@@ -35,7 +35,7 @@ export const PropsSchema = z.object({
   ptzFocusCommand: z.string().default('ptz_focus').describe('props.ptzFocusCommand'),
   presetGotoCommand: z.string().default('preset_goto').describe('props.presetGotoCommand'),
   snapshotCommand: z.string().default('snapshot').describe('props.snapshotCommand'),
-  playbackOpenCommand: z.string().default('playback_open').describe('props.playbackOpenCommand'),
+  playbackOpenCommand: z.string().default('playback').describe('props.playbackOpenCommand'),
 
   borderRadius: z.number().min(0).max(48).default(6).describe('props.borderRadius'),
   borderWidth: z.number().min(0).max(12).default(0).describe('props.borderWidth'),

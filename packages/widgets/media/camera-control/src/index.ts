@@ -108,8 +108,30 @@ function normalizeCommand(command: string): string {
 }
 
 function commandPayload(command: string, params: Record<string, unknown>) {
-  const identify = normalizeCommand(command);
-  return identify ? { [identify]: params } : null;
+  return normalizeCommand(command) ? params : null;
+}
+
+function toUnixSeconds(value: Date | string): number {
+  const time = value instanceof Date ? value.getTime() : Date.parse(value);
+  return Math.floor(time / 1000);
+}
+
+function createPlaybackParams(startTime: number, endTime: number): Record<string, unknown> {
+  return {
+    type: 'cloud',
+    channel_no: 1,
+    start_time: startTime,
+    end_time: endTime,
+  };
+}
+
+function createRecentPlaybackParams(now = Date.now()): Record<string, unknown> {
+  const endTime = Math.floor(now / 1000);
+  return createPlaybackParams(endTime - 24 * 60 * 60, endTime);
+}
+
+function createRangePlaybackParams(range: { start: string; end: string }): Record<string, unknown> {
+  return createPlaybackParams(toUnixSeconds(range.start), toUnixSeconds(range.end));
 }
 
 function statusToBool(value: string): boolean | undefined {
@@ -474,7 +496,7 @@ export const Main = defineWidget({
         if (!iso) return;
         runtimeStreamMode = 'playback';
         playbackPanelOpen = false;
-        emitCommand('playbackRequest', currentProps.playbackOpenCommand, iso);
+        emitCommand('playbackRequest', currentProps.playbackOpenCommand, createRangePlaybackParams(iso));
         updateView();
       },
       onCancel: closePlaybackModal,
@@ -488,6 +510,13 @@ export const Main = defineWidget({
       syncPlaybackInputs();
       playbackPanelOpen = true;
       renderControls();
+    };
+
+    const requestRecentPlayback = () => {
+      runtimeStreamMode = 'playback';
+      playbackPanelOpen = false;
+      emitCommand('playbackRequest', currentProps.playbackOpenCommand, createRecentPlaybackParams());
+      updateView();
     };
 
     const syncVideoTransport = () => {
@@ -940,7 +969,7 @@ export const Main = defineWidget({
           returnToLive,
         );
       } else if (currentProps.showPlaybackControls) {
-        addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), openPlaybackSelector);
+        addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), requestRecentPlayback);
       }
     };
 

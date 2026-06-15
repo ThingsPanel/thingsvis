@@ -135,6 +135,42 @@ describe('devicePresetHydration', () => {
     expect(hydrated.events?.[0]?.actions?.[0]?.payload).toBe('({ "switch": payload ? 1 : 0 })');
   });
 
+  it('removes nested method wrappers from camera-control command actions', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      {
+        id: 'camera-1',
+        type: 'media/camera-control',
+        props: {
+          playbackOpenCommand: 'playback',
+        },
+        data: [
+          {
+            targetProp: 'playbackOpenCommand',
+            expression: '{{ ds.__device_platform_template__.data.playback }}',
+          },
+        ],
+        events: [
+          {
+            event: 'playbackRequest',
+            actions: [
+              {
+                type: 'callWrite',
+                dataSourceId: '__device_platform_template__',
+                payload: '({ playback: { method: "playback", params: payload } })',
+              },
+            ],
+          },
+        ],
+      },
+      'dev-camera',
+    ) as any;
+
+    expect(hydrated.events?.[0]?.actions?.[0]?.dataSourceId).toBe(
+      getPlatformDeviceDataSourceId('dev-camera'),
+    );
+    expect(hydrated.events?.[0]?.actions?.[0]?.payload).toBe('({ "playback": payload })');
+  });
+
   it('rewrites template-device platform data sources saved by the embedded editor', () => {
     const templateDataSourceId = getPlatformDeviceDataSourceId('__template__');
     const hydrated = hydrateDevicePresetSchema(

@@ -59,6 +59,16 @@ const DEFAULT_WRITE_EVENT_BY_COMPONENT: Record<string, string> = {
   'interaction/basic-input': 'submit',
 };
 
+const CAMERA_CONTROL_WRITE_EVENT_BY_PROP: Record<string, string> = {
+  ptzMoveCommand: 'ptzMove',
+  ptzStopCommand: 'ptzStop',
+  ptzZoomCommand: 'ptzZoom',
+  ptzFocusCommand: 'ptzFocus',
+  presetGotoCommand: 'presetGoto',
+  snapshotCommand: 'snapshot',
+  playbackOpenCommand: 'playbackRequest',
+};
+
 const AUTO_WRITE_MARKER = 'field-binding';
 
 type EventHandlerLike = {
@@ -188,10 +198,25 @@ function isDefaultWriteBindingTarget(
   componentType: string | undefined,
   targetProp: string,
 ): boolean {
+  if (componentType === 'media/camera-control') {
+    return Boolean(CAMERA_CONTROL_WRITE_EVENT_BY_PROP[targetProp]);
+  }
+
   return (
     targetProp === 'value' &&
     Boolean(componentType && DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType])
   );
+}
+
+function getDefaultWriteEventName(
+  componentType: string | undefined,
+  targetProp: string,
+): string | undefined {
+  if (componentType === 'media/camera-control') {
+    return CAMERA_CONTROL_WRITE_EVENT_BY_PROP[targetProp];
+  }
+
+  return componentType ? DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType] : undefined;
 }
 
 function getRootFieldPath(fieldPath: string): string | null {
@@ -350,7 +375,7 @@ function buildDefaultWriteEventsForSelection(
   events: EventHandlerLike[] | undefined,
 ): EventHandlerLike[] | null {
   if (!isDefaultWriteBindingTarget(componentType, targetProp)) return null;
-  const eventName = componentType ? DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType] : undefined;
+  const eventName = getDefaultWriteEventName(componentType, targetProp);
   if (!eventName) return null;
 
   if (!selection?.dataSourceId || !selection.fieldPath) {

@@ -19,6 +19,15 @@ const TEMPLATE_PLATFORM_BINDING_RE =
 const AUTO_WRITE_MARKER = 'field-binding';
 const AUTO_WRITE_VALUE_TYPE_KEY = '__thingsvisAutoWriteValueType';
 const FIELD_BINDING_EXPR_RE = /\{\{\s*ds\.[^.\s}]+\.data(?:\.([^}]+?))?\s*\}\}/g;
+const CAMERA_COMMAND_PROP_BY_EVENT: Record<string, string> = {
+  ptzMove: 'ptzMoveCommand',
+  ptzStop: 'ptzStopCommand',
+  ptzZoom: 'ptzZoomCommand',
+  ptzFocus: 'ptzFocusCommand',
+  presetGoto: 'presetGotoCommand',
+  snapshot: 'snapshotCommand',
+  playbackRequest: 'playbackOpenCommand',
+};
 
 function cloneValue<T>(value: T): T {
   if (value == null) return value;
@@ -123,6 +132,62 @@ function normalizeAutoWritePayloads<T>(value: T, fieldId: string | null): T {
   return next as T;
 }
 
+function normalizeCameraControlAutoWritePayloads<T>(value: T): T {
+  if (!value || typeof value !== 'object') return value;
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeCameraControlAutoWritePayloads(entry)) as T;
+  }
+
+  const record = value as Record<string, unknown>;
+  const props =
+    record.props && typeof record.props === 'object'
+      ? (record.props as Record<string, unknown>)
+      : {};
+  const next = Object.fromEntries(
+    Object.entries(record).map(([key, entry]) => {
+      if (key !== 'events' || !Array.isArray(entry)) {
+        return [key, normalizeCameraControlAutoWritePayloads(entry)];
+      }
+
+      return [
+        key,
+        entry.map((handler) => {
+          if (!handler || typeof handler !== 'object') return handler;
+          const handlerRecord = handler as Record<string, unknown>;
+          const eventName = typeof handlerRecord.event === 'string' ? handlerRecord.event : '';
+          const commandProp = CAMERA_COMMAND_PROP_BY_EVENT[eventName];
+          const commandField =
+            commandProp && typeof props[commandProp] === 'string'
+              ? (props[commandProp] as string).trim()
+              : '';
+          if (!commandField) return handler;
+
+          const actions = Array.isArray(handlerRecord.actions) ? handlerRecord.actions : [];
+          return {
+            ...handlerRecord,
+            actions: actions.map((action) => {
+              if (
+                action &&
+                typeof action === 'object' &&
+                (action as Record<string, unknown>).type === 'callWrite'
+              ) {
+                return {
+                  ...(action as Record<string, unknown>),
+                  payload: `({ ${JSON.stringify(commandField)}: payload })`,
+                };
+              }
+              return action;
+            }),
+          };
+        }),
+      ];
+    }),
+  );
+
+  return next as T;
+}
+
 function hydratePlatformDataSource(dataSource: DataSource, deviceId: string): DataSource {
   const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const rewritten = rewriteGenericPlatformBindings(cloneValue(dataSource), targetDataSourceId);
@@ -157,11 +222,12 @@ export function hydrateDevicePresetWidget(
 ): Record<string, unknown> {
   const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const clonedWidget = cloneValue(widget);
+  const rewrittenWidget = rewriteGenericPlatformBindings(clonedWidget, targetDataSourceId);
+  if (rewrittenWidget.type === 'media/camera-control') {
+    return normalizeCameraControlAutoWritePayloads(rewrittenWidget);
+  }
   const fieldId = extractFirstBoundFieldId(clonedWidget.data);
-  return normalizeAutoWritePayloads(
-    rewriteGenericPlatformBindings(clonedWidget, targetDataSourceId),
-    fieldId,
-  );
+  return normalizeAutoWritePayloads(rewrittenWidget, fieldId);
 }
 
 export function hydrateDevicePresetSchema(
@@ -174,7 +240,9 @@ export function hydrateDevicePresetSchema(
   return {
     ...clonedSchema,
     nodes: Array.isArray(clonedSchema.nodes)
-      ? rewriteGenericPlatformBindings(clonedSchema.nodes, targetDataSourceId)
+      ? clonedSchema.nodes.map((node) =>
+          hydrateDevicePresetWidget(node as Record<string, unknown>, deviceId),
+        )
       : [],
     ...(Array.isArray(clonedSchema.dataSources)
       ? {

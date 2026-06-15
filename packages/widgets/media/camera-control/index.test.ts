@@ -17,6 +17,7 @@ describe('media/camera-control widget', () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     document.body.innerHTML = '';
     delete (HTMLElement.prototype as { requestFullscreen?: unknown }).requestFullscreen;
     delete (document as { exitFullscreen?: unknown }).exitFullscreen;
@@ -90,7 +91,55 @@ describe('media/camera-control widget', () => {
     harness.destroy();
   });
 
-  it('opens the playback panel and emits playback_open with selected times', async () => {
+  it('requests cloud playback for the recent 24 hours without nesting command params', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-04T09:00:00.000Z'));
+    const { default: Main } = await import('./src/index');
+    const emit = vi.fn();
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      mode: 'view',
+      emit,
+    });
+
+    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Playback',
+    );
+    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(emit).toHaveBeenCalledWith(
+      'playbackRequest',
+      {
+        type: 'cloud',
+        channel_no: 1,
+        start_time: 1780477200,
+        end_time: 1780563600,
+      },
+    );
+    expect(emit.mock.calls[0]?.[1]).not.toHaveProperty('playback');
+    expect(emit.mock.calls[0]?.[1]).not.toHaveProperty('method');
+    expect(emit.mock.calls[0]?.[1]).not.toHaveProperty('params');
+
+    const panel = harness.element.querySelector('.tv-camera-playback-modal') as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(getComputedStyle(panel).display).toBe('none');
+
+    const returnButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Return to live',
+    );
+    expect(returnButton).toBeTruthy();
+
+    harness.destroy();
+    vi.useRealTimers();
+  });
+
+  it('defaults the playback command identifier to ThingsPanel playback', async () => {
+    const { getDefaultProps } = await import('./src/schema');
+
+    expect(getDefaultProps().playbackOpenCommand).toBe('playback');
+  });
+
+  it('emits selected playback ranges using the same pure ThingsPanel params', async () => {
     const { default: Main } = await import('./src/index');
     const emit = vi.fn();
     const harness = mountWidget(Main, {
@@ -100,24 +149,18 @@ describe('media/camera-control widget', () => {
       props: {
         playbackStart: '2026-06-04T08:00:00.000Z',
         playbackEnd: '2026-06-04T09:00:00.000Z',
+        mode: 'playback',
       },
     });
 
-    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
-      (button) => button.title === 'Playback',
+    const rangeButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.title === 'Select time',
     );
-    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    rangeButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     const panel = harness.element.querySelector('.tv-camera-playback-modal');
     expect(panel).toBeTruthy();
     expect(getComputedStyle(panel as HTMLElement).display).not.toBe('none');
-    expect(harness.element.querySelector('.tv-camera-playback-calendar')).toBeTruthy();
-    expect(harness.element.textContent).toContain('Video playback');
-
-    const dayButton = Array.from(harness.element.querySelectorAll('.tv-camera-calendar-day')).find(
-      (button) => button.textContent === '4',
-    );
-    expect(dayButton).toBeTruthy();
 
     const playButton = Array.from(harness.element.querySelectorAll('button')).find(
       (button) => button.textContent === 'Start playback',
@@ -127,12 +170,13 @@ describe('media/camera-control widget', () => {
     expect(emit).toHaveBeenCalledWith(
       'playbackRequest',
       expect.objectContaining({
-        playback_open: expect.objectContaining({
-          start: expect.any(String),
-          end: expect.any(String),
-        }),
+        type: 'cloud',
+        channel_no: 1,
+        start_time: expect.any(Number),
+        end_time: expect.any(Number),
       }),
     );
+    expect(emit.mock.calls[0]?.[1]).not.toHaveProperty('playback');
 
     const returnButton = Array.from(harness.element.querySelectorAll('button')).find(
       (button) => button.title === 'Return to live',
@@ -219,11 +263,6 @@ describe('media/camera-control widget', () => {
     );
     playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
-    const startButton = Array.from(harness.element.querySelectorAll('button')).find(
-      (button) => button.textContent === '开始回放' || button.textContent === 'Start playback',
-    );
-    startButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
     const topBar = harness.element.querySelector('.tv-camera-topbar') as HTMLElement;
     const videoStage = harness.element.querySelector('.tv-camera-video-stage') as HTMLElement;
     const videoRtc = harness.element.querySelector('video-rtc') as HTMLElement;
@@ -278,9 +317,9 @@ describe('media/camera-control widget', () => {
     clickByTitle('Focus near');
     clickByTitle('Go to preset');
 
-    expect(emit).toHaveBeenCalledWith('ptzZoom', { ptz_zoom: { action: 'in', speed: 3 } });
-    expect(emit).toHaveBeenCalledWith('ptzFocus', { ptz_focus: { action: 'near' } });
-    expect(emit).toHaveBeenCalledWith('presetGoto', { preset_goto: { presetId: '1' } });
+    expect(emit).toHaveBeenCalledWith('ptzZoom', { action: 'in', speed: 3 });
+    expect(emit).toHaveBeenCalledWith('ptzFocus', { action: 'near' });
+    expect(emit).toHaveBeenCalledWith('presetGoto', { presetId: '1' });
 
     harness.destroy();
   });

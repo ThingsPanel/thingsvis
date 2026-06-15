@@ -22,12 +22,21 @@ Recommended command identifiers:
 - `ptz_focus`
 - `preset_goto`
 - `snapshot`
-- `playback_open`
+- `playback`
 
-PTZ events emit command-shaped payloads, for example:
+Control events emit pure command params. Bind the command identifier property to the writable
+platform field; the host uses that field as the command method/identify.
+
+PTZ events emit params, for example:
 
 ```json
-{ "ptz_move": { "direction": "left", "speed": 3 } }
+{ "direction": "left", "speed": 3 }
+```
+
+Playback emits the recent 24-hour cloud request by default:
+
+```json
+{ "type": "cloud", "channel_no": 1, "start_time": 1718000000, "end_time": 1718080000 }
 ```
 
 ThingsPanel should forward this as:
@@ -61,8 +70,7 @@ Publish telemetry with the same HLS URL for live and playback:
 python .\publish-camera-telemetry.py
 ```
 
-Open runtime view, click **Playback**, pick dates on the month calendar (second click sets the end date for multi-day ranges), adjust start/end times, and click **Play**.
-The widget emits `playback_open`, loads `playbackUrl` when the platform updates it,
+Open runtime view and click **Playback**. The widget emits `playback`, loads `playbackUrl` when the platform updates it,
 shows the status chip `Playback`, and renders the bottom transport bar (play/pause,
 scrub, speed, return to live).
 
@@ -77,7 +85,7 @@ pnpm vitest run packages/widgets/media/camera-control/index.test.ts
 For an end-to-end command test in ThingsPanel:
 
 1. Add command fields to the device model, for example `ptz_move`, `ptz_stop`,
-   `ptz_zoom`, `ptz_focus`, `preset_goto`, `snapshot`, and `playback_open`.
+   `ptz_zoom`, `ptz_focus`, `preset_goto`, `snapshot`, and `playback`.
 2. Bind the widget command identifiers to those field keys.
 3. Enable the advanced controls you want to test, such as PTZ pad or zoom.
 4. Open the dashboard in runtime/viewer mode and click the control.

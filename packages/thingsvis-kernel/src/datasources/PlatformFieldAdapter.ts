@@ -240,15 +240,38 @@ export class PlatformFieldAdapter extends BaseAdapter {
     if (!this.config) return payload;
 
     const singleFieldId = this.resolveSingleWriteFieldId();
-    if (!singleFieldId) return payload;
+    const unwrappedPayload = this.unwrapNestedCommandPayload(payload);
+    if (!singleFieldId) return unwrappedPayload;
 
-    if (payload !== null && typeof payload === 'object') {
-      return payload;
+    if (unwrappedPayload !== null && typeof unwrappedPayload === 'object') {
+      return unwrappedPayload;
     }
 
     return {
-      [singleFieldId]: payload,
+      [singleFieldId]: unwrappedPayload,
     };
+  }
+
+  private unwrapNestedCommandPayload(payload: unknown): unknown {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return payload;
+
+    const entries = Object.entries(payload as Record<string, unknown>);
+    let changed = false;
+    const nextEntries = entries.map(([fieldId, value]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return [fieldId, value] as const;
+      }
+
+      const record = value as Record<string, unknown>;
+      if (record.method === fieldId && Object.prototype.hasOwnProperty.call(record, 'params')) {
+        changed = true;
+        return [fieldId, record.params] as const;
+      }
+
+      return [fieldId, value] as const;
+    });
+
+    return changed ? Object.fromEntries(nextEntries) : payload;
   }
 
   /**
