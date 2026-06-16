@@ -266,15 +266,8 @@ export const Main = defineWidget({
     };
 
     const refreshPlayerLayout = () => {
-      if (!player) return;
-      if (player.resize) {
-        player.resize('100%', '100%');
-        return;
-      }
-      const rect = shell.getBoundingClientRect();
-      const width = Math.max(Math.floor(rect.width || shell.clientWidth || 0), 320);
-      const height = Math.max(Math.floor(rect.height || shell.clientHeight || 0), 240);
-      player.resize?.(width, height);
+      if (!player?.resize) return;
+      player.resize('100%', '100%');
     };
 
     const waitForLayout = () =>
