@@ -79,6 +79,10 @@ export const controls = createControlPanel()
         .addTextInput('themeId', { label: `${W}.controls.themeId`, binding: true })
         .addSwitch('autoplay', { label: `${W}.controls.autoplay` })
         .addSwitch('audio', { label: `${W}.controls.audio` })
+        .addSwitch('showPlaybackControls', {
+          label: `${W}.controls.showPlaybackControls`,
+          default: true,
+        })
         .addTextInput('domain', {
           label: `${W}.controls.domain`,
           default: 'https://open.ys7.com',

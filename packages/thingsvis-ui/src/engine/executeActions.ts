@@ -111,7 +111,7 @@ function normalizeLegacyAutoWritePayload(raw: string): string {
     const fieldId = legacyCommandMatch[1].replace(/^"|"$/g, '');
     if (fieldId === legacyCommandMatch[2] && /\bpayload\b/.test(unescaped)) {
       const key = JSON.stringify(fieldId);
-      return `(() => { try { const legacy = ${unescaped}; const command = legacy && legacy[${key}]; return { ${key}: command && typeof command === "object" && Object.prototype.hasOwnProperty.call(command, "params") ? command.params : payload }; } catch { return { ${key}: payload }; } })()`;
+      return `(() => { const __eventPayload = payload; const __source = __eventPayload && typeof __eventPayload === "object" ? __eventPayload : {}; const __legacyPayload = __source && __source[${key}] ? __eventPayload : { ...__source, ${key}: { start: typeof __source.start_time === "number" ? new Date(__source.start_time * 1000).toISOString() : __source.start, end: typeof __source.end_time === "number" ? new Date(__source.end_time * 1000).toISOString() : __source.end } }; try { const payload = __legacyPayload; const legacy = ${unescaped}; const command = legacy && legacy[${key}]; return { ${key}: command && typeof command === "object" && Object.prototype.hasOwnProperty.call(command, "params") ? command.params : __eventPayload }; } catch { return { ${key}: __eventPayload }; } })()`;
     }
   }
 

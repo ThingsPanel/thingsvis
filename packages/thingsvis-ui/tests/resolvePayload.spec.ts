@@ -135,7 +135,7 @@ describe('resolvePayload', () => {
     expect(result).toEqual({ switch: true });
   });
 
-  it('normalizes legacy nested command expressions before evaluation fallback', () => {
+  it('normalizes legacy nested command expressions with current playback params', () => {
     const playbackPayload = {
       type: 'cloud',
       channel_no: 1,
@@ -147,7 +147,14 @@ describe('resolvePayload', () => {
       { ...baseContext, payload: playbackPayload },
     );
 
-    expect(result).toEqual({ playback: playbackPayload });
+    expect(result).toEqual({
+      playback: {
+        type: 'cloud2',
+        channel_no: 1,
+        start_time: 1718000000,
+        end_time: 1718080000,
+      },
+    });
   });
 
   it('uses legacy nested command params when the old event payload shape is still available', () => {

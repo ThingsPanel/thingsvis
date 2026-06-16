@@ -5,6 +5,16 @@
     "loading": "Loading EZVIZ player",
     "error": "EZVIZ player failed to load"
   },
+  "playback": {
+    "playback": "Playback",
+    "live": "Live",
+    "title": "Select playback time",
+    "start": "Start time",
+    "end": "End time",
+    "cancel": "Cancel",
+    "play": "Play",
+    "invalidRange": "Please select a valid playback time range"
+  },
   "editor": {
     "widgets": {
       "thingsvis-widget-media-ezuikit-player": {
@@ -31,6 +41,7 @@
           "themeId": "Theme ID",
           "autoplay": "Autoplay",
           "audio": "Enable audio",
+          "showPlaybackControls": "Show playback selector",
           "domain": "Open platform domain",
           "borderRadius": "Border radius",
           "borderWidth": "Border width",
@@ -73,6 +84,7 @@
   "widgets.thingsvis-widget-media-ezuikit-player.controls.themeId": "Theme ID",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.autoplay": "Autoplay",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.audio": "Enable audio",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.showPlaybackControls": "Show playback selector",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.domain": "Open platform domain",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.borderRadius": "Border radius",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.borderWidth": "Border width",

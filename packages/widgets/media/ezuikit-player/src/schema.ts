@@ -23,6 +23,7 @@ export const PropsSchema = z.object({
   themeId: z.string().default('').describe('props.themeId'),
   autoplay: z.boolean().default(true).describe('props.autoplay'),
   audio: z.boolean().default(false).describe('props.audio'),
+  showPlaybackControls: z.boolean().default(true).describe('props.showPlaybackControls'),
   domain: z.string().default('https://open.ys7.com').describe('props.domain'),
   borderRadius: z.number().min(0).max(48).default(6).describe('props.borderRadius'),
   borderWidth: z.number().min(0).max(12).default(0).describe('props.borderWidth'),

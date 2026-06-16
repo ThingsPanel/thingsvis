@@ -39,7 +39,7 @@ describe('PlatformFieldAdapter write normalization', () => {
       playback: {
         method: 'playback',
         params: {
-          type: 'cloud',
+          type: 'cloud2',
           channel_no: 1,
           start_time: 1718000000,
           end_time: 1718080000,
@@ -53,7 +53,7 @@ describe('PlatformFieldAdapter write normalization', () => {
 
     expect(writeMessage?.payload?.data).toEqual({
       playback: {
-        type: 'cloud',
+        type: 'cloud2',
         channel_no: 1,
         start_time: 1718000000,
         end_time: 1718080000,

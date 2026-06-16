@@ -47,7 +47,12 @@ describe('executeAction callWrite', () => {
     );
 
     expect(writeDataSource).toHaveBeenCalledWith('platform-device-1', {
-      playback: playbackPayload,
+      playback: {
+        type: 'cloud2',
+        channel_no: 1,
+        start_time: 1718000000,
+        end_time: 1718080000,
+      },
     });
   });
 });
