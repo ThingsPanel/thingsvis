@@ -132,6 +132,115 @@ function normalizeAutoWritePayloads<T>(value: T, fieldId: string | null): T {
   return next as T;
 }
 
+const EZUIKIT_COMMAND_PROP_BY_EVENT: Record<string, string> = {
+  playbackRequest: 'playbackCommand',
+  liveRequest: 'liveCommand',
+};
+
+function normalizeEzuikitPlayerAutoWritePayloads<T>(value: T): T {
+  if (!value || typeof value !== 'object') return value;
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeEzuikitPlayerAutoWritePayloads(entry)) as T;
+  }
+
+  const record = value as Record<string, unknown>;
+  const props =
+    record.props && typeof record.props === 'object'
+      ? (record.props as Record<string, unknown>)
+      : {};
+  const next = Object.fromEntries(
+    Object.entries(record).map(([key, entry]) => {
+      if (key !== 'events' || !Array.isArray(entry)) {
+        return [key, normalizeEzuikitPlayerAutoWritePayloads(entry)];
+      }
+
+      return [
+        key,
+        entry.map((handler) => {
+          if (!handler || typeof handler !== 'object') return handler;
+          const handlerRecord = handler as Record<string, unknown>;
+          const eventName = typeof handlerRecord.event === 'string' ? handlerRecord.event : '';
+          const commandProp = EZUIKIT_COMMAND_PROP_BY_EVENT[eventName];
+          const commandField =
+            commandProp && typeof props[commandProp] === 'string'
+              ? (props[commandProp] as string).trim()
+              : eventName === 'liveRequest'
+                ? typeof props.playbackCommand === 'string'
+                  ? (props.playbackCommand as string).trim()
+                  : 'playback'
+                : eventName === 'playbackRequest'
+                  ? typeof props.playbackCommand === 'string'
+                    ? (props.playbackCommand as string).trim()
+                    : 'playback'
+                  : '';
+          if (!commandField) return handler;
+
+          const actions = Array.isArray(handlerRecord.actions) ? handlerRecord.actions : [];
+          const payload =
+            eventName === 'liveRequest'
+              ? `({ ${JSON.stringify(commandField)}: { type: "live" } })`
+              : `({ ${JSON.stringify(commandField)}: payload })`;
+
+          return {
+            ...handlerRecord,
+            actions: actions.map((action) => {
+              if (
+                action &&
+                typeof action === 'object' &&
+                (action as Record<string, unknown>).type === 'callWrite'
+              ) {
+                return {
+                  ...(action as Record<string, unknown>),
+                  payload,
+                };
+              }
+              return action;
+            }),
+          };
+        }),
+      ];
+    }),
+  );
+
+  return next as T;
+}
+
+function ensureEzuikitDefaultEvents(widget: Record<string, unknown>, dataSourceId: string) {
+  if (widget.type !== 'media/ezuikit-player') return widget;
+
+  const props =
+    widget.props && typeof widget.props === 'object'
+      ? (widget.props as Record<string, unknown>)
+      : {};
+  const playbackCommand =
+    typeof props.playbackCommand === 'string' && props.playbackCommand.trim()
+      ? props.playbackCommand.trim()
+      : 'playback';
+  const events = Array.isArray(widget.events) ? [...widget.events] : [];
+
+  const upsert = (eventName: string, payload: string) => {
+    const index = events.findIndex(
+      (handler) => (handler as Record<string, unknown>)?.event === eventName,
+    );
+    const action = { type: 'callWrite', dataSourceId, payload };
+    if (index >= 0) {
+      const existing = events[index] as Record<string, unknown>;
+      const actions = Array.isArray(existing.actions) ? existing.actions : [];
+      if (actions.length === 0) {
+        events[index] = { ...existing, actions: [action] };
+      }
+      return;
+    }
+    events.push({ event: eventName, actions: [action] });
+  };
+
+  upsert('playbackRequest', `({ ${JSON.stringify(playbackCommand)}: payload })`);
+  upsert('liveRequest', `({ ${JSON.stringify(playbackCommand)}: { type: "live" } })`);
+
+  return { ...widget, events };
+}
+
 function normalizeCameraControlAutoWritePayloads<T>(value: T): T {
   if (!value || typeof value !== 'object') return value;
 
@@ -225,6 +334,13 @@ export function hydrateDevicePresetWidget(
   const rewrittenWidget = rewriteGenericPlatformBindings(clonedWidget, targetDataSourceId);
   if (rewrittenWidget.type === 'media/camera-control') {
     return normalizeCameraControlAutoWritePayloads(rewrittenWidget);
+  }
+  if (rewrittenWidget.type === 'media/ezuikit-player') {
+    const withEvents = ensureEzuikitDefaultEvents(rewrittenWidget, targetDataSourceId) as Record<
+      string,
+      unknown
+    >;
+    return normalizeEzuikitPlayerAutoWritePayloads(withEvents);
   }
   const fieldId = extractFirstBoundFieldId(clonedWidget.data);
   return normalizeAutoWritePayloads(rewrittenWidget, fieldId);

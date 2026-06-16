@@ -91,7 +91,7 @@ describe('media/camera-control widget', () => {
     harness.destroy();
   });
 
-  it('requests cloud playback for the recent 24 hours without nesting command params', async () => {
+  it('requests cloud2 playback for the recent 24 hours without nesting command params', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-04T09:00:00.000Z'));
     const { default: Main } = await import('./src/index');
@@ -110,7 +110,7 @@ describe('media/camera-control widget', () => {
     expect(emit).toHaveBeenCalledWith(
       'playbackRequest',
       {
-        type: 'cloud',
+        type: 'cloud2',
         channel_no: 1,
         start_time: 1780477200,
         end_time: 1780563600,
@@ -170,7 +170,7 @@ describe('media/camera-control widget', () => {
     expect(emit).toHaveBeenCalledWith(
       'playbackRequest',
       expect.objectContaining({
-        type: 'cloud',
+        type: 'cloud2',
         channel_no: 1,
         start_time: expect.any(Number),
         end_time: expect.any(Number),

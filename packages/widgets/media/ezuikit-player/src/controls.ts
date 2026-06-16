@@ -24,13 +24,9 @@ export const controls = createControlPanel()
     'Source',
     (builder) => {
       builder
-        .addTextInput('ezopenUrl', {
-          label: `${W}.controls.ezopenUrl`,
-          placeholder: 'ezopen://open.ys7.com/serial/1.live',
-          binding: true,
-        })
         .addTextInput('deviceSerial', {
           label: `${W}.controls.deviceSerial`,
+          placeholder: 'J33497314',
           binding: true,
         })
         .addNumberInput('channelNo', {
@@ -41,27 +37,23 @@ export const controls = createControlPanel()
           default: 1,
           binding: true,
         })
+        .addSwitch('hd', { label: `${W}.controls.hd`, default: true })
+        .addTextInput('spaceId', {
+          label: `${W}.controls.spaceId`,
+          placeholder: '361254',
+          default: '361254',
+        })
+        .addTextInput('busType', {
+          label: `${W}.controls.busType`,
+          default: '7',
+        })
+        .addTextInput('ezopenUrl', {
+          label: `${W}.controls.ezopenUrl`,
+          placeholder: 'ezopen://open.ys7.com/serial/1.live (optional)',
+          binding: true,
+        })
         .addTextInput('validCode', {
           label: `${W}.controls.validCode`,
-          binding: true,
-        })
-        .addSelect('streamSuffix', {
-          label: `${W}.controls.streamSuffix`,
-          options: [
-            { label: `${W}.options.streamSuffix.live`, value: 'live' },
-            { label: `${W}.options.streamSuffix.rec`, value: 'rec' },
-          ],
-          default: 'live',
-          binding: true,
-        })
-        .addTextInput('playbackBegin', {
-          label: `${W}.controls.playbackBegin`,
-          placeholder: 'YYYYMMDDHHmmss',
-          binding: true,
-        })
-        .addTextInput('playbackEnd', {
-          label: `${W}.controls.playbackEnd`,
-          placeholder: 'YYYYMMDDHHmmss',
           binding: true,
         });
     },
@@ -79,10 +71,6 @@ export const controls = createControlPanel()
         .addTextInput('themeId', { label: `${W}.controls.themeId`, binding: true })
         .addSwitch('autoplay', { label: `${W}.controls.autoplay` })
         .addSwitch('audio', { label: `${W}.controls.audio` })
-        .addSwitch('showPlaybackControls', {
-          label: `${W}.controls.showPlaybackControls`,
-          default: true,
-        })
         .addTextInput('domain', {
           label: `${W}.controls.domain`,
           default: 'https://open.ys7.com',

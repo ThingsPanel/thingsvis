@@ -5,6 +5,8 @@ declare module 'ezuikit-js' {
     stop?: () => Promise<unknown>;
     play?: () => Promise<unknown>;
     changePlayUrl?: (options: Record<string, unknown>) => Promise<unknown>;
+    changeTheme?: (template: string) => void;
+    resize?: (width: number | string, height: number | string) => void;
   }
 
   const EZUIKit: {

@@ -118,7 +118,7 @@ function toUnixSeconds(value: Date | string): number {
 
 function createPlaybackParams(startTime: number, endTime: number): Record<string, unknown> {
   return {
-    type: 'cloud',
+    type: 'cloud2',
     channel_no: 1,
     start_time: startTime,
     end_time: endTime,

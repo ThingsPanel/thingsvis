@@ -6,29 +6,36 @@ import {
   resolveLocaleRecord,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
-import { buildEzopenUrl, playbackFingerprint } from './ezopen';
+import {
+  buildCloudRecEzopenUrl,
+  buildLiveEzopenUrl,
+  getTodayBeginTimestamp,
+  isPlayerConfigured,
+  playbackFingerprint,
+  resolveCloudRecPlaybackParams,
+  resolveDeviceSource,
+  resolveSpaceId,
+  type EzopenSource,
+} from './ezopen';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 type RuntimeState = 'empty' | 'idle' | 'loading' | 'error';
 type PlayerState = RuntimeState | 'ready';
+type StreamMode = 'live' | 'playback';
 
 type RuntimeMessages = {
   runtime: Record<RuntimeState, string>;
   playback?: {
     playback: string;
     live: string;
-    title: string;
-    start: string;
-    end: string;
-    cancel: string;
-    play: string;
-    invalidRange: string;
   };
 };
 
 const localeCatalog = { en, zh } as const;
+const MIN_SWITCH_INTERVAL_MS = 1000;
+const PLAYBACK_THEME = 'pcRec';
 
 function getMessages(locale: string | undefined): RuntimeMessages {
   return resolveLocaleRecord(localeCatalog, locale, 'zh') as RuntimeMessages;
@@ -39,6 +46,8 @@ type EzUIKitPlayerInstance = {
   stop?: () => Promise<unknown>;
   play?: () => Promise<unknown>;
   changePlayUrl?: (options: Record<string, unknown>) => Promise<unknown>;
+  changeTheme?: (template: string) => void;
+  resize?: (width: number | string, height: number | string) => void;
 };
 
 type EzUIKitModule = {
@@ -71,46 +80,42 @@ function resolveStaticPath(): string {
   return '/widgets/media/ezuikit-player/dist/ezuikit_static';
 }
 
-function pad(input: number): string {
-  return String(input).padStart(2, '0');
+function resolveLiveTheme(props: Props): string {
+  const template = props.template.trim();
+  if (template === 'pcLive' || template === 'mobileLive' || template === 'security') {
+    return template;
+  }
+  return 'security';
 }
 
-function toLocalInputValue(date: Date): string {
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`;
-}
-
-function toEzvizTime(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}${pad(
-    date.getHours(),
-  )}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
-}
-
-function parseEzopenSource(url: string): { serial: string; channel: number } | null {
-  const match = /ezopen:\/\/open\.ys7\.com\/([^/]+)\/(\d+)/i.exec(url);
-  if (!match?.[1]) return null;
-  return {
-    serial: match[1],
-    channel: Number(match[2] || 1) || 1,
+function buildLiveChangePlayOptions(source: EzopenSource, props: Props): Record<string, unknown> {
+  const options: Record<string, unknown> = {
+    type: 'live',
+    deviceSerial: source.serial,
+    channelNo: source.channel,
+    accessToken: props.accessToken.trim(),
+    hd: source.hd,
   };
+  if (props.validCode.trim()) {
+    options.validCode = props.validCode.trim();
+  }
+  return options;
 }
 
-function resolveSource(props: Props): { serial: string; channel: number } | null {
-  const serial = props.deviceSerial.trim();
-  if (serial) return { serial, channel: props.channelNo || 1 };
-  return parseEzopenSource(props.ezopenUrl.trim());
-}
-
-function buildCloudPlaybackUrl(props: Props, begin: string, end: string): string {
-  const source = resolveSource(props);
-  if (!source || !begin || !end) return '';
-  return `ezopen://open.ys7.com/${source.serial}/${source.channel}.cloud.rec?${new URLSearchParams({
-    begin,
-    end,
-  }).toString()}`;
+function buildCloudRecChangePlayOptions(
+  source: EzopenSource,
+  props: Props,
+  begin?: string,
+): Record<string, unknown> {
+  const rec = resolveCloudRecPlaybackParams(props, begin);
+  const options: Record<string, unknown> = {
+    url: buildCloudRecEzopenUrl(source, rec),
+    accessToken: props.accessToken.trim(),
+  };
+  if (props.validCode.trim()) {
+    options.validCode = props.validCode.trim();
+  }
+  return options;
 }
 
 export const Main = defineWidget({
@@ -127,22 +132,24 @@ export const Main = defineWidget({
   controls,
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
-    let currentCtx = ctx;
     let currentLocale = ctx.locale;
     let currentMode = ctx.mode ?? 'edit';
-    let state: PlayerState = 'empty';
     let player: EzUIKitPlayerInstance | null = null;
     let playerFingerprint = '';
     let mountGeneration = 0;
-    let runtimePlaybackUrl = '';
     let resizeFrame: number | null = null;
+    let streamMode: StreamMode = 'live';
+    let switchInFlight = false;
+    let lastSwitchAt = 0;
 
     const playerHostId = `ezuikit-${Math.random().toString(36).slice(2, 10)}`;
+    const layoutStyleId = `ezuikit-style-${playerHostId}`;
 
     element.dataset.thingsvisOverlay = 'media-ezuikit-player';
     element.style.cssText = `
       width: 100%;
       height: 100%;
+      position: relative;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -151,10 +158,52 @@ export const Main = defineWidget({
       background: transparent;
     `;
 
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = `
+      position:absolute;
+      top:10px;
+      right:10px;
+      z-index:2147483000;
+      display:none;
+      gap:8px;
+      pointer-events:auto;
+    `;
+
+    const playbackButton = document.createElement('button');
+    const liveButton = document.createElement('button');
+    [playbackButton, liveButton].forEach((button) => {
+      button.type = 'button';
+      button.style.cssText = `
+        border:1px solid rgba(255,255,255,0.28);
+        border-radius:6px;
+        padding:6px 10px;
+        color:#fff;
+        background:rgba(5,7,13,0.72);
+        font-size:12px;
+        line-height:1;
+        cursor:pointer;
+        backdrop-filter:blur(8px);
+        pointer-events:auto;
+      `;
+    });
+    toolbar.append(playbackButton, liveButton);
+
     const shell = document.createElement('div');
     shell.style.cssText =
-      'position:relative;flex:1 1 0;min-height:0;overflow:hidden;background:#05070d;';
+      'position:relative;flex:1 1 0;min-height:0;overflow:hidden;background:#05070d;width:100%;height:100%;';
+
     element.appendChild(shell);
+    element.appendChild(toolbar);
+
+    const ensureLayoutStyle = () => {
+      let layoutStyle = document.getElementById(layoutStyleId) as HTMLStyleElement | null;
+      if (!layoutStyle) {
+        layoutStyle = document.createElement('style');
+        layoutStyle.id = layoutStyleId;
+        document.head.appendChild(layoutStyle);
+      }
+      return layoutStyle;
+    };
 
     const playerHost = document.createElement('div');
     playerHost.id = playerHostId;
@@ -180,93 +229,7 @@ export const Main = defineWidget({
     placeholder.appendChild(placeholderText);
     shell.appendChild(placeholder);
 
-    const toolbar = document.createElement('div');
-    toolbar.style.cssText = `
-      position:absolute;
-      top:10px;
-      right:10px;
-      z-index:50;
-      display:flex;
-      gap:8px;
-      pointer-events:auto;
-    `;
-    shell.appendChild(toolbar);
-
-    const playbackButton = document.createElement('button');
-    const liveButton = document.createElement('button');
-    [playbackButton, liveButton].forEach((button) => {
-      button.type = 'button';
-      button.style.cssText = `
-        border:1px solid rgba(255,255,255,0.28);
-        border-radius:6px;
-        padding:6px 10px;
-        color:#fff;
-        background:rgba(5,7,13,0.72);
-        font-size:12px;
-        line-height:1;
-        cursor:pointer;
-        backdrop-filter:blur(8px);
-      `;
-    });
-    toolbar.append(playbackButton, liveButton);
-
-    const modal = document.createElement('div');
-    modal.style.cssText = `
-      position:absolute;
-      inset:0;
-      z-index:60;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      background:rgba(0,0,0,0.48);
-      padding:16px;
-      box-sizing:border-box;
-    `;
-    shell.appendChild(modal);
-
-    const panel = document.createElement('div');
-    panel.style.cssText = `
-      width:min(360px,100%);
-      border-radius:8px;
-      background:#fff;
-      color:#111827;
-      padding:16px;
-      box-sizing:border-box;
-      box-shadow:0 18px 48px rgba(0,0,0,0.32);
-      font-size:13px;
-    `;
-    modal.appendChild(panel);
-
-    const modalTitle = document.createElement('div');
-    modalTitle.style.cssText = 'font-weight:600;font-size:15px;margin-bottom:12px;';
-    const startLabel = document.createElement('label');
-    const endLabel = document.createElement('label');
-    const startInput = document.createElement('input');
-    const endInput = document.createElement('input');
-    const errorText = document.createElement('div');
-    [startInput, endInput].forEach((input) => {
-      input.type = 'datetime-local';
-      input.style.cssText =
-        'width:100%;height:34px;margin:6px 0 10px;border:1px solid #d1d5db;border-radius:6px;padding:0 8px;box-sizing:border-box;';
-    });
-    errorText.style.cssText = 'display:none;color:#dc2626;margin-bottom:10px;';
-    const modalActions = document.createElement('div');
-    modalActions.style.cssText = 'display:flex;justify-content:flex-end;gap:8px;';
-    const cancelButton = document.createElement('button');
-    const playButton = document.createElement('button');
-    [cancelButton, playButton].forEach((button) => {
-      button.type = 'button';
-      button.style.cssText =
-        'border:0;border-radius:6px;padding:7px 12px;font-size:13px;cursor:pointer;';
-    });
-    cancelButton.style.background = '#e5e7eb';
-    playButton.style.background = '#2563eb';
-    playButton.style.color = '#fff';
-    modalActions.append(cancelButton, playButton);
-    panel.append(modalTitle, startLabel, startInput, endLabel, endInput, errorText, modalActions);
-
     const setState = (next: PlayerState, message?: string) => {
-      state = next;
       const messages = getMessages(currentLocale).runtime;
       if (next === 'ready') {
         placeholder.style.display = 'none';
@@ -292,31 +255,92 @@ export const Main = defineWidget({
       playerHost.innerHTML = '';
     };
 
-    const getHostSize = () => {
-      const rect = playerHost.getBoundingClientRect();
-      const width = Math.floor(
-        rect.width || playerHost.clientWidth || shell.clientWidth || element.clientWidth || 0,
-      );
-      const height = Math.floor(
-        rect.height || playerHost.clientHeight || shell.clientHeight || element.clientHeight || 0,
-      );
-      return {
-        width: Math.max(width, 320),
-        height: Math.max(height, 240),
-      };
+    const syncLayoutStyles = () => {
+      const layoutStyle = ensureLayoutStyle();
+      layoutStyle.textContent = `
+        [data-thingsvis-overlay="media-ezuikit-player"] #${playerHostId} {
+          width: 100% !important;
+          height: 100% !important;
+        }
+      `;
     };
 
-    const getPlayerUrl = () => runtimePlaybackUrl || buildEzopenUrl(currentProps);
+    const refreshPlayerLayout = () => {
+      if (!player) return;
+      if (player.resize) {
+        player.resize('100%', '100%');
+        return;
+      }
+      const rect = shell.getBoundingClientRect();
+      const width = Math.max(Math.floor(rect.width || shell.clientWidth || 0), 320);
+      const height = Math.max(Math.floor(rect.height || shell.clientHeight || 0), 240);
+      player.resize?.(width, height);
+    };
+
+    const waitForLayout = () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
+    const applyTheme = (mode: StreamMode) => {
+      const theme = mode === 'live' ? resolveLiveTheme(currentProps) : PLAYBACK_THEME;
+      player?.changeTheme?.(theme);
+    };
+
+    const switchStreamMode = async (nextMode: StreamMode, begin?: string) => {
+      const now = Date.now();
+      if (switchInFlight || now - lastSwitchAt < MIN_SWITCH_INTERVAL_MS) {
+        return;
+      }
+
+      const source = resolveDeviceSource(currentProps);
+      if (!source) {
+        setState('empty');
+        return;
+      }
+
+      if (!player?.changePlayUrl) {
+        streamMode = nextMode;
+        void createPlayer();
+        return;
+      }
+
+      switchInFlight = true;
+      liveButton.disabled = true;
+      playbackButton.disabled = true;
+      try {
+        const options =
+          nextMode === 'live'
+            ? buildLiveChangePlayOptions(source, currentProps)
+            : buildCloudRecChangePlayOptions(
+                source,
+                currentProps,
+                begin ?? getTodayBeginTimestamp(),
+              );
+        await player.changePlayUrl(options);
+        applyTheme(nextMode);
+        streamMode = nextMode;
+        lastSwitchAt = Date.now();
+        setState('ready');
+      } catch {
+        setState('error');
+      } finally {
+        switchInFlight = false;
+        syncPlaybackControls();
+      }
+    };
 
     const createPlayer = async () => {
       const generation = ++mountGeneration;
-      const token = currentProps.accessToken.trim();
-      const url = getPlayerUrl();
-      const fingerprint = playbackFingerprint(currentProps);
-      const { width, height } = getHostSize();
-      const effectiveFingerprint = `${fingerprint}|${runtimePlaybackUrl}|${width}x${height}`;
+      await waitForLayout();
+      if (generation !== mountGeneration) return;
 
-      if (!token || !url) {
+      const source = resolveDeviceSource(currentProps);
+      const token = currentProps.accessToken.trim();
+      const url = source ? buildLiveEzopenUrl(source) : '';
+      const effectiveFingerprint = playbackFingerprint(currentProps);
+
+      if (!isPlayerConfigured(currentProps) || !url) {
         destroyPlayer();
         setState('empty');
         return;
@@ -336,6 +360,7 @@ export const Main = defineWidget({
       destroyPlayer();
       setState('loading');
       playerFingerprint = effectiveFingerprint;
+      streamMode = 'live';
 
       try {
         const EZUIKit = await loadEzUIKitModule();
@@ -345,13 +370,13 @@ export const Main = defineWidget({
           id: playerHostId,
           accessToken: token,
           url,
-          template: currentProps.template,
+          template: resolveLiveTheme(currentProps),
           plugin: currentProps.audio ? ['talk'] : [],
-          width,
-          height,
+          width: '100%',
+          height: '100%',
           autoplay: currentProps.autoplay,
           audio: currentProps.audio,
-          scaleMode: 1,
+          scaleMode: 2,
           env: {
             domain: currentProps.domain.trim() || 'https://open.ys7.com',
           },
@@ -362,75 +387,52 @@ export const Main = defineWidget({
         if (currentProps.validCode.trim()) {
           options.validCode = currentProps.validCode.trim();
         }
+        const spaceId = resolveSpaceId(currentProps);
+        if (spaceId) {
+          options.spaceId = spaceId;
+        }
         if (currentProps.themeId.trim() && currentProps.template === 'theme') {
           options.themeId = currentProps.themeId.trim();
         }
 
         player = new EZUIKit.EZUIKitPlayer(options);
+        syncLayoutStyles();
         setState('ready');
+        syncPlaybackControls();
       } catch {
         destroyPlayer();
         setState('error');
       }
     };
 
-    const openPlaybackModal = () => {
-      const messages = getMessages(currentLocale).playback;
-      const now = new Date();
-      const start = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-      startInput.value = toLocalInputValue(start);
-      endInput.value = toLocalInputValue(now);
-      errorText.style.display = 'none';
-      modalTitle.textContent = messages?.title ?? 'Playback';
-      modal.style.display = 'flex';
-    };
-
-    const closePlaybackModal = () => {
-      modal.style.display = 'none';
+    const setModeButtonStyle = (button: HTMLButtonElement, active: boolean) => {
+      button.style.borderColor = active ? '#60a5fa' : 'rgba(255,255,255,0.28)';
+      button.style.background = active ? 'rgba(37,99,235,0.88)' : 'rgba(5,7,13,0.72)';
+      button.style.opacity = active ? '1' : '0.92';
     };
 
     const requestPlayback = () => {
-      const messages = getMessages(currentLocale).playback;
-      const begin = toEzvizTime(startInput.value);
-      const end = toEzvizTime(endInput.value);
-      if (!begin || !end || begin >= end) {
-        errorText.textContent = messages?.invalidRange ?? 'Please select a valid time range';
-        errorText.style.display = 'block';
-        return;
-      }
-      const nextUrl = buildCloudPlaybackUrl(currentProps, begin, end);
-      if (!nextUrl) {
-        errorText.textContent = messages?.invalidRange ?? 'Please select a valid time range';
-        errorText.style.display = 'block';
-        return;
-      }
-      runtimePlaybackUrl = nextUrl;
-      closePlaybackModal();
-      updateView();
+      void switchStreamMode('playback');
     };
 
-    const returnToLive = () => {
-      runtimePlaybackUrl = '';
-      updateView();
+    const requestLive = () => {
+      void switchStreamMode('live');
     };
 
-    playbackButton.addEventListener('click', openPlaybackModal);
-    liveButton.addEventListener('click', returnToLive);
-    cancelButton.addEventListener('click', closePlaybackModal);
-    playButton.addEventListener('click', requestPlayback);
+    playbackButton.addEventListener('click', requestPlayback);
+    liveButton.addEventListener('click', requestLive);
 
     const syncPlaybackControls = () => {
       const messages = getMessages(currentLocale).playback;
-      const showPlaybackControls = currentProps.showPlaybackControls !== false;
-      toolbar.style.display =
-        currentMode !== 'edit' && showPlaybackControls ? 'flex' : 'none';
+      const showToolbar = currentMode !== 'edit';
+      toolbar.style.display = showToolbar ? 'flex' : 'none';
+
       playbackButton.textContent = messages?.playback ?? 'Playback';
       liveButton.textContent = messages?.live ?? 'Live';
-      liveButton.style.display = runtimePlaybackUrl ? 'inline-flex' : 'none';
-      startLabel.textContent = messages?.start ?? 'Start';
-      endLabel.textContent = messages?.end ?? 'End';
-      cancelButton.textContent = messages?.cancel ?? 'Cancel';
-      playButton.textContent = messages?.play ?? 'Play';
+      playbackButton.disabled = switchInFlight;
+      liveButton.disabled = switchInFlight;
+      setModeButtonStyle(liveButton, streamMode === 'live');
+      setModeButtonStyle(playbackButton, streamMode === 'playback');
     };
 
     const updateView = () => {
@@ -438,8 +440,19 @@ export const Main = defineWidget({
       shell.style.borderRadius =
         currentProps.borderRadius === 0 ? '0' : `${currentProps.borderRadius}px`;
       shell.style.boxSizing = 'border-box';
-
       syncPlaybackControls();
+      syncLayoutStyles();
+
+      if (!isPlayerConfigured(currentProps)) {
+        destroyPlayer();
+        setState('empty');
+        return;
+      }
+      if (currentMode === 'edit') {
+        destroyPlayer();
+        setState('idle');
+        return;
+      }
       void createPlayer();
     };
 
@@ -447,7 +460,7 @@ export const Main = defineWidget({
       if (resizeFrame !== null || currentMode === 'edit') return;
       resizeFrame = window.requestAnimationFrame(() => {
         resizeFrame = null;
-        void createPlayer();
+        refreshPlayerLayout();
       });
     };
 
@@ -455,19 +468,17 @@ export const Main = defineWidget({
       typeof window !== 'undefined' && 'ResizeObserver' in window
         ? new window.ResizeObserver(scheduleResizeRefresh)
         : null;
+    resizeObserver?.observe(element);
     resizeObserver?.observe(shell);
 
+    syncLayoutStyles();
     updateView();
 
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
-        currentCtx = newCtx;
         currentLocale = newCtx.locale;
         currentMode = newCtx.mode ?? currentMode;
-        if (runtimePlaybackUrl && !resolveSource(newProps)) {
-          runtimePlaybackUrl = '';
-        }
         updateView();
       },
       destroy: () => {
@@ -478,6 +489,7 @@ export const Main = defineWidget({
           resizeFrame = null;
         }
         destroyPlayer();
+        document.getElementById(layoutStyleId)?.remove();
         element.innerHTML = '';
       },
     };

@@ -1,11 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mountWidget } from '../../test-utils/widgetLifecycle';
+import { getTodayBeginTimestamp } from './src/ezopen';
 
 const destroy = vi.fn();
 const stop = vi.fn();
-const playerCtor = vi.fn(function MockEZUIKitPlayer(this: { destroy: typeof destroy; stop: typeof stop }) {
+const changePlayUrl = vi.fn().mockResolvedValue(undefined);
+const changeTheme = vi.fn();
+const resize = vi.fn();
+
+const playerCtor = vi.fn(function MockEZUIKitPlayer(this: {
+  destroy: typeof destroy;
+  stop: typeof stop;
+  changePlayUrl: typeof changePlayUrl;
+  changeTheme: typeof changeTheme;
+  resize: typeof resize;
+}) {
   this.destroy = destroy;
   this.stop = stop;
+  this.changePlayUrl = changePlayUrl;
+  this.changeTheme = changeTheme;
+  this.resize = resize;
 });
 
 vi.mock('ezuikit-js', () => ({
@@ -20,6 +34,9 @@ describe('media/ezuikit-player widget', () => {
     document.body.innerHTML = '';
     playerCtor.mockClear();
     destroy.mockClear();
+    changePlayUrl.mockClear();
+    changeTheme.mockClear();
+    resize.mockClear();
     vi.clearAllMocks();
   });
 
@@ -31,14 +48,16 @@ describe('media/ezuikit-player widget', () => {
     harness.destroy();
   });
 
-  it('creates EZUIKit player in view mode when token and ezopen url are set', async () => {
+  it('creates EZUIKit player with hd live url when bound url is hd cloud recording', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
       mode: 'view',
       props: {
         accessToken: 'at.test-token',
-        ezopenUrl: 'ezopen://open.ys7.com/BC7900686/1.live',
+        deviceSerial: 'BC7900686',
+        channelNo: 1,
+        hd: true,
         template: 'security',
       },
     });
@@ -49,59 +68,37 @@ describe('media/ezuikit-player widget', () => {
 
     const options = playerCtor.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(options.accessToken).toBe('at.test-token');
-    expect(options.url).toBe('ezopen://open.ys7.com/BC7900686/1.live');
+    expect(options.url).toBe('ezopen://open.ys7.com/BC7900686/1.hd.live');
     expect(options.template).toBe('security');
 
     harness.destroy();
     expect(destroy).toHaveBeenCalled();
   });
 
-  it('switches to cloud recording playback from the built-in selector', async () => {
+  it('still supports legacy ezopen url fallback', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
       mode: 'view',
       props: {
         accessToken: 'at.test-token',
-        deviceSerial: 'J33497314',
-        channelNo: 1,
+        ezopenUrl:
+          'ezopen://open.ys7.com/BC7900686/1.hd.cloud.rec?begin=20260616000000&end=20260616235959',
         template: 'security',
       },
     });
 
     await vi.waitFor(() => {
-      expect(playerCtor).toHaveBeenCalledTimes(1);
+      expect(playerCtor).toHaveBeenCalled();
     });
 
-    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Playback',
-    );
-    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-    const [startInput, endInput] = Array.from(
-      harness.element.querySelectorAll('input[type="datetime-local"]'),
-    ) as HTMLInputElement[];
-    startInput.value = '2026-06-15T00:00';
-    endInput.value = '2026-06-15T09:34';
-
-    const playButton = Array.from(harness.element.querySelectorAll('button')).find(
-      (button) => button.textContent === 'Play',
-    );
-    playButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-
-    await vi.waitFor(() => {
-      expect(playerCtor).toHaveBeenCalledTimes(2);
-    });
-
-    const options = playerCtor.mock.calls[1]?.[0] as Record<string, unknown>;
-    expect(options.url).toBe(
-      'ezopen://open.ys7.com/J33497314/1.cloud.rec?begin=20260615000000&end=20260615093400',
-    );
+    const options = playerCtor.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(options.url).toBe('ezopen://open.ys7.com/BC7900686/1.hd.live');
 
     harness.destroy();
   });
 
-  it('recreates the player when the host size changes after mount', async () => {
+  it('does not recreate the player when only the host size changes', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
@@ -109,7 +106,9 @@ describe('media/ezuikit-player widget', () => {
       size: { width: 320, height: 240 },
       props: {
         accessToken: 'at.test-token',
-        ezopenUrl: 'ezopen://open.ys7.com/BC7900686/1.live',
+        deviceSerial: 'BC7900686',
+        channelNo: 1,
+        hd: true,
         template: 'security',
       },
     });
@@ -117,17 +116,72 @@ describe('media/ezuikit-player widget', () => {
     await vi.waitFor(() => {
       expect(playerCtor).toHaveBeenCalledTimes(1);
     });
-    expect((playerCtor.mock.calls[0]?.[0] as Record<string, unknown>).width).toBe(320);
 
     harness.update({ size: { width: 900, height: 360 } });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(playerCtor).toHaveBeenCalledTimes(1);
+    harness.destroy();
+  });
+
+  it('uses cloud.rec ezopen url and pcRec theme when entering playback', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-16T12:00:00'));
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      mode: 'view',
+      props: {
+        accessToken: 'at.test-token',
+        deviceSerial: 'BC7900686',
+        channelNo: 1,
+        hd: true,
+        spaceId: '361254',
+        template: 'security',
+      },
+    });
 
     await vi.waitFor(() => {
-      expect(playerCtor).toHaveBeenCalledTimes(2);
+      expect(playerCtor).toHaveBeenCalledTimes(1);
     });
-    const options = playerCtor.mock.calls[1]?.[0] as Record<string, unknown>;
-    expect(options.width).toBe(900);
-    expect(options.height).toBe(360);
+
+    const initOptions = playerCtor.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(initOptions.spaceId).toBe('361254');
+
+    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Playback',
+    );
+    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(changePlayUrl).toHaveBeenCalled();
+    });
+
+    expect(changePlayUrl.mock.calls[0]?.[0]).toEqual({
+      url: `ezopen://open.ys7.com/BC7900686/1.cloud.rec?begin=${getTodayBeginTimestamp()}&end=20260616010000&spaceId=361254&busType=7`,
+      accessToken: 'at.test-token',
+    });
+    expect(changeTheme).toHaveBeenCalledWith('pcRec');
+    expect(playerCtor).toHaveBeenCalledTimes(1);
+
+    vi.setSystemTime(Date.now() + 1500);
+    const liveButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Live',
+    );
+    liveButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(changePlayUrl).toHaveBeenCalledTimes(2);
+    });
+    expect(changePlayUrl.mock.calls[1]?.[0]).toMatchObject({
+      type: 'live',
+      deviceSerial: 'BC7900686',
+      channelNo: 1,
+      hd: true,
+    });
+    expect(changeTheme).toHaveBeenCalledWith('security');
 
     harness.destroy();
+    vi.useRealTimers();
   });
 });

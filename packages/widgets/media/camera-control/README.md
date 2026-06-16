@@ -33,10 +33,10 @@ PTZ events emit params, for example:
 { "direction": "left", "speed": 3 }
 ```
 
-Playback emits the recent 24-hour cloud request by default:
+Playback emits the recent 24-hour cloud recording 2.0 request by default:
 
 ```json
-{ "type": "cloud", "channel_no": 1, "start_time": 1718000000, "end_time": 1718080000 }
+{ "type": "cloud2", "channel_no": 1, "start_time": 1718000000, "end_time": 1718080000 }
 ```
 
 ThingsPanel should forward this as:

@@ -1,9 +1,19 @@
 {
   "runtime": {
-    "empty": "请绑定萤石 accessToken 与 ezopen 地址或设备序列号",
+    "empty": "请绑定萤石 accessToken、设备序列号与通道号",
     "idle": "编辑模式不加载萤石播放器",
     "loading": "正在加载萤石播放器",
     "error": "萤石播放器加载失败"
+  },
+  "playback": {
+    "playback": "回放",
+    "live": "实时",
+    "title": "选择回放时间",
+    "start": "开始时间",
+    "end": "结束时间",
+    "cancel": "取消",
+    "play": "播放",
+    "invalidRange": "请选择有效的回放时间范围"
   },
   "editor": {
     "widgets": {
@@ -20,13 +30,14 @@
           "showTitle": "显示标题",
           "title": "标题",
           "accessToken": "Access Token",
-          "ezopenUrl": "ezopen 完整地址",
           "deviceSerial": "设备序列号",
           "channelNo": "通道号",
+          "hd": "高清码流",
+          "spaceId": "云录制空间 ID",
+          "busType": "云录制 busType",
+          "playbackParamsUrl": "回放参数 URL（解析 spaceId）",
+          "ezopenUrl": "ezopen 完整地址（可选）",
           "validCode": "设备验证码",
-          "streamSuffix": "流类型",
-          "playbackBegin": "回放开始",
-          "playbackEnd": "回放结束",
           "template": "UI 模板",
           "themeId": "主题 ID",
           "autoplay": "自动播放",
@@ -34,14 +45,9 @@
           "domain": "开放平台域名",
           "borderRadius": "圆角",
           "borderWidth": "边框宽度",
-          "borderColor": "边框颜色",
-          "showPlaybackControls": "显示回放选择"
+          "borderColor": "边框颜色"
         },
         "options": {
-          "streamSuffix": {
-            "live": "实时",
-            "rec": "录像回放"
-          },
           "template": {
             "simple": "极简",
             "standard": "标准",
@@ -63,13 +69,14 @@
   "widgets.thingsvis-widget-media-ezuikit-player.controls.showTitle": "显示标题",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.title": "标题",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.accessToken": "Access Token",
-  "widgets.thingsvis-widget-media-ezuikit-player.controls.ezopenUrl": "ezopen 完整地址",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.deviceSerial": "设备序列号",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.channelNo": "通道号",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.hd": "高清码流",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.spaceId": "云录制空间 ID",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.busType": "云录制 busType",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackParamsUrl": "回放参数 URL（解析 spaceId）",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.ezopenUrl": "ezopen 完整地址（可选）",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.validCode": "设备验证码",
-  "widgets.thingsvis-widget-media-ezuikit-player.controls.streamSuffix": "流类型",
-  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackBegin": "回放开始",
-  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackEnd": "回放结束",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.template": "UI 模板",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.themeId": "主题 ID",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.autoplay": "自动播放",
@@ -78,8 +85,6 @@
   "widgets.thingsvis-widget-media-ezuikit-player.controls.borderRadius": "圆角",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.borderWidth": "边框宽度",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.borderColor": "边框颜色",
-  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.live": "实时",
-  "widgets.thingsvis-widget-media-ezuikit-player.options.streamSuffix.rec": "录像回放",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.simple": "极简",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.standard": "标准",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.security": "安防（预览+回放）",
@@ -96,6 +101,5 @@
     "cancel": "取消",
     "play": "播放",
     "invalidRange": "请选择有效的回放时间范围"
-  },
-  "widgets.thingsvis-widget-media-ezuikit-player.controls.showPlaybackControls": "显示回放选择"
+  }
 }

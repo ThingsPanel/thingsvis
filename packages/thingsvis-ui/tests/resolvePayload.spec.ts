@@ -137,7 +137,7 @@ describe('resolvePayload', () => {
 
   it('normalizes legacy nested command expressions with current playback params', () => {
     const playbackPayload = {
-      type: 'cloud',
+      type: 'cloud2',
       channel_no: 1,
       start_time: 1718000000,
       end_time: 1718080000,
