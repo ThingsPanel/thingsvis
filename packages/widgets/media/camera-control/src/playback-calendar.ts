@@ -117,7 +117,6 @@ export function mountPlaybackCalendar(
 ): PlaybackCalendarMount {
   let range = defaultPlaybackDateRange();
   let visibleMonth = new Date(range.endDate.getFullYear(), range.endDate.getMonth(), 1);
-  let selectingEnd = false;
 
   host.className = 'tv-camera-playback-calendar';
   host.style.cssText =
@@ -281,21 +280,20 @@ export function mountPlaybackCalendar(
 
       button.addEventListener('click', () => {
         const clicked = startOfDay(date);
-        if (!selectingEnd || sameDay(range.startDate, range.endDate)) {
-          range = {
-            ...range,
-            startDate: clicked,
-            endDate: clicked,
-          };
-          selectingEnd = true;
-        } else {
-          if (compareDay(clicked, range.startDate) < 0) {
-            range = { ...range, endDate: range.startDate, startDate: clicked };
+        const collapsed = sameDay(range.startDate, range.endDate);
+
+        if (collapsed) {
+          if (sameDay(clicked, range.startDate)) {
+            range = { ...range, startDate: clicked, endDate: clicked };
+          } else if (compareDay(clicked, range.startDate) < 0) {
+            range = { ...range, startDate: clicked, endDate: range.startDate };
           } else {
             range = { ...range, endDate: clicked };
           }
-          selectingEnd = false;
+        } else {
+          range = { ...range, startDate: clicked, endDate: clicked };
         }
+
         visibleMonth = new Date(clicked.getFullYear(), clicked.getMonth(), 1);
         renderMonthGrid();
         notify();
@@ -352,7 +350,6 @@ export function mountPlaybackCalendar(
         endTime: parseTimeValue(next.endTime, range.endTime),
       };
       visibleMonth = new Date(range.endDate.getFullYear(), range.endDate.getMonth(), 1);
-      selectingEnd = !sameDay(range.startDate, range.endDate);
       render();
     },
     updateLabels: (labels, locale) => {

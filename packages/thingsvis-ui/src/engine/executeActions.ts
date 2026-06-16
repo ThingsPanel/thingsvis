@@ -102,6 +102,19 @@ function getFieldRoot(fieldPath: string): string {
 
 function normalizeLegacyAutoWritePayload(raw: string): string {
   const unescaped = raw.replace(/\\"/g, '"');
+
+  const legacyCommandMatch =
+    /^\s*\(\{\s*([A-Za-z_$][\w$]*|"[^"]+")\s*:\s*\{\s*method\s*:\s*["']([^"']+)["']\s*,\s*params\s*:/s.exec(
+      unescaped,
+    );
+  if (legacyCommandMatch?.[1] && legacyCommandMatch[2]) {
+    const fieldId = legacyCommandMatch[1].replace(/^"|"$/g, '');
+    if (fieldId === legacyCommandMatch[2] && /\bpayload\b/.test(unescaped)) {
+      const key = JSON.stringify(fieldId);
+      return `(() => { try { const legacy = ${unescaped}; const command = legacy && legacy[${key}]; return { ${key}: command && typeof command === "object" && Object.prototype.hasOwnProperty.call(command, "params") ? command.params : payload }; } catch { return { ${key}: payload }; } })()`;
+    }
+  }
+
   const match = /^\s*\(\{\s*"([^"]+)"\s*:\s*payload\s*\}\)\s*$/.exec(unescaped);
   if (!match?.[1]) return unescaped;
 
@@ -193,6 +206,15 @@ function resolvePayload(raw: unknown, context: Record<string, unknown>): unknown
   return normalizedRaw;
 }
 
+function resolveDataSourceId(raw: unknown, context: Record<string, unknown>): string {
+  if (typeof raw !== 'string') return '';
+
+  const resolved = resolvePayload(raw, context);
+  if (typeof resolved === 'string') return resolved.trim();
+
+  return raw.trim();
+}
+
 // Exported for testing
 export {
   resolvePayload as _resolvePayload,
@@ -247,12 +269,10 @@ export function executeAction(
       if (!rawDsId) break;
 
       const context = buildExpressionContext(state, payload);
-      const resolvedDsId = resolvePayload(rawDsId, context);
-      const dsId = typeof resolvedDsId === 'string' ? resolvedDsId.trim() : '';
+      const dsId = resolveDataSourceId(rawDsId, context);
       if (!dsId) {
         console.warn('[ThingsVis] callWrite skipped: dataSourceId did not resolve to a string', {
           dataSourceId: rawDsId,
-          resolved: resolvedDsId,
         });
         break;
       }

@@ -135,6 +135,54 @@ describe('resolvePayload', () => {
     expect(result).toEqual({ switch: true });
   });
 
+  it('normalizes legacy nested command expressions before evaluation fallback', () => {
+    const playbackPayload = {
+      type: 'cloud',
+      channel_no: 1,
+      start_time: 1718000000,
+      end_time: 1718080000,
+    };
+    const result = resolvePayload(
+      '({ playback: { method: "playback", params: { type: "cloud2", channel_no: 1, start_time: Math.floor(new Date(payload.playback.start).getTime() / 1000), end_time: Math.floor(new Date(payload.playback.end).getTime() / 1000) } } })',
+      { ...baseContext, payload: playbackPayload },
+    );
+
+    expect(result).toEqual({ playback: playbackPayload });
+  });
+
+  it('uses legacy nested command params when the old event payload shape is still available', () => {
+    const result = resolvePayload(
+      '({ playback: { method: "playback", params: { type: "cloud2", channel_no: 1, start_time: Math.floor(new Date(payload.playback.start).getTime() / 1000), end_time: Math.floor(new Date(payload.playback.end).getTime() / 1000) } } })',
+      {
+        ...baseContext,
+        payload: {
+          playback: {
+            start: '2024-06-10T00:00:00.000Z',
+            end: '2024-06-11T00:00:00.000Z',
+          },
+        },
+      },
+    );
+
+    expect(result).toEqual({
+      playback: {
+        type: 'cloud2',
+        channel_no: 1,
+        start_time: 1717977600,
+        end_time: 1718064000,
+      },
+    });
+  });
+
+  it('preserves static command wrapper expressions that do not depend on event payload', () => {
+    const result = resolvePayload(
+      '({ reboot: { method: "reboot", params: { delay: 3 } } })',
+      baseContext,
+    );
+
+    expect(result).toEqual({ reboot: { method: 'reboot', params: { delay: 3 } } });
+  });
+
   it('handles complex IoT control payload with full JS expression', () => {
     const ctx = { ...baseContext, payload: true };
     // For complex payloads with nested JSON strings, use full JS expression mode

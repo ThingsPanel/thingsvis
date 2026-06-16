@@ -21,4 +21,33 @@ describe('executeAction callWrite', () => {
 
     expect(writeDataSource).toHaveBeenCalledWith('platform-device-1', { value: 'true' });
   });
+
+  it('normalizes legacy camera command expressions before writing', () => {
+    const writeDataSource = vi.fn(async () => ({ success: true }));
+    const playbackPayload = {
+      type: 'cloud',
+      channel_no: 1,
+      start_time: 1718000000,
+      end_time: 1718080000,
+    };
+
+    executeAction(
+      {
+        type: 'callWrite',
+        dataSourceId: 'platform-device-1',
+        payload:
+          '({ playback: { method: "playback", params: { type: "cloud2", channel_no: 1, start_time: Math.floor(new Date(payload.playback.start).getTime() / 1000), end_time: Math.floor(new Date(payload.playback.end).getTime() / 1000) } } })',
+      },
+      {
+        variableValues: {},
+        dataSources: {},
+      },
+      playbackPayload,
+      { dataSourceManager: { writeDataSource } as any },
+    );
+
+    expect(writeDataSource).toHaveBeenCalledWith('platform-device-1', {
+      playback: playbackPayload,
+    });
+  });
 });
