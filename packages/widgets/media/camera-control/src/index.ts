@@ -227,9 +227,13 @@ export const Main = defineWidget({
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:16px;
-      min-height:32px;
+      flex-wrap:nowrap;
+      gap:10px;
+      min-height:36px;
       margin-bottom:8px;
+      overflow-x:auto;
+      overflow-y:hidden;
+      scrollbar-width:none;
     `;
     element.appendChild(topBar);
 
@@ -238,8 +242,9 @@ export const Main = defineWidget({
     statusBar.style.cssText = `
       display:flex;
       align-items:center;
-      flex-wrap:wrap;
-      gap:18px;
+      flex-wrap:nowrap;
+      flex:0 0 auto;
+      gap:12px;
       min-width:0;
       pointer-events:none;
     `;
@@ -251,8 +256,9 @@ export const Main = defineWidget({
       display:none;
       align-items:center;
       justify-content:flex-end;
-      flex-wrap:wrap;
-      gap:10px;
+      flex-wrap:nowrap;
+      flex:1 1 auto;
+      gap:6px;
       min-width:0;
       box-sizing:border-box;
     `;
@@ -394,7 +400,7 @@ export const Main = defineWidget({
     const actionPanel = document.createElement('div');
     actionPanel.className = 'tv-camera-action-panel';
     actionPanel.style.cssText =
-      'display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;min-width:0;';
+      'display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;min-width:0;flex-shrink:0;';
     toolbar.appendChild(actionPanel);
 
     const stopTransportTimer = () => {
@@ -981,6 +987,23 @@ export const Main = defineWidget({
       const resolvedObjectFit = currentProps.objectFit || 'cover';
       const resolvedObjectPosition = resolveObjectPosition(resolvedObjectFit);
       styleEl.textContent = `
+        [data-thingsvis-overlay="media-camera-control"] {
+          container-type: inline-size;
+          container-name: tv-camera;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar {
+          opacity: ${currentProps.panelOpacity};
+          flex-wrap: nowrap;
+          -ms-overflow-style: none;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar::-webkit-scrollbar {
+          display: none;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-bar,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-toolbar,
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
+          flex-wrap: nowrap;
+        }
         [data-thingsvis-overlay="media-camera-control"] video-rtc {
           position: absolute !important;
           inset: 0 !important;
@@ -1205,9 +1228,6 @@ export const Main = defineWidget({
           );
           pointer-events: none;
         }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar {
-          opacity: ${currentProps.panelOpacity};
-        }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-live-header-icon {
           display: inline-flex;
           align-items: center;
@@ -1304,6 +1324,8 @@ export const Main = defineWidget({
           font-size: 13px;
           font-weight: 600;
           line-height: 1;
+          white-space: nowrap;
+          flex-shrink: 0;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-dot {
           width: 8px;
@@ -1352,9 +1374,10 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
           width: auto;
-          max-width: 96px;
-          padding: 0 8px;
+          max-width: none;
+          padding: 0 6px;
           white-space: nowrap;
+          flex-shrink: 0;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-datetime-input {
           width: 100%;
@@ -1403,15 +1426,32 @@ export const Main = defineWidget({
           background: transparent;
           border-color: transparent;
         }
+        @container tv-camera (max-width: 420px) {
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-bar {
+            gap: 8px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip {
+            font-size: 12px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
+            gap: 4px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
+            height: 28px !important;
+            padding: 0 4px !important;
+            font-size: 11px !important;
+          }
+        }
         @media (max-width: 720px) {
           [data-thingsvis-overlay="media-camera-control"] {
             padding: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar {
-            align-items: flex-start !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-            margin-bottom: 12px !important;
+            align-items: center !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            margin-bottom: 8px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-chip {
             min-height: 22px !important;
