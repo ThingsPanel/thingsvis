@@ -225,12 +225,14 @@ export const Main = defineWidget({
     topBar.style.cssText = `
       flex:0 0 auto;
       display:flex;
+      flex-direction:row;
       align-items:center;
-      justify-content:space-between;
       flex-wrap:nowrap;
-      gap:10px;
+      gap:8px;
+      width:100%;
       min-height:36px;
       margin-bottom:8px;
+      box-sizing:border-box;
       overflow-x:auto;
       overflow-y:hidden;
       scrollbar-width:none;
@@ -244,25 +246,22 @@ export const Main = defineWidget({
       align-items:center;
       flex-wrap:nowrap;
       flex:0 0 auto;
-      gap:12px;
+      gap:10px;
       min-width:0;
       pointer-events:none;
     `;
     topBar.appendChild(statusBar);
 
-    const toolbar = document.createElement('div');
-    toolbar.className = 'tv-camera-toolbar';
-    toolbar.style.cssText = `
-      display:none;
-      align-items:center;
-      justify-content:flex-end;
-      flex-wrap:nowrap;
-      flex:1 1 auto;
-      gap:6px;
-      min-width:0;
-      box-sizing:border-box;
-    `;
-    topBar.appendChild(toolbar);
+    const topBarSpacer = document.createElement('div');
+    topBarSpacer.className = 'tv-camera-topbar-spacer';
+    topBarSpacer.style.cssText = 'flex:1 1 auto;min-width:4px;height:1px;';
+    topBar.appendChild(topBarSpacer);
+
+    const actionPanel = document.createElement('div');
+    actionPanel.className = 'tv-camera-action-panel';
+    actionPanel.style.cssText =
+      'display:none;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:4px;flex:0 0 auto;min-width:0;';
+    topBar.appendChild(actionPanel);
 
     const shell = document.createElement('div');
     shell.className = 'tv-camera-shell';
@@ -396,12 +395,6 @@ export const Main = defineWidget({
       gap:4px;
     `;
     shell.appendChild(ptzPanel);
-
-    const actionPanel = document.createElement('div');
-    actionPanel.className = 'tv-camera-action-panel';
-    actionPanel.style.cssText =
-      'display:flex;flex-wrap:nowrap;justify-content:flex-end;align-items:center;gap:6px;min-width:0;flex-shrink:0;';
-    toolbar.appendChild(actionPanel);
 
     const stopTransportTimer = () => {
       if (transportTimer) {
@@ -844,7 +837,8 @@ export const Main = defineWidget({
       const showPtzPad = false;
       element.style.padding = usePlaybackModalLayout ? '0' : '8px 14px 10px';
       topBar.style.display = usePlaybackModalLayout ? 'none' : 'flex';
-      toolbar.style.display = showToolbar ? 'flex' : 'none';
+      actionPanel.style.display = showToolbar ? 'flex' : 'none';
+      topBarSpacer.style.display = showToolbar ? 'block' : 'none';
       statusBar.style.display = showToolbar && currentProps.showStatusBar ? 'flex' : 'none';
       const showLiveTitle = !usePlaybackModalLayout && !isPlayback && currentProps.showTitle;
       liveHeader.style.display = showLiveTitle ? 'inline-flex' : 'none';
@@ -910,7 +904,23 @@ export const Main = defineWidget({
         });
       }
 
-      const addAction = (label: string, title: string, onClick: () => void) => {
+      const addAction = (icon: string, text: string, title: string, onClick: () => void) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'tv-camera-action-button';
+        button.title = title;
+        const iconEl = document.createElement('span');
+        iconEl.className = 'tv-camera-action-icon';
+        iconEl.setAttribute('aria-hidden', 'true');
+        iconEl.textContent = icon;
+        const textEl = document.createElement('span');
+        textEl.className = 'tv-camera-action-text';
+        textEl.textContent = text;
+        button.append(iconEl, textEl);
+        button.addEventListener('click', onClick);
+        actionPanel.appendChild(button);
+      };
+      const addPlainAction = (label: string, title: string, onClick: () => void) => {
         const button = makeButton(label, title, 'tv-camera-action-button');
         button.addEventListener('click', onClick);
         actionPanel.appendChild(button);
@@ -918,13 +928,13 @@ export const Main = defineWidget({
       const buttonTitle = (key: string, fallback: string) => messages[key] ?? fallback;
 
       if (!isPlayback && currentProps.showZoomControls) {
-        addAction('+', buttonTitle('zoomIn', 'Zoom in'), () =>
+        addPlainAction('+', buttonTitle('zoomIn', 'Zoom in'), () =>
           emitCommand('ptzZoom', currentProps.ptzZoomCommand, {
             action: 'in',
             speed: currentProps.ptzSpeed,
           }),
         );
-        addAction('-', buttonTitle('zoomOut', 'Zoom out'), () =>
+        addPlainAction('-', buttonTitle('zoomOut', 'Zoom out'), () =>
           emitCommand('ptzZoom', currentProps.ptzZoomCommand, {
             action: 'out',
             speed: currentProps.ptzSpeed,
@@ -933,16 +943,16 @@ export const Main = defineWidget({
       }
 
       if (!isPlayback && currentProps.showFocusControls) {
-        addAction(buttonTitle('focusNear', 'Focus near'), buttonTitle('focusNear', 'Focus near'), () =>
+        addPlainAction(buttonTitle('focusNear', 'Focus near'), buttonTitle('focusNear', 'Focus near'), () =>
           emitCommand('ptzFocus', currentProps.ptzFocusCommand, { action: 'near' }),
         );
-        addAction(buttonTitle('focusFar', 'Focus far'), buttonTitle('focusFar', 'Focus far'), () =>
+        addPlainAction(buttonTitle('focusFar', 'Focus far'), buttonTitle('focusFar', 'Focus far'), () =>
           emitCommand('ptzFocus', currentProps.ptzFocusCommand, { action: 'far' }),
         );
       }
 
       if (!isPlayback && currentProps.showPresetControl) {
-        addAction(buttonTitle('preset', 'Preset'), buttonTitle('preset', 'Preset'), () =>
+        addPlainAction(buttonTitle('preset', 'Preset'), buttonTitle('preset', 'Preset'), () =>
           emitCommand('presetGoto', currentProps.presetGotoCommand, {
             presetId: currentProps.presetId,
           }),
@@ -950,7 +960,7 @@ export const Main = defineWidget({
       }
 
       if (currentProps.showSnapshot) {
-        addAction(`▣ ${buttonTitle('snapshot', 'Snapshot')}`, buttonTitle('snapshot', 'Snapshot'), () =>
+        addAction('▣', buttonTitle('snapshot', 'Snapshot'), buttonTitle('snapshot', 'Snapshot'), () =>
           emitCommand('snapshot', currentProps.snapshotCommand, {}),
         );
       }
@@ -959,23 +969,25 @@ export const Main = defineWidget({
         const fullscreenLabel = isShellFullscreen()
           ? buttonTitle('exitFullscreen', currentLocale?.startsWith('zh') ? '退出全屏' : 'Exit fullscreen')
           : buttonTitle('fullscreen', 'Fullscreen');
-        addAction(`⛶ ${fullscreenLabel}`, fullscreenLabel, toggleFullscreen);
+        addAction('⛶', fullscreenLabel, fullscreenLabel, toggleFullscreen);
       }
 
       if (isPlayback) {
         const chromeLabels = getChromeLabels();
         addAction(
-          `▷ ${chromeLabels.selectRange ?? 'Select time'}`,
+          '▷',
+          chromeLabels.selectRange ?? 'Select time',
           chromeLabels.selectRange ?? 'Select time',
           openPlaybackSelector,
         );
         addAction(
-          `↩ ${buttonTitle('returnToLive', 'Return to live')}`,
+          '↩',
+          buttonTitle('returnToLive', 'Return to live'),
           buttonTitle('returnToLive', 'Return to live'),
           returnToLive,
         );
       } else if (currentProps.showPlaybackControls) {
-        addAction(`▷ ${buttonTitle('playback', 'Playback')}`, buttonTitle('playback', 'Playback'), requestRecentPlayback);
+        addAction('▷', buttonTitle('playback', 'Playback'), buttonTitle('playback', 'Playback'), requestRecentPlayback);
       }
     };
 
@@ -993,16 +1005,29 @@ export const Main = defineWidget({
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar {
           opacity: ${currentProps.panelOpacity};
-          flex-wrap: nowrap;
+          display: flex !important;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          align-items: center !important;
+          width: 100% !important;
           -ms-overflow-style: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar::-webkit-scrollbar {
           display: none;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-bar,
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-toolbar,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
-          flex-wrap: nowrap;
+          display: flex;
+          flex-direction: row !important;
+          flex-wrap: nowrap !important;
+          align-items: center !important;
+          flex: 0 0 auto !important;
+          width: auto !important;
+          max-width: none !important;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-topbar-spacer {
+          flex: 1 1 auto;
+          min-width: 4px;
         }
         [data-thingsvis-overlay="media-camera-control"] video-rtc {
           position: absolute !important;
@@ -1026,8 +1051,10 @@ export const Main = defineWidget({
         [data-thingsvis-overlay="media-camera-control"] video-rtc video::-webkit-media-controls {
           display: none !important;
         }
-        [data-thingsvis-overlay="media-camera-control"] .tv-camera-toolbar,
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-chrome {
+          opacity: ${currentProps.panelOpacity};
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
           opacity: ${currentProps.panelOpacity};
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-modal {
@@ -1373,11 +1400,22 @@ export const Main = defineWidget({
           transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
           width: auto;
           max-width: none;
           padding: 0 6px;
           white-space: nowrap;
           flex-shrink: 0;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-icon {
+          flex: 0 0 auto;
+          line-height: 1;
+        }
+        [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-text {
+          flex: 0 0 auto;
+          line-height: 1;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-datetime-input {
           width: 100%;
@@ -1426,7 +1464,7 @@ export const Main = defineWidget({
           background: transparent;
           border-color: transparent;
         }
-        @container tv-camera (max-width: 420px) {
+        @container tv-camera (max-width: 480px) {
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-status-bar {
             gap: 8px !important;
           }
@@ -1434,10 +1472,14 @@ export const Main = defineWidget({
             font-size: 12px !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-panel {
-            gap: 4px !important;
+            gap: 2px !important;
+          }
+          [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-text {
+            display: none !important;
           }
           [data-thingsvis-overlay="media-camera-control"] .tv-camera-action-button {
             height: 28px !important;
+            min-width: 28px !important;
             padding: 0 4px !important;
             font-size: 11px !important;
           }
