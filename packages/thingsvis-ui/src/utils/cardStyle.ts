@@ -41,6 +41,49 @@ export function applyCardStyleDefaults(baseStyle: Partial<IBaseStyle> = {}): Par
   return next;
 }
 
+export function removeCardStyleDefaults(baseStyle: Partial<IBaseStyle> = {}): Partial<IBaseStyle> {
+  const next: Partial<IBaseStyle> = { ...baseStyle };
+  const background = next.background;
+  const border = next.border;
+  const shadow = next.shadow;
+
+  if (
+    background &&
+    background.color === CARD_STYLE_DEFAULTS.background.color &&
+    !background.image &&
+    (background.opacity ?? CARD_STYLE_DEFAULTS.background.opacity) ===
+      CARD_STYLE_DEFAULTS.background.opacity
+  ) {
+    delete next.background;
+  }
+
+  if (
+    border &&
+    border.width === CARD_STYLE_DEFAULTS.border.width &&
+    border.color === CARD_STYLE_DEFAULTS.border.color &&
+    (border.style ?? CARD_STYLE_DEFAULTS.border.style) === CARD_STYLE_DEFAULTS.border.style &&
+    border.radius === CARD_STYLE_DEFAULTS.border.radius
+  ) {
+    delete next.border;
+  }
+
+  if (
+    shadow &&
+    shadow.offsetX === CARD_STYLE_DEFAULTS.shadow.offsetX &&
+    shadow.offsetY === CARD_STYLE_DEFAULTS.shadow.offsetY &&
+    shadow.blur === CARD_STYLE_DEFAULTS.shadow.blur &&
+    shadow.color === CARD_STYLE_DEFAULTS.shadow.color
+  ) {
+    delete next.shadow;
+  }
+
+  if (next.padding === CARD_STYLE_DEFAULTS.padding) {
+    delete next.padding;
+  }
+
+  return next;
+}
+
 export function syncCardHeaderElement(
   headerEl: HTMLElement,
   card: ICardStyle | undefined,

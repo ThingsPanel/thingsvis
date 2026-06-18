@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
-import { applyCardStyleDefaults } from '@thingsvis/ui';
+import { applyCardStyleDefaults, removeCardStyleDefaults } from '@thingsvis/ui';
 
 type BaseStylePanelProps = {
   baseStyle: any;
@@ -43,13 +43,15 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
 
   const handleCardEnabledChange = (enabled: boolean) => {
     if (!enabled) {
-      onChange({
-        ...baseStyle,
-        card: {
-          ...(baseStyle.card || {}),
-          enabled: false,
-        },
-      });
+      onChange(
+        removeCardStyleDefaults({
+          ...baseStyle,
+          card: {
+            ...(baseStyle.card || {}),
+            enabled: false,
+          },
+        }),
+      );
       return;
     }
 

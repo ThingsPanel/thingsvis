@@ -23,15 +23,6 @@ export const PropsSchema = z.object({
   /** Text content */
   text: z.string().default('').describe('props.textContent'),
 
-  /** Alternate text used for local simulation / demo playback */
-  alternateText: z.string().default('').describe('props.alternateText'),
-
-  /** Whether to alternate between text and alternateText locally */
-  simulateTextEnabled: z.boolean().default(false).describe('props.simulateTextEnabled'),
-
-  /** Text alternation interval */
-  simulateIntervalMs: z.number().min(500).max(60000).default(2000).describe('props.simulateIntervalMs'),
-
   // ========================================
   // Font
   // ========================================
