@@ -4,12 +4,13 @@
       "thingsvis-widget-custom-glass-panel": {
         "name": "磨砂面板",
         "groupStyle": "样式",
-        "styleMode": "风格模式",
-        "preset": "质感预设",
-        "blurOffset": "模糊微调",
-        "opacityOffset": "透明度微调",
-        "highlightOffset": "高光微调",
-        "tintOffset": "色调微调"
+        "preset": "玻璃质感",
+        "blur": "模糊半径",
+        "fillOpacity": "填充强度",
+        "tintColor": "色调颜色",
+        "tintStrength": "色调强度",
+        "highlight": "高光强度",
+        "noise": "噪点强度"
       }
     }
   }
