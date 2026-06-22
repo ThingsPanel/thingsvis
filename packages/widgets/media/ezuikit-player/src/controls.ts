@@ -10,20 +10,14 @@ const templateOptions = TemplateSchema.options.map((value) => ({
 
 export const controls = createControlPanel()
   .addGroup(
-    'Auth',
-    (builder) => {
-      builder.addTextInput('accessToken', {
-        label: `${W}.controls.accessToken`,
-        placeholder: 'at.xxx',
-        binding: true,
-      });
-    },
-    { label: `${W}.groups.auth` },
-  )
-  .addGroup(
-    'Source',
+    'Connection',
     (builder) => {
       builder
+        .addTextInput('accessToken', {
+          label: `${W}.controls.accessToken`,
+          placeholder: 'at.xxx',
+          binding: true,
+        })
         .addTextInput('deviceSerial', {
           label: `${W}.controls.deviceSerial`,
           placeholder: 'J33497314',
@@ -38,6 +32,17 @@ export const controls = createControlPanel()
           binding: true,
         })
         .addSwitch('hd', { label: `${W}.controls.hd`, default: true })
+        .addTextInput('validCode', {
+          label: `${W}.controls.validCode`,
+          binding: true,
+        });
+    },
+    { label: `${W}.groups.connection` },
+  )
+  .addGroup(
+    'Playback',
+    (builder) => {
+      builder
         .addTextInput('spaceId', {
           label: `${W}.controls.spaceId`,
           placeholder: '361254',
@@ -46,18 +51,9 @@ export const controls = createControlPanel()
         .addTextInput('busType', {
           label: `${W}.controls.busType`,
           default: '7',
-        })
-        .addTextInput('ezopenUrl', {
-          label: `${W}.controls.ezopenUrl`,
-          placeholder: 'ezopen://open.ys7.com/serial/1.live (optional)',
-          binding: true,
-        })
-        .addTextInput('validCode', {
-          label: `${W}.controls.validCode`,
-          binding: true,
         });
     },
-    { label: `${W}.groups.source` },
+    { label: `${W}.groups.playback` },
   )
   .addGroup(
     'Player',
@@ -68,27 +64,25 @@ export const controls = createControlPanel()
           options: templateOptions,
           default: 'security',
         })
-        .addTextInput('themeId', { label: `${W}.controls.themeId`, binding: true })
         .addSwitch('autoplay', { label: `${W}.controls.autoplay` })
-        .addSwitch('audio', { label: `${W}.controls.audio` })
-        .addTextInput('domain', {
-          label: `${W}.controls.domain`,
-          default: 'https://open.ys7.com',
-        });
+        .addSwitch('audio', { label: `${W}.controls.audio` });
     },
     { label: `${W}.groups.player` },
   )
   .addGroup(
-    'Style',
+    'Advanced',
+    (builder) => {
+      builder.addTextInput('domain', {
+        label: `${W}.controls.domain`,
+        default: 'https://open.ys7.com',
+      });
+    },
+    { label: `${W}.groups.advanced` },
+  )
+  .addGroup(
+    'Border',
     (builder) => {
       builder
-        .addNumberInput('borderRadius', {
-          label: `${W}.controls.borderRadius`,
-          min: 0,
-          max: 48,
-          step: 1,
-          default: 6,
-        })
         .addNumberInput('borderWidth', {
           label: `${W}.controls.borderWidth`,
           min: 0,
@@ -98,6 +92,6 @@ export const controls = createControlPanel()
         })
         .addTextInput('borderColor', { label: `${W}.controls.borderColor` });
     },
-    { label: `${W}.groups.style` },
+    { label: `${W}.groups.border` },
   )
   .build();

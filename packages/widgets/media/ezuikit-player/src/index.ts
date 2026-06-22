@@ -175,7 +175,7 @@ export const Main = defineWidget({
       button.type = 'button';
       button.style.cssText = `
         border:1px solid rgba(255,255,255,0.28);
-        border-radius:6px;
+        border-radius:0;
         padding:6px 10px;
         color:#fff;
         background:rgba(5,7,13,0.72);
