@@ -1,6 +1,6 @@
 import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PenLine } from 'lucide-react';
+import { WandSparkles } from 'lucide-react';
 import { transformationUtils, type KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
@@ -1666,9 +1666,9 @@ export function FieldPicker({
               setDraftCode(selectedTransform);
               setTransformDialogOpen(true);
             }}
-            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-violet-600 transition-colors hover:text-violet-700 dark:text-violet-300 dark:hover:text-violet-200"
           >
-            <PenLine className="size-3" />
+            <WandSparkles className="size-3" />
             <span>{t('binding.transform', 'Data Transform')}</span>
             {selectedTransform.trim() && (
               <span className="ml-1 px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium leading-none">
