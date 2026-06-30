@@ -43,7 +43,6 @@ export const CameraPresetSchema = z.object({
 
 export const PropsSchema = z.object({
   modelUrl: z.string().default('').describe('Remote GLB/GLTF URL'),
-  requestMode: z.enum(['auto', 'direct', 'proxy']).default('auto').describe('Model request mode'),
   canvasBackgroundColor: z.string().default('transparent').describe('Canvas background color'),
   backgroundColor: z.string().optional().describe('Legacy canvas background color'),
   modelScale: z.number().min(0.01).max(20).default(1).describe('Model scale'),

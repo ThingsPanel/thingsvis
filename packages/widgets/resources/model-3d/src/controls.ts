@@ -7,15 +7,6 @@ export const controls = createControlPanel()
         label: { zh: '模型地址', en: 'Model URL' },
         placeholder: 'https://example.com/model.glb',
         binding: true,
-      })
-      .addSelect('requestMode', {
-        label: { zh: '加载方式', en: 'Request Mode' },
-        default: 'auto',
-        options: [
-          { label: { zh: '自动', en: 'Auto' }, value: 'auto' },
-          { label: { zh: '直连', en: 'Direct' }, value: 'direct' },
-          { label: { zh: '代理', en: 'Proxy' }, value: 'proxy' },
-        ],
       });
   })
   .addGroup(

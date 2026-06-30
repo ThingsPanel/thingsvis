@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { WidgetControlsSchema } from '@thingsvis/schema';
 import { controls } from './controls';
 import Main from './index';
+import { PropsSchema } from './schema';
 
 describe('model-3d controls', () => {
   it('exports valid widget controls from controls.ts', () => {
@@ -17,6 +18,13 @@ describe('model-3d controls', () => {
     expect(parsed.data.groups.some((group) => group.fields.some((field) => field.path === 'modelUrl'))).toBe(
       true,
     );
+    expect(parsed.data.groups.some((group) => group.fields.some((field) => field.path === 'requestMode'))).toBe(
+      false,
+    );
+  });
+
+  it('discards the removed request mode from old persisted props', () => {
+    expect(PropsSchema.parse({ requestMode: 'direct' })).not.toHaveProperty('requestMode');
   });
 
   it('keeps controls on Main export', () => {

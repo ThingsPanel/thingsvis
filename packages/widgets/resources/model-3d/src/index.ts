@@ -9,6 +9,7 @@ import { PropsSchema, type CameraPreset, type Props } from './schema';
 import zh from './locales/zh.json';
 import en from './locales/en.json';
 import { resolveWidgetApiBaseUrl } from './api-base';
+import { resolveModelRequestUrl } from './request-url';
 import {
   clearSceneLabels,
   createSceneLabelRenderer,
@@ -24,7 +25,6 @@ import {
 } from './pipe-flow';
 
 type RuntimeMessages = (typeof zh)['runtime'];
-type RequestMode = Props['requestMode'];
 type CameraPose = {
   position: THREE.Vector3;
   target: THREE.Vector3;
@@ -148,58 +148,6 @@ function resolveResourceUrl(resourceUrl: string, resourceBaseUrl: string): strin
   }
 }
 
-function isRemoteHttpUrl(source: string): boolean {
-  try {
-    const url = new URL(source);
-    return url.protocol === 'http:' || url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function isManagedUploadUrl(source: string): boolean {
-  try {
-    const url = new URL(source);
-    const pathname = url.pathname;
-    return (
-      pathname.startsWith('/uploads/') ||
-      pathname.startsWith('/api/v1/uploads/') ||
-      pathname.includes('/thingsvis-api/uploads/')
-    );
-  } catch {
-    return false;
-  }
-}
-
-function shouldProxyRequest(source: string, requestMode: RequestMode): boolean {
-  if (!isRemoteHttpUrl(source)) {
-    return false;
-  }
-
-  if (isManagedUploadUrl(source)) {
-    return false;
-  }
-
-  if (requestMode === 'proxy') {
-    return true;
-  }
-
-  if (requestMode === 'direct') {
-    return false;
-  }
-
-  return false;
-}
-
-function buildProxyUrl(source: string): string {
-  if (typeof window === 'undefined') {
-    return source;
-  }
-
-  const apiBaseUrl = resolveWidgetApiBaseUrl().replace(/\/$/, '');
-  return `${apiBaseUrl}/public/assets/proxy?url=${encodeURIComponent(source)}`;
-}
-
 function resolveWidgetStaticBaseUrl(): string {
   if (typeof window === 'undefined') {
     return '/';
@@ -226,10 +174,6 @@ function resolveWidgetStaticBaseUrl(): string {
   }
 
   return new URL(marker, window.location.origin).toString();
-}
-
-function getRequestUrl(source: string, requestMode: RequestMode): string {
-  return shouldProxyRequest(source, requestMode) ? buildProxyUrl(source) : source;
 }
 
 function formatLoadError(error: unknown): string {
@@ -599,7 +543,7 @@ export const Main = defineWidget({
       const absoluteUrl = activeResourceBaseUrl
         ? resolveResourceUrl(resourceUrl, activeResourceBaseUrl)
         : resourceUrl;
-      return getRequestUrl(absoluteUrl, currentProps.requestMode);
+      return resolveModelRequestUrl(absoluteUrl, resolveWidgetApiBaseUrl());
     });
 
     const loader = new GLTFLoader(loadingManager);
@@ -944,14 +888,13 @@ export const Main = defineWidget({
 
       const requestId = ++loadRequestId;
       const resourceBaseUrl = getResourceBaseUrl(currentUrl);
-      const requestUrl = getRequestUrl(currentUrl, currentProps.requestMode);
       clearModel();
       isModelLoading = true;
       updatePlaceholder('loading');
       activeResourceBaseUrl = resourceBaseUrl;
 
       loader.load(
-        requestUrl,
+        currentUrl,
         (gltf) => {
           if (destroyed || requestId !== loadRequestId) {
             disposeObject3D(gltf.scene);
@@ -1014,7 +957,6 @@ export const Main = defineWidget({
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         const nextUrl = normalizeModelUrl(newProps.modelUrl);
         const urlChanged = nextUrl !== currentUrl;
-        const requestModeChanged = newProps.requestMode !== currentProps.requestMode;
         const playAnimationsChanged = newProps.playAnimations !== currentProps.playAnimations;
         const labelsStructureChanged =
           newProps.showSceneLabels !== currentProps.showSceneLabels
@@ -1030,7 +972,7 @@ export const Main = defineWidget({
         currentMode = newCtx.mode ?? currentMode;
         currentLocale = newCtx.locale;
 
-        if (urlChanged || requestModeChanged) {
+        if (urlChanged) {
           loadModel(currentProps.modelUrl);
           return;
         }
