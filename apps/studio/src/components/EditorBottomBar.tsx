@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Maximize, Monitor, Undo2, Redo2, HelpCircle } from 'lucide-react';
+import { getEditorBottomBarLeft } from '../lib/editorLayout';
 
 interface EditorBottomBarProps {
   zoom: number;
@@ -50,7 +51,8 @@ export function EditorBottomBar({
     <>
       {/* Bottom Left Controls: Zoom & Undo/Redo */}
       <div
-        className={`absolute bottom-4 z-40 flex items-center gap-3 select-none ${showLeftPanel ? 'left-[324px]' : 'left-4'}`}
+        className="absolute bottom-4 z-40 flex items-center gap-3 select-none"
+        style={{ left: getEditorBottomBarLeft(showLeftPanel) }}
       >
         {/* Zoom Controls */}
         <div className="glass rounded-xl shadow-lg border border-border/60 flex items-center p-1.5">

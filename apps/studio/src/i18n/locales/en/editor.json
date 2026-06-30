@@ -211,7 +211,17 @@
         "noBase64Allowed": "Base64 images are not allowed. Please provide an accessible URL.",
         "bgSize": "Background Size",
         "bgRepeat": "Background Repeat",
-        "bgAttachment": "Background Scroll"
+        "bgAttachment": "Background Scroll",
+        "bgSizeCover": "Cover",
+        "bgSizeContain": "Contain",
+        "bgSizeStretch": "Stretch 100%",
+        "bgSizeAuto": "Auto",
+        "bgRepeatNone": "No Repeat",
+        "bgRepeatTile": "Repeat",
+        "bgRepeatX": "Repeat X",
+        "bgRepeatY": "Repeat Y",
+        "bgAttachmentScroll": "Scroll",
+        "bgAttachmentFixed": "Fixed"
     },
     "shortcuts": {
         "title": "Keyboard Shortcuts",

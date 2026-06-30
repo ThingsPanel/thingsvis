@@ -56,7 +56,7 @@ export interface GridCanvasProps {
     /** Canvas theme identifier (matched against theme registry) */
     theme?: string;
     /** Panel-aware centering offsets */
-    centerPadding?: { left?: number; right?: number };
+    centerPadding?: { left?: number; right?: number; top?: number; bottom?: number };
     /** Widget runtime mode forwarded to DOM overlays */
     widgetMode?: WidgetOverlayContext['mode'];
     /** Explicit locale forwarded to widget overlay contexts */
@@ -185,6 +185,11 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
     const panOffsetRef = useRef({ x: 0, y: 0 });
+
+    useEffect(() => {
+        panOffsetRef.current = { x: 0, y: 0 };
+        setPanOffset({ x: 0, y: 0 });
+    }, [locale, centerPadding?.left, centerPadding?.right, centerPadding?.top, centerPadding?.bottom]);
     const isPanningRef = useRef(false);
     const panStartRef = useRef({ x: 0, y: 0 });
 
@@ -212,12 +217,15 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
         const artboardH = height ?? canvasDimensions.height;
         const leftPad = centerPadding?.left ?? 0;
         const rightPad = centerPadding?.right ?? 0;
+        const topPad = centerPadding?.top ?? 0;
+        const bottomPad = centerPadding?.bottom ?? 0;
         const worldW = Math.max(canvasDimensions.width, artboardW * zoom + 2 * CANVAS_EDITOR_PADDING);
         const worldH = Math.max(canvasDimensions.height, artboardH * zoom + 2 * CANVAS_EDITOR_PADDING);
         const usableW = worldW - leftPad - rightPad;
+        const usableH = worldH - topPad - bottomPad;
         return {
             x: leftPad + (usableW - artboardW * zoom) / 2 + panOffset.x,
-            y: (worldH - artboardH * zoom) / 2 + panOffset.y,
+            y: topPad + (usableH - artboardH * zoom) / 2 + panOffset.y,
         };
     }, [fullWidth, width, height, centerPadding, canvasDimensions, zoom, panOffset]);
 

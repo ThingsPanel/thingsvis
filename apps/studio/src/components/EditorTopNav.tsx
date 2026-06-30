@@ -141,8 +141,12 @@ export function EditorTopNav({
   onShare,
 }: EditorTopNavProps) {
   const { t, i18n } = useTranslation('editor');
+  const topOffsetClass = showTopLeft || showTopRight || showToolbar ? 'top-20' : 'top-4';
+  const gridHiddenTools: Tool[] = ['rectangle', 'circle', 'line', 'text', 'image'];
   return (
-    <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
+    <div
+      className={`absolute ${topOffsetClass} left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}
+    >
       {/* Left Side: Left Panel Toggle, Logo (Menu), Title, Status */}
       <div
         className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}
@@ -219,54 +223,49 @@ export function EditorTopNav({
 
         <Input
           placeholder={t('topNav.untitledProject')}
-          className="min-w-[50px] max-w-[300px] w-auto h-8 bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium rounded-lg"
+          className="h-8 w-[160px] min-w-[120px] max-w-[220px] bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium rounded-lg"
           value={projectName}
           onChange={(e) => onProjectNameChange(e.target.value)}
-          style={{
-            width: `${Math.max(100, Math.min(150, (projectName?.length || 6) * 14 + 16))}px`,
-          }}
         />
 
-        <SaveIndicator
-          status={saveStatus as any}
-          lastSavedAt={lastSavedAt}
-          error={saveError}
-          className="ml-1 pr-2"
-        />
+        <div className="min-w-[88px] shrink-0">
+          <SaveIndicator
+            status={saveStatus as any}
+            lastSavedAt={lastSavedAt}
+            error={saveError}
+            className="ml-1 pr-2"
+          />
+        </div>
       </div>
 
       {/* Center Side: Tools */}
       <div
         className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!showToolbar ? 'invisible' : ''}`}
       >
-        {tools
-          .filter((tool) => {
-            if (canvasMode === 'grid') {
-              return !['rectangle', 'circle', 'line', 'text', 'image'].includes(tool.id);
-            }
-            return true;
-          })
-          .map((tool) => {
-            const Icon = tool.icon;
-            const isActive = activeTool === tool.id;
+        {tools.map((tool) => {
+          const Icon = tool.icon;
+          const isActive = activeTool === tool.id;
+          const hiddenInGridMode = canvasMode === 'grid' && gridHiddenTools.includes(tool.id);
 
-            return (
-              <Button
-                key={tool.id}
-                variant="ghost"
-                size="icon"
-                className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${
-                  isActive
-                    ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
-                }`}
-                onClick={() => onToolChange(tool.id)}
-                title={tool.label}
-              >
-                <Icon className={`h-4.5 w-4.5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              </Button>
-            );
-          })}
+          return (
+            <Button
+              key={tool.id}
+              variant="ghost"
+              size="icon"
+              className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${
+                hiddenInGridMode ? 'invisible pointer-events-none' : ''
+              } ${
+                isActive
+                  ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
+              }`}
+              onClick={() => onToolChange(tool.id)}
+              title={tool.label}
+            >
+              <Icon className={`h-4.5 w-4.5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            </Button>
+          );
+        })}
         <Button
           variant="ghost"
           size="icon"

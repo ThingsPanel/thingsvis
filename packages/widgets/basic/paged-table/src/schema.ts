@@ -1,7 +1,21 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-  columns: z.array(z.any()).default([
+  columns: z.preprocess(
+    (value) => {
+      if (Array.isArray(value)) return value;
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value);
+          return Array.isArray(parsed) ? parsed : undefined;
+        } catch {
+          return undefined;
+        }
+      }
+      return undefined;
+    },
+    z.array(z.any()),
+  ).default([
     { key: 'deviceName', title: '设备名称', align: 'left' },
     { key: 'isOnline', title: '运行状态', align: 'center' },
     { key: 'groupName', title: '设备分组', align: 'left' },

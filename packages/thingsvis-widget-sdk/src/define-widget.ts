@@ -280,10 +280,10 @@ export function defineWidget<TProps extends z.ZodRawShape>(config: DefineWidgetC
     const element = document.createElement('div');
     element.style.width = '100%';
     element.style.height = '100%';
-    element.style.pointerEvents = 'auto';
 
     let currentProps = { ...defaultProps, ...(ctx.props as Partial<z.infer<z.ZodObject<TProps>>>) };
     let currentCtx = ctx;
+    element.style.pointerEvents = currentCtx.mode === 'edit' ? 'none' : 'auto';
 
     const handleWidgetEmit = (event: Event) => {
       const customEvent = event as CustomEvent<{ event?: string; data?: unknown }>;
@@ -334,6 +334,7 @@ export function defineWidget<TProps extends z.ZodRawShape>(config: DefineWidgetC
           ...defaultProps,
           ...(newCtx.props as Partial<z.infer<z.ZodObject<TProps>>>),
         };
+        element.style.pointerEvents = newCtx.mode === 'edit' ? 'none' : 'auto';
         lifecycle.update?.(currentProps, newCtx);
       },
       destroy: () => {

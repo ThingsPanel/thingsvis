@@ -100,6 +100,19 @@ function requestPagedDevices(props: Props, state: PagedTableState, reqId: string
   );
 }
 
+function normalizeColumns(value: unknown): Array<{ key?: string; title?: string; align?: string }> {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 function renderPagedTable(
   element: HTMLElement,
   props: Props,
@@ -108,7 +121,7 @@ function renderPagedTable(
   onPageChange: (page: number) => void,
 ): void {
   const {
-    columns,
+    columns: rawColumns,
     showHeader,
     headerFontSize,
     headerWeight,
@@ -124,6 +137,8 @@ function renderPagedTable(
     cellPadding,
     scrollEnabled,
   } = props;
+
+  const columns = normalizeColumns(rawColumns);
 
   const rowBorderColorRaw =
     rowBorderColor || (props as unknown as { borderColor?: string }).borderColor || 'auto';

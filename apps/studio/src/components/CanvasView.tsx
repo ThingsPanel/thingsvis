@@ -110,8 +110,13 @@ function isLocalIconNode(node: { schemaRef?: NodeSchemaType } | null | undefined
   return node?.schemaRef?.type === 'basic/icon';
 }
 
-function shouldAutoOpenLocalIconPicker(type: string | undefined): boolean {
-  return type === 'basic/icon';
+function shouldAutoOpenLocalIconPicker(
+  type: string | undefined,
+  props: Record<string, unknown> | undefined,
+): boolean {
+  if (type !== 'basic/icon') return false;
+  if (props?.iconSource === 'builtin') return false;
+  return !props?.localIconId && !props?.assetUrl && !props?.svgContent;
 }
 
 function isConnectorNodeType(type: string | undefined): boolean {
@@ -244,7 +249,7 @@ const CanvasView = forwardRef<
     onImagePickerRequest?: () => void;
     onImagePickerComplete?: () => void;
     theme?: string;
-    centerPadding?: { left?: number; right?: number };
+    centerPadding?: { left?: number; right?: number; top?: number; bottom?: number };
     formatBrushActive?: boolean;
     onApplyFormatBrush?: (targetNodeId: string) => boolean;
   }
@@ -703,7 +708,7 @@ const CanvasView = forwardRef<
       await hydratePlatformDataSourcesForNodes([node]);
       // Ensure autosave is scheduled even if this mutation doesn't hit temporal.
       onUserEdit?.();
-      if (shouldAutoOpenLocalIconPicker(node.type)) {
+      if (shouldAutoOpenLocalIconPicker(node.type, node.props ?? {})) {
         openLocalIconPickerForNode(nodeId, node.props ?? {});
       }
     } catch {
@@ -822,7 +827,7 @@ const CanvasView = forwardRef<
           store.getState().addNodes([node as any]);
         }
         onUserEdit?.();
-        if (shouldAutoOpenLocalIconPicker(node.type)) {
+        if (shouldAutoOpenLocalIconPicker(node.type, node.props ?? {})) {
           openLocalIconPickerForNode(nodeId, node.props ?? {});
         }
       } catch (e) {

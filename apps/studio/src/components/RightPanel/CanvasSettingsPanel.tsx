@@ -201,10 +201,12 @@ export function CanvasSettingsPanel({
               onChange={(e) => {
                 const newMode = e.target.value as 'fixed' | 'infinite' | 'grid';
                 if (newMode !== canvasConfig.mode) {
-                  const hasNodes = onLayoutModeChange(newMode, true);
-                  if (!hasNodes) return; // shouldProceed = false
+                  const shouldProceed = onLayoutModeChange(newMode, true);
+                  if (!shouldProceed) {
+                    e.target.value = canvasConfig.mode;
+                    return;
+                  }
 
-                  // The parent will handle clearing canvas if needed
                   onConfigChange({ ...canvasConfig, mode: newMode });
                   onZoomReset();
                 }
@@ -416,10 +418,10 @@ export function CanvasSettingsPanel({
                 }
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
               >
-                <option value="cover">Cover</option>
-                <option value="contain">Contain</option>
-                <option value="100% 100%">Stretch 100%</option>
-                <option value="auto">Auto</option>
+                <option value="cover">{t('canvas.bgSizeCover')}</option>
+                <option value="contain">{t('canvas.bgSizeContain')}</option>
+                <option value="100% 100%">{t('canvas.bgSizeStretch')}</option>
+                <option value="auto">{t('canvas.bgSizeAuto')}</option>
               </select>
             </div>
             <div className="space-y-3">
@@ -434,10 +436,10 @@ export function CanvasSettingsPanel({
                 }
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
               >
-                <option value="no-repeat">No Repeat</option>
-                <option value="repeat">Repeat</option>
-                <option value="repeat-x">Repeat X</option>
-                <option value="repeat-y">Repeat Y</option>
+                <option value="no-repeat">{t('canvas.bgRepeatNone')}</option>
+                <option value="repeat">{t('canvas.bgRepeatTile')}</option>
+                <option value="repeat-x">{t('canvas.bgRepeatX')}</option>
+                <option value="repeat-y">{t('canvas.bgRepeatY')}</option>
               </select>
             </div>
           </div>
@@ -455,8 +457,8 @@ export function CanvasSettingsPanel({
                 }
                 className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
               >
-                <option value="scroll">Scroll</option>
-                <option value="fixed">Fixed</option>
+                <option value="scroll">{t('canvas.bgAttachmentScroll')}</option>
+                <option value="fixed">{t('canvas.bgAttachmentFixed')}</option>
               </select>
             </div>
           )}

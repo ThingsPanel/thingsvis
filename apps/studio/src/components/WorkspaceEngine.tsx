@@ -10,6 +10,7 @@ import { uploadImage as uploadToLocal } from '@/lib/imageUpload';
 import { useAuth } from '@/lib/auth';
 import type { CanvasConfigSchema } from '../hooks/useProjectBootstrap';
 import { loadWidget } from '../lib/registry/componentLoader';
+import { getEditorCenterPadding } from '../lib/editorLayout';
 
 export type Tool = 'select' | 'rectangle' | 'circle' | 'line' | 'text' | 'image' | 'pan';
 
@@ -119,10 +120,12 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
             onImagePickerComplete={handleImagePickerComplete}
             formatBrushActive={formatBrushActive}
             onApplyFormatBrush={onApplyFormatBrush}
-            centerPadding={{
-              left: embedVisibility.showLibrary && showLeftPanel ? 320 : 0,
-              right: embedVisibility.showProps && showRightPanel ? 340 : 0,
-            }}
+            centerPadding={getEditorCenterPadding({
+              showLeftPanel,
+              showRightPanel,
+              showLibrary: embedVisibility.showLibrary,
+              showProps: embedVisibility.showProps,
+            })}
           />
         </div>
       </EditorContextMenu>

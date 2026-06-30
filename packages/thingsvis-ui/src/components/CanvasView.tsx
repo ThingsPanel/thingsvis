@@ -31,8 +31,8 @@ type Props = {
   zoomEnabled?: boolean;
   /** Enable component interaction (dragging etc) */
   interactive?: boolean;
-  /** Padding for centering calculation (to account for side panels) */
-  centerPadding?: { left?: number; right?: number };
+  /** Padding for centering calculation (to account for side panels and top/bottom chrome) */
+  centerPadding?: { left?: number; right?: number; top?: number; bottom?: number };
   actionRuntime?: ActionRuntime;
 };
 
@@ -121,8 +121,11 @@ export const CanvasView: React.FC<Props> = ({
     if ((mode === 'fixed' || mode === 'grid') && containerDimensions.width > 0 && !hasAutoFit && propsZoom === undefined) {
       const leftPad = centerPadding?.left ?? 0;
       const rightPad = centerPadding?.right ?? 0;
+      const topPad = centerPadding?.top ?? 0;
+      const bottomPad = centerPadding?.bottom ?? 0;
       const visibleWidth = containerDimensions.width - leftPad - rightPad;
-      const initialZoom = calculateScaleToFit(visibleWidth, containerDimensions.height, width, height, 40, mode === 'grid');
+      const visibleHeight = containerDimensions.height - topPad - bottomPad;
+      const initialZoom = calculateScaleToFit(visibleWidth, visibleHeight, width, height, 40, mode === 'grid');
       setInternalZoom(initialZoom);
       setHasAutoFit(true);
     }
@@ -137,16 +140,23 @@ export const CanvasView: React.FC<Props> = ({
     if (hasUserPanned) return;
     const leftPad = centerPadding?.left ?? 0;
     const rightPad = centerPadding?.right ?? 0;
-    // Calculate center based on visible area (excluding side panels)
+    const topPad = centerPadding?.top ?? 0;
+    const bottomPad = centerPadding?.bottom ?? 0;
     const visibleWidth = containerDimensions.width - leftPad - rightPad;
+    const visibleHeight = containerDimensions.height - topPad - bottomPad;
     const nextOffset = {
       x: leftPad + (visibleWidth - width * zoom) / 2,
-      y: (containerDimensions.height - height * zoom) / 2
+      y: topPad + (visibleHeight - height * zoom) / 2,
     };
     setOffset((prev) => (
       prev.x === nextOffset.x && prev.y === nextOffset.y ? prev : nextOffset
     ));
   }, [mode, containerDimensions, width, height, zoom, hasUserPanned, centerPadding]);
+
+  useEffect(() => {
+    setHasAutoFit(false);
+    setHasUserPanned(false);
+  }, [locale]);
 
   const viewportInfo = useMemo(() => {
     return { zoom, offset };

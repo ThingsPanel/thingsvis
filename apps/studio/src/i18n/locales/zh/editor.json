@@ -204,7 +204,17 @@
         "noBase64Allowed": "严禁使用 base64 图片，请使用可访问的 URL 地址",
         "bgSize": "背景尺寸",
         "bgRepeat": "平铺方式",
-        "bgAttachment": "背景滚动"
+        "bgAttachment": "背景滚动",
+        "bgSizeCover": "覆盖 (Cover)",
+        "bgSizeContain": "包含 (Contain)",
+        "bgSizeStretch": "拉伸 100%",
+        "bgSizeAuto": "自动 (Auto)",
+        "bgRepeatNone": "不平铺",
+        "bgRepeatTile": "平铺",
+        "bgRepeatX": "横向平铺",
+        "bgRepeatY": "纵向平铺",
+        "bgAttachmentScroll": "随内容滚动",
+        "bgAttachmentFixed": "固定"
     },
     "shortcuts": {
         "title": "快捷键",

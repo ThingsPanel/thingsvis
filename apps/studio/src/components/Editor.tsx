@@ -524,14 +524,17 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
   useKeyboardShortcuts({ registry: commandRegistry });
 
-  const tools = [
-    { id: 'select' as Tool, icon: MousePointer2, label: '选择' },
-    { id: 'rectangle' as Tool, icon: Square, label: '矩形' },
-    { id: 'circle' as Tool, icon: Circle, label: '圆形' },
-    { id: 'line' as Tool, icon: ArrowRight, label: '连线' },
-    { id: 'pan' as Tool, icon: Hand, label: '移动' },
-    { id: 'image' as Tool, icon: ImageIcon, label: '图片' },
-  ];
+  const tools = useMemo(
+    () => [
+      { id: 'select' as Tool, icon: MousePointer2, label: t('toolbar.select') },
+      { id: 'rectangle' as Tool, icon: Square, label: t('toolbar.rectangle') },
+      { id: 'circle' as Tool, icon: Circle, label: t('toolbar.circle') },
+      { id: 'line' as Tool, icon: ArrowRight, label: t('toolbar.line') },
+      { id: 'pan' as Tool, icon: Hand, label: t('toolbar.pan') },
+      { id: 'image' as Tool, icon: ImageIcon, label: t('toolbar.image') },
+    ],
+    [t],
+  );
 
   return (
     <div
@@ -742,7 +745,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onLayoutModeChange={(newMode: 'fixed' | 'infinite' | 'grid') => {
                     const hasNodes = Object.keys(store.getState().nodesById).length > 0;
                     if (embedVisibility.isEmbedded || !hasNodes) {
-                      setCanvasConfig((prev) => ({ ...prev, mode: newMode }));
                       return true;
                     }
                     setConfirmLayoutSwitch({
@@ -765,7 +767,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                         markDirty();
                       },
                     });
-                    return true;
+                    return false;
                   }}
                   onClearCanvas={() => {}}
                   onMarkDirty={markDirty}

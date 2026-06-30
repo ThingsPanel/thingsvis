@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const PropsSchema = z.object({
-  iconSource: z.enum(['local', 'builtin']).default('local'),
+  iconSource: z.enum(['local', 'builtin']).default('builtin'),
   localIconId: z.string().default('').describe('Local categorized icon id'),
   assetKind: z.enum(['svg', 'image']).default('svg').describe('Local asset type'),
   assetUrl: z.string().default('').describe('Local asset URL'),
