@@ -416,6 +416,7 @@ export default function EmbedPage() {
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
+          padding: (dashboard.canvasConfig as any)?.padding ?? 0,
         };
 
         store.getState().loadPage(page);
@@ -498,6 +499,7 @@ export default function EmbedPage() {
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
+          padding: (dashboard.canvasConfig as any)?.padding ?? 0,
         };
 
         store.getState().loadPage(page);
@@ -626,6 +628,7 @@ export default function EmbedPage() {
           theme: (schema.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
           scaleMode: (schema.canvas as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((schema.canvas as any)?.previewAlignY),
+          padding: (schema.canvas as any)?.padding ?? 0,
         };
 
         store.getState().loadPage(page);

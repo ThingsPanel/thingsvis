@@ -185,6 +185,7 @@
         "gridCols": "列数",
         "gridRowHeight": "行高",
         "gridGap": "间距",
+        "padding": "内边距",
         "showGrid": "显示网格",
         "fullWidthPreview": "预览撑满宽度",
         "homeFlag": "设为首页",

@@ -117,6 +117,7 @@ export type CanvasConfigSchema = {
   gridCols?: number;
   gridRowHeight?: number;
   gridGap?: number;
+  padding?: number;
   homeFlag?: boolean; // 是否设为首页
   theme: 'dawn' | 'midnight' | string;
   scaleMode: PreviewScaleMode;
@@ -285,6 +286,7 @@ export function useProjectBootstrap({
       gridCols: 24,
       gridRowHeight: 50,
       gridGap: 10,
+      padding: 0,
       theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
       scaleMode: 'fit-min' as PreviewScaleMode,
       previewAlignY: 'center' as PreviewAlignY,
@@ -351,6 +353,7 @@ export function useProjectBootstrap({
           background: loadedBackground as unknown as
             | NonNullable<IPageConfig['background']>
             | undefined,
+          padding: (loaded.canvas as any).padding ?? 0,
         },
       });
       setCanvasConfig((prev) => ({
@@ -375,6 +378,7 @@ export function useProjectBootstrap({
         gridCols: loaded.canvas.gridCols ?? prev.gridCols,
         gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
         gridGap: loaded.canvas.gridGap ?? prev.gridGap,
+        padding: (loaded.canvas as any).padding ?? prev.padding ?? 0,
         gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
         gridSize: loaded.canvas.gridSize ?? prev.gridSize,
         layerOrder: (loaded.canvas as any).layerOrder,
@@ -457,6 +461,7 @@ export function useProjectBootstrap({
         gridCols: currentCanvasConfig.gridCols,
         gridRowHeight: currentCanvasConfig.gridRowHeight,
         gridGap: currentCanvasConfig.gridGap,
+        padding: currentCanvasConfig.padding,
         gridEnabled: currentCanvasConfig.gridEnabled,
         gridSize: currentCanvasConfig.gridSize,
         homeFlag: currentCanvasConfig.homeFlag,
@@ -629,6 +634,7 @@ export function useProjectBootstrap({
           gridCols: processed.canvas.gridCols,
           gridRowHeight: processed.canvas.gridRowHeight,
           gridGap: processed.canvas.gridGap,
+          padding: processed.canvas.padding,
         },
       });
       if (fingerprint === lastInitFingerprintRef.current) {
@@ -739,6 +745,7 @@ export function useProjectBootstrap({
         gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
         gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
         gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+        padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
         layerOrder: (resolvedCanvas as any)?.layerOrder,
         layerGroups: (resolvedCanvas as any)?.layerGroups,
         thumbnail: loadedMeta?.thumbnail || processed.thumbnail || '',
@@ -760,6 +767,7 @@ export function useProjectBootstrap({
           layerOrder: (resolvedCanvas as any)?.layerOrder,
           layerGroups: (resolvedCanvas as any)?.layerGroups,
           background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
+          padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
           gridSettings: {
             cols: resolvedCanvas?.gridCols ?? 24,
             rowHeight: resolvedCanvas?.gridRowHeight ?? 50,
@@ -839,6 +847,7 @@ export function useProjectBootstrap({
             gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
             gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
             gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+            padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
             homeFlag: (resolvedCanvas as any)?.homeFlag,
             layerOrder: store.getState().layerOrder,
             layerGroups: store.getState().layerGroups,

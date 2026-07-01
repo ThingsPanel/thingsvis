@@ -242,30 +242,29 @@ export function EditorTopNav({
       <div
         className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-1 px-2 py-1.5 pointer-events-auto ${!showToolbar ? 'invisible' : ''}`}
       >
-        {tools.map((tool) => {
-          const Icon = tool.icon;
-          const isActive = activeTool === tool.id;
-          const hiddenInGridMode = canvasMode === 'grid' && gridHiddenTools.includes(tool.id);
+        {tools
+          .filter((tool) => canvasMode !== 'grid' || !gridHiddenTools.includes(tool.id))
+          .map((tool) => {
+            const Icon = tool.icon;
+            const isActive = activeTool === tool.id;
 
-          return (
-            <Button
-              key={tool.id}
-              variant="ghost"
-              size="icon"
-              className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${
-                hiddenInGridMode ? 'invisible pointer-events-none' : ''
-              } ${
-                isActive
-                  ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
-              }`}
-              onClick={() => onToolChange(tool.id)}
-              title={tool.label}
-            >
-              <Icon className={`h-4.5 w-4.5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            </Button>
-          );
-        })}
+            return (
+              <Button
+                key={tool.id}
+                variant="ghost"
+                size="icon"
+                className={`h-9 w-9 rounded-lg transition-all focus:ring-0 focus:outline-none ${
+                  isActive
+                    ? 'bg-[#6965db]/10 text-[#6965db] shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/80'
+                }`}
+                onClick={() => onToolChange(tool.id)}
+                title={tool.label}
+              >
+                <Icon className={`h-4.5 w-4.5 ${isActive ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              </Button>
+            );
+          })}
         <Button
           variant="ghost"
           size="icon"

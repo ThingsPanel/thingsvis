@@ -97,6 +97,7 @@ export function useEditorSync({
     canvasConfig.gridCols,
     canvasConfig.gridRowHeight,
     canvasConfig.gridGap,
+    canvasConfig.padding,
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
     canvasConfig.gridSize,
@@ -142,6 +143,11 @@ export function useEditorSync({
     if (!canvasConfig.previewAlignY) return;
     store.getState().updatePageConfig({ previewAlignY: canvasConfig.previewAlignY } as any);
   }, [canvasConfig.previewAlignY, isBootstrapping, bootstrappingRef]);
+
+  useEffect(() => {
+    if (isBootstrapping || bootstrappingRef.current) return;
+    store.getState().updatePageConfig({ padding: canvasConfig.padding ?? 0 } as any);
+  }, [canvasConfig.padding, isBootstrapping, bootstrappingRef]);
 
   // Subscribe to store node changes, automatically trigger markDirty
   useEffect(() => {

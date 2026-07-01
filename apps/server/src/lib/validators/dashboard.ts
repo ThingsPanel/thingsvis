@@ -44,6 +44,7 @@ export const CanvasConfigSchema = z
     gridCols: z.number().int().min(1).max(MAX_GRID_COLS).optional(),
     gridRowHeight: z.number().int().positive().optional(),
     gridGap: z.number().int().nonnegative().optional(),
+    padding: z.number().int().nonnegative().optional(),
     gridEnabled: z.boolean().optional(),
     gridSize: z.number().int().positive().optional(),
     fullWidthPreview: z.boolean().optional(),

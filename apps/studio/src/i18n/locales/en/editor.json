@@ -192,6 +192,7 @@
         "gridCols": "Columns",
         "gridRowHeight": "Row Height",
         "gridGap": "Gap",
+        "padding": "Padding",
         "showGrid": "Show Grid",
         "fullWidthPreview": "Full Width Preview",
         "homeFlag": "Set as Home",

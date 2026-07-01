@@ -109,6 +109,11 @@ export const PageConfigSchema = z.object({
   background: PageBackgroundSchema.optional(),
 
   /**
+   * Canvas content padding in pixels (insets widgets from canvas edges)
+   */
+  padding: z.number().int().nonnegative().optional(),
+
+  /**
    * Scale mode for preview
    */
   scaleMode: PageScaleModeSchema.optional(),

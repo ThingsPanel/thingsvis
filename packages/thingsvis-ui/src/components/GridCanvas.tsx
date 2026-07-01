@@ -36,6 +36,8 @@ export interface GridCanvasProps {
     width?: number;
     /** Fixed pixel height (undefined = auto; grows with grid content) */
     height?: number;
+    /** Canvas content padding in pixels */
+    padding?: number;
     /** Enable drag/resize interactions */
     interactive?: boolean;
     /**
@@ -116,12 +118,14 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     onZoomChange,
     theme,
     centerPadding,
+    padding: paddingProp,
     widgetMode = 'view',
     locale,
     actionRuntime,
 }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(0);
 
     // ── Store subscription ────────────────────────────────────────────────────
@@ -142,11 +146,19 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const background = (pageConfig?.background as Record<string, unknown>) || {};
     const backgroundStyle = resolveCanvasBackgroundStyle(background);
     const gridSurfaceBackgroundStyle = backgroundStyle;
+    const canvasPadding = Math.max(
+        0,
+        typeof paddingProp === 'number'
+            ? paddingProp
+            : typeof pageConfig?.padding === 'number'
+              ? pageConfig.padding
+              : 0,
+    );
 
-    // ── ResizeObserver to track container width ───────────────────────────────
+    // ── ResizeObserver to track content area width (inside canvas padding) ────
 
     useEffect(() => {
-        const el = canvasRef.current;
+        const el = contentRef.current;
         if (!el) return;
         const observer = new ResizeObserver((entries) => {
             const w = entries[0]?.contentRect.width ?? 0;
@@ -154,11 +166,10 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
             store.getState().updateGridContainerWidth(w);
         });
         observer.observe(el);
-        // Set initial width immediately
         setContainerWidth(el.clientWidth);
         store.getState().updateGridContainerWidth(el.clientWidth);
         return () => observer.disconnect();
-    }, [store]);
+    }, [store, canvasPadding]);
 
     // ── Grid layout hook ──────────────────────────────────────────────────────
 
@@ -315,7 +326,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 const componentType: string = payload.type ?? payload.remoteName;
                 if (!componentType) return;
 
-                const gridEl = canvasRef.current;
+                const gridEl = contentRef.current;
                 if (!gridEl) return;
                 const rect = gridEl.getBoundingClientRect();
                 const { x, y } = clientPointToGrid({
@@ -456,9 +467,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 backgroundRepeat: 'repeat',
                 backgroundAttachment: 'scroll',
                 boxSizing: 'border-box',
-                // Bottom breathing room: add padding so the last row of widgets is not flush
-                // with the canvas bottom edge (only relevant in fluid editor mode).
-                paddingBottom: (!fullWidth && !width) ? CANVAS_EDITOR_PADDING : 0,
+                padding: canvasPadding > 0 ? canvasPadding : undefined,
                 ...(fullWidth ? {} : { boxShadow: '0 2px 12px rgba(0,0,0,0.15)' }),
             }}
         >
@@ -472,6 +481,16 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 }}
             />
 
+            <div
+                ref={contentRef}
+                style={{
+                    position: 'relative',
+                    width: '100%',
+                    minHeight: effectiveTotalHeight,
+                    boxSizing: 'border-box',
+                    paddingBottom: !fullWidth && !width ? CANVAS_EDITOR_PADDING : 0,
+                }}
+            >
             {/* Grid line background */}
             {(showGridLinesProp ?? effectiveSettings.showGridLines) && colWidth > 0 && (
                 <GridCanvasBackground
@@ -537,6 +556,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                     containerWidth={containerWidth}
                 />
             )}
+            </div>
         </div>
     );
 

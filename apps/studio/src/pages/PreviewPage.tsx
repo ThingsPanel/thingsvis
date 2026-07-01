@@ -248,6 +248,7 @@ export default function PreviewPage() {
         theme: (project.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
         scaleMode: (project.canvas as any)?.scaleMode,
         previewAlignY: normalizePreviewAlignY((project.canvas as any)?.previewAlignY),
+        padding: (project.canvas as any)?.padding ?? 0,
       };
 
       store.getState().loadPage(page);
@@ -455,7 +456,6 @@ export default function PreviewPage() {
               width: '100%',
               height: '100%',
               minHeight: '100%',
-              padding: 16,
               boxSizing: 'border-box',
             }}
           >

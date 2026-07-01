@@ -863,6 +863,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               layerOrder: (project.canvas as any).layerOrder,
               layerGroups: (project.canvas as any).layerGroups,
               background: loadedBackground as any,
+              padding: (project.canvas as any).padding ?? 0,
             },
           });
           if (project.canvas.mode === 'grid') {
@@ -900,6 +901,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             gridCols: project.canvas.gridCols ?? prev.gridCols,
             gridRowHeight: project.canvas.gridRowHeight ?? prev.gridRowHeight,
             gridGap: project.canvas.gridGap ?? prev.gridGap,
+            padding: (project.canvas as any).padding ?? prev.padding ?? 0,
             gridEnabled: project.canvas.gridEnabled ?? prev.gridEnabled,
             gridSize: project.canvas.gridSize ?? prev.gridSize,
             layerOrder: (project.canvas as any).layerOrder,

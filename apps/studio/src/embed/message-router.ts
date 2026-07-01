@@ -246,6 +246,7 @@ export interface EmbedInitPayload {
       gridCols?: number;
       gridRowHeight?: number;
       gridGap?: number;
+      padding?: number;
       fullWidthPreview?: boolean;
       layerOrder?: unknown[];
       layerGroups?: Record<string, unknown>;
@@ -278,6 +279,7 @@ export interface ProcessedEmbedData {
     gridCols: number;
     gridRowHeight: number;
     gridGap: number;
+    padding: number;
     fullWidthPreview: boolean;
     layerOrder?: unknown[];
     layerGroups?: Record<string, unknown>;
@@ -360,6 +362,7 @@ export function processEmbedInitPayload(
     gridCols: data.canvas?.gridCols ?? 24,
     gridRowHeight: data.canvas?.gridRowHeight ?? 50,
     gridGap: data.canvas?.gridGap ?? 5,
+    padding: data.canvas?.padding ?? 0,
     fullWidthPreview: data.canvas?.fullWidthPreview ?? false,
     layerOrder: Array.isArray(data.canvas?.layerOrder) ? data.canvas.layerOrder : undefined,
     layerGroups:

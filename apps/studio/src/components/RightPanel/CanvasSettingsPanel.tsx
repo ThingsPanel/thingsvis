@@ -25,6 +25,7 @@ export interface CanvasConfig {
   gridCols?: number;
   gridRowHeight?: number;
   gridGap?: number;
+  padding?: number;
   background?: {
     color?: string;
     image?: string;
@@ -301,6 +302,22 @@ export function CanvasSettingsPanel({
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('canvas.padding')}</label>
+                <NumericInput
+                  value={canvasConfig.padding ?? 0}
+                  min={0}
+                  max={200}
+                  onValueChange={(nextValue) =>
+                    onConfigChange({
+                      ...canvasConfig,
+                      padding: nextValue ?? canvasConfig.padding ?? 0,
+                    })
+                  }
+                  className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                  mode="int"
+                />
+              </div>
               <p className="text-xs text-muted-foreground">{t('canvas.gridSnapTip')}</p>
             </div>
           ) : canvasConfig.mode === 'fixed' ? (
@@ -332,6 +349,22 @@ export function CanvasSettingsPanel({
                     mode="int"
                   />
                 </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">{t('canvas.padding')}</label>
+                <NumericInput
+                  value={canvasConfig.padding ?? 0}
+                  min={0}
+                  max={200}
+                  onValueChange={(nextValue) =>
+                    onConfigChange({
+                      ...canvasConfig,
+                      padding: nextValue ?? canvasConfig.padding ?? 0,
+                    })
+                  }
+                  className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+                  mode="int"
+                />
               </div>
             </div>
           ) : null}

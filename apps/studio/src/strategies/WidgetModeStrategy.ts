@@ -145,6 +145,7 @@ export class WidgetModeStrategy implements EditorStrategy {
         gridCols: payload.canvas?.gridCols,
         gridRowHeight: payload.canvas?.gridRowHeight,
         gridGap: payload.canvas?.gridGap,
+        padding: payload.canvas?.padding,
         fullWidthPreview: payload.canvas?.fullWidthPreview,
         layerOrder: Array.isArray(payload.canvas?.layerOrder)
           ? payload.canvas.layerOrder.filter((id): id is string => typeof id === 'string')
