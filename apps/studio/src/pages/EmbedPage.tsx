@@ -170,7 +170,8 @@ type EmbedMessage =
   | { type: 'ERROR'; payload: string }
   | { type: 'LOADED'; payload: { id?: string; name?: string } }
   | { type: 'tv:init'; payload: any }
-  | { type: 'tv:event'; payload: any; event?: string };
+  | { type: 'tv:event'; payload: any; event?: string }
+  | { type: 'tv:content-height'; payload: { height: number } };
 
 function inferCanvasMode(canvas: any, nodes: any[] = []): 'fixed' | 'infinite' | 'grid' {
   if (canvas?.mode === 'fixed' || canvas?.mode === 'infinite' || canvas?.mode === 'grid') {
@@ -274,6 +275,7 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
   const isHostManagedEmbed =
     searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
+  const isHostGridEmbed = isHostManagedEmbed && isGridLayout;
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
@@ -385,6 +387,14 @@ export default function EmbedPage() {
   const handleRefresh = useCallback(() => {
     window.location.reload();
   }, []);
+
+  const handleHostEmbedContentHeight = useCallback(
+    (height: number) => {
+      if (!isHostGridEmbed || height <= 0) return;
+      postToParent({ type: MSG_TYPES.CONTENT_HEIGHT, payload: { height: Math.ceil(height) } });
+    },
+    [isHostGridEmbed, postToParent],
+  );
 
   // Load dashboard from API by ID with optional share token
   const loadFromApiWithShareToken = useCallback(
@@ -1109,10 +1119,13 @@ export default function EmbedPage() {
   // Auto-calculation of zoom for non-grid layouts (Fixed/Infinite)
   return (
     <div
-      className={`theme-${pageTheme} relative overflow-auto thingsvis-embed-surface`}
+      className={`theme-${pageTheme} relative thingsvis-embed-surface ${
+        isHostGridEmbed ? 'overflow-visible' : 'overflow-auto'
+      }`}
       style={{
-        width: '100vw',
-        height: '100vh',
+        width: isHostGridEmbed ? '100%' : '100vw',
+        height: isHostGridEmbed ? 'auto' : '100vh',
+        minHeight: isHostGridEmbed ? 0 : undefined,
         backgroundColor: pageBackground.color || 'transparent',
         backgroundImage: pageBackground.image ? `url(${pageBackground.image})` : undefined,
         backgroundSize: pageBackground.size || 'cover',
@@ -1195,8 +1208,8 @@ export default function EmbedPage() {
           <div
             style={{
               width: '100%',
-              height: '100%',
-              minHeight: '100%',
+              height: isHostGridEmbed ? 'auto' : '100%',
+              minHeight: isHostGridEmbed ? undefined : '100%',
               padding: GRID_CANVAS_PADDING,
               boxSizing: 'border-box',
             }}
@@ -1208,6 +1221,8 @@ export default function EmbedPage() {
               settings={{ ...gridSettings, showGridLines: false }}
               interactive={false}
               fullWidth={true}
+              contentSized={isHostGridEmbed}
+              onContentHeightChange={isHostGridEmbed ? handleHostEmbedContentHeight : undefined}
               actionRuntime={actionRuntime}
             />
           </div>

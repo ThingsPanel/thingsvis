@@ -59,6 +59,13 @@ export interface GridCanvasProps {
     theme?: string;
     /** Panel-aware centering offsets */
     centerPadding?: { left?: number; right?: number; top?: number; bottom?: number };
+    /**
+     * When true, canvas height follows grid content only (no viewport floor).
+     * Used by host-managed iframe embeds.
+     */
+    contentSized?: boolean;
+    /** Called when contentSized grid height changes (px). */
+    onContentHeightChange?: (height: number) => void;
     /** Widget runtime mode forwarded to DOM overlays */
     widgetMode?: WidgetOverlayContext['mode'];
     /** Explicit locale forwarded to widget overlay contexts */
@@ -74,10 +81,24 @@ export function resolveGridCanvasMinHeight(options: {
     explicitHeight?: number;
     containerHeight: number;
     fullWidth: boolean;
+    contentSized?: boolean;
 }): number {
     if (options.explicitHeight) return options.explicitHeight;
+    if (options.contentSized) return Math.max(0, options.contentHeight);
     const viewportFloor = options.fullWidth ? options.containerHeight : 0;
     return Math.max(options.contentHeight, viewportFloor, 300);
+}
+
+/** Pixel height of grid canvas content (rows × row stride, no trailing gap). */
+export function computeGridContentHeightPx(
+    totalRows: number,
+    settings: Pick<GridSettings, 'rowHeight' | 'gap'>,
+    padding = 0,
+): number {
+    if (totalRows <= 0) return 0;
+    const rowHeight = settings.rowHeight ?? 50;
+    const gap = settings.gap ?? 10;
+    return totalRows * (rowHeight + gap) - gap + padding * 2;
 }
 
 // ─── Default grid settings (mirrors GridSettingsSchema defaults) ──────────────
@@ -113,6 +134,8 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     height,
     interactive = true,
     fullWidth = false,
+    contentSized = false,
+    onContentHeightChange,
     showGridLines: showGridLinesProp,
     zoom = 1,
     onZoomChange,
@@ -443,13 +466,28 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const canvasW = width ? `${width}px` : '100%';
     const effectiveTotalHeight =
         responsiveTotalRows * (effectiveSettings.rowHeight + effectiveSettings.gap) +
-        effectiveSettings.gap;
+        (contentSized ? 0 : effectiveSettings.gap);
     const canvasMinH = `${resolveGridCanvasMinHeight({
         contentHeight: effectiveTotalHeight,
         explicitHeight: height,
         containerHeight: canvasDimensions.height,
         fullWidth,
+        contentSized,
     })}px`;
+
+    useEffect(() => {
+        if (!contentSized || !onContentHeightChange) return;
+        onContentHeightChange(
+            computeGridContentHeightPx(responsiveTotalRows, effectiveSettings, canvasPadding),
+        );
+    }, [
+        contentSized,
+        onContentHeightChange,
+        responsiveTotalRows,
+        effectiveSettings.rowHeight,
+        effectiveSettings.gap,
+        canvasPadding,
+    ]);
 
     const innerCanvas = (
         <div
@@ -572,7 +610,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 // In fullWidth (preview/embed) mode, allow content to grow beyond viewport
                 // so the parent container can scroll. In editor mode, clip to viewport area.
                 height: fullWidth ? undefined : '100%',
-                minHeight: fullWidth ? '100%' : undefined,
+                minHeight: fullWidth && !contentSized ? '100%' : undefined,
                 overflow: fullWidth ? 'visible' : 'auto',
                 position: 'relative',
                 // Outer container is always transparent — background comes from

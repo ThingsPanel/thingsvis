@@ -31,6 +31,8 @@ export const MSG_TYPES = {
   HOST_SAVE: 'tv:save',
   READY: 'tv:ready',
   REQUEST_INIT: 'tv:request-init',
+  /** Grid embed reports document height so the host iframe can auto-size. */
+  CONTENT_HEIGHT: 'tv:content-height',
 
   // Viewer (Host -> Guest)
   LOAD_DASHBOARD: 'LOAD_DASHBOARD',
