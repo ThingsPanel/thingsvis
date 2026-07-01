@@ -141,12 +141,9 @@ export function EditorTopNav({
   onShare,
 }: EditorTopNavProps) {
   const { t, i18n } = useTranslation('editor');
-  const topOffsetClass = showTopLeft || showTopRight || showToolbar ? 'top-20' : 'top-4';
   const gridHiddenTools: Tool[] = ['rectangle', 'circle', 'line', 'text', 'image'];
   return (
-    <div
-      className={`absolute ${topOffsetClass} left-4 right-4 z-50 flex items-center justify-between pointer-events-none`}
-    >
+    <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
       {/* Left Side: Left Panel Toggle, Logo (Menu), Title, Status */}
       <div
         className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}

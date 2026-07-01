@@ -3,8 +3,6 @@
 export const EDITOR_PANEL_GUTTER = 16; // Tailwind left-4 / right-4
 export const EDITOR_LEFT_PANEL_WIDTH = 288; // w-72
 export const EDITOR_RIGHT_PANEL_WIDTH = 320; // w-80
-export const EDITOR_TOP_CHROME = 80; // top-20 toolbar zone
-export const EDITOR_BOTTOM_CHROME = 56; // bottom bar + gutter
 
 export type EditorCenterPadding = {
   left?: number;
@@ -28,8 +26,6 @@ export function getEditorCenterPadding(options: {
       options.showProps && options.showRightPanel
         ? EDITOR_PANEL_GUTTER + EDITOR_RIGHT_PANEL_WIDTH
         : 0,
-    top: EDITOR_TOP_CHROME,
-    bottom: EDITOR_BOTTOM_CHROME,
   };
 }
 
