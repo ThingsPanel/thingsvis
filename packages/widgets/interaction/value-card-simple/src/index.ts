@@ -4,7 +4,7 @@ import { controls } from './controls';
 import { createElement } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import * as LucideIcons from 'lucide-react';
-import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, type WidgetColors } from '@thingsvis/widget-sdk';
+import { defineWidget, type WidgetOverlayContext, resolveWidgetColors, resolveLayeredColor, type WidgetColors } from '@thingsvis/widget-sdk';
 
 import zh from './locales/zh.json';
 import en from './locales/en.json';
@@ -45,6 +45,16 @@ function resolveColor(value: string | undefined, fallback: string): string {
   return normalized && normalized.toLowerCase() !== 'auto' ? normalized : fallback;
 }
 
+function normalizeLegacyColor(value: string | undefined): string {
+  const trimmed = String(value ?? '').trim();
+  const legacySemantic: Record<string, string> = {
+    success: '#34c759',
+    warning: '#ff9500',
+    danger: '#ff3b30',
+  };
+  return legacySemantic[trimmed] ?? trimmed;
+}
+
 function formatValue(value: unknown, precision: number): string {
   if (value === null || value === undefined) return '-';
 
@@ -57,33 +67,6 @@ function formatValue(value: unknown, precision: number): string {
   if (absNum >= 1e3 && precision === 0) return (num / 1e3).toFixed(1) + 'K';
 
   return num.toFixed(precision);
-}
-
-function parseThresholds(json: string): Array<{ min: number; max: number; color: string }> {
-  try {
-    const parsed = JSON.parse(json);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((item): item is { min: number; max: number; color: string } => {
-      return !!item && typeof item === 'object'
-        && Number.isFinite(item.min)
-        && Number.isFinite(item.max)
-        && typeof item.color === 'string';
-    });
-  } catch {
-    return [];
-  }
-}
-
-function getValueColor(
-  value: number,
-  thresholds: Array<{ min: number; max: number; color: string }>,
-  fallback: string
-): string {
-  if (!Number.isFinite(value)) return fallback;
-  for (const t of thresholds) {
-    if (value >= t.min && value <= t.max) return t.color;
-  }
-  return fallback;
 }
 
 function escapeHtml(input: unknown): string {
@@ -117,25 +100,25 @@ function resolveIconComponent(icon: string): LucideIcons.LucideIcon | null {
 }
 
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): Root | null {
-  const textPrimary = colors.fg;
-  const textSecondary = withAlpha(textPrimary, 0.5);
+  const textSecondary = withAlpha(colors.fg, 0.5);
 
-  const numericValue = typeof props.value === 'number' ? props.value : Number(props.value);
   const displayValue = formatValue(props.value, props.precision);
 
-  const thresholds = parseThresholds(props.thresholds);
-  let valueColor = textPrimary;
-  if (props.valueColor === 'auto' && Number.isFinite(numericValue)) {
-    valueColor = getValueColor(numericValue, thresholds, textPrimary);
-  } else if (props.valueColor && props.valueColor !== 'auto') {
-    const semanticColors: Record<string, string> = {
-      theme: colors.primary,
-      success: '#34c759',
-      warning: '#ff9500',
-      danger: '#ff3b30',
-    };
-    valueColor = semanticColors[props.valueColor] || textPrimary;
-  }
+  const titleColor = resolveLayeredColor({
+    instance: normalizeLegacyColor(props.titleColor),
+    theme: textSecondary,
+    fallback: textSecondary,
+  });
+  const valueColor = resolveLayeredColor({
+    instance: normalizeLegacyColor(props.valueColor),
+    theme: colors.fg,
+    fallback: colors.fg,
+  });
+  const unitColor = resolveLayeredColor({
+    instance: normalizeLegacyColor(props.unitColor),
+    theme: textSecondary,
+    fallback: textSecondary,
+  });
 
   const trendValue = Number(props.trend);
   const showTrend = props.showTrend && Number.isFinite(trendValue);
@@ -143,8 +126,8 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
   const trendColor = isPositive ? '#34c759' : '#ff3b30';
 
   const titleSize = props.titleFontSize;
-  const valueSize = 28;
-  const unitSize = 13;
+  const valueSize = props.valueFontSize;
+  const unitSize = props.unitFontSize;
   const iconColor = resolveColor(props.iconColor, colors.primary || '#0ea5e9');
   const iconBackgroundColor = resolveColor(props.iconBackgroundColor, withAlpha(iconColor, 0.14));
   const iconComponent = props.showIcon ? resolveIconComponent(props.icon) : null;
@@ -181,7 +164,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
         width: 100%;
         font-size: ${titleSize}px;
         font-weight: 500;
-        color: ${textSecondary};
+        color: ${titleColor};
         letter-spacing: 0.01em;
         margin-bottom: 4px;
         white-space: nowrap;
@@ -211,7 +194,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): R
           <span style="
             font-size: ${unitSize}px;
             font-weight: 500;
-            color: ${textSecondary};
+            color: ${unitColor};
           ">${escapeHtml(props.unit)}</span>
         ` : ''}
       </div>

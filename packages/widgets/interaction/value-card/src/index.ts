@@ -54,34 +54,6 @@ function formatValue(value: unknown, precision: number, useGrouping: boolean): s
   }).format(num);
 }
 
-function parseNumericValue(value: unknown): number {
-  if (typeof value === 'string') {
-    return Number(value.replace(/,/g, ''));
-  }
-  return Number(value);
-}
-
-function resolveSimulatedProps(props: Props): Props {
-  if (!props.simulateValueEnabled) return props;
-
-  const baseValue = parseNumericValue(props.value);
-  if (!Number.isFinite(baseValue)) return props;
-
-  const rangePercent = Math.max(0, Number(props.simulateRange) || 0);
-  const range = Math.abs(baseValue) * rangePercent / 100;
-  if (range === 0) return props;
-
-  const offset = (Math.random() * 2 - 1) * range;
-  const nextValue = baseValue + offset;
-  const nextTrend = props.trend + (Math.random() * 2 - 1) * Math.max(0.05, Math.min(2, rangePercent));
-
-  return {
-    ...props,
-    value: nextValue,
-    trend: Math.max(-999, Math.min(999, nextTrend)),
-  };
-}
-
 function withAlpha(color: string, alpha: number): string {
   const clamped = Math.max(0, Math.min(1, alpha));
   const normalized = color.trim();
@@ -512,36 +484,12 @@ export const Main = defineWidget({
     let colors = resolveWidgetColors(element);
     let iconRoot: Root | null = null;
     let themeObserver: MutationObserver | null = null;
-    let simulatedProps = resolveSimulatedProps(currentProps);
-    let simulationTimer: number | null = null;
 
     const renderWidget = () => {
       iconRoot?.unmount();
-      iconRoot = renderCard(element, simulatedProps, colors, currentCtx);
-    };
-
-    const stopSimulation = () => {
-      if (simulationTimer) {
-        window.clearInterval(simulationTimer);
-        simulationTimer = null;
-      }
-    };
-
-    const startSimulation = () => {
-      stopSimulation();
-      simulatedProps = resolveSimulatedProps(currentProps);
-      if (!currentProps.simulateValueEnabled || Math.max(0, Number(currentProps.simulateRange) || 0) === 0) {
-        return;
-      }
-
-      const intervalMs = Math.max(250, Math.min(60000, Number(currentProps.simulateIntervalMs) || 2500));
-      simulationTimer = window.setInterval(() => {
-        simulatedProps = resolveSimulatedProps(currentProps);
-        renderWidget();
-      }, intervalMs);
+      iconRoot = renderCard(element, currentProps, colors, currentCtx);
     };
     
-    startSimulation();
     renderWidget();
     
     let ro: ResizeObserver | null = null;
@@ -567,11 +515,9 @@ export const Main = defineWidget({
         currentProps = newProps;
         currentCtx = newCtx;
         colors = resolveWidgetColors(element);
-        startSimulation();
         renderWidget();
       },
       destroy: () => {
-        stopSimulation();
         iconRoot?.unmount();
         ro?.disconnect();
         themeObserver?.disconnect();

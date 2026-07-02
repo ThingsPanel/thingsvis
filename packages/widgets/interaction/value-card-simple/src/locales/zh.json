@@ -25,13 +25,11 @@
                 "iconColor": "图标颜色",
                 "iconBackgroundColor": "图标背景",
                 "titleFontSize": "标题字号",
+                "valueFontSize": "数值字号",
+                "unitFontSize": "单位字号",
+                "titleColor": "标题颜色",
                 "valueColor": "数值颜色",
-                "thresholds": "阈值规则",
-                "color.auto": "自动",
-                "color.theme": "主题色",
-                "color.success": "成功",
-                "color.warning": "警告",
-                "color.danger": "危险"
+                "unitColor": "单位颜色"
             }
         }
     }

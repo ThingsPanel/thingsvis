@@ -82,22 +82,25 @@ export const controls = createControlPanel()
       min: 10,
       max: 100,
       step: 1,
-      default: 12
+      default: 12,
     });
-    b.addSelect('valueColor', {
-      label: `${W}.valueColor`,
-      options: [
-        { label: `${W}.color.auto`, value: 'auto' },
-        { label: `${W}.color.theme`, value: 'theme' },
-        { label: `${W}.color.success`, value: 'success' },
-        { label: `${W}.color.warning`, value: 'warning' },
-        { label: `${W}.color.danger`, value: 'danger' },
-      ],
+    b.addSlider('valueFontSize', {
+      label: `${W}.valueFontSize`,
+      min: 12,
+      max: 200,
+      step: 1,
+      default: 28,
     });
-    b.addTextInput('thresholds', {
-      label: `${W}.thresholds`,
-      placeholder: '[{\"min\":0,\"max\":50,\"color\":\"#34c759\"}]'
+    b.addSlider('unitFontSize', {
+      label: `${W}.unitFontSize`,
+      min: 10,
+      max: 100,
+      step: 1,
+      default: 13,
     });
+    b.addColorPicker('titleColor', { label: `${W}.titleColor`, default: '' });
+    b.addColorPicker('valueColor', { label: `${W}.valueColor`, default: '' });
+    b.addColorPicker('unitColor', { label: `${W}.unitColor`, default: '' });
   }, { label: `${W}.groupStyle` })
 
   .build();

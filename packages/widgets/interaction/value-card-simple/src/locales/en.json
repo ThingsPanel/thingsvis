@@ -25,13 +25,11 @@
                 "iconColor": "Icon Color",
                 "iconBackgroundColor": "Icon Background",
                 "titleFontSize": "Title Font Size",
+                "valueFontSize": "Value Font Size",
+                "unitFontSize": "Unit Font Size",
+                "titleColor": "Title Color",
                 "valueColor": "Value Color",
-                "thresholds": "Thresholds",
-                "color.auto": "Auto",
-                "color.theme": "Theme",
-                "color.success": "Success",
-                "color.warning": "Warning",
-                "color.danger": "Danger"
+                "unitColor": "Unit Color"
             }
         }
     }

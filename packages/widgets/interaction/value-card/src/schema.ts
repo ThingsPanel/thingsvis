@@ -14,9 +14,6 @@ export const PropsSchema = z.object({
   subtitle: z.string().default('').describe('props.subtitle'),
   trend: z.number().default(0).describe('props.trend'),
   precision: z.number().int().min(0).max(6).default(2).describe('props.precision'),
-  simulateValueEnabled: z.boolean().default(false).describe('props.simulateValueEnabled'),
-  simulateRange: z.number().min(0).max(1000000).default(0).describe('props.simulateRange'),
-  simulateIntervalMs: z.number().int().min(250).max(60000).default(2500).describe('props.simulateIntervalMs'),
 
   // Icon Settings
   icon: z.string().default('i-lucide:activity').describe('props.icon'),

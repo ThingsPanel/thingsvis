@@ -12,9 +12,6 @@ export const controls = createControlPanel()
     b.addTextInput('subtitle', { label: `${W}.subtitle`, binding: true });
     b.addNumberInput('trend', { label: `${W}.trend`, min: -999, max: 999, step: 0.01, binding: true });
     b.addSlider('precision', { label: `${W}.precision`, min: 0, max: 6, step: 1, default: 0 });
-    b.addSwitch('simulateValueEnabled', { label: `${W}.simulateValueEnabled` });
-    b.addNumberInput('simulateRange', { label: `${W}.simulateRange`, min: 0, max: 1000000, step: 0.1 });
-    b.addNumberInput('simulateIntervalMs', { label: `${W}.simulateIntervalMs`, min: 250, max: 60000, step: 250 });
     b.addIconPicker('icon', { label: `${W}.icon` });
     b.addSelect('iconPosition', {
       label: `${W}.iconPosition`,

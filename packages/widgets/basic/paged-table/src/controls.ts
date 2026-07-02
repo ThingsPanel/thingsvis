@@ -17,8 +17,8 @@ export const controls = createControlPanel()
       default: 10,
     });
     b.addTextInput('groupId', { label: `${W}.groupId`, placeholder: '__all__' });
-    b.addTextInput('keyword', { label: `${W}.keyword`, placeholder: '' });
-    b.addTextInput('deviceConfigId', { label: `${W}.deviceConfigId`, placeholder: '' });
+    b.addTextInput('keyword', { label: `${W}.keyword` });
+    b.addTextInput('deviceConfigId', { label: `${W}.deviceConfigId` });
   }, { label: `${W}.groupData` })
 
   .addGroup('Header', (b) => {
