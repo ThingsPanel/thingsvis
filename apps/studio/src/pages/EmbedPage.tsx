@@ -241,6 +241,7 @@ export default function EmbedPage() {
   const [isScaleMenuOpen, setIsScaleMenuOpen] = useState(false);
   const isPreviewToolbarVisible = isPreviewHovered || isScaleMenuOpen;
   const cleanupRef = useRef<Array<() => void>>([]);
+  const lastReportedEmbedHeightRef = useRef(0);
   const embedTokenRef = useRef<string | null>(searchParams.get('token'));
   /** Whether data sources from the last tv:init have been registered and are ready. */
   const initDoneRef = useRef<boolean>(false);
@@ -391,10 +392,60 @@ export default function EmbedPage() {
   const handleHostEmbedContentHeight = useCallback(
     (height: number) => {
       if (!isHostGridEmbed || height <= 0) return;
-      postToParent({ type: MSG_TYPES.CONTENT_HEIGHT, payload: { height: Math.ceil(height) } });
+      const next = Math.ceil(height);
+      if (Math.abs(next - lastReportedEmbedHeightRef.current) < 2) return;
+      lastReportedEmbedHeightRef.current = next;
+      postToParent({ type: MSG_TYPES.CONTENT_HEIGHT, payload: { height: next } });
     },
     [isHostGridEmbed, postToParent],
   );
+
+  // Host iframe embed: no internal scroll — height is driven by canvas, outer page scrolls.
+  useEffect(() => {
+    if (!isHostGridEmbed || !state.schema) return;
+
+    lastReportedEmbedHeightRef.current = 0;
+
+    const targets = [
+      document.documentElement,
+      document.body,
+      document.getElementById('root'),
+    ].filter((target): target is HTMLElement => Boolean(target));
+
+    const prev = targets.map((target) => ({
+      target,
+      overflow: target.style.overflow,
+      height: target.style.height,
+    }));
+
+    targets.forEach((target) => {
+      target.style.overflow = 'hidden';
+      if (target === document.body) target.style.height = 'auto';
+    });
+
+    return () => {
+      prev.forEach(({ target, overflow, height }) => {
+        target.style.overflow = overflow;
+        target.style.height = height;
+      });
+    };
+  }, [isHostGridEmbed, state.schema]);
+
+  // Host page scrolls; iframe must not trap wheel when it has no internal overflow.
+  useEffect(() => {
+    if (!isHostGridEmbed || !state.schema) return;
+
+    const onWheel = (event: WheelEvent) => {
+      postToParent({
+        type: MSG_TYPES.EMBED_WHEEL,
+        payload: { deltaY: event.deltaY, deltaX: event.deltaX },
+      });
+      event.preventDefault();
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => window.removeEventListener('wheel', onWheel);
+  }, [isHostGridEmbed, postToParent, state.schema]);
 
   // Load dashboard from API by ID with optional share token
   const loadFromApiWithShareToken = useCallback(

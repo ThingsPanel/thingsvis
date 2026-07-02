@@ -33,6 +33,8 @@ export const MSG_TYPES = {
   REQUEST_INIT: 'tv:request-init',
   /** Grid embed reports document height so the host iframe can auto-size. */
   CONTENT_HEIGHT: 'tv:content-height',
+  /** Forward wheel deltas to host when embed has no internal scroll. */
+  EMBED_WHEEL: 'tv:embed-wheel',
 
   // Viewer (Host -> Guest)
   LOAD_DASHBOARD: 'LOAD_DASHBOARD',

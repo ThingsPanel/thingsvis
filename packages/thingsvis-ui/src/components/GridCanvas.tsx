@@ -477,15 +477,28 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     useEffect(() => {
         if (!contentSized || !onContentHeightChange) return;
-        onContentHeightChange(
-            computeGridContentHeightPx(responsiveTotalRows, effectiveSettings, canvasPadding),
-        );
+        const el = scrollContainerRef.current ?? canvasRef.current;
+        if (!el) return;
+
+        let lastHeight = 0;
+        const report = () => {
+            const height = Math.ceil(el.getBoundingClientRect().height);
+            if (height <= 0 || Math.abs(height - lastHeight) < 1) return;
+            lastHeight = height;
+            onContentHeightChange(height);
+        };
+
+        const observer = new ResizeObserver(report);
+        observer.observe(el);
+        report();
+
+        return () => observer.disconnect();
     }, [
         contentSized,
         onContentHeightChange,
+        canvasMinH,
         responsiveTotalRows,
-        effectiveSettings.rowHeight,
-        effectiveSettings.gap,
+        nodes.length,
         canvasPadding,
     ]);
 
