@@ -70,9 +70,15 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
     <div className="w-full space-y-4 pb-4">
       {/* Card mode */}
       <div className="px-1 border-t border-border pt-4">
-        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-2">
           {t('propsPanel.baseStyle.card', '卡片模式')}
         </h3>
+        <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+          {t(
+            'propsPanel.baseStyle.cardHint',
+            '为组件添加标题栏和卡片外观（背景、边框、阴影），适合在看板中分组展示。',
+          )}
+        </p>
         <div className="space-y-3">
           <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <input

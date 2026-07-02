@@ -154,7 +154,10 @@
         "activeDataSources": "已激活的数据源",
         "noActiveSources": "无活跃数据源",
         "noPlatformFields": "没有可用的平台字段",
-        "events": "事件"
+        "events": "事件",
+        "baseStyle": {
+            "cardHint": "为组件添加标题栏和卡片外观（背景、边框、阴影），适合在看板中分组展示。"
+        }
     },
     "canvas": {
         "settings": "画布设置",

@@ -158,7 +158,10 @@
         "activeDataSources": "Active Data Sources",
         "noActiveSources": "No active data sources today.",
         "noPlatformFields": "No platform fields available.",
-        "events": "Events"
+        "events": "Events",
+        "baseStyle": {
+            "cardHint": "Adds a title bar and card shell (background, border, shadow) around the widget—useful for grouping on dashboards."
+        }
     },
     "canvas": {
         "settings": "Canvas Settings",
