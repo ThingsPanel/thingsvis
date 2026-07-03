@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { ChartAxisFontMixin } from '@thingsvis/widget-sdk';
 
 export const PropsSchema = z.object({
     /** 主色调 */
@@ -20,12 +21,11 @@ export const PropsSchema = z.object({
     /** 显示Y轴刻度 */
     showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 
-    /** 
-     * 数据集 
+    /** 数据集 
      * 抛弃显式定义维度，交由 ECharts Dataset 自动推导
      */
     data: z.array(z.any()).default([]).describe('props.dataset'),
-});
+}).extend(ChartAxisFontMixin);
 
 /** 属性类型 */
 export type Props = z.infer<typeof PropsSchema>;

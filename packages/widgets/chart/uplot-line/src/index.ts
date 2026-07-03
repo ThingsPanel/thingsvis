@@ -9,6 +9,7 @@ import {
   resolveLocaleRecord,
   type WidgetOverlayContext,
   resolveWidgetColors,
+  scaledChartFontSize,
   type WidgetColors,
 } from '@thingsvis/widget-sdk';
 
@@ -19,9 +20,8 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 16;
-/** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT` / `LEGEND_FONT_SIZE`. */
+/** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT`. */
 const LEGEND_BLOCK_HEIGHT = 20;
-const LEGEND_FONT_SIZE = 12;
 /** Gap between X-axis band (canvas bottom) and legend — half widget padding, same rhythm as echarts-bar spacing. */
 const LEGEND_AXIS_GAP_BASE = WIDGET_PADDING / 2;
 
@@ -565,7 +565,7 @@ export const Main = defineWidget({
           : 'rgba(250,250,252,0.97)';
       const tooltipBorder = withAlpha(currentAxisLabelColor, 0.22);
 
-      const legendFontPx = Math.round(LEGEND_FONT_SIZE * scale);
+      const legendFontPx = scaledChartFontSize(currentProps.legendFontSize, scale);
       const legendAxisGapPx = Math.round(LEGEND_AXIS_GAP_BASE * scale);
       element.style.setProperty('--uplot-legend-font-size', `${legendFontPx}px`);
       element.style.setProperty('--uplot-legend-line-height', `${Math.round(16 * scale)}px`);
@@ -573,7 +573,7 @@ export const Main = defineWidget({
       element.style.setProperty('--uplot-legend-axis-gap', `${legendAxisGapPx}px`);
 
       emptyStateEl.style.color = withAlpha(currentAxisLabelColor, 0.65);
-      emptyStateEl.style.fontSize = `${Math.max(12, Math.round(13 * scale))}px`;
+      emptyStateEl.style.fontSize = `${scaledChartFontSize(currentProps.xAxisFontSize, scale)}px`;
       emptyStateEl.style.alignItems = 'center';
       emptyStateEl.style.justifyContent = 'center';
       emptyStateEl.style.padding = '0';
@@ -581,8 +581,8 @@ export const Main = defineWidget({
       emptyStateEl.style.display = hasData ? 'none' : 'flex';
 
       // Independent axis font sizes with scale
-      const xFontSize = Math.max(12, Math.round((currentProps.xAxisFontSize ?? 12) * scale));
-      const yFontSize = Math.max(12, Math.round((currentProps.yAxisFontSize ?? 12) * scale));
+      const xFontSize = scaledChartFontSize(currentProps.xAxisFontSize, scale);
+      const yFontSize = scaledChartFontSize(currentProps.yAxisFontSize, scale);
       const xAxisFont = `${xFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
       const yAxisFont = `${yFontSize}px Inter, Noto Sans SC, Noto Sans, sans-serif`;
 

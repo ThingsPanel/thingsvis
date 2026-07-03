@@ -3,6 +3,7 @@ import {
   resolveLayeredColor,
   resolveLocaleRecord,
   resolveWidgetColors,
+  scaledChartFontSize,
   type WidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
@@ -21,8 +22,6 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const CHART_PADDING = 16;
-const LEGEND_FONT_SIZE = 12;
-const MIN_AXIS_LABEL_FONT_SIZE = 12;
 const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
@@ -321,6 +320,9 @@ function buildOption(
     showXAxis,
     showYAxis,
     timeRangePreset,
+    xAxisFontSize,
+    yAxisFontSize,
+    legendFontSize,
   } = props;
 
   const resolvedAxisLabelColor = resolveLayeredColor({
@@ -331,7 +333,9 @@ function buildOption(
   const splitLineColor = colors.axis;
   const baseSeriesColor = pickSeriesColor(primaryColor, colors);
   const padding = Math.round(CHART_PADDING * scale);
-  const axisLabelFontSize = Math.max(MIN_AXIS_LABEL_FONT_SIZE, Math.round(12 * scale));
+  const xLabelFontSize = scaledChartFontSize(xAxisFontSize, scale);
+  const yLabelFontSize = scaledChartFontSize(yAxisFontSize, scale);
+  const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const seriesName = messages.runtime?.defaultSeriesName || 'Value';
   const normalizedSeries = normalizeLineData(data, timeRangePreset, seriesName);
@@ -385,7 +389,7 @@ function buildOption(
         max: hasData ? undefined : emptyTimeWindow.endMs,
         axisLabel: {
           color: resolvedAxisLabelColor,
-          fontSize: axisLabelFontSize,
+          fontSize: xLabelFontSize,
           hideOverlap: true,
           formatter: (value: string | number) =>
             formatTimeLabel(
@@ -400,7 +404,7 @@ function buildOption(
         show: showXAxis !== false,
         type: 'category',
         data: categoryAxisData,
-        axisLabel: { color: resolvedAxisLabelColor, fontSize: axisLabelFontSize },
+        axisLabel: { color: resolvedAxisLabelColor, fontSize: xLabelFontSize },
         axisLine: { lineStyle: { color: splitLineColor } },
         axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
       };
@@ -419,7 +423,7 @@ function buildOption(
             text: messages.runtime?.emptyState || 'Add data points or bind a data series',
             fill: resolvedAxisLabelColor,
             opacity: 0.58,
-            fontSize: Math.round(12 * scale),
+            fontSize: xLabelFontSize,
           },
         },
     tooltip: {
@@ -432,7 +436,7 @@ function buildOption(
       left: 'center',
       selectedMode: true,
       icon: 'roundRect',
-      textStyle: { color: resolvedAxisLabelColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
+      textStyle: { color: resolvedAxisLabelColor, fontSize: legendTextFontSize },
     },
     grid: {
       left: padding,
@@ -448,7 +452,7 @@ function buildOption(
       min: hasData ? undefined : 0,
       max: hasData ? undefined : 1,
       splitLine: { lineStyle: { color: splitLineColor } },
-      axisLabel: { color: resolvedAxisLabelColor, fontSize: axisLabelFontSize },
+      axisLabel: { color: resolvedAxisLabelColor, fontSize: yLabelFontSize },
       // 补充刻度展示属性
       axisLine: { show: true, lineStyle: { color: splitLineColor } },
       axisTick: { show: true, lineStyle: { color: splitLineColor } },

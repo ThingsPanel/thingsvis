@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { ChartGaugeFontMixin } from '@thingsvis/widget-sdk';
 
 export const PropsSchema = z.object({
     /** 主色调 */
@@ -19,7 +20,7 @@ export const PropsSchema = z.object({
 
     /** 数据集 */
     data: z.any().default(null).describe('props.dataset'),
-});
+}).extend(ChartGaugeFontMixin);
 
 /** 属性类型 */
 export type Props = z.infer<typeof PropsSchema>;

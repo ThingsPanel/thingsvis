@@ -10,6 +10,7 @@ import {
   defineWidget,
   resolveLayeredColor,
   resolveWidgetColors,
+  scaledChartFontSize,
   type WidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
@@ -19,7 +20,6 @@ import en from './locales/en.json';
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const CHART_PADDING = 16;
-const LEGEND_FONT_SIZE = 12;
 const LEGEND_BLOCK_HEIGHT = 20;
 const STANDALONE_BAR_SERIES = [
   { name: 'Mon', value: 18 },
@@ -166,6 +166,9 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     showLegend,
     showXAxis,
     showYAxis,
+    xAxisFontSize,
+    yAxisFontSize,
+    legendFontSize,
   } = props;
   const normalizedData = normalizeCategoryData(data);
   const hasData = normalizedData.length > 0;
@@ -184,6 +187,9 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   });
   const padding = Math.round(CHART_PADDING * scale);
   const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
+  const xLabelFontSize = scaledChartFontSize(xAxisFontSize, scale);
+  const yLabelFontSize = scaledChartFontSize(yAxisFontSize, scale);
+  const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
   const seriesName = '数值';
 
   const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -205,7 +211,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             text: '暂无数据',
             fill: resolvedAxisLabelColor,
             opacity: 0.65,
-            fontSize: Math.round(14 * scale),
+            fontSize: scaledChartFontSize(xAxisFontSize, scale),
           },
         },
     tooltip: {
@@ -219,7 +225,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       left: 'center',
       selectedMode: true,
       icon: 'roundRect',
-      textStyle: { color: resolvedAxisLabelColor, fontSize: Math.round(LEGEND_FONT_SIZE * scale) },
+      textStyle: { color: resolvedAxisLabelColor, fontSize: legendTextFontSize },
     },
     grid: {
       left: padding,
@@ -240,7 +246,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     xAxis: {
       show: showXAxis !== false,
       type: 'category',
-      axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
+      axisLabel: { color: resolvedAxisLabelColor, fontSize: xLabelFontSize },
       axisLine: { lineStyle: { color: splitLineColor } },
       axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
     },
@@ -248,7 +254,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       show: showYAxis !== false,
       type: 'value',
       splitLine: { lineStyle: { color: splitLineColor } },
-      axisLabel: { color: resolvedAxisLabelColor, fontSize: Math.round(12 * scale) },
+      axisLabel: { color: resolvedAxisLabelColor, fontSize: yLabelFontSize },
       axisLine: { show: true, lineStyle: { color: splitLineColor } },
       axisTick: { show: true, lineStyle: { color: splitLineColor } },
     },

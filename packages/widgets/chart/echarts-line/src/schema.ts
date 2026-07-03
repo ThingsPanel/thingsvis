@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { ChartAxisFontMixin } from '@thingsvis/widget-sdk';
 
 const DEFAULT_SAMPLE_DATA = [
   { time: '2026-03-16T08:00:00.000Z', value: 18 },
@@ -40,7 +41,7 @@ export const PropsSchema = z.object({
 
   /** 数据集 */
   data: z.array(z.any()).default(() => DEFAULT_SAMPLE_DATA.map((point) => ({ ...point }))).describe('props.dataset'),
-});
+}).extend(ChartAxisFontMixin);
 
 /** 属性类型 */
 export type Props = z.infer<typeof PropsSchema>;

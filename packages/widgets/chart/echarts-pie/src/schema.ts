@@ -3,6 +3,7 @@
  */
 
 import { z } from 'zod';
+import { ChartPieFontMixin } from '@thingsvis/widget-sdk';
 
 export const PropsSchema = z.object({
     /** 主色调 (留空使用主题色板) */
@@ -23,7 +24,7 @@ export const PropsSchema = z.object({
         { name: '邮件营销', value: 310 },
         { name: '联盟广告', value: 234 },
     ]).describe('props.dataset'),
-});
+}).extend(ChartPieFontMixin);
 
 /** 属性类型 */
 export type Props = z.infer<typeof PropsSchema>;

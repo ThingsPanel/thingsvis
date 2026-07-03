@@ -111,6 +111,13 @@ async function main() {
   );
   const start = Date.now();
 
+  try {
+    console.log('[build:widgets:safe] Building @thingsvis/widget-sdk (widget dependency)...');
+    execSync('pnpm --filter @thingsvis/widget-sdk build', { cwd: ROOT, stdio: 'inherit' });
+  } catch (e) {
+    console.warn('[build:widgets:safe] widget-sdk build failed:', e.message);
+  }
+
   const results = await parallelMapLimit(widgets, jobs, buildWidget);
 
   const succeeded = results.filter((r) => r.success);

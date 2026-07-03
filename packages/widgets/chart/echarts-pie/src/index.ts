@@ -11,6 +11,7 @@ import {
     resolveLayeredColor,
     type WidgetOverlayContext,
     resolveWidgetColors,
+    scaledChartFontSize,
     type WidgetColors,
 } from '@thingsvis/widget-sdk';
 
@@ -43,7 +44,7 @@ const SAMPLE_PIE_SERIES = [
  * 根据 Props 和 Theme 生成 ECharts Option
  */
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-    const { data, primaryColor, labelColor, showLegend, isDoughnut } = props;
+    const { data, primaryColor, labelColor, showLegend, isDoughnut, legendFontSize, labelFontSize } = props;
     const normalizedData = normalizePieData(data);
     const hasData = normalizedData.length > 0;
     const compactMode = scale < 0.85 || normalizedData.length > 6;
@@ -60,6 +61,8 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
         inheritValues: [LEGACY_DEFAULT_PRIMARY],
     });
     const palette = [primarySliceColor, ...colors.series.slice(1)];
+    const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
+    const sliceLabelFontSize = scaledChartFontSize(labelFontSize, scale);
 
     return {
         backgroundColor: 'transparent',
@@ -73,7 +76,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 text: '暂无数据',
                 fill: resolvedLabelColor,
                 opacity: 0.65,
-                fontSize: Math.round(14 * scale),
+                fontSize: sliceLabelFontSize,
             },
         },
         tooltip: {
@@ -83,7 +86,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             show: showLegend,
             bottom: 10,
             left: 'center',
-            textStyle: { color: resolvedLabelColor, fontSize: Math.round(12 * scale) },
+            textStyle: { color: resolvedLabelColor, fontSize: legendTextFontSize },
         },
         dataset: hasData ? {
             source: normalizedData
@@ -109,7 +112,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
                 label: {
                     color: resolvedLabelColor,
                     show: !compactMode,
-                    fontSize: Math.max(10, Math.round(12 * scale)),
+                    fontSize: sliceLabelFontSize,
                     position: compactMode ? 'inside' : 'outer',
                     distanceToLabelLine: 5,
                     formatter: compactMode ? '{d}%' : '{b}: {d}%'

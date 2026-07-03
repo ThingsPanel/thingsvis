@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ChartAxisFontMixin } from '@thingsvis/widget-sdk';
 
 export const PropsSchema = z.object({
     /** 主色调 */
@@ -15,12 +16,6 @@ export const PropsSchema = z.object({
 
     /** 是否显示 Y 轴 */
     showYAxis: z.boolean().default(true).describe('props.showYAxis'),
-
-    /** X 轴刻度文字大小 */
-    xAxisFontSize: z.number().min(12).max(32).default(12).describe('props.xAxisFontSize'),
-
-    /** Y 轴刻度文字大小 */
-    yAxisFontSize: z.number().min(12).max(32).default(12).describe('props.yAxisFontSize'),
 
     /** Y 轴最小值（空=自动）；标签与说明见 controls overrides */
     yAxisMin: z.number().optional(),
@@ -45,7 +40,7 @@ export const PropsSchema = z.object({
 
     /** 数据集 - uPlot requires precise format, but we accept ECharts style and convert it */
     data: z.array(z.any()).default([]).describe('props.dataset'),
-});
+}).extend(ChartAxisFontMixin);
 
 export type Props = z.infer<typeof PropsSchema>;
 

@@ -1,12 +1,16 @@
 import { PropsSchema } from './schema';
-import { generateControls } from '@thingsvis/widget-sdk';
+import {
+    generateControls,
+    chartAxisFontControlOverrides,
+    chartAxisFontBindings,
+} from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
     groups: {
         Content: ['showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
         Style: [
             'primaryColor', 'axisLabelColor',
-            'xAxisFontSize', 'yAxisFontSize',
+            'xAxisFontSize', 'yAxisFontSize', 'legendFontSize',
             'lineWidth', 'showArea', 'areaFillAlpha', 'smooth',
         ],
         Data: ['data'],
@@ -28,20 +32,7 @@ export const controls = generateControls(PropsSchema, {
                 { label: '最近 30 天', value: '30d' },
             ],
         },
-        xAxisFontSize: {
-            kind: 'slider',
-            label: { zh: 'X轴字号', en: 'X Axis Font Size' },
-            min: 12,
-            max: 24,
-            step: 1,
-        },
-        yAxisFontSize: {
-            kind: 'slider',
-            label: { zh: 'Y轴字号', en: 'Y Axis Font Size' },
-            min: 12,
-            max: 24,
-            step: 1,
-        },
+        ...chartAxisFontControlOverrides,
         lineWidth: {
             kind: 'slider',
             label: { zh: '线条宽度', en: 'Line Width' },
@@ -85,8 +76,6 @@ export const controls = generateControls(PropsSchema, {
         showLegend: { enabled: true, modes: ['static', 'field', 'expr'] },
         showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
         showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
-        xAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
-        yAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] },
         yAxisMin: { enabled: true, modes: ['static', 'field', 'expr'] },
         yAxisMax: { enabled: true, modes: ['static', 'field', 'expr'] },
         lineWidth: { enabled: true, modes: ['static', 'field', 'expr'] },
@@ -94,5 +83,6 @@ export const controls = generateControls(PropsSchema, {
         areaFillAlpha: { enabled: true, modes: ['static', 'field', 'expr'] },
         smooth: { enabled: true, modes: ['static', 'field', 'expr'] },
         data: { enabled: true, modes: ['static', 'field', 'expr'] },
+        ...chartAxisFontBindings,
     },
 });

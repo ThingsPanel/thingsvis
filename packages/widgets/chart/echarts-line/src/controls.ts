@@ -1,10 +1,14 @@
 import { PropsSchema } from './schema';
-import { generateControls } from '@thingsvis/widget-sdk';
+import {
+  generateControls,
+  chartAxisFontControlOverrides,
+  chartAxisFontBindings,
+} from '@thingsvis/widget-sdk';
 
 export const controls = generateControls(PropsSchema, {
   groups: {
     Content: ['showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
-    Style: ['primaryColor', 'axisLabelColor', 'smooth', 'showArea'],
+    Style: ['primaryColor', 'axisLabelColor', 'xAxisFontSize', 'yAxisFontSize', 'legendFontSize', 'smooth', 'showArea'],
     Data: ['data'],
   },
   overrides: {
@@ -37,6 +41,7 @@ export const controls = generateControls(PropsSchema, {
         { label: 'widgets.thingsvis-widget-chart-echarts-line.options.timeRangePreset.30d', value: '30d' },
       ],
     },
+    ...chartAxisFontControlOverrides,
   },
   bindings: {
     showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
@@ -44,5 +49,6 @@ export const controls = generateControls(PropsSchema, {
     primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },
     axisLabelColor: { enabled: true, modes: ['static', 'field', 'expr'] },
     data: { enabled: true, modes: ['static', 'field', 'expr'] },
+    ...chartAxisFontBindings,
   },
 });

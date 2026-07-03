@@ -162,4 +162,25 @@ describe('chart/echarts-line widget', () => {
 
     harness.destroy();
   });
+
+  it('maps font size props to ECharts axisLabel and legend textStyle', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      size: { width: 300, height: 300 },
+      props: {
+        xAxisFontSize: 16,
+        yAxisFontSize: 18,
+        legendFontSize: 14,
+      },
+    });
+    harness.update({});
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.xAxis?.axisLabel?.fontSize).toBe(16);
+    expect(latestOption?.yAxis?.axisLabel?.fontSize).toBe(18);
+    expect(latestOption?.legend?.textStyle?.fontSize).toBe(14);
+
+    harness.destroy();
+  });
 });

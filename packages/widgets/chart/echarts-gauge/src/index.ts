@@ -11,6 +11,7 @@ import {
   resolveLayeredColor,
   type WidgetOverlayContext,
   resolveWidgetColors,
+  scaledChartFontSize,
   type WidgetColors,
 } from '@thingsvis/widget-sdk';
 
@@ -81,7 +82,7 @@ function withAlpha(color: string, alpha: number): string {
 }
 
 function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-  const { data, primaryColor, axisLabelColor, detailColor, max } = props;
+  const { data, primaryColor, axisLabelColor, detailColor, max, axisLabelFontSize, titleFontSize, detailFontSize } = props;
 
   const accentColor = resolveLayeredColor({
     instance: primaryColor,
@@ -104,6 +105,9 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   });
   const splitLineColor = colors.axis;
   const axisLineColor = colors.axis;
+  const gaugeAxisFontSize = scaledChartFontSize(axisLabelFontSize, scale);
+  const gaugeTitleFontSize = scaledChartFontSize(titleFontSize, scale);
+  const gaugeDetailFontSize = scaledChartFontSize(detailFontSize, scale);
 
   // Extract current value and name
   const dataEntry = parseGaugeData(data, '');
@@ -125,7 +129,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             text: '暂无数据',
             fill: resolvedAxisLabelColor,
             opacity: 0.65,
-            fontSize: Math.round(14 * scale),
+            fontSize: gaugeTitleFontSize,
           },
         },
     series: hasData
@@ -186,7 +190,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
               show: true,
               distance: Math.round(-30 * scale),
               color: resolvedAxisLabelColor,
-              fontSize: Math.round(10 * scale),
+              fontSize: gaugeAxisFontSize,
             },
             anchor: {
               show: true,
@@ -203,7 +207,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             title: {
               show: true,
               offsetCenter: [0, '40%'],
-              fontSize: Math.round(12 * scale),
+              fontSize: gaugeTitleFontSize,
               color: resolvedAxisLabelColor,
               opacity: 0.8,
             },
@@ -212,7 +216,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
               offsetCenter: [0, '75%'],
               formatter: '{value}',
               color: resolvedDetailColor,
-              fontSize: Math.round(26 * scale),
+              fontSize: gaugeDetailFontSize,
               fontWeight: 'bold',
             },
             data: [{ value: val, name: itemName }],

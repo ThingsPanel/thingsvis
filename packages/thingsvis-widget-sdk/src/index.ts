@@ -26,6 +26,20 @@ export { generateControls, type GenerateControlsConfig } from './generate-contro
 // ============================================================================
 export { BasePropsSchema, type BaseProps } from './schemas/base-props';
 export { withMixins, TransformMixin, ShadowMixin, BorderMixin } from './schemas/mixins';
+export {
+  CHART_FONT_SIZE_MIN,
+  CHART_FONT_SIZE_MAX,
+  CHART_AXIS_FONT_SIZE_DEFAULT,
+  CHART_LEGEND_FONT_SIZE_DEFAULT,
+  ChartAxisFontMixin,
+  ChartPieFontMixin,
+  ChartGaugeFontMixin,
+  scaledChartFontSize,
+  chartAxisFontControlOverrides,
+  chartPieFontControlOverrides,
+  chartGaugeFontControlOverrides,
+  chartAxisFontBindings,
+} from './schemas/chart-font';
 
 // ============================================================================
 // 工具函数
