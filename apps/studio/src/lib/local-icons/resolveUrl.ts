@@ -1,13 +1,12 @@
 import type { LocalIconEntry } from './types';
+import { resolveLocalIconsPublicUrl } from './publicPath';
 
-export function buildLocalIconAssetUrl(
-  icon: LocalIconEntry,
-  basePath = '/local-icons/icons',
-): string {
+export function buildLocalIconAssetUrl(icon: LocalIconEntry, basePath?: string): string {
+  const resolvedBase = basePath ?? resolveLocalIconsPublicUrl('/local-icons/icons');
   const segments = [...icon.categoryId.split('/'), icon.file].map((part) =>
     encodeURIComponent(part),
   );
-  return `${basePath}/${segments.join('/')}`;
+  return `${resolvedBase}/${segments.join('/')}`;
 }
 
 export function isLocalIconSvg(icon: LocalIconEntry): boolean {
