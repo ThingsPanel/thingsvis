@@ -35,6 +35,7 @@ export {
   ChartPieFontMixin,
   ChartGaugeFontMixin,
   scaledChartFontSize,
+  shouldShowChartLegend,
   chartAxisFontControlOverrides,
   chartPieFontControlOverrides,
   chartGaugeFontControlOverrides,

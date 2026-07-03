@@ -51,6 +51,8 @@ describe('chart/echarts-line widget', () => {
     expect(init).toHaveBeenCalledTimes(1);
     expect(Main.defaultProps.data).toHaveLength(6);
     expect(latestOption?.graphic).toBeUndefined();
+    expect(latestOption?.legend?.show).toBe(false);
+    expect(latestOption?.series?.[0]?.name).toBeUndefined();
 
     harness.destroy();
   });
@@ -96,6 +98,9 @@ describe('chart/echarts-line widget', () => {
     const latestOption = setOption.mock.calls.at(-1)?.[0];
 
     expect(latestOption?.legend?.data).toEqual(['Supply', 'Return']);
+    expect(latestOption?.legend?.show).toBe(true);
+    expect(latestOption?.series?.[0]?.name).toBe('Supply');
+    expect(latestOption?.series?.[1]?.name).toBe('Return');
     expect(latestOption?.xAxis?.data).toEqual(['Mon', 'Tue']);
     expect(latestOption?.series).toHaveLength(2);
     expect(latestOption?.series?.[0]?.data).toEqual([12, 18]);

@@ -10,6 +10,7 @@ import {
   type WidgetOverlayContext,
   resolveWidgetColors,
   scaledChartFontSize,
+  shouldShowChartLegend,
   type WidgetColors,
 } from '@thingsvis/widget-sdk';
 
@@ -203,7 +204,6 @@ function normalizeSeries(data: unknown, timeRangePreset: Props['timeRangePreset'
 function normalizeLineSeries(
   data: Props['data'],
   timeRangePreset: Props['timeRangePreset'],
-  fallbackSeriesName: string,
 ): ParsedLineSeries[] {
   if (Array.isArray(data) && data.length > 0) {
     const seriesRecords = data.filter((entry): entry is Record<string, unknown> => {
@@ -225,7 +225,7 @@ function normalizeLineSeries(
 
   return [
     {
-      name: fallbackSeriesName,
+      name: '',
       points: normalizeSeries(data, timeRangePreset),
     },
   ];
@@ -321,6 +321,7 @@ function escapeHtml(s: string): string {
 type HoverTooltipCtx = {
   spanSec: number;
   seriesLabels: string[];
+  multiSeries: boolean;
   fg: string;
   tooltipBg: string;
   tooltipBorder: string;
@@ -376,9 +377,13 @@ function createHoverTooltipPlugin(ctx: HoverTooltipCtx) {
 
           const label = ctx.seriesLabels[seriesIndex - 1] ?? `Series ${seriesIndex}`;
           const yStr = typeof yRaw === 'number' ? String(yRaw) : String(yRaw);
-          rows.push(
-            `<span style="opacity:0.78;font-size:11px;font-weight:400">${escapeHtml(label)}</span> <span>${escapeHtml(yStr)}</span>`,
-          );
+          if (ctx.multiSeries) {
+            rows.push(
+              `<span style="opacity:0.78;font-size:11px;font-weight:400">${escapeHtml(label)}</span> <span>${escapeHtml(yStr)}</span>`,
+            );
+          } else {
+            rows.push(`<span>${escapeHtml(yStr)}</span>`);
+          }
         }
 
         if (rows.length === 0) {
@@ -507,11 +512,9 @@ export const Main = defineWidget({
 
       const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
       const runtimeMessages = getRuntimeMessages(currentLocale);
-      const seriesLabel = runtimeMessages.runtime?.defaultSeriesName || 'Value';
       const renderLineSeries = normalizeLineSeries(
         currentProps.data,
         currentProps.timeRangePreset,
-        seriesLabel,
       ).map((series) => ({
         ...series,
         points: ensureRenderableSeries(series.points, fallbackRangeSec),
@@ -519,7 +522,8 @@ export const Main = defineWidget({
       const hasData = renderLineSeries.some((series) => series.points.length > 0);
       const activeLineSeries = hasData
         ? renderLineSeries
-        : [{ name: seriesLabel, points: buildPreviewSeries(currentProps.timeRangePreset) }];
+        : [{ name: '', points: buildPreviewSeries(currentProps.timeRangePreset) }];
+      const multiSeries = activeLineSeries.length > 1;
       const fallbackEndSec = Math.floor(Date.now() / 1000);
       const finalTimes = Array.from(
         new Set(activeLineSeries.flatMap((series) => series.points.map((point) => point.tsSec))),
@@ -542,7 +546,7 @@ export const Main = defineWidget({
 
       const showX = currentProps.showXAxis !== false;
       const showY = currentProps.showYAxis !== false;
-      const showLegend = currentProps.showLegend;
+      const showLegend = shouldShowChartLegend(currentProps.showLegend, activeLineSeries.length);
       const { width: rawPlotW, height: rawPlotH } = computeUplotInnerSize(cw, ch, showLegend, scale);
       const plotW = Math.max(80, rawPlotW);
       const plotH = Math.max(48, rawPlotH);
@@ -604,6 +608,7 @@ export const Main = defineWidget({
           createHoverTooltipPlugin({
             spanSec,
             seriesLabels: activeLineSeries.map((series) => series.name),
+            multiSeries,
             fg: currentAxisLabelColor,
             tooltipBg,
             tooltipBorder,
@@ -657,7 +662,7 @@ export const Main = defineWidget({
           ...activeLineSeries.map((series, index) => {
             const currentLineColor = pickLineColorByIndex(currentProps, currentColors, index);
             return {
-              label: series.name,
+              ...(multiSeries && series.name ? { label: series.name } : {}),
               stroke: currentLineColor,
               fill: currentProps.showArea
                 ? withAlpha(currentLineColor, currentProps.areaFillAlpha ?? 0.18)

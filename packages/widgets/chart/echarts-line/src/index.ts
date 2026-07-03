@@ -4,6 +4,7 @@ import {
   resolveLocaleRecord,
   resolveWidgetColors,
   scaledChartFontSize,
+  shouldShowChartLegend,
   type WidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
@@ -258,7 +259,6 @@ function normalizeSingleLineData(data: Props['data'], timeRangePreset: Props['ti
 function normalizeLineData(
   data: Props['data'],
   timeRangePreset: Props['timeRangePreset'],
-  fallbackSeriesName: string,
 ): NormalizedLineSeries[] {
   if (Array.isArray(data) && data.length > 0) {
     const seriesRecords = data.filter((entry): entry is Record<string, unknown> => {
@@ -280,7 +280,7 @@ function normalizeLineData(
 
   return [
     {
-      name: fallbackSeriesName,
+      name: '',
       normalized: normalizeSingleLineData(data, timeRangePreset),
     },
   ];
@@ -336,9 +336,10 @@ function buildOption(
   const xLabelFontSize = scaledChartFontSize(xAxisFontSize, scale);
   const yLabelFontSize = scaledChartFontSize(yAxisFontSize, scale);
   const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
-  const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
-  const seriesName = messages.runtime?.defaultSeriesName || 'Value';
-  const normalizedSeries = normalizeLineData(data, timeRangePreset, seriesName);
+  const normalizedSeries = normalizeLineData(data, timeRangePreset);
+  const multiSeries = normalizedSeries.length > 1;
+  const showSeriesLegend = shouldShowChartLegend(showLegend, normalizedSeries.length);
+  const legendSpace = showSeriesLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const hasData =
     normalizedSeries.some(({ normalized }) =>
       normalized.mode === 'time' ? normalized.timeData.length > 0 : normalized.categoryData.length > 0,
@@ -430,8 +431,8 @@ function buildOption(
       trigger: 'axis',
     },
     legend: {
-      show: showLegend,
-      data: normalizedSeries.map(({ name }) => name),
+      show: showSeriesLegend,
+      data: multiSeries ? normalizedSeries.map(({ name }) => name) : [],
       bottom: padding,
       left: 'center',
       selectedMode: true,
@@ -468,7 +469,7 @@ function buildOption(
 
       return {
         type: 'line',
-        name,
+        ...(multiSeries ? { name } : {}),
         // Time points use value: [timeMs, y]. Axis tooltip otherwise lists both dimensions as separate rows
         // under the same series name (duplicate lines). Restrict tooltip to the Y dimension only.
         encode: isTimeSeries ? { x: 0, y: 1, tooltip: [1] } : undefined,

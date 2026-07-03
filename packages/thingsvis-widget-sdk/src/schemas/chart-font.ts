@@ -93,6 +93,11 @@ export function scaledChartFontSize(fontSize: number, scale: number): number {
   return Math.max(CHART_FONT_SIZE_MIN, Math.round(fontSize * scale));
 }
 
+/** Legend / tooltip series labels only matter when there are multiple metrics. */
+export function shouldShowChartLegend(showLegend: boolean, seriesCount: number): boolean {
+  return showLegend && seriesCount > 1;
+}
+
 /** Shared slider overrides for generateControls. */
 export const chartAxisFontControlOverrides = {
   xAxisFontSize: {

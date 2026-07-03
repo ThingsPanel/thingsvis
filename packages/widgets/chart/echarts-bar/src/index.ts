@@ -11,6 +11,7 @@ import {
   resolveLayeredColor,
   resolveWidgetColors,
   scaledChartFontSize,
+  shouldShowChartLegend,
   type WidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
@@ -186,11 +187,11 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     inheritValues: [LEGACY_DEFAULT_PRIMARY],
   });
   const padding = Math.round(CHART_PADDING * scale);
-  const legendSpace = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
+  const showSeriesLegend = shouldShowChartLegend(showLegend, 1);
+  const legendSpace = showSeriesLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
   const xLabelFontSize = scaledChartFontSize(xAxisFontSize, scale);
   const yLabelFontSize = scaledChartFontSize(yAxisFontSize, scale);
   const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
-  const seriesName = '数值';
 
   const gradientColor = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
     { offset: 0, color: seriesColor },
@@ -219,8 +220,8 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       axisPointer: { type: 'shadow' },
     },
     legend: {
-      show: showLegend,
-      data: [seriesName],
+      show: showSeriesLegend,
+      data: [],
       bottom: padding,
       left: 'center',
       selectedMode: true,
@@ -236,10 +237,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
     },
     dataset: hasData
       ? {
-          dimensions: [
-            { name: 'name', displayName: '维度' },
-            { name: 'value', displayName: seriesName },
-          ],
+          dimensions: ['name', 'value'],
           source: normalizedData,
         }
       : undefined,
@@ -262,7 +260,6 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
       ? [
           {
             type: 'bar',
-            name: seriesName,
             encode: { x: 'name', y: 'value', tooltip: ['value'] },
             itemStyle: {
               color: gradientColor,

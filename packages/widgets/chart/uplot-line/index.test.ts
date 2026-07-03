@@ -81,9 +81,13 @@ describe('chart/uplot-line widget', () => {
     });
 
     const data = UPlotMock.lastData as [number[], number[]];
+    const opts = UPlotMock.lastOpts as { legend?: { show?: boolean }; series: Array<{ label?: string }> };
+
     expect(data[0]).toHaveLength(2);
     expect(data[1]).toEqual([18, 18]);
     expect(data[0][0]).toBeLessThan(data[0][1]);
+    expect(opts.legend?.show).toBe(false);
+    expect(opts.series[1]?.label).toBeUndefined();
 
     harness.destroy();
   });
@@ -135,11 +139,12 @@ describe('chart/uplot-line widget', () => {
     });
 
     const data = UPlotMock.lastData as [number[], number[], number[]];
-    const opts = UPlotMock.lastOpts as { series: Array<{ label?: string }> };
+    const opts = UPlotMock.lastOpts as { legend?: { show?: boolean }; series: Array<{ label?: string }> };
 
     expect(data).toHaveLength(3);
     expect(data[1]).toEqual([18, 22]);
     expect(data[2]).toEqual([9, 12]);
+    expect(opts.legend?.show).toBe(true);
     expect(opts.series.map((series) => series.label)).toEqual([undefined, 'Supply', 'Return']);
 
     harness.destroy();
