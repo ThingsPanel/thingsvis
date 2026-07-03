@@ -34,6 +34,7 @@
           "deviceSerial": "设备序列号",
           "channelNo": "通道号",
           "hd": "高清码流",
+          "playbackMode": "回放存储类型",
           "spaceId": "云录制空间 ID",
           "busType": "云录制 busType",
           "playbackParamsUrl": "回放参数 URL（可选）",
@@ -57,6 +58,10 @@
             "mobileLive": "移动端直播",
             "voice": "语音对讲",
             "theme": "可配置主题"
+          },
+          "playbackMode": {
+            "sd": "SD 卡",
+            "cloud": "云存储"
           }
         }
       }
@@ -74,6 +79,7 @@
   "widgets.thingsvis-widget-media-ezuikit-player.controls.deviceSerial": "设备序列号",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.channelNo": "通道号",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.hd": "高清码流",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackMode": "回放存储类型",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.spaceId": "云录制空间 ID",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.busType": "云录制 busType",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackParamsUrl": "回放参数 URL（可选）",
@@ -94,6 +100,8 @@
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.mobileLive": "移动端直播",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.voice": "语音对讲",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.theme": "可配置主题",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.playbackMode.sd": "SD 卡",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.playbackMode.cloud": "云存储",
   "playback": {
     "playback": "回放",
     "live": "实时",

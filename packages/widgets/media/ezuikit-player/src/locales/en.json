@@ -34,6 +34,7 @@
           "deviceSerial": "Device serial",
           "channelNo": "Channel number",
           "hd": "HD stream",
+          "playbackMode": "Playback storage",
           "spaceId": "Cloud recording space ID",
           "busType": "Cloud recording busType",
           "playbackParamsUrl": "Playback params URL (optional)",
@@ -57,6 +58,10 @@
             "mobileLive": "Mobile live",
             "voice": "Voice talk",
             "theme": "Theme"
+          },
+          "playbackMode": {
+            "sd": "SD card",
+            "cloud": "Cloud storage"
           }
         }
       }
@@ -74,6 +79,7 @@
   "widgets.thingsvis-widget-media-ezuikit-player.controls.deviceSerial": "Device serial",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.channelNo": "Channel number",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.hd": "HD stream",
+  "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackMode": "Playback storage",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.spaceId": "Cloud recording space ID",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.busType": "Cloud recording busType",
   "widgets.thingsvis-widget-media-ezuikit-player.controls.playbackParamsUrl": "Playback params URL (optional)",
@@ -93,5 +99,7 @@
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.pcLive": "PC live",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.mobileLive": "Mobile live",
   "widgets.thingsvis-widget-media-ezuikit-player.options.template.voice": "Voice talk",
-  "widgets.thingsvis-widget-media-ezuikit-player.options.template.theme": "Theme"
+  "widgets.thingsvis-widget-media-ezuikit-player.options.template.theme": "Theme",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.playbackMode.sd": "SD card",
+  "widgets.thingsvis-widget-media-ezuikit-player.options.playbackMode.cloud": "Cloud storage"
 }

@@ -7,12 +7,12 @@ import {
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
 import {
-  buildCloudRecEzopenUrl,
+  buildPlaybackEzopenUrl,
   buildLiveEzopenUrl,
   getTodayBeginTimestamp,
   isPlayerConfigured,
   playbackFingerprint,
-  resolveCloudRecPlaybackParams,
+  resolvePlaybackParams,
   resolveDeviceSource,
   resolveSpaceId,
   type EzopenSource,
@@ -68,9 +68,7 @@ function loadEzUIKitModule(): Promise<EzUIKitModule> {
 
 function resolveStaticPath(): string {
   if (typeof document === 'undefined') return '/ezuikit_static';
-  const scripts = Array.from(
-    document.querySelectorAll<HTMLScriptElement>('script[src]'),
-  );
+  const scripts = Array.from(document.querySelectorAll<HTMLScriptElement>('script[src]'));
   const remoteEntry = scripts.find((script) =>
     script.src.includes('ezuikit-player/dist/remoteEntry.js'),
   );
@@ -102,14 +100,14 @@ function buildLiveChangePlayOptions(source: EzopenSource, props: Props): Record<
   return options;
 }
 
-function buildCloudRecChangePlayOptions(
+function buildPlaybackChangePlayOptions(
   source: EzopenSource,
   props: Props,
   begin?: string,
 ): Record<string, unknown> {
-  const rec = resolveCloudRecPlaybackParams(props, begin);
+  const rec = resolvePlaybackParams(props, begin);
   const options: Record<string, unknown> = {
-    url: buildCloudRecEzopenUrl(source, rec),
+    url: buildPlaybackEzopenUrl(source, rec),
     accessToken: props.accessToken.trim(),
   };
   if (props.validCode.trim()) {
@@ -305,7 +303,7 @@ export const Main = defineWidget({
         const options =
           nextMode === 'live'
             ? buildLiveChangePlayOptions(source, currentProps)
-            : buildCloudRecChangePlayOptions(
+            : buildPlaybackChangePlayOptions(
                 source,
                 currentProps,
                 begin ?? getTodayBeginTimestamp(),
@@ -381,7 +379,7 @@ export const Main = defineWidget({
           options.validCode = currentProps.validCode.trim();
         }
         const spaceId = resolveSpaceId(currentProps);
-        if (spaceId) {
+        if (currentProps.playbackMode === 'cloud' && spaceId) {
           options.spaceId = spaceId;
         }
         if (currentProps.themeId.trim() && currentProps.template === 'theme') {

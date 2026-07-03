@@ -8,24 +8,22 @@ This is a **separate** widget from `media/camera-control`. Use camera-control fo
 
 1. Register at [EZVIZ Open Platform](https://open.ys7.com/) and create an application.
 2. Obtain `accessToken` (server-side refresh recommended; bind via `PLATFORM_FIELD`).
-3. Provide either:
-   - **Full ezopen URL**, e.g. `ezopen://open.ys7.com/{serial}/{channel}.live`, or
-   - **Device serial** + **channel** + stream type (`live` / `rec`).
+3. Provide the **device serial** and **channel**. Live playback uses `.live` / `.hd.live`.
 4. For encrypted devices, set **validCode** (device verification code).
-5. For `.rec` playback, set `playbackBegin` / `playbackEnd` as `YYYYMMDDHHmmss`.
+5. Playback defaults to the device SD card (`.rec`). Select cloud storage to use `.cloud.rec`; cloud-only `spaceId` and `busType` are optional.
 
 Official npm package: [ezuikit-js](https://www.npmjs.com/package/ezuikit-js)
 
 ## Templates
 
-| Template | Typical use |
-|----------|-------------|
+| Template   | Typical use                            |
+| ---------- | -------------------------------------- |
 | `security` | Monitoring + playback UI (recommended) |
-| `pcLive` | PC live view |
-| `simple` | Minimal live |
-| `standard` | Standard controls |
-| `voice` | Talk-enabled |
-| `theme` | Custom theme (`themeId`) |
+| `pcLive`   | PC live view                           |
+| `simple`   | Minimal live                           |
+| `standard` | Standard controls                      |
+| `voice`    | Talk-enabled                           |
+| `theme`    | Custom theme (`themeId`)               |
 
 EZUIKit renders its own toolbar, timeline, and “return to live” inside the player — no need to duplicate that in ThingsVis.
 

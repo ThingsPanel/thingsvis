@@ -10,14 +10,17 @@ export const TemplateSchema = z.enum([
   'theme',
 ]);
 
+export const PlaybackModeSchema = z.enum(['sd', 'cloud']);
+
 export const PropsSchema = z.object({
   accessToken: z.string().default('').describe('props.accessToken'),
   deviceSerial: z.string().default('').describe('props.deviceSerial'),
   channelNo: z.coerce.number().int().min(1).max(32).default(1).describe('props.channelNo'),
   hd: z.boolean().default(true).describe('props.hd'),
+  playbackMode: PlaybackModeSchema.default('sd').describe('props.playbackMode'),
   /** Cloud recording space id — fill directly in widget props, not from telemetry. */
-  spaceId: z.string().default('361254').describe('props.spaceId'),
-  busType: z.string().default('7').describe('props.busType'),
+  spaceId: z.string().default('').describe('props.spaceId'),
+  busType: z.string().default('').describe('props.busType'),
   /** Optional hint URL to parse begin/end/spaceId/busType (not used for live). */
   playbackParamsUrl: z.string().default('').describe('props.playbackParamsUrl'),
   playbackEnd: z.string().default('').describe('props.playbackEnd'),

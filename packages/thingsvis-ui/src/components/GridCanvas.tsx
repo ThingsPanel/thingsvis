@@ -183,14 +183,35 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     useEffect(() => {
         const el = contentRef.current;
         if (!el) return;
+
+        const applyWidth = (width: number) => {
+            if (width <= 0) return false;
+            setContainerWidth(width);
+            store.getState().updateGridContainerWidth(width);
+            return true;
+        };
+
+        const measureWidth = () => {
+            const rectWidth = el.getBoundingClientRect().width;
+            return applyWidth(rectWidth > 0 ? rectWidth : el.clientWidth);
+        };
+
         const observer = new ResizeObserver((entries) => {
             const w = entries[0]?.contentRect.width ?? 0;
-            setContainerWidth(w);
-            store.getState().updateGridContainerWidth(w);
+            applyWidth(w);
         });
         observer.observe(el);
-        setContainerWidth(el.clientWidth);
-        store.getState().updateGridContainerWidth(el.clientWidth);
+
+        if (!measureWidth()) {
+            let attempts = 0;
+            const retry = () => {
+                if (measureWidth() || attempts >= 12) return;
+                attempts += 1;
+                requestAnimationFrame(retry);
+            };
+            requestAnimationFrame(retry);
+        }
+
         return () => observer.disconnect();
     }, [store, canvasPadding]);
 

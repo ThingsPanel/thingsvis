@@ -276,7 +276,9 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
   const isHostManagedEmbed =
     searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
-  const isHostGridEmbed = isHostManagedEmbed && isGridLayout;
+  /** Only when parent iframe uses auto-height (embedSizing=content). */
+  const isHostContentSizedEmbed =
+    isHostManagedEmbed && isGridLayout && searchParams.get('embedSizing') === 'content';
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
@@ -391,18 +393,18 @@ export default function EmbedPage() {
 
   const handleHostEmbedContentHeight = useCallback(
     (height: number) => {
-      if (!isHostGridEmbed || height <= 0) return;
+      if (!isHostContentSizedEmbed || height <= 0) return;
       const next = Math.ceil(height);
       if (Math.abs(next - lastReportedEmbedHeightRef.current) < 2) return;
       lastReportedEmbedHeightRef.current = next;
       postToParent({ type: MSG_TYPES.CONTENT_HEIGHT, payload: { height: next } });
     },
-    [isHostGridEmbed, postToParent],
+    [isHostContentSizedEmbed, postToParent],
   );
 
   // Host iframe embed: no internal scroll — height is driven by canvas, outer page scrolls.
   useEffect(() => {
-    if (!isHostGridEmbed || !state.schema) return;
+    if (!isHostContentSizedEmbed || !state.schema) return;
 
     lastReportedEmbedHeightRef.current = 0;
 
@@ -429,11 +431,11 @@ export default function EmbedPage() {
         target.style.height = height;
       });
     };
-  }, [isHostGridEmbed, state.schema]);
+  }, [isHostContentSizedEmbed, state.schema]);
 
   // Host page scrolls; iframe must not trap wheel when it has no internal overflow.
   useEffect(() => {
-    if (!isHostGridEmbed || !state.schema) return;
+    if (!isHostContentSizedEmbed || !state.schema) return;
 
     const onWheel = (event: WheelEvent) => {
       postToParent({
@@ -445,7 +447,7 @@ export default function EmbedPage() {
 
     window.addEventListener('wheel', onWheel, { passive: false });
     return () => window.removeEventListener('wheel', onWheel);
-  }, [isHostGridEmbed, postToParent, state.schema]);
+  }, [isHostContentSizedEmbed, postToParent, state.schema]);
 
   // Load dashboard from API by ID with optional share token
   const loadFromApiWithShareToken = useCallback(
@@ -1171,12 +1173,12 @@ export default function EmbedPage() {
   return (
     <div
       className={`theme-${pageTheme} relative thingsvis-embed-surface ${
-        isHostGridEmbed ? 'overflow-visible' : 'overflow-auto'
+        isHostContentSizedEmbed ? 'overflow-visible' : 'overflow-auto'
       }`}
       style={{
-        width: isHostGridEmbed ? '100%' : '100vw',
-        height: isHostGridEmbed ? 'auto' : '100vh',
-        minHeight: isHostGridEmbed ? 0 : undefined,
+        width: isHostContentSizedEmbed ? '100%' : '100vw',
+        height: isHostContentSizedEmbed ? 'auto' : '100vh',
+        minHeight: isHostContentSizedEmbed ? 0 : undefined,
         backgroundColor: pageBackground.color || 'transparent',
         backgroundImage: pageBackground.image ? `url(${pageBackground.image})` : undefined,
         backgroundSize: pageBackground.size || 'cover',
@@ -1259,8 +1261,8 @@ export default function EmbedPage() {
           <div
             style={{
               width: '100%',
-              height: isHostGridEmbed ? 'auto' : '100%',
-              minHeight: isHostGridEmbed ? undefined : '100%',
+              height: isHostContentSizedEmbed ? 'auto' : '100%',
+              minHeight: isHostContentSizedEmbed ? undefined : '100%',
               padding: GRID_CANVAS_PADDING,
               boxSizing: 'border-box',
             }}
@@ -1272,8 +1274,10 @@ export default function EmbedPage() {
               settings={{ ...gridSettings, showGridLines: false }}
               interactive={false}
               fullWidth={true}
-              contentSized={isHostGridEmbed}
-              onContentHeightChange={isHostGridEmbed ? handleHostEmbedContentHeight : undefined}
+              contentSized={isHostContentSizedEmbed}
+              onContentHeightChange={
+                isHostContentSizedEmbed ? handleHostEmbedContentHeight : undefined
+              }
               actionRuntime={actionRuntime}
             />
           </div>

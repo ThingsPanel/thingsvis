@@ -124,7 +124,7 @@ describe('media/ezuikit-player widget', () => {
     harness.destroy();
   });
 
-  it('uses cloud.rec ezopen url and pcRec theme when entering playback', async () => {
+  it('uses sd card rec url by default and pcRec theme when entering playback', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-16T12:00:00'));
     const { default: Main } = await import('./src/index');
@@ -136,7 +136,6 @@ describe('media/ezuikit-player widget', () => {
         deviceSerial: 'BC7900686',
         channelNo: 1,
         hd: true,
-        spaceId: '361254',
         template: 'security',
       },
     });
@@ -146,7 +145,7 @@ describe('media/ezuikit-player widget', () => {
     });
 
     const initOptions = playerCtor.mock.calls[0]?.[0] as Record<string, unknown>;
-    expect(initOptions.spaceId).toBe('361254');
+    expect(initOptions.spaceId).toBeUndefined();
 
     const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
       (button) => button.textContent === 'Playback',
@@ -158,7 +157,7 @@ describe('media/ezuikit-player widget', () => {
     });
 
     expect(changePlayUrl.mock.calls[0]?.[0]).toEqual({
-      url: `ezopen://open.ys7.com/BC7900686/1.cloud.rec?begin=${getTodayBeginTimestamp()}&end=20260616010000&spaceId=361254&busType=7`,
+      url: `ezopen://open.ys7.com/BC7900686/1.rec?begin=${getTodayBeginTimestamp()}`,
       accessToken: 'at.test-token',
     });
     expect(changeTheme).toHaveBeenCalledWith('pcRec');
@@ -180,6 +179,41 @@ describe('media/ezuikit-player widget', () => {
       hd: true,
     });
     expect(changeTheme).toHaveBeenCalledWith('security');
+
+    harness.destroy();
+    vi.useRealTimers();
+  });
+
+  it('uses cloud.rec url when cloud playback is selected', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-16T12:00:00'));
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      mode: 'view',
+      props: {
+        accessToken: 'at.test-token',
+        deviceSerial: 'BC7900686',
+        channelNo: 1,
+        playbackMode: 'cloud',
+        spaceId: '361254',
+        busType: '7',
+      },
+    });
+
+    await vi.waitFor(() => expect(playerCtor).toHaveBeenCalledTimes(1));
+    expect((playerCtor.mock.calls[0]?.[0] as Record<string, unknown>).spaceId).toBe('361254');
+
+    const playbackButton = Array.from(harness.element.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Playback',
+    );
+    playbackButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    await vi.waitFor(() => expect(changePlayUrl).toHaveBeenCalled());
+    expect(changePlayUrl.mock.calls[0]?.[0]).toEqual({
+      url: `ezopen://open.ys7.com/BC7900686/1.cloud.rec?begin=${getTodayBeginTimestamp()}&end=20260616010000&spaceId=361254&busType=7`,
+      accessToken: 'at.test-token',
+    });
 
     harness.destroy();
     vi.useRealTimers();

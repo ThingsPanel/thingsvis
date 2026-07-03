@@ -1,10 +1,15 @@
 import { createControlPanel } from '@thingsvis/widget-sdk';
-import { TemplateSchema } from './schema';
+import { PlaybackModeSchema, TemplateSchema } from './schema';
 
 const W = 'widgets.thingsvis-widget-media-ezuikit-player';
 
 const templateOptions = TemplateSchema.options.map((value) => ({
   label: `${W}.options.template.${value}`,
+  value,
+}));
+
+const playbackModeOptions = PlaybackModeSchema.options.map((value) => ({
+  label: `${W}.options.playbackMode.${value}`,
   value,
 }));
 
@@ -43,14 +48,17 @@ export const controls = createControlPanel()
     'Playback',
     (builder) => {
       builder
+        .addSelect('playbackMode', {
+          label: `${W}.controls.playbackMode`,
+          options: playbackModeOptions,
+          default: 'sd',
+        })
         .addTextInput('spaceId', {
           label: `${W}.controls.spaceId`,
           placeholder: '361254',
-          default: '361254',
         })
         .addTextInput('busType', {
           label: `${W}.controls.busType`,
-          default: '7',
         });
     },
     { label: `${W}.groups.playback` },
