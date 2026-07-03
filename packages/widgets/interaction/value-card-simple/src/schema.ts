@@ -15,12 +15,6 @@ export const PropsSchema = z.object({
   titleColor: z.string().default('').describe('props.titleColor'),
   valueColor: z.string().default('').describe('props.valueColor'),
   unitColor: z.string().default('').describe('props.unitColor'),
-  showIcon: z.boolean().default(false).describe('props.showIcon'),
-  icon: z.string().default('i-lucide:thermometer').describe('props.icon'),
-  iconPosition: z.enum(['top', 'left', 'right']).default('top').describe('props.iconPosition'),
-  iconSize: z.number().int().min(12).max(100).default(32).describe('props.iconSize'),
-  iconColor: z.string().default('').describe('props.iconColor'),
-  iconBackgroundColor: z.string().default('').describe('props.iconBackgroundColor'),
 });
 
 export type Props = z.infer<typeof PropsSchema>;
