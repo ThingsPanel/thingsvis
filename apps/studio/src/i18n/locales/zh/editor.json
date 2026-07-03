@@ -103,12 +103,12 @@
         "noResults": "未找到匹配的组件",
         "noComponents": "暂无组件",
         "categories": {
-            "basic": "基础",
-            "indicator": "指标",
+            "layout": "布局",
+            "dataDisplay": "数据展示",
+            "resources": "资源",
             "controls": "控件",
             "charts": "图表",
-            "industrial": "工业",
-            "mediaDecoration": "媒体与装饰"
+            "industrial": "工业"
         }
     },
     "layers": {

@@ -103,12 +103,12 @@
         "noResults": "No components found",
         "noComponents": "No components",
         "categories": {
-            "basic": "Basic",
-            "indicator": "Indicators",
+            "layout": "Layout",
+            "dataDisplay": "Data Display",
+            "resources": "Resources",
             "controls": "Controls",
             "charts": "Charts",
-            "industrial": "Industrial",
-            "mediaDecoration": "Media & Decoration"
+            "industrial": "Industrial"
         }
     },
     "layers": {

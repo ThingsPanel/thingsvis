@@ -1,22 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { COMPONENT_CATEGORY_DEFS, resolveComponentCategory } from './ComponentsList';
+import {
+  COMPONENT_CATEGORY_DEFS,
+  COMPONENT_ORDER,
+  resolveComponentCategory,
+  sortComponentsByConfiguredOrder,
+} from './ComponentsList';
 
 const renderedCategories = new Set(COMPONENT_CATEGORY_DEFS.map((def) => def.key));
 
 describe('ComponentsList category mapping', () => {
   it.each([
-    ['basic/text', undefined, 'basic'],
-    ['basic/digital-clock', 'basic', 'indicator'],
+    ['basic/text', undefined, 'layout'],
+    ['basic/digital-clock', 'basic', 'dataDisplay'],
     ['interaction/basic-switch', 'interaction', 'controls'],
-    ['interaction/basic-progress', 'interaction', 'indicator'],
+    ['interaction/basic-progress', 'interaction', 'dataDisplay'],
     ['chart/echarts-line', 'chart', 'charts'],
-    ['custom/alert-list', 'custom', 'indicator'],
-    ['resources/model-3d', 'resources', 'mediaDecoration'],
-    ['media/video-player', 'media', 'mediaDecoration'],
-    ['decoration/tech-border', 'decoration', 'mediaDecoration'],
+    ['custom/alert-list', 'custom', 'dataDisplay'],
+    ['resources/model-3d', 'resources', 'resources'],
+    ['media/video-player', 'media', 'resources'],
+    ['decoration/tech-border', 'decoration', 'resources'],
     ['geo/map', 'geo', 'industrial'],
     ['industrial/pump', 'industrial', 'industrial'],
-    ['unknown/widget', undefined, 'basic'],
+    ['media/camera-control', 'media', 'industrial'],
+    ['custom/guidance-steps', 'custom', 'controls'],
+    ['unknown/widget', undefined, 'layout'],
   ] as const)('maps %s category %s to visible group %s', (componentId, category, expected) => {
     const resolved = resolveComponentCategory({
       componentId,
@@ -32,9 +39,33 @@ describe('ComponentsList category mapping', () => {
     const resolved = resolveComponentCategory({
       componentId: 'custom/device-status-card',
       category: 'custom',
-      displayCategory: 'indicator',
+      displayCategory: 'dataDisplay',
     });
 
-    expect(resolved).toBe('indicator');
+    expect(resolved).toBe('dataDisplay');
+  });
+
+  it('uses the requested category order', () => {
+    expect(COMPONENT_CATEGORY_DEFS.map((def) => def.key)).toEqual([
+      'layout',
+      'dataDisplay',
+      'charts',
+      'resources',
+      'controls',
+      'industrial',
+    ]);
+  });
+
+  it('sorts components by the requested order', () => {
+    const entries = ['basic/placeholder', 'basic/rectangle', 'basic/table'].map((componentId) => ({
+      componentId,
+    })) as never[];
+
+    expect(sortComponentsByConfiguredOrder(entries).map((entry) => entry.componentId)).toEqual([
+      'basic/rectangle',
+      'basic/table',
+      'basic/placeholder',
+    ]);
+    expect(COMPONENT_ORDER).toHaveLength(48);
   });
 });

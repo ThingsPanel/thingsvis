@@ -119,13 +119,68 @@ export const ICON_MAP: Record<string, LucideIcon> = {
 };
 
 export const COMPONENT_CATEGORY_DEFS = [
-  { key: 'basic', Icon: Box },
-  { key: 'indicator', Icon: Activity },
+  { key: 'layout', Icon: Box },
+  { key: 'dataDisplay', Icon: Activity },
   { key: 'charts', Icon: BarChart3 },
+  { key: 'resources', Icon: Shapes },
   { key: 'controls', Icon: MousePointerClick },
   { key: 'industrial', Icon: Cpu },
-  { key: 'mediaDecoration', Icon: Shapes },
 ] as const;
+
+export const COMPONENT_ORDER = [
+  'basic/rectangle',
+  'basic/circle',
+  'basic/card',
+  'basic/badge',
+  'basic/text',
+  'basic/rich-text',
+  'basic/list',
+  'basic/table',
+  'basic/paged-table',
+  'basic/placeholder',
+  'interaction/value-card',
+  'interaction/value-card-simple',
+  'basic/digital-clock',
+  'custom/device-status-card',
+  'interaction/basic-progress',
+  'custom/alert-list',
+  'chart/echarts-bar',
+  'chart/echarts-line',
+  'chart/echarts-pie',
+  'chart/uplot-line',
+  'chart/echarts-gauge',
+  'media/image',
+  'media/video-player',
+  'media/iframe',
+  'resources/model-3d',
+  'media/ezuikit-player',
+  'decoration/border-corner',
+  'decoration/border-scanline',
+  'decoration/tech-border',
+  'decoration/section-divider',
+  'interaction/basic-button',
+  'interaction/basic-input',
+  'interaction/basic-select',
+  'interaction/date-range-picker',
+  'interaction/basic-slider',
+  'interaction/basic-switch',
+  'interaction/toggle-button',
+  'custom/guidance-steps',
+  'geo/map',
+  'industrial/flow-meter',
+  'industrial/pressure-gauge',
+  'industrial/tank',
+  'industrial/pipe',
+  'industrial/valve',
+  'industrial/pump',
+  'industrial/motor',
+  'industrial/svg-symbol',
+  'media/camera-control',
+] as const;
+
+const componentOrderIndex = new globalThis.Map<string, number>(
+  COMPONENT_ORDER.map((componentId, index) => [componentId, index]),
+);
 
 type CategoryMap = Record<string, RegistryListEntry[]>;
 const HIDDEN_COMPONENT_IDS = new Set([
@@ -134,6 +189,9 @@ const HIDDEN_COMPONENT_IDS = new Set([
   'basic/line',
   'basic/luxury-clock',
   'geo/map-china',
+  'basic/glass-panel',
+  'basic/icon',
+  'decoration/title-decoration',
 ]);
 
 export type ComponentCategoryKey = (typeof COMPONENT_CATEGORY_DEFS)[number]['key'];
@@ -142,43 +200,70 @@ const renderedCategoryKeys = new Set<string>(COMPONENT_CATEGORY_DEFS.map((def) =
 export function resolveComponentCategory(
   entry: Pick<RegistryListEntry, 'category' | 'componentId' | 'displayCategory'>,
 ): ComponentCategoryKey {
-  if (entry.displayCategory && renderedCategoryKeys.has(entry.displayCategory)) {
-    return entry.displayCategory as ComponentCategoryKey;
+  const explicitCategoryById: Partial<
+    Record<(typeof COMPONENT_ORDER)[number], ComponentCategoryKey>
+  > = {
+    'interaction/value-card': 'dataDisplay',
+    'interaction/value-card-simple': 'dataDisplay',
+    'basic/digital-clock': 'dataDisplay',
+    'custom/device-status-card': 'dataDisplay',
+    'interaction/basic-progress': 'dataDisplay',
+    'custom/alert-list': 'dataDisplay',
+    'media/image': 'resources',
+    'media/video-player': 'resources',
+    'media/iframe': 'resources',
+    'resources/model-3d': 'resources',
+    'media/ezuikit-player': 'resources',
+    'decoration/border-corner': 'resources',
+    'decoration/border-scanline': 'resources',
+    'decoration/tech-border': 'resources',
+    'decoration/section-divider': 'resources',
+    'custom/guidance-steps': 'controls',
+    'geo/map': 'industrial',
+    'media/camera-control': 'industrial',
+  };
+  const explicitCategory =
+    explicitCategoryById[entry.componentId as (typeof COMPONENT_ORDER)[number]];
+  if (explicitCategory) {
+    return explicitCategory;
   }
 
-  const indicatorIds = new Set([
-    'basic/analog-clock',
-    'basic/digital-clock',
-    'basic/luxury-clock',
-    'interaction/value-card',
-    'interaction/value-card-simple',
-    'interaction/basic-progress',
-    'custom/alert-list',
-    'custom/device-status-card',
-    'custom/guidance-steps',
-  ]);
+  if (componentOrderIndex.has(entry.componentId)) {
+    if (entry.componentId.startsWith('chart/')) return 'charts';
+    if (entry.componentId.startsWith('interaction/')) return 'controls';
+    if (entry.componentId.startsWith('industrial/')) return 'industrial';
+    return 'layout';
+  }
 
-  if (indicatorIds.has(entry.componentId)) {
-    return 'indicator';
+  if (entry.displayCategory && renderedCategoryKeys.has(entry.displayCategory)) {
+    return entry.displayCategory as ComponentCategoryKey;
   }
 
   const rawCategory =
     entry.category?.toLowerCase() || (entry.componentId.split('/')[0] || 'basic').toLowerCase();
   const prefixMap: Record<string, ComponentCategoryKey> = {
-    basic: 'basic',
+    basic: 'layout',
     controls: 'controls',
     interaction: 'controls',
     chart: 'charts',
     charts: 'charts',
-    media: 'mediaDecoration',
-    resources: 'mediaDecoration',
+    media: 'resources',
+    resources: 'resources',
     geo: 'industrial',
-    custom: 'basic',
-    decoration: 'mediaDecoration',
+    custom: 'layout',
+    decoration: 'resources',
     industrial: 'industrial',
   };
 
-  return prefixMap[rawCategory] ?? 'basic';
+  return prefixMap[rawCategory] ?? 'layout';
+}
+
+export function sortComponentsByConfiguredOrder(entries: RegistryListEntry[]): RegistryListEntry[] {
+  return [...entries].sort((left, right) => {
+    const leftIndex = componentOrderIndex.get(left.componentId) ?? Number.MAX_SAFE_INTEGER;
+    const rightIndex = componentOrderIndex.get(right.componentId) ?? Number.MAX_SAFE_INTEGER;
+    return leftIndex - rightIndex;
+  });
 }
 
 function resolveEntryDisplayName(entry: RegistryListEntry, language: string): string {
@@ -239,6 +324,10 @@ export default function ComponentsList({
       // 优先从注册表读取直接定义好的 category，如果不存在再 fallback 到路径前缀解析
       const category = resolveComponentCategory(entry);
       (map[category] ??= []).push(entry);
+    });
+
+    Object.keys(map).forEach((category) => {
+      map[category] = sortComponentsByConfiguredOrder(map[category] ?? []);
     });
 
     return map;
@@ -304,7 +393,7 @@ export default function ComponentsList({
           <Accordion
             key={searchQuery ? 'search-results' : 'category-list'}
             type="multiple"
-            defaultValue={searchQuery ? Object.keys(filteredCategoriesMap) : ['basic']}
+            defaultValue={searchQuery ? Object.keys(filteredCategoriesMap) : ['layout']}
             className="space-y-2"
           >
             {COMPONENT_CATEGORY_DEFS.map((categoryDef) => {
