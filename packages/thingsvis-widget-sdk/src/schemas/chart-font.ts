@@ -159,7 +159,7 @@ export const chartGaugeFontControlOverrides = {
 };
 
 export const chartAxisFontBindings = {
-  xAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as const },
-  yAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as const },
-  legendFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as const },
+  xAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as ('static' | 'field' | 'expr')[] },
+  yAxisFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as ('static' | 'field' | 'expr')[] },
+  legendFontSize: { enabled: true, modes: ['static', 'field', 'expr'] as ('static' | 'field' | 'expr')[] },
 };
