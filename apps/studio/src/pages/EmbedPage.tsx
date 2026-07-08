@@ -309,11 +309,11 @@ export default function EmbedPage() {
     }));
 
     targets.forEach((target) => {
-      target.style.backgroundColor = pageBackground.color || 'transparent';
-      target.style.backgroundImage = pageBackground.image ? `url(${pageBackground.image})` : 'none';
-      target.style.backgroundSize = pageBackground.size || 'cover';
-      target.style.backgroundRepeat = pageBackground.repeat || 'no-repeat';
-      target.style.backgroundAttachment = pageBackground.attachment || 'scroll';
+      target.style.backgroundColor = 'transparent';
+      target.style.backgroundImage = 'none';
+      target.style.backgroundSize = 'auto';
+      target.style.backgroundRepeat = 'repeat';
+      target.style.backgroundAttachment = 'scroll';
     });
 
     return () => {
@@ -325,7 +325,7 @@ export default function EmbedPage() {
         target.style.backgroundAttachment = styles.backgroundAttachment;
       });
     };
-  }, [pageBackground]);
+  }, []);
 
   const schemaCanvas = useMemo(() => {
     const schema = state.schema as {
@@ -1179,10 +1179,10 @@ export default function EmbedPage() {
         width: isHostContentSizedEmbed ? '100%' : '100vw',
         height: isHostContentSizedEmbed ? 'auto' : '100vh',
         minHeight: isHostContentSizedEmbed ? 0 : undefined,
-        backgroundColor: pageBackground.color || 'transparent',
-        backgroundImage: pageBackground.image ? `url(${pageBackground.image})` : undefined,
-        backgroundSize: pageBackground.size || 'cover',
-        backgroundRepeat: pageBackground.repeat || 'no-repeat',
+        backgroundColor: 'transparent',
+        backgroundImage: 'none',
+        backgroundSize: 'auto',
+        backgroundRepeat: 'repeat',
       }}
       onMouseEnter={() => setIsPreviewHovered(true)}
       onMouseLeave={() => setIsPreviewHovered(false)}
