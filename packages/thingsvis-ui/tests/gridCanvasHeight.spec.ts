@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { computeGridContentHeightPx, resolveGridCanvasMinHeight } from '../src/components/GridCanvas';
+import {
+  computeGridContentHeightPx,
+  resolveGridCanvasBackgroundHeight,
+  resolveGridCanvasMinHeight,
+} from '../src/components/GridCanvas';
 
 describe('computeGridContentHeightPx', () => {
   it('matches the bottom edge of occupied grid rows without trailing gap', () => {
@@ -48,5 +52,19 @@ describe('resolveGridCanvasMinHeight', () => {
         fullWidth: false,
       }),
     ).toBe(300);
+  });
+});
+
+describe('grid canvas background height', () => {
+  it('keeps background tied to content height while preview container fills viewport', () => {
+    const contentHeight = computeGridContentHeightPx(3, { rowHeight: 50, gap: 10 }, 0);
+    const canvasMinHeight = resolveGridCanvasMinHeight({
+      contentHeight,
+      containerHeight: 984,
+      fullWidth: true,
+    });
+
+    expect(canvasMinHeight).toBe(984);
+    expect(resolveGridCanvasBackgroundHeight(contentHeight)).toBe(170);
   });
 });

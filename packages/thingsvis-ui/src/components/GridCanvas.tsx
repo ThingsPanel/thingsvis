@@ -90,6 +90,10 @@ export function resolveGridCanvasMinHeight(options: {
 }
 
 /** Pixel height of grid canvas content (rows × row stride, no trailing gap). */
+export function resolveGridCanvasBackgroundHeight(contentHeight: number): number {
+    return Math.max(0, contentHeight);
+}
+
 export function computeGridContentHeightPx(
     totalRows: number,
     settings: Pick<GridSettings, 'rowHeight' | 'gap'>,
@@ -495,6 +499,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
         fullWidth,
         contentSized,
     })}px`;
+    const backgroundHeight = resolveGridCanvasBackgroundHeight(effectiveTotalHeight);
 
     useEffect(() => {
         if (!contentSized || !onContentHeightChange) return;
@@ -547,7 +552,10 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 aria-hidden="true"
                 style={{
                     position: 'absolute',
-                    inset: 0,
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: backgroundHeight,
                     pointerEvents: 'none',
                     ...gridSurfaceBackgroundStyle,
                 }}
