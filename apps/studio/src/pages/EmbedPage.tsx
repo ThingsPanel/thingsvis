@@ -339,7 +339,7 @@ export default function EmbedPage() {
     (kernelState?.page as any)?.config?.scaleMode ?? schemaCanvas?.scaleMode,
   );
   const previewAlignY: PreviewAlignY = normalizePreviewAlignY(
-    (kernelState?.page as any)?.config?.previewAlignY ?? schemaCanvas?.previewAlignY,
+    (kernelState?.page as any)?.config?.previewAlignY ?? schemaCanvas?.previewAlignY ?? 'top',
   );
   const [scaleMode, setScaleMode] = useState<PreviewScaleMode>(resolvedScaleMode);
 
