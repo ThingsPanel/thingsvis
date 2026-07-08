@@ -10,6 +10,8 @@ interface ScaleScreenProps {
   mode: PreviewScaleMode;
   /** Vertical alignment applied after preview scaling */
   alignY?: PreviewAlignY;
+  /** Style applied to the scaled content artboard, not the full viewport wrapper. */
+  contentStyle?: React.CSSProperties;
   /**
    * Render prop. Receives `engineZoom`:
    * - For centering modes (fit-min, stretch): always 1. CSS transform handles visual scale.
@@ -40,6 +42,7 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({
   height,
   mode,
   alignY = 'center',
+  contentStyle,
   children,
 }) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -155,7 +158,7 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({
 
   return (
     <div ref={wrapperRef} style={layout.wrapperStyle}>
-      <div style={layout.innerStyle}>{children(layout.engineZoom)}</div>
+      <div style={{ ...layout.innerStyle, ...contentStyle }}>{children(layout.engineZoom)}</div>
     </div>
   );
 };

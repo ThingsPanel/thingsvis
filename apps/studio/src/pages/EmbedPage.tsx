@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
+import { PreviewCanvas, GridCanvas, resolveCanvasBackgroundStyle } from '@thingsvis/ui';
 import type { KernelState } from '@thingsvis/kernel';
 import type { PageSchemaType, DataSource } from '@thingsvis/schema';
 import { DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
@@ -292,6 +292,11 @@ export default function EmbedPage() {
     const page = kernelState?.page as any;
     return (page?.config?.theme as string) ?? DEFAULT_CANVAS_THEME;
   }, [kernelState]);
+
+  const scaleScreenBackgroundStyle = useMemo(
+    () => resolveCanvasBackgroundStyle(pageBackground),
+    [pageBackground],
+  );
 
   useEffect(() => {
     const targets = [
@@ -1287,6 +1292,7 @@ export default function EmbedPage() {
             height={canvasHeight}
             mode={scaleMode}
             alignY={previewAlignY}
+            contentStyle={scaleScreenBackgroundStyle}
           >
             {(engineZoom) => (
               <PreviewCanvas
