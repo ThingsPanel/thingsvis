@@ -138,6 +138,7 @@ export const COMPONENT_ORDER = [
   'basic/table',
   'basic/paged-table',
   'basic/placeholder',
+  'basic/glass-panel',
   'interaction/value-card',
   'interaction/value-card-simple',
   'basic/digital-clock',
@@ -189,7 +190,6 @@ const HIDDEN_COMPONENT_IDS = new Set([
   'basic/line',
   'basic/luxury-clock',
   'geo/map-china',
-  'basic/glass-panel',
   'basic/icon',
   'decoration/title-decoration',
 ]);

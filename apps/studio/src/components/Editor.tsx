@@ -81,6 +81,7 @@ import {
   getMergedEditorUrlParams,
   isEmbeddedEditorUrl,
 } from '../lib/embed/editorUrlParams';
+import { resolveEditorServiceConfig } from '../lib/embedded/service-config';
 
 type Language = string;
 function DataPanel(_props: { store: typeof store; language: Language }) {
@@ -167,6 +168,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const embedVisibility = useMemo(() => {
     const params = getMergedEditorUrlParams();
     const isEmbedded = isEmbeddedEditorUrl() || !!props.embedVisibility;
+    const serviceConfig = resolveEditorServiceConfig();
+    // 物模型 Web 图表配置场景不需要「选择设备」面板
+    const showDeviceLibrary = serviceConfig.context !== 'device-template';
     return {
       isEmbedded,
       showLibrary: props.embedVisibility?.showLibrary ?? params.get('showLibrary') !== '0',
@@ -175,8 +179,11 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       showToolbar: props.embedVisibility?.showToolbar ?? params.get('showToolbar') !== '0',
       showTopRight: props.embedVisibility?.showTopRight ?? params.get('showTopRight') !== '0',
       hideProjectDialog: props.embedVisibility?.hideProjectDialog ?? false,
+      showDeviceLibrary,
     };
   }, [props.embedVisibility]);
+  const activeLeftPanelTab =
+    leftPanelTab === 'devices' && !embedVisibility.showDeviceLibrary ? 'components' : leftPanelTab;
   const urlBackendProjectId = useMemo(() => getBackendProjectIdFromEditorUrl() ?? undefined, []);
 
   const kernelState = useSyncExternalStore(
@@ -639,21 +646,23 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               <div className="flex flex-1">
                 <button
                   onClick={() => setLeftPanelTab('components')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'components' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${activeLeftPanelTab === 'components' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
                   title={t('leftPanel.library')}
                 >
                   <Grid3x3 className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={() => setLeftPanelTab('devices')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'devices' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
-                  title={t('leftPanel.devices', '设备图表')}
-                >
-                  <Server className="h-4 w-4" />
-                </button>
+                {embedVisibility.showDeviceLibrary && (
+                  <button
+                    onClick={() => setLeftPanelTab('devices')}
+                    className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${activeLeftPanelTab === 'devices' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                    title={t('leftPanel.devices', '设备图表')}
+                  >
+                    <Server className="h-4 w-4" />
+                  </button>
+                )}
                 <button
                   onClick={() => setLeftPanelTab('layers')}
-                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${leftPanelTab === 'layers' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
+                  className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 text-sm font-medium transition-all rounded-lg ${activeLeftPanelTab === 'layers' ? 'text-foreground bg-accent/80 shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-accent/40'}`}
                   title={t('leftPanel.layers')}
                 >
                   <Layers className="h-4 w-4" />
@@ -670,13 +679,13 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               )}
             </div>
             <div className="flex-1 overflow-y-auto p-3">
-              {leftPanelTab === 'components' ? (
+              {activeLeftPanelTab === 'components' ? (
                 <div>
                   <ComponentsList onInsert={handleAddNode} />
                 </div>
-              ) : leftPanelTab === 'devices' ? (
+              ) : activeLeftPanelTab === 'devices' ? (
                 <DeviceLibraryPanel />
-              ) : leftPanelTab === 'layers' ? (
+              ) : activeLeftPanelTab === 'layers' ? (
                 <LayerPanel
                   store={store}
                   language={language}
