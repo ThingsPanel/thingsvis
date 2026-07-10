@@ -89,9 +89,12 @@ export function resolveGridCanvasMinHeight(options: {
     return Math.max(options.contentHeight, viewportFloor, 300);
 }
 
-/** Pixel height of grid canvas content (rows × row stride, no trailing gap). */
-export function resolveGridCanvasBackgroundHeight(contentHeight: number): number {
-    return Math.max(0, contentHeight);
+/** Background/grid overlay height — must cover the full canvas, not just occupied rows. */
+export function resolveGridCanvasBackgroundHeight(
+    contentHeight: number,
+    canvasMinHeight: number,
+): number {
+    return Math.max(0, contentHeight, canvasMinHeight);
 }
 
 export function computeGridContentHeightPx(
@@ -492,14 +495,18 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const effectiveTotalHeight =
         responsiveTotalRows * (effectiveSettings.rowHeight + effectiveSettings.gap) +
         (contentSized ? 0 : effectiveSettings.gap);
-    const canvasMinH = `${resolveGridCanvasMinHeight({
+    const canvasMinHeightPx = resolveGridCanvasMinHeight({
         contentHeight: effectiveTotalHeight,
         explicitHeight: height,
         containerHeight: canvasDimensions.height,
         fullWidth,
         contentSized,
-    })}px`;
-    const backgroundHeight = resolveGridCanvasBackgroundHeight(effectiveTotalHeight);
+    });
+    const canvasMinH = `${canvasMinHeightPx}px`;
+    const backgroundHeight = resolveGridCanvasBackgroundHeight(
+        effectiveTotalHeight,
+        canvasMinHeightPx,
+    );
 
     useEffect(() => {
         if (!contentSized || !onContentHeightChange) return;
@@ -552,10 +559,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 aria-hidden="true"
                 style={{
                     position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: backgroundHeight,
+                    inset: 0,
                     pointerEvents: 'none',
                     ...gridSurfaceBackgroundStyle,
                 }}
@@ -578,7 +582,11 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                     colWidth={colWidth}
                     rowHeight={effectiveSettings.rowHeight}
                     gap={effectiveSettings.gap}
-                    totalHeight={Math.max(effectiveTotalHeight, height ?? Math.max(canvasDimensions.height, 600))}
+                    totalHeight={Math.max(
+                        backgroundHeight,
+                        height ?? 0,
+                        canvasDimensions.height,
+                    )}
                     containerWidth={containerWidth}
                 />
             )}

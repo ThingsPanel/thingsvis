@@ -56,7 +56,7 @@ describe('resolveGridCanvasMinHeight', () => {
 });
 
 describe('grid canvas background height', () => {
-  it('keeps background tied to content height while preview container fills viewport', () => {
+  it('fills the canvas min height when content is shorter than the viewport', () => {
     const contentHeight = computeGridContentHeightPx(3, { rowHeight: 50, gap: 10 }, 0);
     const canvasMinHeight = resolveGridCanvasMinHeight({
       contentHeight,
@@ -65,6 +65,18 @@ describe('grid canvas background height', () => {
     });
 
     expect(canvasMinHeight).toBe(984);
-    expect(resolveGridCanvasBackgroundHeight(contentHeight)).toBe(170);
+    expect(resolveGridCanvasBackgroundHeight(contentHeight, canvasMinHeight)).toBe(984);
+  });
+
+  it('follows content height when content exceeds the canvas min height', () => {
+    const contentHeight = 1280;
+    const canvasMinHeight = resolveGridCanvasMinHeight({
+      contentHeight,
+      containerHeight: 984,
+      fullWidth: true,
+    });
+
+    expect(canvasMinHeight).toBe(1280);
+    expect(resolveGridCanvasBackgroundHeight(contentHeight, canvasMinHeight)).toBe(1280);
   });
 });

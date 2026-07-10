@@ -521,6 +521,10 @@
   input, select, textarea, button, [role="combobox"] {
     --tw-ring-inset: inset !important;
   }
+}
+
+[data-testid="studio-canvas"] {
+  background-color: hsl(var(--workspace-bg));
   background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1.2px, transparent 1.2px);
   background-size: 24px 24px;
   background-position: center center;
