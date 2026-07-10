@@ -462,21 +462,23 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
             </label>
           </div>
         )}
-        {/* 旋转角度 */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-muted-foreground">
-              {t('propsPanel.rotation')}
-            </label>
-            <NumericInput
-              value={schema.props?._rotation ?? 0}
-              onValueChange={(nextValue) =>
-                updateNode({ props: { ...schema.props, _rotation: nextValue ?? 0 } })
-              }
-              className="h-8 text-sm"
-            />
+        {/* 旋转角度：网格模式下不展示 */}
+        {!isGridMode && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-muted-foreground">
+                {t('propsPanel.rotation')}
+              </label>
+              <NumericInput
+                value={schema.props?._rotation ?? 0}
+                onValueChange={(nextValue) =>
+                  updateNode({ props: { ...schema.props, _rotation: nextValue ?? 0 } })
+                }
+                className="h-8 text-sm"
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };

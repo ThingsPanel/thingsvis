@@ -49,10 +49,80 @@ describe('chart/echarts-line widget', () => {
     const latestOption = setOption.mock.calls.at(-1)?.[0];
 
     expect(init).toHaveBeenCalledTimes(1);
-    expect(Main.defaultProps.data).toHaveLength(6);
+    expect(Main.defaultProps.data).toHaveLength(5);
+    expect(Main.defaultSize).toEqual({ width: 600, height: 320 });
     expect(latestOption?.graphic).toBeUndefined();
-    expect(latestOption?.legend?.show).toBe(false);
-    expect(latestOption?.series?.[0]?.name).toBeUndefined();
+    expect(latestOption?.legend?.show).toBe(true);
+    expect(latestOption?.legend?.data).toEqual(['Value 1']);
+    expect(latestOption?.xAxis?.type).toBe('category');
+    expect(latestOption?.xAxis?.boundaryGap).toBe(false);
+    expect(latestOption?.series?.[0]?.smooth).toBe(false);
+    expect(latestOption?.series?.[0]?.showSymbol).toBe(true);
+    expect(latestOption?.series?.[0]?.name).toBe('Value 1');
+    expect(latestOption?.series?.[0]?.areaStyle).toBeUndefined();
+    expect(typeof latestOption?.tooltip?.formatter).toBe('function');
+
+    harness.destroy();
+  });
+
+  it('uses custom seriesName in tooltip and legend label', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: {
+        seriesName: '温度',
+        data: [
+          { name: '示例1', value: 18 },
+          { name: '示例2', value: 24 },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.series?.[0]?.name).toBe('温度');
+    const tooltipHtml = latestOption?.tooltip?.formatter?.([
+      {
+        axisValueLabel: '示例1',
+        marker: '<span style="color:red">●</span>',
+        seriesName: '温度',
+        value: 18,
+      },
+    ]);
+    expect(tooltipHtml).toBe('<span style="color:red">●</span>温度: 18');
+
+    harness.destroy();
+  });
+
+  it('uses boundaryGap false on category axis so the line spans edge to edge', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        data: [
+          { name: '00:00', value: 12 },
+          { name: '06:00', value: 18 },
+          { name: '12:00', value: 26 },
+          { name: '18:00', value: 22 },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.xAxis?.type).toBe('category');
+    expect(latestOption?.xAxis?.boundaryGap).toBe(false);
+    expect(latestOption?.series?.[0]?.name).toBe('Value 1');
+
+    const tooltipHtml = latestOption?.tooltip?.formatter?.([
+      {
+        axisValueLabel: '12:00',
+        marker: '<span style="color:red">●</span>',
+        seriesName: 'Value 1',
+        value: 26,
+      },
+    ]);
+    expect(tooltipHtml).toContain('Value 1: 26');
+    expect(tooltipHtml).not.toContain('12:00');
+    expect(tooltipHtml).not.toMatch(/Value 1:\s{2,}/);
 
     harness.destroy();
   });
@@ -172,7 +242,7 @@ describe('chart/echarts-line widget', () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
-      size: { width: 300, height: 300 },
+      size: { width: 324, height: 324 },
       props: {
         xAxisFontSize: 16,
         yAxisFontSize: 18,

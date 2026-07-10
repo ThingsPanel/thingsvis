@@ -4,7 +4,6 @@ import {
   resolveLocaleRecord,
   resolveWidgetColors,
   scaledChartFontSize,
-  shouldShowChartLegend,
   type WidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
@@ -22,7 +21,10 @@ import en from './locales/en.json';
 const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
+/** 图表内边距：配合 containLabel 为轴标签留出空间 */
 const CHART_PADDING = 16;
+/** 组件容器内边距，避免轴标签贴边被裁切 */
+const WIDGET_INNER_PADDING = 12;
 const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
@@ -32,10 +34,11 @@ const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = 
   '30d': 30 * 24 * 60 * 60 * 1000,
 };
 const STANDALONE_LINE_SERIES = [
-  { name: '00:00', value: 12 },
-  { name: '06:00', value: 18 },
-  { name: '12:00', value: 26 },
-  { name: '18:00', value: 22 },
+  { name: '示例1', value: 1048 },
+  { name: '示例2', value: 735 },
+  { name: '示例3', value: 580 },
+  { name: '示例4', value: 984 },
+  { name: '示例5', value: 700 },
 ];
 
 type CategoryPoint = { name: string; value: number | null };
@@ -68,6 +71,28 @@ function pickSeriesColor(primaryColor: string, colors: WidgetColors): string {
     fallback: LEGACY_DEFAULT_PRIMARY,
     inheritValues: [LEGACY_DEFAULT_PRIMARY],
   });
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function resolveTooltipYValue(raw: unknown): string {
+  let value: unknown = raw;
+  if (value && typeof value === 'object' && !Array.isArray(value) && 'value' in (value as object)) {
+    value = (value as { value: unknown }).value;
+  }
+  if (Array.isArray(value)) {
+    value = value.length > 1 ? value[1] : value[0];
+  }
+  if (value == null || (typeof value === 'number' && Number.isNaN(value))) {
+    return '-';
+  }
+  return String(value);
 }
 
 function withAlpha(color: string, alpha: number): string {
@@ -320,6 +345,7 @@ function buildOption(
     showXAxis,
     showYAxis,
     timeRangePreset,
+    seriesName,
     xAxisFontSize,
     yAxisFontSize,
     legendFontSize,
@@ -338,8 +364,9 @@ function buildOption(
   const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
   const normalizedSeries = normalizeLineData(data, timeRangePreset);
   const multiSeries = normalizedSeries.length > 1;
-  const showSeriesLegend = shouldShowChartLegend(showLegend, normalizedSeries.length);
-  const legendSpace = showSeriesLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + padding : 0;
+  const showSeriesLegend = showLegend !== false && normalizedSeries.length > 0;
+  const legendTopSpace = showSeriesLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + Math.round(padding * 0.5) : 0;
+  const xAxisLabelSpace = showXAxis !== false ? Math.max(8, Math.round(xLabelFontSize * 0.6)) : 0;
   const hasData =
     normalizedSeries.some(({ normalized }) =>
       normalized.mode === 'time' ? normalized.timeData.length > 0 : normalized.categoryData.length > 0,
@@ -392,6 +419,7 @@ function buildOption(
           color: resolvedAxisLabelColor,
           fontSize: xLabelFontSize,
           hideOverlap: true,
+          margin: Math.max(8, Math.round(xLabelFontSize * 0.45)),
           formatter: (value: string | number) =>
             formatTimeLabel(
               Number(value),
@@ -404,11 +432,18 @@ function buildOption(
     : {
         show: showXAxis !== false,
         type: 'category',
+        boundaryGap: false,
         data: categoryAxisData,
-        axisLabel: { color: resolvedAxisLabelColor, fontSize: xLabelFontSize },
+        axisLabel: {
+          color: resolvedAxisLabelColor,
+          fontSize: xLabelFontSize,
+          margin: Math.max(8, Math.round(xLabelFontSize * 0.45)),
+        },
         axisLine: { lineStyle: { color: splitLineColor } },
         axisTick: { show: true, alignWithLabel: true, lineStyle: { color: splitLineColor } },
       };
+
+  const defaultSeriesName = seriesName.trim() || messages.runtime?.defaultSeriesName || 'Value';
 
   return {
     backgroundColor: 'transparent',
@@ -429,12 +464,31 @@ function buildOption(
         },
     tooltip: {
       trigger: 'axis',
+      // 仅显示「系列名: 值」，不重复展示横坐标类目/时间
+      formatter: (params: unknown) => {
+        const items = (Array.isArray(params) ? params : [params]) as Array<{
+          marker?: string;
+          seriesName?: string;
+          value?: unknown;
+          data?: unknown;
+        }>;
+        if (items.length === 0) return '';
+
+        return items
+          .map((item) => {
+            const seriesName = (item.seriesName || '').trim() || defaultSeriesName;
+            const yStr = resolveTooltipYValue(item.value ?? item.data);
+            return `${item.marker ?? ''}${escapeHtml(seriesName)}: ${escapeHtml(yStr)}`;
+          })
+          .join('<br/>');
+      },
     },
     legend: {
       show: showSeriesLegend,
-      data: multiSeries ? normalizedSeries.map(({ name }) => name) : [],
-      bottom: padding,
-      left: 'center',
+      data: normalizedSeries.map(({ name }) => name.trim() || defaultSeriesName),
+      top: Math.round(padding * 0.5),
+      right: padding,
+      left: 'auto',
       selectedMode: true,
       icon: 'roundRect',
       textStyle: { color: resolvedAxisLabelColor, fontSize: legendTextFontSize },
@@ -442,8 +496,8 @@ function buildOption(
     grid: {
       left: padding,
       right: padding,
-      bottom: padding + legendSpace,
-      top: padding,
+      top: padding + legendTopSpace,
+      bottom: padding + xAxisLabelSpace,
       containLabel: true,
     },
     xAxis,
@@ -460,6 +514,7 @@ function buildOption(
     },
     series: normalizedSeries.map(({ name, normalized }, index) => {
       const seriesColor = getSeriesColor(index);
+      const seriesName = name.trim() || defaultSeriesName;
       const areaGradient = showArea
         ? new echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: withAlpha(seriesColor, 0.5) },
@@ -469,18 +524,22 @@ function buildOption(
 
       return {
         type: 'line',
-        ...(multiSeries ? { name } : {}),
+        name: seriesName,
         // Time points use value: [timeMs, y]. Axis tooltip otherwise lists both dimensions as separate rows
         // under the same series name (duplicate lines). Restrict tooltip to the Y dimension only.
         encode: isTimeSeries ? { x: 0, y: 1, tooltip: [1] } : undefined,
         data: buildSeriesData(normalized),
         smooth: smooth,
-        showSymbol: false,
+        showSymbol: hasData,
+        symbol: 'rect',
+        symbolSize: Math.max(6, Math.round(8 * scale)),
         itemStyle: {
-          color: seriesColor,
+          color: '#ffffff',
+          borderColor: seriesColor,
+          borderWidth: 2,
         },
         lineStyle: {
-          width: 3,
+          width: 2,
           color: seriesColor,
           opacity: hasData ? 1 : 0.35,
           type: hasData ? 'solid' : 'dashed',
@@ -502,22 +561,35 @@ function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayConte
   element.style.boxSizing = 'border-box';
   element.style.overflow = 'hidden';
   element.style.pointerEvents = 'auto';
+  element.style.padding = `${WIDGET_INNER_PADDING}px`;
+
+  const chartHost = document.createElement('div');
+  chartHost.style.width = '100%';
+  chartHost.style.height = '100%';
+  element.appendChild(chartHost);
 
   let currentCtx = ctx;
   let currentProps = props;
   let colors: WidgetColors = resolveWidgetColors(element);
   let messages = getRuntimeMessages(ctx.locale);
 
-  const chart = echarts.init(element);
+  const chart = echarts.init(chartHost);
   chart.setOption(buildOption(currentProps, colors, messages, 1));
+
+  const readChartHostSize = () => {
+    const parentW = element.clientWidth || 300;
+    const parentH = element.clientHeight || 200;
+    const cw = chartHost.clientWidth || Math.max(80, parentW - WIDGET_INNER_PADDING * 2);
+    const ch = chartHost.clientHeight || Math.max(48, parentH - WIDGET_INNER_PADDING * 2);
+    return { cw, ch };
+  };
 
   const scheduleResize = () => {
     try {
       requestAnimationFrame(() => {
         if (!chart.isDisposed()) {
           chart.resize();
-          const cw = element.clientWidth || 300;
-          const ch = element.clientHeight || 200;
+          const { cw, ch } = readChartHostSize();
           const scale = computeScale(cw, ch);
           colors = resolveWidgetColors(element);
           chart.setOption(buildOption(currentProps, colors, messages, scale), {
@@ -564,6 +636,7 @@ function renderChart(element: HTMLElement, props: Props, ctx: WidgetOverlayConte
       ro?.disconnect();
       themeObserver?.disconnect();
       chart.dispose();
+      chartHost.remove();
     },
   };
 }

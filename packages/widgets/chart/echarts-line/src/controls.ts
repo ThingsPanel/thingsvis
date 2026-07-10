@@ -7,11 +7,15 @@ import {
 
 export const controls = generateControls(PropsSchema, {
   groups: {
-    Content: ['showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
+    Content: ['seriesName', 'showLegend', 'showXAxis', 'showYAxis', 'timeRangePreset'],
     Style: ['primaryColor', 'axisLabelColor', 'xAxisFontSize', 'yAxisFontSize', 'legendFontSize', 'smooth', 'showArea'],
     Data: ['data'],
   },
   overrides: {
+    seriesName: {
+      label: 'widgets.thingsvis-widget-chart-echarts-line.controls.seriesName',
+      placeholder: { zh: '留空则显示「值1」', en: 'Empty shows "Value 1"' },
+    },
     showLegend: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showLegend' },
     showXAxis: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showXAxis' },
     showYAxis: { label: 'widgets.thingsvis-widget-chart-echarts-line.controls.showYAxis' },
@@ -44,6 +48,7 @@ export const controls = generateControls(PropsSchema, {
     ...chartAxisFontControlOverrides,
   },
   bindings: {
+    seriesName: { enabled: true, modes: ['static', 'field', 'expr'] },
     showXAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
     showYAxis: { enabled: true, modes: ['static', 'field', 'expr'] },
     primaryColor: { enabled: true, modes: ['static', 'field', 'expr'] },

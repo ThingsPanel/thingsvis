@@ -338,7 +338,7 @@ export default function TransformControls({
         // This improves usability and makes multi-drag more predictable.
         dragArea: true,
         resizable: true,
-        rotatable: true,
+        rotatable: !isGridMode,
         pinchable: true,
         origin: true,
         keepRatio: false,
@@ -1269,7 +1269,8 @@ export default function TransformControls({
         !hasLockedSelection &&
         !anyNonResizableSelected &&
         moveableTargetIds.length > 0 &&
-        !anyConnectorSelected;
+        !anyConnectorSelected &&
+        !isGridModeRef.current;
       moveableRef.current.pinchable =
         !hasLockedSelection &&
         !anyNonResizableSelected &&

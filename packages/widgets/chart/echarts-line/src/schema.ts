@@ -6,12 +6,11 @@ import { z } from 'zod';
 import { ChartAxisFontMixin } from '@thingsvis/widget-sdk';
 
 const DEFAULT_SAMPLE_DATA = [
-  { time: '2026-03-16T08:00:00.000Z', value: 18 },
-  { time: '2026-03-16T09:00:00.000Z', value: 24 },
-  { time: '2026-03-16T10:00:00.000Z', value: 21 },
-  { time: '2026-03-16T11:00:00.000Z', value: 29 },
-  { time: '2026-03-16T12:00:00.000Z', value: 34 },
-  { time: '2026-03-16T13:00:00.000Z', value: 31 },
+  { name: '示例1', value: 1048 },
+  { name: '示例2', value: 735 },
+  { name: '示例3', value: 580 },
+  { name: '示例4', value: 984 },
+  { name: '示例5', value: 700 },
 ] as const;
 
 export const PropsSchema = z.object({
@@ -30,11 +29,14 @@ export const PropsSchema = z.object({
   /** 显示Y轴刻度 */
   showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 
+  /** 系列名称（图例与悬浮提示中的「数值」文案；留空则用内置默认） */
+  seriesName: z.string().default('').describe('props.seriesName'),
+
   /** 是否平滑曲线 */
-  smooth: z.boolean().default(true).describe('props.smoothCurve'),
+  smooth: z.boolean().default(false).describe('props.smoothCurve'),
 
   /** 是否显示面积阴影 */
-  showArea: z.boolean().default(true).describe('props.showArea'),
+  showArea: z.boolean().default(false).describe('props.showArea'),
 
   /** 时间范围 */
   timeRangePreset: z.enum(['all', '1h', '6h', '24h', '7d', '30d']).default('all').describe('props.timeRangePreset'),

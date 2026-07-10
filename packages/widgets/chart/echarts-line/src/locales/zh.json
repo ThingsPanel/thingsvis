@@ -9,6 +9,7 @@
           "showLegend": "显示图例",
           "showXAxis": "显示 X 轴",
           "showYAxis": "显示 Y 轴",
+          "seriesName": "系列名称",
           "timeRangePreset": "时间范围",
           "primaryColor": "主色",
           "titleColor": "标题颜色",
@@ -37,7 +38,7 @@
     }
   },
   "runtime": {
-    "defaultSeriesName": "数值",
+    "defaultSeriesName": "值1",
     "emptyState": "添加数据点或绑定数据序列"
   }
 }

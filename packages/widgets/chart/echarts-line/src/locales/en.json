@@ -9,6 +9,7 @@
           "showLegend": "Show Legend",
           "showXAxis": "Show X Axis",
           "showYAxis": "Show Y Axis",
+          "seriesName": "Series Name",
           "timeRangePreset": "Time Range",
           "primaryColor": "Primary Color",
           "titleColor": "Title Color",
@@ -37,7 +38,7 @@
     }
   },
   "runtime": {
-    "defaultSeriesName": "Value",
+    "defaultSeriesName": "Value 1",
     "emptyState": "Add data points or bind a data series"
   }
 }
