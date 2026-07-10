@@ -46,7 +46,7 @@ export const controls = createControlPanel()
           min: 0,
           max: 32,
           step: 1,
-          default: 10,
+          default: 0,
         })
         .addSlider('paddingSize', {
           label: `${W}.paddingSize`,
