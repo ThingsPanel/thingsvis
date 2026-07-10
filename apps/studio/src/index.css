@@ -523,13 +523,6 @@
   }
 }
 
-[data-testid="studio-canvas"] {
-  background-color: hsl(var(--workspace-bg));
-  background-image: radial-gradient(circle, hsl(var(--canvas-dot)) 1.2px, transparent 1.2px);
-  background-size: 24px 24px;
-  background-position: center center;
-}
-
 /* Glassmorphism effect for floating islands - Excalidraw-inspired softer look */
 .glass {
   background: hsl(var(--card) / 1);
