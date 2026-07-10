@@ -44,7 +44,7 @@ import {
   type CanvasConfigSchema,
   generateId,
 } from '../hooks/useProjectBootstrap';
-import { buildHashRoute } from '../lib/embed/navigation';
+import { buildHashRoute, openDataSources as navigateToDataSources } from '../lib/embed/navigation';
 import { useEditorStartup } from '../hooks/useEditorStartup';
 import { useEditorSync } from '../hooks/useEditorSync';
 import { useEditorDragDrop } from '../hooks/useEditorDragDrop';
@@ -169,19 +169,23 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     const params = getMergedEditorUrlParams();
     const isEmbedded = isEmbeddedEditorUrl() || !!props.embedVisibility;
     const serviceConfig = resolveEditorServiceConfig();
+    const showTopLeft = props.embedVisibility?.showTopLeft ?? params.get('showTopLeft') !== '0';
     // 物模型 Web 图表配置场景不需要「选择设备」面板
     const showDeviceLibrary = serviceConfig.context !== 'device-template';
     return {
       isEmbedded,
       showLibrary: props.embedVisibility?.showLibrary ?? params.get('showLibrary') !== '0',
       showProps: props.embedVisibility?.showProps ?? params.get('showProps') !== '0',
-      showTopLeft: props.embedVisibility?.showTopLeft ?? params.get('showTopLeft') !== '0',
+      showTopLeft,
+      forceShowMenu: serviceConfig.context === 'device-template' && !showTopLeft,
       showToolbar: props.embedVisibility?.showToolbar ?? params.get('showToolbar') !== '0',
       showTopRight: props.embedVisibility?.showTopRight ?? params.get('showTopRight') !== '0',
       hideProjectDialog: props.embedVisibility?.hideProjectDialog ?? false,
       showDeviceLibrary,
     };
   }, [props.embedVisibility]);
+  const hasVisibleTopNav =
+    embedVisibility.showTopLeft || embedVisibility.showTopRight || embedVisibility.forceShowMenu;
   const activeLeftPanelTab =
     leftPanelTab === 'devices' && !embedVisibility.showDeviceLibrary ? 'components' : leftPanelTab;
   const urlBackendProjectId = useMemo(() => getBackendProjectIdFromEditorUrl() ?? undefined, []);
@@ -397,6 +401,16 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     window.location.hash = previewHash;
   }, [projectId, saveNow, embedVisibility.isEmbedded]);
 
+  const openDataSources = useCallback(() => {
+    navigateToDataSources({
+      isEmbedded: embedVisibility.isEmbedded,
+      projectId,
+      currentHash: window.location.hash,
+      location: window.location,
+      openWindow: window.open.bind(window),
+    });
+  }, [embedVisibility.isEmbedded, projectId]);
+
   const openPublish = useCallback(async () => {
     await saveNow();
     // Implementation omitted for brevity
@@ -581,6 +595,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           isDarkMode={isDarkMode}
           isEmbedded={embedVisibility.isEmbedded}
           showTopLeft={embedVisibility.showTopLeft}
+          forceShowMenu={embedVisibility.forceShowMenu}
           showToolbar={embedVisibility.showToolbar}
           showTopRight={embedVisibility.showTopRight}
           showRightPanel={showRightPanel}
@@ -617,17 +632,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           onOpenProjectDialog={() => setShowProjectDialog(true)}
           onOpenVariables={() => setShowVariablesPanel(true)}
           onOpenHelp={() => setShowHelpDialog(true)}
-          onOpenDataSources={async () => {
-            if (embedVisibility.isEmbedded) {
-              await saveNow();
-              window.location.hash = buildHashRoute('#/data-sources', {
-                preserveCurrentParams: true,
-                params: { projectId, resumeSession: null },
-              });
-            } else {
-              window.open('#/data-sources', '_blank');
-            }
-          }}
+          onOpenDataSources={openDataSources}
           onLogout={() => {
             logout();
             window.location.hash = '#/';
@@ -639,7 +644,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {shouldRenderEditorShell && embedVisibility.showLibrary && showLeftPanel && (
         <aside
-          className={`absolute left-4 ${embedVisibility.isEmbedded ? (embedVisibility.showTopLeft || embedVisibility.showTopRight ? 'top-20' : 'top-4') : 'top-20'} bottom-4 z-40 w-72`}
+          className={`absolute left-4 ${embedVisibility.isEmbedded ? (hasVisibleTopNav ? 'top-20' : 'top-4') : 'top-20'} bottom-4 z-40 w-72`}
         >
           <div className="glass rounded-xl shadow-2xl border border-border/50 h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-2 py-2 border-b border-border/50">
@@ -723,7 +728,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
 
       {shouldRenderEditorShell && embedVisibility.showProps && showRightPanel && (
         <aside
-          className={`absolute right-4 ${embedVisibility.isEmbedded ? (embedVisibility.showTopLeft || embedVisibility.showTopRight ? 'top-20' : 'top-4') : 'top-20'} bottom-4 w-80 z-40`}
+          className={`absolute right-4 ${embedVisibility.isEmbedded ? (hasVisibleTopNav ? 'top-20' : 'top-4') : 'top-20'} bottom-4 w-80 z-40`}
         >
           <div className="glass rounded-xl shadow-2xl border border-border/50 h-full flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">

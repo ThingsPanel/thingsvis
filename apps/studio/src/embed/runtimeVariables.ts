@@ -27,7 +27,11 @@ function normalizeRuntimeManagedUrl(name: string, value: string | undefined): st
 
   try {
     const url = new URL(value);
-    if (url.hostname === 'localhost' && url.port === '5002' && url.pathname === '/api/v1') {
+    if (
+      url.hostname === 'localhost' &&
+      (url.port === '5002' || url.port === '5003') &&
+      url.pathname === '/api/v1'
+    ) {
       url.pathname = '/proxy-default';
       return url.toString().replace(/\/$/, '');
     }

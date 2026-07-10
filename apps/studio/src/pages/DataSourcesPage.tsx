@@ -63,6 +63,7 @@ import type { ProjectFile } from '../lib/storage/schemas';
 import { buildHostSavePayload } from '../lib/storage/hostSavePayload';
 import { normalizeCanvasBackground } from '../lib/canvasBackground';
 import { mergeActionVariableDefinitions } from '../lib/eventVariables';
+import { getDataSourceProviderGroups } from '../lib/embedded/providerGroupPolicy';
 
 // Default configurations for new data sources
 const DEFAULT_REST_CONFIG: RESTConfig = {
@@ -83,14 +84,6 @@ const DEFAULT_WS_CONFIG: WSConfig = {
   heartbeat: DEFAULT_HEARTBEAT_CONFIG,
   initMessages: [],
 };
-
-function getProviderGroups(context: string | undefined) {
-  return context === 'dashboard'
-    ? ['dashboard']
-    : context === 'device-template'
-      ? ['dashboard', 'current-device', 'current-device-history']
-      : undefined;
-}
 
 function getOrderedNodeSchemas(): NodeSchemaType[] {
   const state = store.getState();
@@ -195,10 +188,14 @@ export default function DataSourcesPage() {
       ]),
     );
   }, [i18n.language, i18n.resolvedLanguage, serviceConfig.provider, t]);
+  const allProviderDataSourceIds = useMemo(
+    () => new Set(listEmbeddedProviderDataSourceIds(serviceConfig.provider)),
+    [serviceConfig.provider],
+  );
   const protectedDataSourceIds = useMemo(() => {
     if (serviceConfig.mode !== 'embedded') return new Set<string>();
 
-    const groups = getProviderGroups(serviceConfig.context);
+    const groups = getDataSourceProviderGroups(serviceConfig.context);
 
     return new Set(
       listEmbeddedProviderDataSourceIds(
@@ -210,7 +207,7 @@ export default function DataSourcesPage() {
   const embeddedProviderDataSources = useMemo(() => {
     if (serviceConfig.mode !== 'embedded') return [] as DataSource[];
 
-    const groups = getProviderGroups(serviceConfig.context);
+    const groups = getDataSourceProviderGroups(serviceConfig.context);
 
     return buildEmbeddedProviderDataSources(
       serviceConfig.provider,
@@ -220,6 +217,10 @@ export default function DataSourcesPage() {
   }, [configVersion, serviceConfig.context, serviceConfig.mode, serviceConfig.provider]);
   const embeddedProviderDataSourceMap = useMemo(
     () => new Map(embeddedProviderDataSources.map((source) => [source.id, source])),
+    [embeddedProviderDataSources],
+  );
+  const visibleProviderDataSourceIds = useMemo(
+    () => new Set(embeddedProviderDataSources.map((source) => source.id)),
     [embeddedProviderDataSources],
   );
 
@@ -267,6 +268,9 @@ export default function DataSourcesPage() {
     });
 
     dataSourceManager.getAllConfigs().forEach((config: DataSource) => {
+      if (allProviderDataSourceIds.has(config.id) && !visibleProviderDataSourceIds.has(config.id)) {
+        return;
+      }
       const providerName = providerDataSourceNameMap.get(config.id);
       byId.set(config.id, {
         id: config.id,
@@ -278,6 +282,9 @@ export default function DataSourcesPage() {
 
     Object.values(states).forEach((state) => {
       if (byId.has(state.id)) return;
+      if (allProviderDataSourceIds.has(state.id) && !visibleProviderDataSourceIds.has(state.id)) {
+        return;
+      }
       byId.set(state.id, {
         id: state.id,
         name: getDisplayName(state.id),
@@ -287,7 +294,13 @@ export default function DataSourcesPage() {
     });
 
     return Array.from(byId.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [embeddedProviderDataSources, providerDataSourceNameMap, states]);
+  }, [
+    allProviderDataSourceIds,
+    embeddedProviderDataSources,
+    providerDataSourceNameMap,
+    states,
+    visibleProviderDataSourceIds,
+  ]);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, visible: true, type });

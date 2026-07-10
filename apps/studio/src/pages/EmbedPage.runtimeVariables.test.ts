@@ -100,5 +100,15 @@ describe('EmbedPage runtime variables', () => {
         runtimeValues,
       ).platformApiBaseUrl,
     ).toBe('http://localhost:5002/proxy-default');
+
+    expect(
+      buildEmbedRuntimeVariableValues({ platformApiBaseUrl: 'http://localhost:5003/api/v1' }, null)
+        .platformApiBaseUrl,
+    ).toBe('http://localhost:5003/proxy-default');
+
+    expect(
+      buildEmbedRuntimeVariableValues({ platformApiBaseUrl: 'http://localhost:5004/api/v1' }, null)
+        .platformApiBaseUrl,
+    ).toBe('http://localhost:5004/api/v1');
   });
 });

@@ -26,3 +26,28 @@ export function buildHashRoute(path: string, options: BuildHashRouteOptions = {}
   const query = params.toString();
   return query ? `${path}?${query}` : path;
 }
+
+export function buildDataSourcesRoute(currentHash?: string, projectId?: string): string {
+  return buildHashRoute('#/data-sources', {
+    preserveCurrentParams: true,
+    currentHash,
+    params: { projectId, resumeSession: null },
+  });
+}
+
+export interface OpenDataSourcesOptions {
+  isEmbedded: boolean;
+  projectId: string;
+  currentHash?: string;
+  location: { hash: string };
+  openWindow: (url: string, target: string) => unknown;
+}
+
+export function openDataSources(options: OpenDataSourcesOptions): void {
+  if (options.isEmbedded) {
+    options.location.hash = buildDataSourcesRoute(options.currentHash, options.projectId);
+    return;
+  }
+
+  options.openWindow('#/data-sources', '_blank');
+}

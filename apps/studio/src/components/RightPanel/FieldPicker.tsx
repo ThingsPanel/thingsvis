@@ -11,6 +11,7 @@ import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
 import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
 import { TEMPLATE_DEVICE_ID } from '@/lib/embedded/hostDataSourcePolicy';
 import { resolveControlText } from '@/lib/i18n/controlText';
+import { isFieldPickerProviderGroupVisible } from '@/lib/embedded/providerGroupPolicy';
 import {
   Dialog,
   DialogContent,
@@ -374,7 +375,7 @@ export function FieldPicker({
         // When context=dashboard, only dashboard group makes sense (no device scoped).
         // When context=device-template, expose all groups (device history etc. are relevant).
         // When context is unset, include everything so nothing is silently hidden.
-        .filter((source) => serviceConfig.context !== 'dashboard' || source.group === 'dashboard')
+        .filter((source) => isFieldPickerProviderGroupVisible(serviceConfig.context, source.group))
         .map((source) => ({
           id: source.id,
           name: resolveControlText(source.label, locale, t),
@@ -393,6 +394,10 @@ export function FieldPicker({
   const platformSourceIds = useMemo(
     () => new Set(platformSources.map((source) => source.id)),
     [platformSources],
+  );
+  const allPlatformSourceIds = useMemo(
+    () => new Set((providerCatalog?.dataSources ?? []).map((source) => source.id)),
+    [providerCatalog],
   );
   const runtimeDeviceFields = useMemo<RuntimeDeviceField[]>(
     () =>
@@ -512,9 +517,9 @@ export function FieldPicker({
         (id) =>
           id !== '__platform__' &&
           parseDeviceDataSourceId(id) === null &&
-          !platformSourceIds.has(id),
+          !allPlatformSourceIds.has(id),
       ),
-    [dataSourceIds, platformSourceIds],
+    [allPlatformSourceIds, dataSourceIds],
   );
   const customDataSourceLabelById = useMemo(() => {
     const labels = new Map<string, string>();

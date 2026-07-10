@@ -44,6 +44,7 @@ import {
   getDashboardIdFromEditorUrl,
   getMergedEditorUrlParams,
 } from '../lib/embed/editorUrlParams';
+import { restoreProjectDataSources } from '../lib/embed/projectDataSourceRestore';
 
 export const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -391,15 +392,7 @@ export function useProjectBootstrap({
         store.getState().initVariablesFromDefinitions(loaded.variables as any);
       }
 
-      if (loaded.dataSources && Array.isArray(loaded.dataSources)) {
-        for (const ds of loaded.dataSources) {
-          try {
-            await dataSourceManager.registerDataSource(ds as any, false);
-          } catch (e) {
-            console.warn(`[Editor] Failed to restore data source ${ds.id}:`, e);
-          }
-        }
-      }
+      await restoreProjectDataSources(loaded.dataSources);
 
       if (loaded.canvas.mode === 'grid') {
         store.getState().setGridSettings({

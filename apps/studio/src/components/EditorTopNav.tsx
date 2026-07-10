@@ -10,7 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { SaveIndicator } from './SaveIndicator';
@@ -18,12 +17,9 @@ import { AlignTools } from './tools/AlignTools';
 import { store } from '@/lib/store';
 import {
   Menu,
-  FolderOpen,
   Save,
   Database,
   HelpCircle,
-  LogOut,
-  Users,
   Eye,
   Languages,
   Sun,
@@ -54,6 +50,7 @@ interface EditorTopNavProps {
   isDarkMode: boolean;
   isEmbedded: boolean;
   showTopLeft: boolean;
+  forceShowMenu?: boolean;
   showToolbar: boolean;
   showTopRight: boolean;
   showRightPanel: boolean;
@@ -103,6 +100,7 @@ export function EditorTopNav({
   isDarkMode,
   isEmbedded,
   showTopLeft,
+  forceShowMenu = false,
   showToolbar,
   showTopRight,
   showRightPanel,
@@ -115,16 +113,12 @@ export function EditorTopNav({
   lastSavedAt,
   saveError,
   isSaving,
-  isAuthenticated,
-  authLoading,
-  user,
   projectName,
   projectId,
   onToolChange,
   onProjectNameChange,
   onSave,
   onPreview,
-  onPublish,
   onOpenVariables,
   onToggleTheme,
   onToggleGrid,
@@ -133,11 +127,8 @@ export function EditorTopNav({
   showLeftPanel,
   onToggleLeftPanel,
   onToggleFullscreen,
-  onOpenProjectDialog,
   onOpenDataSources,
   onOpenHelp,
-  onLogout,
-  onLogin,
   onShare,
 }: EditorTopNavProps) {
   const { t, i18n } = useTranslation('editor');
@@ -146,10 +137,10 @@ export function EditorTopNav({
     <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
       {/* Left Side: Left Panel Toggle, Logo (Menu), Title, Status */}
       <div
-        className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft ? 'invisible' : ''}`}
+        className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft && !forceShowMenu ? 'invisible' : ''}`}
       >
         {/* Left Panel Toggle Button - 最左边 */}
-        {showLibrary && !showLeftPanel && (
+        {showTopLeft && showLibrary && !showLeftPanel && (
           <Button
             variant="ghost"
             size="icon"
@@ -169,11 +160,6 @@ export function EditorTopNav({
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 mt-2">
-            <DropdownMenuItem className="gap-2" onClick={onOpenProjectDialog}>
-              <FolderOpen className="h-4 w-4" />
-              {t('menu.openProject')}
-              <span className="ml-auto text-sm text-muted-foreground">Ctrl+O</span>
-            </DropdownMenuItem>
             <DropdownMenuItem className="gap-2" onClick={onSave}>
               <Save className="h-4 w-4" />
               {t('menu.save')}
@@ -187,52 +173,34 @@ export function EditorTopNav({
               <Braces className="h-4 w-4" />
               {t('topNav.variables')}
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
             {onOpenHelp && (
               <DropdownMenuItem className="gap-2" onClick={onOpenHelp}>
                 <HelpCircle className="h-4 w-4" />
                 {t('menu.help')}
               </DropdownMenuItem>
             )}
-            <DropdownMenuSeparator />
-            {!authLoading && isAuthenticated && user ? (
-              <>
-                <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                  <div className="font-medium text-foreground">{user.name || user.email}</div>
-                  <div className="text-xs">{user.email}</div>
-                </div>
-                <DropdownMenuItem
-                  className="gap-2 text-red-600 dark:text-red-400"
-                  onClick={onLogout}
-                >
-                  <LogOut className="h-4 w-4" />
-                  {t('menu.logout')}
-                </DropdownMenuItem>
-              </>
-            ) : !authLoading ? (
-              <DropdownMenuItem className="gap-2" onClick={onLogin}>
-                <Users className="h-4 w-4" />
-                {t('menu.login')}
-              </DropdownMenuItem>
-            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Input
-          placeholder={t('topNav.untitledProject')}
-          className="h-8 w-[160px] min-w-[120px] max-w-[220px] bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium rounded-lg"
-          value={projectName}
-          onChange={(e) => onProjectNameChange(e.target.value)}
-        />
+        {showTopLeft && (
+          <>
+            <Input
+              placeholder={t('topNav.untitledProject')}
+              className="h-8 w-[160px] min-w-[120px] max-w-[220px] bg-transparent border-0 focus-visible:ring-0 px-2 text-foreground font-medium rounded-lg"
+              value={projectName}
+              onChange={(e) => onProjectNameChange(e.target.value)}
+            />
 
-        <div className="min-w-[88px] shrink-0">
-          <SaveIndicator
-            status={saveStatus as any}
-            lastSavedAt={lastSavedAt}
-            error={saveError}
-            className="ml-1 pr-2"
-          />
-        </div>
+            <div className="min-w-[88px] shrink-0">
+              <SaveIndicator
+                status={saveStatus as any}
+                lastSavedAt={lastSavedAt}
+                error={saveError}
+                className="ml-1 pr-2"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* Center Side: Tools */}
