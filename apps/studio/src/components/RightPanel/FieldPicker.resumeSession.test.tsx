@@ -107,7 +107,8 @@ describe('FieldPicker resumed custom data sources', () => {
     const scopeSelect = container.querySelector('select');
     expect(scopeSelect?.querySelector('option[value="device"]')).not.toBeNull();
     expect(scopeSelect?.querySelector('option[value="custom"]')).not.toBeNull();
-    expect(scopeSelect?.querySelector('option[value="global"]')).toBeNull();
+    // device-template field picker exposes provider dashboard sources as "系统数据".
+    expect(scopeSelect?.querySelector('option[value="global"]')).not.toBeNull();
     expect(container.querySelector('option[value="thingspanel_device_summary"]')).toBeNull();
     await act(async () => {
       if (!scopeSelect) return;
