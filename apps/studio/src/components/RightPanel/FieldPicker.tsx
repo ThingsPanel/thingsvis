@@ -239,6 +239,13 @@ function isTelemetryField(field: unknown): boolean {
   return dataType === undefined || dataType === 'telemetry';
 }
 
+/** 当前值只展示宿主明确标注为遥测或属性的字段。 */
+function isCurrentDeviceField(field: unknown): boolean {
+  if (!field || typeof field !== 'object') return false;
+  const dataType = (field as { dataType?: unknown }).dataType;
+  return dataType === 'telemetry' || dataType === 'attribute';
+}
+
 function isFieldTypeCompatible(type: FieldPathInfo['type'], targetKind?: string): boolean {
   if (!targetKind) return true;
 
@@ -441,6 +448,7 @@ export function FieldPicker({
   /** Draft code while the dialog is open — only committed on Apply */
   const [draftCode, setDraftCode] = useState('');
   const transformTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const invalidHistoryResetKeyRef = useRef<string | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const [selectedPlatformGroupId, setSelectedPlatformGroupId] = useState('');
 
@@ -553,7 +561,11 @@ export function FieldPicker({
     isEmbeddedMode &&
     !writableOnly &&
     runtimeDeviceFields.some((field) => DEVICE_ALARM_STATUS_FIELD_IDS.has(field.id));
-  const hasDeviceHistoryCatalog = isEmbeddedMode && !writableOnly && hasDeviceCatalog;
+  const hasDeviceHistoryCatalog =
+    isEmbeddedMode &&
+    !writableOnly &&
+    hasDeviceCatalog &&
+    isFieldTypeCompatible('array', targetKind);
 
   useEffect(() => {
     if (!isEmbeddedMode) return;
@@ -562,10 +574,10 @@ export function FieldPicker({
       const fieldRoot = getRequestedFieldId(selectedFieldPath) ?? '';
       if (!fieldRoot) {
         if (selectedHistoryConfig) {
-          setDeviceBindingKind('history');
+          setDeviceBindingKind(hasDeviceHistoryCatalog ? 'history' : 'model');
         }
       } else if (isHistoryFieldPath(fieldRoot)) {
-        setDeviceBindingKind('history');
+        setDeviceBindingKind(hasDeviceHistoryCatalog ? 'history' : 'model');
       } else if (DEVICE_ALARM_STATUS_FIELD_IDS.has(fieldRoot)) {
         setDeviceBindingKind('alarmStatus');
       } else if (runtimeDeviceFieldIds.has(fieldRoot)) {
@@ -604,6 +616,7 @@ export function FieldPicker({
     deviceSources,
     hasVisibleCustomDataSources,
     hasDeviceCatalog,
+    hasDeviceHistoryCatalog,
     hasPlatformStatsCatalog,
     isEmbeddedMode,
     platformSourceIds,
@@ -780,6 +793,7 @@ export function FieldPicker({
     return selectedDeviceBaseFields.filter((field: any) => {
       const fieldId = getStaticFieldId(field);
       if (runtimeDeviceFieldIds.has(fieldId)) return false;
+      if (!isCurrentDeviceField(field)) return false;
       return isFieldTypeCompatible(getStaticFieldType(field), targetKind);
     });
   }, [
@@ -916,6 +930,41 @@ export function FieldPicker({
         : selectedDataSourceId || customDataSourceIds[0] || '';
 
   const dsState = effectiveDataSourceId ? states[effectiveDataSourceId] : null;
+
+  useEffect(() => {
+    const hasInvalidHistorySelection =
+      isDeviceScopedGroup &&
+      !hasDeviceHistoryCatalog &&
+      (Boolean(selectedHistoryConfig) || isHistoryFieldPath(selectedFieldPath));
+    if (!hasInvalidHistorySelection) {
+      invalidHistoryResetKeyRef.current = null;
+      return;
+    }
+
+    const resetKey = `${selectedDataSourceId}|${selectedFieldPath}|${selectedHistoryConfig?.timeRange ?? ''}`;
+    if (invalidHistoryResetKeyRef.current === resetKey) return;
+    invalidHistoryResetKeyRef.current = resetKey;
+    if (deviceBindingKind !== 'model') setDeviceBindingKind('model');
+    safeOnChange(
+      selectedDataSourceId
+        ? {
+            dataSourceId: selectedDataSourceId,
+            fieldPath: '',
+            transform: selectedTransform || undefined,
+          }
+        : null,
+    );
+  }, [
+    deviceBindingKind,
+    hasDeviceHistoryCatalog,
+    isDeviceScopedGroup,
+    safeOnChange,
+    selectedDataSourceId,
+    selectedFieldPath,
+    selectedHistoryConfig,
+    selectedTransform,
+  ]);
+
   const snapshot = dsState?.data ?? null;
   const dsStatus = dsState?.status ?? 'disconnected';
   // fieldSchema — available even when DS is offline (cached from last connection)
@@ -982,6 +1031,10 @@ export function FieldPicker({
         }
       });
       return finalize(staticInfos);
+    }
+    // 设备当前值必须来自宿主字段目录；目录为空时禁止从缓存 schema 或快照猜测。
+    if (selectedGroup === 'device' && deviceBindingKind === 'model') {
+      return finalize([]);
     }
     if (
       selectedGroup === 'device' &&
@@ -1138,7 +1191,6 @@ export function FieldPicker({
   useEffect(() => {
     if (!isDeviceScopedGroup) return;
     if (!selectedDeviceSource?.deviceId) return;
-    if (!selectedDeviceSource?.templateId && !selectedDeviceSource?.deviceConfigId) return;
     if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
 
