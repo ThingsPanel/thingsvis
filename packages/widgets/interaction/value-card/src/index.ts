@@ -483,10 +483,37 @@ export const Main = defineWidget({
     let currentCtx = ctx;
     let colors = resolveWidgetColors(element);
     let iconRoot: Root | null = null;
+    const pendingIconRoots = new Set<Root>();
+    let iconRootUnmountScheduled = false;
     let themeObserver: MutationObserver | null = null;
 
+    // React warns when a root is synchronously unmounted while another React
+    // tree is rendering. Overlay updates can be re-entrant with that render,
+    // so flush icon root cleanup after the current call stack completes.
+    const scheduleIconRootUnmount = (root: Root | null) => {
+      if (!root) return;
+      pendingIconRoots.add(root);
+      if (iconRootUnmountScheduled) return;
+
+      iconRootUnmountScheduled = true;
+      const flush = () => {
+        iconRootUnmountScheduled = false;
+        const roots = Array.from(pendingIconRoots);
+        pendingIconRoots.clear();
+        roots.forEach((pendingRoot) => pendingRoot.unmount());
+      };
+
+      if (typeof queueMicrotask === 'function') {
+        queueMicrotask(flush);
+      } else {
+        Promise.resolve().then(flush);
+      }
+    };
+
     const renderWidget = () => {
-      iconRoot?.unmount();
+      const previousIconRoot = iconRoot;
+      iconRoot = null;
+      scheduleIconRootUnmount(previousIconRoot);
       iconRoot = renderCard(element, currentProps, colors, currentCtx);
     };
     
@@ -518,7 +545,9 @@ export const Main = defineWidget({
         renderWidget();
       },
       destroy: () => {
-        iconRoot?.unmount();
+        const currentIconRoot = iconRoot;
+        iconRoot = null;
+        scheduleIconRootUnmount(currentIconRoot);
         ro?.disconnect();
         themeObserver?.disconnect();
         element.innerHTML = '';

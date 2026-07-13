@@ -31,6 +31,20 @@ type DeviceFilterOptionsPayload = {
   serviceOptions?: DeviceFilterOption[];
 };
 
+type DeviceGroupsPayload = {
+  reqId?: string;
+  groups?: unknown[];
+};
+
+type DeviceGroupTreeNode = {
+  group?: {
+    id?: string;
+    parent_id?: string | null;
+    name?: string;
+  };
+  children?: DeviceGroupTreeNode[];
+};
+
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -38,17 +52,52 @@ type Props = {
   selectedGroupId: string;
   selectedDeviceId?: string;
   onGroupChange: (groupId: string) => void;
+  onGroupsLoaded?: (groups: PlatformDeviceGroup[]) => void;
   onDevicesLoaded: (groupId: string, devices: PlatformDevice[]) => void;
   onSelect: (device: PlatformDevice) => void;
 };
 
 const DEFAULT_PAGE_SIZE = 10;
 const ALL_GROUP_ID = '__all__';
+const UNGROUPED_GROUP_ID = '__ungrouped__';
+const UNGROUPED_GROUP_LABEL = '\u672a\u5206\u7ec4';
 const ALL_GROUP_LABEL = '不限设备分组';
 
 function normalizeGroupLabel(group: PlatformDeviceGroup): string {
   if (group.groupId === ALL_GROUP_ID) return ALL_GROUP_LABEL;
+  if (group.groupId === UNGROUPED_GROUP_ID) return UNGROUPED_GROUP_LABEL;
   return group.groupName || group.groupId || '未命名分组';
+}
+
+function flattenDeviceGroupTree(tree: DeviceGroupTreeNode[]): PlatformDeviceGroup[] {
+  const flattened: PlatformDeviceGroup[] = [];
+
+  const visit = (node: DeviceGroupTreeNode, fallbackParentId: string | null) => {
+    const group = node.group;
+    const groupId = group?.id ? String(group.id) : '';
+    if (!groupId) return;
+
+    const parentId =
+      group?.parent_id && group.parent_id !== '0' ? String(group.parent_id) : fallbackParentId;
+    flattened.push({
+      groupId,
+      groupName: group?.name?.trim() || groupId,
+      parentId,
+    });
+
+    (Array.isArray(node.children) ? node.children : []).forEach((child) => visit(child, groupId));
+  };
+
+  tree.forEach((node) => visit(node, null));
+  return flattened;
+}
+
+function normalizeIncomingGroups(groups: unknown[]): PlatformDeviceGroup[] {
+  const hasTreeNodes = groups.some(
+    (group) => Boolean(group) && typeof group === 'object' && 'group' in (group as object),
+  );
+  if (hasTreeNodes) return flattenDeviceGroupTree(groups as DeviceGroupTreeNode[]);
+  return groups as PlatformDeviceGroup[];
 }
 
 function buildGroupOptions(
@@ -122,6 +171,7 @@ export function DeviceSelectorModal({
   selectedGroupId,
   selectedDeviceId,
   onGroupChange,
+  onGroupsLoaded,
   onDevicesLoaded,
   onSelect,
 }: Props) {
@@ -136,14 +186,14 @@ export function DeviceSelectorModal({
   const [warnStatus, setWarnStatus] = useState('');
   const [deviceType, setDeviceType] = useState('');
   const [serviceIdentifier, setServiceIdentifier] = useState('');
-  const [labelKeyword, setLabelKeyword] = useState('');
-  const [searchTick, setSearchTick] = useState(0);
   const [deviceConfigOptions, setDeviceConfigOptions] = useState<DeviceFilterOption[]>([]);
   const [serviceOptions, setServiceOptions] = useState<DeviceFilterOption[]>([]);
   const reqSeqRef = useRef(0);
   const filterReqSeqRef = useRef(0);
+  const groupReqSeqRef = useRef(0);
   const activeReqRef = useRef('');
   const activeFilterReqRef = useRef('');
+  const activeGroupReqRef = useRef('');
 
   const visibleGroups = useMemo(() => {
     const normalized = groups.map((group) => ({
@@ -169,6 +219,35 @@ export function DeviceSelectorModal({
     if (selectedGroupId && visibleGroupIds.has(selectedGroupId)) return;
     onGroupChange(visibleGroups[0]?.groupId || ALL_GROUP_ID);
   }, [onGroupChange, open, selectedGroupId, visibleGroupIds, visibleGroups]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const reqId = `device-groups-${Date.now()}-${++groupReqSeqRef.current}`;
+    activeGroupReqRef.current = reqId;
+    window.parent.postMessage(
+      {
+        type: 'thingsvis:requestDeviceGroups',
+        payload: { reqId },
+      },
+      '*',
+    );
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as { type?: string; payload?: DeviceGroupsPayload } | undefined;
+      if (data?.type !== 'tv:device-groups') return;
+
+      const payload = data.payload;
+      if (payload?.reqId && payload.reqId !== activeGroupReqRef.current) return;
+
+      if (!Array.isArray(payload?.groups)) return;
+      const nextGroups = normalizeIncomingGroups(payload.groups);
+      onGroupsLoaded?.(nextGroups);
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [onGroupsLoaded, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -221,8 +300,6 @@ export function DeviceSelectorModal({
             warnStatus,
             deviceType,
             serviceIdentifier,
-            label: labelKeyword.trim(),
-            searchTick,
             page,
             pageSize: DEFAULT_PAGE_SIZE,
           },
@@ -257,11 +334,9 @@ export function DeviceSelectorModal({
     groupId,
     isOnline,
     keyword,
-    labelKeyword,
     onDevicesLoaded,
     open,
     page,
-    searchTick,
     serviceIdentifier,
     warnStatus,
   ]);
@@ -288,11 +363,6 @@ export function DeviceSelectorModal({
     setPage(1);
   };
 
-  const handleSearch = () => {
-    setPage(1);
-    setSearchTick((value) => value + 1);
-  };
-
   const handleReset = () => {
     onGroupChange(ALL_GROUP_ID);
     setKeyword('');
@@ -301,9 +371,7 @@ export function DeviceSelectorModal({
     setWarnStatus('');
     setDeviceType('');
     setServiceIdentifier('');
-    setLabelKeyword('');
     setPage(1);
-    setSearchTick((value) => value + 1);
   };
 
   return (
@@ -388,7 +456,7 @@ export function DeviceSelectorModal({
           </select>
         </div>
 
-        <div className="grid grid-cols-[minmax(0,312px)_minmax(0,312px)_auto_auto] gap-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-3">
           <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -402,15 +470,6 @@ export function DeviceSelectorModal({
             />
           </div>
 
-          <Input
-            value={labelKeyword}
-            onChange={(event) => updateFilter(setLabelKeyword, event.target.value)}
-            placeholder="标签"
-          />
-
-          <Button type="button" onClick={handleSearch} disabled={loading}>
-            查询
-          </Button>
           <Button type="button" variant="outline" onClick={handleReset} disabled={loading}>
             重置
           </Button>

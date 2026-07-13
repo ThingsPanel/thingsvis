@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
   usePlatformDeviceStore,
   type PlatformDevice,
+  type PlatformDeviceGroup,
   type PlatformDevicePreset,
 } from '@/lib/stores/platformDeviceStore';
 import { hydrateDevicePresetSchema, hydrateDevicePresetWidget } from '@/lib/devicePresetHydration';
@@ -25,8 +26,7 @@ export default function DeviceLibraryPanel() {
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
   const [selectedDevice, setSelectedDevice] = useState<PlatformDevice | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
-  const [groupsRequested, setGroupsRequested] = useState(false);
-  const groupsRequestedRef = React.useRef(false);
+  const groupsRequested = true;
   const registrySnapshot = useSyncExternalStore(
     subscribeRegistry,
     getRegistrySnapshot,
@@ -42,28 +42,6 @@ export default function DeviceLibraryPanel() {
       console.error('[DeviceLibraryPanel] Failed to load component registry', error);
     });
   }, []);
-
-  React.useEffect(() => {
-    if (groups.length > 0 || groupsRequestedRef.current || window.parent === window) {
-      return;
-    }
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; payload?: { groups?: unknown[] } } | undefined;
-      if (data?.type !== 'tv:device-groups') return;
-      const payloadGroups = Array.isArray(data.payload?.groups) ? data.payload.groups : [];
-      usePlatformDeviceStore.getState().setGroups(payloadGroups as any);
-    };
-
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage({ type: 'thingsvis:requestDeviceGroups', payload: {} }, '*');
-    groupsRequestedRef.current = true;
-    setGroupsRequested(true);
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [groups.length]);
 
   const selectedDeviceSource = useMemo(
     () => devices.find((device) => device.deviceId === selectedDeviceId) ?? selectedDevice,
@@ -94,6 +72,10 @@ export default function DeviceLibraryPanel() {
     },
     [],
   );
+
+  const handleDeviceGroupsLoaded = React.useCallback((nextGroups: PlatformDeviceGroup[]) => {
+    usePlatformDeviceStore.getState().setGroups(nextGroups);
+  }, []);
 
   const handleDeviceSelect = React.useCallback((device: PlatformDevice) => {
     setSelectedDevice(device);
@@ -153,6 +135,7 @@ export default function DeviceLibraryPanel() {
             selectedGroupId={selectedGroupId}
             selectedDeviceId={selectedDeviceSource?.deviceId}
             onGroupChange={setSelectedGroupId}
+            onGroupsLoaded={handleDeviceGroupsLoaded}
             onDevicesLoaded={handleDevicesLoaded}
             onSelect={handleDeviceSelect}
           />

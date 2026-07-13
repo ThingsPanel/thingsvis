@@ -5,7 +5,11 @@ import { transformationUtils, type KernelStore } from '@thingsvis/kernel';
 import { useDataSourceRegistry } from '@thingsvis/ui';
 import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
 import { dataSourceManager } from '@/lib/store';
-import { usePlatformDeviceStore, type PlatformDevice } from '@/lib/stores/platformDeviceStore';
+import {
+  usePlatformDeviceStore,
+  type PlatformDevice,
+  type PlatformDeviceGroup,
+} from '@/lib/stores/platformDeviceStore';
 import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
 import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
 import { resolveEmbeddedProviderCatalog } from '@/lib/embedded/embedded-data-source-registry';
@@ -438,7 +442,6 @@ export function FieldPicker({
   const [draftCode, setDraftCode] = useState('');
   const transformTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
-  const [deviceGroupsRequested, setDeviceGroupsRequested] = useState(false);
   const [selectedPlatformGroupId, setSelectedPlatformGroupId] = useState('');
 
   const selectedDataSourceId = value?.dataSourceId || '';
@@ -612,28 +615,6 @@ export function FieldPicker({
 
   const selectedGroup = isEmbeddedMode ? embeddedSourceGroup : 'custom';
   const isDeviceScopedGroup = selectedGroup === 'device';
-  const hasHostDeviceCatalog =
-    isEmbeddedMode && isDeviceScopedGroup && !hasTemplateFieldCatalog && window.parent !== window;
-
-  useEffect(() => {
-    if (!hasHostDeviceCatalog) return;
-    if (platformDeviceGroups.length > 0 || deviceGroupsRequested) return;
-
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as { type?: string; payload?: { groups?: unknown[] } } | undefined;
-      if (data?.type !== 'tv:device-groups') return;
-      const groups = Array.isArray(data.payload?.groups) ? data.payload.groups : [];
-      usePlatformDeviceStore.getState().setGroups(groups as any);
-    };
-
-    setDeviceGroupsRequested(true);
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage({ type: 'thingsvis:requestDeviceGroups', payload: {} }, '*');
-
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, [deviceGroupsRequested, hasHostDeviceCatalog, platformDeviceGroups.length]);
 
   useEffect(() => {
     if (!isDeviceScopedGroup || platformDeviceGroups.length === 0) return;
@@ -1140,6 +1121,10 @@ export function FieldPicker({
     usePlatformDeviceStore.getState().setDevicesForGroup(groupId, devices);
   }, []);
 
+  const handleDeviceGroupsLoaded = useCallback((groups: PlatformDeviceGroup[]) => {
+    usePlatformDeviceStore.getState().setGroups(groups);
+  }, []);
+
   const handleDeviceSelect = useCallback(
     (device: PlatformDevice) => {
       const dataSourceId = getDeviceDataSourceId(device.deviceId);
@@ -1396,6 +1381,7 @@ export function FieldPicker({
             selectedGroupId={selectedPlatformGroupId}
             selectedDeviceId={selectedDeviceSource?.deviceId}
             onGroupChange={setSelectedPlatformGroupId}
+            onGroupsLoaded={handleDeviceGroupsLoaded}
             onDevicesLoaded={handleDevicesLoaded}
             onSelect={handleDeviceSelect}
           />
