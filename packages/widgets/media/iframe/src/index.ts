@@ -8,8 +8,6 @@ import en from './locales/en.json';
 
 const localeCatalog = { zh, en } as const;
 
-export const STANDALONE_DEFAULT_SRC = 'https://www.thingspanel.cn/';
-
 type PlaceholderState = 'empty' | 'idle' | 'loading' | 'error' | 'ready';
 type RuntimeMessages = {
     runtime: {
@@ -42,7 +40,7 @@ export const Main = defineWidget({
     schema: PropsSchema,
     controls,
     standaloneDefaults: {
-        src: STANDALONE_DEFAULT_SRC,
+        src: '',
     },
     render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
         let currentProps = props;

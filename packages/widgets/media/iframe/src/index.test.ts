@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import Main, { STANDALONE_DEFAULT_SRC } from './index';
+import Main from './index';
 import type { WidgetOverlayContext } from '@thingsvis/widget-sdk';
+
+const TEST_SRC = 'https://example.com/';
 
 function createContext(overrides: Partial<WidgetOverlayContext> = {}): WidgetOverlayContext {
     return {
@@ -11,8 +13,8 @@ function createContext(overrides: Partial<WidgetOverlayContext> = {}): WidgetOve
 }
 
 describe('media/iframe widget', () => {
-    it('exposes standalone default url', () => {
-        expect(Main.standaloneDefaults).toEqual({ src: STANDALONE_DEFAULT_SRC });
+    it('does not load an external page by default', () => {
+        expect(Main.standaloneDefaults).toEqual({ src: '' });
     });
 
     it('shows localized empty guidance before a url is configured', () => {
@@ -31,12 +33,12 @@ describe('media/iframe widget', () => {
     it('loads iframe in edit mode but keeps interaction disabled', () => {
         const instance = Main.createOverlay(createContext({
             mode: 'edit',
-            props: { src: STANDALONE_DEFAULT_SRC },
+            props: { src: TEST_SRC },
         }));
 
         const iframe = instance.element.querySelector('iframe');
         expect(iframe).not.toBeNull();
-        expect(iframe?.getAttribute('src')).toBe(STANDALONE_DEFAULT_SRC);
+        expect(iframe?.getAttribute('src')).toBe(TEST_SRC);
         expect(iframe?.style.pointerEvents).toBe('none');
 
         instance.destroy?.();
@@ -45,16 +47,16 @@ describe('media/iframe widget', () => {
     it('enables iframe interaction in view mode', () => {
         const instance = Main.createOverlay(createContext({
             mode: 'edit',
-            props: { src: STANDALONE_DEFAULT_SRC },
+            props: { src: TEST_SRC },
         }));
 
         instance.update?.(createContext({
             mode: 'view',
-            props: { src: STANDALONE_DEFAULT_SRC },
+            props: { src: TEST_SRC },
         }));
 
         const iframe = instance.element.querySelector('iframe');
-        expect(iframe?.getAttribute('src')).toBe(STANDALONE_DEFAULT_SRC);
+        expect(iframe?.getAttribute('src')).toBe(TEST_SRC);
         expect(iframe?.style.pointerEvents).toBe('auto');
 
         instance.destroy?.();

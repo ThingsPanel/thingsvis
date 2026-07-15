@@ -202,7 +202,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         id: 'bfa90a38-5d22-4250-b21a-fd4f254a374e',
         type: 'media/iframe',
         props: {
-          src: 'https://docs.thingspanel.cn/zh-Hans/',
+          src: '',
           borderWidth: 0,
           borderColor: '#000000',
           borderRadius: 0,
