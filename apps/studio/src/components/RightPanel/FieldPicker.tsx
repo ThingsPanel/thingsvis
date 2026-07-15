@@ -190,6 +190,75 @@ function parseDeviceDataSourceId(dataSourceId: string): string | null {
   return match?.[1] ?? null;
 }
 
+const pendingEmbeddedDeviceRequests = new Set<string>();
+const pendingEmbeddedFieldRequests = new Map<string, Promise<unknown[]>>();
+
+function requestEmbeddedDeviceOnce(deviceId: string): void {
+  if (pendingEmbeddedDeviceRequests.has(deviceId)) return;
+  pendingEmbeddedDeviceRequests.add(deviceId);
+
+  const handleMessage = (event: MessageEvent) => {
+    const data = event.data as
+      | { type?: string; payload?: { deviceId?: string; device?: PlatformDevice | null } }
+      | undefined;
+    if (data?.type !== 'tv:device-by-id' || data.payload?.deviceId !== deviceId) return;
+
+    window.removeEventListener('message', handleMessage);
+    pendingEmbeddedDeviceRequests.delete(deviceId);
+    if (data.payload.device?.deviceId) {
+      usePlatformDeviceStore.getState().setDevices([data.payload.device]);
+    }
+  };
+
+  window.addEventListener('message', handleMessage);
+  window.parent.postMessage(
+    {
+      type: 'thingsvis:requestDeviceById',
+      payload: { reqId: `field-picker-${deviceId}`, deviceId },
+    },
+    '*',
+  );
+}
+
+function requestEmbeddedDeviceFieldsOnce(device: PlatformDevice): Promise<unknown[]> {
+  const requestKey = [device.deviceId, device.templateId ?? '', device.deviceConfigId ?? ''].join(
+    ':',
+  );
+  const pending = pendingEmbeddedFieldRequests.get(requestKey);
+  if (pending) return pending;
+
+  const request = new Promise<unknown[]>((resolve) => {
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data as
+        | { type?: string; payload?: { deviceId?: string; fields?: unknown[] } }
+        | undefined;
+      if (data?.type !== 'tv:device-fields' || data.payload?.deviceId !== device.deviceId) return;
+
+      window.removeEventListener('message', handleMessage);
+      resolve(Array.isArray(data.payload.fields) ? data.payload.fields : []);
+    };
+
+    window.addEventListener('message', handleMessage);
+    window.parent.postMessage(
+      {
+        type: 'thingsvis:requestDeviceFields',
+        payload: {
+          deviceId: device.deviceId,
+          templateId: device.templateId,
+          deviceConfigId: device.deviceConfigId,
+        },
+      },
+      '*',
+    );
+  });
+  pendingEmbeddedFieldRequests.set(requestKey, request);
+  request.then(
+    () => pendingEmbeddedFieldRequests.delete(requestKey),
+    () => pendingEmbeddedFieldRequests.delete(requestKey),
+  );
+  return request;
+}
+
 function getRequestedFieldId(fieldPath: string): string | null {
   if (!fieldPath || fieldPath === '(root)') return null;
   return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
@@ -742,28 +811,7 @@ export function FieldPicker({
     if (platformDevices.some((d) => d.deviceId === selectedPlatformDeviceId)) return;
     if (window.parent === window) return;
 
-    const reqId = `field-picker-${selectedPlatformDeviceId}`;
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; payload?: { deviceId?: string; device?: unknown } }
-        | undefined;
-      if (data?.type !== 'tv:device-by-id') return;
-      const device = data.payload?.device as any;
-      if (!device?.deviceId) return;
-      usePlatformDeviceStore.getState().setDevices([device]);
-    };
-
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestDeviceById',
-        payload: { reqId, deviceId: selectedPlatformDeviceId },
-      },
-      '*',
-    );
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
+    requestEmbeddedDeviceOnce(selectedPlatformDeviceId);
   }, [
     isDeviceScopedGroup,
     isEmbeddedMode,
@@ -1194,34 +1242,15 @@ export function FieldPicker({
     if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
 
-    const handleMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; payload?: { deviceId?: string; fields?: unknown[] } }
-        | undefined;
-      if (data?.type !== 'tv:device-fields') return;
-      const payload = data.payload;
-      if (payload?.deviceId !== selectedDeviceSource.deviceId) return;
-      if (!Array.isArray(payload.fields)) return;
+    let active = true;
+    void requestEmbeddedDeviceFieldsOnce(selectedDeviceSource).then((fields) => {
+      if (!active) return;
       usePlatformDeviceStore
         .getState()
-        .updateDeviceFields(selectedDeviceSource.deviceId, payload.fields as any);
-    };
-
-    window.addEventListener('message', handleMessage);
-    window.parent.postMessage(
-      {
-        type: 'thingsvis:requestDeviceFields',
-        payload: {
-          deviceId: selectedDeviceSource.deviceId,
-          templateId: selectedDeviceSource.templateId,
-          deviceConfigId: selectedDeviceSource.deviceConfigId,
-        },
-      },
-      '*',
-    );
-
+        .updateDeviceFields(selectedDeviceSource.deviceId, fields as PlatformDevice['fields']);
+    });
     return () => {
-      window.removeEventListener('message', handleMessage);
+      active = false;
     };
   }, [isDeviceScopedGroup, selectedDeviceSource]);
 

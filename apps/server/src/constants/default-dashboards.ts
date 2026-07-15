@@ -292,7 +292,7 @@ return {
       {
         name: 'platformApiBaseUrl',
         type: 'string',
-        defaultValue: 'http://c.thingspanel.cn/api/v1',
+        defaultValue: '',
       },
       {
         name: 'thingsvisApiBaseUrl',
@@ -812,7 +812,7 @@ return {
       {
         name: 'platformApiBaseUrl',
         type: 'string',
-        defaultValue: 'http://c.thingspanel.cn/api/v1',
+        defaultValue: '',
       },
       {
         name: 'thingsvisApiBaseUrl',

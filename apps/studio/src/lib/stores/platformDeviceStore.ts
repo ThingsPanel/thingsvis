@@ -221,11 +221,31 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
   },
 
   updateDeviceFields: (deviceId, fields) =>
-    set((state) => ({
-      devices: state.devices.map((device) =>
-        device.deviceId === deviceId ? { ...device, fields } : device,
-      ),
-    })),
+    set((state) => {
+      const deviceIndex = state.devices.findIndex((device) => device.deviceId === deviceId);
+      if (deviceIndex < 0) return state;
+
+      const currentDevice = state.devices[deviceIndex];
+      if (!currentDevice) return state;
+      const currentFields = currentDevice.fields ?? [];
+      const fieldsUnchanged =
+        currentFields.length === fields.length &&
+        currentFields.every((field, index) => {
+          const nextField = fields[index];
+          return (
+            nextField !== undefined &&
+            field.id === nextField.id &&
+            field.name === nextField.name &&
+            field.type === nextField.type &&
+            field.dataType === nextField.dataType
+          );
+        });
+      if (fieldsUnchanged) return state;
+
+      const devices = [...state.devices];
+      devices[deviceIndex] = { ...currentDevice, fields };
+      return { devices };
+    }),
 
   clearDevices: () => set({ groups: [], loadedGroupIds: [], devices: [] }),
 }));

@@ -70,4 +70,20 @@ describe('platformDeviceStore', () => {
       { id: 'totalHeat', name: 'Total heat', type: 'number' },
     ]);
   });
+
+  it('does not publish a new store state when device fields are unchanged', () => {
+    const fields = [{ id: 'humidity', name: 'Humidity', type: 'number' as const }];
+    platformDeviceStore.setDevices([
+      {
+        deviceId: 'dev-1',
+        deviceName: 'Device 1',
+        fields,
+      },
+    ]);
+    const before = platformDeviceStore.getDevices();
+
+    platformDeviceStore.updateDeviceFields('dev-1', [{ ...fields[0] }]);
+
+    expect(platformDeviceStore.getDevices()).toBe(before);
+  });
 });
