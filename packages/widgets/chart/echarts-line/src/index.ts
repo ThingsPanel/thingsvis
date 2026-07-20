@@ -22,9 +22,9 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 /** 图表内边距：配合 containLabel 为轴标签留出空间 */
-const CHART_PADDING = 16;
+const CHART_PADDING = 10;
 /** 组件容器内边距，避免轴标签贴边被裁切 */
-const WIDGET_INNER_PADDING = 12;
+const WIDGET_INNER_PADDING = 6;
 const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
@@ -191,7 +191,10 @@ function formatTimeLabel(timeMs: number, spanMs: number): string {
   return `${month}-${day} ${hh}:${mm}`;
 }
 
-function normalizeSingleLineData(data: Props['data'], timeRangePreset: Props['timeRangePreset']): NormalizedSingleLineData {
+function normalizeSingleLineData(
+  data: Props['data'],
+  timeRangePreset: Props['timeRangePreset'],
+): NormalizedSingleLineData {
   if (!Array.isArray(data) || data.length === 0) {
     return {
       mode: 'category' as const,
@@ -294,7 +297,9 @@ function normalizeLineData(
 
     if (seriesRecords.length > 0) {
       return seriesRecords.slice(0, 4).map((record, index) => {
-        const seriesData = (Array.isArray(record.data) ? record.data : record.values) as Props['data'];
+        const seriesData = (
+          Array.isArray(record.data) ? record.data : record.values
+        ) as Props['data'];
         return {
           name: String(record.name ?? record.label ?? record.seriesName ?? `Series ${index + 1}`),
           normalized: normalizeSingleLineData(seriesData, timeRangePreset),
@@ -365,16 +370,23 @@ function buildOption(
   const normalizedSeries = normalizeLineData(data, timeRangePreset);
   const multiSeries = normalizedSeries.length > 1;
   const showSeriesLegend = showLegend !== false && normalizedSeries.length > 0;
-  const legendTopSpace = showSeriesLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + Math.round(padding * 0.5) : 0;
+  const legendTopSpace = showSeriesLegend
+    ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + Math.round(padding * 0.5)
+    : 0;
   const xAxisLabelSpace = showXAxis !== false ? Math.max(8, Math.round(xLabelFontSize * 0.6)) : 0;
-  const hasData =
-    normalizedSeries.some(({ normalized }) =>
-      normalized.mode === 'time' ? normalized.timeData.length > 0 : normalized.categoryData.length > 0,
-    );
+  const hasData = normalizedSeries.some(({ normalized }) =>
+    normalized.mode === 'time'
+      ? normalized.timeData.length > 0
+      : normalized.categoryData.length > 0,
+  );
   const emptyTimeWindow = getEmptyTimeWindow(timeRangePreset);
   const useEmptyTimeSkeleton = !hasData;
-  const isTimeSeries = normalizedSeries.some(({ normalized }) => normalized.mode === 'time') || useEmptyTimeSkeleton;
-  const timeSeriesSpanMs = Math.max(0, ...normalizedSeries.map(({ normalized }) => normalized.timeSpanMs));
+  const isTimeSeries =
+    normalizedSeries.some(({ normalized }) => normalized.mode === 'time') || useEmptyTimeSkeleton;
+  const timeSeriesSpanMs = Math.max(
+    0,
+    ...normalizedSeries.map(({ normalized }) => normalized.timeSpanMs),
+  );
   const categoryAxisData = Array.from(
     new Set(
       normalizedSeries.flatMap(({ normalized }) =>
@@ -395,10 +407,7 @@ function buildOption(
         }));
       }
 
-      return [
-        { value: [emptyTimeWindow.startMs, null] },
-        { value: [emptyTimeWindow.endMs, null] },
-      ];
+      return [{ value: [emptyTimeWindow.startMs, null] }, { value: [emptyTimeWindow.endMs, null] }];
     }
 
     return categoryAxisData.map((categoryName) => {
@@ -530,9 +539,13 @@ function buildOption(
         encode: isTimeSeries ? { x: 0, y: 1, tooltip: [1] } : undefined,
         data: buildSeriesData(normalized),
         smooth: smooth,
-        showSymbol: hasData,
-        symbol: 'rect',
-        symbolSize: Math.max(6, Math.round(8 * scale)),
+        // Keep sparse series inspectable, but avoid turning dense history into a field of dots.
+        showSymbol:
+          hasData && normalized.mode === 'category'
+            ? normalized.categoryData.length <= 24
+            : hasData && normalized.timeData.length <= 24,
+        symbol: 'circle',
+        symbolSize: Math.max(4, Math.round(6 * scale)),
         itemStyle: {
           color: '#ffffff',
           borderColor: seriesColor,

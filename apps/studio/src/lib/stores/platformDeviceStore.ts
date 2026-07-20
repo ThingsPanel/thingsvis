@@ -103,6 +103,20 @@ function normalizeGroups(groups: PlatformDeviceGroup[]): PlatformDeviceGroup[] {
   return Array.from(deduped.values()).sort((a, b) => a.groupName.localeCompare(b.groupName));
 }
 
+function areGroupsEqual(left: PlatformDeviceGroup[], right: PlatformDeviceGroup[]): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((group, index) => {
+    const other = right[index];
+    if (!other) return false;
+    return (
+      group.groupId === other.groupId &&
+      group.groupName === other.groupName &&
+      group.deviceCount === other.deviceCount &&
+      group.parentId === other.parentId
+    );
+  });
+}
+
 function normalizeDevices(devices: PlatformDevice[]): PlatformDevice[] {
   return devices.map((device) => {
     const groupId = normalizeGroupId(device.groupId, device.groupName);
@@ -165,6 +179,8 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
   setGroups: (groups) =>
     set((state) => {
       const normalizedGroups = normalizeGroups(groups);
+      if (areGroupsEqual(normalizedGroups, state.groups)) return state;
+
       const validGroupIds = new Set(normalizedGroups.map((group) => group.groupId));
       const retainedLoadedGroupIds = state.loadedGroupIds.filter((groupId) =>
         validGroupIds.has(normalizeGroupId(groupId)),

@@ -8,6 +8,7 @@ import en from './locales/en.json';
 
 const localeCatalog = { zh, en } as const;
 
+
 type PlaceholderState = 'empty' | 'idle' | 'loading' | 'error' | 'ready';
 type RuntimeMessages = {
     runtime: {

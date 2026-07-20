@@ -35,13 +35,13 @@ export type FieldPickerValue = {
   transform?: string;
   historyConfig?: {
     timeRange: string;
-    aggFunction?: 'AVG' | 'MIN' | 'MAX' | 'SUM' | 'COUNT' | 'NONE_RAW';
-    aggWindow?: string;
   };
 };
 
 type SourceGroup = 'global' | 'device' | 'custom';
 type DeviceBindingKind = 'model' | 'status' | 'history' | 'alarmStatus';
+
+const ALL_DEVICE_GROUP_ID = '__all__';
 
 const HISTORY_FIELD_SUFFIX = '__history';
 const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
@@ -191,7 +191,10 @@ function parseDeviceDataSourceId(dataSourceId: string): string | null {
 }
 
 const pendingEmbeddedDeviceRequests = new Set<string>();
-const pendingEmbeddedFieldRequests = new Map<string, Promise<unknown[]>>();
+const pendingEmbeddedFieldRequests = new Map<
+  string,
+  Promise<NonNullable<PlatformDevice['fields']>>
+>();
 
 function requestEmbeddedDeviceOnce(deviceId: string): void {
   if (pendingEmbeddedDeviceRequests.has(deviceId)) return;
@@ -220,14 +223,16 @@ function requestEmbeddedDeviceOnce(deviceId: string): void {
   );
 }
 
-function requestEmbeddedDeviceFieldsOnce(device: PlatformDevice): Promise<unknown[]> {
+function requestEmbeddedDeviceFieldsOnce(
+  device: Pick<PlatformDevice, 'deviceId' | 'templateId' | 'deviceConfigId'>,
+): Promise<NonNullable<PlatformDevice['fields']>> {
   const requestKey = [device.deviceId, device.templateId ?? '', device.deviceConfigId ?? ''].join(
     ':',
   );
   const pending = pendingEmbeddedFieldRequests.get(requestKey);
   if (pending) return pending;
 
-  const request = new Promise<unknown[]>((resolve) => {
+  const request = new Promise<NonNullable<PlatformDevice['fields']>>((resolve) => {
     const handleMessage = (event: MessageEvent) => {
       const data = event.data as
         | { type?: string; payload?: { deviceId?: string; fields?: unknown[] } }
@@ -235,7 +240,11 @@ function requestEmbeddedDeviceFieldsOnce(device: PlatformDevice): Promise<unknow
       if (data?.type !== 'tv:device-fields' || data.payload?.deviceId !== device.deviceId) return;
 
       window.removeEventListener('message', handleMessage);
-      resolve(Array.isArray(data.payload.fields) ? data.payload.fields : []);
+      resolve(
+        Array.isArray(data.payload.fields)
+          ? (data.payload.fields as NonNullable<PlatformDevice['fields']>)
+          : [],
+      );
     };
 
     window.addEventListener('message', handleMessage);
@@ -700,11 +709,13 @@ export function FieldPicker({
 
   useEffect(() => {
     if (!isDeviceScopedGroup || platformDeviceGroups.length === 0) return;
-    if (
-      !selectedPlatformGroupId ||
-      !platformDeviceGroups.some((group) => group.groupId === selectedPlatformGroupId)
-    ) {
-      setSelectedPlatformGroupId(platformDeviceGroups[0]?.groupId || '');
+    if (!selectedPlatformGroupId) {
+      setSelectedPlatformGroupId(ALL_DEVICE_GROUP_ID);
+      return;
+    }
+    if (selectedPlatformGroupId === ALL_DEVICE_GROUP_ID) return;
+    if (!platformDeviceGroups.some((group) => group.groupId === selectedPlatformGroupId)) {
+      setSelectedPlatformGroupId(ALL_DEVICE_GROUP_ID);
     }
   }, [isDeviceScopedGroup, platformDeviceGroups, selectedPlatformGroupId]);
 
@@ -753,7 +764,7 @@ export function FieldPicker({
         .filter((groupId) => groupId && !loadedGroupIds.has(groupId));
     }
 
-    if (!selectedPlatformGroupId) return [];
+    if (!selectedPlatformGroupId || selectedPlatformGroupId === ALL_DEVICE_GROUP_ID) return [];
     return loadedGroupIds.has(selectedPlatformGroupId) ? [] : [selectedPlatformGroupId];
   }, [
     isDeviceScopedGroup,
@@ -1245,9 +1256,7 @@ export function FieldPicker({
     let active = true;
     void requestEmbeddedDeviceFieldsOnce(selectedDeviceSource).then((fields) => {
       if (!active) return;
-      usePlatformDeviceStore
-        .getState()
-        .updateDeviceFields(selectedDeviceSource.deviceId, fields as PlatformDevice['fields']);
+      usePlatformDeviceStore.getState().updateDeviceFields(selectedDeviceSource.deviceId, fields);
     });
     return () => {
       active = false;
@@ -1265,8 +1274,6 @@ export function FieldPicker({
         ? {
             historyConfig: selectedHistoryConfig ?? {
               timeRange: 'last_30d',
-              aggFunction: 'NONE_RAW',
-              aggWindow: 'no_aggregate',
             },
           }
         : {}),
@@ -1302,8 +1309,6 @@ export function FieldPicker({
     if (!effectiveDataSourceId || !selectedFieldPathForPicker) return;
     const nextHistoryConfig = {
       timeRange: selectedHistoryConfig?.timeRange ?? 'last_30d',
-      aggFunction: selectedHistoryConfig?.aggFunction ?? 'NONE_RAW',
-      aggWindow: selectedHistoryConfig?.aggWindow ?? 'no_aggregate',
       ...patch,
     };
     safeOnChange({
@@ -1547,8 +1552,6 @@ export function FieldPicker({
                       ? {
                           historyConfig: selectedHistoryConfig ?? {
                             timeRange: 'last_30d',
-                            aggFunction: 'NONE_RAW',
-                            aggWindow: 'no_aggregate',
                           },
                         }
                       : {}),
@@ -1635,48 +1638,6 @@ export function FieldPicker({
                 <option value="last_7d">{t('binding.last7d', '最近 7 天')}</option>
                 <option value="last_30d">{t('binding.last30d', '最近 30 天')}</option>
               </select>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t('binding.aggFunction', '聚合函数')}
-                </label>
-                <select
-                  value={selectedHistoryConfig?.aggFunction ?? 'NONE_RAW'}
-                  onChange={(e) =>
-                    handleHistoryConfigChange({
-                      aggFunction: e.target.value as NonNullable<
-                        FieldPickerValue['historyConfig']
-                      >['aggFunction'],
-                    })
-                  }
-                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
-                >
-                  <option value="NONE_RAW">{t('binding.noneRaw', '原始值')}</option>
-                  <option value="AVG">AVG</option>
-                  <option value="MIN">MIN</option>
-                  <option value="MAX">MAX</option>
-                  <option value="SUM">SUM</option>
-                  <option value="COUNT">COUNT</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-muted-foreground">
-                  {t('binding.aggWindow', '聚合窗口')}
-                </label>
-                <select
-                  value={selectedHistoryConfig?.aggWindow ?? 'no_aggregate'}
-                  onChange={(e) => handleHistoryConfigChange({ aggWindow: e.target.value })}
-                  className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-inset focus:ring-ring"
-                >
-                  <option value="no_aggregate">{t('binding.noAggregate', '不聚合')}</option>
-                  <option value="1m">1m</option>
-                  <option value="5m">5m</option>
-                  <option value="15m">15m</option>
-                  <option value="1h">1h</option>
-                  <option value="1d">1d</option>
-                </select>
-              </div>
             </div>
           </div>
         )}

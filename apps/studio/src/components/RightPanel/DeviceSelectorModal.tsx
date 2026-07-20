@@ -207,9 +207,7 @@ export function DeviceSelectorModal({
     [visibleGroups],
   );
   const groupId =
-    selectedGroupId && visibleGroupIds.has(selectedGroupId)
-      ? selectedGroupId
-      : visibleGroups[0]?.groupId || ALL_GROUP_ID;
+    selectedGroupId && visibleGroupIds.has(selectedGroupId) ? selectedGroupId : ALL_GROUP_ID;
   const pageCount = Math.max(1, Math.ceil(total / DEFAULT_PAGE_SIZE));
   const canPrev = page > 1 && !loading;
   const canNext = page < pageCount && !loading;
@@ -217,8 +215,8 @@ export function DeviceSelectorModal({
   useEffect(() => {
     if (!open) return;
     if (selectedGroupId && visibleGroupIds.has(selectedGroupId)) return;
-    onGroupChange(visibleGroups[0]?.groupId || ALL_GROUP_ID);
-  }, [onGroupChange, open, selectedGroupId, visibleGroupIds, visibleGroups]);
+    onGroupChange(ALL_GROUP_ID);
+  }, [onGroupChange, open, selectedGroupId, visibleGroupIds]);
 
   useEffect(() => {
     if (!open) return;
@@ -481,7 +479,7 @@ export function DeviceSelectorModal({
             <span>在线状态</span>
             <span>告警状态</span>
             <span>设备类型</span>
-            <span>设备配置</span>
+            <span>设备模板</span>
             <span>接入服务/协议</span>
             <span>最后推送时间</span>
           </div>

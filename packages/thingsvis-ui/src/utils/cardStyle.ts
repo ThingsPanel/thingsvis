@@ -1,10 +1,12 @@
 import type { IBaseStyle, ICardStyle } from '@thingsvis/schema';
 
-export const CARD_STYLE_DEFAULTS: Required<Pick<IBaseStyle, 'background' | 'border' | 'shadow' | 'padding'>> = {
+export const CARD_STYLE_DEFAULTS: Required<
+  Pick<IBaseStyle, 'background' | 'border' | 'shadow' | 'padding'>
+> = {
   background: { color: '#ffffff', opacity: 1 },
   border: { width: 1, color: 'rgba(148, 163, 184, 0.3)', style: 'solid', radius: 10 },
   shadow: { offsetX: 0, offsetY: 2, blur: 8, color: 'rgba(15, 23, 42, 0.08)' },
-  padding: 16,
+  padding: 12,
 };
 
 export function isCardModeEnabled(baseStyle?: Partial<IBaseStyle> | null): boolean {
