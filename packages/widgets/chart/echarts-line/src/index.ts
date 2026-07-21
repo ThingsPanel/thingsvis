@@ -22,9 +22,9 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 /** 图表内边距：配合 containLabel 为轴标签留出空间 */
-const CHART_PADDING = 10;
+const CHART_PADDING = 6;
 /** 组件容器内边距，避免轴标签贴边被裁切 */
-const WIDGET_INNER_PADDING = 6;
+const WIDGET_INNER_PADDING = 0;
 const LEGEND_BLOCK_HEIGHT = 20;
 const TIME_RANGE_MS: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
   '1h': 60 * 60 * 1000,
@@ -373,7 +373,6 @@ function buildOption(
   const legendTopSpace = showSeriesLegend
     ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + Math.round(padding * 0.5)
     : 0;
-  const xAxisLabelSpace = showXAxis !== false ? Math.max(8, Math.round(xLabelFontSize * 0.6)) : 0;
   const hasData = normalizedSeries.some(({ normalized }) =>
     normalized.mode === 'time'
       ? normalized.timeData.length > 0
@@ -441,7 +440,9 @@ function buildOption(
     : {
         show: showXAxis !== false,
         type: 'category',
-        boundaryGap: false,
+        // Keep a half-category of horizontal breathing room so the first and
+        // last category labels/points are not clipped at the grid edges.
+        boundaryGap: true,
         data: categoryAxisData,
         axisLabel: {
           color: resolvedAxisLabelColor,
@@ -503,10 +504,12 @@ function buildOption(
       textStyle: { color: resolvedAxisLabelColor, fontSize: legendTextFontSize },
     },
     grid: {
-      left: padding,
-      right: padding,
-      top: padding + legendTopSpace,
-      bottom: padding + xAxisLabelSpace,
+      left: 10,
+      right: 10,
+      top: 10 + legendTopSpace,
+      // containLabel already accounts for the X-axis labels. Adding the label
+      // space here as well leaves an excessive blank area below the chart.
+      bottom: 0,
       containLabel: true,
     },
     xAxis,

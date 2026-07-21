@@ -6,7 +6,7 @@ export const CARD_STYLE_DEFAULTS: Required<
   background: { color: '#ffffff', opacity: 1 },
   border: { width: 1, color: 'rgba(148, 163, 184, 0.3)', style: 'solid', radius: 10 },
   shadow: { offsetX: 0, offsetY: 2, blur: 8, color: 'rgba(15, 23, 42, 0.08)' },
-  padding: 12,
+  padding: 6,
 };
 
 export function isCardModeEnabled(baseStyle?: Partial<IBaseStyle> | null): boolean {
@@ -128,7 +128,7 @@ export function createCardHeaderElement(): HTMLDivElement {
   const headerEl = document.createElement('div');
   headerEl.dataset.cardShellHeader = 'true';
   headerEl.style.flex = '0 0 auto';
-  headerEl.style.marginBottom = '12px';
+  headerEl.style.marginBottom = '6px';
 
   const titleEl = document.createElement('div');
   titleEl.dataset.cardShellTitle = 'true';
