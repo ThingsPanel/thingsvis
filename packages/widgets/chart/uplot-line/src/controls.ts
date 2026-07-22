@@ -61,6 +61,7 @@ export const controls = generateControls(PropsSchema, {
     showYAxis: { label: { zh: '显示Y轴', en: 'Show Y Axis' } },
     yAxisMin: {
       kind: 'number',
+      allowEmpty: true,
       label: { zh: 'Y 轴最小值', en: 'Y axis minimum' },
       description: {
         zh: '固定纵轴下限；不填则按数据自动计算范围。',
@@ -70,6 +71,7 @@ export const controls = generateControls(PropsSchema, {
     },
     yAxisMax: {
       kind: 'number',
+      allowEmpty: true,
       label: { zh: 'Y 轴最大值', en: 'Y axis maximum' },
       description: {
         zh: '固定纵轴上限；不填则按数据自动计算范围。',

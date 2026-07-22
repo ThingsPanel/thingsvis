@@ -656,9 +656,13 @@ export function ControlFieldRow({
                     const n = Number(propsValue);
                     if (Number.isFinite(n)) return n;
                   }
+                  if (field.allowEmpty) return undefined;
                   return typeof field.default === 'number' ? field.default : 0;
                 })()}
-                onValueChange={(nextValue) => setStatic(nextValue ?? field.default ?? 0)}
+                onValueChange={(nextValue) =>
+                  setStatic(nextValue ?? (field.allowEmpty ? null : (field.default ?? 0)))
+                }
+                allowEmpty={field.allowEmpty}
                 className="h-8 text-sm"
                 min={field.min}
                 max={field.max}

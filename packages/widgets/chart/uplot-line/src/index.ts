@@ -21,14 +21,14 @@ const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const WIDGET_PADDING = 6;
-/** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT`. */
+/** Same numeric intent as the ECharts line legend row. */
 const LEGEND_BLOCK_HEIGHT = 20;
 /** Keep the legend close to the plot, matching the compact ECharts line layout. */
 const LEGEND_AXIS_GAP_BASE = 4;
 
 /**
- * uPlot `opts.height` is only `.u-wrap` (canvas + axes). HTML legend stacks below — reserve bar-aligned
- * `legendSpace` plus axis→legend gap so margin does not get clipped by overflow:hidden.
+ * uPlot `opts.height` covers only `.u-wrap` (canvas + axes), excluding the HTML legend.
+ * Reserve one compact legend row plus its gap after moving that row above the plot.
  */
 function computeUplotInnerSize(
   containerW: number,
@@ -37,13 +37,22 @@ function computeUplotInnerSize(
   scale: number,
 ): { width: number; height: number } {
   const legendAxisGap = Math.round(LEGEND_AXIS_GAP_BASE * scale);
-  const reserve = showLegend
-    ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + Math.round(WIDGET_PADDING * scale) + legendAxisGap
-    : 0;
+  const reserve = showLegend ? Math.round(LEGEND_BLOCK_HEIGHT * scale) + legendAxisGap : 0;
   return {
     width: Math.max(0, Math.floor(containerW)),
     height: Math.max(48, Math.floor(containerH - reserve)),
   };
+}
+
+function computeYAxisBand(
+  values: string[] | null | undefined,
+  fontPx: number,
+  scale: number,
+): number {
+  const widestLabelLength = Math.max(1, ...(values ?? []).map((value) => String(value).length));
+  const estimatedLabelWidth = widestLabelLength * fontPx * 0.58;
+  const tickAndGap = Math.round(11 * scale);
+  return Math.max(30, Math.min(72, Math.ceil(estimatedLabelWidth + tickAndGap)));
 }
 
 const TIME_RANGE_SEC: Record<Exclude<Props['timeRangePreset'], 'all'>, number> = {
@@ -53,12 +62,19 @@ const TIME_RANGE_SEC: Record<Exclude<Props['timeRangePreset'], 'all'>, number> =
   '7d': 7 * 24 * 60 * 60,
   '30d': 30 * 24 * 60 * 60,
 };
-const STANDALONE_UPLOT_SERIES = [
-  { timestamp: '2026-01-01T00:00:00Z', value: 18 },
-  { timestamp: '2026-01-01T01:00:00Z', value: 22 },
-  { timestamp: '2026-01-01T02:00:00Z', value: 26 },
-  { timestamp: '2026-01-01T03:00:00Z', value: 24 },
-];
+const STANDALONE_POINT_COUNT = 288;
+const STANDALONE_INTERVAL_MS = 5 * 60 * 1000;
+const STANDALONE_START_MS = Date.UTC(2026, 6, 21, 0, 0, 0);
+const STANDALONE_UPLOT_SERIES = Array.from({ length: STANDALONE_POINT_COUNT }, (_, index) => {
+  const baseline = 32 + index * 0.018;
+  const periodic = Math.sin(index / 13) * 1.8 + Math.sin(index / 4.7) * 0.45;
+  const deterministicNoise = (((index * 37) % 17) - 8) * 0.045;
+  const spike = index === 58 ? 8.5 : index === 143 ? 12 : index === 226 ? 7 : 0;
+  return {
+    timestamp: new Date(STANDALONE_START_MS + index * STANDALONE_INTERVAL_MS).toISOString(),
+    value: Number((baseline + periodic + deterministicNoise + spike).toFixed(2)),
+  };
+});
 
 type ParsedPoint = { tsSec: number; value: number };
 type ParsedLineSeries = { name: string; points: ParsedPoint[] };
@@ -461,9 +477,15 @@ export const Main = defineWidget({
                 min-width: 0 !important;
                 max-width: 100%;
                 box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+            }
+            [data-thingsvis-uplot-line] .u-wrap {
+                order: 2;
             }
             [data-thingsvis-uplot-line] .u-legend {
-                margin: var(--uplot-legend-axis-gap, 4px) 0 0 !important;
+                order: 1;
+                margin: 0 0 var(--uplot-legend-axis-gap, 4px) !important;
                 padding: 0 !important;
                 width: 100%;
                 box-sizing: border-box;
@@ -613,7 +635,7 @@ export const Main = defineWidget({
       const opts: uPlot.Options = {
         width: plotW,
         height: plotH,
-        padding: [Math.round(8 * scale), padRight, effectivePaddingBottom, padSide],
+        padding: [padSide, padRight, effectivePaddingBottom, padSide],
         plugins: [
           createHoverTooltipPlugin({
             spanSec,
@@ -641,6 +663,7 @@ export const Main = defineWidget({
             stroke: currentAxisLabelColor,
             font: xAxisFont,
             size: xAxisBand,
+            gap: Math.max(3, Math.round(5 * scale)),
             space: Math.max(40, Math.round(50 * scale)),
             values: (_u: uPlot, vals: number[]) => vals.map((v) => formatTick(Number(v), spanSec)),
             // ECharts line uses horizontal split lines by default, not a full square mesh.
@@ -651,13 +674,17 @@ export const Main = defineWidget({
             show: showY,
             stroke: currentAxisLabelColor,
             font: yAxisFont,
+            size: (_u: uPlot, values: string[]) => computeYAxisBand(values, yFontSize, scale),
+            gap: Math.max(3, Math.round(5 * scale)),
             grid: showY ? { stroke: currentGridColor, width: 1 } : undefined,
             ticks: showY ? { stroke: currentGridColor, width: 1 } : undefined,
           },
         ],
         scales: {
           y: {
-            auto: (): boolean => currentProps.yAxisMin == null && currentProps.yAxisMax == null,
+            // Keep data auto-ranging active so a single configured bound can still use the
+            // calculated data extent on the opposite side.
+            auto: true,
             range: (_self: uPlot, min: number, max: number): [number, number] => {
               if (currentProps.yAxisMin != null && currentProps.yAxisMax != null) {
                 return ensureFiniteRange(currentProps.yAxisMin, currentProps.yAxisMax);
@@ -686,7 +713,9 @@ export const Main = defineWidget({
                   ? uPlot.paths.spline()
                   : uPlot.paths.linear?.(),
               points: {
-                show: series.points.length <= 24,
+                // Dense telemetry should read as a continuous signal. The cursor marker and
+                // tooltip still identify the hovered sample without drawing every sample dot.
+                show: false,
                 size: Math.max(4, Math.round(6 * scale)),
                 width: 2,
                 stroke: currentLineColor,

@@ -30,6 +30,17 @@ function Harness({
   );
 }
 
+function OptionalHarness() {
+  const [value, setValue] = useState<number | undefined>(12);
+
+  return (
+    <div>
+      <NumericInput value={value} onValueChange={setValue} allowEmpty />
+      <output data-testid="optional-value">{value === undefined ? 'automatic' : value}</output>
+    </div>
+  );
+}
+
 describe('NumericInput', () => {
   reactActEnvironment.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -99,5 +110,26 @@ describe('NumericInput', () => {
       Simulate.blur(input);
     });
     expect(input.value).toBe('1');
+  });
+
+  it('commits an empty optional value instead of replacing it with zero', () => {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    root = createRoot(container);
+
+    act(() => {
+      root?.render(<OptionalHarness />);
+    });
+
+    const input = container.querySelector('input') as HTMLInputElement;
+    const committedValue = container.querySelector('[data-testid="optional-value"]');
+
+    act(() => {
+      Simulate.focus(input);
+      Simulate.change(input, { target: { value: '' } } as any);
+    });
+
+    expect(input.value).toBe('');
+    expect(committedValue?.textContent).toBe('automatic');
   });
 });

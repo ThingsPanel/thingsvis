@@ -122,6 +122,8 @@ export const ControlFieldSchema = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   step: z.number().optional(),
+  /** 允许数字输入保持为空；清空时写入 null，适用于“空值表示自动”等配置。 */
+  allowEmpty: z.boolean().optional(),
 });
 export type ControlField = z.infer<typeof ControlFieldSchema>;
 

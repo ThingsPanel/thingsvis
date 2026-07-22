@@ -87,7 +87,19 @@ describe('chart/uplot-line widget', () => {
     });
 
     const opts = UPlotMock.lastOpts as {
-      axes: Array<{ grid?: { show?: boolean; dash?: number[] }; ticks?: { width?: number } }>;
+      padding?: number[];
+      scales?: {
+        y?: {
+          auto?: boolean;
+          range?: (self: unknown, min: number, max: number) => [number, number];
+        };
+      };
+      axes: Array<{
+        grid?: { show?: boolean; dash?: number[] };
+        ticks?: { width?: number };
+        gap?: number;
+        size?: number | ((self: unknown, values: string[]) => number);
+      }>;
       series: Array<{
         fill?: string;
         paths?: unknown;
@@ -97,6 +109,13 @@ describe('chart/uplot-line widget', () => {
 
     expect(Main.defaultProps.showArea).toBe(false);
     expect(Main.defaultProps.smooth).toBe(false);
+    expect(Main.defaultProps.lineWidth).toBe(1.5);
+    expect(Main.defaultProps.yAxisMin).toBeNull();
+    expect(Main.defaultProps.yAxisMax).toBeNull();
+    const minimumControl = Main.controls.groups
+      .flatMap((group) => group.fields)
+      .find((field) => field.path === 'yAxisMin');
+    expect(minimumControl).toMatchObject({ allowEmpty: true });
     expect(
       Main.controls.groups
         .flatMap((group) => group.fields)
@@ -105,10 +124,61 @@ describe('chart/uplot-line widget', () => {
     expect(opts.axes[0]?.grid?.show).toBe(false);
     expect(opts.axes[1]?.grid?.dash).toBeUndefined();
     expect(opts.axes[1]?.ticks?.width).toBe(1);
+    expect(opts.padding?.[0]).toBeLessThanOrEqual(6);
+    expect(opts.axes[0]?.gap).toBeGreaterThanOrEqual(3);
+    expect(typeof opts.axes[1]?.size).toBe('function');
+    const yAxisSize = opts.axes[1]?.size as (self: unknown, values: string[]) => number;
+    expect(yAxisSize(null, ['0', '25', '50'])).toBeLessThan(50);
     expect(opts.series[1]?.fill).toBeUndefined();
-    expect(opts.series[1]?.points).toMatchObject({ show: true, fill: '#ffffff', width: 2 });
+    expect(opts.series[1]?.points).toMatchObject({ show: false, fill: '#ffffff', width: 2 });
+
+    expect(opts.scales?.y?.auto).toBe(true);
+    expect(opts.scales?.y?.range?.(null, 12, 48)).toEqual([12, 48]);
 
     harness.destroy();
+  });
+
+  it('provides a dense 24-hour standalone preview with 5-minute samples', async () => {
+    const { default: Main } = await import('./src/index');
+    const previewData = Main.standaloneDefaults?.data as Array<{
+      timestamp: string;
+      value: number;
+    }>;
+
+    expect(previewData).toHaveLength(288);
+    expect(Date.parse(previewData[1]!.timestamp) - Date.parse(previewData[0]!.timestamp)).toBe(
+      5 * 60 * 1000,
+    );
+    expect(new Set(previewData.map((point) => point.value)).size).toBeGreaterThan(100);
+  });
+
+  it('applies lower-only, upper-only and fixed Y-axis ranges', async () => {
+    const { default: Main } = await import('./src/index');
+    const renderWithBounds = (yAxisMin?: number, yAxisMax?: number) => {
+      const harness = mountWidget(Main, {
+        locale: 'en',
+        props: {
+          yAxisMin,
+          yAxisMax,
+          data: [
+            { timestamp: '2026-01-01T00:00:00Z', value: 18 },
+            { timestamp: '2026-01-01T01:00:00Z', value: 22 },
+          ],
+        },
+      });
+      const range = (
+        UPlotMock.lastOpts as {
+          scales: { y: { range: (self: unknown, min: number, max: number) => [number, number] } };
+        }
+      ).scales.y.range;
+      const result = range(null, 18, 22);
+      harness.destroy();
+      return result;
+    };
+
+    expect(renderWithBounds(0, undefined)).toEqual([0, 22]);
+    expect(renderWithBounds(undefined, 30)).toEqual([18, 30]);
+    expect(renderWithBounds(0, 50)).toEqual([0, 50]);
   });
 
   it('does not apply the legacy component time range on top of bound history data', async () => {

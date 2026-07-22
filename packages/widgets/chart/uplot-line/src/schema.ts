@@ -19,13 +19,13 @@ export const PropsSchema = z
     showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 
     /** Y 轴最小值（空=自动）；标签与说明见 controls overrides */
-    yAxisMin: z.number().optional(),
+    yAxisMin: z.number().nullable().default(null),
 
     /** Y 轴最大值（空=自动）；标签与说明见 controls overrides */
-    yAxisMax: z.number().optional(),
+    yAxisMax: z.number().nullable().default(null),
 
     /** 线条宽度 */
-    lineWidth: z.number().min(1).max(10).default(2).describe('props.lineWidth'),
+    lineWidth: z.number().min(1).max(10).default(1.5).describe('props.lineWidth'),
 
     /** 是否显示面积填充 */
     showArea: z.boolean().default(false).describe('props.showArea'),
