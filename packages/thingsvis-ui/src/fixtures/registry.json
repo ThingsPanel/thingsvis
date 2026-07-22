@@ -492,6 +492,31 @@
         "minHeight": 80
       }
     },
+    "chart/realtime-history-curve": {
+      "remoteName": "thingsvis_widget_chart_realtime_history_curve",
+      "remoteEntryUrl": "http://localhost:3240/remoteEntry.js",
+      "staticEntryUrl": "/widgets/chart/realtime-history-curve/dist/remoteEntry.js",
+      "debugSource": "static",
+      "exposedModule": "./Main",
+      "version": "1.0.0",
+      "icon": "ChartNoAxesCombined",
+      "name": "历史曲线",
+      "i18n": {
+        "zh": "历史曲线",
+        "en": "Real-time / Historical Curve"
+      },
+      "category": "charts",
+      "displayCategory": "charts",
+      "description": "设备遥测历史查询、实时追加与趋势分析曲线",
+      "defaultSize": {
+        "width": 720,
+        "height": 380
+      },
+      "constraints": {
+        "minWidth": 360,
+        "minHeight": 220
+      }
+    },
     "chart/uplot-line": {
       "remoteName": "thingsvis_widget_chart_uplot_line",
       "remoteEntryUrl": "http://localhost:3209/remoteEntry.js",

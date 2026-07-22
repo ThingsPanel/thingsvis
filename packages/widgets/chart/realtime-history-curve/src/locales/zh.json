@@ -1,0 +1,10 @@
+{
+  "runtime": {
+    "empty": "请选择设备和指标字段",
+    "loading": "正在查询历史数据…",
+    "noData": "当前时间范围内没有数据",
+    "error": "历史数据查询失败",
+    "export": "导出 CSV",
+    "noVariables": "未收到平台 API 地址或令牌"
+  }
+}

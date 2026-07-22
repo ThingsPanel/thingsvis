@@ -1,0 +1,10 @@
+{
+  "runtime": {
+    "empty": "Select a device and telemetry metrics",
+    "loading": "Loading historical data…",
+    "noData": "No data in the selected time range",
+    "error": "Failed to load historical data",
+    "export": "Export CSV",
+    "noVariables": "Platform API URL or token is unavailable"
+  }
+}

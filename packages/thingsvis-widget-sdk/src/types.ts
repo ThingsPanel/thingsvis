@@ -60,6 +60,8 @@ export type WidgetOverlayContext = SchemaOverlayContext & {
   id?: string;
   /** 组件类型标识 */
   type?: string;
+  /** Runtime-only host variables. Secrets are never persisted in widget props. */
+  variables?: Record<string, unknown>;
   /** Node-level visual style forwarded by the host. */
   baseStyle?: {
     background?: {

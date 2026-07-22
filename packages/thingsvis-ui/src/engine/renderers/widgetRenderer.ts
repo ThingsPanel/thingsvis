@@ -70,6 +70,7 @@ function nodeToOverlayContext(
     position: schema.position,
     size: schema.size,
     props: resolvedProps,
+    variables: ((store.getState() as any).variableValues ?? {}) as Record<string, unknown>,
     baseStyle: schema.baseStyle,
     mode,
     locale: opts?.locale ?? 'en',

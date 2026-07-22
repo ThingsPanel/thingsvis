@@ -109,6 +109,7 @@ function buildOverlayContext(
         position: { x: pixelRect.x, y: pixelRect.y },
         size: { width: pixelRect.width, height: pixelRect.height },
         props: resolvedProps,
+        variables: ((state as Record<string, unknown>).variableValues ?? {}) as Record<string, unknown>,
         baseStyle: node.schemaRef.baseStyle,
         theme,
         mode,

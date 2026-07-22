@@ -149,6 +149,7 @@ export const COMPONENT_ORDER = [
   'chart/echarts-line',
   'chart/echarts-pie',
   'chart/uplot-line',
+  'chart/realtime-history-curve',
   'chart/echarts-gauge',
   'media/image',
   'media/video-player',

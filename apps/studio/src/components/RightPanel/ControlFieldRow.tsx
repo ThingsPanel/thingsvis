@@ -11,6 +11,7 @@ import { IconPicker } from './IconPicker';
 import { LocalIconField } from './LocalIconField';
 import ImageSourceInput from './ImageSourceInput';
 import ModelSourceInput from './ModelSourceInput';
+import { RealtimeHistoryConfigEditor } from './RealtimeHistoryConfigEditor';
 import { ColorInput } from '@/components/ui/color-input';
 import { resolveControlText } from '@/lib/i18n/controlText';
 import {
@@ -579,35 +580,37 @@ export function ControlFieldRow({
 
   return (
     <div className="space-y-1.5 relative group/field">
-      <div className="flex items-center justify-between gap-2">
-        <label
-          className={`text-sm font-medium text-muted-foreground truncate flex-1${fieldDescription ? ' cursor-help' : ''}`}
-          title={labelHoverTitle}
-        >
-          {fieldLabel}
-        </label>
-
-        {modes.length > 1 && (
-          <select
-            value={mode}
-            onChange={(e) => handleModeChange(e.target.value as BindingMode)}
-            className="appearance-none h-6 px-2.5 pr-6 text-[11px] font-medium rounded border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset transition-colors"
-            title="Binding Mode"
-            style={{
-              backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 6px center',
-              backgroundSize: '12px',
-            }}
+      {field.kind !== 'timeSeriesConfig' && (
+        <div className="flex items-center justify-between gap-2">
+          <label
+            className={`text-sm font-medium text-muted-foreground truncate flex-1${fieldDescription ? ' cursor-help' : ''}`}
+            title={labelHoverTitle}
           >
-            {modes.map((m) => (
-              <option key={m} value={m} className="font-medium bg-background text-foreground">
-                {modeLabel(m)}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
+            {fieldLabel}
+          </label>
+
+          {modes.length > 1 && (
+            <select
+              value={mode}
+              onChange={(e) => handleModeChange(e.target.value as BindingMode)}
+              className="appearance-none h-6 px-2.5 pr-6 text-[11px] font-medium rounded border border-border bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset transition-colors"
+              title="Binding Mode"
+              style={{
+                backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                backgroundSize: '12px',
+              }}
+            >
+              {modes.map((m) => (
+                <option key={m} value={m} className="font-medium bg-background text-foreground">
+                  {modeLabel(m)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      )}
 
       <div className="w-full min-w-0 flex flex-col justify-center">
         {mode === 'static' && (
@@ -843,6 +846,10 @@ export function ControlFieldRow({
               <Model3dPipeRulesEditor value={propsValue} onChange={setStatic} />
             )}
 
+            {field.kind === 'timeSeriesConfig' && (
+              <RealtimeHistoryConfigEditor value={propsValue} onChange={setStatic} />
+            )}
+
             {/* Fallback for unknown kinds */}
             {![
               'string',
@@ -861,6 +868,7 @@ export function ControlFieldRow({
               'localIcon',
               'model3dLabels',
               'model3dPipeRules',
+              'timeSeriesConfig',
             ].includes(field.kind) && (
               <Input
                 value={propsValue === undefined ? '' : String(propsValue)}

@@ -68,6 +68,8 @@ export const ControlKindSchema = z.enum([
   // 3D
   'model3dLabels',
   'model3dPipeRules',
+  // IoT time-series domain editor
+  'timeSeriesConfig',
 ]);
 export type ControlKind = z.infer<typeof ControlKindSchema>;
 

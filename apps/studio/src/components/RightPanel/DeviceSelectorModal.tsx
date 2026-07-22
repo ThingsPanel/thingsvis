@@ -194,6 +194,15 @@ export function DeviceSelectorModal({
   const activeReqRef = useRef('');
   const activeFilterReqRef = useRef('');
   const activeGroupReqRef = useRef('');
+  const onGroupChangeRef = useRef(onGroupChange);
+  const onGroupsLoadedRef = useRef(onGroupsLoaded);
+  const onDevicesLoadedRef = useRef(onDevicesLoaded);
+
+  useEffect(() => {
+    onGroupChangeRef.current = onGroupChange;
+    onGroupsLoadedRef.current = onGroupsLoaded;
+    onDevicesLoadedRef.current = onDevicesLoaded;
+  }, [onDevicesLoaded, onGroupChange, onGroupsLoaded]);
 
   const visibleGroups = useMemo(() => {
     const normalized = groups.map((group) => ({
@@ -215,8 +224,8 @@ export function DeviceSelectorModal({
   useEffect(() => {
     if (!open) return;
     if (selectedGroupId && visibleGroupIds.has(selectedGroupId)) return;
-    onGroupChange(ALL_GROUP_ID);
-  }, [onGroupChange, open, selectedGroupId, visibleGroupIds]);
+    onGroupChangeRef.current(ALL_GROUP_ID);
+  }, [open, selectedGroupId, visibleGroupIds]);
 
   useEffect(() => {
     if (!open) return;
@@ -240,12 +249,12 @@ export function DeviceSelectorModal({
 
       if (!Array.isArray(payload?.groups)) return;
       const nextGroups = normalizeIncomingGroups(payload.groups);
-      onGroupsLoaded?.(nextGroups);
+      onGroupsLoadedRef.current?.(nextGroups);
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [onGroupsLoaded, open]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -316,7 +325,7 @@ export function DeviceSelectorModal({
       const nextDevices = Array.isArray(payload.devices) ? payload.devices : [];
       setDevices(nextDevices);
       setTotal(typeof payload.total === 'number' ? payload.total : 0);
-      onDevicesLoaded(groupId, nextDevices);
+      onDevicesLoadedRef.current(groupId, nextDevices);
       setLoading(false);
     };
 
@@ -332,7 +341,6 @@ export function DeviceSelectorModal({
     groupId,
     isOnline,
     keyword,
-    onDevicesLoaded,
     open,
     page,
     serviceIdentifier,

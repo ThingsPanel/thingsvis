@@ -46,6 +46,8 @@ export type WidgetOverlayContext = {
   position?: { x: number; y: number };
   size?: { width: number; height: number };
   props?: Record<string, unknown>;
+  /** Runtime-only variables supplied by the host (API base URL, token, device context, etc.). */
+  variables?: Record<string, unknown>;
   baseStyle?: IBaseStyle;
   theme?: string;
   /** 当前语言 (e.g. 'zh', 'en') */

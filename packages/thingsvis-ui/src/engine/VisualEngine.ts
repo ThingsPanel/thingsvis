@@ -970,6 +970,7 @@ export class VisualEngine {
           const contextWithLinks = {
             ...node,
             linkedNodes,
+            variables: ((this.store.getState() as any).variableValues ?? {}) as Record<string, unknown>,
             theme: (this.store.getState().page as any)?.config?.theme || 'dawn',
             mode: (this.opts?.editable !== false ? 'edit' : 'view') as 'edit' | 'view',
             locale: this.opts?.locale ?? 'en',
@@ -1254,7 +1255,12 @@ export class VisualEngine {
 
         if (propsKey !== lastPropsKey) {
           this.lastNodePropsCache.set(node.id, propsKey);
-          const contextWithLinks = { ...node, linkedNodes, theme: canvasTheme };
+          const contextWithLinks = {
+            ...node,
+            linkedNodes,
+            theme: canvasTheme,
+            variables: ((this.store.getState() as any).variableValues ?? {}) as Record<string, unknown>,
+          };
           existing.renderer.updateOverlay(existing.overlayInst as any, contextWithLinks);
         }
 
