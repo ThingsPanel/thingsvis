@@ -187,6 +187,36 @@ describe('E2E-03: 历史数据回填', () => {
       { value: 25.3, ts: 1710316920000 },
     ]);
   });
+
+  it('preserves the full explicit history query beyond the realtime buffer size', async () => {
+    const history = Array.from({ length: 150 }, (_, index) => ({
+      value: index,
+      ts: 1710316800000 + index * 300000,
+    }));
+
+    simulateHostMessage({
+      type: 'tv:platform-history',
+      payload: { fieldId: 'temperature', history, bufferLimit: history.length },
+    });
+    await flushMicro();
+
+    expect(emittedData.temperature__history).toHaveLength(150);
+    expect((emittedData.temperature__history as typeof history)[0]?.value).toBe(0);
+
+    simulateHostMessage({
+      type: 'tv:platform-data',
+      payload: {
+        fieldId: 'temperature',
+        value: 150,
+        timestamp: 1710316800000 + 150 * 300000,
+      },
+    });
+    await flushMicro();
+
+    expect(emittedData.temperature__history).toHaveLength(150);
+    expect((emittedData.temperature__history as typeof history)[0]?.value).toBe(1);
+    expect((emittedData.temperature__history as typeof history).at(-1)?.value).toBe(150);
+  });
 });
 
 describe('E2E-08~09: 旧格式向后兼容', () => {

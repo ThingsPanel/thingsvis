@@ -46,10 +46,13 @@ describe('chart/uplot-line widget', () => {
       return 1;
     });
     vi.stubGlobal('cancelAnimationFrame', vi.fn());
-    vi.stubGlobal('ResizeObserver', class {
-      observe() {}
-      disconnect() {}
-    });
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
   });
 
   afterEach(() => {
@@ -71,6 +74,62 @@ describe('chart/uplot-line widget', () => {
     harness.destroy();
   });
 
+  it('matches the generic ECharts line defaults for line, fill, points and grid', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        data: [
+          { timestamp: '2026-01-01T00:00:00Z', value: 18 },
+          { timestamp: '2026-01-01T01:00:00Z', value: 22 },
+        ],
+      },
+    });
+
+    const opts = UPlotMock.lastOpts as {
+      axes: Array<{ grid?: { show?: boolean; dash?: number[] }; ticks?: { width?: number } }>;
+      series: Array<{
+        fill?: string;
+        paths?: unknown;
+        points?: { show?: boolean; fill?: string; width?: number };
+      }>;
+    };
+
+    expect(Main.defaultProps.showArea).toBe(false);
+    expect(Main.defaultProps.smooth).toBe(false);
+    expect(
+      Main.controls.groups
+        .flatMap((group) => group.fields)
+        .some((field) => field.path === 'timeRangePreset'),
+    ).toBe(false);
+    expect(opts.axes[0]?.grid?.show).toBe(false);
+    expect(opts.axes[1]?.grid?.dash).toBeUndefined();
+    expect(opts.axes[1]?.ticks?.width).toBe(1);
+    expect(opts.series[1]?.fill).toBeUndefined();
+    expect(opts.series[1]?.points).toMatchObject({ show: true, fill: '#ffffff', width: 2 });
+
+    harness.destroy();
+  });
+
+  it('does not apply the legacy component time range on top of bound history data', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        timeRangePreset: '1h',
+        data: [
+          { timestamp: '2026-01-01T00:00:00Z', value: 18 },
+          { timestamp: '2026-01-01T10:00:00Z', value: 22 },
+        ],
+      },
+    });
+
+    const data = UPlotMock.lastData as [number[], number[]];
+    expect(data[0]).toHaveLength(2);
+    expect(data[1]).toEqual([18, 22]);
+    harness.destroy();
+  });
+
   it('expands a single valid time-series point before handing data to uPlot', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
@@ -81,7 +140,10 @@ describe('chart/uplot-line widget', () => {
     });
 
     const data = UPlotMock.lastData as [number[], number[]];
-    const opts = UPlotMock.lastOpts as { legend?: { show?: boolean }; series: Array<{ label?: string }> };
+    const opts = UPlotMock.lastOpts as {
+      legend?: { show?: boolean };
+      series: Array<{ label?: string }>;
+    };
 
     expect(data[0]).toHaveLength(2);
     expect(data[1]).toEqual([18, 18]);
@@ -139,7 +201,10 @@ describe('chart/uplot-line widget', () => {
     });
 
     const data = UPlotMock.lastData as [number[], number[], number[]];
-    const opts = UPlotMock.lastOpts as { legend?: { show?: boolean }; series: Array<{ label?: string }> };
+    const opts = UPlotMock.lastOpts as {
+      legend?: { show?: boolean };
+      series: Array<{ label?: string }>;
+    };
 
     expect(data).toHaveLength(3);
     expect(data[1]).toEqual([18, 22]);

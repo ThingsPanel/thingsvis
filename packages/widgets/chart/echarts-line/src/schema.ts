@@ -26,6 +26,11 @@ export const PropsSchema = z.object({
   /** 显示X轴刻度 */
   showXAxis: z.boolean().default(true).describe('props.showXAxis'),
 
+  timeFormat: z
+    .enum(['auto', 'HH:mm', 'MM-dd HH:mm', 'yyyy-MM-dd', 'yyyy-MM-dd HH:mm:ss'])
+    .default('auto')
+    .describe('props.timeFormat'),
+
   /** 显示Y轴刻度 */
   showYAxis: z.boolean().default(true).describe('props.showYAxis'),
 

@@ -4,6 +4,7 @@
       "thingsvis-widget-chart-echarts-line": {
         "name": "Line Chart",
         "controls": {
+          "timeFormat": "Time Format",
           "title": "Chart Title",
           "titleAlign": "Title Alignment",
           "showLegend": "Show Legend",

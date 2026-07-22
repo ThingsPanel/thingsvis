@@ -44,6 +44,13 @@ type DeviceBindingKind = 'model' | 'status' | 'history' | 'alarmStatus';
 const ALL_DEVICE_GROUP_ID = '__all__';
 
 const HISTORY_FIELD_SUFFIX = '__history';
+const HISTORY_AGGREGATE_WINDOW: Record<string, string> = {
+  last_15m: 'no_aggregate',
+  last_1h: '30s',
+  last_24h: '5m',
+  last_7d: '30m',
+  last_30d: '3h',
+};
 const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
   'device_alarm_active',
   'device_alarm_count',
@@ -92,6 +99,34 @@ type Props = {
   maxDepth?: number;
   maxNodes?: number;
 };
+
+function normalizeHistoryRows(payload: unknown): Array<{ value: unknown; ts: number }> {
+  const root = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+  const data = root.data && typeof root.data === 'object' ? root.data : root;
+  const rows = Array.isArray(data)
+    ? data
+    : Array.isArray((data as Record<string, unknown>).time_series)
+      ? ((data as Record<string, unknown>).time_series as unknown[])
+      : [];
+
+  return rows
+    .map((row) => {
+      const record = row && typeof row === 'object' ? (row as Record<string, unknown>) : {};
+      const rawTime = record.x ?? record.ts ?? record.time ?? record.timestamp;
+      const numericTime = Number(rawTime);
+      const parsedTime = Number.isFinite(numericTime)
+        ? numericTime > 1e11
+          ? numericTime
+          : numericTime * 1000
+        : Date.parse(String(rawTime ?? ''));
+      return {
+        value: record.y ?? record.value,
+        ts: parsedTime,
+      };
+    })
+    .filter((row) => Number.isFinite(row.ts))
+    .sort((a, b) => a.ts - b.ts);
+}
 
 /** Safely evaluate a transform snippet against a value and full DS snapshot. Returns undefined on error. */
 function applyTransform(
@@ -526,6 +561,7 @@ export function FieldPicker({
   /** Draft code while the dialog is open — only committed on Apply */
   const [draftCode, setDraftCode] = useState('');
   const transformTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const historyPreviewRequestRef = useRef<AbortController | null>(null);
   const invalidHistoryResetKeyRef = useRef<string | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const [selectedPlatformGroupId, setSelectedPlatformGroupId] = useState('');
@@ -1211,7 +1247,78 @@ export function FieldPicker({
       historyConfig?: FieldPickerValue['historyConfig'],
     ) => {
       const fieldId = getRequestedFieldId(fieldPath);
-      if (!fieldId || window.parent === window) return;
+      if (!fieldId) return;
+
+      const deviceId = parseDeviceDataSourceId(dataSourceId);
+      if (historyConfig && deviceId) {
+        const metricKey = fieldId.endsWith(HISTORY_FIELD_SUFFIX)
+          ? fieldId.slice(0, -HISTORY_FIELD_SUFFIX.length)
+          : fieldId;
+        historyPreviewRequestRef.current?.abort();
+        const controller = new AbortController();
+        historyPreviewRequestRef.current = controller;
+
+        void (async () => {
+          try {
+            const variables = kernelStore.getState().variableValues;
+            const baseUrl = String(variables.platformApiBaseUrl || '/proxy-default').replace(
+              /\/$/,
+              '',
+            );
+            const token = String(variables.platformToken || '');
+            const aggregateWindow =
+              HISTORY_AGGREGATE_WINDOW[historyConfig.timeRange] ?? 'no_aggregate';
+            const params = new URLSearchParams({
+              device_id: deviceId,
+              key: metricKey,
+              time_range: historyConfig.timeRange,
+              aggregate_window: aggregateWindow,
+            });
+            if (aggregateWindow !== 'no_aggregate') {
+              params.set('aggregate_function', 'avg');
+            }
+
+            const response = await fetch(`${baseUrl}/telemetry/datas/statistic?${params}`, {
+              signal: controller.signal,
+              headers: token ? { 'x-token': token } : {},
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const payload = await response.json();
+            if (
+              payload &&
+              typeof payload === 'object' &&
+              typeof payload.code === 'number' &&
+              payload.code !== 200
+            ) {
+              throw new Error(
+                typeof payload.message === 'string' ? payload.message : `API ${payload.code}`,
+              );
+            }
+
+            const history = normalizeHistoryRows(payload);
+
+            window.postMessage(
+              {
+                type: 'tv:platform-history',
+                payload: {
+                  deviceId,
+                  fieldId: metricKey,
+                  history,
+                  bufferLimit: history.length,
+                },
+              },
+              '*',
+            );
+          } catch (error) {
+            if ((error as Error).name !== 'AbortError') {
+              console.error('[FieldPicker] Failed to query telemetry history:', error);
+            }
+          }
+        })();
+        return;
+      }
+
+      if (window.parent === window) return;
 
       window.parent.postMessage(
         {
@@ -1226,8 +1333,22 @@ export function FieldPicker({
         '*',
       );
     },
-    [],
+    [kernelStore],
   );
+
+  useEffect(() => {
+    if (deviceBindingKind !== 'history') return;
+    if (!effectiveDataSourceId || !selectedFieldPathForPicker) return;
+    requestFieldPreview(effectiveDataSourceId, selectedFieldPathForPicker, {
+      timeRange: selectedHistoryConfig?.timeRange ?? 'last_30d',
+    });
+  }, [
+    deviceBindingKind,
+    effectiveDataSourceId,
+    requestFieldPreview,
+    selectedFieldPathForPicker,
+    selectedHistoryConfig?.timeRange,
+  ]);
 
   const handleDevicesLoaded = useCallback((groupId: string, devices: PlatformDevice[]) => {
     usePlatformDeviceStore.getState().setDevicesForGroup(groupId, devices);
@@ -1318,7 +1439,6 @@ export function FieldPicker({
       transform: selectedTransform || undefined,
       historyConfig: nextHistoryConfig,
     });
-    requestFieldPreview(effectiveDataSourceId, selectedFieldPathForPicker, nextHistoryConfig);
   };
 
   return (
@@ -1538,7 +1658,9 @@ export function FieldPicker({
               requestFieldPreview(
                 effectiveDataSourceId,
                 nextPath,
-                deviceBindingKind === 'history' ? selectedHistoryConfig : undefined,
+                deviceBindingKind === 'history'
+                  ? (selectedHistoryConfig ?? { timeRange: 'last_30d' })
+                  : undefined,
               );
             }
             safeOnChange(

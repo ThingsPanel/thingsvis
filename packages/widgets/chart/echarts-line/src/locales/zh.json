@@ -4,6 +4,7 @@
       "thingsvis-widget-chart-echarts-line": {
         "name": "折线图",
         "controls": {
+          "timeFormat": "时间格式",
           "title": "图表标题",
           "titleAlign": "标题对齐",
           "showLegend": "显示图例",

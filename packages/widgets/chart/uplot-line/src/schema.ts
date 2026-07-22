@@ -1,7 +1,8 @@
 import { z } from 'zod';
 import { ChartAxisFontMixin } from '@thingsvis/widget-sdk';
 
-export const PropsSchema = z.object({
+export const PropsSchema = z
+  .object({
     /** 主色调 */
     primaryColor: z.string().default('').describe('props.primaryColor'),
 
@@ -27,23 +28,27 @@ export const PropsSchema = z.object({
     lineWidth: z.number().min(1).max(10).default(2).describe('props.lineWidth'),
 
     /** 是否显示面积填充 */
-    showArea: z.boolean().default(true).describe('props.showArea'),
+    showArea: z.boolean().default(false).describe('props.showArea'),
 
     /** 面积填充透明度 */
     areaFillAlpha: z.number().min(0).max(1).default(0.18).describe('props.areaFillAlpha'),
 
     /** 是否平滑曲线 */
-    smooth: z.boolean().default(true).describe('props.smoothCurve'),
+    smooth: z.boolean().default(false).describe('props.smoothCurve'),
 
     /** 时间范围 */
-    timeRangePreset: z.enum(['all', '1h', '6h', '24h', '7d', '30d']).default('all').describe('props.timeRangePreset'),
+    timeRangePreset: z
+      .enum(['all', '1h', '6h', '24h', '7d', '30d'])
+      .default('all')
+      .describe('props.timeRangePreset'),
 
     /** 数据集 - uPlot requires precise format, but we accept ECharts style and convert it */
     data: z.array(z.any()).default([]).describe('props.dataset'),
-}).extend(ChartAxisFontMixin);
+  })
+  .extend(ChartAxisFontMixin);
 
 export type Props = z.infer<typeof PropsSchema>;
 
 export function getDefaultProps(): Props {
-    return PropsSchema.parse({});
+  return PropsSchema.parse({});
 }

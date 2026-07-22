@@ -59,6 +59,7 @@ describe('FieldPicker device fields', () => {
     await act(async () => root.unmount());
     container.remove();
     platformDeviceStore.clearDevices();
+    vi.unstubAllGlobals();
     if (parentDescriptor) Object.defineProperty(window, 'parent', parentDescriptor);
   });
 
@@ -216,6 +217,69 @@ describe('FieldPicker device fields', () => {
     expect(fieldOptionValues()).toContain('temperature__history');
     expect(fieldOptionValues()).not.toEqual(
       expect.arrayContaining(['state__history', 'threshold__history']),
+    );
+  });
+
+  it('queries telemetry history again when the history time range changes', async () => {
+    platformDeviceStore.setDevices([
+      {
+        deviceId: 'history-device',
+        deviceName: 'History device',
+        groupId: 'group-1',
+        fields: [{ id: 'temperature', name: 'Temperature', type: 'number', dataType: 'telemetry' }],
+      },
+    ]);
+    store.getState().setVariableValue('platformApiBaseUrl', '/proxy-default');
+    store.getState().setVariableValue('platformToken', 'test-token');
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        code: 200,
+        data: [{ x: 1_784_705_581_289, y: 12.5 }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const onChange = vi.fn();
+
+    await renderPicker(
+      {
+        dataSourceId: '__platform_history-device__',
+        fieldPath: 'temperature__history',
+        historyConfig: { timeRange: 'last_15m' },
+      },
+      'json',
+      onChange,
+    );
+
+    const rangeSelect = Array.from(container.querySelectorAll('select')).find((select) =>
+      select.querySelector('option[value="last_1h"]'),
+    );
+    expect(rangeSelect).toBeDefined();
+
+    await act(async () => {
+      if (!rangeSelect) return;
+      rangeSelect.value = 'last_1h';
+      rangeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      await Promise.resolve();
+    });
+    await renderPicker(
+      {
+        dataSourceId: '__platform_history-device__',
+        fieldPath: 'temperature__history',
+        historyConfig: { timeRange: 'last_1h' },
+      },
+      'json',
+      onChange,
+    );
+
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ historyConfig: { timeRange: 'last_1h' } }),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining(
+        '/proxy-default/telemetry/datas/statistic?device_id=history-device&key=temperature&time_range=last_1h&aggregate_window=30s&aggregate_function=avg',
+      ),
+      expect.objectContaining({ headers: { 'x-token': 'test-token' } }),
     );
   });
 

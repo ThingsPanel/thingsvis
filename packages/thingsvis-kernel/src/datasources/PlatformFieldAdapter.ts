@@ -12,6 +12,7 @@ export class PlatformFieldAdapter extends BaseAdapter {
   private platformDataCache: Map<string, { value: unknown; timestamp: number }> = new Map();
   /** Rolling time-series buffers — populated only when bufferSize > 0. */
   private dataBuffers: Map<string, Array<{ value: unknown; ts: number }>> = new Map();
+  private historyBufferLimits: Map<string, number> = new Map();
   private messageListener: ((event: MessageEvent) => void) | null = null;
   private pendingWrites = new Map<
     string,
@@ -56,10 +57,11 @@ export class PlatformFieldAdapter extends BaseAdapter {
 
       // ── Bulk history pre-fill ────────────────────────────────────────────────
       if (msgType === 'tv:platform-history') {
-        const { fieldId, history, deviceId } = event.data.payload as {
+        const { fieldId, history, deviceId, bufferLimit } = event.data.payload as {
           fieldId: string;
           history: Array<{ value: unknown; ts: number }>;
           deviceId?: string;
+          bufferLimit?: number;
         };
         // 若 Adapter 配置了专属 deviceId，但消息中的 deviceId 不匹配，忽略该消息
         const historyPlatformConfig = this.config?.config as PlatformFieldConfig | undefined;
@@ -76,8 +78,14 @@ export class PlatformFieldAdapter extends BaseAdapter {
 
         const bufferSize = historyPlatformConfig?.bufferSize ?? 0;
         if (bufferSize > 0) {
-          // Retain at most the last bufferSize entries (oldest entries are dropped).
-          const merged = history.slice(-bufferSize).map((item) => ({
+          const requestedLimit =
+            typeof bufferLimit === 'number' && Number.isFinite(bufferLimit)
+              ? Math.max(0, Math.floor(bufferLimit))
+              : 0;
+          const effectiveLimit = Math.max(bufferSize, requestedLimit);
+          if (requestedLimit > 0) this.historyBufferLimits.set(fieldId, effectiveLimit);
+          else this.historyBufferLimits.delete(fieldId);
+          const merged = history.slice(-effectiveLimit).map((item) => ({
             value: item.value,
             ts: item.ts,
           }));
@@ -130,7 +138,10 @@ export class PlatformFieldAdapter extends BaseAdapter {
         this.platformDataCache.set(key, { value: val, timestamp: ts });
 
         // Ring buffer — only when configured
-        const bufferSize = platformConfig?.bufferSize ?? 0;
+        const bufferSize = Math.max(
+          platformConfig?.bufferSize ?? 0,
+          this.historyBufferLimits.get(key) ?? 0,
+        );
         if (bufferSize > 0) {
           const existingBuffer = this.dataBuffers.get(key);
           const buf = existingBuffer ? [...existingBuffer] : [];
@@ -395,5 +406,6 @@ export class PlatformFieldAdapter extends BaseAdapter {
     this.pendingWrites.clear();
     this.platformDataCache.clear();
     this.dataBuffers.clear();
+    this.historyBufferLimits.clear();
   }
 }

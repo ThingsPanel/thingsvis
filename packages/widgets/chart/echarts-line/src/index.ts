@@ -176,19 +176,29 @@ function parseTimestampMs(raw: unknown): number | null {
   return null;
 }
 
-function formatTimeLabel(timeMs: number, spanMs: number): string {
+function formatTimeLabel(timeMs: number, spanMs: number, format: Props['timeFormat']): string {
   const date = new Date(timeMs);
   if (!Number.isFinite(date.getTime())) return '';
 
-  const hh = String(date.getHours()).padStart(2, '0');
-  const mm = String(date.getMinutes()).padStart(2, '0');
-  if (spanMs <= 24 * 60 * 60 * 1000) {
-    return `${hh}:${mm}`;
-  }
-
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${month}-${day} ${hh}:${mm}`;
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const tokens: Record<string, string> = {
+    yyyy: String(date.getFullYear()),
+    MM: pad(date.getMonth() + 1),
+    dd: pad(date.getDate()),
+    HH: pad(date.getHours()),
+    mm: pad(date.getMinutes()),
+    ss: pad(date.getSeconds()),
+  };
+  const pattern: string =
+    format === 'auto'
+      ? spanMs <= 24 * 60 * 60 * 1000
+        ? 'HH:mm'
+        : 'MM-dd HH:mm'
+      : format;
+  return Object.entries(tokens).reduce<string>(
+    (result, [token, replacement]) => result.replace(token, replacement),
+    pattern,
+  );
 }
 
 function normalizeSingleLineData(
@@ -348,8 +358,8 @@ function buildOption(
     smooth,
     showArea,
     showXAxis,
+    timeFormat,
     showYAxis,
-    timeRangePreset,
     seriesName,
     xAxisFontSize,
     yAxisFontSize,
@@ -367,7 +377,9 @@ function buildOption(
   const xLabelFontSize = scaledChartFontSize(xAxisFontSize, scale);
   const yLabelFontSize = scaledChartFontSize(yAxisFontSize, scale);
   const legendTextFontSize = scaledChartFontSize(legendFontSize, scale);
-  const normalizedSeries = normalizeLineData(data, timeRangePreset);
+  // History/query range is owned by the bound data source. The legacy component preset is
+  // intentionally ignored so saved dashboards do not apply a second, hidden client-side filter.
+  const normalizedSeries = normalizeLineData(data, 'all');
   const multiSeries = normalizedSeries.length > 1;
   const showSeriesLegend = showLegend !== false && normalizedSeries.length > 0;
   const legendTopSpace = showSeriesLegend
@@ -378,7 +390,7 @@ function buildOption(
       ? normalized.timeData.length > 0
       : normalized.categoryData.length > 0,
   );
-  const emptyTimeWindow = getEmptyTimeWindow(timeRangePreset);
+  const emptyTimeWindow = getEmptyTimeWindow('all');
   const useEmptyTimeSkeleton = !hasData;
   const isTimeSeries =
     normalizedSeries.some(({ normalized }) => normalized.mode === 'time') || useEmptyTimeSkeleton;
@@ -432,6 +444,7 @@ function buildOption(
             formatTimeLabel(
               Number(value),
               hasData ? timeSeriesSpanMs : emptyTimeWindow.endMs - emptyTimeWindow.startMs,
+              timeFormat,
             ),
         },
         axisLine: { lineStyle: { color: splitLineColor } },

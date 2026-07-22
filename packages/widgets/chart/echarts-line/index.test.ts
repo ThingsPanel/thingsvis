@@ -55,12 +55,22 @@ describe('chart/echarts-line widget', () => {
     expect(latestOption?.legend?.show).toBe(true);
     expect(latestOption?.legend?.data).toEqual(['Value 1']);
     expect(latestOption?.xAxis?.type).toBe('category');
-    expect(latestOption?.xAxis?.boundaryGap).toBe(false);
+    expect(latestOption?.xAxis?.boundaryGap).toBe(true);
     expect(latestOption?.series?.[0]?.smooth).toBe(false);
     expect(latestOption?.series?.[0]?.showSymbol).toBe(true);
     expect(latestOption?.series?.[0]?.name).toBe('Value 1');
     expect(latestOption?.series?.[0]?.areaStyle).toBeUndefined();
     expect(typeof latestOption?.tooltip?.formatter).toBe('function');
+    expect(
+      Main.controls.groups
+        .flatMap((group) => group.fields)
+        .some((field) => field.path === 'timeRangePreset'),
+    ).toBe(false);
+    expect(
+      Main.controls.groups
+        .flatMap((group) => group.fields)
+        .some((field) => field.path === 'timeFormat'),
+    ).toBe(true);
 
     harness.destroy();
   });
@@ -93,7 +103,7 @@ describe('chart/echarts-line widget', () => {
     harness.destroy();
   });
 
-  it('uses boundaryGap false on category axis so the line spans edge to edge', async () => {
+  it('keeps half-category breathing room on category axes', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       locale: 'en',
@@ -109,7 +119,7 @@ describe('chart/echarts-line widget', () => {
     const latestOption = setOption.mock.calls.at(-1)?.[0];
 
     expect(latestOption?.xAxis?.type).toBe('category');
-    expect(latestOption?.xAxis?.boundaryGap).toBe(false);
+    expect(latestOption?.xAxis?.boundaryGap).toBe(true);
     expect(latestOption?.series?.[0]?.name).toBe('Value 1');
 
     const tooltipHtml = latestOption?.tooltip?.formatter?.([
@@ -238,6 +248,43 @@ describe('chart/echarts-line widget', () => {
     harness.destroy();
   });
 
+  it('does not apply the legacy component time range on top of bound history data', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        timeRangePreset: '1h',
+        data: [
+          { timestamp: '2026-01-01T00:00:00Z', value: 18 },
+          { timestamp: '2026-01-01T10:00:00Z', value: 22 },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.series?.[0]?.data).toHaveLength(2);
+    harness.destroy();
+  });
+
+  it('formats time-axis labels with the selected time format', async () => {
+    const { default: Main } = await import('./src/index');
+    const timestamp = new Date(2026, 6, 21, 8, 5, 9).getTime();
+    const harness = mountWidget(Main, {
+      locale: 'en',
+      props: {
+        timeFormat: 'yyyy-MM-dd HH:mm:ss',
+        data: [
+          { timestamp, value: 18 },
+          { timestamp: timestamp + 3600000, value: 22 },
+        ],
+      },
+    });
+    const latestOption = setOption.mock.calls.at(-1)?.[0];
+
+    expect(latestOption?.xAxis?.axisLabel?.formatter?.(timestamp)).toBe('2026-07-21 08:05:09');
+    harness.destroy();
+  });
+
   it('maps font size props to ECharts axisLabel and legend textStyle', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
@@ -252,9 +299,9 @@ describe('chart/echarts-line widget', () => {
     harness.update({});
     const latestOption = setOption.mock.calls.at(-1)?.[0];
 
-    expect(latestOption?.xAxis?.axisLabel?.fontSize).toBe(16);
-    expect(latestOption?.yAxis?.axisLabel?.fontSize).toBe(18);
-    expect(latestOption?.legend?.textStyle?.fontSize).toBe(14);
+    expect(latestOption?.xAxis?.axisLabel?.fontSize).toBe(17);
+    expect(latestOption?.yAxis?.axisLabel?.fontSize).toBe(19);
+    expect(latestOption?.legend?.textStyle?.fontSize).toBe(15);
 
     harness.destroy();
   });

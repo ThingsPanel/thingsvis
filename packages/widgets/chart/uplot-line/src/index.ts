@@ -20,11 +20,11 @@ import en from './locales/en.json';
 const localeCatalog = { zh, en } as const;
 
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
-const WIDGET_PADDING = 16;
+const WIDGET_PADDING = 6;
 /** Same numeric intent as echarts-bar `LEGEND_BLOCK_HEIGHT`. */
 const LEGEND_BLOCK_HEIGHT = 20;
-/** Gap between X-axis band (canvas bottom) and legend — half widget padding, same rhythm as echarts-bar spacing. */
-const LEGEND_AXIS_GAP_BASE = WIDGET_PADDING / 2;
+/** Keep the legend close to the plot, matching the compact ECharts line layout. */
+const LEGEND_AXIS_GAP_BASE = 4;
 
 /**
  * uPlot `opts.height` is only `.u-wrap` (canvas + axes). HTML legend stacks below — reserve bar-aligned
@@ -214,7 +214,9 @@ function normalizeLineSeries(
 
     if (seriesRecords.length > 0) {
       return seriesRecords.slice(0, 4).map((record, index) => {
-        const seriesData = (Array.isArray(record.data) ? record.data : record.values) as Props['data'];
+        const seriesData = (
+          Array.isArray(record.data) ? record.data : record.values
+        ) as Props['data'];
         return {
           name: String(record.name ?? record.label ?? record.seriesName ?? `Series ${index + 1}`),
           points: normalizeSeries(seriesData, timeRangePreset),
@@ -244,10 +246,7 @@ function ensureRenderableSeries(points: ParsedPoint[], fallbackRangeSec: number)
 
   const point = sorted[sorted.length - 1]!;
   const offsetSec = Math.max(60, Math.floor(fallbackRangeSec / 12));
-  return [
-    { tsSec: point.tsSec - offsetSec, value: point.value },
-    point,
-  ];
+  return [{ tsSec: point.tsSec - offsetSec, value: point.value }, point];
 }
 
 function ensureFiniteRange(min: number, max: number): [number, number] {
@@ -291,7 +290,11 @@ function pickLineColorByIndex(props: Props, colors: WidgetColors, index: number)
     return pickLineColor(props, colors);
   }
 
-  return colors.series[index] ?? colors.series[index % colors.series.length] ?? pickLineColor(props, colors);
+  return (
+    colors.series[index] ??
+    colors.series[index % colors.series.length] ??
+    pickLineColor(props, colors)
+  );
 }
 
 function pad2(value: number): string {
@@ -460,11 +463,11 @@ export const Main = defineWidget({
                 box-sizing: border-box;
             }
             [data-thingsvis-uplot-line] .u-legend {
-                margin: var(--uplot-legend-axis-gap, 8px) 0 0 !important;
+                margin: var(--uplot-legend-axis-gap, 4px) 0 0 !important;
                 padding: 0 !important;
                 width: 100%;
                 box-sizing: border-box;
-                text-align: center;
+                text-align: right;
                 font-family: Inter, "Noto Sans SC", "Noto Sans", sans-serif !important;
                 font-size: var(--uplot-legend-font-size, 12px) !important;
                 font-weight: 400 !important;
@@ -510,19 +513,21 @@ export const Main = defineWidget({
         chart = null;
       }
 
-      const fallbackRangeSec = getFallbackRangeSec(currentProps.timeRangePreset);
+      // The data binding/source owns the query range. Ignore the legacy component preset to
+      // avoid silently applying a second time-window filter to the returned history.
+      const displayRangePreset: Props['timeRangePreset'] = 'all';
+      const fallbackRangeSec = getFallbackRangeSec(displayRangePreset);
       const runtimeMessages = getRuntimeMessages(currentLocale);
-      const renderLineSeries = normalizeLineSeries(
-        currentProps.data,
-        currentProps.timeRangePreset,
-      ).map((series) => ({
-        ...series,
-        points: ensureRenderableSeries(series.points, fallbackRangeSec),
-      }));
+      const renderLineSeries = normalizeLineSeries(currentProps.data, displayRangePreset).map(
+        (series) => ({
+          ...series,
+          points: ensureRenderableSeries(series.points, fallbackRangeSec),
+        }),
+      );
       const hasData = renderLineSeries.some((series) => series.points.length > 0);
       const activeLineSeries = hasData
         ? renderLineSeries
-        : [{ name: '', points: buildPreviewSeries(currentProps.timeRangePreset) }];
+        : [{ name: '', points: buildPreviewSeries(displayRangePreset) }];
       const multiSeries = activeLineSeries.length > 1;
       const fallbackEndSec = Math.floor(Date.now() / 1000);
       const finalTimes = Array.from(
@@ -547,7 +552,12 @@ export const Main = defineWidget({
       const showX = currentProps.showXAxis !== false;
       const showY = currentProps.showYAxis !== false;
       const showLegend = shouldShowChartLegend(currentProps.showLegend, activeLineSeries.length);
-      const { width: rawPlotW, height: rawPlotH } = computeUplotInnerSize(cw, ch, showLegend, scale);
+      const { width: rawPlotW, height: rawPlotH } = computeUplotInnerSize(
+        cw,
+        ch,
+        showLegend,
+        scale,
+      );
       const plotW = Math.max(80, rawPlotW);
       const plotH = Math.max(48, rawPlotH);
 
@@ -592,7 +602,7 @@ export const Main = defineWidget({
 
       const padSide = Math.round(WIDGET_PADDING * scale);
       // Extra right inset so the last X tick label (e.g. "11:00") is not clipped by the canvas edge.
-      const padRight = padSide + Math.round(20 * scale);
+      const padRight = padSide + Math.round(10 * scale);
       // uPlot `padding[2]` is inset between the series area and the X-axis band — large values create a visible
       // "dead strip" above tick labels. Keep it minimal; the axis `size` holds the tick labels.
       const effectivePaddingBottom = Math.max(2, Math.round(4 * scale));
@@ -633,15 +643,16 @@ export const Main = defineWidget({
             size: xAxisBand,
             space: Math.max(40, Math.round(50 * scale)),
             values: (_u: uPlot, vals: number[]) => vals.map((v) => formatTick(Number(v), spanSec)),
-            grid: showX ? { stroke: currentGridColor, width: 1 } : undefined,
+            // ECharts line uses horizontal split lines by default, not a full square mesh.
+            grid: showX ? { show: false } : undefined,
             ticks: showX ? { stroke: currentGridColor, width: 1 } : undefined,
           },
           {
             show: showY,
             stroke: currentAxisLabelColor,
             font: yAxisFont,
-            grid: showY ? { stroke: currentGridColor, width: 1, dash: [5, 5] } : undefined,
-            ticks: showY ? { stroke: currentGridColor, width: 0 } : undefined,
+            grid: showY ? { stroke: currentGridColor, width: 1 } : undefined,
+            ticks: showY ? { stroke: currentGridColor, width: 1 } : undefined,
           },
         ],
         scales: {
@@ -651,8 +662,10 @@ export const Main = defineWidget({
               if (currentProps.yAxisMin != null && currentProps.yAxisMax != null) {
                 return ensureFiniteRange(currentProps.yAxisMin, currentProps.yAxisMax);
               }
-              if (currentProps.yAxisMin != null) return ensureFiniteRange(currentProps.yAxisMin, max);
-              if (currentProps.yAxisMax != null) return ensureFiniteRange(min, currentProps.yAxisMax);
+              if (currentProps.yAxisMin != null)
+                return ensureFiniteRange(currentProps.yAxisMin, max);
+              if (currentProps.yAxisMax != null)
+                return ensureFiniteRange(min, currentProps.yAxisMax);
               return ensureFiniteRange(min, max);
             },
           },
@@ -673,7 +686,11 @@ export const Main = defineWidget({
                   ? uPlot.paths.spline()
                   : uPlot.paths.linear?.(),
               points: {
-                show: false,
+                show: series.points.length <= 24,
+                size: Math.max(4, Math.round(6 * scale)),
+                width: 2,
+                stroke: currentLineColor,
+                fill: '#ffffff',
               },
             };
           }),
