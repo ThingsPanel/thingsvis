@@ -159,6 +159,7 @@ export interface CreateShareLinkData {
 }
 
 export interface CreateShareLinkResponse {
+  shareToken: string;
   shareUrl: string;
   expiresAt: string | null;
 }
@@ -166,6 +167,7 @@ export interface CreateShareLinkResponse {
 export interface ShareLinkInfo {
   enabled: boolean;
   url: string | null;
+  tokenHint?: string | null;
   expiresAt: string | null;
 }
 

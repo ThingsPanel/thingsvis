@@ -12,6 +12,7 @@ import {
   revokeShareLink,
   type ShareLinkInfo,
 } from '@/lib/api/dashboards';
+import { resolveShareUrl } from '@/lib/shareUrl';
 
 function debugShareLog(message: string, payload: Record<string, unknown>) {
   if (typeof window === 'undefined') return;
@@ -93,7 +94,13 @@ export function ShareDashboardDialog({
         alert(`${t('shareDialog.errors.createFailed')}: ${response.error}${hint}`);
         return;
       }
-      const createdUrl = response.data?.shareUrl || null;
+      const createdUrl =
+        response.data?.shareToken && response.data?.shareUrl
+          ? resolveShareUrl({
+              shareToken: response.data.shareToken,
+              standaloneShareUrl: response.data.shareUrl,
+            })
+          : null;
       const createdExpiresAt = response.data?.expiresAt || null;
       if (!createdUrl) {
         alert(t('shareDialog.errors.createFailed'));
@@ -160,14 +167,14 @@ export function ShareDashboardDialog({
           <div className="flex justify-center py-8">
             <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : shareInfo?.enabled ? (
+        ) : shareInfo?.enabled && (latestShareUrl || shareInfo.url) ? (
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-2">{t('shareDialog.linkLabel')}</label>
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={shareInfo.url || ''}
+                  value={latestShareUrl || shareInfo.url || ''}
                   readOnly
                   className="flex-1 px-3 py-2 border rounded-md"
                 />
@@ -205,6 +212,41 @@ export function ShareDashboardDialog({
                 className="flex-1 px-4 py-2 bg-gray-200 rounded-md"
               >
                 {t('shareDialog.close')}
+              </button>
+            </div>
+          </div>
+        ) : shareInfo?.enabled ? (
+          <div className="space-y-4">
+            <p className="text-sm">
+              {t('shareDialog.description')}
+              {shareInfo.tokenHint ? ` (${shareInfo.tokenHint}…)` : ''}
+            </p>
+
+            {shareInfo.expiresAt && (
+              <div className="text-sm">
+                <span className={isExpired ? 'text-red-600' : ''}>
+                  {isExpired ? t('shareDialog.expired') : t('shareDialog.expiresAt')}:
+                </span>
+                <span className="ml-2">
+                  {new Date(shareInfo.expiresAt).toLocaleString(
+                    i18n.language === 'zh' ? 'zh-CN' : 'en-US',
+                  )}
+                </span>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={handleCreateShare}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md"
+              >
+                {t('shareDialog.create')}
+              </button>
+              <button
+                onClick={handleRevoke}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-md"
+              >
+                {t('shareDialog.revoke')}
               </button>
             </div>
           </div>

@@ -520,10 +520,25 @@ export default function EmbedPage() {
           runtimeVariableValues,
         );
         if (dataSources.length > 0) {
-          dataSources.forEach((ds: any) => {
-            dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
-              console.error('[EmbedPage] Failed to register data source:', ds.id, err);
-            });
+          await Promise.all(
+            dataSources.map((ds: any) =>
+              dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
+                console.error('[EmbedPage] Failed to register data source:', ds.id, err);
+              }),
+            ),
+          );
+        }
+        initDoneRef.current = true;
+        if (pendingPlatformDataRef.current.length > 0) {
+          const buffered = pendingPlatformDataRef.current.splice(0);
+          buffered.forEach(({ fieldId, value, timestamp, deviceId, dataSourceId }) => {
+            window.postMessage(
+              {
+                type: MSG_TYPES.PLATFORM_DATA,
+                payload: { fieldId, value, timestamp, deviceId, dataSourceId },
+              },
+              '*',
+            );
           });
         }
 

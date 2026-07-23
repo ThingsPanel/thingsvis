@@ -70,6 +70,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   const shareUrl = `${frontendOrigin}/#/embed?id=${id}&shareToken=${shareToken}`;
 
   return NextResponse.json({
+    shareToken,
     shareUrl,
     expiresAt: shareExpiry?.toISOString() || null,
   });
@@ -107,17 +108,12 @@ export async function GET(request: NextRequest, { params }: Params) {
     });
   }
 
-  const frontendOrigin =
-    process.env.AUTH_URL ||
-    `${process.env.NODE_ENV === 'production' ? 'https' : 'http'}://${request.headers.get('host') || 'localhost:3000'}`;
-
-  // Mask the token for security (show only first 8 chars)
-  const maskedToken = dashboard.shareToken.substring(0, 8) + '****';
-  const maskedUrl = `${frontendOrigin}/#/embed?id=${id}&shareToken=${maskedToken}`;
-
   return NextResponse.json({
     enabled: true,
-    url: maskedUrl,
+    // A share token is a bearer credential. Never return a fake, masked URL that
+    // the UI can accidentally copy as though it were usable.
+    url: null,
+    tokenHint: dashboard.shareToken.substring(0, 8),
     expiresAt: dashboard.shareExpiry?.toISOString() || null,
   });
 }
