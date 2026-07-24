@@ -452,7 +452,7 @@ const CanvasView = forwardRef<
 
   // Detect grid layout mode
   const isGridMode = state.canvas?.mode === 'grid';
-  const showGridLines = state.gridState?.settings?.showGridLines ?? true;
+  const showGridLines = state.gridState?.settings?.showGridLines ?? false;
 
   // Grid layout hook (provides grid-aware drag/resize handlers)
   const gridLayout = useGridLayout({

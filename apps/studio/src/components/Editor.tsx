@@ -888,7 +888,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               compactVertical: true,
               minW: 1,
               minH: 1,
-              showGridLines: project.canvas.gridEnabled ?? true,
+              showGridLines: project.canvas.gridEnabled ?? false,
               breakpoints: [],
               responsive: false,
             } as any);

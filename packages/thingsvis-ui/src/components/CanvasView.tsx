@@ -45,7 +45,7 @@ export const CanvasView: React.FC<Props> = ({
   height: propsHeight,
   gridSize = 16,
   snapToGrid = false,
-  showGridLines = true,
+  showGridLines = false,
   centeredMask = true,
   zoom: propsZoom,
   onZoomChange,

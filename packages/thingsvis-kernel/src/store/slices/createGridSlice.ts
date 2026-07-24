@@ -55,7 +55,7 @@ export const createGridSlice: StateCreator<
         compactVertical: true,
         minW: 1,
         minH: 1,
-        showGridLines: true,
+        showGridLines: false,
         breakpoints: [],
         responsive: true,
       };

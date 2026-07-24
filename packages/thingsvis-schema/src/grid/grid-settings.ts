@@ -9,12 +9,12 @@ export const BreakpointConfigSchema = z.object({
    * Minimum container width for this breakpoint (inclusive)
    */
   minWidth: z.number().int().nonnegative(),
-  
+
   /**
    * Number of columns at this breakpoint
    */
   cols: z.number().int().min(1).max(48),
-  
+
   /**
    * Optional row height override for this breakpoint
    */
@@ -30,45 +30,45 @@ export const GridSettingsSchema = z.object({
    * Number of columns in the grid (1-48, default: 24)
    */
   cols: z.number().int().min(1).max(48).default(24),
-  
+
   /**
    * Height of each row in pixels (default: 30)
    */
   rowHeight: z.number().int().positive().default(30),
-  
+
   /**
    * Gap between grid items in pixels (default: 10)
    * Applied both horizontally and vertically
    */
   gap: z.number().int().nonnegative().default(10),
-  
+
   /**
    * Enable/disable vertical compaction (default: true)
    * When true, items float up to fill gaps
    */
   compactVertical: z.boolean().default(true),
-  
+
   /**
    * Minimum item width in columns (default: 1)
    */
   minW: z.number().int().min(1).default(1),
-  
+
   /**
    * Minimum item height in rows (default: 1)
    */
   minH: z.number().int().min(1).default(1),
-  
+
   /**
-   * Show grid lines helper (default: true in edit mode)
+   * Show grid lines helper (default: false; toggle in editor toolbar)
    */
-  showGridLines: z.boolean().default(true),
-  
+  showGridLines: z.boolean().default(false),
+
   /**
    * Responsive breakpoints configuration
    * If empty, uses default breakpoints
    */
   breakpoints: z.array(BreakpointConfigSchema).default([]),
-  
+
   /**
    * Enable responsive mode (default: true)
    */
@@ -100,7 +100,7 @@ export const DEFAULT_GRID_SETTINGS: GridSettings = {
   compactVertical: true,
   minW: 1,
   minH: 1,
-  showGridLines: true,
+  showGridLines: false,
   breakpoints: [],
   responsive: true,
 };

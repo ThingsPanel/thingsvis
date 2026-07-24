@@ -299,7 +299,7 @@ export function useProjectBootstrap({
       variables: {} as Record<string, any>,
       dataSources: [] as Array<{ id: string; name: string; type: string; config: any }>,
       background: backgroundState.background,
-      gridEnabled: true,
+      gridEnabled: false,
     };
   });
   const canvasConfigRef = useRef(canvasConfig);
@@ -402,7 +402,7 @@ export function useProjectBootstrap({
           compactVertical: true,
           minW: 1,
           minH: 1,
-          showGridLines: loaded.canvas.gridEnabled ?? true,
+          showGridLines: loaded.canvas.gridEnabled ?? false,
           breakpoints: [],
           responsive: true,
         } as any);
@@ -769,7 +769,7 @@ export function useProjectBootstrap({
             responsive: false,
             minW: 1,
             minH: 1,
-            showGridLines: true,
+            showGridLines: false,
             breakpoints: [],
           },
         },
