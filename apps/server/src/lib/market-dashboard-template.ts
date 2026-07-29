@@ -32,6 +32,7 @@ const BINDING_DATA_SOURCE_ID = /^__platform_binding_([a-z][a-z0-9_]*)__$/;
 const BINDING_KEY = /^[a-z][a-z0-9_]{2,63}$/;
 const FIELD_EXPRESSION =
   /\{\{\s*ds\.(__platform_.+?__)\.data(?:\.([A-Za-z][A-Za-z0-9_]*)(?:__history)?)?/g;
+const HISTORY_FIELD_SUFFIX = '__history';
 
 function isRecord(value: unknown): value is JsonObject {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -134,7 +135,12 @@ export function analyzeMarketDashboard(
         fieldIdentifiers: new Set<string>(),
       };
       entry.dataSourceIds.add(dataSourceId);
-      if (match[2]) entry.fieldIdentifiers.add(match[2]);
+      if (match[2]) {
+        const fieldIdentifier = match[2].endsWith(HISTORY_FIELD_SUFFIX)
+          ? match[2].slice(0, -HISTORY_FIELD_SUFFIX.length)
+          : match[2];
+        entry.fieldIdentifiers.add(fieldIdentifier);
+      }
       references.set(deviceId, entry);
     }
   });

@@ -46,6 +46,19 @@ describe('market dashboard template transformation', () => {
     ]);
   });
 
+  it('normalizes runtime history fields to thing model identifiers', () => {
+    const dashboard = singleDeviceDashboard();
+    dashboard.nodes.push({
+      id: 'humidity-history',
+      expression: '{{ ds.__platform_device-100__.data.humidity__history }}',
+    });
+
+    expect(analyzeMarketDashboard(dashboard)[0]?.fieldIdentifiers).toEqual([
+      'humidity',
+      'temperature',
+    ]);
+  });
+
   it('exports without source device IDs and imports with a local device', () => {
     const exported = exportMarketDashboard(singleDeviceDashboard(), [
       {
