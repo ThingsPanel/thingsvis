@@ -13,6 +13,7 @@ import type {
   FieldBinding,
   FieldBindingInput,
 } from './validators';
+import { normalizeBindingKey } from './validators';
 
 // Pattern to extract data source ID from binding expressions like `ds.xxx.data`
 const DATA_SOURCE_EXPRESSION_RE = /ds\.([^\s.}]+)(?:\.|$)/g;
@@ -155,9 +156,15 @@ export function extractDeviceBindings(
   const hintByBindingKey = new Map<string, DeviceBindingHint>();
 
   for (const hint of bindingHints) {
-    hintByBindingKey.set(hint.bindingKey, hint);
+    hintByBindingKey.set(normalizeBindingKey(hint.bindingKey), {
+      ...hint,
+      bindingKey: normalizeBindingKey(hint.bindingKey),
+    });
     if (hint.deviceId) {
-      hintByDeviceId.set(hint.deviceId, hint);
+      hintByDeviceId.set(hint.deviceId, {
+        ...hint,
+        bindingKey: normalizeBindingKey(hint.bindingKey),
+      });
     }
   }
 
@@ -186,7 +193,7 @@ export function extractDeviceBindings(
       // For template devices, extract bindingKey from the ID pattern
       const bindingKeyMatch = dsId.match(/^__platform___([^_]+)__$/);
       if (bindingKeyMatch) {
-        bindingKey = bindingKeyMatch[1];
+        bindingKey = normalizeBindingKey(bindingKeyMatch[1]);
       } else if (dsId === '__device_platform_template__') {
         // Generic template - use the first hint or generate a key
         const firstHint = bindingHints[0];
@@ -218,7 +225,7 @@ export function extractDeviceBindings(
       }
 
       if (hint) {
-        bindingKey = hint.bindingKey;
+        bindingKey = normalizeBindingKey(hint.bindingKey);
         deviceTemplateKey = hint.deviceTemplateKey;
       } else {
         // No hint provided - this is a real device reference without mapping

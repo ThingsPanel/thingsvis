@@ -76,6 +76,23 @@ const GENERATED_PLATFORM_DS_ID_RE = /^__platform_.+__$/;
 const GENERATED_HOST_DS_ID_RE = /^(?:__platform_.+__|thingspanel_.+)$/;
 const TEMPLATE_DEVICE_ID = '__template__';
 
+/** 将外部 bindingKey 规范化为契约要求的 hyphen 格式 */
+export function normalizeBindingKey(raw: string): string {
+  let key = raw
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, '-')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  if (!key || !/^[a-z]/.test(key)) {
+    key = `device-${key || 'binding'}`.replace(/-+/g, '-');
+  }
+
+  return key.slice(0, 63);
+}
+
 // ---------------------------------------------------------------------------
 // deviceBinding structure per contract
 // ---------------------------------------------------------------------------
