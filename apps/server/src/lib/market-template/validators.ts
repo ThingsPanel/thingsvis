@@ -103,6 +103,14 @@ export const DeviceBindingSchema = z.object({
 
 export type DeviceBinding = z.infer<typeof DeviceBindingSchema>;
 
+/**
+ * Pre-parse shape. `required` and `allowMany` carry zod defaults, so z.infer
+ * (the *output* type) marks them present, while anything not yet parsed —
+ * a bundle off the wire, a test fixture, the validators below — legitimately
+ * omits them. Validators take this type; parsed values keep DeviceBinding.
+ */
+export type DeviceBindingInput = z.input<typeof DeviceBindingSchema>;
+
 // ---------------------------------------------------------------------------
 // fieldBinding structure per contract
 // ---------------------------------------------------------------------------
@@ -114,6 +122,9 @@ export const FieldBindingSchema = z.object({
 });
 
 export type FieldBinding = z.infer<typeof FieldBindingSchema>;
+
+/** Pre-parse shape; `required` carries a zod default. See DeviceBindingInput. */
+export type FieldBindingInput = z.input<typeof FieldBindingSchema>;
 
 // ---------------------------------------------------------------------------
 // DashboardTemplateSnapshot - the core export structure
@@ -139,6 +150,13 @@ export const DashboardTemplateSnapshotSchema = z.object({
 });
 
 export type DashboardTemplateSnapshot = z.infer<typeof DashboardTemplateSnapshotSchema>;
+
+/**
+ * Pre-parse shape. validateImportedSnapshot() exists precisely to inspect
+ * *untrusted, unparsed* content, so it must not demand a fully-defaulted
+ * snapshot as its input.
+ */
+export type DashboardTemplateSnapshotInput = z.input<typeof DashboardTemplateSnapshotSchema>;
 
 // ---------------------------------------------------------------------------
 // Export request validation

@@ -7,7 +7,12 @@
  */
 
 import type { DataSource } from '@thingsvis/schema';
-import type { DeviceBinding, FieldBinding } from './validators';
+import type {
+  DeviceBinding,
+  DeviceBindingInput,
+  FieldBinding,
+  FieldBindingInput,
+} from './validators';
 
 // Pattern to extract data source ID from binding expressions like `ds.xxx.data`
 const DATA_SOURCE_EXPRESSION_RE = /ds\.([^\s.}]+)(?:\.|$)/g;
@@ -282,8 +287,8 @@ export function extractDeviceBindings(
  * Validate that all fieldBindings reference valid deviceBindings
  */
 export function validateFieldBindings(
-  fieldBindings: FieldBinding[],
-  deviceBindings: DeviceBinding[],
+  fieldBindings: FieldBindingInput[],
+  deviceBindings: DeviceBindingInput[],
 ): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
   const bindingKeys = new Set(deviceBindings.map((db) => db.bindingKey));
@@ -311,7 +316,7 @@ export function validateFieldBindings(
 /**
  * Validate device binding array
  */
-export function validateDeviceBindings(deviceBindings: DeviceBinding[]): {
+export function validateDeviceBindings(deviceBindings: DeviceBindingInput[]): {
   valid: boolean;
   errors: string[];
 } {

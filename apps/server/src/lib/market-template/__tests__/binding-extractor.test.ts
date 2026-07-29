@@ -8,7 +8,7 @@ import {
   validateDeviceBindings,
   validateFieldBindings,
 } from '../binding-extractor';
-import type { DeviceBinding, FieldBinding } from '../validators';
+import type { DeviceBindingInput, FieldBindingInput } from '../validators';
 
 describe('extractDeviceBindings', () => {
   it('extracts device bindings from template data sources with hints', () => {
@@ -167,7 +167,7 @@ describe('extractDeviceBindings', () => {
 
 describe('validateDeviceBindings', () => {
   it('accepts valid device bindings', () => {
-    const bindings: DeviceBinding[] = [
+    const bindings: DeviceBindingInput[] = [
       { bindingKey: 'sensor-1', deviceTemplateKey: 'temperature-sensor', required: true },
       { bindingKey: 'switch-1', deviceTemplateKey: 'switch', required: true, allowMany: true },
     ];
@@ -178,7 +178,7 @@ describe('validateDeviceBindings', () => {
   });
 
   it('rejects duplicate bindingKeys', () => {
-    const bindings: DeviceBinding[] = [
+    const bindings: DeviceBindingInput[] = [
       { bindingKey: 'sensor-1', deviceTemplateKey: 'temp-sensor', required: true },
       { bindingKey: 'sensor-1', deviceTemplateKey: 'humidity-sensor', required: true },
     ];
@@ -189,7 +189,7 @@ describe('validateDeviceBindings', () => {
   });
 
   it('rejects invalid bindingKey format', () => {
-    const bindings: DeviceBinding[] = [
+    const bindings: DeviceBindingInput[] = [
       { bindingKey: 'Invalid_Key', deviceTemplateKey: 'sensor', required: true },
     ];
 
@@ -199,7 +199,7 @@ describe('validateDeviceBindings', () => {
   });
 
   it('rejects invalid deviceTemplateKey format', () => {
-    const bindings: DeviceBinding[] = [
+    const bindings: DeviceBindingInput[] = [
       { bindingKey: 'sensor-1', deviceTemplateKey: 'Invalid_Template', required: true },
     ];
 
@@ -209,7 +209,7 @@ describe('validateDeviceBindings', () => {
   });
 
   it('accepts bindingKey with hyphens', () => {
-    const bindings: DeviceBinding[] = [
+    const bindings: DeviceBindingInput[] = [
       {
         bindingKey: 'room-temperature-sensor',
         deviceTemplateKey: 'sensor-template',
@@ -223,13 +223,13 @@ describe('validateDeviceBindings', () => {
 });
 
 describe('validateFieldBindings', () => {
-  const deviceBindings: DeviceBinding[] = [
+  const deviceBindings: DeviceBindingInput[] = [
     { bindingKey: 'sensor-1', deviceTemplateKey: 'temperature-sensor', required: true },
     { bindingKey: 'switch-1', deviceTemplateKey: 'switch', required: true },
   ];
 
   it('accepts valid field bindings', () => {
-    const fieldBindings: FieldBinding[] = [
+    const fieldBindings: FieldBindingInput[] = [
       { bindingKey: 'sensor-1', kind: 'telemetry', identifier: 'temperature', required: true },
       { bindingKey: 'sensor-1', kind: 'telemetry', identifier: 'humidity', required: false },
       { bindingKey: 'switch-1', kind: 'attribute', identifier: 'power', required: true },
@@ -242,7 +242,7 @@ describe('validateFieldBindings', () => {
   });
 
   it('rejects field binding with unknown bindingKey', () => {
-    const fieldBindings: FieldBinding[] = [
+    const fieldBindings: FieldBindingInput[] = [
       { bindingKey: 'unknown-sensor', kind: 'telemetry', identifier: 'temp', required: true },
     ];
 
@@ -252,7 +252,7 @@ describe('validateFieldBindings', () => {
   });
 
   it('rejects field binding with invalid kind', () => {
-    const fieldBindings: FieldBinding[] = [
+    const fieldBindings: FieldBindingInput[] = [
       { bindingKey: 'sensor-1', kind: 'invalid' as any, identifier: 'temp', required: true },
     ];
 
@@ -262,7 +262,7 @@ describe('validateFieldBindings', () => {
   });
 
   it('rejects field binding with empty identifier', () => {
-    const fieldBindings: FieldBinding[] = [
+    const fieldBindings: FieldBindingInput[] = [
       { bindingKey: 'sensor-1', kind: 'telemetry', identifier: '', required: true },
     ];
 
@@ -272,10 +272,10 @@ describe('validateFieldBindings', () => {
   });
 
   it('accepts all valid field kinds', () => {
-    const kinds: Array<FieldBinding['kind']> = ['telemetry', 'attribute', 'command', 'event'];
+    const kinds: Array<FieldBindingInput['kind']> = ['telemetry', 'attribute', 'command', 'event'];
 
     for (const kind of kinds) {
-      const fieldBindings: FieldBinding[] = [
+      const fieldBindings: FieldBindingInput[] = [
         { bindingKey: 'sensor-1', kind, identifier: 'test-field', required: true },
       ];
 

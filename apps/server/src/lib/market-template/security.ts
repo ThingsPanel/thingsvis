@@ -6,7 +6,7 @@
  */
 
 import type { DataSource } from '@thingsvis/schema';
-import type { DashboardTemplateSnapshot } from './validators';
+import type { DashboardTemplateSnapshotInput } from './validators';
 
 // ---------------------------------------------------------------------------
 // Patterns for sensitive data detection
@@ -197,9 +197,10 @@ export function sanitizeDashboardForExport(dashboard: {
 
   return {
     canvasConfig: sanitizeSection(dashboard.canvasConfig ?? {}, 'canvasConfig'),
-    nodes: sanitizeSection(dashboard.nodes ?? [], 'nodes'),
-    dataSources: sanitizeSection(dashboard.dataSources ?? [], 'dataSources'),
-    variables: sanitizeSection(dashboard.variables ?? [], 'variables'),
+    // sanitizeSection preserves shape, so an array section stays an array.
+    nodes: sanitizeSection(dashboard.nodes ?? [], 'nodes') as unknown[],
+    dataSources: sanitizeSection(dashboard.dataSources ?? [], 'dataSources') as unknown[],
+    variables: sanitizeSection(dashboard.variables ?? [], 'variables') as unknown[],
     replacedFields,
     detectedIssues,
   };
@@ -342,7 +343,7 @@ export function checkExportSize(dashboard: {
 /**
  * Validate imported snapshot for safety
  */
-export function validateImportedSnapshot(snapshot: DashboardTemplateSnapshot): {
+export function validateImportedSnapshot(snapshot: DashboardTemplateSnapshotInput): {
   valid: boolean;
   errors: string[];
   warnings: string[];
@@ -395,7 +396,7 @@ export function validateImportedSnapshot(snapshot: DashboardTemplateSnapshot): {
 
   // Check fieldBindings reference valid bindingKeys
   const bindingKeys = new Set(snapshot.deviceBindings.map((db) => db.bindingKey));
-  for (const fb of snapshot.fieldBindings) {
+  for (const fb of snapshot.fieldBindings ?? []) {
     if (!bindingKeys.has(fb.bindingKey)) {
       errors.push(`Field binding references unknown bindingKey: '${fb.bindingKey}'`);
     }

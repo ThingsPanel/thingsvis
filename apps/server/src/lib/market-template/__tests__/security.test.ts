@@ -13,6 +13,7 @@ import {
   EXPORT_SIZE_LIMITS,
 } from '../security';
 import type { DataSource } from '@thingsvis/schema';
+import type { DashboardTemplateSnapshotInput } from '../validators';
 
 describe('deepSanitize', () => {
   it('passes through plain objects unchanged', () => {
@@ -152,12 +153,14 @@ describe('sanitizeDataSourceForExport', () => {
       id: 'ds-1',
       name: 'Test',
       type: 'PLATFORM_FIELD',
+      // tenantId is not part of the DataSource config union by design — this
+      // test exists to prove sanitisation strips it when it sneaks in anyway.
       config: {
         source: 'platform',
         deviceId: 'dev-123',
         tenantId: 'tenant-456',
         fieldMappings: {},
-      },
+      } as DataSource['config'],
     };
 
     const result = sanitizeDataSourceForExport(dataSource);
@@ -259,7 +262,7 @@ describe('checkExportSize', () => {
 
 describe('validateImportedSnapshot', () => {
   it('accepts valid snapshot', () => {
-    const snapshot = {
+    const snapshot: DashboardTemplateSnapshotInput = {
       resourceKey: 'test-dashboard',
       version: '1.0.0',
       name: 'Test Dashboard',
@@ -278,7 +281,7 @@ describe('validateImportedSnapshot', () => {
   });
 
   it('rejects snapshot with invalid bindingKey format', () => {
-    const snapshot = {
+    const snapshot: DashboardTemplateSnapshotInput = {
       resourceKey: 'test-dashboard',
       version: '1.0.0',
       name: 'Test Dashboard',
@@ -297,7 +300,7 @@ describe('validateImportedSnapshot', () => {
   });
 
   it('rejects field binding referencing unknown device binding', () => {
-    const snapshot = {
+    const snapshot: DashboardTemplateSnapshotInput = {
       resourceKey: 'test-dashboard',
       version: '1.0.0',
       name: 'Test Dashboard',
@@ -316,7 +319,7 @@ describe('validateImportedSnapshot', () => {
   });
 
   it('rejects snapshot with javascript: in content', () => {
-    const snapshot = {
+    const snapshot: DashboardTemplateSnapshotInput = {
       resourceKey: 'test-dashboard',
       version: '1.0.0',
       name: 'Test Dashboard',
@@ -335,7 +338,7 @@ describe('validateImportedSnapshot', () => {
   });
 
   it('rejects snapshot with script tags', () => {
-    const snapshot = {
+    const snapshot: DashboardTemplateSnapshotInput = {
       resourceKey: 'test-dashboard',
       version: '1.0.0',
       name: 'Test Dashboard',
