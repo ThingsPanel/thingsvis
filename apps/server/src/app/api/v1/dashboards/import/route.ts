@@ -180,77 +180,29 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Replace template data source IDs with actual device IDs
-  const processedDataSources = snapshot.dataSources.map((ds) => {
-    if (!ds || typeof ds !== 'object') return ds;
-
-    const dataSource = ds as Record<string, unknown>;
-    const dsType = String(dataSource.type ?? '').toUpperCase();
-
-    // For PLATFORM_FIELD data sources, replace template device ID with actual device ID
-    if (dsType === 'PLATFORM_FIELD') {
-      const config = dataSource.config as Record<string, unknown> | undefined;
-      const currentDeviceId = config?.deviceId;
-
-      // Check if this is a template reference
-      if (currentDeviceId === '__template__' || String(currentDeviceId).includes('__template__')) {
-        // Find the binding key for this data source (from deviceBindings)
-        // The bindingKey maps to a specific device in localDeviceBindings
-        const dsId = String(dataSource.id ?? '');
-
-        // Try to extract bindingKey from dataSource ID pattern
-        const bindingKeyMatch = dsId.match(/^__platform___([^_]+)__$/);
-        if (bindingKeyMatch) {
-          const bindingKey = bindingKeyMatch[1];
-          const localDeviceId = localBindingKeys.get(bindingKey);
-          if (localDeviceId) {
-            return {
-              ...dataSource,
-              id: `thingspanel_${localDeviceId}`,
-              config: {
-                ...config,
-                deviceId: localDeviceId,
-              },
-            };
-          }
-        }
-
-        // Also check dataSources for template device references and replace them
-        // based on the first matching local binding
-        if (!localBindingKeys.has(bindingKeyMatch?.[1] || '')) {
-          // Try to find any matching binding
-          for (const [bk, deviceId] of localBindingKeys) {
-            // Check if this data source should be bound to this device
-            const db = snapshot.deviceBindings.find((d) => d.bindingKey === bk);
-            if (db) {
-              return {
-                ...dataSource,
-                id: `thingspanel_${deviceId}`,
-                config: {
-                  ...config,
-                  deviceId: deviceId,
-                },
-              };
-            }
-          }
-        }
-      }
-    }
-
-    return dataSource;
-  });
-
-  // Replace binding references in nodes and variables
   const bindingKeyToDeviceIdMap = new Map(
     localDeviceBindings.map((lb) => [lb.bindingKey, lb.deviceId]),
   );
 
+  // A bound platform data source must end up in the exact shape the runtime
+  // resolves — `__platform_<deviceId>__` (see studio's platformDeviceCompat /
+  // WidgetModeStrategy / FieldPicker). The `thingspanel_*` prefix is a
+  // different namespace entirely (host catalog sources like
+  // thingspanel_device_summary) and is never resolved as a per-device source,
+  // so emitting it here produces a dashboard that renders nothing.
+  const boundDataSourceId = (deviceId: string) => `__platform_${deviceId}__`;
+
+  // Device references live in five places in a real dashboard: dataSources[].id,
+  // dataSources[].config.deviceId, node expressions
+  // ("{{ ds.__platform___key__.data.f }}"), node dataSourcePath, and event
+  // action dataSourceId. A single recursive string substitution covers all of
+  // them; special-casing individual keys silently leaves the others pointing at
+  // a data source that no longer exists.
   const replaceBindingReferences = (value: unknown): unknown => {
     if (typeof value === 'string') {
-      // Replace __platform___bindingKey__ patterns with thingspanel_deviceId
       return value.replace(/__platform___([^_]+)__/g, (match, bindingKey) => {
         const deviceId = bindingKeyToDeviceIdMap.get(bindingKey);
-        return deviceId ? `thingspanel_${deviceId}` : match;
+        return deviceId ? boundDataSourceId(deviceId) : match;
       });
     }
 
@@ -261,29 +213,52 @@ export async function POST(request: NextRequest) {
     if (value && typeof value === 'object') {
       const record = value as Record<string, unknown>;
       const result: Record<string, unknown> = {};
-
       for (const [key, val] of Object.entries(record)) {
-        // Check if this field contains device references
-        if (key === 'dataSourceId' && typeof val === 'string') {
-          // Replace template data source ID with actual device data source ID
-          const bindingKeyMatch = val.match(/^__platform___([^_]+)__$/);
-          if (bindingKeyMatch) {
-            const bindingKey = bindingKeyMatch[1];
-            const deviceId = bindingKeyToDeviceIdMap.get(bindingKey);
-            if (deviceId) {
-              result[key] = `thingspanel_${deviceId}`;
-              continue;
-            }
-          }
-        }
         result[key] = replaceBindingReferences(val);
       }
-
       return result;
     }
 
     return value;
   };
+
+  // Bind the platform data sources themselves. An unresolved bindingKey is left
+  // untouched rather than being attached to some other binding — silently
+  // pointing a widget at the wrong device is worse than leaving it unbound.
+  const unresolvedBindings: string[] = [];
+  const processedDataSources = snapshot.dataSources.map((ds) => {
+    if (!ds || typeof ds !== 'object') return ds;
+
+    const dataSource = ds as Record<string, unknown>;
+    if (String(dataSource.type ?? '').toUpperCase() !== 'PLATFORM_FIELD') {
+      return replaceBindingReferences(dataSource);
+    }
+
+    const config = (dataSource.config as Record<string, unknown>) ?? {};
+    const bindingKeyMatch = String(dataSource.id ?? '').match(/^__platform___([^_]+)__$/);
+    if (!bindingKeyMatch) return replaceBindingReferences(dataSource);
+
+    const bindingKey = bindingKeyMatch[1];
+    const localDeviceId = bindingKeyToDeviceIdMap.get(bindingKey);
+    if (!localDeviceId) {
+      unresolvedBindings.push(bindingKey);
+      return replaceBindingReferences(dataSource);
+    }
+
+    return {
+      ...(replaceBindingReferences(dataSource) as Record<string, unknown>),
+      id: boundDataSourceId(localDeviceId),
+      config: { ...config, deviceId: localDeviceId },
+    };
+  });
+
+  if (unresolvedBindings.length > 0) {
+    logger.warn({
+      msg: '[MarketImport] Data sources left unbound',
+      unresolvedBindings,
+      snapshotKey: snapshot.resourceKey,
+    });
+  }
 
   const processedNodes = snapshot.nodes.map(replaceBindingReferences);
   const processedVariables = snapshot.variables.map(replaceBindingReferences);
