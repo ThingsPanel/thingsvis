@@ -215,3 +215,118 @@ export async function validateShareLink(
     { skipAuth: true }, // This endpoint doesn't require authentication
   );
 }
+
+// ========================================================================
+// Market Template Export/Import APIs
+// ========================================================================
+
+export interface DeviceBinding {
+  bindingKey: string;
+  deviceTemplateKey: string;
+  displayName?: string;
+  required?: boolean;
+  allowMany?: boolean;
+}
+
+export interface FieldBinding {
+  bindingKey: string;
+  kind: 'telemetry' | 'attribute' | 'command' | 'event';
+  identifier: string;
+  required?: boolean;
+}
+
+export interface DashboardTemplateSnapshot {
+  resourceKey: string;
+  version: string;
+  name: string;
+  schemaVersion: string;
+  canvasConfig: unknown;
+  nodes: unknown[];
+  dataSources: unknown[];
+  variables: unknown[];
+  deviceBindings: DeviceBinding[];
+  fieldBindings: FieldBinding[];
+}
+
+export interface DeviceBindingHint {
+  bindingKey: string;
+  deviceTemplateKey: string;
+  deviceId?: string;
+}
+
+export interface ExportDashboardOptions {
+  exportMode?: 'market-template';
+  deviceBindingHints?: DeviceBindingHint[];
+}
+
+export interface ExportDashboardResponse {
+  success: true;
+  snapshot: DashboardTemplateSnapshot;
+  warnings?: string[];
+}
+
+export interface ExportDashboardError {
+  success: false;
+  error: string;
+  code: string;
+  details?: Record<string, unknown>;
+}
+
+export interface LocalDeviceBinding {
+  bindingKey: string;
+  deviceId: string;
+}
+
+export interface ImportDashboardData {
+  snapshot: DashboardTemplateSnapshot;
+  localDeviceBindings: LocalDeviceBinding[];
+  name?: string;
+  projectId?: string;
+}
+
+export interface ImportDashboardResponse {
+  success: true;
+  dashboardId: string;
+  name: string;
+  warnings?: string[];
+}
+
+export interface ImportDashboardError {
+  success: false;
+  error: string;
+  code: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Export a dashboard as a market template
+ *
+ * @param dashboardId - The ID of the dashboard to export
+ * @param options - Export options including binding hints
+ */
+export async function exportDashboardAsMarketTemplate(
+  dashboardId: string,
+  options: ExportDashboardOptions = {},
+): Promise<ApiResponse<ExportDashboardResponse | ExportDashboardError>> {
+  const searchParams = new URLSearchParams();
+  searchParams.set('exportMode', options.exportMode || 'market-template');
+
+  if (options.deviceBindingHints && options.deviceBindingHints.length > 0) {
+    searchParams.set('deviceBindingHints', JSON.stringify(options.deviceBindingHints));
+  }
+
+  return apiClient.get<ExportDashboardResponse | ExportDashboardError>(
+    `/dashboards/${dashboardId}/export?${searchParams.toString()}`,
+  );
+}
+
+/**
+ * Import a market template snapshot and bind it to local devices
+ *
+ * @param data - Import data including snapshot and device bindings
+ */
+export async function importMarketTemplate(
+  data: ImportDashboardData,
+): Promise<ApiResponse<ImportDashboardResponse | ImportDashboardError>> {
+  return apiClient.post<ImportDashboardResponse | ImportDashboardError>('/dashboards/import', data);
+}
