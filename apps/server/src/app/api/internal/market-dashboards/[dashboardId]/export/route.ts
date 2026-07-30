@@ -13,7 +13,7 @@ const ExportRequestSchema = z.object({
   deviceRoles: z.array(
     z.object({
       sourceDeviceId: z.string().min(1),
-      bindingKey: z.string().regex(/^[a-z][a-z0-9_]{2,63}$/),
+      bindingKey: z.string().regex(/^[a-z][a-z0-9_-]{2,63}$/),
       displayName: z.string().max(100).optional(),
     }),
   ),

@@ -15,7 +15,7 @@ const ImportRequestSchema = z.object({
   }),
   deviceBindings: z.array(
     z.object({
-      bindingKey: z.string().regex(/^[a-z][a-z0-9_]{2,63}$/),
+      bindingKey: z.string().regex(/^[a-z][a-z0-9_-]{2,63}$/),
       localDeviceId: z.string().min(1),
     }),
   ),

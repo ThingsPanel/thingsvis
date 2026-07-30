@@ -63,7 +63,7 @@ describe('market dashboard template transformation', () => {
     const exported = exportMarketDashboard(singleDeviceDashboard(), [
       {
         sourceDeviceId: 'device-100',
-        bindingKey: 'temperature_sensor',
+        bindingKey: 'temperature-sensor',
         displayName: 'Temperature Sensor',
       },
     ]).snapshot;
@@ -71,20 +71,20 @@ describe('market dashboard template transformation', () => {
     expect(JSON.stringify(exported)).not.toContain('device-100');
     expect(exported.dataSources).toEqual([
       {
-        id: '__platform_binding_temperature_sensor__',
+        id: '__platform_binding_temperature-sensor__',
         name: 'Workshop Sensor',
         type: 'PLATFORM_FIELD',
         config: {
           source: 'platform',
           requestedFields: ['temperature'],
           fieldMappings: {},
-          deviceBinding: { $deviceBinding: 'temperature_sensor' },
+          deviceBinding: { $deviceBinding: 'temperature-sensor' },
         },
       },
     ]);
 
     const imported = importMarketDashboard(exported, [
-      { bindingKey: 'temperature_sensor', localDeviceId: 'local-device-900' },
+      { bindingKey: 'temperature-sensor', localDeviceId: 'local-device-900' },
     ]);
 
     expect(JSON.stringify(imported)).not.toContain('$deviceBinding');
@@ -128,16 +128,16 @@ describe('market dashboard template transformation', () => {
     });
 
     const exported = exportMarketDashboard(dashboard, [
-      { sourceDeviceId: 'device-100', bindingKey: 'temperature_sensor' },
-      { sourceDeviceId: 'switch-200', bindingKey: 'power_switch' },
+      { sourceDeviceId: 'device-100', bindingKey: 'temperature-sensor' },
+      { sourceDeviceId: 'switch-200', bindingKey: 'power-switch' },
     ]);
 
     expect(exported.deviceReferences).toHaveLength(2);
     expect(exported.snapshot.dataSources).toHaveLength(2);
 
     const imported = importMarketDashboard(exported.snapshot, [
-      { bindingKey: 'temperature_sensor', localDeviceId: 'sensor-local' },
-      { bindingKey: 'power_switch', localDeviceId: 'switch-local' },
+      { bindingKey: 'temperature-sensor', localDeviceId: 'sensor-local' },
+      { bindingKey: 'power-switch', localDeviceId: 'switch-local' },
     ]);
     expect(JSON.stringify(imported)).toContain('__platform_sensor-local__');
     expect(JSON.stringify(imported)).toContain('__platform_switch-local__');
@@ -157,15 +157,15 @@ describe('market dashboard template transformation', () => {
     });
 
     const exported = exportMarketDashboard(dashboard, [
-      { sourceDeviceId: 'device-100', bindingKey: 'temperature_sensor' },
+      { sourceDeviceId: 'device-100', bindingKey: 'temperature-sensor' },
     ]).snapshot;
     const serializedExport = JSON.stringify(exported);
     expect(serializedExport).not.toContain('device-100');
     expect(serializedExport).not.toContain('"deviceId":');
-    expect(serializedExport).toContain('__device_binding_temperature_sensor__');
+    expect(serializedExport).toContain('__device_binding_temperature-sensor__');
 
     const imported = importMarketDashboard(exported, [
-      { bindingKey: 'temperature_sensor', localDeviceId: 'local-device-900' },
+      { bindingKey: 'temperature-sensor', localDeviceId: 'local-device-900' },
     ]);
     const serializedImport = JSON.stringify(imported);
     expect(serializedImport).not.toContain('__device_binding_');
@@ -181,11 +181,11 @@ describe('market dashboard template transformation', () => {
 
   it('rejects import when any binding is missing', () => {
     const exported = exportMarketDashboard(singleDeviceDashboard(), [
-      { sourceDeviceId: 'device-100', bindingKey: 'temperature_sensor' },
+      { sourceDeviceId: 'device-100', bindingKey: 'temperature-sensor' },
     ]).snapshot;
 
     expect(() => importMarketDashboard(exported, [])).toThrow(
-      'Missing device binding "temperature_sensor"',
+      'Missing device binding "temperature-sensor"',
     );
   });
 

@@ -28,8 +28,10 @@ export type InstalledDeviceBinding = {
 };
 
 const PLATFORM_DATA_SOURCE_ID = /^__platform_(.+)__$/;
-const BINDING_DATA_SOURCE_ID = /^__platform_binding_([a-z][a-z0-9_]*)__$/;
-const BINDING_KEY = /^[a-z][a-z0-9_]{2,63}$/;
+// Accept legacy underscores on the internal boundary during rolling upgrades.
+// New publishers emit the contract-canonical hyphen form.
+const BINDING_DATA_SOURCE_ID = /^__platform_binding_([a-z][a-z0-9_-]*)__$/;
+const BINDING_KEY = /^[a-z][a-z0-9_-]{2,63}$/;
 const FIELD_EXPRESSION =
   /\{\{\s*ds\.(__platform_.+?__)\.data(?:\.([A-Za-z][A-Za-z0-9_]*)(?:__history)?)?/g;
 const HISTORY_FIELD_SUFFIX = '__history';
