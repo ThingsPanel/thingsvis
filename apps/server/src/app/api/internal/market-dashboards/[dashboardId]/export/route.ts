@@ -23,7 +23,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   const auth = await authorizeMarketInternalRequest(request);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const parsed = ExportRequestSchema.safeParse(await request.json());
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+  }
+  const parsed = ExportRequestSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Validation failed', details: parsed.error.flatten() },

@@ -158,4 +158,17 @@ describe('market dashboard template transformation', () => {
       'Missing device binding "temperature_sensor"',
     );
   });
+
+  it('rejects bindings that are not declared by the dashboard snapshot', () => {
+    const exported = exportMarketDashboard(singleDeviceDashboard(), [
+      { sourceDeviceId: 'device-100', bindingKey: 'temperature_sensor' },
+    ]).snapshot;
+
+    expect(() =>
+      importMarketDashboard(exported, [
+        { bindingKey: 'temperature_sensor', localDeviceId: 'local-device-900' },
+        { bindingKey: 'unexpected_device', localDeviceId: 'local-device-901' },
+      ]),
+    ).toThrow('Unknown device binding "unexpected_device"');
+  });
 });

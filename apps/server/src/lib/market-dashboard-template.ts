@@ -304,6 +304,26 @@ function assertInstalledBindings(bindings: InstalledDeviceBinding[]): Map<string
   return bindingToDevice;
 }
 
+function collectRequiredBindingKeys(value: unknown): Set<string> {
+  const keys = new Set<string>();
+  visitStrings(value, (input) => {
+    const match = BINDING_DATA_SOURCE_ID.exec(input);
+    if (match?.[1]) keys.add(match[1]);
+  });
+
+  const visitMarkers = (entry: unknown): void => {
+    if (Array.isArray(entry)) {
+      entry.forEach(visitMarkers);
+      return;
+    }
+    if (!isRecord(entry)) return;
+    if (typeof entry.$deviceBinding === 'string') keys.add(entry.$deviceBinding);
+    Object.values(entry).forEach(visitMarkers);
+  };
+  visitMarkers(value);
+  return keys;
+}
+
 function importBindingMarkers(value: unknown, bindingToDevice: Map<string, string>): unknown {
   if (Array.isArray(value)) {
     return value.map((entry) => importBindingMarkers(entry, bindingToDevice));
@@ -347,6 +367,17 @@ export function importMarketDashboard(
   bindings: InstalledDeviceBinding[],
 ): MarketDashboardSnapshot {
   const bindingToDevice = assertInstalledBindings(bindings);
+  const requiredBindingKeys = collectRequiredBindingKeys(snapshot);
+  for (const bindingKey of requiredBindingKeys) {
+    if (!bindingToDevice.has(bindingKey)) {
+      throw new Error(`Missing device binding "${bindingKey}"`);
+    }
+  }
+  for (const bindingKey of bindingToDevice.keys()) {
+    if (!requiredBindingKeys.has(bindingKey)) {
+      throw new Error(`Unknown device binding "${bindingKey}"`);
+    }
+  }
   const replacements = new Map<string, string>();
 
   visitStrings(snapshot, (input) => {

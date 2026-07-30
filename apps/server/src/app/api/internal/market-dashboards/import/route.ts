@@ -9,9 +9,9 @@ const ImportRequestSchema = z.object({
     name: z.string().min(1).max(100),
     schemaVersion: z.string().min(1),
     canvasConfig: z.record(z.unknown()),
-    nodes: z.array(z.unknown()),
-    dataSources: z.array(z.unknown()),
-    variables: z.array(z.unknown()),
+    nodes: z.array(z.unknown()).max(2000),
+    dataSources: z.array(z.unknown()).max(500),
+    variables: z.array(z.unknown()).max(500),
   }),
   deviceBindings: z.array(
     z.object({
@@ -27,7 +27,18 @@ export async function POST(request: NextRequest) {
   const auth = await authorizeMarketInternalRequest(request);
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status });
 
-  const parsed = ImportRequestSchema.safeParse(await request.json());
+  const contentLength = Number(request.headers.get('content-length') ?? 0);
+  if (contentLength > 10 * 1024 * 1024) {
+    return NextResponse.json({ error: 'Dashboard import payload is too large' }, { status: 413 });
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
+  }
+  const parsed = ImportRequestSchema.safeParse(payload);
   if (!parsed.success) {
     return NextResponse.json(
       { error: 'Validation failed', details: parsed.error.flatten() },
