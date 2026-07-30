@@ -192,13 +192,17 @@ function assertRoleMappings(
   return sourceToBinding;
 }
 
+function replaceKnownString(input: string, replacements: Map<string, string>): string {
+  let result = input;
+  for (const [source, replacement] of replacements) {
+    result = result.split(source).join(replacement);
+  }
+  return result;
+}
+
 function replaceKnownDataSourceIds(value: unknown, replacements: Map<string, string>): unknown {
   if (typeof value === 'string') {
-    let result = value;
-    for (const [source, replacement] of replacements) {
-      result = result.split(source).join(replacement);
-    }
-    return result;
+    return replaceKnownString(value, replacements);
   }
   if (Array.isArray(value)) {
     return value.map((entry) => replaceKnownDataSourceIds(entry, replacements));
@@ -206,7 +210,7 @@ function replaceKnownDataSourceIds(value: unknown, replacements: Map<string, str
   if (isRecord(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, entry]) => [
-        key,
+        replaceKnownString(key, replacements),
         replaceKnownDataSourceIds(entry, replacements),
       ]),
     );
@@ -216,6 +220,43 @@ function replaceKnownDataSourceIds(value: unknown, replacements: Map<string, str
 
 function roleMarker(bindingKey: string): JsonObject {
   return { $deviceBinding: bindingKey };
+}
+
+function rawDeviceBindingToken(bindingKey: string): string {
+  return `__device_binding_${bindingKey}__`;
+}
+
+function replaceDeviceIdFields(
+  value: unknown,
+  sourceToBinding: Map<string, string>,
+  path = 'snapshot',
+): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry, index) =>
+      replaceDeviceIdFields(entry, sourceToBinding, `${path}[${index}]`),
+    );
+  }
+  if (!isRecord(value)) return value;
+
+  const result: JsonObject = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (key === 'deviceId' || key === 'device_id') {
+      if (typeof entry !== 'string') {
+        throw new Error(`Unsupported ${key} field at "${path}.${key}"`);
+      }
+      const bindingKey = sourceToBinding.get(entry);
+      if (!bindingKey) {
+        throw new Error(`Unmapped device ID "${entry}" at "${path}.${key}"`);
+      }
+      if ('deviceBinding' in value || 'deviceBinding' in result) {
+        throw new Error(`Conflicting device binding fields at "${path}"`);
+      }
+      result.deviceBinding = roleMarker(bindingKey);
+      continue;
+    }
+    result[key] = replaceDeviceIdFields(entry, sourceToBinding, `${path}.${key}`);
+  }
+  return result;
 }
 
 function exportDataSources(
@@ -274,13 +315,21 @@ export function exportMarketDashboard(
     snapshot.dataSources,
     sourceToBinding,
   );
+  const replacements = new Map(dataSourceIdReplacements);
+  for (const [sourceDeviceId, bindingKey] of sourceToBinding) {
+    replacements.set(sourceDeviceId, rawDeviceBindingToken(bindingKey));
+  }
 
-  const exported = replaceKnownDataSourceIds(
+  const withDeviceBindings = replaceDeviceIdFields(
     {
       ...snapshot,
       dataSources,
     },
-    dataSourceIdReplacements,
+    sourceToBinding,
+  );
+  const exported = replaceKnownDataSourceIds(
+    withDeviceBindings,
+    replacements,
   ) as MarketDashboardSnapshot;
 
   assertNoSourceDeviceIds(exported, sourceToBinding.keys());
@@ -343,21 +392,21 @@ function importBindingMarkers(value: unknown, bindingToDevice: Map<string, strin
   return result;
 }
 
-function importDataSourceConfigs(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(importDataSourceConfigs);
+function importDeviceBindingFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(importDeviceBindingFields);
   if (!isRecord(value)) return value;
 
   const result: JsonObject = {};
   for (const [key, entry] of Object.entries(value)) {
-    result[key] = importDataSourceConfigs(entry);
+    result[key] = importDeviceBindingFields(entry);
   }
 
-  if (isRecord(result.config) && typeof result.config.deviceBinding === 'string') {
-    result.config = {
-      ...result.config,
-      deviceId: result.config.deviceBinding,
-    };
-    delete (result.config as JsonObject).deviceBinding;
+  if (typeof result.deviceBinding === 'string') {
+    if ('deviceId' in result) {
+      throw new Error('Dashboard import contains conflicting device binding fields');
+    }
+    result.deviceId = result.deviceBinding;
+    delete result.deviceBinding;
   }
   return result;
 }
@@ -379,6 +428,9 @@ export function importMarketDashboard(
     }
   }
   const replacements = new Map<string, string>();
+  for (const [bindingKey, deviceId] of bindingToDevice) {
+    replacements.set(rawDeviceBindingToken(bindingKey), deviceId);
+  }
 
   visitStrings(snapshot, (input) => {
     const match = BINDING_DATA_SOURCE_ID.exec(input);
@@ -389,14 +441,18 @@ export function importMarketDashboard(
   });
 
   const withDeviceIds = importBindingMarkers(snapshot, bindingToDevice);
-  const withConfigDeviceIds = importDataSourceConfigs(withDeviceIds);
+  const withConfigDeviceIds = importDeviceBindingFields(withDeviceIds);
   const imported = replaceKnownDataSourceIds(
     withConfigDeviceIds,
     replacements,
   ) as MarketDashboardSnapshot;
   const serialized = JSON.stringify(imported);
 
-  if (serialized.includes('$deviceBinding') || serialized.includes('__platform_binding_')) {
+  if (
+    serialized.includes('$deviceBinding') ||
+    serialized.includes('__platform_binding_') ||
+    serialized.includes('__device_binding_')
+  ) {
     throw new Error('Dashboard import contains unresolved device bindings');
   }
 

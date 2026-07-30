@@ -143,6 +143,36 @@ describe('market dashboard template transformation', () => {
     expect(JSON.stringify(imported)).toContain('__platform_switch-local__');
   });
 
+  it('replaces nested and embedded source device IDs across the full snapshot', () => {
+    const dashboard = singleDeviceDashboard();
+    dashboard.nodes.push({
+      id: 'custom-device-widget',
+      config: {
+        deviceId: 'device-100',
+        endpoint: '/api/v1/devices/device-100/history',
+        lookup: {
+          'device-100': 'device-100',
+        },
+      },
+    });
+
+    const exported = exportMarketDashboard(dashboard, [
+      { sourceDeviceId: 'device-100', bindingKey: 'temperature_sensor' },
+    ]).snapshot;
+    const serializedExport = JSON.stringify(exported);
+    expect(serializedExport).not.toContain('device-100');
+    expect(serializedExport).not.toContain('"deviceId":');
+    expect(serializedExport).toContain('__device_binding_temperature_sensor__');
+
+    const imported = importMarketDashboard(exported, [
+      { bindingKey: 'temperature_sensor', localDeviceId: 'local-device-900' },
+    ]);
+    const serializedImport = JSON.stringify(imported);
+    expect(serializedImport).not.toContain('__device_binding_');
+    expect(serializedImport).toContain('/api/v1/devices/local-device-900/history');
+    expect(serializedImport).toContain('"local-device-900":"local-device-900"');
+  });
+
   it('rejects export when any device role is missing', () => {
     expect(() => exportMarketDashboard(singleDeviceDashboard(), [])).toThrow(
       'Missing role mapping for device "device-100"',
