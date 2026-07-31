@@ -616,6 +616,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           onToolChange={handleToolChange}
           onProjectNameChange={(name: string) => setCanvasConfig({ ...canvasConfig, name })}
           onSave={() => saveNow()}
+          onUserEdit={markDirty}
           onPreview={openPreview}
           onPublish={openPublish}
           onToggleTheme={toggleTheme}

@@ -269,7 +269,7 @@ export function AlignTools({ kernelStore, disabled = false, onUserEdit }: AlignT
       state.updateNode(id, update);
     });
 
-    // Trigger save
+    // 对齐完成后标记用户编辑（dirty），不强制保存
     onUserEdit?.();
   };
 

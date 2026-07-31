@@ -75,6 +75,8 @@ interface EditorTopNavProps {
   onToolChange: (tool: Tool) => void;
   onProjectNameChange: (name: string) => void;
   onSave: () => void;
+  /** 用户编辑回调（如对齐后标记 dirty），勿与 onSave 混用 */
+  onUserEdit?: () => void;
   onPreview: () => void;
   onPublish: () => void;
   onOpenVariables: () => void;
@@ -118,6 +120,7 @@ export function EditorTopNav({
   onToolChange,
   onProjectNameChange,
   onSave,
+  onUserEdit,
   onPreview,
   onOpenVariables,
   onToggleTheme,
@@ -260,7 +263,7 @@ export function EditorTopNav({
           />
         </Button>
         {/* Alignment Tools (only visible when multiple nodes selected) */}
-        <AlignTools kernelStore={store} onUserEdit={onSave} />
+        <AlignTools kernelStore={store} onUserEdit={onUserEdit} />
       </div>
 
       {/* Right Side: Language, Theme, Preview, Publish */}
