@@ -19,7 +19,7 @@ export type FieldPathListResult = {
 
 const defaultOptions: FieldPathOptions = {
   maxDepth: 5,
-  maxNodes: 200
+  maxNodes: 200,
 };
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -36,7 +36,10 @@ function getValueType(value: unknown): FieldPathInfo['type'] {
   return 'unknown';
 }
 
-export function listFieldPaths(value: unknown, options?: Partial<FieldPathOptions>): FieldPathListResult {
+export function listFieldPaths(
+  value: unknown,
+  options?: Partial<FieldPathOptions>,
+): FieldPathListResult {
   const opts: FieldPathOptions = { ...defaultOptions, ...(options ?? {}) };
   const paths: string[] = [];
   const pathInfos: FieldPathInfo[] = [];
@@ -126,6 +129,25 @@ export function listFieldPaths(value: unknown, options?: Partial<FieldPathOption
 }
 
 /**
+ * 对剩余路径段从长到短匹配对象自有键；优先扁平整键（如 A_3.Status_S）。
+ */
+function matchLongestOwnKey(
+  obj: Record<string, unknown>,
+  segments: string[],
+  start: number,
+): { key: string; consumed: number } | null {
+  for (let end = segments.length - 1; end >= start; end--) {
+    const candidateParts = segments.slice(start, end + 1);
+    if (candidateParts.some((p) => p === '[]')) continue;
+    const candidate = candidateParts.join('.');
+    if (Object.prototype.hasOwnProperty.call(obj, candidate)) {
+      return { key: candidate, consumed: end - start + 1 };
+    }
+  }
+  return null;
+}
+
+/**
  * resolveFieldPath: extract a value from data using a field path produced by listFieldPaths.
  *
  * Supported path formats:
@@ -134,6 +156,7 @@ export function listFieldPaths(value: unknown, options?: Partial<FieldPathOption
  *   "[].key"        → data is array → data[0].key  (component maps over full array as needed)
  *   "items[].name"  → data.items[0].name (first element representative)
  *   "a.b.c"         → data.a.b.c
+ *   "A_3.Status_S"  → 优先 data["A_3.Status_S"] 扁平整键，否则再按嵌套回退
  *
  * Returns undefined if the path cannot be resolved (caller should handle gracefully).
  */
@@ -144,29 +167,41 @@ export function resolveFieldPath(data: unknown, path: string): unknown {
   // Split path into segments, handling [] notation
   // e.g. "[].value" → ["[]", "value"]
   // e.g. "items[].name" → ["items", "[]", "name"]
-  const segments = path
-    .replace(/\[\]/g, '.[]')
-    .split('.')
-    .filter(Boolean);
+  const segments = path.replace(/\[\]/g, '.[]').split('.').filter(Boolean);
 
   let current: unknown = data;
-  for (const seg of segments) {
+  let i = 0;
+  while (i < segments.length) {
     if (current === null || current === undefined) return undefined;
+    const seg = segments[i];
+
     if (seg === '[]') {
       // Descend into first array element as representative
       if (Array.isArray(current)) {
         current = current[0];
+        i += 1;
       } else {
         return undefined;
       }
-    } else if (Array.isArray(current)) {
+      continue;
+    }
+
+    if (Array.isArray(current)) {
       // Implicit array lookup — take first element
       current = (current[0] as Record<string, unknown>)?.[seg];
-    } else if (isPlainObject(current)) {
-      current = (current as Record<string, unknown>)[seg];
-    } else {
-      return undefined;
+      i += 1;
+      continue;
     }
+
+    if (isPlainObject(current)) {
+      const matched = matchLongestOwnKey(current as Record<string, unknown>, segments, i);
+      if (!matched) return undefined;
+      current = (current as Record<string, unknown>)[matched.key];
+      i += matched.consumed;
+      continue;
+    }
+
+    return undefined;
   }
   return current;
 }

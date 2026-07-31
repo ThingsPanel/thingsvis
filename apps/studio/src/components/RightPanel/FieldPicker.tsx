@@ -303,18 +303,32 @@ function requestEmbeddedDeviceFieldsOnce(
   return request;
 }
 
+/**
+ * 历史/当前值请求用的字段 ID。
+ * 设备字段选择器输出的是扁平 id（可含 `.`，如 A_3.Status_S），不含 `[]` 时整串作为 metric/field id；
+ * 含 `[]` 的结构路径仍取首段。
+ */
 function getRequestedFieldId(fieldPath: string): string | null {
   if (!fieldPath || fieldPath === '(root)') return null;
-  return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+  if (fieldPath.includes('[]')) {
+    return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+  }
+  return fieldPath;
 }
 
 function isHistoryFieldPath(fieldPath: string): boolean {
   return fieldPath.endsWith(HISTORY_FIELD_SUFFIX);
 }
 
+/**
+ * 路径根段：不含 `[]` 时保留完整扁平字段 ID（可含点）；结构路径仍取首段。
+ */
 function getRootPathSegment(path: string): string {
   if (!path || path === '(root)') return path;
-  return path.split(/[.[\]]/).filter(Boolean)[0] ?? path;
+  if (path.includes('[]')) {
+    return path.split(/[.[\]]/).filter(Boolean)[0] ?? path;
+  }
+  return path;
 }
 
 function normalizeHistoryFieldPath(path: string): string {

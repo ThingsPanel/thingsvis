@@ -396,4 +396,34 @@ describe('PropertyResolver', () => {
       ]);
     });
   });
+
+  // ── 遥测键含点 ─────────────────────────────────────────────────────────────
+
+  describe('telemetry keys containing dots', () => {
+    it('resolves dotted flat field bindings into props (legacy dotted path)', () => {
+      const node = makeNode({ value: '' }, [
+        {
+          targetProp: 'value',
+          expression: '{{ ds.dev.data.A_3.Status_S }}',
+        },
+      ]);
+      const result = PropertyResolver.resolve(node, {
+        dev: { data: { 'A_3.Status_S': '正常' }, status: 'connected' },
+      });
+      expect(result.value).toBe('正常');
+    });
+
+    it('resolves bracket-encoded dotted flat field bindings into props', () => {
+      const node = makeNode({ value: '' }, [
+        {
+          targetProp: 'value',
+          expression: '{{ ds.dev.data["A_3.Status_S"] }}',
+        },
+      ]);
+      const result = PropertyResolver.resolve(node, {
+        dev: { data: { 'A_3.Status_S': '正常' }, status: 'connected' },
+      });
+      expect(result.value).toBe('正常');
+    });
+  });
 });

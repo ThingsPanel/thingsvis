@@ -220,9 +220,15 @@ function getDefaultWriteEventName(
   return componentType ? DEFAULT_WRITE_EVENT_BY_COMPONENT[componentType] : undefined;
 }
 
+/**
+ * 写入命令用的字段 ID：不含 `[]` 时保留完整扁平 id（可含 `.`）；结构路径仍取首段。
+ */
 function getRootFieldPath(fieldPath: string): string | null {
   if (!fieldPath || fieldPath === '(root)') return null;
-  return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+  if (fieldPath.includes('[]')) {
+    return fieldPath.split(/[.[\]]/).filter(Boolean)[0] ?? null;
+  }
+  return fieldPath;
 }
 
 function selectOptionCaption(
