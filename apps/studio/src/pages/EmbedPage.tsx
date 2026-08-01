@@ -34,6 +34,7 @@ import { platformFieldStore } from '@/lib/stores/platformFieldStore';
 import { platformDeviceStore } from '@/lib/stores/platformDeviceStore';
 import { messageRouter, MSG_TYPES } from '@/embed/message-router';
 import {
+  activatePlatformDataSources,
   applyPlatformBufferSize,
   getResolvedPlatformBufferSize,
 } from '@/embed/platformDeviceCompat';
@@ -920,7 +921,7 @@ export default function EmbedPage() {
           ) as DataSource[];
 
           schema.dataSources = applyPlatformBufferSize(
-            normalizedDataSources,
+            activatePlatformDataSources(normalizedDataSources as DataSource[]),
             msg.platformBufferSize,
           );
 

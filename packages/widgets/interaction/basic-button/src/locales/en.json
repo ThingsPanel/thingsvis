@@ -9,6 +9,7 @@
                 "fontSize": "Font Size",
                 "variant": "Variant",
                 "backgroundColor": "Background Color",
+                "fillColor": "Button Fill Color",
                 "textColor": "Text Color",
                 "borderRadius": "Border Radius",
                 "disabled": "Disabled"

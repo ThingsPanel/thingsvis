@@ -301,7 +301,7 @@ export default function ActionConfigEditor({
           id: TEMPLATE_DEVICE_DATA_SOURCE_ID,
           name: t('events.currentDevice', { defaultValue: 'Current Device' }),
           type: 'PLATFORM_FIELD',
-          mode: 'manual',
+          mode: 'auto',
           config: {
             ...DEFAULT_PLATFORM_FIELD_CONFIG,
             deviceId: '__template__',

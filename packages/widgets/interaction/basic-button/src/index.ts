@@ -47,7 +47,7 @@ function renderButton(
   const fgColor = colors.fg || '#000000';
   
   // Determine colors based on variant
-  const buttonBg = isOutline || isGhost ? 'transparent' : primaryColor;
+  const buttonBg = isOutline || isGhost ? 'transparent' : props.fillColor || primaryColor;
   const defaultTextColor = isOutline || isGhost ? primaryColor : '#ffffff';
   const buttonColor = props.textColor || defaultTextColor;
   const border = isOutline ? `2px solid ${primaryColor}` : 'none';

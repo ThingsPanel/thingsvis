@@ -9,6 +9,7 @@
                 "fontSize": "字体大小",
                 "variant": "样式类型",
                 "backgroundColor": "背景颜色",
+                "fillColor": "按钮填充颜色",
                 "textColor": "文字颜色",
                 "borderRadius": "圆角",
                 "disabled": "禁用"

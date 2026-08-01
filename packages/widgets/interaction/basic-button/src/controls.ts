@@ -17,6 +17,7 @@ export const controls = createControlPanel()
       ],
       default: 'filled',
     });
+    b.addColorPicker('fillColor', { label: `${W}.fillColor`, binding: true });
     b.addColorPicker('textColor', { label: `${W}.textColor`, binding: true });
     b.addSlider('borderRadius', { label: `${W}.borderRadius`, min: 0, max: 50, step: 1, default: 6 });
     b.addSwitch('disabled', { label: `${W}.disabled` });

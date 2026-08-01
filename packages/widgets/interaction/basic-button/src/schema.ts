@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const PropsSchema = z.object({
   label: z.string().default('按钮').describe('props.label'),
   variant: z.enum(['filled', 'outline', 'ghost']).default('filled').describe('props.variant'),
+  fillColor: z.string().default('').describe('props.fillColor'),
   textColor: z.string().default('').describe('props.textColor'),
   borderRadius: z.number().min(0).max(50).default(6).describe('props.borderRadius'),
   disabled: z.boolean().default(false).describe('props.disabled'),

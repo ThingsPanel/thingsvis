@@ -55,3 +55,12 @@ export function getPlatformDeviceDataSourceId(deviceId: string): string {
 export function isCanonicalPlatformDeviceDataSourceId(dataSourceId: string): boolean {
   return /^__platform_(.+)__$/.test(dataSourceId);
 }
+
+/** Platform sources must be connected to receive host telemetry, even when also used for writes. */
+export function activatePlatformDataSources(dataSources: DataSource[]): DataSource[] {
+  return dataSources.map((dataSource) =>
+    isPlatformFieldDataSource(dataSource) && dataSource.mode === 'manual'
+      ? ({ ...dataSource, mode: 'auto' } as DataSource)
+      : dataSource,
+  );
+}
