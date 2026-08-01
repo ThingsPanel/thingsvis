@@ -7,4 +7,7 @@ export const controls = generateControls(PropsSchema, {
   overrides: {
     fill: { kind: 'color' },
   },
+  bindings: {
+    fill: { enabled: true, modes: ['static', 'field', 'expr'] },
+  },
 });
