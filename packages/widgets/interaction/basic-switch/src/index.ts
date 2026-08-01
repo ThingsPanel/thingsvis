@@ -87,7 +87,19 @@ function renderSwitch(
   onToggle: () => void,
 ): void {
   const t = SIZE_TOKENS[props.size] ?? SIZE_TOKENS['default'];
-  const thumbPos = internalChecked ? t.trackWidth - t.thumbSize - t.thumbOffset : t.thumbOffset;
+  const elementWidth = element.clientWidth || 100;
+  const elementHeight = element.clientHeight || 36;
+  const heightScale = Math.max(0.5, elementHeight / 36);
+  const widthBudget = coerceBoolean(props.showLabel, true)
+    ? Math.max(t.trackWidth, elementWidth * 0.62)
+    : Math.max(t.trackWidth, elementWidth - 16);
+  const scale = Math.min(heightScale, widthBudget / t.trackWidth, 4);
+  const trackWidth = Math.round(t.trackWidth * scale);
+  const trackHeight = Math.round(t.trackHeight * scale);
+  const thumbSize = Math.round(t.thumbSize * scale);
+  const thumbOffset = Math.max(1, Math.round(t.thumbOffset * scale));
+  const innerFontSize = Math.max(8, Math.round(t.innerFontSize * scale));
+  const thumbPos = internalChecked ? trackWidth - thumbSize - thumbOffset : thumbOffset;
 
   const onColor = resolveLayeredColor({
     instance: props.onColor,
@@ -115,7 +127,7 @@ function renderSwitch(
   const labelHtml = showLabel
     ? `
     <span style="
-      font-size: ${t.labelFontSize}px;
+      font-size: ${props.labelFontSize}px;
       color: ${colors.fg};
       white-space: nowrap;
       user-select: none;
@@ -123,7 +135,7 @@ function renderSwitch(
   `
     : '';
 
-  const spinnerSize = Math.round(t.thumbSize * 0.55);
+  const spinnerSize = Math.round(thumbSize * 0.55);
   const spinnerHtml = isLoading
     ? `
     <div style="
@@ -143,9 +155,9 @@ function renderSwitch(
     <span style="
       position: absolute;
       top: 50%;
-      left: ${t.thumbOffset + 2}px;
+      left: ${thumbOffset + 2}px;
       transform: translateY(-50%);
-      font-size: ${t.innerFontSize}px;
+      font-size: ${innerFontSize}px;
       color: #fff;
       font-weight: 600;
       line-height: 1;
@@ -162,9 +174,9 @@ function renderSwitch(
     <span style="
       position: absolute;
       top: 50%;
-      right: ${t.thumbOffset + 2}px;
+      right: ${thumbOffset + 2}px;
       transform: translateY(-50%);
-      font-size: ${t.innerFontSize}px;
+      font-size: ${innerFontSize}px;
       color: #fff;
       font-weight: 600;
       line-height: 1;
@@ -179,9 +191,9 @@ function renderSwitch(
   const trackHtml = `
     <div id="track" style="
       position: relative;
-      width: ${t.trackWidth}px;
-      height: ${t.trackHeight}px;
-      border-radius: ${t.trackHeight / 2}px;
+      width: ${trackWidth}px;
+      height: ${trackHeight}px;
+      border-radius: ${trackHeight / 2}px;
       background: ${trackColor};
       transition: background 0.2s;
       flex-shrink: 0;
@@ -192,10 +204,10 @@ function renderSwitch(
       ${offTextHtml}
       <div style="
         position: absolute;
-        top: ${t.thumbOffset}px;
+        top: ${thumbOffset}px;
         left: ${thumbPos}px;
-        width: ${t.thumbSize}px;
-        height: ${t.thumbSize}px;
+        width: ${thumbSize}px;
+        height: ${thumbSize}px;
         border-radius: 50%;
         background: #fff;
         transition: left 0.2s;

@@ -103,4 +103,23 @@ describe('interaction/basic-switch widget', () => {
 
     harness.destroy();
   });
+
+  it('scales the track with the widget bounds and keeps label font size configurable', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { label: 'Switch', labelFontSize: 24 },
+    });
+    Object.defineProperty(harness.element, 'clientWidth', { configurable: true, value: 200 });
+    Object.defineProperty(harness.element, 'clientHeight', { configurable: true, value: 72 });
+
+    harness.update({ props: { label: 'Switch', labelFontSize: 24 } });
+
+    const trackWidth = Number.parseFloat(
+      harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style')?.match(/width:\s*(\d+)px/)?.[1] ?? '0',
+    );
+    expect(trackWidth).toBeGreaterThan(44);
+    expect(harness.element.innerHTML).toContain('font-size: 24px');
+    harness.destroy();
+  });
 });

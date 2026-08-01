@@ -7,6 +7,7 @@ export const controls = createControlPanel()
     b.addSwitch('value', { label: `${W}.value`, binding: true });
     b.addTextInput('label', { label: `${W}.label`, binding: true });
     b.addSwitch('showLabel', { label: `${W}.showLabel` });
+    b.addSlider('labelFontSize', { label: `${W}.labelFontSize`, min: 8, max: 72, step: 1, default: 14 });
     b.addSelect('labelPosition', { label: `${W}.labelPosition`, options: [
       { label: { en: 'Left', zh: '左侧' }, value: 'left' },
       { label: { en: 'Right', zh: '右侧' }, value: 'right' },

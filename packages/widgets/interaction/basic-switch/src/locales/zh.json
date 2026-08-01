@@ -9,6 +9,7 @@
                 "value": "开关状态",
                 "label": "标签文字",
                 "showLabel": "显示标签",
+                "labelFontSize": "标签字号",
                 "labelPosition": "标签位置",
                 "onLabel": "开启文字",
                 "offLabel": "关闭文字",

@@ -9,6 +9,7 @@
                 "value": "Switch Status",
                 "label": "Label",
                 "showLabel": "Show Label",
+                "labelFontSize": "Label Font Size",
                 "labelPosition": "Label Position",
                 "onLabel": "On Text",
                 "offLabel": "Off Text",
