@@ -9,7 +9,15 @@ import { Input } from '@/components/ui/input';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { createVariableDefinition, isValidVariableName } from '@/lib/eventVariables';
+import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { dataSourceManager } from '@/lib/store';
 import type { DashboardVariable, KernelState, KernelStore } from '@thingsvis/kernel';
+import { DEFAULT_PLATFORM_FIELD_CONFIG } from '@thingsvis/schema';
+import {
+  getActionDataSourceIds,
+  normalizeDeviceTemplateWriteActions,
+  TEMPLATE_DEVICE_DATA_SOURCE_ID,
+} from './actionDataSources';
 
 export type ActionType = 'setVariable' | 'callWrite' | 'navigate' | 'runScript';
 
@@ -50,6 +58,7 @@ function ActionRow({
   variables,
   onEnsureVariable,
   dataSources,
+  defaultWriteDataSourceId,
 }: {
   action: ActionConfigItem;
   index: number;
@@ -62,6 +71,7 @@ function ActionRow({
   variables: DashboardVariable[];
   onEnsureVariable: (name: string, value?: unknown) => void;
   dataSources: string[];
+  defaultWriteDataSourceId?: string;
 }) {
   const { t } = useTranslation('editor');
   const update = (partial: Partial<ActionConfigItem>) => {
@@ -80,7 +90,15 @@ function ActionRow({
       <div className="flex items-center justify-between">
         <select
           value={action.type}
-          onChange={(e) => update({ type: e.target.value as ActionType })}
+          onChange={(e) => {
+            const type = e.target.value as ActionType;
+            update({
+              type,
+              ...(type === 'callWrite' && !action.dataSourceId && defaultWriteDataSourceId
+                ? { dataSourceId: defaultWriteDataSourceId }
+                : {}),
+            });
+          }}
           className="h-6 px-2 pr-6 text-[11px] font-medium rounded border border-transparent hover:border-border bg-transparent hover:bg-muted text-foreground outline-none focus:ring-1 focus:ring-inset focus:ring-ring focus:ring-inset w-32 cursor-pointer appearance-none transition-colors"
           style={{
             backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
@@ -188,7 +206,9 @@ function ActionRow({
               </option>
               {dataSources.map((ds) => (
                 <option key={ds} value={ds}>
-                  {ds}
+                  {ds === TEMPLATE_DEVICE_DATA_SOURCE_ID
+                    ? t('events.currentDevice', { defaultValue: 'Current Device' })
+                    : ds}
                 </option>
               ))}
             </select>
@@ -265,7 +285,34 @@ export default function ActionConfigEditor({
     () => kernelStore.getState() as KernelState,
   );
   const variables = state.variableDefinitions ?? [];
-  const dataSources = Object.keys(state.dataSources ?? {});
+  const serviceConfig = resolveEditorServiceConfig();
+  const isDeviceTemplate = serviceConfig.context === 'device-template';
+  const dataSources = getActionDataSourceIds(
+    Object.keys(state.dataSources ?? {}),
+    dataSourceManager.getAllConfigs().map((config) => config.id),
+    isDeviceTemplate,
+  );
+
+  React.useEffect(() => {
+    if (!isDeviceTemplate) return;
+    if (!dataSourceManager.getConfig(TEMPLATE_DEVICE_DATA_SOURCE_ID)) {
+      void dataSourceManager.registerDataSource(
+        {
+          id: TEMPLATE_DEVICE_DATA_SOURCE_ID,
+          name: t('events.currentDevice', { defaultValue: 'Current Device' }),
+          type: 'PLATFORM_FIELD',
+          mode: 'manual',
+          config: {
+            ...DEFAULT_PLATFORM_FIELD_CONFIG,
+            deviceId: '__template__',
+          },
+        },
+        false,
+      );
+    }
+    const normalized = normalizeDeviceTemplateWriteActions(actions);
+    if (normalized !== actions) onChange(normalized);
+  }, [actions, isDeviceTemplate, onChange, t]);
 
   const ensureVariable = React.useCallback(
     (name: string, value?: unknown) => {
@@ -335,6 +382,7 @@ export default function ActionConfigEditor({
           variables={variables}
           onEnsureVariable={ensureVariable}
           dataSources={dataSources}
+          defaultWriteDataSourceId={isDeviceTemplate ? TEMPLATE_DEVICE_DATA_SOURCE_ID : undefined}
         />
       ))}
       <Button

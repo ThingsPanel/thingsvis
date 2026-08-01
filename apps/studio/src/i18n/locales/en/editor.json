@@ -654,6 +654,7 @@
         "variableName": "Variable Name",
         "value": "Value / Expression",
         "dataSourceId": "Data Source ID",
+        "currentDevice": "Current Device",
         "payload": "Payload",
         "payloadExprHint": "Supports {{expr}} templates or JS expressions. 'payload' = event value",
         "url": "URL or Page ID",

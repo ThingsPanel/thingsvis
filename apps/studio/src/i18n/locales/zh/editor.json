@@ -638,6 +638,7 @@
         "variableName": "变量名",
         "value": "值 / 表达式",
         "dataSourceId": "数据源 ID",
+        "currentDevice": "当前设备",
         "payload": "写入载荷",
         "payloadExprHint": "支持 {{expr}} 模板或 JS 表达式，payload 为事件值",
         "url": "URL 或页面ID",
