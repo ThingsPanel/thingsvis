@@ -33,6 +33,7 @@ RUN npm install -g pnpm@9
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
+COPY --from=deps /app/packages/thingsvis-schema/node_modules ./packages/thingsvis-schema/node_modules
 
 # Copy source
 COPY . .
