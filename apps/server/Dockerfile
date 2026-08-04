@@ -37,11 +37,14 @@ COPY --from=deps /app/apps/server/node_modules ./apps/server/node_modules
 # Copy source
 COPY . .
 
-# Generate Prisma client + build server
+# Build workspace dependencies, generate Prisma client, then build server.
+# @thingsvis/schema publishes its runtime and type entrypoints from dist/, which
+# is intentionally excluded from the Docker build context.
 WORKDIR /app/apps/server
 ARG PORT=8000
 ARG DATABASE_URL="postgresql://thingsvis:thingsvis_password@thingsvis-postgres:5432/thingsvis_db?schema=public"
 
+RUN pnpm --filter @thingsvis/schema build
 RUN npx prisma generate
 RUN pnpm build
 
