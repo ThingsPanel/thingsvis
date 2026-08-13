@@ -226,8 +226,14 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     embedVisibility.isEmbedded,
   ]);
 
-  const [zoom, setZoom] = useState(80);
-  const [zoomInput, setZoomInput] = useState('80');
+  const initialZoom = useMemo(() => {
+    const value = Number(
+      new URLSearchParams(window.location.hash.split('?')[1] || '').get('initialZoom'),
+    );
+    return Number.isFinite(value) && value >= 0.1 && value <= 0.8 ? Math.round(value * 100) : 80;
+  }, []);
+  const [zoom, setZoom] = useState(initialZoom);
+  const [zoomInput, setZoomInput] = useState(initialZoom.toString());
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(() => {
     return embedVisibility.showLibrary;
@@ -240,7 +246,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const handleZoomInputBlur = () => {
     let value = parseInt(zoomInput.replace(/[^0-9]/g, ''), 10);
     if (isNaN(value)) value = 100;
-    value = Math.max(10, Math.min(500, value));
+    value = Math.max(10, Math.min(200, value));
     setZoom(value);
     setZoomInput(value.toString());
   };
@@ -674,11 +680,12 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   <Layers className="h-4 w-4" />
                 </button>
               </div>
-              {embedVisibility.showTopRight && (
+              {(embedVisibility.showTopRight || embedVisibility.forceShowMenu) && (
                 <button
                   className="p-1.5 ml-2 hover:bg-accent rounded-lg transition-colors"
                   onClick={() => setShowLeftPanel(false)}
                   title={t('common.close')}
+                  aria-label={t('common.close')}
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
                 </button>

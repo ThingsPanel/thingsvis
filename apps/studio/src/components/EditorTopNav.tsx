@@ -143,13 +143,14 @@ export function EditorTopNav({
         className={`glass rounded-xl shadow-lg border border-border/60 flex items-center gap-3 px-3 py-2 pointer-events-auto ${!showTopLeft && !forceShowMenu ? 'invisible' : ''}`}
       >
         {/* Left Panel Toggle Button - 最左边 */}
-        {showTopLeft && showLibrary && !showLeftPanel && (
+        {showLibrary && !showLeftPanel && (showTopLeft || forceShowMenu) && (
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-lg focus:ring-0 focus:outline-none hover:bg-accent/80"
             onClick={onToggleLeftPanel}
             title={t('topNav.showLibrary')}
+            aria-label={t('topNav.showLibrary')}
           >
             <PanelLeftOpen className="h-4 w-4" />
           </Button>

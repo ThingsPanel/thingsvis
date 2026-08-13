@@ -82,7 +82,7 @@ export function EditorBottomBar({
             variant="ghost"
             size="icon"
             className="h-8 w-8 rounded-lg hover:bg-accent/80 focus:ring-0 focus:outline-none"
-            onClick={() => onZoomChange(Math.min(500, zoom + 10))}
+            onClick={() => onZoomChange(Math.min(200, zoom + 10))}
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -105,7 +105,7 @@ export function EditorBottomBar({
               const scaleH = availableHeight / canvasH;
 
               const bestFit = Math.min(scaleW, scaleH);
-              onZoomChange(Math.floor(Math.max(10, Math.min(500, bestFit * 90))));
+              onZoomChange(Math.floor(Math.max(10, Math.min(200, bestFit * 90))));
             }}
           >
             <Maximize className="h-4 w-4" />
