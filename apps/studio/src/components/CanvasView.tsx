@@ -825,6 +825,10 @@ const CanvasView = forwardRef<
       try {
         if (store.getState().addNodes) {
           store.getState().addNodes([node as any]);
+          // Newly dropped grid items must be compacted immediately; otherwise
+          // the authored drop position can overlap existing items or remain
+          // outside the visible grid until another layout action occurs.
+          store.getState().compactGrid?.();
         }
         onUserEdit?.();
         if (shouldAutoOpenLocalIconPicker(node.type, node.props ?? {})) {
