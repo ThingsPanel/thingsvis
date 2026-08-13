@@ -761,8 +761,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               ) : (
                 <CanvasSettingsPanel
                   canvasConfig={canvasConfig}
-                  currentProjectName={currentProject?.name}
-                  isEmbedded={embedVisibility.isEmbedded}
                   onConfigChange={setCanvasConfig}
                   onLayoutModeChange={(newMode: 'fixed' | 'infinite' | 'grid') => {
                     const hasNodes = Object.keys(store.getState().nodesById).length > 0;
@@ -795,8 +793,8 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onMarkDirty={markDirty}
                   onZoomReset={() => {
                     setTimeout(() => {
-                      setZoom(80);
-                      setZoomInput('80');
+                      setZoom(initialZoom);
+                      setZoomInput(initialZoom.toString());
                     }, 50);
                   }}
                 />

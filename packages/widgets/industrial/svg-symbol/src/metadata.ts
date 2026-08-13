@@ -1,6 +1,6 @@
 export const metadata = {
   id: 'svg-symbol',
-  name: '图形符号',
+  name: '工业图标',
   category: 'industrial',
   icon: 'Shapes',
   version: '1.0.0',

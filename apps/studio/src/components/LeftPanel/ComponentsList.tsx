@@ -190,8 +190,8 @@ const HIDDEN_COMPONENT_IDS = new Set([
   'basic/container',
   'basic/line',
   'basic/luxury-clock',
+  'basic/rich-text',
   'geo/map-china',
-  'basic/icon',
   'decoration/title-decoration',
 ]);
 

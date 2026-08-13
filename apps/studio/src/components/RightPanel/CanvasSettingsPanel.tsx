@@ -1,10 +1,9 @@
 /**
- * CanvasSettingsPanel — 画布设置面板 (基础信息 + 画布配置)
+ * CanvasSettingsPanel — 画布设置面板
  * 从 Editor.tsx 提取的子组件 (Phase 6)
  * 在右侧面板未选中节点时显示
  */
 import { useTranslation } from 'react-i18next';
-import { Input } from '@/components/ui/input';
 import { NumericInput } from '@/components/ui/NumericInput';
 
 import { processThumbnailFile } from '../../lib/storage/thumbnail';
@@ -40,8 +39,6 @@ export interface CanvasConfig {
 
 interface CanvasSettingsPanelProps {
   canvasConfig: Record<string, any>;
-  currentProjectName?: string;
-  isEmbedded: boolean;
   onConfigChange: (config: any) => void;
   onLayoutModeChange: (mode: 'fixed' | 'infinite' | 'grid', hasNodes: boolean) => boolean; // returns shouldProceed
   onClearCanvas: (mode: 'fixed' | 'infinite' | 'grid') => void;
@@ -51,7 +48,6 @@ interface CanvasSettingsPanelProps {
 
 export function CanvasSettingsPanel({
   canvasConfig,
-  currentProjectName,
   onConfigChange,
   onLayoutModeChange,
   onMarkDirty,
@@ -67,92 +63,66 @@ export function CanvasSettingsPanel({
 
   return (
     <div className="w-full space-y-4 pb-4">
-      {/* Basic Info */}
-      <div className="px-2 border-t border-border pt-4">
-        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
-          {t('canvas.basicInfo')}
-        </h3>
-        <div className="space-y-4">
-          <div className="space-y-3">
-            <label className="text-sm font-medium">{t('canvas.projectName')}</label>
-            <Input
-              value={canvasConfig.projectName || currentProjectName || t('canvas.untitledProject')}
-              readOnly
-              disabled
-              className="h-8 text-sm rounded-md bg-muted/50 cursor-not-allowed"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-sm font-medium">{t('canvas.pageName')}</label>
-            <Input
-              value={canvasConfig.name}
-              onChange={(e) => onConfigChange({ ...canvasConfig, name: e.target.value })}
-              className="h-8 text-sm rounded-md focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-sm font-medium">{t('canvas.pageId')}</label>
-            <Input
-              value={canvasConfig.id}
-              readOnly
-              className="h-8 text-sm rounded-md bg-muted focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-sm font-medium">{t('canvas.thumbnail')}</label>
-            <div className="flex items-center gap-2">
-              {canvasConfig.thumbnail ? (
-                <div className="relative group w-full">
-                  <img
-                    src={canvasConfig.thumbnail}
-                    alt="Thumbnail"
-                    className="w-full h-20 object-cover rounded-md border border-border"
-                  />
-                  <button
-                    onClick={() => onConfigChange({ ...canvasConfig, thumbnail: '' })}
-                    className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
-                  >
-                    ×
-                  </button>
-                </div>
-              ) : (
-                <label className="flex-1 h-20 border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-[#6965db] transition-colors">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        try {
-                          const thumbnail = await processThumbnailFile(file);
-                          onConfigChange({ ...canvasConfig, thumbnail });
-                          onMarkDirty();
-                        } catch (error) {
-                          console.error('Failed to process thumbnail', error);
-                          alert(t('canvas.thumbnailFailed'));
-                        }
+      <div className="px-2">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">{t('canvas.pageName')}</label>
+          <input
+            value={canvasConfig.name}
+            onChange={(e) => onConfigChange({ ...canvasConfig, name: e.target.value })}
+            className="h-8 w-full rounded-md border border-input bg-background px-3 text-sm focus:ring-1 focus:ring-[#6965db] focus:border-[#6965db]"
+          />
+        </div>
+        <div className="mt-4 space-y-2">
+          <label className="text-sm font-medium">{t('canvas.thumbnail')}</label>
+          <div className="flex items-center gap-2">
+            {canvasConfig.thumbnail ? (
+              <div className="relative group w-full">
+                <img
+                  src={canvasConfig.thumbnail}
+                  alt="Thumbnail"
+                  className="w-full h-20 object-cover rounded-md border border-border"
+                />
+                <button
+                  onClick={() => onConfigChange({ ...canvasConfig, thumbnail: '' })}
+                  className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                >
+                  ×
+                </button>
+              </div>
+            ) : (
+              <label className="flex-1 h-20 border-2 border-dashed border-border rounded-md flex items-center justify-center cursor-pointer hover:border-[#6965db] transition-colors">
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      try {
+                        const thumbnail = await processThumbnailFile(file);
+                        onConfigChange({ ...canvasConfig, thumbnail });
+                        onMarkDirty();
+                      } catch (error) {
+                        console.error('Failed to process thumbnail', error);
+                        alert(t('canvas.thumbnailFailed'));
                       }
-                    }}
-                  />
-                  <span className="text-xs text-muted-foreground">{t('canvas.clickToUpload')}</span>
-                </label>
-              )}
-            </div>
+                    }
+                  }}
+                />
+                <span className="text-xs text-muted-foreground">{t('canvas.clickToUpload')}</span>
+              </label>
+            )}
           </div>
         </div>
       </div>
 
       {/* Canvas Config */}
-      <div className="px-2 border-t border-border pt-4">
-        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-4">
+      <div className="px-2 border-t border-border pt-3">
+        <h3 className="text-[12px] font-normal text-muted-foreground uppercase tracking-wider mb-2">
           {t('canvas.settings')}
         </h3>
-        <div className="space-y-4">
-          <div className="space-y-3">
+        <div className="space-y-2 flex flex-col">
+          <div className="space-y-2 order-2 mt-3">
             <label className="text-sm font-medium">{t('canvas.theme')}</label>
             <div className="grid grid-cols-2 gap-3">
               {Object.values(CANVAS_THEMES).map((tOpt) => {
@@ -195,33 +165,44 @@ export function CanvasSettingsPanel({
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2 order-1">
             <label className="text-sm font-medium">{t('canvas.mode')}</label>
-            <select
-              value={canvasConfig.mode}
-              onChange={(e) => {
-                const newMode = e.target.value as 'fixed' | 'infinite' | 'grid';
-                if (newMode !== canvasConfig.mode) {
-                  const shouldProceed = onLayoutModeChange(newMode, true);
-                  if (!shouldProceed) {
-                    e.target.value = canvasConfig.mode;
-                    return;
-                  }
+            <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-muted/40 p-1">
+              {[
+                ['grid', t('canvas.modeGrid')],
+                ['fixed', t('canvas.modeFixed')],
+                ['infinite', t('canvas.modeInfinite')],
+              ].map(([mode, label]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  className={cn(
+                    'h-8 rounded-md px-1 text-xs font-medium transition-colors',
+                    canvasConfig.mode === mode
+                      ? 'bg-background text-[#6965db] shadow-sm ring-1 ring-[#6965db]/30'
+                      : 'text-muted-foreground hover:bg-background/70 hover:text-foreground',
+                  )}
+                  onClick={() => {
+                    const newMode = mode as 'fixed' | 'infinite' | 'grid';
+                    if (newMode !== canvasConfig.mode) {
+                      const shouldProceed = onLayoutModeChange(newMode, true);
+                      if (!shouldProceed) {
+                        return;
+                      }
 
-                  onConfigChange({ ...canvasConfig, mode: newMode });
-                  onZoomReset();
-                }
-              }}
-              className="w-full h-8 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring "
-            >
-              <option value="grid">{t('canvas.modeGrid')}</option>
-              <option value="fixed">{t('canvas.modeFixed')}</option>
-              <option value="infinite">{t('canvas.modeInfinite')}</option>
-            </select>
+                      onConfigChange({ ...canvasConfig, mode: newMode });
+                      onZoomReset();
+                    }
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {canvasConfig.mode === 'grid' ? (
-            <div className="space-y-3">
+            <div className="space-y-2 order-1 mb-3">
               {/* Canvas size for grid mode */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
@@ -321,7 +302,7 @@ export function CanvasSettingsPanel({
               <p className="text-xs text-muted-foreground">{t('canvas.gridSnapTip')}</p>
             </div>
           ) : canvasConfig.mode === 'fixed' ? (
-            <div className="space-y-3">
+            <div className="space-y-2 order-1 mb-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium">{t('canvas.width')}</label>
@@ -371,8 +352,8 @@ export function CanvasSettingsPanel({
 
           {/* Scale mode setting — only relevant for fixed canvas modes, not grid (which is auto-responsive) */}
           {canvasConfig.mode !== 'infinite' && canvasConfig.mode !== 'grid' && (
-            <div className="space-y-3 mt-3">
-              <div className="space-y-3">
+            <div className="space-y-2 mt-2">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">{t('canvas.scaleMode')}</label>
                 <select
                   value={canvasConfig.scaleMode || 'fit-min'}
@@ -387,7 +368,7 @@ export function CanvasSettingsPanel({
                 </select>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">
                   {t('canvas.previewAlignY', { defaultValue: '预览垂直对齐' })}
                 </label>
