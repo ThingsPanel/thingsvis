@@ -662,6 +662,10 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 height: fullWidth ? undefined : '100%',
                 minHeight: fullWidth && !contentSized ? '100%' : undefined,
                 overflow: fullWidth ? 'visible' : 'auto',
+                // Keep the content width stable when an overflowing canvas needs a
+                // vertical scrollbar; otherwise grid reflow can oscillate between
+                // two widths and make the embedded editor visibly flicker.
+                scrollbarGutter: fullWidth ? undefined : 'stable',
                 position: 'relative',
                 // Outer container is always transparent — background comes from
                 // the page config (innerCanvas) or the host wrapper, never hardcoded here.

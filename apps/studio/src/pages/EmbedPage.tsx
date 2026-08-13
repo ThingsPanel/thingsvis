@@ -277,6 +277,22 @@ export default function EmbedPage() {
   const isGridLayout = canvasMode === 'grid';
   const isHostManagedEmbed =
     searchParams.get('mode') === 'embedded' && searchParams.get('saveTarget') === 'host';
+  const isDeviceTemplatePreview = searchParams.get('context') === 'device-template';
+  const isFixedGridPreview =
+    isGridLayout &&
+    (kernelState?.gridState?.settings?.responsive === false ||
+      (kernelState?.canvas as any)?.responsive === false ||
+      (kernelState?.page as any)?.config?.responsive === false);
+  const useFixedAppCanvas = isDeviceTemplatePreview || isFixedGridPreview;
+  const appScale =
+    useFixedAppCanvas && !isDeviceTemplatePreview
+      ? Math.max(
+          0.1,
+          (typeof window !== 'undefined' ? window.innerWidth : canvasWidth) / canvasWidth,
+        )
+      : 1;
+  const scaledAppWidth = canvasWidth * appScale;
+  const scaledAppHeight = canvasHeight * appScale;
   /** Only when parent iframe uses auto-height (embedSizing=content). */
   const isHostContentSizedEmbed =
     isHostManagedEmbed && isGridLayout && searchParams.get('embedSizing') === 'content';
@@ -732,6 +748,7 @@ export default function EmbedPage() {
             cols: schema.canvas.gridCols ?? 24,
             rowHeight: schema.canvas.gridRowHeight ?? 50,
             gap: schema.canvas.gridGap ?? 5,
+            responsive: schema.canvas.responsive !== false,
           };
 
           store.getState().setGridSettings?.(gridSettings);
@@ -1194,7 +1211,11 @@ export default function EmbedPage() {
   return (
     <div
       className={`theme-${pageTheme} relative thingsvis-embed-surface ${
-        isHostContentSizedEmbed ? 'overflow-visible' : 'overflow-auto'
+        useFixedAppCanvas
+          ? 'overflow-x-hidden overflow-y-auto'
+          : isHostContentSizedEmbed
+            ? 'overflow-visible'
+            : 'overflow-auto'
       }`}
       style={{
         width: isHostContentSizedEmbed ? '100%' : '100vw',
@@ -1204,6 +1225,7 @@ export default function EmbedPage() {
         backgroundImage: 'none',
         backgroundSize: 'auto',
         backgroundRepeat: 'repeat',
+        overflowX: useFixedAppCanvas ? 'hidden' : undefined,
       }}
       onMouseEnter={() => setIsPreviewHovered(true)}
       onMouseLeave={() => setIsPreviewHovered(false)}
@@ -1281,26 +1303,60 @@ export default function EmbedPage() {
         {isGridLayout ? (
           <div
             style={{
-              width: '100%',
-              height: isHostContentSizedEmbed ? 'auto' : '100%',
-              minHeight: isHostContentSizedEmbed ? undefined : '100%',
+              width: useFixedAppCanvas ? `${scaledAppWidth}px` : '100%',
+              height: useFixedAppCanvas
+                ? `${scaledAppHeight}px`
+                : isHostContentSizedEmbed
+                  ? 'auto'
+                  : '100%',
+              minHeight: useFixedAppCanvas
+                ? `${scaledAppHeight}px`
+                : isHostContentSizedEmbed
+                  ? undefined
+                  : '100%',
+              margin: useFixedAppCanvas ? '0 auto' : undefined,
+              position: 'relative',
               padding: GRID_CANVAS_PADDING,
               boxSizing: 'border-box',
             }}
           >
-            <GridCanvas
-              store={store as any}
-              resolveWidget={resolveWidget as any}
-              locale={locale}
-              settings={{ ...gridSettings, showGridLines: false }}
-              interactive={false}
-              fullWidth={true}
-              contentSized={isHostContentSizedEmbed}
-              onContentHeightChange={
-                isHostContentSizedEmbed ? handleHostEmbedContentHeight : undefined
+            <div
+              style={
+                useFixedAppCanvas
+                  ? {
+                      width: `${canvasWidth}px`,
+                      height: `${canvasHeight}px`,
+                      transform: `scale(${appScale})`,
+                      transformOrigin: 'top left',
+                    }
+                  : undefined
               }
-              actionRuntime={actionRuntime}
-            />
+            >
+              <GridCanvas
+                store={store as any}
+                resolveWidget={resolveWidget as any}
+                locale={locale}
+                settings={{
+                  ...gridSettings,
+                  responsive: useFixedAppCanvas ? false : gridSettings.responsive,
+                  showGridLines: false,
+                }}
+                interactive={false}
+                // App runtime still uses preview rendering so the grid surface does
+                // not create an editor-style horizontal scrollbar. Its design-space
+                // width remains fixed and is scaled by the wrapper above.
+                fullWidth={true}
+                width={useFixedAppCanvas ? canvasWidth : undefined}
+                height={useFixedAppCanvas ? canvasHeight : undefined}
+                contentSized={useFixedAppCanvas ? false : isHostContentSizedEmbed}
+                onContentHeightChange={
+                  !useFixedAppCanvas && isHostContentSizedEmbed
+                    ? handleHostEmbedContentHeight
+                    : undefined
+                }
+                actionRuntime={actionRuntime}
+              />
+            </div>
           </div>
         ) : (
           <ScaleScreen
