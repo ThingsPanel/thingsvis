@@ -20,7 +20,7 @@ import {
 import { ICON_MAP } from './ComponentsList';
 
 export default function DeviceLibraryPanel() {
-  const { t } = useTranslation('editor');
+  const { t, i18n } = useTranslation('editor');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [selectedDeviceId, setSelectedDeviceId] = useState('');
@@ -185,6 +185,15 @@ export default function DeviceLibraryPanel() {
                   const registryEntry = componentType
                     ? registryEntryByType.get(componentType)
                     : null;
+                  const language = (i18n.resolvedLanguage ?? i18n.language ?? '').toLowerCase();
+                  const baseLanguage = language.split('-')[0];
+                  const componentName =
+                    registryEntry?.i18n?.[language] ??
+                    registryEntry?.i18n?.[baseLanguage] ??
+                    registryEntry?.i18n?.zh ??
+                    registryEntry?.i18n?.en ??
+                    registryEntry?.displayName ??
+                    preset.name;
                   const iconName = registryEntry?.icon ?? '';
                   const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
 
@@ -195,19 +204,19 @@ export default function DeviceLibraryPanel() {
                       draggable
                       onDragStart={(e) => handleDragStart(e, selectedDeviceSource, preset)}
                       className="flex h-20 flex-col items-center justify-center gap-2 rounded border border-border p-2 transition-colors hover:border-primary hover:bg-accent"
-                      title={preset.name}
+                      title={componentName}
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded border border-border/50 bg-background text-foreground shadow-sm">
                         {registryEntry?.iconUrl ? (
                           <img
                             src={registryEntry.iconUrl}
-                            alt={preset.name}
+                            alt={componentName}
                             className="max-h-full max-w-full object-contain"
                           />
                         ) : preset.thumbnail ? (
                           <img
                             src={preset.thumbnail}
-                            alt={preset.name}
+                            alt={componentName}
                             className="max-h-full max-w-full object-contain"
                           />
                         ) : (
@@ -216,7 +225,7 @@ export default function DeviceLibraryPanel() {
                       </div>
                       <div className="w-full text-center leading-tight">
                         <div className="truncate px-0.5 text-xs font-medium text-foreground">
-                          {preset.name}
+                          {componentName}
                         </div>
                       </div>
                     </button>
