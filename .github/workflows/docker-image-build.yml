@@ -103,6 +103,8 @@ jobs:
             registry.cn-hangzhou.aliyuncs.com/${{ needs.resolve-version.outputs.owner_lower }}/${{ matrix.image_name }}:${{ needs.resolve-version.outputs.tag }}-${{ matrix.arch }}
           cache-from: type=gha,scope=${{ matrix.image_name }}-${{ matrix.arch }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image_name }}-${{ matrix.arch }}
+          # 阿里云容器镜像仓库当前不识别 Buildx 默认生成的 OCI provenance attestation。
+          provenance: false
           build-args: ${{ matrix.build_args }}
 
   publish-manifest:
