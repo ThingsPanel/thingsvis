@@ -3,12 +3,28 @@ import {
   computeGridContentHeightPx,
   resolveGridCanvasBackgroundHeight,
   resolveGridCanvasMinHeight,
+  resolveGridTotalRows,
 } from '../src/components/GridCanvas';
 
 describe('computeGridContentHeightPx', () => {
   it('matches the bottom edge of occupied grid rows without trailing gap', () => {
     expect(computeGridContentHeightPx(3, { rowHeight: 50, gap: 10 }, 0)).toBe(170);
     expect(computeGridContentHeightPx(1, { rowHeight: 50, gap: 10 }, 0)).toBe(50);
+  });
+});
+
+describe('resolveGridTotalRows', () => {
+  it('falls back to authored nodes when host hydration has not populated totalHeight', () => {
+    expect(
+      resolveGridTotalRows(0, [
+        { y: 0, h: 3 },
+        { y: 2, h: 4 },
+      ]),
+    ).toBe(6);
+  });
+
+  it('preserves a larger store height that includes empty canvas rows', () => {
+    expect(resolveGridTotalRows(12, [{ y: 0, h: 3 }])).toBe(12);
   });
 });
 

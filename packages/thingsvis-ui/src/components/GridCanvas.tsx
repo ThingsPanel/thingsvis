@@ -108,6 +108,18 @@ export function computeGridContentHeightPx(
     return totalRows * (rowHeight + gap) - gap + padding * 2;
 }
 
+export function resolveGridTotalRows(
+    storedTotalRows: number | undefined,
+    positions: Array<{ y: number; h: number }>
+): number {
+    const authoredTotalRows = positions.reduce((max, position) => {
+        if (!Number.isFinite(position.y) || !Number.isFinite(position.h)) return max;
+        return Math.max(max, position.y + position.h);
+    }, 0);
+
+    return Math.max(storedTotalRows ?? 0, authoredTotalRows);
+}
+
 // ─── Default grid settings (mirrors GridSettingsSchema defaults) ──────────────
 
 const DEFAULT_SETTINGS: GridSettings = {
@@ -478,11 +490,18 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     /** Total canvas rows after responsive reflow (used for canvasMinH). */
     const responsiveTotalRows = useMemo(() => {
-        if (!compactedDisplayMap) return kernelState.gridState?.totalHeight ?? 0;
+        if (!compactedDisplayMap) {
+            // Host hydration loads authored nodes without running a grid mutation, so
+            // gridState.totalHeight can still be zero. Derive a safe floor from nodes.
+            const authoredPositions = nodes.map((node) =>
+                (node.schemaRef as Record<string, unknown>).grid as { y: number; h: number }
+            );
+            return resolveGridTotalRows(kernelState.gridState?.totalHeight, authoredPositions);
+        }
         const entries = Object.values(compactedDisplayMap);
         if (entries.length === 0) return 0;
         return Math.max(...entries.map((item) => item.y + item.h));
-    }, [compactedDisplayMap, kernelState.gridState?.totalHeight]);
+    }, [compactedDisplayMap, kernelState.gridState?.totalHeight, nodes]);
 
     // ── Theme ─────────────────────────────────────────────────────────────────
 
