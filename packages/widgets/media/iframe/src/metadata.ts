@@ -3,7 +3,7 @@ export const metadata = {
     name: 'Iframe',
     category: 'media' as const,
     icon: 'AppWindow',
-    version: '1.0.0',
+    version: '1.1.0',
     description: 'Embeddable web container',
     defaultSize: { width: 400, height: 300 },
     resizable: true,

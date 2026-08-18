@@ -1,0 +1,25 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-interaction-quick-entry-list": {
+        "name": "快捷入口",
+        "groupContent": "内容",
+        "groupStyle": "样式",
+        "title": "卡片标题",
+        "showTitle": "显示标题",
+        "items": "入口配置",
+        "itemsDescription": "JSON 数组。支持 id、title、description、icon、iconColor、iconBackgroundColor、url、target 和 disabled。",
+        "showDivider": "显示分割线",
+        "titleFontSize": "卡片标题字号",
+        "itemTitleFontSize": "入口标题字号",
+        "descriptionFontSize": "说明文字字号",
+        "iconSize": "图标尺寸",
+        "itemPadding": "入口内边距",
+        "textColor": "标题颜色",
+        "descriptionColor": "说明颜色",
+        "dividerColor": "分割线颜色",
+        "hoverColor": "悬浮背景色"
+      }
+    }
+  }
+}

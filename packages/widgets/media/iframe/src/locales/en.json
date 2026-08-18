@@ -1,20 +1,37 @@
 {
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-media-iframe": {
-                "name": "Iframe"
-            }
-        }
-    },
-    "runtime": {
-        "emptyTitle": "Configure a webpage URL",
-        "emptyDescription": "Supports static values, field bindings, or expressions",
-        "idleTitle": "Webpage configured",
-        "idleDescriptionEdit": "Edit mode keeps live pages paused by default",
-        "idleDescriptionView": "Waiting for preview or runtime mode",
-        "loadingTitle": "Loading webpage",
-        "loadingDescription": "Requesting remote page content",
-        "errorTitle": "Failed to load webpage",
-        "errorDescription": "The site may block embedding or be temporarily unavailable"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-media-iframe": {
+        "name": "Webpage",
+        "groupContent": "Content",
+        "groupLoading": "Loading",
+        "groupSecurity": "Security",
+        "groupStyle": "Style",
+        "src": "Webpage URL",
+        "title": "Title",
+        "showHeader": "Show header",
+        "showRefresh": "Show refresh",
+        "showOpenExternal": "Show open in new window",
+        "showFullscreen": "Show fullscreen",
+        "loadTimeout": "Load timeout (seconds)",
+        "sandboxEnabled": "Enable secure sandbox",
+        "allowFullscreen": "Allow webpage fullscreen",
+        "allowPopups": "Allow webpage popups",
+        "allowDownloads": "Allow webpage downloads",
+        "borderRadius": "Border radius"
+      }
     }
+  },
+  "runtime": {
+    "emptyTitle": "Configure a webpage URL",
+    "emptyDescription": "Supports static values, field bindings, or expressions",
+    "loadingTitle": "Loading webpage",
+    "loadingDescription": "Requesting webpage content",
+    "errorTitle": "Webpage is unavailable",
+    "errorDescription": "The site may block embedding or the network may be unavailable",
+    "retry": "Reload",
+    "openExternal": "Open in new window",
+    "refresh": "Refresh",
+    "fullscreen": "Fullscreen"
+  }
 }

@@ -1,0 +1,25 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-interaction-quick-entry-list": {
+        "name": "Quick Links",
+        "groupContent": "Content",
+        "groupStyle": "Style",
+        "title": "Card title",
+        "showTitle": "Show title",
+        "items": "Entries",
+        "itemsDescription": "JSON array supporting id, title, description, icon, colors, url, target and disabled.",
+        "showDivider": "Show dividers",
+        "titleFontSize": "Card title size",
+        "itemTitleFontSize": "Entry title size",
+        "descriptionFontSize": "Description size",
+        "iconSize": "Icon size",
+        "itemPadding": "Entry padding",
+        "textColor": "Title color",
+        "descriptionColor": "Description color",
+        "dividerColor": "Divider color",
+        "hoverColor": "Hover background"
+      }
+    }
+  }
+}

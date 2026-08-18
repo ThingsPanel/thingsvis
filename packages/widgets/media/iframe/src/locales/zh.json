@@ -1,20 +1,37 @@
 {
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-media-iframe": {
-                "name": "网页容器"
-            }
-        }
-    },
-    "runtime": {
-        "emptyTitle": "请配置网页地址",
-        "emptyDescription": "支持静态值、字段绑定或表达式",
-        "idleTitle": "网页已配置",
-        "idleDescriptionEdit": "编辑态默认不加载实时页面",
-        "idleDescriptionView": "等待进入预览或运行态",
-        "loadingTitle": "页面加载中",
-        "loadingDescription": "正在请求网页内容",
-        "errorTitle": "页面加载失败",
-        "errorDescription": "目标站点可能禁止嵌入或暂时不可用"
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-media-iframe": {
+        "name": "网页",
+        "groupContent": "内容",
+        "groupLoading": "加载设置",
+        "groupSecurity": "安全设置",
+        "groupStyle": "样式",
+        "src": "网页地址",
+        "title": "标题",
+        "showHeader": "显示标题栏",
+        "showRefresh": "显示刷新按钮",
+        "showOpenExternal": "显示新窗口按钮",
+        "showFullscreen": "显示全屏按钮",
+        "loadTimeout": "加载超时（秒）",
+        "sandboxEnabled": "启用安全沙箱",
+        "allowFullscreen": "允许网页全屏",
+        "allowPopups": "允许网页弹窗",
+        "allowDownloads": "允许网页下载",
+        "borderRadius": "圆角"
+      }
     }
+  },
+  "runtime": {
+    "emptyTitle": "请配置网页地址",
+    "emptyDescription": "支持静态值、字段绑定或表达式",
+    "loadingTitle": "正在加载网页",
+    "loadingDescription": "正在请求网页内容",
+    "errorTitle": "网页暂时无法显示",
+    "errorDescription": "目标网站可能禁止嵌入，或当前网络不可用",
+    "retry": "重新加载",
+    "openExternal": "新窗口打开",
+    "refresh": "刷新",
+    "fullscreen": "全屏"
+  }
 }
