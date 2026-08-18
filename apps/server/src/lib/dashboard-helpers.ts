@@ -9,9 +9,10 @@ import { logger } from '@/lib/logger';
  * Ensures the user has a default home dashboard based on their role.
  *
  * Flow:
- * 1. Find or create the default project for the tenant
- * 2. Find or create the default dashboard within that project
- * 3. Set the dashboard as the home dashboard (homeFlag: true)
+ * 1. Keep an existing tenant homepage, including a user-configured dashboard
+ * 2. Find or create the default project for the tenant
+ * 3. Find or create the default dashboard within that project
+ * 4. Set the dashboard as the home dashboard (homeFlag: true)
  *
  * This function is idempotent — running it multiple times is safe.
  */
@@ -22,7 +23,27 @@ export async function ensureDefaultDashboardForUser(
 ): Promise<void> {
   const config = DEFAULT_DASHBOARD_CONFIGS[role];
 
-  // 1. Find or create project
+  // SSO runs whenever the embedded editor reconnects. Do not recreate the
+  // built-in dashboard after an administrator has selected a custom homepage.
+  const existingHomepage = await prisma.dashboard.findFirst({
+    where: {
+      homeFlag: true,
+      project: { tenantId },
+    },
+    select: { id: true, name: true },
+  });
+
+  if (existingHomepage) {
+    logger.info({
+      msg: '[DashboardInit] Tenant homepage already exists, skipping default dashboard initialization',
+      dashboardId: existingHomepage.id,
+      dashboardName: existingHomepage.name,
+      role,
+    });
+    return;
+  }
+
+  // 2. Find or create project
   let project = await prisma.project.findFirst({
     where: {
       tenantId,
@@ -47,7 +68,7 @@ export async function ensureDefaultDashboardForUser(
     });
   }
 
-  // 2. Check if dashboard already exists
+  // 3. Check if dashboard already exists
   const existingDashboard = await prisma.dashboard.findFirst({
     where: {
       projectId: project.id,
@@ -66,7 +87,7 @@ export async function ensureDefaultDashboardForUser(
     return;
   }
 
-  // 3. Create dashboard
+  // 4. Create dashboard
   const dashboard = await prisma.dashboard.create({
     data: {
       name: config.dashboardName,
