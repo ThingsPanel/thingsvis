@@ -787,6 +787,11 @@ export function useProjectBootstrap({
       const embedRuntimeVariableValues = buildEmbedRuntimeVariableValues(
         (payload as any)?.config as Record<string, unknown>,
       );
+
+      // Stop adapters before runtime variables are replaced. Otherwise every
+      // URL/token assignment refreshes the old REST adapters and produces a
+      // burst of unauthenticated or aborted requests during embedded startup.
+      await dataSourceManager.resetRuntimeDataSources();
       applyRuntimeVariables(variablesToLoad, embedRuntimeVariableValues);
 
       mergedDataSources = normalizeEmbeddedProviderDataSources(
@@ -797,7 +802,6 @@ export function useProjectBootstrap({
         ...prev,
         dataSources: mergedDataSources as any,
       }));
-      await dataSourceManager.resetRuntimeDataSources();
 
       try {
         store.temporal.getState().clear?.();

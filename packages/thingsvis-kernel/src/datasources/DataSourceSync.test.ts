@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { ApiSyncAdapter } from './DataSourceSync';
+import { ApiSyncAdapter, isHostManagedDataSourceId } from './DataSourceSync';
+
+describe('isHostManagedDataSourceId', () => {
+  it('matches generated host sources without matching user-created sources', () => {
+    expect(isHostManagedDataSourceId('thingspanel_home_alarm_history')).toBe(true);
+    expect(isHostManagedDataSourceId('__platform_device-1__')).toBe(true);
+    expect(isHostManagedDataSourceId('custom_rest')).toBe(false);
+    expect(isHostManagedDataSourceId(undefined)).toBe(false);
+  });
+});
 
 describe('ApiSyncAdapter', () => {
   it('filters and prunes leaked generated platform datasources from cloud loads', async () => {

@@ -5,6 +5,10 @@
 
 import type { DataSource } from '@thingsvis/schema';
 
+export function isHostManagedDataSourceId(id: unknown): id is string {
+  return typeof id === 'string' && /^(?:__platform_.+__|thingspanel_.+)$/.test(id);
+}
+
 /**
  * Interface for backend sync adapter
  */
@@ -71,9 +75,7 @@ export class ApiSyncAdapter implements DataSourceSyncAdapter {
 
     // Parse legacy or backend records
     const datasources = (response.data as Array<Record<string, unknown>>) || [];
-    const leakedManagedSources = datasources.filter(
-      (ds) => typeof ds.id === 'string' && /^(?:__platform_.+__|thingspanel_.+)$/.test(ds.id),
-    );
+    const leakedManagedSources = datasources.filter((ds) => isHostManagedDataSourceId(ds.id));
     await Promise.allSettled(
       leakedManagedSources.map((ds) => this.apiClient.delete(`/datasources/${ds.id}`)),
     );

@@ -9,7 +9,7 @@ import { PlatformFieldAdapter } from './PlatformFieldAdapter';
 import { FieldMappingExecutor } from './FieldMappingExecutor';
 import { get, set, del, keys } from 'idb-keyval';
 import type { DataSourceSyncAdapter } from './DataSourceSync';
-import { NoopSyncAdapter } from './DataSourceSync';
+import { isHostManagedDataSourceId, NoopSyncAdapter } from './DataSourceSync';
 
 type AdapterConstructor = new () => BaseAdapter;
 
@@ -228,6 +228,13 @@ export class DataSourceManager {
 
       for (const key of dsKeys) {
         const config = await get<DataSource>(key);
+        if (isHostManagedDataSourceId(config?.id)) {
+          // Embedded provider sources are rebuilt from the current host catalog.
+          // Restoring an old persisted copy can issue obsolete or unauthenticated
+          // requests before the host has supplied its URL and token variables.
+          await del(key);
+          continue;
+        }
         if (config && !this.configs.has(config.id)) {
           this.registerDataSource(config, false).catch((e) => {
             console.error('[DataSourceManager] Failed to load local data source:', e);

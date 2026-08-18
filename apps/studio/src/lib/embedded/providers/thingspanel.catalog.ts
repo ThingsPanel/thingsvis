@@ -148,11 +148,17 @@ return {
       id: 'thingspanel_home_alarm_history',
       group: 'dashboard',
       label: zhEn('告警列表', 'Alarm List'),
-      url: '{{ var.platformApiBaseUrl }}/alarm/info/history',
+      url: '{{ var.platformApiBaseUrl }}/alarm/info',
       params: { page: 1, page_size: 10 },
       fields: [
         { id: 'alarm_rows', label: zhEn('告警列表', 'Alarm Rows'), type: 'array' },
         { id: 'alarm_total', label: zhEn('告警总数', 'Alarm Total'), type: 'number' },
+        { id: 'latest_alarm', label: zhEn('最新告警', 'Latest Alarm'), type: 'object' },
+        {
+          id: 'unprocessed_alarm_count',
+          label: zhEn('未处理告警数', 'Unprocessed Alarm Count'),
+          type: 'number',
+        },
         {
           id: 'latest_alarm_level',
           label: zhEn('最新告警级别', 'Latest Alarm Level'),
@@ -190,18 +196,23 @@ const fmtTime = (raw) => {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   } catch { return String(raw); }
 };
-const latest = rows[0] ?? null;
+const normalizedRows = rows.map((row) => ({
+  ...row,
+  level: normalizeLevel(row?.alarm_level ?? row?.level),
+  title: String(row?.name ?? row?.alarm_name ?? row?.title ?? ''),
+  detail: String(row?.description ?? row?.content ?? row?.alarm_description ?? row?.message ?? ''),
+  source: String(row?.device_name ?? row?.processor_name ?? row?.processor ?? row?.source ?? ''),
+  time: fmtTime(row?.alarm_time ?? row?.create_at ?? row?.created_at ?? row?.time),
+  status: String(row?.processing_result ?? row?.alarm_status ?? row?.status ?? ''),
+}));
+const latest = normalizedRows[0] ?? null;
 return {
-  alarm_rows: rows.map((row) => ({
-    level: normalizeLevel(row?.alarm_level ?? row?.level),
-    title: String(row?.alarm_name ?? row?.name ?? row?.title ?? ''),
-    detail: String(row?.alarm_description ?? row?.alarm_message ?? row?.message ?? row?.detail ?? ''),
-    source: String(row?.device_name ?? row?.source ?? ''),
-    time: fmtTime(row?.create_time ?? row?.created_at ?? row?.time),
-  })),
+  alarm_rows: normalizedRows,
   alarm_total: Number(payload?.total ?? rows.length ?? 0),
-  latest_alarm_level: normalizeLevel(latest?.alarm_level ?? latest?.level),
-  latest_alarm_title: String(latest?.alarm_name ?? latest?.name ?? latest?.title ?? ''),
+  latest_alarm: latest,
+  unprocessed_alarm_count: normalizedRows.filter((row) => row.processing_result === 'UND').length,
+  latest_alarm_level: latest?.level ?? 'info',
+  latest_alarm_title: latest?.title ?? '',
 };
 `,
     },
