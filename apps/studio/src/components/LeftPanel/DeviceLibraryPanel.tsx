@@ -19,6 +19,23 @@ import {
 } from '@/lib/registry/registry-store';
 import { ICON_MAP } from './ComponentsList';
 
+const FIELD_BINDING_RE = /\{\{\s*ds\.[^.\s}]+\.data\.([^.[\]\s}]+)/;
+
+function resolvePresetField(
+  preset: PlatformDevicePreset,
+  device: PlatformDevice,
+): { fieldId: string; fieldName: string } | null {
+  const serializedWidget = preset.widget ? JSON.stringify(preset.widget) : '';
+  const fieldId = preset.fieldId?.trim() || FIELD_BINDING_RE.exec(serializedWidget)?.[1];
+  if (!fieldId) return null;
+
+  const field = device.fields?.find((candidate) => candidate.id === fieldId);
+  return {
+    fieldId,
+    fieldName: preset.fieldName?.trim() || field?.name || field?.alias || fieldId,
+  };
+}
+
 export default function DeviceLibraryPanel() {
   const { t, i18n } = useTranslation('editor');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +72,12 @@ export default function DeviceLibraryPanel() {
     if (!searchQuery.trim()) return presets;
     const query = searchQuery.toLowerCase();
 
-    return presets.filter((preset) => preset.name.toLowerCase().includes(query));
+    return presets.filter((preset) => {
+      const field = selectedDeviceSource ? resolvePresetField(preset, selectedDeviceSource) : null;
+      return [preset.name, field?.fieldName, field?.fieldId].some((value) =>
+        value?.toLowerCase().includes(query),
+      );
+    });
   }, [searchQuery, selectedDeviceSource]);
 
   const registryEntryByType = useMemo(() => {
@@ -177,7 +199,7 @@ export default function DeviceLibraryPanel() {
               <Server className="h-4 w-4 text-primary" />
               <span className="truncate">{selectedDeviceSource.deviceName}</span>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {visiblePresets.map((preset) =>
                 (() => {
                   const componentType =
@@ -186,7 +208,7 @@ export default function DeviceLibraryPanel() {
                     ? registryEntryByType.get(componentType)
                     : null;
                   const language = (i18n.resolvedLanguage ?? i18n.language ?? '').toLowerCase();
-                  const baseLanguage = language.split('-')[0];
+                  const baseLanguage = language.split('-')[0] || language;
                   const componentName =
                     registryEntry?.i18n?.[language] ??
                     registryEntry?.i18n?.[baseLanguage] ??
@@ -196,6 +218,10 @@ export default function DeviceLibraryPanel() {
                     preset.name;
                   const iconName = registryEntry?.icon ?? '';
                   const IconComponent = (iconName && ICON_MAP[iconName]) || Box;
+                  const boundField = resolvePresetField(preset, selectedDeviceSource);
+                  const itemTitle = boundField
+                    ? `${componentName} · ${boundField.fieldName} (${boundField.fieldId})`
+                    : componentName;
 
                   return (
                     <button
@@ -203,8 +229,8 @@ export default function DeviceLibraryPanel() {
                       type="button"
                       draggable
                       onDragStart={(e) => handleDragStart(e, selectedDeviceSource, preset)}
-                      className="flex h-20 flex-col items-center justify-center gap-2 rounded border border-border p-2 transition-colors hover:border-primary hover:bg-accent"
-                      title={componentName}
+                      className="flex min-h-16 w-full items-center gap-3 rounded border border-border px-3 py-2 text-left transition-colors hover:border-primary hover:bg-accent"
+                      title={itemTitle}
                     >
                       <div className="flex h-8 w-8 items-center justify-center rounded border border-border/50 bg-background text-foreground shadow-sm">
                         {registryEntry?.iconUrl ? (
@@ -223,10 +249,20 @@ export default function DeviceLibraryPanel() {
                           <IconComponent className="h-5 w-5 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="w-full text-center leading-tight">
-                        <div className="truncate px-0.5 text-xs font-medium text-foreground">
+                      <div className="min-w-0 flex-1 leading-tight">
+                        <div className="truncate text-sm font-medium text-foreground">
                           {componentName}
                         </div>
+                        {boundField ? (
+                          <div className="mt-1 flex min-w-0 items-center gap-1.5 text-xs">
+                            <span className="shrink-0 truncate text-muted-foreground">
+                              {boundField.fieldName}
+                            </span>
+                            <span className="min-w-0 truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                              {boundField.fieldId}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
                     </button>
                   );

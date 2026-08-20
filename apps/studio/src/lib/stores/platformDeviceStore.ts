@@ -19,6 +19,8 @@ export interface PlatformDeviceField {
 export interface PlatformDevicePreset {
   id: string;
   name: string;
+  fieldId?: string;
+  fieldName?: string;
   thumbnail?: string;
   widget?: Record<string, unknown>; // Legacy single-node snippet
   schema?: {
