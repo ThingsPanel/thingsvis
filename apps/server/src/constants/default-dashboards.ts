@@ -3,6 +3,10 @@
  *
  * These constants define the default home dashboard configurations
  * that are initialized when SUPER_ADMIN or TENANT_ADMIN users register.
+ *
+ * Template contents are synchronized from apps/docs/demand/init_kanban copy.md.
+ * SQL row IDs and project IDs are intentionally excluded: initialization keeps
+ * using the project's existing ID generation and tenant-scoped lookup behavior.
  */
 
 export type DefaultDashboardRole = 'SUPER_ADMIN' | 'TENANT_ADMIN';
@@ -10,6 +14,7 @@ export type DefaultDashboardRole = 'SUPER_ADMIN' | 'TENANT_ADMIN';
 export interface DefaultDashboardConfig {
   projectName: string;
   dashboardName: string;
+  version: number;
   canvasConfig: string;
   nodes: string;
   dataSources: string;
@@ -19,61 +24,157 @@ export interface DefaultDashboardConfig {
 export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDashboardConfig> = {
   SUPER_ADMIN: {
     projectName: '超管首页',
-    dashboardName: '超管首页v1',
+    dashboardName: '超管首页v2',
+    version: 99,
     canvasConfig: JSON.stringify({
       mode: 'grid',
       width: 1500,
-      height: 1000,
-      background: { color: '#f7fafc', size: 'cover', repeat: 'no-repeat', attachment: 'scroll' },
+      height: 850,
+      background: {
+        color: '#f6f8fc',
+        size: 'cover',
+        repeat: 'no-repeat',
+        attachment: 'scroll',
+      },
       theme: 'dawn',
       scaleMode: 'fit-min',
       previewAlignY: 'center',
       gridCols: 24,
       gridRowHeight: 50,
-      gridGap: 5,
-      gridEnabled: true,
+      gridGap: 10,
+      padding: 10,
+      gridEnabled: false,
       gridSize: 20,
+      layerOrder: [
+        'sa-tenant-total',
+        'sa-device-total',
+        'sa-device-online',
+        'sa-device-offline',
+        'sa-cpu-gauge',
+        'sa-memory-trend',
+        'sa-disk-trend',
+        'sa-help',
+        '7229451f-ec1a-467f-a116-b9b0f4758bfc',
+        '2e245892-8506-45c0-8eda-69f79cbfceb4',
+      ],
+      layerGroups: {},
     }),
     nodes: JSON.stringify([
       {
-        id: 'de56f271-4e51-4e69-bc81-0058164d259e',
-        type: 'chart/uplot-line',
+        id: 'sa-tenant-total',
+        type: 'interaction/value-card',
         props: {
-          title: '磁盘占用',
-          titleAlign: 'left',
-          primaryColor: '#6965db',
-          showLegend: true,
-          timeRangePreset: 'all',
-          data: [],
+          title: '租户总数',
+          suffix: '',
+          subtitle: '',
+          trend: 0,
+          precision: 0,
+          icon: 'i-lucide:building-2',
+          iconPosition: 'left',
+          iconSize: 62,
+          titleFontSize: 16,
+          valueFontSize: 42,
+          suffixFontSize: 14,
+          subtitleFontSize: 13,
+          titleColor: '#172033',
+          valueColor: '#111827',
+          subtitleColor: '#64748b',
+          iconColor: '#ffffff',
+          iconBackgroundColor: '#6366f1',
+          trendUpColor: '#2563eb',
+          trendDownColor: '#ef4444',
+          align: 'left',
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { width: 0, color: '#c0c0c0', style: 'solid', radius: 8 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
           opacity: 1,
         },
-        position: { x: 0, y: 0 },
-        size: { width: 600, height: 220 },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
+        },
         data: [
           {
-            targetProp: 'data',
-            expression: '{{ ds.thingspanel_system_metrics_trend.data.disk_usage__history }}',
+            targetProp: 'value',
+            expression: '{{ ds.thingspanel_tenant_summary.data.tenant_total }}',
           },
         ],
-        grid: { x: 0, y: 3, w: 12, h: 7, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 0,
+          y: 0,
+          w: 6,
+          h: 3,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: '9a4bdf25-78cc-476b-9e8b-79d81583eecf',
-        type: 'interaction/value-card-simple',
+        id: 'sa-device-total',
+        type: 'interaction/value-card',
         props: {
-          title: '总设备数',
-          value: 0,
-          unit: '个',
-          showUnit: true,
+          title: '设备总数',
+          suffix: '',
+          subtitle: '',
+          trend: 0,
           precision: 0,
-          showTrend: false,
-          valueColor: 'auto',
-          thresholds: '[]',
+          icon: 'i-lucide:server',
+          iconPosition: 'left',
+          iconSize: 62,
           titleFontSize: 16,
+          valueFontSize: 42,
+          suffixFontSize: 14,
+          subtitleFontSize: 13,
+          titleColor: '#172033',
+          valueColor: '#111827',
+          subtitleColor: '#64748b',
+          iconColor: '#ffffff',
+          iconBackgroundColor: '#ff9f2d',
+          trendUpColor: '#2563eb',
+          trendDownColor: '#ef4444',
+          align: 'left',
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          opacity: 1,
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
         },
         data: [
           {
@@ -81,21 +182,65 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
             expression: '{{ ds.device_sum.data.device_total }}',
           },
         ],
-        grid: { x: 0, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 6,
+          y: 0,
+          w: 6,
+          h: 3,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: 'dc68f31a-2727-4c90-8219-69c0fab96739',
-        type: 'interaction/value-card-simple',
+        id: 'sa-device-online',
+        type: 'interaction/value-card',
         props: {
-          title: '总在线数',
-          value: 0,
-          unit: '个',
-          showUnit: true,
+          title: '在线设备',
+          suffix: '',
+          subtitle: '',
+          trend: 0,
           precision: 0,
-          showTrend: false,
-          valueColor: 'auto',
-          thresholds: '[]',
+          icon: 'i-lucide:wifi',
+          iconPosition: 'left',
+          iconSize: 62,
           titleFontSize: 16,
+          valueFontSize: 42,
+          suffixFontSize: 14,
+          subtitleFontSize: 13,
+          titleColor: '#172033',
+          valueColor: '#111827',
+          subtitleColor: '#64748b',
+          iconColor: '#ffffff',
+          iconBackgroundColor: '#36bf7a',
+          trendUpColor: '#2563eb',
+          trendDownColor: '#ef4444',
+          align: 'left',
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          opacity: 1,
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
         },
         data: [
           {
@@ -103,21 +248,65 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
             expression: '{{ ds.device_sum.data.device_on }}',
           },
         ],
-        grid: { x: 6, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 12,
+          y: 0,
+          w: 6,
+          h: 3,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: 'db3f0e48-720b-422f-8dd2-6628c766ecc9',
-        type: 'interaction/value-card-simple',
+        id: 'sa-device-offline',
+        type: 'interaction/value-card',
         props: {
-          title: '总离线数',
-          value: 0,
-          unit: '个',
-          showUnit: true,
+          title: '离线设备',
+          suffix: '',
+          subtitle: '',
+          trend: 0,
           precision: 0,
-          showTrend: false,
-          valueColor: 'auto',
-          thresholds: '[]',
+          icon: 'i-lucide:triangle-alert',
+          iconPosition: 'left',
+          iconSize: 62,
           titleFontSize: 16,
+          valueFontSize: 42,
+          suffixFontSize: 14,
+          subtitleFontSize: 13,
+          titleColor: '#172033',
+          valueColor: '#111827',
+          subtitleColor: '#64748b',
+          iconColor: '#ffffff',
+          iconBackgroundColor: '#ff4d4f',
+          trendUpColor: '#2563eb',
+          trendDownColor: '#ef4444',
+          align: 'left',
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          opacity: 1,
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
         },
         data: [
           {
@@ -125,92 +314,404 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
             expression: '{{ ds.device_sum.data.device_offline }}',
           },
         ],
-        grid: { x: 12, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 18,
+          y: 0,
+          w: 6,
+          h: 3,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: '3e98c169-5679-4102-a2f4-967ca47cf4f5',
-        type: 'interaction/value-card-simple',
+        id: 'sa-cpu-gauge',
+        type: 'chart/echarts-gauge',
         props: {
-          title: '租户总数',
-          value: 0,
-          unit: '个',
-          showUnit: true,
-          precision: 0,
-          showTrend: true,
-          valueColor: 'auto',
-          thresholds: '[]',
-          titleFontSize: 16,
+          primaryColor: '#4f6ef7',
+          axisLabelColor: '#64748b',
+          detailColor: '#172033',
+          max: 100,
+          axisLabelFontSize: 11,
+          titleFontSize: 14,
+          detailFontSize: 28,
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          padding: 10,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: 'CPU占用率（%）',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
         },
         data: [
           {
-            targetProp: 'value',
-            expression: '{{ ds.thingspanel_tenant_summary.data.tenant_total }}',
-          },
-          {
-            targetProp: 'trend',
-            expression: '{{ ds.thingspanel_tenant_summary.data.tenant_added_month }}',
-            transform: '(data.tenant_added_month / data.tenant_total).toFixed(2) * 100',
+            targetProp: 'data',
+            expression: '{{ ds.thingspanel_system_metrics.data.cpu_usage }}',
+            transform: 'utils.toFixed(value, 2)',
           },
         ],
-        grid: { x: 18, y: 0, w: 6, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 0,
+          y: 3,
+          w: 5,
+          h: 5,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: '50440e62-8599-40c5-9f42-ca21b81d83aa',
+        id: 'sa-memory-trend',
         type: 'chart/uplot-line',
         props: {
-          title: '内存占用',
-          titleAlign: 'left',
-          primaryColor: '#6965db',
+          primaryColor: '#7c3aed',
           showLegend: true,
+          showArea: true,
+          areaFillAlpha: 0.12,
+          smooth: true,
           timeRangePreset: 'all',
-          data: [],
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          border: { width: 0, color: '#c0c0c0', style: 'solid', radius: 8 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          padding: 10,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '内存占用趋势',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 20, y: 20 },
-        size: { width: 600, height: 220 },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
+        },
         data: [
           {
             targetProp: 'data',
             expression: '{{ ds.thingspanel_system_metrics_trend.data.memory_usage__history }}',
           },
         ],
-        grid: { x: 12, y: 3, w: 12, h: 7, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 5,
+          y: 3,
+          w: 10,
+          h: 5,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
-        id: '79521394-f416-4b1f-be7a-5844a7df4117',
+        id: 'sa-disk-trend',
+        type: 'chart/uplot-line',
+        props: {
+          primaryColor: '#f59e0b',
+          showLegend: false,
+          showArea: true,
+          areaFillAlpha: 0.12,
+          smooth: true,
+          timeRangePreset: 'all',
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          padding: 10,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: '磁盘占用趋势',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
+        },
+        data: [
+          {
+            targetProp: 'data',
+            expression: '{{ ds.thingspanel_system_metrics_trend.data.disk_usage__history }}',
+          },
+        ],
+        grid: {
+          x: 15,
+          y: 3,
+          w: 9,
+          h: 5,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
+      },
+      {
+        id: 'sa-help',
+        type: 'interaction/quick-entry-list',
+        props: {
+          title: '',
+          showTitle: true,
+          showDivider: true,
+          titleFontSize: 18,
+          itemTitleFontSize: 16,
+          descriptionFontSize: 13,
+          iconSize: 52,
+          itemPadding: 16,
+          textColor: '#172033',
+          descriptionColor: '#64748b',
+          dividerColor: '#e8edf5',
+          hoverColor: '#f8faff',
+          items: [
+            {
+              id: 'ai-chat',
+              title: 'ThingsPanel 智能问答',
+              description: '查询配置、接入和使用问题',
+              icon: 'bot',
+              iconColor: '#2563eb',
+              iconBackgroundColor: '#eef2ff',
+              url: 'https://aichat.thingspanel.cn/',
+              target: '_blank',
+              disabled: false,
+            },
+            {
+              id: 'docs',
+              title: '官方文档',
+              description: '快速开始和操作手册',
+              icon: 'book-open',
+              iconColor: '#536dfe',
+              iconBackgroundColor: '#f0f2ff',
+              url: 'https://docs.thingspanel.cn/zh-Hans/',
+              target: '_blank',
+              disabled: false,
+            },
+            {
+              id: 'open-source',
+              title: '项目开源地址',
+              description: '查看源码、提交问题和参与贡献',
+              icon: 'github',
+              iconColor: '#334155',
+              iconBackgroundColor: '#f1f5f9',
+              url: 'https://github.com/ThingsPanel',
+              target: '_blank',
+              disabled: false,
+            },
+          ],
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: '#e8edf5',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(30,64,175,0.06)',
+            blur: 16,
+          },
+          padding: 10,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: '智能问答与文档',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 100,
+          y: 100,
+        },
+        size: {
+          width: 200,
+          height: 80,
+        },
+        data: [],
+        grid: {
+          x: 0,
+          y: 8,
+          w: 8,
+          h: 6,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
+      },
+      {
+        id: '7229451f-ec1a-467f-a116-b9b0f4758bfc',
+        type: 'media/iframe',
+        props: {
+          src: 'https://docs.thingspanel.cn/zh-Hans/',
+          borderWidth: 0,
+          borderColor: '#000000',
+          borderRadius: 0,
+          showHeader: false,
+          showOpenExternal: false,
+          showRefresh: false,
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 10,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: 'ThingsPanel官网',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 400,
+          height: 300,
+        },
+        data: [],
+        grid: {
+          x: 8,
+          y: 8,
+          w: 8,
+          h: 6,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
+      },
+      {
+        id: '2e245892-8506-45c0-8eda-69f79cbfceb4',
         type: 'media/video-player',
         props: {
           src: 'https://pub-dd72232484fd4c78b094868481918d04.r2.dev/thingspanel-intro.mp4',
           mode: 'webrtc,mse,hls,mjpeg',
-          background: false,
+          autoplay: true,
           visibilityThreshold: 0,
           objectFit: 'fill',
           borderWidth: 0,
           borderColor: '#000000',
           borderRadius: 0,
         },
-        position: { x: 0, y: 0 },
-        size: { width: 400, height: 300 },
-        data: [],
-        grid: { x: 0, y: 10, w: 12, h: 8, static: false, isDraggable: true, isResizable: true },
-      },
-      {
-        id: 'bfa90a38-5d22-4250-b21a-fd4f254a374e',
-        type: 'media/iframe',
-        props: {
-          src: '',
-          borderWidth: 0,
-          borderColor: '#000000',
-          borderRadius: 0,
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 0,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 10,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: '产品介绍',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 400, height: 300 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 400,
+          height: 300,
+        },
         data: [],
-        grid: { x: 12, y: 10, w: 12, h: 8, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 16,
+          y: 8,
+          w: 8,
+          h: 6,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
     ]),
     dataSources: JSON.stringify([
@@ -221,13 +722,17 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         config: {
           url: '{{ var.platformApiBaseUrl }}/board/device',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
           params: {},
           pollingInterval: 0,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `return data.data`,
+        transformation: 'return data.data',
         createdAt: '2026-05-07T08:19:07.385Z',
         updatedAt: '2026-05-07T12:40:58.098Z',
         mode: 'auto',
@@ -239,26 +744,18 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
         config: {
           url: '{{ var.platformApiBaseUrl }}/board/tenant',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
           params: {},
           pollingInterval: 60,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const year = new Date().getFullYear();
-const rows = Array.isArray(payload?.user_list_month) ? payload.user_list_month : [];
-return {
-  tenant_total: Number(payload?.user_total ?? 0),
-  tenant_added_yesterday: Number(payload?.user_added_yesterday ?? 0),
-  tenant_added_month: Number(payload?.user_added_month ?? 0),
-  tenant_growth__history: rows.map((row) => ({
-    timestamp: new Date(year, Number(row.mon ?? 1) - 1, 1).toISOString(),
-    value: Number(row.num ?? 0)
-  }))
-};
-`,
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst year = new Date().getFullYear();\nconst rows = Array.isArray(payload?.user_list_month) ? payload.user_list_month : [];\nreturn {\n  tenant_total: Number(payload?.user_total ?? 0),\n  tenant_added_yesterday: Number(payload?.user_added_yesterday ?? 0),\n  tenant_added_month: Number(payload?.user_added_month ?? 0),\n  tenant_growth__history: rows.map((row) => ({\n    timestamp: new Date(year, Number(row.mon ?? 1) - 1, 1).toISOString(),\n    value: Number(row.num ?? 0)\n  }))\n};\n",
       },
       {
         id: 'thingspanel_system_metrics_trend',
@@ -267,59 +764,128 @@ return {
         config: {
           url: '{{ var.platformApiBaseUrl }}/system/metrics/history',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: { hours: 24 },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {
+            hours: 24,
+          },
           pollingInterval: 60,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const rows = Array.isArray(payload) ? payload : [];
-const mapSeries = (usageKey, fallbackKey) => rows.map((row) => ({
-  timestamp: row.timestamp ?? row.time ?? row.created_at,
-  value: Number(row[usageKey] ?? row[fallbackKey] ?? 0)
-}));
-return {
-  cpu_usage__history: mapSeries('cpu_usage', 'cpu'),
-  memory_usage__history: mapSeries('memory_usage', 'memory'),
-  disk_usage__history: mapSeries('disk_usage', 'disk')
-};
-`,
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst rows = Array.isArray(payload) ? payload : [];\nconst mapSeries = (usageKey, fallbackKey) => rows.map((row) => ({\n  timestamp: row.timestamp ?? row.time ?? row.created_at,\n  value: Number(row[usageKey] ?? row[fallbackKey] ?? 0)\n}));\nreturn {\n  cpu_usage__history: mapSeries('cpu_usage', 'cpu'),\n  memory_usage__history: mapSeries('memory_usage', 'memory'),\n  disk_usage__history: mapSeries('disk_usage', 'disk')\n};\n",
+      },
+      {
+        id: 'thingspanel_system_metrics',
+        name: '系统资源',
+        type: 'REST',
+        config: {
+          url: '{{ var.platformApiBaseUrl }}/system/metrics/current',
+          method: 'GET',
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {},
+          pollingInterval: 60,
+          timeout: 30,
+          auth: {
+            type: 'none',
+          },
+        },
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nreturn {\n  cpu_usage: Number(payload?.cpu_usage ?? 0),\n  memory_usage: Number(payload?.memory_usage ?? 0),\n  disk_usage: Number(payload?.disk_usage ?? 0)\n};\n",
+        mode: 'auto',
+      },
+      {
+        id: 'thingspanel_device_summary',
+        name: '设备统计',
+        type: 'REST',
+        config: {
+          url: '{{ var.platformApiBaseUrl }}/board/tenant/device/info',
+          method: 'GET',
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {},
+          pollingInterval: 60,
+          timeout: 30,
+          auth: {
+            type: 'none',
+          },
+        },
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst total = Number(payload?.device_total ?? 0);\nconst online = Number(payload?.device_on ?? payload?.device_online ?? 0);\nconst activity = Number(payload?.device_activity ?? 0);\nreturn {\n  device_total: total,\n  device_online: online,\n  device_offline: Math.max(0, total - online),\n  device_activity: activity\n};\n",
       },
     ]),
     variables: JSON.stringify([
       {
         name: 'platformApiBaseUrl',
         type: 'string',
-        defaultValue: '',
+        defaultValue: 'http://localhost:5002/proxy-default',
       },
       {
         name: 'thingsvisApiBaseUrl',
         type: 'string',
         defaultValue: 'http://localhost:5002/thingsvis-api',
       },
-      { name: 'deviceId', type: 'string', defaultValue: '' },
-      { name: 'dateRange', type: 'object', defaultValue: { startTime: '', endTime: '' } },
+      {
+        name: 'deviceId',
+        type: 'string',
+        defaultValue: '',
+      },
+      {
+        name: 'dateRange',
+        type: 'object',
+        defaultValue: {
+          startTime: '',
+          endTime: '',
+        },
+      },
     ]),
   },
 
   TENANT_ADMIN: {
     projectName: '首页项目',
     dashboardName: '首页看板（租户管理员首页）',
+    version: 539,
     canvasConfig: JSON.stringify({
       mode: 'grid',
       width: 1920,
       height: 1080,
-      background: { color: '#f7fafc', size: 'cover', repeat: 'no-repeat', attachment: 'scroll' },
+      background: {
+        color: '#f7fafc',
+        image: 'http://c.thingspanel.cn/thingsvis-api/uploads/wWFD2ldFbOfpGvqqmRzt6.png',
+        size: 'cover',
+        repeat: 'no-repeat',
+        attachment: 'fixed',
+      },
       theme: 'dawn',
       scaleMode: 'fit-min',
       previewAlignY: 'center',
       gridCols: 12,
-      gridRowHeight: 50,
+      gridRowHeight: 16,
       gridGap: 8,
-      gridEnabled: true,
+      padding: 10,
+      gridEnabled: false,
       gridSize: 20,
+      layerOrder: [
+        '68c9ec9d-6bd1-4528-bf74-6d8acce3a47f',
+        'db8cfc25-a033-4d55-a1a0-3cd7a70604c8',
+        '31f83f00-47e8-46aa-80e7-cf30d9ac394e',
+        'a0617113-530c-4aa1-8d34-ecc86718a0e1',
+        'daa90ad4-ad55-4198-a9ac-6ded7535e3d3',
+        '3101370d-f8b8-4b5b-8f87-ac550bcdfcff',
+        'e14415ed-a914-486a-9e22-d49bb6d61c16',
+        'fa4e0bd8-240e-4fed-938e-0022ed78c812',
+        'ccefb744-fb6b-43a8-9a3f-1d0dcf9d9821',
+        'e2e02f34-ebde-4fb9-9bc7-752a54b52a54',
+        'f4cb7bc7-d9d3-4735-94eb-30baa20af069',
+      ],
+      layerGroups: {},
     }),
     nodes: JSON.stringify([
       {
@@ -328,39 +894,75 @@ return {
         props: {
           title: '设备总数',
           prefix: '',
-          value: 0,
           suffix: '个',
           subtitle: '',
           trend: 0,
           precision: 0,
-          icon: '',
-          iconSize: 24,
-          titleFontSize: 18,
-          valueFontSize: 36,
+          icon: 'i-lucide:server',
+          iconSize: 84,
+          titleFontSize: 16,
+          valueFontSize: 32,
           suffixFontSize: 20,
           subtitleFontSize: 12,
-          titleColor: '#ffffff',
-          valueColor: '#ffffff',
+          titleColor: '',
+          valueColor: '',
           subtitleColor: '',
           iconColor: '',
-          iconBackgroundColor: '',
+          iconBackgroundColor: '#4858f8',
           trendUpColor: '',
           trendDownColor: '',
           align: 'left',
+          iconPosition: 'left',
+          simulateValueEnabled: false,
+          simulateRange: 20,
+          simulateIntervalMs: 250,
         },
         baseStyle: {
-          background: { color: '#d64a92', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            style: 'solid',
+            radius: 8,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 0,
           opacity: 1,
+          card: {
+            enabled: true,
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 320, height: 160 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 320,
+          height: 160,
+        },
         data: [
           {
             targetProp: 'value',
             expression: '{{ ds.thingspanel_device_summary.data.device_total }}',
           },
         ],
-        grid: { x: 0, y: 0, w: 3, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 0,
+          y: 0,
+          w: 3,
+          h: 7,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'db8cfc25-a033-4d55-a1a0-3cd7a70604c8',
@@ -368,39 +970,72 @@ return {
         props: {
           title: '离线设备数',
           prefix: '',
-          value: 0,
           suffix: '个',
           subtitle: '',
           trend: 0,
           precision: 0,
-          icon: '',
-          iconSize: 24,
-          titleFontSize: 18,
-          valueFontSize: 36,
-          suffixFontSize: 18,
+          icon: 'i-lucide:globe',
+          iconSize: 84,
+          titleFontSize: 16,
+          valueFontSize: 32,
+          suffixFontSize: 20,
           subtitleFontSize: 12,
-          titleColor: '#ffffff',
-          valueColor: '#ffffff',
+          titleColor: '',
+          valueColor: '',
           subtitleColor: '',
           iconColor: '',
-          iconBackgroundColor: '',
+          iconBackgroundColor: '#fd9c2b',
           trendUpColor: '',
           trendDownColor: '',
           align: 'left',
+          iconPosition: 'left',
         },
         baseStyle: {
-          background: { color: '#62b8f9', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            style: 'solid',
+            radius: 8,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 0,
           opacity: 1,
+          card: {
+            enabled: true,
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 20, y: 20 },
-        size: { width: 320, height: 160 },
+        position: {
+          x: 20,
+          y: 20,
+        },
+        size: {
+          width: 320,
+          height: 160,
+        },
         data: [
           {
             targetProp: 'value',
             expression: '{{ ds.thingspanel_device_summary.data.device_offline }}',
           },
         ],
-        grid: { x: 3, y: 0, w: 3, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 3,
+          y: 0,
+          w: 3,
+          h: 7,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: '31f83f00-47e8-46aa-80e7-cf30d9ac394e',
@@ -408,39 +1043,72 @@ return {
         props: {
           title: '在线设备数',
           prefix: '',
-          value: 0,
           suffix: '个',
           subtitle: '',
           trend: 0,
           precision: 0,
-          icon: '',
-          iconSize: 24,
-          titleFontSize: 18,
-          valueFontSize: 36,
-          suffixFontSize: 18,
+          icon: 'i-lucide:wifi',
+          iconSize: 84,
+          titleFontSize: 16,
+          valueFontSize: 32,
+          suffixFontSize: 20,
           subtitleFontSize: 12,
-          titleColor: '#ffffff',
-          valueColor: '#ffffff',
+          titleColor: '',
+          valueColor: '',
           subtitleColor: '',
           iconColor: '',
-          iconBackgroundColor: '',
+          iconBackgroundColor: '#2bbb72',
           trendUpColor: '',
           trendDownColor: '',
           align: 'left',
+          iconPosition: 'left',
         },
         baseStyle: {
-          background: { color: '#7059d9', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            style: 'solid',
+            radius: 8,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 0,
           opacity: 1,
+          card: {
+            enabled: true,
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 40, y: 40 },
-        size: { width: 320, height: 160 },
+        position: {
+          x: 40,
+          y: 40,
+        },
+        size: {
+          width: 320,
+          height: 160,
+        },
         data: [
           {
             targetProp: 'value',
             expression: '{{ ds.thingspanel_device_summary.data.device_online }}',
           },
         ],
-        grid: { x: 6, y: 0, w: 3, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 6,
+          y: 0,
+          w: 3,
+          h: 7,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'a0617113-530c-4aa1-8d34-ecc86718a0e1',
@@ -448,39 +1116,72 @@ return {
         props: {
           title: '告警设备数',
           prefix: '',
-          value: 0,
           suffix: '个',
           subtitle: '',
           trend: 0,
           precision: 0,
-          icon: '',
-          iconSize: 24,
-          titleFontSize: 18,
-          valueFontSize: 36,
-          suffixFontSize: 18,
+          icon: 'i-lucide:alert-triangle',
+          iconSize: 84,
+          titleFontSize: 16,
+          valueFontSize: 32,
+          suffixFontSize: 20,
           subtitleFontSize: 12,
-          titleColor: '#ffffff',
-          valueColor: '#ffffff',
+          titleColor: '',
+          valueColor: '',
           subtitleColor: '',
           iconColor: '',
-          iconBackgroundColor: '',
+          iconBackgroundColor: '#f73c3a',
           trendUpColor: '',
           trendDownColor: '',
           align: 'left',
+          iconPosition: 'left',
         },
         baseStyle: {
-          background: { color: '#ff5a34', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            style: 'solid',
+            radius: 8,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 0,
           opacity: 1,
+          card: {
+            enabled: true,
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 60, y: 60 },
-        size: { width: 320, height: 160 },
+        position: {
+          x: 60,
+          y: 60,
+        },
+        size: {
+          width: 320,
+          height: 160,
+        },
         data: [
           {
             targetProp: 'value',
             expression: '{{ ds.thingspanel_alarm_summary.data.alarm_device_total }}',
           },
         ],
-        grid: { x: 9, y: 0, w: 3, h: 3, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 9,
+          y: 0,
+          w: 3,
+          h: 7,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'daa90ad4-ad55-4198-a9ac-6ded7535e3d3',
@@ -491,41 +1192,70 @@ return {
           primaryColor: '',
           titleColor: '',
           axisLabelColor: '',
-          showLegend: true,
+          showLegend: false,
           showXAxis: true,
           showYAxis: true,
           smooth: true,
           showArea: true,
-          timeRangePreset: 'all',
-          data: [
-            { name: '00:00', value: 12 },
-            { name: '06:00', value: 18 },
-            { name: '12:00', value: 26 },
-            { name: '18:00', value: 22 },
-          ],
+          timeRangePreset: '6h',
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '设备在线趋势',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 600, height: 220 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 600,
+          height: 220,
+        },
         data: [
           {
             targetProp: 'data',
             expression: '{{ ds.thingspanel_device_trend.data.device_online__history }}',
           },
         ],
-        grid: { x: 3, y: 3, w: 4, h: 4, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 3,
+          y: 7,
+          w: 5,
+          h: 10,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: '3101370d-f8b8-4b5b-8f87-ac550bcdfcff',
         type: 'custom/alert-list',
         props: {
-          items: [],
           maxItems: 6,
           autoScroll: true,
-          scrollSpeed: 'normal',
+          scrollSpeed: 'slow',
           showTime: true,
           showSource: true,
           showDetail: true,
@@ -536,30 +1266,77 @@ return {
           title: '设备最新告警',
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '最新告警',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 340, height: 280 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 340,
+          height: 280,
+        },
         data: [
           {
             targetProp: 'items',
             expression: '{{ ds.thingspanel_home_alarm_history.data.alarm_rows }}',
           },
         ],
-        grid: { x: 9, y: 8, w: 3, h: 6, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 8,
+          y: 17,
+          w: 4,
+          h: 15,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'e14415ed-a914-486a-9e22-d49bb6d61c16',
         type: 'basic/table',
         props: {
           columns: [
-            { key: 'name', title: '设备名称' },
-            { key: 'metric', title: '指标' },
-            { key: 'value', title: '数据值' },
-            { key: 'time', title: '更新时间' },
+            {
+              key: 'name',
+              title: '设备名称',
+            },
+            {
+              key: 'metric',
+              title: '指标',
+            },
+            {
+              key: 'value',
+              title: '数据值',
+            },
+            {
+              key: 'time',
+              title: '更新时间',
+            },
           ],
-          data: [],
           showHeader: true,
           headerFontSize: 14,
           headerWeight: '400',
@@ -576,18 +1353,117 @@ return {
           title: '设备最新上报',
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '最新数据上报',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 300, height: 160 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 300,
+          height: 160,
+        },
         data: [
           {
             targetProp: 'data',
             expression: '{{ ds.thingspanel_home_latest_telemetry.data.latest_telemetry_rows }}',
           },
         ],
-        grid: { x: 3, y: 7, w: 6, h: 7, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 3,
+          y: 17,
+          w: 5,
+          h: 15,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
+      },
+      {
+        id: 'fa4e0bd8-240e-4fed-938e-0022ed78c812',
+        type: 'chart/echarts-gauge',
+        props: {
+          title: ' ',
+          primaryColor: '',
+          titleColor: '',
+          axisLabelColor: '',
+          detailColor: '',
+          max: 100,
+        },
+        baseStyle: {
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
+          opacity: 1,
+          card: {
+            enabled: true,
+            title: '设备在线率',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 300,
+          height: 200,
+        },
+        data: [
+          {
+            targetProp: 'data',
+            expression: '{{ ds.thingspanel_device_summary.data.device_online }}',
+            transform:
+              '{\n name: "设备在线率(%)",\n value: utils.toFixed(value / data.device_total * 100, 2)\n}',
+          },
+        ],
+        grid: {
+          x: 0,
+          y: 7,
+          w: 3,
+          h: 10,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'ccefb744-fb6b-43a8-9a3f-1d0dcf9d9821',
@@ -605,13 +1481,49 @@ return {
           title: '产品介绍',
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '产品介绍',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 400, height: 300 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 400,
+          height: 300,
+        },
         data: [],
-        grid: { x: 9, y: 3, w: 3, h: 6, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 10,
+          y: 7,
+          w: 2,
+          h: 10,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'e2e02f34-ebde-4fb9-9bc7-752a54b52a54',
@@ -627,8 +1539,12 @@ return {
               actionText: 'How to create Device',
               actionUrl: '#',
             },
-            { title: 'Connect device' },
-            { title: 'Create dashboard' },
+            {
+              title: 'Connect device',
+            },
+            {
+              title: 'Create dashboard',
+            },
           ],
           themeColor: '#6965db',
           finishText: '',
@@ -636,13 +1552,49 @@ return {
           descFontSize: 14,
         },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
+          background: {
+            color: '#ffffff',
+            opacity: 1,
+          },
+          border: {
+            width: 1,
+            color: 'rgba(148, 163, 184, 0.3)',
+            style: 'solid',
+            radius: 10,
+          },
+          shadow: {
+            color: 'rgba(15, 23, 42, 0.08)',
+            blur: 8,
+            offsetX: 0,
+            offsetY: 2,
+          },
+          padding: 16,
           opacity: 1,
+          card: {
+            enabled: true,
+            title: '操作指引',
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
         },
-        position: { x: 0, y: 0 },
-        size: { width: 400, height: 600 },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 400,
+          height: 600,
+        },
         data: [],
-        grid: { x: 0, y: 7, w: 3, h: 7, static: false, isDraggable: true, isResizable: true },
+        grid: {
+          x: 0,
+          y: 17,
+          w: 3,
+          h: 15,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
       {
         id: 'f4cb7bc7-d9d3-4735-94eb-30baa20af069',
@@ -655,140 +1607,81 @@ return {
           borderColor: 'transparent',
           borderWidth: 0,
         },
-        position: { x: 0, y: 0 },
-        size: { width: 200, height: 200 },
-        data: [],
-        grid: { x: 7, y: 3, w: 2, h: 4, static: false, isDraggable: true, isResizable: true },
-      },
-      {
-        id: 'fa4e0bd8-240e-4fed-938e-0022ed78c812',
-        type: 'chart/echarts-gauge',
-        props: {
-          title: ' ',
-          primaryColor: '',
-          titleColor: '',
-          axisLabelColor: '',
-          detailColor: '',
-          max: 100,
-          data: [{ name: 'CPU', value: 67 }],
-        },
         baseStyle: {
-          background: { color: '#ffffff', opacity: 1 },
-          opacity: 1,
-        },
-        position: { x: 0, y: 0 },
-        size: { width: 300, height: 200 },
-        data: [
-          {
-            targetProp: 'data',
-            expression: '{{ ds.thingspanel_device_summary.data.device_online }}',
-            transform:
-              '{\n  "name": "设备在线率(%)",\n  "value": ((data.device_online / data.device_total) * 100).toFixed(2)\n}',
+          border: {
+            style: 'solid',
+            radius: 10,
           },
-        ],
-        grid: { x: 0, y: 3, w: 3, h: 4, static: false, isDraggable: true, isResizable: true },
+          opacity: 1,
+          card: {
+            enabled: false,
+            showSubtitle: false,
+            titleFontSize: 16,
+          },
+        },
+        position: {
+          x: 0,
+          y: 0,
+        },
+        size: {
+          width: 200,
+          height: 200,
+        },
+        data: [],
+        grid: {
+          x: 8,
+          y: 7,
+          w: 2,
+          h: 10,
+          static: false,
+          isDraggable: true,
+          isResizable: true,
+        },
       },
     ]),
     dataSources: JSON.stringify([
       {
         id: 'thingspanel_device_summary',
-        name: 'thingspanel_device_summary',
+        name: '设备统计',
         type: 'REST',
         config: {
           url: '{{ var.platformApiBaseUrl }}/board/tenant/device/info',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
           params: {},
           pollingInterval: 60,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const total = Number(payload?.device_total ?? 0);
-const online = Number(payload?.device_on ?? payload?.device_online ?? 0);
-const activity = Number(payload?.device_activity ?? 0);
-return {
-  device_total: total,
-  device_online: online,
-  device_offline: Math.max(0, total - online),
-  device_activity: activity
-};
-`,
-      },
-      {
-        id: 'thingspanel_alarm_summary',
-        name: 'thingspanel_alarm_summary',
-        type: 'REST',
-        config: {
-          url: '{{ var.platformApiBaseUrl }}/alarm/device/counts',
-          method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: {},
-          pollingInterval: 60,
-          timeout: 30,
-          auth: { type: 'none' },
-        },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return { alarm_device_total: Number(payload?.alarm_device_total ?? 0) };
-`,
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst total = Number(payload?.device_total ?? 0);\nconst online = Number(payload?.device_on ?? payload?.device_online ?? 0);\nconst activity = Number(payload?.device_activity ?? 0);\nreturn {\n  device_total: total,\n  device_online: online,\n  device_offline: Math.max(0, total - online),\n  device_activity: activity\n};\n",
       },
       {
         id: 'thingspanel_home_alarm_history',
         name: 'thingspanel_home_alarm_history',
         type: 'REST',
         config: {
-          url: '{{ var.platformApiBaseUrl }}/alarm/info',
+          url: '{{ var.platformApiBaseUrl }}/alarm/info/history',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
-          params: { page: 1, page_size: 10 },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {
+            page: 1,
+            page_size: 10,
+          },
           pollingInterval: 60,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-const rows = Array.isArray(payload?.list)
-  ? payload.list
-  : Array.isArray(payload?.data)
-    ? payload.data
-    : Array.isArray(payload)
-      ? payload
-      : [];
-const normalizeLevel = (raw) => {
-  const v = String(raw ?? '').toLowerCase().trim();
-  if (v === '1' || v === 'critical' || v === 'high' || v === 'serious') return 'critical';
-  if (v === '2' || v === 'warning' || v === 'medium' || v === 'warn') return 'warning';
-  return 'info';
-};
-const fmtTime = (raw) => {
-  if (!raw) return '';
-  try {
-    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);
-    if (isNaN(d.getTime())) return String(raw);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-  } catch { return String(raw); }
-};
-const normalizedRows = rows.map((row) => ({
-  ...row,
-  level: normalizeLevel(row?.alarm_level ?? row?.level),
-  title: String(row?.name ?? row?.alarm_name ?? row?.title ?? ''),
-  detail: String(row?.description ?? row?.content ?? row?.alarm_description ?? row?.message ?? ''),
-  source: String(row?.device_name ?? row?.processor_name ?? row?.processor ?? row?.source ?? ''),
-  time: fmtTime(row?.alarm_time ?? row?.create_at ?? row?.created_at ?? row?.time),
-  status: String(row?.processing_result ?? row?.alarm_status ?? row?.status ?? ''),
-}));
-const latest = normalizedRows[0] ?? null;
-return {
-  alarm_rows: normalizedRows,
-  alarm_total: Number(payload?.total ?? rows.length ?? 0),
-  latest_alarm: latest,
-  unprocessed_alarm_count: normalizedRows.filter((row) => row.processing_result === 'UND').length,
-  latest_alarm_level: latest?.level ?? 'info',
-  latest_alarm_title: latest?.title ?? '',
-};
-`,
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst rows = Array.isArray(payload?.list)\n  ? payload.list\n  : Array.isArray(payload?.data)\n    ? payload.data\n    : Array.isArray(payload)\n      ? payload\n      : [];\n// Normalize alarm level code to semantic string.\n// ThingsPanel API uses: 1=critical/high, 2=warning/medium, 3=info/low (or string variants).\nconst normalizeLevel = (raw) => {\n  const v = String(raw ?? '').toLowerCase().trim();\n  if (v === '1' || v === 'critical' || v === 'high' || v === 'serious') return 'critical';\n  if (v === '2' || v === 'warning' || v === 'medium' || v === 'warn') return 'warning';\n  return 'info';\n};\n// Format ISO/timestamp to HH:mm local time.\nconst fmtTime = (raw) => {\n  if (!raw) return '';\n  try {\n    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);\n    if (isNaN(d.getTime())) return String(raw);\n    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });\n  } catch { return String(raw); }\n};\nconst latest = rows[0] ?? null;\nreturn {\n  alarm_rows: rows.map((row) => ({\n    level: normalizeLevel(row?.alarm_level ?? row?.level),\n    title: String(row?.alarm_name ?? row?.name ?? row?.title ?? ''),\n    detail: String(row?.alarm_description ?? row?.alarm_message ?? row?.message ?? row?.detail ?? ''),\n    source: String(row?.device_name ?? row?.source ?? ''),\n    time: fmtTime(row?.create_time ?? row?.created_at ?? row?.time),\n  })),\n  alarm_total: Number(payload?.total ?? rows.length ?? 0),\n  latest_alarm_level: normalizeLevel(latest?.alarm_level ?? latest?.level),\n  latest_alarm_title: String(latest?.alarm_name ?? latest?.name ?? latest?.title ?? ''),\n};\n",
       },
       {
         id: 'thingspanel_system_metrics',
@@ -797,35 +1690,84 @@ return {
         config: {
           url: '{{ var.platformApiBaseUrl }}/system/metrics/current',
           method: 'GET',
-          headers: { 'x-token': '{{ var.platformToken }}' },
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
           params: {},
           pollingInterval: 60,
           timeout: 30,
-          auth: { type: 'none' },
+          auth: {
+            type: 'none',
+          },
         },
-        transformation: `
-const payload = data && typeof data === 'object' && data.data ? data.data : data;
-return {
-  cpu_usage: Number(payload?.cpu_usage ?? 0),
-  memory_usage: Number(payload?.memory_usage ?? 0),
-  disk_usage: Number(payload?.disk_usage ?? 0)
-};
-`,
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nreturn {\n  cpu_usage: Number(payload?.cpu_usage ?? 0),\n  memory_usage: Number(payload?.memory_usage ?? 0),\n  disk_usage: Number(payload?.disk_usage ?? 0)\n};\n",
+      },
+      {
+        id: 'thingspanel_home_latest_telemetry',
+        name: '最近数据上报',
+        type: 'REST',
+        config: {
+          url: '{{ var.platformApiBaseUrl }}/device/telemetry/latest',
+          method: 'GET',
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {},
+          pollingInterval: 60,
+          timeout: 30,
+          auth: {
+            type: 'none',
+          },
+        },
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst devices = Array.isArray(payload) ? payload : [];\nconst latestDevices = devices.map((device) => ({\n  device_id: device?.device_id ?? '',\n  device_name: device?.device_name ?? '',\n  is_online: Number(device?.is_online ?? 0),\n  last_push_time: device?.last_push_time ?? '',\n  telemetry_data: Array.isArray(device?.telemetry_data) ? device.telemetry_data : []\n}));\n// Format ISO/timestamp to HH:mm:ss local time.\nconst fmtTime = (raw) => {\n  if (!raw) return '';\n  try {\n    const d = new Date(typeof raw === 'number' && raw < 1e12 ? raw * 1000 : raw);\n    if (isNaN(d.getTime())) return String(raw);\n    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });\n  } catch { return String(raw); }\n};\nconst rows = latestDevices.flatMap((device) =>\n  (Array.isArray(device.telemetry_data) ? device.telemetry_data : []).map((item) => ({\n    // Table-ready fields: name / metric / value / time\n    name: device.device_name,\n    metric: String(item?.label ?? item?.key ?? ''),\n    value: item?.unit ? String(item.value ?? '') + ' ' + item.unit : String(item?.value ?? ''),\n    time: fmtTime(device.last_push_time),\n    // Raw fields kept for advanced bindings\n    device_id: device.device_id,\n    key: item?.key ?? '',\n    raw_value: item?.value,\n    is_online: device.is_online,\n  }))\n);\nreturn {\n  latest_devices: latestDevices,\n  latest_telemetry_rows: rows,\n  latest_device_count: latestDevices.length\n};\n",
+      },
+      {
+        id: 'thingspanel_device_trend',
+        name: '设备在线趋势',
+        type: 'REST',
+        config: {
+          url: '{{ var.platformApiBaseUrl }}/board/trend',
+          method: 'GET',
+          headers: {
+            'x-token': '{{ var.platformToken }}',
+          },
+          params: {},
+          pollingInterval: 60,
+          timeout: 30,
+          auth: {
+            type: 'none',
+          },
+        },
+        transformation:
+          "\nconst payload = data && typeof data === 'object' && data.data ? data.data : data;\nconst points = Array.isArray(payload?.points) ? payload.points : Array.isArray(payload) ? payload : [];\nconst mapSeries = (field) => points.map((point) => ({\n  timestamp: point.timestamp ?? point.time ?? point.created_at,\n  value: Number(point[field] ?? 0)\n}));\nreturn {\n  device_total__history: mapSeries('device_total'),\n  device_online__history: mapSeries('device_online'),\n  device_offline__history: mapSeries('device_offline'),\n  device_activity__history: mapSeries('device_online')\n};\n",
       },
     ]),
     variables: JSON.stringify([
       {
         name: 'platformApiBaseUrl',
         type: 'string',
-        defaultValue: '',
+        defaultValue: 'http://c.thingspanel.cn/api/v1',
       },
       {
         name: 'thingsvisApiBaseUrl',
         type: 'string',
         defaultValue: 'http://localhost:5002/thingsvis-api',
       },
-      { name: 'deviceId', type: 'string', defaultValue: '' },
-      { name: 'dateRange', type: 'object', defaultValue: { startTime: '', endTime: '' } },
+      {
+        name: 'deviceId',
+        type: 'string',
+        defaultValue: '',
+      },
+      {
+        name: 'dateRange',
+        type: 'object',
+        defaultValue: {
+          startTime: '',
+          endTime: '',
+        },
+      },
     ]),
   },
 };

@@ -98,7 +98,7 @@ export async function ensureDefaultDashboardForUser(
       nodes: config.nodes,
       dataSources: config.dataSources,
       variables: config.variables,
-      version: 1,
+      version: config.version,
     },
   });
 
