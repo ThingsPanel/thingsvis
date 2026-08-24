@@ -17,7 +17,7 @@ function firstSeries(option: ReturnType<typeof buildOption>): any {
 
 describe('echarts gauge compatibility', () => {
   it('keeps legacy rendering defaults without thresholds', () => {
-    const series = firstSeries(buildOption(getDefaultProps(), colors));
+    const series = firstSeries(buildOption({ ...getDefaultProps(), data: 67 }, colors));
     expect(series.min).toBe(0);
     expect(series.max).toBe(100);
     expect(series.startAngle).toBe(210);
