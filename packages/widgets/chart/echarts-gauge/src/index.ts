@@ -134,7 +134,7 @@ function pm25ToAqi(concentration: number): number {
 
 export function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
   const {
-    data, primaryColor, axisLabelColor, detailColor, min, max, unit, precision,
+    data, primaryColor, axisLabelColor, tickColor, detailColor, min, max, unit, precision,
     startAngle, endAngle, splitNumber, showProgress, showPointer, showAxisTicks,
     showSplitLines, showAxisLabels,
     colorMode, aqiInputType, lowMax, mediumMax, lowColor, mediumColor, highColor,
@@ -160,7 +160,11 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
     theme: colors.fg,
     fallback: colors.fg,
   });
-  const splitLineColor = colors.axis;
+  const resolvedTickColor = resolveLayeredColor({
+    instance: tickColor,
+    theme: colors.axis,
+    fallback: colors.axis,
+  });
   const axisLineColor = colors.axis;
   const gaugeAxisFontSize = scaledChartFontSize(axisLabelFontSize, scale);
   const gaugeTitleFontSize = scaledChartFontSize(titleFontSize, scale);
@@ -204,6 +208,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
 
   return {
     backgroundColor: 'transparent',
+    animation: false,
     color: colors.series,
     graphic: hasData
       ? undefined
@@ -260,7 +265,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               show: showAxisTicks,
               distance: Math.round(-15 * scale),
               lineStyle: {
-                color: splitLineColor,
+                color: resolvedTickColor,
                 width: 1,
               },
             },
@@ -269,7 +274,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               distance: Math.round(-15 * scale),
               length: Math.round(10 * scale),
               lineStyle: {
-                color: splitLineColor,
+                color: resolvedTickColor,
                 width: 2,
               },
             },
@@ -301,7 +306,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               opacity: 1,
             },
             detail: {
-              valueAnimation: true,
+              valueAnimation: false,
               offsetCenter: [0, '76%'],
               formatter: detailFormatter,
               color: colorMode !== 'single' && activeThreshold ? activeThreshold.color : resolvedDetailColor,

@@ -4,7 +4,7 @@ const binding: ControlBinding = { enabled: true, modes: ['static', 'field', 'exp
 
 export const controls = createControlPanel()
   .addGroup('GaugeBasic', (b) => {
-    b.addNumberInput('precision', { label: { zh: '小数位数', en: 'Decimal Places' }, min: 0, max: 6, step: 1, binding });
+    b.addSlider('precision', { label: { zh: '小数位数', en: 'Decimal Places' }, min: 0, max: 6, step: 1 });
     b.addSelect('colorMode', {
       label: { zh: '颜色方案', en: 'Color Scheme' },
       options: [
@@ -52,20 +52,21 @@ export const controls = createControlPanel()
       binding,
       showWhen: { field: 'colorMode', value: 'single' },
     });
-    b.addColorPicker('axisLabelColor', { label: { zh: '刻度颜色', en: 'Scale Color' }, binding });
+    b.addColorPicker('axisLabelColor', { label: { zh: '刻度值颜色', en: 'Scale Value Color' }, binding });
+    b.addColorPicker('tickColor', { label: { zh: '刻度线颜色', en: 'Tick Line Color' }, binding });
     b.addColorPicker('detailColor', {
       label: { zh: '数值颜色', en: 'Value Color' },
       binding,
       showWhen: { field: 'colorMode', value: 'single' },
     });
-    b.addNumberInput('axisLabelFontSize', { label: { zh: '刻度字号', en: 'Scale Font Size' }, min: 8, max: 72, step: 1 });
-    b.addNumberInput('titleFontSize', { label: { zh: '标题字号', en: 'Title Font Size' }, min: 8, max: 72, step: 1 });
-    b.addNumberInput('detailFontSize', { label: { zh: '数值字号', en: 'Value Font Size' }, min: 8, max: 96, step: 1 });
+    b.addSlider('axisLabelFontSize', { label: { zh: '刻度字号', en: 'Scale Font Size' }, min: 8, max: 72, step: 1 });
+    b.addSlider('titleFontSize', { label: { zh: '标题字号', en: 'Title Font Size' }, min: 8, max: 72, step: 1 });
+    b.addSlider('detailFontSize', { label: { zh: '数值字号', en: 'Value Font Size' }, min: 8, max: 96, step: 1 });
   }, { label: { zh: '样式', en: 'Style' } })
   .addGroup('Advanced', (b) => {
-    b.addNumberInput('startAngle', { label: { zh: '起始角度', en: 'Start Angle' }, min: -360, max: 360 });
-    b.addNumberInput('endAngle', { label: { zh: '结束角度', en: 'End Angle' }, min: -360, max: 360 });
-    b.addNumberInput('splitNumber', { label: { zh: '刻度段数', en: 'Scale Segments' }, min: 1, max: 100, step: 1 });
+    b.addSlider('startAngle', { label: { zh: '起始角度', en: 'Start Angle' }, min: -360, max: 360, step: 1 });
+    b.addSlider('endAngle', { label: { zh: '结束角度', en: 'End Angle' }, min: -360, max: 360, step: 1 });
+    b.addSlider('splitNumber', { label: { zh: '刻度段数', en: 'Scale Segments' }, min: 1, max: 100, step: 1 });
     b.addSwitch('showAxisTicks', { label: { zh: '显示小刻度', en: 'Show Minor Ticks' } });
     b.addSwitch('showSplitLines', { label: { zh: '显示主刻度线', en: 'Show Major Ticks' } });
   }, { label: { zh: '高级', en: 'Advanced' }, expanded: false })

@@ -12,6 +12,9 @@ export const PropsSchema = z.object({
     /** 刻度颜色 */
     axisLabelColor: z.string().default('').describe('props.axisLabelColor'),
 
+    /** 刻度线颜色 */
+    tickColor: z.string().default('').describe('props.tickColor'),
+
     /** 数值颜色 */
     detailColor: z.string().default('').describe('props.detailColor'),
 
