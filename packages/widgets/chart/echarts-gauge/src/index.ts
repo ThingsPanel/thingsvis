@@ -195,13 +195,12 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
       : [];
   const thresholdColors = buildThresholdColors(effectiveThresholds, rangeMin, rangeMax, axisLineColor);
   const activeThreshold = hasData ? resolveThreshold(val, effectiveThresholds, rangeMin, rangeMax) : null;
-  const showSectionLabels = colorMode === 'aqi';
   const currentColor = colorMode !== 'single' && activeThreshold ? activeThreshold.color : accentColor;
   const detailFormatter = (value: number) => {
     const formatted = precision === null ? String(value) : value.toFixed(precision);
-    const level = colorMode === 'aqi' && activeThreshold?.label ? `${activeThreshold.label}\n` : '';
-    return `${level}${formatted}${displayUnit}`;
+    return `${formatted}${displayUnit}`;
   };
+  const displayName = colorMode === 'aqi' ? (activeThreshold?.label ?? '') : itemName;
 
   return {
     backgroundColor: 'transparent',
@@ -275,18 +274,11 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               },
             },
             axisLabel: {
-              show: showAxisLabels || showSectionLabels,
+              show: showAxisLabels,
               distance: Math.round(-30 * scale),
               color: resolvedAxisLabelColor,
               fontSize: gaugeAxisFontSize,
-              formatter: (value: number) => {
-                if (showSectionLabels) {
-                  const match = normalizeThresholds(effectiveThresholds, rangeMin, rangeMax)
-                    .find((item) => Math.abs(item.value - value) < 0.000001 && item.label);
-                  if (match) return match.label;
-                }
-                return showAxisLabels ? String(value) : '';
-              },
+              formatter: (value: number) => String(value),
             },
             anchor: {
               show: true,
@@ -302,20 +294,21 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
             },
             title: {
               show: true,
-              offsetCenter: [0, '40%'],
+              offsetCenter: [0, '48%'],
               fontSize: gaugeTitleFontSize,
-              color: resolvedAxisLabelColor,
-              opacity: 0.8,
+              color: colorMode === 'aqi' && activeThreshold ? activeThreshold.color : resolvedAxisLabelColor,
+              fontWeight: colorMode === 'aqi' ? 'bold' : 'normal',
+              opacity: 1,
             },
             detail: {
               valueAnimation: true,
-              offsetCenter: [0, '75%'],
+              offsetCenter: [0, '76%'],
               formatter: detailFormatter,
               color: colorMode !== 'single' && activeThreshold ? activeThreshold.color : resolvedDetailColor,
               fontSize: gaugeDetailFontSize,
               fontWeight: 'bold',
             },
-            data: [{ value: val, name: itemName }],
+            data: [{ value: val, name: displayName }],
           },
         ]
       : [],
