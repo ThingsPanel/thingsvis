@@ -21,7 +21,7 @@ import en from './locales/en.json';
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
-type GaugeThreshold = Props['thresholds'][number];
+type GaugeThreshold = { value: number; label: string; color: string };
 
 function parseGaugeData(
   raw: Props['data'],
@@ -113,11 +113,31 @@ function resolveThreshold(
   return normalized.find((item) => value <= item.value) ?? normalized[normalized.length - 1] ?? null;
 }
 
+function pm25ToAqi(concentration: number): number {
+  const concentrationBreakpoints = [0, 35, 75, 115, 150, 250, 350, 500];
+  const indexBreakpoints = [0, 50, 100, 150, 200, 300, 400, 500];
+  const value = Math.max(0, concentration);
+
+  for (let index = 0; index < concentrationBreakpoints.length - 1; index += 1) {
+    const lowConcentration = concentrationBreakpoints[index];
+    const highConcentration = concentrationBreakpoints[index + 1];
+    if (lowConcentration === undefined || highConcentration === undefined || value > highConcentration) continue;
+    const lowIndex = indexBreakpoints[index] ?? 0;
+    const highIndex = indexBreakpoints[index + 1] ?? 500;
+    return Math.round(
+      ((highIndex - lowIndex) / (highConcentration - lowConcentration)) * (value - lowConcentration) + lowIndex,
+    );
+  }
+
+  return 500;
+}
+
 export function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
   const {
     data, primaryColor, axisLabelColor, detailColor, min, max, unit, precision,
     startAngle, endAngle, splitNumber, showProgress, showPointer, showAxisTicks,
-    showSplitLines, showAxisLabels, showRangeLabels, useThresholdColor, thresholds,
+    showSplitLines, showAxisLabels,
+    colorMode, aqiInputType, lowMax, mediumMax, lowColor, mediumColor, highColor,
     axisLabelFontSize, titleFontSize, detailFontSize,
   } = props;
 
@@ -148,15 +168,39 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
 
   // Extract current value and name
   const dataEntry = parseGaugeData(data, '');
-  const val = dataEntry?.value ?? 0;
+  const rawValue = dataEntry?.value ?? 0;
+  const val = colorMode === 'aqi' && aqiInputType === 'pm25' ? pm25ToAqi(rawValue) : rawValue;
+  const rangeMin = colorMode === 'aqi' ? 0 : min;
+  const rangeMax = colorMode === 'aqi' ? 500 : max;
+  const displayUnit = colorMode === 'aqi' ? ' AQI' : unit;
   const itemName = dataEntry?.name ?? '';
   const hasData = dataEntry !== null;
-  const thresholdColors = buildThresholdColors(thresholds, min, max, axisLineColor);
-  const activeThreshold = hasData ? resolveThreshold(val, thresholds, min, max) : null;
-  const currentColor = useThresholdColor && activeThreshold ? activeThreshold.color : accentColor;
+  const simpleThresholds: GaugeThreshold[] = [
+    { value: lowMax, label: '', color: lowColor },
+    { value: mediumMax, label: '', color: mediumColor },
+    { value: rangeMax, label: '', color: highColor },
+  ];
+  const aqiThresholds: GaugeThreshold[] = [
+    { value: 50, label: '优', color: '#00e400' },
+    { value: 100, label: '良', color: '#ffff00' },
+    { value: 150, label: '轻度污染', color: '#ff7e00' },
+    { value: 200, label: '中度污染', color: '#ff0000' },
+    { value: 300, label: '重度污染', color: '#99004c' },
+    { value: 500, label: '严重污染', color: '#7e0023' },
+  ];
+  const effectiveThresholds = colorMode === 'aqi'
+    ? aqiThresholds
+    : colorMode === 'three'
+      ? simpleThresholds
+      : [];
+  const thresholdColors = buildThresholdColors(effectiveThresholds, rangeMin, rangeMax, axisLineColor);
+  const activeThreshold = hasData ? resolveThreshold(val, effectiveThresholds, rangeMin, rangeMax) : null;
+  const showSectionLabels = colorMode === 'aqi';
+  const currentColor = colorMode !== 'single' && activeThreshold ? activeThreshold.color : accentColor;
   const detailFormatter = (value: number) => {
     const formatted = precision === null ? String(value) : value.toFixed(precision);
-    return `${formatted}${unit}`;
+    const level = colorMode === 'aqi' && activeThreshold?.label ? `${activeThreshold.label}\n` : '';
+    return `${level}${formatted}${displayUnit}`;
   };
 
   return {
@@ -184,8 +228,8 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
             radius: '76%',
             startAngle,
             endAngle,
-            min,
-            max: max,
+            min: rangeMin,
+            max: rangeMax,
             splitNumber,
             axisLine: {
               lineStyle: {
@@ -199,7 +243,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
                   { offset: 0, color: currentColor },
-                  { offset: 1, color: useThresholdColor && activeThreshold ? activeThreshold.color : accentTailColor },
+                  { offset: 1, color: colorMode !== 'single' && activeThreshold ? activeThreshold.color : accentTailColor },
                 ]),
                 borderRadius: Math.round(6 * scale),
               },
@@ -231,13 +275,13 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               },
             },
             axisLabel: {
-              show: showAxisLabels || showRangeLabels,
+              show: showAxisLabels || showSectionLabels,
               distance: Math.round(-30 * scale),
               color: resolvedAxisLabelColor,
               fontSize: gaugeAxisFontSize,
               formatter: (value: number) => {
-                if (showRangeLabels) {
-                  const match = normalizeThresholds(thresholds, min, max)
+                if (showSectionLabels) {
+                  const match = normalizeThresholds(effectiveThresholds, rangeMin, rangeMax)
                     .find((item) => Math.abs(item.value - value) < 0.000001 && item.label);
                   if (match) return match.label;
                 }
@@ -267,7 +311,7 @@ export function buildOption(props: Props, colors: WidgetColors, scale: number = 
               valueAnimation: true,
               offsetCenter: [0, '75%'],
               formatter: detailFormatter,
-              color: useThresholdColor && activeThreshold ? activeThreshold.color : resolvedDetailColor,
+              color: colorMode !== 'single' && activeThreshold ? activeThreshold.color : resolvedDetailColor,
               fontSize: gaugeDetailFontSize,
               fontWeight: 'bold',
             },

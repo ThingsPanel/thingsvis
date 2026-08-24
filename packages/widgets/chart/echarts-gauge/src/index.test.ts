@@ -32,12 +32,12 @@ describe('echarts gauge compatibility', () => {
       ...getDefaultProps(),
       data: 58,
       max: 300,
-      thresholds: [
-        { value: 50, label: '优', color: '#22c55e' },
-        { value: 100, label: '良', color: '#84cc16' },
-        { value: 300, label: '污染', color: '#ef4444' },
-      ],
-      useThresholdColor: true,
+      colorMode: 'three',
+      lowMax: 50,
+      mediumMax: 100,
+      lowColor: '#22c55e',
+      mediumColor: '#84cc16',
+      highColor: '#ef4444',
     }, colors);
     const series = firstSeries(option);
     expect(series.axisLine.lineStyle.color).toEqual([

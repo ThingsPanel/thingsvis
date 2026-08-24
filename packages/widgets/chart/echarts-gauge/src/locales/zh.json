@@ -1,9 +1,1 @@
-{
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-chart-echarts-gauge": {
-                "name": "仪表盘"
-            }
-        }
-    }
-}
+{"editor":{"widgets":{"thingsvis-widget-chart-echarts-gauge":{"name":"仪表盘","min":"最小值","max":"最大值","unit":"单位","precision":"小数位数","lowMax":"低值上限","mediumMax":"中值上限","lowColor":"低值颜色","mediumColor":"中值颜色","highColor":"高值颜色","showProgress":"显示进度弧","showPointer":"显示指针","showAxisLabels":"显示刻度数值","startAngle":"起始角度","endAngle":"结束角度","splitNumber":"刻度段数","showAxisTicks":"显示小刻度","showSplitLines":"显示主刻度线","primaryColor":"主题颜色","axisLabelColor":"刻度颜色","detailColor":"数值颜色","axisLabelFontSize":"刻度字号","titleFontSize":"标题字号","detailFontSize":"数值字号","data":"仪表数据"}}}}

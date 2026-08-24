@@ -29,13 +29,13 @@ export const PropsSchema = z.object({
     showAxisTicks: z.boolean().default(true).describe('props.showAxisTicks'),
     showSplitLines: z.boolean().default(true).describe('props.showSplitLines'),
     showAxisLabels: z.boolean().default(true).describe('props.showAxisLabels'),
-    showRangeLabels: z.boolean().default(false).describe('props.showRangeLabels'),
-    useThresholdColor: z.boolean().default(false).describe('props.useThresholdColor'),
-    thresholds: z.array(z.object({
-        value: z.number(),
-        label: z.string().default(''),
-        color: z.string(),
-    })).default([]).describe('props.thresholds'),
+    colorMode: z.enum(['single', 'three', 'aqi']).default('single').describe('props.colorMode'),
+    aqiInputType: z.enum(['aqi', 'pm25']).default('aqi').describe('props.aqiInputType'),
+    lowMax: z.number().default(50).describe('props.lowMax'),
+    mediumMax: z.number().default(80).describe('props.mediumMax'),
+    lowColor: z.string().default('#22c55e').describe('props.lowColor'),
+    mediumColor: z.string().default('#f59e0b').describe('props.mediumColor'),
+    highColor: z.string().default('#ef4444').describe('props.highColor'),
 
     /** 数据集 */
     data: z.any().default(null).describe('props.dataset'),

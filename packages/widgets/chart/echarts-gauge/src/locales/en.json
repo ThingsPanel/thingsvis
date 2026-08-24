@@ -1,9 +1,1 @@
-{
-    "editor": {
-        "widgets": {
-            "thingsvis-widget-chart-echarts-gauge": {
-                "name": "Gauge Chart"
-            }
-        }
-    }
-}
+{"editor":{"widgets":{"thingsvis-widget-chart-echarts-gauge":{"name":"Gauge","min":"Minimum","max":"Maximum","unit":"Unit","precision":"Decimal Places","lowMax":"Low Range Maximum","mediumMax":"Medium Range Maximum","lowColor":"Low Range Color","mediumColor":"Medium Range Color","highColor":"High Range Color","showProgress":"Show Progress Arc","showPointer":"Show Pointer","showAxisLabels":"Show Scale Values","startAngle":"Start Angle","endAngle":"End Angle","splitNumber":"Scale Segments","showAxisTicks":"Show Minor Ticks","showSplitLines":"Show Major Ticks","primaryColor":"Primary Color","axisLabelColor":"Scale Color","detailColor":"Value Color","axisLabelFontSize":"Scale Font Size","titleFontSize":"Title Font Size","detailFontSize":"Value Font Size","data":"Gauge Data"}}}}

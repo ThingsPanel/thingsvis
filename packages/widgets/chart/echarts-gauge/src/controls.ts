@@ -6,17 +6,29 @@ import {
 
 export const controls = generateControls(PropsSchema, {
     groups: {
-        Content: ['min', 'max', 'unit', 'precision'],
-        Scale: ['startAngle', 'endAngle', 'splitNumber', 'showAxisTicks', 'showSplitLines', 'showAxisLabels'],
-        Thresholds: ['thresholds', 'showRangeLabels', 'useThresholdColor'],
-        Style: ['primaryColor', 'axisLabelColor', 'detailColor', 'showProgress', 'showPointer', 'axisLabelFontSize', 'titleFontSize', 'detailFontSize'],
+        Basic: ['min', 'max', 'unit', 'precision', 'colorMode', 'aqiInputType'],
+        Sections: ['lowMax', 'mediumMax', 'lowColor', 'mediumColor', 'highColor'],
+        Display: ['showProgress', 'showPointer', 'showAxisLabels'],
+        Style: ['primaryColor', 'axisLabelColor', 'detailColor', 'axisLabelFontSize', 'titleFontSize', 'detailFontSize'],
+        Advanced: ['startAngle', 'endAngle', 'splitNumber', 'showAxisTicks', 'showSplitLines'],
         Data: ['data'],
     },
     overrides: {
         primaryColor: { kind: 'color' },
         axisLabelColor: { kind: 'color', label: { zh: '刻度颜色', en: 'Axis Label Color' } },
         detailColor: { kind: 'color', label: { zh: '数值颜色', en: 'Detail Color' } },
-        thresholds: { kind: 'json', label: { zh: '颜色区间', en: 'Thresholds' } },
+        colorMode: { kind: 'select', label: { zh: '颜色方案', en: 'Color Scheme' }, options: [
+            { label: { zh: '单色', en: 'Single Color' }, value: 'single' },
+            { label: { zh: '三段自定义', en: 'Custom Three Sections' }, value: 'three' },
+            { label: { zh: 'AQI 空气质量', en: 'AQI Air Quality' }, value: 'aqi' },
+        ] },
+        aqiInputType: { kind: 'select', label: { zh: 'AQI 数据来源', en: 'AQI Data Source' }, options: [
+            { label: { zh: '设备直接上报 AQI', en: 'Device Reports AQI' }, value: 'aqi' },
+            { label: { zh: '设备上报 PM2.5 浓度', en: 'Device Reports PM2.5' }, value: 'pm25' },
+        ] },
+        lowColor: { kind: 'color' },
+        mediumColor: { kind: 'color' },
+        highColor: { kind: 'color' },
         data: { kind: 'json' },
         ...chartGaugeFontControlOverrides,
     },
