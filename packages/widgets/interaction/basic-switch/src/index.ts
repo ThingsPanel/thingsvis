@@ -100,6 +100,8 @@ function renderSwitch(
   const thumbOffset = Math.max(1, Math.round(t.thumbOffset * scale));
   const innerFontSize = Math.max(8, Math.round(t.innerFontSize * scale));
   const thumbPos = internalChecked ? trackWidth - thumbSize - thumbOffset : thumbOffset;
+  const onTextCenter = thumbPos / 2;
+  const offTextCenter = thumbPos + thumbSize + (trackWidth - thumbPos - thumbSize) / 2;
 
   const onColor = resolveLayeredColor({
     instance: props.onColor,
@@ -155,8 +157,8 @@ function renderSwitch(
     <span style="
       position: absolute;
       top: 50%;
-      left: ${thumbOffset + 2}px;
-      transform: translateY(-50%);
+      left: ${onTextCenter}px;
+      transform: translate(-50%, -50%);
       font-size: ${innerFontSize}px;
       color: #fff;
       font-weight: 600;
@@ -174,8 +176,8 @@ function renderSwitch(
     <span style="
       position: absolute;
       top: 50%;
-      right: ${thumbOffset + 2}px;
-      transform: translateY(-50%);
+      left: ${offTextCenter}px;
+      transform: translate(-50%, -50%);
       font-size: ${innerFontSize}px;
       color: #fff;
       font-weight: 600;
