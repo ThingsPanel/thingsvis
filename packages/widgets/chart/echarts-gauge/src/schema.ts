@@ -17,6 +17,25 @@ export const PropsSchema = z.object({
 
     /** 刻度最大值 */
     max: z.number().default(100).describe('props.max'),
+    min: z.number().default(0).describe('props.min'),
+    unit: z.string().default('').describe('props.unit'),
+    // null preserves the legacy ECharts value formatting.
+    precision: z.number().int().min(0).max(6).nullable().default(null).describe('props.precision'),
+    startAngle: z.number().min(-360).max(360).default(210).describe('props.startAngle'),
+    endAngle: z.number().min(-360).max(360).default(-30).describe('props.endAngle'),
+    splitNumber: z.number().int().min(1).max(100).default(10).describe('props.splitNumber'),
+    showProgress: z.boolean().default(true).describe('props.showProgress'),
+    showPointer: z.boolean().default(true).describe('props.showPointer'),
+    showAxisTicks: z.boolean().default(true).describe('props.showAxisTicks'),
+    showSplitLines: z.boolean().default(true).describe('props.showSplitLines'),
+    showAxisLabels: z.boolean().default(true).describe('props.showAxisLabels'),
+    showRangeLabels: z.boolean().default(false).describe('props.showRangeLabels'),
+    useThresholdColor: z.boolean().default(false).describe('props.useThresholdColor'),
+    thresholds: z.array(z.object({
+        value: z.number(),
+        label: z.string().default(''),
+        color: z.string(),
+    })).default([]).describe('props.thresholds'),
 
     /** 数据集 */
     data: z.any().default(null).describe('props.dataset'),

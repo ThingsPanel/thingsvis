@@ -21,6 +21,8 @@ import en from './locales/en.json';
 const LEGACY_DEFAULT_PRIMARY = '#6965db';
 const STANDALONE_GAUGE_SERIES = [{ name: 'CPU', value: 67 }];
 
+type GaugeThreshold = Props['thresholds'][number];
+
 function parseGaugeData(
   raw: Props['data'],
   fallbackName: string,
@@ -81,8 +83,43 @@ function withAlpha(color: string, alpha: number): string {
   return normalized;
 }
 
-function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
-  const { data, primaryColor, axisLabelColor, detailColor, max, axisLabelFontSize, titleFontSize, detailFontSize } = props;
+function normalizeThresholds(thresholds: GaugeThreshold[], min: number, max: number): GaugeThreshold[] {
+  if (!(max > min)) return [];
+  return thresholds
+    .filter((item) => Number.isFinite(item.value) && item.color.trim())
+    .map((item) => ({ ...item, value: Math.max(min, Math.min(max, item.value)) }))
+    .sort((left, right) => left.value - right.value);
+}
+
+function buildThresholdColors(
+  thresholds: GaugeThreshold[], min: number, max: number, fallbackColor: string,
+): Array<[number, string]> {
+  const normalized = normalizeThresholds(thresholds, min, max);
+  if (normalized.length === 0) return [[1, fallbackColor]];
+  const span = max - min;
+  const result: Array<[number, string]> = normalized.map((item) => [
+    (item.value - min) / span,
+    item.color,
+  ]);
+  const last = result[result.length - 1];
+  if (last && last[0] < 1) result.push([1, fallbackColor]);
+  return result;
+}
+
+function resolveThreshold(
+  value: number, thresholds: GaugeThreshold[], min: number, max: number,
+): GaugeThreshold | null {
+  const normalized = normalizeThresholds(thresholds, min, max);
+  return normalized.find((item) => value <= item.value) ?? normalized[normalized.length - 1] ?? null;
+}
+
+export function buildOption(props: Props, colors: WidgetColors, scale: number = 1): echarts.EChartsOption {
+  const {
+    data, primaryColor, axisLabelColor, detailColor, min, max, unit, precision,
+    startAngle, endAngle, splitNumber, showProgress, showPointer, showAxisTicks,
+    showSplitLines, showAxisLabels, showRangeLabels, useThresholdColor, thresholds,
+    axisLabelFontSize, titleFontSize, detailFontSize,
+  } = props;
 
   const accentColor = resolveLayeredColor({
     instance: primaryColor,
@@ -114,6 +151,13 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
   const val = dataEntry?.value ?? 0;
   const itemName = dataEntry?.name ?? '';
   const hasData = dataEntry !== null;
+  const thresholdColors = buildThresholdColors(thresholds, min, max, axisLineColor);
+  const activeThreshold = hasData ? resolveThreshold(val, thresholds, min, max) : null;
+  const currentColor = useThresholdColor && activeThreshold ? activeThreshold.color : accentColor;
+  const detailFormatter = (value: number) => {
+    const formatted = precision === null ? String(value) : value.toFixed(precision);
+    return `${formatted}${unit}`;
+  };
 
   return {
     backgroundColor: 'transparent',
@@ -138,39 +182,39 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             type: 'gauge',
             center: ['50%', '54%'],
             radius: '76%',
-            startAngle: 210,
-            endAngle: -30,
-            min: 0,
+            startAngle,
+            endAngle,
+            min,
             max: max,
-            splitNumber: 10,
+            splitNumber,
             axisLine: {
               lineStyle: {
                 width: Math.round(8 * scale),
-                color: [[1, axisLineColor]],
+                color: thresholdColors,
               },
             },
             progress: {
-              show: true,
+              show: showProgress,
               width: Math.round(12 * scale),
               itemStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-                  { offset: 0, color: accentColor },
-                  { offset: 1, color: accentTailColor },
+                  { offset: 0, color: currentColor },
+                  { offset: 1, color: useThresholdColor && activeThreshold ? activeThreshold.color : accentTailColor },
                 ]),
                 borderRadius: Math.round(6 * scale),
               },
             },
             pointer: {
-              show: true,
+              show: showPointer,
               length: '60%',
               width: Math.round(4 * scale),
               offsetCenter: [0, '5%'],
               itemStyle: {
-                color: accentColor,
+                color: currentColor,
               },
             },
             axisTick: {
-              show: true,
+              show: showAxisTicks,
               distance: Math.round(-15 * scale),
               lineStyle: {
                 color: splitLineColor,
@@ -178,7 +222,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
               },
             },
             splitLine: {
-              show: true,
+              show: showSplitLines,
               distance: Math.round(-15 * scale),
               length: Math.round(10 * scale),
               lineStyle: {
@@ -187,10 +231,18 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
               },
             },
             axisLabel: {
-              show: true,
+              show: showAxisLabels || showRangeLabels,
               distance: Math.round(-30 * scale),
               color: resolvedAxisLabelColor,
               fontSize: gaugeAxisFontSize,
+              formatter: (value: number) => {
+                if (showRangeLabels) {
+                  const match = normalizeThresholds(thresholds, min, max)
+                    .find((item) => Math.abs(item.value - value) < 0.000001 && item.label);
+                  if (match) return match.label;
+                }
+                return showAxisLabels ? String(value) : '';
+              },
             },
             anchor: {
               show: true,
@@ -198,7 +250,7 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
               size: Math.round(14 * scale),
               itemStyle: {
                 borderWidth: Math.round(3 * scale),
-                borderColor: accentColor,
+                borderColor: currentColor,
                 color: '#fff',
                 shadowBlur: 10,
                 shadowColor: 'rgba(0,0,0,0.2)',
@@ -214,8 +266,8 @@ function buildOption(props: Props, colors: WidgetColors, scale: number = 1): ech
             detail: {
               valueAnimation: true,
               offsetCenter: [0, '75%'],
-              formatter: '{value}',
-              color: resolvedDetailColor,
+              formatter: detailFormatter,
+              color: useThresholdColor && activeThreshold ? activeThreshold.color : resolvedDetailColor,
               fontSize: gaugeDetailFontSize,
               fontWeight: 'bold',
             },
