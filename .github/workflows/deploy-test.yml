@@ -139,6 +139,8 @@ jobs:
 
                 location ^~ /widgets/ {
                   alias /var/www/thingsvis-plugins/;
+                  expires -1;
+                  add_header Cache-Control "no-store, no-cache, must-revalidate" always;
               }
 
               location / {
@@ -254,8 +256,15 @@ jobs:
             # --- Deploy Widgets ---
             echo ">>> Deploying Widgets..."
             if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
+              test -f /tmp/thingsvis-deploy/widgets/chart/echarts-gauge/dist/remoteEntry.js
+              rm -rf /var/www/thingsvis-plugins
               mkdir -p /var/www/thingsvis-plugins
               cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
+              test -f /var/www/thingsvis-plugins/chart/echarts-gauge/dist/remoteEntry.js
+              echo ">>> Widgets deployed from current build"
+            else
+              echo "Widget artifacts are missing or empty"
+              exit 1
             fi
 
             # Reload nginx
