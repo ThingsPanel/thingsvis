@@ -1,5 +1,4 @@
-import { createControlPanel } from '@thingsvis/widget-sdk';
-import type { ControlBinding } from '@thingsvis/schema';
+import { createControlPanel, type ControlBinding } from '@thingsvis/widget-sdk';
 
 const binding: ControlBinding = { enabled: true, modes: ['static', 'field', 'expr'] };
 
