@@ -84,6 +84,13 @@ export const controls = createControlPanel()
   // ============================================
   .addGroup('Layout', (builder) => {
     builder
+      .addSegmented('resizeMode', {
+        label: { zh: '尺寸模式', en: 'Size Mode' },
+        options: [
+          { label: { zh: '自动高度', en: 'Auto Height' }, value: 'autoHeight' },
+          { label: { zh: '固定尺寸', en: 'Fixed Size' }, value: 'fixed' },
+        ],
+      })
       .addSegmented('textAlign', {
         label: 'widgets.thingsvis-widget-basic-text.label_33',
         options: [
@@ -95,10 +102,11 @@ export const controls = createControlPanel()
       })
       .addSegmented('verticalAlign', {
         label: 'widgets.thingsvis-widget-basic-text.label_38',
+        showWhen: { field: 'resizeMode', value: 'fixed' },
         options: [
-          { label: 'widgets.thingsvis-widget-basic-text.label_39', value: 'top', icon: 'AlignStartVertical' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_40', value: 'middle', icon: 'AlignCenterVertical' },
-          { label: 'widgets.thingsvis-widget-basic-text.label_41', value: 'bottom', icon: 'AlignEndVertical' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_39', value: 'top', icon: 'AlignVerticalJustifyStart' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_40', value: 'middle', icon: 'AlignVerticalJustifyCenter' },
+          { label: 'widgets.thingsvis-widget-basic-text.label_41', value: 'bottom', icon: 'AlignVerticalJustifyEnd' },
         ],
       })
       .addSlider('lineHeight', {

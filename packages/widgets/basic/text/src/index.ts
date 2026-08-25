@@ -114,19 +114,6 @@ function normalizeFontFamily(fontFamily: string): string {
   return normalized;
 }
 
-function getFlexAlign(align: Props['textAlign']): string {
-  switch (align) {
-    case 'center':
-      return 'center';
-    case 'right':
-      return 'flex-end';
-    case 'justify':
-      return 'space-between';
-    default:
-      return 'flex-start';
-  }
-}
-
 function getVerticalAlign(align: Props['verticalAlign']): string {
   switch (align) {
     case 'middle':
@@ -144,9 +131,11 @@ export const Main = defineWidget({
   locales: { zh, en },
   controls,
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
-    element.style.display = 'inline-flex';
-    element.style.width = 'fit-content';
-    element.style.height = 'fit-content';
+    element.style.display = 'flex';
+    element.style.width = '100%';
+    element.style.height = '100%';
+    element.style.minWidth = '0';
+    element.style.minHeight = '0';
     element.style.overflow = 'visible';
     element.style.pointerEvents = 'none';
     element.style.userSelect = 'none';
@@ -158,8 +147,10 @@ export const Main = defineWidget({
     let colors = resolveWidgetColors(element);
 
     const textEl = document.createElement('div');
-    textEl.style.width = 'fit-content';
-    textEl.style.height = 'fit-content';
+    textEl.style.width = '100%';
+    textEl.style.height = '100%';
+    textEl.style.minWidth = '0';
+    textEl.style.minHeight = '0';
     textEl.style.boxSizing = 'border-box';
     textEl.dataset.thingsvisMeasure = '1';
     element.appendChild(textEl);
@@ -167,8 +158,9 @@ export const Main = defineWidget({
     const renderText = () => {
       colors = resolveWidgetColors(element);
       applyStyles(textEl, currentProps, currentCtx, colors);
-      element.style.justifyContent = getFlexAlign(currentProps.textAlign);
-      element.style.alignItems = getVerticalAlign(currentProps.verticalAlign);
+      const autoHeight = currentProps.resizeMode === 'autoHeight';
+      textEl.style.height = 'auto';
+      element.style.alignItems = autoHeight ? 'flex-start' : getVerticalAlign(currentProps.verticalAlign);
     };
     renderText();
 

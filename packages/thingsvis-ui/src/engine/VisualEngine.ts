@@ -53,6 +53,14 @@ function shouldTreatNodeAsResizable(node: NodeState, renderer: RendererFactory):
   return isPipeNodeType(schema?.type) && !hasPipeEndpointBinding(schema?.props);
 }
 
+function isAutoHeightTextNode(node: Pick<NodeState, 'schemaRef'>): boolean {
+  const schema = node.schemaRef as
+    | { type?: string; props?: Record<string, unknown> }
+    | null
+    | undefined;
+  return schema?.type === 'basic/text' && schema.props?.resizeMode !== 'fixed';
+}
+
 export function shouldUseVisibleOverlayOverflow(
   node: Pick<NodeState, 'schemaRef'>,
   isResizable: boolean,
@@ -1017,6 +1025,10 @@ export class VisualEngine {
           // Track reactRoot for cleanup
           (overlayInst as any).__reactRoot = reactRoot;
 
+          if (isAutoHeightTextNode(node)) {
+            this.syncAutoHeightTextNode(node, ov.element);
+          }
+
           // 对于自适应尺寸组件，在下一帧同步占位符尺寸
           if (!isResizable) {
             requestAnimationFrame(() => {
@@ -1130,6 +1142,11 @@ export class VisualEngine {
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
       this.syncOverlayCardShell(existing.overlayBox, node);
       this.syncOverlayClickFallback(node, existing);
+
+      if (isAutoHeightTextNode(node) && existing.overlayInst) {
+        const element = (existing.overlayInst as any).element as HTMLElement | undefined;
+        if (element) this.syncAutoHeightTextNode(node, element);
+      }
 
       // 对于自适应尺寸组件，同步占位符尺寸
       if (!isResizable && existing.overlayInst) {
@@ -1513,6 +1530,25 @@ export class VisualEngine {
     widgetHost.style.cssText = 'width:100%;height:100%';
 
     syncCardHeaderElement(headerEl, node.schemaRef?.baseStyle?.card, node.schemaRef?.name);
+  }
+
+  private syncAutoHeightTextNode(node: NodeState, element: HTMLElement) {
+    requestAnimationFrame(() => {
+      const measure = element.querySelector<HTMLElement>('[data-thingsvis-measure="1"]');
+      if (!measure) return;
+
+      const schema = node.schemaRef as any;
+      const padding = Number(schema.baseStyle?.padding ?? 0);
+      const height = Math.max(12, Math.ceil(measure.scrollHeight + Math.max(0, padding) * 2));
+      const width = Number(schema.size?.width ?? 160);
+      const previousHeight = Number(schema.size?.height ?? 0);
+      if (!Number.isFinite(height) || Math.abs(previousHeight - height) < 1) return;
+
+      const state = this.store.getState() as KernelState & {
+        updateNode?: (id: string, changes: { size: { width: number; height: number } }) => void;
+      };
+      state.updateNode?.(node.id, { size: { width, height } });
+    });
   }
 
   private positionOverlayBox(box: HTMLDivElement, node: NodeState, isResizable: boolean = true) {

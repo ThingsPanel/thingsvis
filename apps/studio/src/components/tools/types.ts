@@ -34,7 +34,7 @@ export type NodeCreationSpec = {
  * Tool default sizes per the spec:
  * - Rectangle: 120×80 (drag to create)
  * - Circle: 100×100 (drag to create)
- * - Text: auto-size (click to create)
+ * - Text: 200x40 (click to create, resizable)
  * - Image: 240×240 max (auto-place after file selection)
  */
 export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
@@ -59,7 +59,7 @@ export const TOOL_SPECS: Record<string, NodeCreationSpec> = {
     defaultSize: { width: 200, height: 40 },
     minSize: { width: 50, height: 20 },
     defaultProps: { text: '请输入文本' },
-    resizable: false,
+    resizable: true,
     interactionMode: 'click',
   },
   image: {

@@ -64,6 +64,14 @@ export const ScaleScreen: React.FC<ScaleScreenProps> = ({
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (mode !== 'fit-min' && mode !== 'stretch') return;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    wrapper.scrollLeft = 0;
+    wrapper.scrollTop = 0;
+  }, [mode]);
+
   const layout = useMemo(() => {
     // Guard against invalid canvas dimensions
     if (!width || !height) {

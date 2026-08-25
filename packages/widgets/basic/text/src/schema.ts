@@ -43,6 +43,9 @@ export const PropsSchema = z.object({
   // Layout
   // ========================================
 
+  /** Text box sizing behavior */
+  resizeMode: z.enum(['autoHeight', 'fixed']).default('autoHeight').describe('props.resizeMode'),
+
   /** Text align */
   textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('props.textAlign'),
 
