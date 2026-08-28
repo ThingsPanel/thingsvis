@@ -46,12 +46,6 @@ export function collectReferencedDataSourceIds(
   return referencedIds;
 }
 
-function stripEditorRuntimeState(dataSource: Record<string, unknown>): Record<string, unknown> {
-  if (!dataSource.__editorAutoManual) return dataSource;
-  const { __editorAutoManual: _editorAutoManual, mode: _mode, ...rest } = dataSource;
-  return rest;
-}
-
 function stripTemplateDeviceId(dataSource: Record<string, unknown>): Record<string, unknown> {
   if (String(dataSource.type ?? '').toUpperCase() !== 'PLATFORM_FIELD') return dataSource;
   const config = dataSource.config;
@@ -59,6 +53,11 @@ function stripTemplateDeviceId(dataSource: Record<string, unknown>): Record<stri
   if (!isTemplateDeviceId((config as Record<string, unknown>).deviceId)) return dataSource;
   const { deviceId: _deviceId, ...restConfig } = config as Record<string, unknown>;
   return { ...dataSource, config: restConfig };
+}
+
+function stripEditorMetadata(dataSource: Record<string, unknown>): Record<string, unknown> {
+  const { __editorAutoManual: _editorMetadata, ...persistedDataSource } = dataSource;
+  return persistedDataSource;
 }
 
 export function sanitizeDataSourcesForHostSave(
@@ -84,5 +83,5 @@ export function sanitizeDataSourcesForHostSave(
       if (!isGeneratedHostDataSourceId(id)) return true;
       return referencedIds.has(String(id));
     })
-    .map((dataSource) => stripTemplateDeviceId(stripEditorRuntimeState(dataSource)));
+    .map((dataSource) => stripTemplateDeviceId(stripEditorMetadata(dataSource)));
 }

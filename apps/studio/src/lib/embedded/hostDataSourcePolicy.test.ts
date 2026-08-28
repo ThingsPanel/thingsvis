@@ -53,6 +53,7 @@ describe('hostDataSourcePolicy', () => {
       {
         id: '__platform___template____',
         type: 'PLATFORM_FIELD',
+        mode: 'manual',
         config: { source: 'platform', requestedFields: [] },
       },
       {
