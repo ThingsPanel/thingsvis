@@ -536,15 +536,7 @@ export default function EmbedPage() {
           searchParams.get('context'),
           runtimeVariableValues,
         );
-        if (dataSources.length > 0) {
-          await Promise.all(
-            dataSources.map((ds: any) =>
-              dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
-                console.error('[EmbedPage] Failed to register data source:', ds.id, err);
-              }),
-            ),
-          );
-        }
+        await dataSourceManager.replaceRuntimeDataSources(dataSources);
         initDoneRef.current = true;
         if (pendingPlatformDataRef.current.length > 0) {
           const buffered = pendingPlatformDataRef.current.splice(0);
@@ -635,13 +627,7 @@ export default function EmbedPage() {
           searchParams.get('context'),
           runtimeVariableValues,
         );
-        if (dataSources.length > 0) {
-          dataSources.forEach((ds: any) => {
-            dataSourceManager.registerDataSource(ds, false).catch((err: any) => {
-              console.error('[EmbedPage] Failed to register data source:', ds.id, err);
-            });
-          });
-        }
+        await dataSourceManager.replaceRuntimeDataSources(dataSources);
 
         postToParent({ type: 'LOADED', payload: { id: dashboard.id, name: dashboard.name } });
       } catch (error) {
@@ -976,15 +962,10 @@ export default function EmbedPage() {
           const registerAndLoad = async () => {
             loadFromSchema(schema, { skipVariableInitialization: true });
 
-            if (schema.dataSources && Array.isArray(schema.dataSources)) {
-              for (const ds of schema.dataSources as any[]) {
-                try {
-                  await dataSourceManager.registerDataSource(ds, false);
-                } catch (err: any) {
-                  console.error('[EmbedPage] Failed to register data source:', ds.id, err);
-                }
-              }
-            }
+            const runtimeDataSources = Array.isArray(schema.dataSources)
+              ? (schema.dataSources as any[])
+              : [];
+            await dataSourceManager.replaceRuntimeDataSources(runtimeDataSources);
 
             // Replay any platform-data messages that arrived before adapters were ready.
             if (pendingPlatformDataRef.current.length > 0) {
@@ -1010,7 +991,10 @@ export default function EmbedPage() {
             initDoneRef.current = true;
           };
 
-          registerAndLoad();
+          void registerAndLoad().catch((error) => {
+            initDoneRef.current = false;
+            console.error('[EmbedPage] Failed to initialize runtime data sources:', error);
+          });
         }
       }),
     );
@@ -1106,7 +1090,12 @@ export default function EmbedPage() {
     );
 
     cleanupRef.current = cleanups;
-    return () => cleanups.forEach((fn) => fn());
+    return () => {
+      cleanups.forEach((fn) => fn());
+      initDoneRef.current = false;
+      pendingPlatformDataRef.current = [];
+      void dataSourceManager.clearRuntimeDataSources();
+    };
   }, [loadFromSchema, setEmbedApiToken, updateVariables]);
 
   // Initial load from URL params

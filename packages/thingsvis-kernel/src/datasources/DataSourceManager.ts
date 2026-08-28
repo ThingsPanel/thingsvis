@@ -7,9 +7,9 @@ import { WSAdapter } from './WSAdapter';
 import { RESTAdapter } from './RESTAdapter';
 import { PlatformFieldAdapter } from './PlatformFieldAdapter';
 import { FieldMappingExecutor } from './FieldMappingExecutor';
-import { get, set, del, keys } from 'idb-keyval';
+import { set, del, keys } from 'idb-keyval';
 import type { DataSourceSyncAdapter } from './DataSourceSync';
-import { isHostManagedDataSourceId, NoopSyncAdapter } from './DataSourceSync';
+import { NoopSyncAdapter } from './DataSourceSync';
 
 type AdapterConstructor = new () => BaseAdapter;
 
@@ -73,6 +73,8 @@ export class DataSourceManager {
   private adapterRegistry: Map<DataSourceType, AdapterConstructor> = new Map();
   /** Resolved (inferred or explicit) trigger mode per data source. */
   private resolvedModes: Map<string, 'auto' | 'manual'> = new Map();
+  /** Serializes page-level datasource replacement so adapters cannot overlap across dashboards. */
+  private runtimeReplacementQueue: Promise<void> = Promise.resolve();
   private store?: KernelStore;
   private syncAdapter: DataSourceSyncAdapter = new NoopSyncAdapter();
   private storageMode: StorageMode = 'local';
@@ -111,17 +113,9 @@ export class DataSourceManager {
     return this.storageMode === 'cloud';
   }
 
-  /**
-   * Initializes the manager with the kernel store.
-   * Only loads from local IndexedDB on first boot (before auth).
-   * Cloud loading happens later via reloadFromCloud() after auth.
-   */
+  /** Initializes the manager with the kernel store. */
   public async init(store: KernelStore): Promise<void> {
     this.store = store;
-
-    // At init time, syncAdapter is still NoopSyncAdapter (auth not ready).
-    // Only load from IndexedDB as a quick offline fallback.
-    await this.loadFromStorage();
 
     // Subscribe to variable value changes so data sources that reference
     // {{ var.xxx }} expressions are automatically re-fetched (TASK-23 cascade refresh).
@@ -214,35 +208,6 @@ export class DataSourceManager {
     } catch (e) {
       console.error('[DataSourceManager] Failed to reload from cloud:', e);
       throw e;
-    }
-  }
-
-  /**
-   * Loads all persisted data sources from IndexedDB.
-   * Only used as offline fallback when backend is unavailable.
-   */
-  private async loadFromStorage(): Promise<void> {
-    try {
-      const allKeys = await keys();
-      const dsKeys = (allKeys as string[]).filter((k) => k.startsWith(STORAGE_KEY_PREFIX));
-
-      for (const key of dsKeys) {
-        const config = await get<DataSource>(key);
-        if (isHostManagedDataSourceId(config?.id)) {
-          // Embedded provider sources are rebuilt from the current host catalog.
-          // Restoring an old persisted copy can issue obsolete or unauthenticated
-          // requests before the host has supplied its URL and token variables.
-          await del(key);
-          continue;
-        }
-        if (config && !this.configs.has(config.id)) {
-          this.registerDataSource(config, false).catch((e) => {
-            console.error('[DataSourceManager] Failed to load local data source:', e);
-          });
-        }
-      }
-    } catch (e) {
-      console.error('[DataSourceManager] Failed to load from local storage:', e);
     }
   }
 
@@ -569,6 +534,47 @@ export class DataSourceManager {
     for (const id of new Set([...existingIds, ...existingStoreIds])) {
       this.store?.getState().removeDataSourceFromStore(id);
     }
+  }
+
+  /**
+   * Replace the complete runtime datasource set without touching persistent storage.
+   * Dashboard schemas are ownership boundaries: adapters omitted by the next schema
+   * must be disconnected, otherwise their polling survives route/dashboard changes.
+   */
+  public replaceRuntimeDataSources(configs: DataSource[]): Promise<void> {
+    const replacement = this.runtimeReplacementQueue
+      .catch(() => {
+        // A failed previous replacement must not block later dashboards.
+      })
+      .then(async () => {
+        await this.resetRuntimeDataSources();
+
+        for (const config of configs) {
+          try {
+            await this.registerDataSource(config, false);
+          } catch (error) {
+            console.error(
+              `[DataSourceManager] Failed to activate runtime data source "${config.id}":`,
+              error,
+            );
+          }
+        }
+      });
+
+    this.runtimeReplacementQueue = replacement;
+    return replacement;
+  }
+
+  /** Stop all runtime adapters after any in-flight page replacement has settled. */
+  public clearRuntimeDataSources(): Promise<void> {
+    const cleanup = this.runtimeReplacementQueue
+      .catch(() => {
+        // Cleanup must still run after a failed replacement.
+      })
+      .then(() => this.resetRuntimeDataSources());
+
+    this.runtimeReplacementQueue = cleanup;
+    return cleanup;
   }
 
   /**
