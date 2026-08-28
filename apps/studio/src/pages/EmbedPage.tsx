@@ -295,7 +295,7 @@ export default function EmbedPage() {
   const scaledAppHeight = canvasHeight * appScale;
   /** Only when parent iframe uses auto-height (embedSizing=content). */
   const isHostContentSizedEmbed =
-    isHostManagedEmbed && searchParams.get('embedSizing') === 'content';
+    isHostManagedEmbed && isGridLayout && searchParams.get('embedSizing') === 'content';
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
   const pageBackground = useMemo(() => {
@@ -423,29 +423,6 @@ export default function EmbedPage() {
     },
     [isHostContentSizedEmbed, postToParent],
   );
-
-  useEffect(() => {
-    if (!isHostContentSizedEmbed || !state.schema) return;
-    if (useFixedAppCanvas) {
-      handleHostEmbedContentHeight(scaledAppHeight);
-    } else if (!isGridLayout) {
-      const reportHeight = () => {
-        const width = document.documentElement.clientWidth;
-        handleHostEmbedContentHeight((canvasHeight * width) / canvasWidth);
-      };
-      reportHeight();
-      const observer = new ResizeObserver(reportHeight);
-      observer.observe(document.documentElement);
-      return () => observer.disconnect();
-    }
-  }, [
-    handleHostEmbedContentHeight,
-    isHostContentSizedEmbed,
-    isGridLayout,
-    scaledAppHeight,
-    state.schema,
-    useFixedAppCanvas,
-  ]);
 
   // Host iframe embed: no internal scroll — height is driven by canvas, outer page scrolls.
   useEffect(() => {
@@ -1243,8 +1220,6 @@ export default function EmbedPage() {
       style={{
         width: isHostContentSizedEmbed ? '100%' : '100vw',
         height: isHostContentSizedEmbed ? 'auto' : '100vh',
-        aspectRatio:
-          isHostContentSizedEmbed && !isGridLayout ? `${canvasWidth} / ${canvasHeight}` : undefined,
         minHeight: isHostContentSizedEmbed ? 0 : undefined,
         backgroundColor: 'transparent',
         backgroundImage: 'none',
@@ -1375,7 +1350,9 @@ export default function EmbedPage() {
                 height={useFixedAppCanvas ? canvasHeight : undefined}
                 contentSized={useFixedAppCanvas ? false : isHostContentSizedEmbed}
                 onContentHeightChange={
-                  isHostContentSizedEmbed ? handleHostEmbedContentHeight : undefined
+                  !useFixedAppCanvas && isHostContentSizedEmbed
+                    ? handleHostEmbedContentHeight
+                    : undefined
                 }
                 actionRuntime={actionRuntime}
               />
