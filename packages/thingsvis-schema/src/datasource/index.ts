@@ -31,6 +31,8 @@ export const DataSourceTypeSchema = z.enum([
  */
 export const DataSourceModeSchema = z.enum(['auto', 'manual']);
 
+export const MIN_REST_POLLING_INTERVAL_SECONDS = 1;
+
 /**
  * Configuration for different data source types
  */
@@ -40,7 +42,10 @@ export const RESTConfigSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE']).default('GET'),
   headers: z.record(z.string()).optional().default({}),
   params: z.record(z.unknown()).optional().default({}),
-  pollingInterval: z.number().min(0).optional().default(0), // seconds, 0 means no polling
+  pollingInterval: z
+    .union([z.literal(0), z.number().min(MIN_REST_POLLING_INTERVAL_SECONDS)])
+    .optional()
+    .default(0), // seconds, 0 means no polling
 
   // New fields (all optional with defaults for backward compatibility)
   body: z.string().optional(), // JSON string for POST/PUT requests

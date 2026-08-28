@@ -99,7 +99,7 @@ function buildRequestUrl(
  * - Variable expression resolution: {{ var.xxx }} in URL/headers/body (TASK-23)
  */
 export class RESTAdapter extends BaseAdapter {
-  private timer?: ReturnType<typeof setInterval>;
+  private timer?: ReturnType<typeof setTimeout>;
   private abortController?: AbortController;
   /** Parsed REST config template (URLs may contain {{ var.xxx }} expressions) */
   private restConfig?: RESTConfig;
@@ -115,12 +115,25 @@ export class RESTAdapter extends BaseAdapter {
     this.restConfig = RESTConfigSchema.parse(config.config);
 
     await this.fetchData(this.restConfig);
+    this.scheduleNextPoll(this.restConfig);
+  }
 
-    if (this.restConfig.pollingInterval && this.restConfig.pollingInterval > 0) {
-      this.timer = setInterval(() => {
-        if (this.restConfig) this.fetchData(this.restConfig);
-      }, this.restConfig.pollingInterval * 1000);
-    }
+  /**
+   * Schedule polling only after the previous request has settled. This prevents
+   * slow or failing endpoints from creating an abort/retry storm.
+   */
+  private scheduleNextPoll(config: RESTConfig): void {
+    if (!config.pollingInterval || config.pollingInterval <= 0) return;
+
+    this.timer = setTimeout(async () => {
+      this.timer = undefined;
+      if (this.restConfig !== config) return;
+
+      await this.fetchData(config);
+      if (this.restConfig === config) {
+        this.scheduleNextPoll(config);
+      }
+    }, config.pollingInterval * 1000);
   }
 
   /**
@@ -335,7 +348,7 @@ export class RESTAdapter extends BaseAdapter {
     this.abortController = undefined;
 
     if (this.timer) {
-      clearInterval(this.timer);
+      clearTimeout(this.timer);
       this.timer = undefined;
     }
     this.config = undefined;

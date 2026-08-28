@@ -2,7 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RESTConfig, DEFAULT_AUTH_CONFIG } from '@thingsvis/schema';
+import {
+  RESTConfig,
+  DEFAULT_AUTH_CONFIG,
+  MIN_REST_POLLING_INTERVAL_SECONDS,
+} from '@thingsvis/schema';
 import { HeadersSection, AuthSection, TimeoutSection, BodySection } from './sections';
 
 interface RESTFormProps {
@@ -57,6 +61,8 @@ export const RESTForm: React.FC<RESTFormProps> = ({ config, onChange }) => {
             </Label>
             <Input
               type="number"
+              min={0}
+              step={MIN_REST_POLLING_INTERVAL_SECONDS}
               value={config.pollingInterval || 0}
               onChange={(e) => handleChange('pollingInterval', Number(e.target.value))}
               className="h-8 text-sm"
