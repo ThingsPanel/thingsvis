@@ -159,7 +159,7 @@ export const Main = defineWidget({
       colors = resolveWidgetColors(element);
       applyStyles(textEl, currentProps, currentCtx, colors);
       const autoHeight = currentProps.resizeMode === 'autoHeight';
-      textEl.style.height = 'auto';
+      textEl.style.height = autoHeight ? 'auto' : '100%';
       element.style.alignItems = autoHeight ? 'flex-start' : getVerticalAlign(currentProps.verticalAlign);
     };
     renderText();

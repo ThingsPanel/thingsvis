@@ -58,7 +58,7 @@ function isAutoHeightTextNode(node: Pick<NodeState, 'schemaRef'>): boolean {
     | { type?: string; props?: Record<string, unknown> }
     | null
     | undefined;
-  return schema?.type === 'basic/text' && schema.props?.resizeMode !== 'fixed';
+  return schema?.type === 'basic/text' && schema.props?.resizeMode === 'autoHeight';
 }
 
 export function shouldUseVisibleOverlayOverflow(
@@ -257,6 +257,8 @@ export class VisualEngine {
   private errorMessageByNode = new Map<string, string>();
   // Cache node props to detect changes and avoid unnecessary updates
   private lastNodePropsCache = new Map<string, string>();
+  // Coalesce text measurement to one layout read per node per animation frame.
+  private pendingAutoHeightTextFrames = new Map<string, number>();
   // Cache for auto-layout of connected line nodes (bbox/points)
   private lastLineAutoLayoutCache = new Map<string, string>();
 
@@ -1025,7 +1027,7 @@ export class VisualEngine {
           // Track reactRoot for cleanup
           (overlayInst as any).__reactRoot = reactRoot;
 
-          if (isAutoHeightTextNode(node)) {
+          if ((this.opts?.editable ?? true) && isAutoHeightTextNode(node)) {
             this.syncAutoHeightTextNode(node, ov.element);
           }
 
@@ -1142,11 +1144,6 @@ export class VisualEngine {
       this.positionOverlayBox(existing.overlayBox, node, isResizable);
       this.syncOverlayCardShell(existing.overlayBox, node);
       this.syncOverlayClickFallback(node, existing);
-
-      if (isAutoHeightTextNode(node) && existing.overlayInst) {
-        const element = (existing.overlayInst as any).element as HTMLElement | undefined;
-        if (element) this.syncAutoHeightTextNode(node, element);
-      }
 
       // 对于自适应尺寸组件，同步占位符尺寸
       if (!isResizable && existing.overlayInst) {
@@ -1279,6 +1276,11 @@ export class VisualEngine {
             variables: ((this.store.getState() as any).variableValues ?? {}) as Record<string, unknown>,
           };
           existing.renderer.updateOverlay(existing.overlayInst as any, contextWithLinks);
+
+          if ((this.opts?.editable ?? true) && isAutoHeightTextNode(node)) {
+            const element = (existing.overlayInst as any).element as HTMLElement | undefined;
+            if (element) this.syncAutoHeightTextNode(node, element);
+          }
         }
 
         // Keep connected line nodes' bbox/points in sync with linked nodes.
@@ -1533,7 +1535,15 @@ export class VisualEngine {
   }
 
   private syncAutoHeightTextNode(node: NodeState, element: HTMLElement) {
-    requestAnimationFrame(() => {
+    const pendingFrame = this.pendingAutoHeightTextFrames.get(node.id);
+    if (pendingFrame !== undefined) {
+      cancelAnimationFrame(pendingFrame);
+    }
+
+    const frame = requestAnimationFrame(() => {
+      this.pendingAutoHeightTextFrames.delete(node.id);
+      if (!element.isConnected) return;
+
       const measure = element.querySelector<HTMLElement>('[data-thingsvis-measure="1"]');
       if (!measure) return;
 
@@ -1549,6 +1559,7 @@ export class VisualEngine {
       };
       state.updateNode?.(node.id, { size: { width, height } });
     });
+    this.pendingAutoHeightTextFrames.set(node.id, frame);
   }
 
   private positionOverlayBox(box: HTMLDivElement, node: NodeState, isResizable: boolean = true) {
