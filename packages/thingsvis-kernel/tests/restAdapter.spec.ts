@@ -102,4 +102,39 @@ describe('RESTAdapter runtime variables', () => {
       'https://platform.example.com/api/devices/device-001/status',
     );
   });
+
+  it('does not emit an error when a newer refresh cancels an in-flight request', async () => {
+    let requestCount = 0;
+    const fetchMock = vi.fn((_url: string, options?: RequestInit) => {
+      requestCount += 1;
+      if (requestCount === 1) {
+        return new Promise<Response>((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => {
+            reject(new DOMException('Aborted', 'AbortError'));
+          });
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ ok: true }),
+      } as Response);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const adapter = new RESTAdapter();
+    const emitError = vi.spyOn(adapter as any, 'emitError');
+
+    await adapter.prepare({
+      id: 'rest-cancel',
+      name: 'Cancelable request',
+      type: 'REST',
+      config: { url: 'https://platform.example.com/data', method: 'GET' },
+    } as DataSource);
+
+    const first = adapter.refresh();
+    const second = adapter.refresh();
+    await Promise.all([first, second]);
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(emitError).not.toHaveBeenCalled();
+  });
 });

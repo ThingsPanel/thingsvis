@@ -11,7 +11,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import type { KernelStore } from '@thingsvis/kernel';
-import type { DataSourceType, RESTConfig, WSConfig } from '@thingsvis/schema';
+import type { DataSourceMode, DataSourceType, RESTConfig, WSConfig } from '@thingsvis/schema';
 import {
   DEFAULT_AUTH_CONFIG,
   DEFAULT_RECONNECT_POLICY,
@@ -59,7 +59,7 @@ interface DataSourceDialogProps {
 }
 
 export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialogProps) {
-  const { t, i18n } = useTranslation('editor');
+  const { t, i18n } = useTranslation(['editor', 'pages']);
   const { states } = useDataSourceRegistry(store);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -70,11 +70,13 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
   const [editingSource, setEditingSource] = useState<{
     id: string;
     type: DataSourceType;
+    mode: DataSourceMode;
     config: any;
     transformation: string;
   }>({
     id: '',
     type: 'STATIC',
+    mode: 'auto',
     config: { value: {} },
     transformation: '',
   });
@@ -148,6 +150,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
         id: editingSource.id,
         name: editingSource.id,
         type: editingSource.type,
+        mode: editingSource.mode,
         config: editingSource.config,
         transformation: editingSource.transformation || undefined,
       });
@@ -159,7 +162,13 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
   const startAdding = () => {
     setIsAdding(true);
     setSelectedId(null);
-    setEditingSource({ id: '', type: 'STATIC', config: { value: {} }, transformation: '' });
+    setEditingSource({
+      id: '',
+      type: 'STATIC',
+      mode: 'auto',
+      config: { value: {} },
+      transformation: '',
+    });
     syncStaticJsonTextFromConfig({});
   };
 
@@ -171,6 +180,7 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
       setEditingSource({
         id: config.id,
         type: config.type,
+        mode: config.mode ?? 'auto',
         config: config.config,
         transformation: config.transformation || '',
       });
@@ -346,6 +356,40 @@ export function DataSourceDialog({ open, onOpenChange, store }: DataSourceDialog
                           ))}
                         </div>
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-muted-foreground">
+                        {t('dataSources.triggerMode', { ns: 'pages' })}
+                      </label>
+                      <div className="flex gap-1 p-1 bg-muted rounded-md h-10">
+                        {[
+                          {
+                            id: 'auto' as const,
+                            label: t('dataSources.modeAuto', { ns: 'pages' }),
+                          },
+                          {
+                            id: 'manual' as const,
+                            label: t('dataSources.modeManual', { ns: 'pages' }),
+                          },
+                        ].map((mode) => (
+                          <button
+                            key={mode.id}
+                            onClick={() => setEditingSource({ ...editingSource, mode: mode.id })}
+                            className={`flex-1 flex items-center justify-center gap-2 rounded-md transition-all text-sm font-semibold ${
+                              editingSource.mode === mode.id
+                                ? 'bg-background text-[#6965db] shadow-sm'
+                                : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                          >
+                            {mode.label}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {editingSource.mode === 'auto'
+                          ? t('dataSources.modeAutoHint', { ns: 'pages' })
+                          : t('dataSources.modeManualHint', { ns: 'pages' })}
+                      </p>
                     </div>
                   </section>
 

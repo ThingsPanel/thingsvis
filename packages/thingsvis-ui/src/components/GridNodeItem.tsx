@@ -87,6 +87,47 @@ export interface GridNodeItemProps {
 
 const widgetModuleCache = new Map<string, WidgetMainModule>();
 
+interface NodeRuntimeDependencies {
+    dataSourceIds: string[];
+    usesVariables: boolean;
+}
+
+interface NodeRuntimeSnapshot {
+    nodeState: NodeState | undefined;
+    dataSourceStates: unknown[];
+    variableValues: unknown;
+}
+
+const nodeDependencyCache = new WeakMap<object, NodeRuntimeDependencies>();
+
+function getNodeRuntimeDependencies(node: NodeState | undefined): NodeRuntimeDependencies {
+    const schemaRef = node?.schemaRef as Record<string, unknown> | undefined;
+    if (!schemaRef) return { dataSourceIds: [], usesVariables: false };
+    const cached = nodeDependencyCache.get(schemaRef);
+    if (cached) return cached;
+
+    const expressions = `${JSON.stringify(schemaRef.props ?? {})}${JSON.stringify(schemaRef.data ?? [])}`;
+    const dataSourceIds = Array.from(
+        new Set(Array.from(expressions.matchAll(/ds\.([a-zA-Z0-9_-]+)/g), (match) => match[1]!)),
+    );
+    const dependencies = { dataSourceIds, usesVariables: expressions.includes('var.') };
+    nodeDependencyCache.set(schemaRef, dependencies);
+    return dependencies;
+}
+
+function isSameRuntimeSnapshot(
+    previous: NodeRuntimeSnapshot | undefined,
+    next: NodeRuntimeSnapshot,
+): boolean {
+    return Boolean(
+        previous &&
+        previous.nodeState === next.nodeState &&
+        previous.variableValues === next.variableValues &&
+        previous.dataSourceStates.length === next.dataSourceStates.length &&
+        previous.dataSourceStates.every((value, index) => value === next.dataSourceStates[index]),
+    );
+}
+
 // ─── Context builder ─────────────────────────────────────────────────────────
 
 function buildOverlayContext(
@@ -180,20 +221,6 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     const overlayRef = useRef<Partial<PluginOverlayInstance>>({});
 
     // Reactive baseStyle — re-reads from store so background/border/etc. update without remount
-    const [nodeBaseStyle, setNodeBaseStyle] = React.useState<NodeBaseStyle>(
-        () => (store.getState() as KernelState).nodesById[nodeId]?.schemaRef?.baseStyle as NodeBaseStyle ?? {}
-    );
-
-    useEffect(() => {
-        const unsub = store.subscribe((state: KernelState) => {
-            const next = (state.nodesById[nodeId]?.schemaRef?.baseStyle) ?? {};
-            setNodeBaseStyle((prev) =>
-                JSON.stringify(prev) === JSON.stringify(next) ? prev : next
-            );
-        });
-        return unsub;
-    }, [store, nodeId]);
-
     // Local state for smooth ultra-fast visual dragging & resizing
     const [dragDelta, setDragDelta] = React.useState<{ dx: number; dy: number } | null>(null);
     const [resizeDelta, setResizeDelta] = React.useState<{ dx: number; dy: number; handle: ResizeHandle } | null>(null);
@@ -288,14 +315,29 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
 
     // ── Widget update (props / data / pixelRect / dataSources change) ─────────
 
-    // Subscribe to the store so React re-renders this component when data sources update.
-    // Without this, incoming telemetry data (which only updates state.dataSources, not
-    // state.nodesById) would never trigger useEffect to call overlay.update().
-    const kernelState = useSyncExternalStore(
-        useCallback((cb) => store.subscribe(cb), [store]),
-        () => store.getState() as KernelState
+    const runtimeSnapshotRef = useRef<NodeRuntimeSnapshot>();
+    const getRuntimeSnapshot = useCallback(() => {
+        const state = store.getState() as KernelState & Record<string, unknown>;
+        const nodeState = state.nodesById[nodeId];
+        const dependencies = getNodeRuntimeDependencies(nodeState);
+        const next: NodeRuntimeSnapshot = {
+            nodeState,
+            dataSourceStates: dependencies.dataSourceIds.map((id) => state.dataSources?.[id]),
+            variableValues: dependencies.usesVariables ? state.variableValues : undefined,
+        };
+        if (isSameRuntimeSnapshot(runtimeSnapshotRef.current, next)) {
+            return runtimeSnapshotRef.current as NodeRuntimeSnapshot;
+        }
+        runtimeSnapshotRef.current = next;
+        return next;
+    }, [nodeId, store]);
+    const runtimeSnapshot = useSyncExternalStore(
+        useCallback((callback) => store.subscribe(callback), [store]),
+        getRuntimeSnapshot,
+        getRuntimeSnapshot,
     );
-    const nodeState = kernelState.nodesById[nodeId];
+    const nodeState = runtimeSnapshot.nodeState;
+    const nodeBaseStyle = (nodeState?.schemaRef?.baseStyle ?? {}) as NodeBaseStyle;
     const isInlineEditableText = interactive && isBasicTextNode(nodeState);
     const isPreviewClickable = !interactive && isBasicNode(nodeState) && hasClickActions(nodeState);
     const liveText = typeof (nodeState?.schemaRef as any)?.props?.text === 'string'
@@ -361,28 +403,9 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         setIsInlineEditing(false);
     }, [liveText]);
 
-    // Build a cache key fragment from the live values of referenced data sources.
-    const dataSourceKey = React.useMemo(() => {
-        if (!nodeState) return '';
-        const schemaRef = nodeState.schemaRef as Record<string, unknown>;
-        const haystack =
-            JSON.stringify(schemaRef.props ?? {}) + JSON.stringify(schemaRef.data ?? []);
-        if (!haystack.includes('ds.')) return '';
-        const matches = haystack.match(/ds\.([a-zA-Z0-9_-]+)/g);
-        if (!matches) return '';
-        const snapshot: Record<string, unknown> = {};
-        for (const m of matches) {
-            const dsId = m.replace('ds.', '');
-            if (kernelState.dataSources?.[dsId]) {
-                snapshot[dsId] = kernelState.dataSources[dsId].data;
-            }
-        }
-        return JSON.stringify(snapshot);
-    }, [nodeState, kernelState.dataSources]);
-
-    // Derive a stable cache key from node props + data bindings + pixelRect + live dataSources
+    // Derive a stable cache key from node props, data bindings, and geometry.
     const updateKey = nodeState
-        ? `${JSON.stringify((nodeState.schemaRef as Record<string, unknown>).props ?? {})}|${JSON.stringify((nodeState.schemaRef as Record<string, unknown>).data ?? [])}|${pixelRect.width}x${pixelRect.height}|${dataSourceKey}`
+        ? `${JSON.stringify((nodeState.schemaRef as Record<string, unknown>).props ?? {})}|${JSON.stringify((nodeState.schemaRef as Record<string, unknown>).data ?? [])}|${pixelRect.width}x${pixelRect.height}`
         : '';
 
     useEffect(() => {
@@ -400,7 +423,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         );
         overlayRef.current.update(ctx);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actionRuntime, locale, updateKey, theme, store, widgetMode]);
+    }, [actionRuntime, locale, runtimeSnapshot, updateKey, theme, store, widgetMode]);
 
     // ── Drag handling ─────────────────────────────────────────────────────────
 

@@ -27,7 +27,7 @@ describe('EmbedPage runtime variables', () => {
     });
   });
 
-  it('preserves explicit URL defaults and only fills empty runtime-managed defaults', () => {
+  it('uses host runtime URLs instead of environment-specific saved defaults', () => {
     const runtimeValues = {
       platformApiBaseUrl: 'https://platform.example.com',
       thingsvisApiBaseUrl: 'https://thingsvis.example.com',
@@ -49,7 +49,7 @@ describe('EmbedPage runtime variables', () => {
     ];
 
     expect(resolveEmbedRuntimeVariableValues(definitions, runtimeValues)).toMatchObject({
-      platformApiBaseUrl: 'https://legacy-platform.example.com',
+      platformApiBaseUrl: 'https://platform.example.com',
       thingsvisApiBaseUrl: 'https://thingsvis.example.com',
       deviceId: 'device-001',
     });
@@ -64,7 +64,7 @@ describe('EmbedPage runtime variables', () => {
     );
     expect(
       merged.find((definition) => definition.name === 'platformApiBaseUrl')?.defaultValue,
-    ).toBe('https://legacy-platform.example.com');
+    ).toBe('https://platform.example.com');
     expect(
       merged.find((definition) => definition.name === 'thingsvisApiBaseUrl')?.defaultValue,
     ).toBe('https://thingsvis.example.com');
@@ -77,7 +77,7 @@ describe('EmbedPage runtime variables', () => {
     expect(merged.some((definition) => definition.name === 'platformToken')).toBe(false);
   });
 
-  it('normalizes the local ThingsPanel frontend API fallback to the dev proxy endpoint', () => {
+  it('does not rewrite runtime or saved URLs', () => {
     const runtimeValues = buildEmbedRuntimeVariableValues(
       {
         platformApiBaseUrl: 'http://localhost:5002/api/v1',
@@ -86,7 +86,7 @@ describe('EmbedPage runtime variables', () => {
       null,
     );
 
-    expect(runtimeValues.platformApiBaseUrl).toBe('http://localhost:5002/proxy-default');
+    expect(runtimeValues.platformApiBaseUrl).toBe('http://localhost:5002/api/v1');
 
     expect(
       resolveEmbedRuntimeVariableValues(
@@ -99,12 +99,12 @@ describe('EmbedPage runtime variables', () => {
         ],
         runtimeValues,
       ).platformApiBaseUrl,
-    ).toBe('http://localhost:5002/proxy-default');
+    ).toBe('http://localhost:5002/api/v1');
 
     expect(
       buildEmbedRuntimeVariableValues({ platformApiBaseUrl: 'http://localhost:5003/api/v1' }, null)
         .platformApiBaseUrl,
-    ).toBe('http://localhost:5003/proxy-default');
+    ).toBe('http://localhost:5003/api/v1');
 
     expect(
       buildEmbedRuntimeVariableValues({ platformApiBaseUrl: 'http://localhost:5004/api/v1' }, null)

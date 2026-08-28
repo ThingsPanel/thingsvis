@@ -49,6 +49,15 @@ function toQueryValues(value: unknown): string[] {
   return [String(value)];
 }
 
+function isAbortError(error: unknown): boolean {
+  return Boolean(
+    error &&
+    typeof error === 'object' &&
+    'name' in error &&
+    (error as { name?: unknown }).name === 'AbortError',
+  );
+}
+
 function getUrlBase(): string {
   if (typeof globalThis.location?.origin === 'string' && globalThis.location.origin) {
     return globalThis.location.origin;
@@ -208,10 +217,11 @@ export class RESTAdapter extends BaseAdapter {
    * Resolves {{ var.xxx }} expressions in URL/headers/body before fetching.
    */
   private async fetchData(config: RESTConfig): Promise<void> {
+    const controller = new AbortController();
     try {
       // Cancel any pending request
       this.abortController?.abort();
-      this.abortController = new AbortController();
+      this.abortController = controller;
 
       const shouldAppendParamsToUrl = config.method === 'GET' || config.method === 'DELETE';
       const rawUrl = buildRequestUrl(
@@ -263,9 +273,10 @@ export class RESTAdapter extends BaseAdapter {
           method: config.method,
           headers,
           body,
-          signal: this.abortController.signal,
+          signal: controller.signal,
         },
         (config.timeout ?? 30) * 1000,
+        controller,
       );
 
       if (!response.ok) {
@@ -276,10 +287,14 @@ export class RESTAdapter extends BaseAdapter {
       this.emitData(rawData);
     } catch (e) {
       // Don't emit error if request was aborted intentionally
-      if (e instanceof Error && e.name === 'AbortError') {
+      if (isAbortError(e)) {
         return;
       }
       this.emitError(e);
+    } finally {
+      if (this.abortController === controller) {
+        this.abortController = undefined;
+      }
     }
   }
 
@@ -293,9 +308,12 @@ export class RESTAdapter extends BaseAdapter {
     url: string,
     options: RequestInit,
     timeoutMs: number,
+    controller: AbortController,
   ): Promise<Response> {
+    let didTimeout = false;
     const timeoutId = setTimeout(() => {
-      this.abortController?.abort();
+      didTimeout = true;
+      controller.abort();
     }, timeoutMs);
 
     try {
@@ -304,7 +322,7 @@ export class RESTAdapter extends BaseAdapter {
       return response;
     } catch (error) {
       clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
+      if (didTimeout && isAbortError(error)) {
         throw new Error(`Request timeout after ${timeoutMs / 1000}s`);
       }
       throw error;

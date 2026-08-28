@@ -12,34 +12,12 @@ export const EMBED_RUNTIME_VARIABLES: RuntimeVariableDefinition[] = [
   { name: 'dateRange', type: 'object', defaultValue: { startTime: '', endTime: '' } },
 ];
 
-// These runtime-managed URLs use the current host only as a fallback. If a
-// dashboard/template already stores an explicit URL, keep it so local testing
-// can target a remote ThingsPanel backend.
+// These values are supplied by the embedding host for the current environment.
 const RUNTIME_MANAGED_DEFAULT_NAMES = new Set(['platformApiBaseUrl', 'thingsvisApiBaseUrl']);
 
 function readConfigString(config: Record<string, unknown> | undefined, key: string) {
   const value = config?.[key];
   return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
-
-function normalizeRuntimeManagedUrl(name: string, value: string | undefined): string | undefined {
-  if (!value || name !== 'platformApiBaseUrl') return value;
-
-  try {
-    const url = new URL(value);
-    if (
-      url.hostname === 'localhost' &&
-      (url.port === '5002' || url.port === '5003') &&
-      url.pathname === '/api/v1'
-    ) {
-      url.pathname = '/proxy-default';
-      return url.toString().replace(/\/$/, '');
-    }
-  } catch {
-    if (value === '/api/v1') return '/proxy-default';
-  }
-
-  return value;
 }
 
 export function resolveThingsVisApiBaseUrl(config: Record<string, unknown> | undefined) {
@@ -50,10 +28,7 @@ export function buildEmbedRuntimeVariableValues(
   config: Record<string, unknown> | undefined,
   fallbackDeviceId?: string | null,
 ): Record<string, unknown> {
-  const platformApiBaseUrl = normalizeRuntimeManagedUrl(
-    'platformApiBaseUrl',
-    readConfigString(config, 'platformApiBaseUrl'),
-  );
+  const platformApiBaseUrl = readConfigString(config, 'platformApiBaseUrl');
   const thingsvisApiBaseUrl = resolveThingsVisApiBaseUrl(config);
   const platformToken =
     readConfigString(config, 'platformToken') || readConfigString(config, 'token');
@@ -87,14 +62,14 @@ function readSavedRuntimeDefault(
     return undefined;
   }
 
-  return normalizeRuntimeManagedUrl(name, defaultValue);
+  return defaultValue;
 }
 
 export function resolveEmbedRuntimeVariableValues(
   definitions: unknown[] | undefined,
   runtimeValues: Record<string, unknown>,
 ): Record<string, unknown> {
-  const resolvedValues = { ...runtimeValues };
+  const resolvedValues: Record<string, unknown> = {};
 
   RUNTIME_MANAGED_DEFAULT_NAMES.forEach((name) => {
     const savedDefault = readSavedRuntimeDefault(definitions, name);
@@ -103,7 +78,7 @@ export function resolveEmbedRuntimeVariableValues(
     }
   });
 
-  return resolvedValues;
+  return { ...resolvedValues, ...runtimeValues };
 }
 
 export function mergeEmbedRuntimeVariableDefinitions(
@@ -120,13 +95,6 @@ export function mergeEmbedRuntimeVariableDefinitions(
 
         const runtimeValue = runtimeValues[name];
         if (runtimeValue === undefined) return definition;
-        if (
-          typeof definition.defaultValue === 'string' &&
-          definition.defaultValue.trim().length > 0
-        ) {
-          return definition;
-        }
-
         return {
           ...definition,
           defaultValue: runtimeValue,
