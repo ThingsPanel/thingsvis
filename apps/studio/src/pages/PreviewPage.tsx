@@ -1,22 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSyncExternalStore } from 'react';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, Maximize, Minimize, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import type { PageSchemaType, IPage } from '@thingsvis/schema';
 import { validateCanvasTheme, DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
 import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { ScaleScreen } from '../components/ScaleScreen';
+import { PreviewToolbar, type PreviewScaleMode } from '../components/PreviewToolbar';
 
-export type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
+export type { PreviewScaleMode } from '../components/PreviewToolbar';
 export type PreviewAlignY = 'top' | 'center';
 
 import { actionRuntime, store } from '../lib/store';
@@ -79,7 +71,7 @@ export default function PreviewPage() {
   const [isFullscreen, setIsFullscreen] = useState(previewSession.isFullscreen());
   const [scaleMode, setScaleMode] = useState<PreviewScaleMode>('fit-min');
   const [previewAlignY, setPreviewAlignY] = useState<PreviewAlignY>('center');
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language;
 
   // Observe kernel state so we can decide whether to auto-load from storage.
@@ -331,22 +323,6 @@ export default function PreviewPage() {
     void previewSession.toggleFullscreen(document.documentElement);
   }, []);
 
-  // Show toolbar only while the mouse is moving; hide after 2 s of inactivity.
-  const [isToolbarVisible, setIsToolbarVisible] = useState(false);
-  useEffect(() => {
-    let idleTimer: ReturnType<typeof setTimeout>;
-    const onMouseMove = () => {
-      setIsToolbarVisible(true);
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => setIsToolbarVisible(false), 2000);
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      clearTimeout(idleTimer);
-    };
-  }, []);
-
   return (
     <div
       className={`theme-${pageTheme} relative w-full h-screen`}
@@ -360,81 +336,17 @@ export default function PreviewPage() {
         overflow: canvasMode === 'grid' ? 'auto' : 'hidden',
       }}
     >
-      {/* Minimal overlay toolbar — visible only while mouse is moving */}
-      <div
-        className="absolute top-4 right-4 z-50 pointer-events-auto transition-opacity duration-300"
-        style={{
-          opacity: isToolbarVisible ? 1 : 0,
-          pointerEvents: isToolbarVisible ? 'auto' : 'none',
-        }}
-      >
-        <div className="glass rounded-md shadow-md border border-border flex items-center gap-1 p-1 text-foreground">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-            onClick={handleBack}
-            title="Back"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-            onClick={handleRefresh}
-            disabled={!projectId || isLoading}
-            title="Refresh"
-          >
-            <RefreshCw className="h-4 w-4" />
-          </Button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-md focus:ring-0 focus:outline-none"
-            onClick={handleToggleFullscreen}
-            title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-          >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
-
-          <div className="w-px h-4 mx-2 bg-neutral-300 dark:bg-neutral-600" />
-
-          {canvasMode === 'grid' ? (
-            <span className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground select-none">
-              {t('preview.scaleMode.responsive', { ns: 'pages' })}
-            </span>
-          ) : (
-            <Select
-              value={scaleMode}
-              onValueChange={(v: string) => setScaleMode(v as PreviewScaleMode)}
-            >
-              <SelectTrigger className="w-auto min-w-[140px] px-2 h-8 bg-transparent border-0 ring-0 focus:ring-0 focus:ring-offset-0 focus-visible:ring-0 focus-visible:ring-offset-0 outline-none shadow-none text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" align="end">
-                <SelectItem value="fit-min">
-                  {t('preview.scaleMode.fitMin', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="fit-width">
-                  {t('preview.scaleMode.fitWidth', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="fit-height">
-                  {t('preview.scaleMode.fitHeight', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="stretch">
-                  {t('preview.scaleMode.stretch', { ns: 'pages' })}
-                </SelectItem>
-                <SelectItem value="original">
-                  {t('preview.scaleMode.original', { ns: 'pages' })}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      </div>
+      {/* Compact trigger expands into preview controls without covering the canvas while idle. */}
+      <PreviewToolbar
+        isFullscreen={isFullscreen}
+        isGridLayout={canvasMode === 'grid'}
+        scaleMode={scaleMode}
+        refreshDisabled={!projectId || isLoading}
+        onBack={handleBack}
+        onRefresh={handleRefresh}
+        onToggleFullscreen={handleToggleFullscreen}
+        onScaleModeChange={setScaleMode}
+      />
 
       {/* Errors / loading */}
       {error ? (
