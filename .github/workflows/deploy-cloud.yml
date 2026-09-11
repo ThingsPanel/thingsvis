@@ -230,7 +230,7 @@ jobs:
 
             # Apply database migrations
             cd apps/server
-            npx prisma db push --accept-data-loss || true
+            npx prisma db push --accept-data-loss
             cd ../..
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
