@@ -235,7 +235,7 @@ jobs:
 
             # Apply database migrations
             cd apps/server
-            npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss
+            npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
             cd ../..
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
