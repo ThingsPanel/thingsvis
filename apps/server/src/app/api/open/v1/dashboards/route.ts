@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { verifyApiKey, hasPermission } from '@/lib/auth/api-key-auth';
 import { CreateDashboardSchema, DEFAULT_CANVAS_CONFIG } from '@/lib/validators/dashboard';
+import { ensureDefaultProject } from '@/lib/default-project';
 
 function parseDashboardForResponse(dashboard: {
   canvasConfig: string;
@@ -101,22 +102,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!projectId) {
-    const defaultProject = await prisma.project.findFirst({
-      where: { tenantId: principal.tenantId, name: 'Default Project' },
-    });
-
-    if (defaultProject) {
-      projectId = defaultProject.id;
-    } else {
-      const newProject = await prisma.project.create({
-        data: {
-          name: 'Default Project',
-          tenantId: principal.tenantId,
-          createdById: systemUser.id,
-        },
-      });
-      projectId = newProject.id;
-    }
+    projectId = (await ensureDefaultProject(principal.tenantId, systemUser.id)).id;
   } else {
     const project = await prisma.project.findFirst({
       where: { id: projectId, tenantId: principal.tenantId },

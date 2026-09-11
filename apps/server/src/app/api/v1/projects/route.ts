@@ -1,20 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { getSessionUser } from '@/lib/auth-helpers'
-import { CreateProjectSchema } from '@/lib/validators/project'
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/db';
+import { getSessionUser } from '@/lib/auth-helpers';
+import { CreateProjectSchema } from '@/lib/validators/project';
+import { ensureDefaultProject } from '@/lib/default-project';
 
 // GET /api/v1/projects - List projects with pagination
 export async function GET(request: NextRequest) {
-  const user = await getSessionUser(request)
+  const user = await getSessionUser(request);
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { searchParams } = new URL(request.url)
-  const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+  const { searchParams } = new URL(request.url);
+  await ensureDefaultProject(user.tenantId, user.id);
+  const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
+  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')));
 
-  const where = { tenantId: user.tenantId }
+  const where = { tenantId: user.tenantId };
 
   const [projects, total] = await Promise.all([
     prisma.project.findMany({
@@ -28,29 +30,29 @@ export async function GET(request: NextRequest) {
       take: limit,
     }),
     prisma.project.count({ where }),
-  ])
+  ]);
 
   return NextResponse.json({
     data: projects,
     meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
-  })
+  });
 }
 
 // POST /api/v1/projects - Create a new project
 export async function POST(request: NextRequest) {
-  const user = await getSessionUser(request)
+  const user = await getSessionUser(request);
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const body = await request.json()
-  const result = CreateProjectSchema.safeParse(body)
+  const body = await request.json();
+  const result = CreateProjectSchema.safeParse(body);
 
   if (!result.success) {
     return NextResponse.json(
       { error: 'Validation failed', details: result.error.flatten() },
-      { status: 400 }
-    )
+      { status: 400 },
+    );
   }
 
   const project = await prisma.project.create({
@@ -59,7 +61,7 @@ export async function POST(request: NextRequest) {
       tenantId: user.tenantId,
       createdById: user.id,
     },
-  })
+  });
 
-  return NextResponse.json(project, { status: 201 })
+  return NextResponse.json(project, { status: 201 });
 }

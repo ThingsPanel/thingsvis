@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/db';
 import { authorizeMarketInternalRequest } from '@/lib/market-internal-auth';
 import { importMarketDashboard } from '@/lib/market-dashboard-template';
+import { ensureDefaultProject } from '@/lib/default-project';
 
 const ImportRequestSchema = z.object({
   dashboardSnapshot: z.object({
@@ -58,18 +59,7 @@ export async function POST(request: NextRequest) {
     });
     if (!project) return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   } else {
-    const project =
-      (await prisma.project.findFirst({
-        where: { tenantId: auth.context.tenantId, name: 'Default Project' },
-      })) ??
-      (await prisma.project.create({
-        data: {
-          name: 'Default Project',
-          tenantId: auth.context.tenantId,
-          createdById: user.id,
-        },
-      }));
-    projectId = project.id;
+    projectId = (await ensureDefaultProject(auth.context.tenantId, user.id)).id;
   }
 
   try {

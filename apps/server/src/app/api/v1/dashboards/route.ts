@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth-helpers';
 import { CreateDashboardSchema, DEFAULT_CANVAS_CONFIG } from '@/lib/validators/dashboard';
+import { ensureDefaultProject } from '@/lib/default-project';
 
 // Helper to parse dashboard JSON fields for response
 function parseDashboardForResponse(dashboard: {
@@ -29,12 +30,19 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
+  const keyword = searchParams.get('keyword')?.trim();
   const page = Math.max(1, parseInt(searchParams.get('page') || '1'));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')));
 
   const where = {
     project: { tenantId: user.tenantId },
     ...(projectId && { projectId }),
+    ...(keyword && {
+      OR: [
+        { name: { contains: keyword, mode: 'insensitive' as const } },
+        { project: { name: { contains: keyword, mode: 'insensitive' as const } } },
+      ],
+    }),
   };
 
   const [dashboards, total] = await Promise.all([
@@ -89,25 +97,7 @@ export async function POST(request: NextRequest) {
 
   // Auto-create/find default project if projectId is missing
   if (!projectId) {
-    const defaultProject = await prisma.project.findFirst({
-      where: {
-        tenantId: user.tenantId,
-        name: 'Default Project',
-      },
-    });
-
-    if (defaultProject) {
-      projectId = defaultProject.id;
-    } else {
-      const newProject = await prisma.project.create({
-        data: {
-          name: 'Default Project',
-          tenantId: user.tenantId,
-          createdById: user.id,
-        },
-      });
-      projectId = newProject.id;
-    }
+    projectId = (await ensureDefaultProject(user.tenantId, user.id)).id;
   } else {
     // Verify provided project belongs to user's tenant
     const project = await prisma.project.findFirst({

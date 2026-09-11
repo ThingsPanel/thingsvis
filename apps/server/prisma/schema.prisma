@@ -56,10 +56,12 @@ model Project {
   createdById String
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+  systemKey   String?
   dashboards  Dashboard[]
   createdBy   User        @relation(fields: [createdById], references: [id])
   tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
+  @@unique([tenantId, systemKey])
   @@index([tenantId])
   @@map("projects")
 }
