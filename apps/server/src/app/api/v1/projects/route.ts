@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth-helpers';
 import { CreateProjectSchema } from '@/lib/validators/project';
-import { ensureDefaultProject } from '@/lib/default-project';
+import { ensureDefaultProject, isDefaultProject } from '@/lib/default-project';
 
 // GET /api/v1/projects - List projects with pagination
 export async function GET(request: NextRequest) {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const where = { tenantId: user.tenantId };
 
-  const [projects, total] = await Promise.all([
+  const [rawProjects, total] = await Promise.all([
     prisma.project.findMany({
       where,
       include: {
@@ -31,6 +31,10 @@ export async function GET(request: NextRequest) {
     }),
     prisma.project.count({ where }),
   ]);
+  const projects = rawProjects.map((project) => ({
+    ...project,
+    isDefault: isDefaultProject(project),
+  }));
 
   return NextResponse.json({
     data: projects,

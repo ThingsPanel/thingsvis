@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth-helpers';
 import { UpdateProjectSchema } from '@/lib/validators/project';
-import { DEFAULT_PROJECT_SYSTEM_KEY } from '@/lib/default-project';
+import { isDefaultProject } from '@/lib/default-project';
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -55,7 +55,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   if (!existing) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
-  if (existing.systemKey === DEFAULT_PROJECT_SYSTEM_KEY) {
+  if (isDefaultProject(existing)) {
     return NextResponse.json({ error: 'Default project cannot be modified' }, { status: 409 });
   }
 
@@ -83,7 +83,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!existing) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
-  if (existing.systemKey === DEFAULT_PROJECT_SYSTEM_KEY) {
+  if (isDefaultProject(existing)) {
     return NextResponse.json({ error: 'Default project cannot be deleted' }, { status: 409 });
   }
 
