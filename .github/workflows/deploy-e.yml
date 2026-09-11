@@ -229,7 +229,7 @@ jobs:
 
             # Apply database migrations
             cd apps/server
-            npx prisma db push --accept-data-loss
+            npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss
             cd ../..
 
             NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
