@@ -60,6 +60,7 @@ export interface SavePayload {
     gridCols?: number;
     gridRowHeight?: number;
     gridGap?: number;
+    responsive?: boolean;
     padding?: number;
     fullWidthPreview?: boolean;
     layerOrder?: unknown[];

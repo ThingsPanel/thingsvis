@@ -250,6 +250,8 @@ export interface EmbedInitPayload {
       gridCols?: number;
       gridRowHeight?: number;
       gridGap?: number;
+      /** Whether grid items should reflow at responsive breakpoints. Missing keeps legacy behavior. */
+      responsive?: boolean;
       padding?: number;
       fullWidthPreview?: boolean;
       layerOrder?: unknown[];
@@ -283,6 +285,7 @@ export interface ProcessedEmbedData {
     gridCols: number;
     gridRowHeight: number;
     gridGap: number;
+    responsive: boolean;
     padding: number;
     fullWidthPreview: boolean;
     layerOrder?: unknown[];
@@ -366,6 +369,7 @@ export function processEmbedInitPayload(
     gridCols: data.canvas?.gridCols ?? 24,
     gridRowHeight: data.canvas?.gridRowHeight ?? 50,
     gridGap: data.canvas?.gridGap ?? 5,
+    responsive: data.canvas?.responsive !== false,
     padding: data.canvas?.padding ?? 0,
     fullWidthPreview: data.canvas?.fullWidthPreview ?? false,
     layerOrder: Array.isArray(data.canvas?.layerOrder) ? data.canvas.layerOrder : undefined,

@@ -82,6 +82,32 @@ describe('KernelStore', () => {
             });
         });
 
+        it('should restore persisted responsive grid settings', () => {
+            const mockPage = {
+                config: {
+                    mode: 'grid',
+                    width: 1920,
+                    height: 1080,
+                    gridSettings: {
+                        cols: 24,
+                        rowHeight: 50,
+                        gap: 10,
+                        compactVertical: true,
+                        minW: 1,
+                        minH: 1,
+                        showGridLines: false,
+                        breakpoints: [],
+                        responsive: false,
+                    },
+                },
+                nodes: [],
+            } as any;
+
+            useStore.getState().loadPage(mockPage);
+
+            expect(useStore.getState().gridState.settings?.responsive).toBe(false);
+        });
+
         it('should update canvas state', () => {
             useStore.getState().updateCanvas({ zoom: 1.5, offsetX: 100, gridEnabled: true, gridSize: 32 });
             const state = useStore.getState();

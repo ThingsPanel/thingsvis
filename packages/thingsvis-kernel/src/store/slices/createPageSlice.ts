@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand/vanilla';
 import type { KernelState, KernelActions, NodeState, LayerGroup } from '../types';
 import type { NodeSchemaType, IPage } from '@thingsvis/schema';
-import { PageSchema } from '@thingsvis/schema';
+import { GridSettingsSchema, PageSchema } from '@thingsvis/schema';
 import { defaultCanvas } from './createCanvasSlice';
 import { CANVAS_DEFAULT_WIDTH, CANVAS_DEFAULT_HEIGHT } from '../../constants/default';
 
@@ -99,6 +99,7 @@ export const createPageSlice: StateCreator<
     const validPage = parsed.success ? parsed.data : page;
     const nodes = extractNodes(validPage as IPage | Record<string, unknown>);
     const config = extractConfig(validPage as IPage | Record<string, unknown>);
+    const parsedGridSettings = GridSettingsSchema.safeParse(config.gridSettings);
 
     const nodesById: Record<string, NodeState> = {};
     nodes.forEach((node: NodeSchemaType) => {
@@ -123,6 +124,13 @@ export const createPageSlice: StateCreator<
         gridEnabled: Boolean(config.gridEnabled),
         gridSize: typeof config.gridSize === 'number' ? config.gridSize : defaultCanvas.gridSize,
       } as typeof state.canvas;
+      state.gridState.settings = parsedGridSettings.success ? parsedGridSettings.data : null;
+      state.gridState.activeBreakpoint = null;
+      state.gridState.effectiveCols = parsedGridSettings.success
+        ? parsedGridSettings.data.cols
+        : 24;
+      state.gridState.colWidth = 0;
+      state.gridState.totalHeight = 0;
       state.layerOrder = normalizeLayerOrder(config, nodes);
       state.layerGroups = normalizeLayerGroups(config, state.layerOrder);
     });

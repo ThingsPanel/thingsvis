@@ -4,6 +4,10 @@ import { resolveInitialWidgetProps } from '../lib/registry/resolveInitialWidgetP
 import { dataSourceManager, store } from '../lib/store';
 import type { NodeSchemaType } from '@thingsvis/schema';
 import { augmentPlatformDataSourcesForNodes } from '../lib/platformDatasourceBindings';
+import {
+  createDefaultWidgetBaseStyle,
+  resolveInitialGridPosition,
+} from '../lib/registry/initialNodeDefaults';
 
 export function resolveInitialNodeSize(entry: {
   defaultSize?: { width?: number; height?: number };
@@ -88,7 +92,17 @@ export function useEditorDragDrop(markDirty: () => void) {
           position: { x: 100, y: 100 },
           ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
-          grid: { x: 0, y: gridY, w: 4, h: 3, static: false, isDraggable: true, isResizable: true },
+          baseStyle: createDefaultWidgetBaseStyle(),
+          grid: resolveInitialGridPosition(
+            initialSize,
+            {
+              cols: store.getState().gridState?.settings?.cols ?? 24,
+              rowHeight: store.getState().gridState?.settings?.rowHeight ?? 50,
+              gap: store.getState().gridState?.settings?.gap ?? 10,
+              containerWidth: store.getState().gridState?.containerWidth ?? 1200,
+            },
+            { y: gridY },
+          ),
         };
         store.getState().addNodes([node]);
         markDirty();
@@ -124,15 +138,18 @@ export function useEditorDragDrop(markDirty: () => void) {
           position: { x: 0, y: 0 },
           ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
-          grid: {
-            x: gridPosition.x,
-            y: gridPosition.y,
-            w: gridPosition.w ?? 4,
-            h: gridPosition.h ?? 3,
-            static: false,
-            isDraggable: true,
-            isResizable: true,
-          },
+          baseStyle: createDefaultWidgetBaseStyle(),
+          grid: resolveInitialGridPosition(
+            initialSize,
+            {
+              cols: store.getState().gridState?.settings?.cols ?? 24,
+              rowHeight: store.getState().gridState?.settings?.rowHeight ?? 50,
+              gap: store.getState().gridState?.settings?.gap ?? 10,
+              containerWidth: store.getState().gridState?.containerWidth ?? 1200,
+            },
+            gridPosition,
+            { w: gridPosition.w ?? 4, h: gridPosition.h ?? 2 },
+          ),
         };
         store.getState().addNodes([node]);
         markDirty();

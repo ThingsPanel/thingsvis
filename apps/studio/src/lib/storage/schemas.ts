@@ -54,6 +54,8 @@ export const CanvasConfigSchema = z.object({
   gridRowHeight: z.number().int().positive().optional(),
   /** Grid gap in pixels (grid layout only) */
   gridGap: z.number().int().nonnegative().optional(),
+  /** Whether grid items reflow at responsive breakpoints (missing preserves legacy responsive behavior) */
+  responsive: z.boolean().optional(),
   /** Canvas content padding in pixels */
   padding: z.number().int().nonnegative().optional(),
   /** Whether grid is visible */

@@ -212,3 +212,25 @@ export function getEffectiveCols(
   const activeBreakpoint = getActiveBreakpoint(settings.breakpoints ?? [], containerWidth);
   return activeBreakpoint?.cols ?? settings.cols;
 }
+
+/**
+ * Scale an authored grid position into the active responsive column count.
+ * Authored coordinates remain untouched; this is only a render-time projection.
+ */
+export function scaleGridPositionForResponsive(
+  raw: { x: number; y: number; w: number; h: number },
+  effectiveCols: number,
+  maxCols: number,
+): { x: number; y: number; w: number; h: number } {
+  if (effectiveCols === maxCols) return raw;
+  if (effectiveCols <= 2) {
+    return { x: 0, y: raw.y, w: Math.max(1, effectiveCols), h: raw.h };
+  }
+
+  const scaledW = Math.max(1, Math.round((raw.w * effectiveCols) / maxCols));
+  const scaledX = Math.min(
+    Math.floor((raw.x * effectiveCols) / maxCols),
+    effectiveCols - scaledW,
+  );
+  return { x: Math.max(0, scaledX), y: raw.y, w: scaledW, h: raw.h };
+}

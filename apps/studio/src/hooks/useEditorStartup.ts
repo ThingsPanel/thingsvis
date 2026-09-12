@@ -22,6 +22,15 @@ export interface UseEditorStartupResult {
   isReady: boolean;
 }
 
+export interface EditorStartupReadiness {
+  authResolved: boolean;
+  isBootstrapping: boolean;
+  projectLoaded: boolean;
+  isRegistryReady: boolean;
+  isWidgetsReady: boolean;
+  hasPainted: boolean;
+}
+
 const PHASE_CONFIG: Record<
   Exclude<EditorStartupPhase, 'ready'>,
   Omit<EditorStartupState, 'phase'>
@@ -48,6 +57,41 @@ const PHASE_CONFIG: Record<
   },
 };
 
+export function resolveEditorStartupState({
+  authResolved,
+  isBootstrapping,
+  projectLoaded,
+  isRegistryReady,
+  isWidgetsReady,
+  hasPainted,
+}: EditorStartupReadiness): EditorStartupState {
+  if (!authResolved) {
+    return { phase: 'auth', ...PHASE_CONFIG.auth };
+  }
+
+  if (isBootstrapping || !projectLoaded) {
+    return { phase: 'project', ...PHASE_CONFIG.project };
+  }
+
+  if (!isRegistryReady) {
+    return { phase: 'registry', ...PHASE_CONFIG.registry };
+  }
+
+  if (!isWidgetsReady) {
+    return { phase: 'widgets', ...PHASE_CONFIG.widgets };
+  }
+
+  if (!hasPainted) {
+    return { phase: 'paint', ...PHASE_CONFIG.paint };
+  }
+
+  return {
+    phase: 'ready',
+    progress: 100,
+    statusKey: 'loadingScreen.completed',
+  };
+}
+
 export function useEditorStartup({
   authResolved,
   isBootstrapping,
@@ -55,14 +99,20 @@ export function useEditorStartup({
   widgetTypes,
 }: UseEditorStartupOptions): UseEditorStartupResult {
   const [isRegistryReady, setIsRegistryReady] = useState(false);
+  const [isWidgetsReady, setIsWidgetsReady] = useState(false);
   const [hasPainted, setHasPainted] = useState(false);
 
   useEffect(() => {
     if (!authResolved || isBootstrapping || !projectLoaded) {
       setIsRegistryReady(false);
+      setIsWidgetsReady(false);
       setHasPainted(false);
       return;
     }
+
+    setIsRegistryReady(false);
+    setIsWidgetsReady(false);
+    setHasPainted(false);
 
     let cancelled = false;
 
@@ -71,15 +121,20 @@ export function useEditorStartup({
         await ensureRegistryLoaded();
       } catch (error) {
         console.error('[useEditorStartup] Failed to load registry:', error);
-      } finally {
-        if (!cancelled) {
-          setIsRegistryReady(true);
-        }
       }
 
-      void preloadComponentTypes(widgetTypes).catch((error) => {
+      if (cancelled) return;
+      setIsRegistryReady(true);
+
+      try {
+        await preloadComponentTypes(widgetTypes);
+      } catch (error) {
         console.error('[useEditorStartup] Failed to preload widgets:', error);
-      });
+      }
+
+      if (!cancelled) {
+        setIsWidgetsReady(true);
+      }
     })();
 
     return () => {
@@ -88,7 +143,7 @@ export function useEditorStartup({
   }, [authResolved, isBootstrapping, projectLoaded, widgetTypes]);
 
   useEffect(() => {
-    if (!authResolved || isBootstrapping || !projectLoaded || !isRegistryReady) {
+    if (!authResolved || isBootstrapping || !projectLoaded || !isRegistryReady || !isWidgetsReady) {
       setHasPainted(false);
       return;
     }
@@ -101,31 +156,20 @@ export function useEditorStartup({
     return () => {
       window.cancelAnimationFrame(frameId);
     };
-  }, [authResolved, isBootstrapping, isRegistryReady, projectLoaded]);
+  }, [authResolved, isBootstrapping, isRegistryReady, isWidgetsReady, projectLoaded]);
 
-  const startup = useMemo<EditorStartupState>(() => {
-    if (!authResolved) {
-      return { phase: 'auth', ...PHASE_CONFIG.auth };
-    }
-
-    if (isBootstrapping || !projectLoaded) {
-      return { phase: 'project', ...PHASE_CONFIG.project };
-    }
-
-    if (!isRegistryReady) {
-      return { phase: 'registry', ...PHASE_CONFIG.registry };
-    }
-
-    if (!hasPainted) {
-      return { phase: 'paint', ...PHASE_CONFIG.paint };
-    }
-
-    return {
-      phase: 'ready',
-      progress: 100,
-      statusKey: 'loadingScreen.completed',
-    };
-  }, [authResolved, hasPainted, isBootstrapping, isRegistryReady, projectLoaded]);
+  const startup = useMemo(
+    () =>
+      resolveEditorStartupState({
+        authResolved,
+        isBootstrapping,
+        projectLoaded,
+        isRegistryReady,
+        isWidgetsReady,
+        hasPainted,
+      }),
+    [authResolved, hasPainted, isBootstrapping, isRegistryReady, isWidgetsReady, projectLoaded],
+  );
 
   return {
     startup,

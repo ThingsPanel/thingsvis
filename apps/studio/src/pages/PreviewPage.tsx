@@ -240,6 +240,7 @@ export default function PreviewPage() {
         theme: (project.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
         scaleMode: (project.canvas as any)?.scaleMode,
         previewAlignY: normalizePreviewAlignY((project.canvas as any)?.previewAlignY),
+        responsive: (project.canvas as any)?.responsive !== false,
         padding: (project.canvas as any)?.padding ?? 0,
       };
 
@@ -260,6 +261,7 @@ export default function PreviewPage() {
             cols: project.canvas.gridCols ?? 24,
             rowHeight: project.canvas.gridRowHeight ?? 50,
             gap: project.canvas.gridGap ?? 5,
+            responsive: (project.canvas as any).responsive !== false,
           });
         }
       }

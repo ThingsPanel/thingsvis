@@ -37,6 +37,8 @@ export interface EmbedInitPayload {
     gridCols?: number;
     gridRowHeight?: number;
     gridGap?: number;
+    responsive?: boolean;
+    padding?: number;
     fullWidthPreview?: boolean;
     layerOrder?: unknown[];
     layerGroups?: Record<string, unknown>;
@@ -145,6 +147,7 @@ export class WidgetModeStrategy implements EditorStrategy {
         gridCols: payload.canvas?.gridCols,
         gridRowHeight: payload.canvas?.gridRowHeight,
         gridGap: payload.canvas?.gridGap,
+        responsive: payload.canvas?.responsive,
         padding: payload.canvas?.padding,
         fullWidthPreview: payload.canvas?.fullWidthPreview,
         layerOrder: Array.isArray(payload.canvas?.layerOrder)

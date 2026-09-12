@@ -12,7 +12,11 @@ import type { GridSettings, WidgetMainModule, WidgetOverlayContext } from '@thin
 import { validateCanvasTheme } from '@thingsvis/schema';
 import type { ActionRuntime } from '../engine/executeActions';
 import { useGridLayout } from '../hooks/useGridLayout';
-import { clientPointToGrid, gridToPixel } from '../utils/grid-mapper';
+import {
+    clientPointToGrid,
+    gridToPixel,
+    scaleGridPositionForResponsive,
+} from '../utils/grid-mapper';
 import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
 import { GridCanvasBackground } from './GridCanvasBackground';
 import { GridDropTarget } from './GridDropTarget';
@@ -439,24 +443,6 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     const maxCols = effectiveSettings.cols; // design-time column count (e.g. 24)
 
-    const scaleGridPos = useCallback(
-        (raw: { x: number; y: number; w: number; h: number }) => {
-            if (effectiveCols === maxCols) return raw;
-            // At very narrow breakpoints (≤ 2 cols), force all items to full-width
-            // so they are vertically stacked rather than placed side-by-side.
-            if (effectiveCols <= 2) {
-                return { x: 0, y: raw.y, w: effectiveCols, h: raw.h };
-            }
-            const scaledW = Math.max(1, Math.round(raw.w * effectiveCols / maxCols));
-            const scaledX = Math.min(
-                Math.floor(raw.x * effectiveCols / maxCols),
-                effectiveCols - scaledW
-            );
-            return { x: scaledX, y: raw.y, w: scaledW, h: raw.h };
-        },
-        [effectiveCols, maxCols]
-    );
-
     // ── Visible nodes ─────────────────────────────────────────────────────────
 
     const nodes = useMemo(
@@ -480,13 +466,13 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
         const scaledItems = nodes.map((node) => {
             const gridRaw = (node.schemaRef as Record<string, unknown>).grid as
                 { x: number; y: number; w: number; h: number };
-            const s = scaleGridPos(gridRaw);
+            const s = scaleGridPositionForResponsive(gridRaw, effectiveCols, maxCols);
             return { id: node.id, x: s.x, y: s.y, w: s.w, h: s.h };
         });
 
         const result = GridSystem.compact(scaledItems, effectiveCols);
         return Object.fromEntries(result.items.map((item) => [item.id, item]));
-    }, [effectiveCols, maxCols, nodes, scaleGridPos]);
+    }, [effectiveCols, maxCols, nodes]);
 
     /** Total canvas rows after responsive reflow (used for canvasMinH). */
     const responsiveTotalRows = useMemo(() => {
@@ -617,14 +603,18 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                 // Use compacted display position when in a responsive breakpoint,
                 // otherwise fall back to authored grid position.
                 const displayGrid = compactedDisplayMap
-                    ? (compactedDisplayMap[node.id] ?? scaleGridPos(gridRaw))
+                    ? (compactedDisplayMap[node.id] ?? scaleGridPositionForResponsive(gridRaw, effectiveCols, maxCols))
                     : gridRaw;
                 const pixelRect = gridToPixel(displayGrid, responsiveSettings, containerWidth);
 
                 let pushedRect = null;
                 const pushedData = localPreview?.pushedItems?.[node.id];
                 if (pushedData) {
-                    pushedRect = gridToPixel(scaleGridPos(pushedData), responsiveSettings, containerWidth);
+                    pushedRect = gridToPixel(
+                        scaleGridPositionForResponsive(pushedData, effectiveCols, maxCols),
+                        responsiveSettings,
+                        containerWidth,
+                    );
                 }
 
                 return (

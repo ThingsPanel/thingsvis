@@ -27,6 +27,10 @@ import {
 } from '../embed/platformDeviceCompat';
 import { PipeProxyHits, buildPipeProxySegmentsForNode } from './CanvasView.pipeProxy';
 import { openLocalIconPicker } from '@/lib/local-icons/pickerStore';
+import {
+  createDefaultWidgetBaseStyle,
+  resolveInitialGridPosition,
+} from '../lib/registry/initialNodeDefaults';
 
 function generateId(prefix = 'node') {
   try {
@@ -648,6 +652,7 @@ const CanvasView = forwardRef<
           ? snippetEntry.props
           : {}),
       },
+      ...(!snippetEntry ? { baseStyle: createDefaultWidgetBaseStyle() } : {}),
     };
 
     if (snippetEntry) {
@@ -670,32 +675,13 @@ const CanvasView = forwardRef<
       // Calculate grid dimensions from initialSize and container width
       // Formula: cols = (width + gap) / (containerWidth + gap) * cols
       const containerWidth = containerRef.current?.clientWidth ?? 1200;
-      if (initialSize && containerWidth > 0) {
-        const cellWidth = (containerWidth - (cols - 1) * gap) / cols;
-        const gridW = Math.max(2, Math.round((initialSize.width + gap) / (cellWidth + gap)));
-        const gridH = Math.max(2, Math.round((initialSize.height + gap) / (rowHeight + gap)));
-
-        node.grid = {
-          x: 0,
-          y: 0, // Will be calculated by grid compaction
-          w: Math.min(gridW, cols),
-          h: gridH,
-          static: false,
-          isDraggable: true,
-          isResizable: true,
-        };
-      } else {
-        // Fallback for non-resizable widgets
-        node.grid = {
-          x: 0,
-          y: 0,
-          w: 4,
-          h: 2,
-          static: false,
-          isDraggable: true,
-          isResizable: false,
-        };
-      }
+      node.grid = resolveInitialGridPosition(
+        initialSize,
+        { cols, rowHeight, gap, containerWidth },
+        { x: 0, y: 0 },
+        { w: 4, h: 2 },
+      );
+      if (!isResizable) node.grid.isResizable = false;
     }
 
     try {
@@ -783,21 +769,11 @@ const CanvasView = forwardRef<
         initialSize = size;
       }
 
-      // Calculate grid dimensions from widget defaultSize
-      let gridW = gridPos.w;
-      let gridH = gridPos.h;
-      if (initialSize && containerRef.current) {
-        const gridSettings = state.gridState?.settings;
-        const cols = gridSettings?.cols ?? 24;
-        const gap = gridSettings?.gap ?? 10;
-        const rowHeight = gridSettings?.rowHeight ?? 40;
-        const containerWidth = containerRef.current.clientWidth || 1200;
-
-        const cellWidth = (containerWidth - (cols - 1) * gap) / cols;
-        gridW = Math.max(2, Math.round((initialSize.width + gap) / (cellWidth + gap)));
-        gridH = Math.max(2, Math.round((initialSize.height + gap) / (rowHeight + gap)));
-        gridW = Math.min(gridW, cols);
-      }
+      const gridSettings = state.gridState?.settings;
+      const cols = gridSettings?.cols ?? 24;
+      const gap = gridSettings?.gap ?? 10;
+      const rowHeight = gridSettings?.rowHeight ?? 40;
+      const containerWidth = containerRef.current?.clientWidth || 1200;
 
       const node: any = {
         id: nodeId,
@@ -811,16 +787,15 @@ const CanvasView = forwardRef<
           sampleData: moduleDefs?.sampleData,
           fallbackDefaults: moduleDefs?.defaultProps,
         }),
-        grid: {
-          x: gridPos.x,
-          y: gridPos.y,
-          w: gridW,
-          h: gridH,
-          static: false,
-          isDraggable: true,
-          isResizable: isResizable,
-        },
+        baseStyle: createDefaultWidgetBaseStyle(),
+        grid: resolveInitialGridPosition(
+          initialSize,
+          { cols, rowHeight, gap, containerWidth },
+          gridPos,
+          { w: gridPos.w ?? 4, h: gridPos.h ?? 2 },
+        ),
       };
+      node.grid.isResizable = isResizable;
 
       try {
         if (store.getState().addNodes) {

@@ -340,8 +340,8 @@ export default function EmbedPage() {
 
   const schemaCanvas = useMemo(() => {
     const schema = state.schema as {
-      canvas?: { scaleMode?: string; previewAlignY?: string };
-      canvasConfig?: { scaleMode?: string; previewAlignY?: string };
+      canvas?: { scaleMode?: string; previewAlignY?: string; responsive?: boolean };
+      canvasConfig?: { scaleMode?: string; previewAlignY?: string; responsive?: boolean };
     } | null;
     return schema?.canvas ?? schema?.canvasConfig ?? null;
   }, [state.schema]);
@@ -490,6 +490,7 @@ export default function EmbedPage() {
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
+          responsive: (dashboard.canvasConfig as any)?.responsive !== false,
           padding: (dashboard.canvasConfig as any)?.padding ?? 0,
         };
 
@@ -503,6 +504,14 @@ export default function EmbedPage() {
             width: dashboard.canvasConfig.width || 1920,
             height: dashboard.canvasConfig.height || 1080,
           });
+          if (dashboard.canvasConfig.mode === 'grid' || dashboard.canvasConfig.gridEnabled) {
+            store.getState().setGridSettings?.({
+              cols: dashboard.canvasConfig.gridCols ?? 24,
+              rowHeight: dashboard.canvasConfig.gridRowHeight ?? 50,
+              gap: dashboard.canvasConfig.gridGap ?? 5,
+              responsive: (dashboard.canvasConfig as any).responsive !== false,
+            });
+          }
         }
 
         const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];
@@ -580,6 +589,7 @@ export default function EmbedPage() {
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
+          responsive: (dashboard.canvasConfig as any)?.responsive !== false,
           padding: (dashboard.canvasConfig as any)?.padding ?? 0,
         };
 
@@ -593,6 +603,14 @@ export default function EmbedPage() {
             width: dashboard.canvasConfig.width || 1920,
             height: dashboard.canvasConfig.height || 1080,
           });
+          if (dashboard.canvasConfig.mode === 'grid' || dashboard.canvasConfig.gridEnabled) {
+            store.getState().setGridSettings?.({
+              cols: dashboard.canvasConfig.gridCols ?? 24,
+              rowHeight: dashboard.canvasConfig.gridRowHeight ?? 50,
+              gap: dashboard.canvasConfig.gridGap ?? 5,
+              responsive: (dashboard.canvasConfig as any).responsive !== false,
+            });
+          }
         }
 
         const variables = Array.isArray(dashboard.variables) ? (dashboard.variables as any[]) : [];

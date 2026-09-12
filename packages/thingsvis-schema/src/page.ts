@@ -103,6 +103,9 @@ export const PageConfigSchema = z.object({
    */
   gridSettings: GridSettingsSchema.optional(),
 
+  /** Whether grid items reflow at responsive breakpoints. Missing keeps legacy defaults. */
+  responsive: z.boolean().optional(),
+
   /**
    * Global page background settings
    */

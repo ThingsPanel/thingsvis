@@ -118,6 +118,7 @@ export type CanvasConfigSchema = {
   gridCols?: number;
   gridRowHeight?: number;
   gridGap?: number;
+  responsive?: boolean;
   padding?: number;
   homeFlag?: boolean; // 是否设为首页
   theme: 'dawn' | 'midnight' | string;
@@ -287,6 +288,7 @@ export function useProjectBootstrap({
       gridCols: 24,
       gridRowHeight: 50,
       gridGap: 10,
+      responsive: true,
       padding: 0,
       theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
       scaleMode: 'fit-min' as PreviewScaleMode,
@@ -379,6 +381,7 @@ export function useProjectBootstrap({
         gridCols: loaded.canvas.gridCols ?? prev.gridCols,
         gridRowHeight: loaded.canvas.gridRowHeight ?? prev.gridRowHeight,
         gridGap: loaded.canvas.gridGap ?? prev.gridGap,
+        responsive: loaded.canvas.responsive ?? prev.responsive ?? true,
         padding: (loaded.canvas as any).padding ?? prev.padding ?? 0,
         gridEnabled: loaded.canvas.gridEnabled ?? prev.gridEnabled,
         gridSize: loaded.canvas.gridSize ?? prev.gridSize,
@@ -404,7 +407,7 @@ export function useProjectBootstrap({
           minH: 1,
           showGridLines: loaded.canvas.gridEnabled ?? false,
           breakpoints: [],
-          responsive: true,
+          responsive: loaded.canvas.responsive !== false,
         } as any);
       }
 
@@ -454,6 +457,7 @@ export function useProjectBootstrap({
         gridCols: currentCanvasConfig.gridCols,
         gridRowHeight: currentCanvasConfig.gridRowHeight,
         gridGap: currentCanvasConfig.gridGap,
+        responsive: currentCanvasConfig.responsive,
         padding: currentCanvasConfig.padding,
         gridEnabled: currentCanvasConfig.gridEnabled,
         gridSize: currentCanvasConfig.gridSize,
@@ -627,6 +631,7 @@ export function useProjectBootstrap({
           gridCols: processed.canvas.gridCols,
           gridRowHeight: processed.canvas.gridRowHeight,
           gridGap: processed.canvas.gridGap,
+          responsive: processed.canvas.responsive,
           padding: processed.canvas.padding,
         },
       });
@@ -738,6 +743,7 @@ export function useProjectBootstrap({
         gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
         gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
         gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+        responsive: resolvedCanvas?.responsive !== false,
         padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
         layerOrder: (resolvedCanvas as any)?.layerOrder,
         layerGroups: (resolvedCanvas as any)?.layerGroups,
@@ -761,12 +767,13 @@ export function useProjectBootstrap({
           layerGroups: (resolvedCanvas as any)?.layerGroups,
           background: bgObj as unknown as NonNullable<IPageConfig['background']> | undefined,
           padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
+          responsive: resolvedCanvas?.responsive !== false,
           gridSettings: {
             cols: resolvedCanvas?.gridCols ?? 24,
             rowHeight: resolvedCanvas?.gridRowHeight ?? 50,
             gap: resolvedCanvas?.gridGap ?? 10,
             compactVertical: false,
-            responsive: false,
+            responsive: resolvedCanvas?.responsive !== false,
             minW: 1,
             minH: 1,
             showGridLines: false,
@@ -844,6 +851,7 @@ export function useProjectBootstrap({
             gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,
             gridRowHeight: resolvedCanvas?.gridRowHeight || processed.canvas.gridRowHeight,
             gridGap: resolvedCanvas?.gridGap || processed.canvas.gridGap,
+            responsive: resolvedCanvas?.responsive !== false,
             padding: (resolvedCanvas as any)?.padding ?? processed.canvas.padding ?? 0,
             homeFlag: (resolvedCanvas as any)?.homeFlag,
             layerOrder: store.getState().layerOrder,

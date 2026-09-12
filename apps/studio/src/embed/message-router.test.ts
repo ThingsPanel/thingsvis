@@ -85,4 +85,32 @@ describe('message-router host notifications', () => {
       memberIds: ['node-1'],
     });
   });
+
+  it('preserves the explicit responsive canvas flag for embedded runtimes', async () => {
+    vi.stubGlobal('window', {
+      parent: { postMessage: vi.fn() },
+      location: {
+        hash: '#/editor/demo?mode=embedded&saveTarget=host',
+      },
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as Window & typeof globalThis);
+
+    const { processEmbedInitPayload } = await import('./message-router');
+    const processed = processEmbedInitPayload({
+      data: {
+        meta: { id: 'dashboard-2', name: 'Fixed mobile layout' },
+        canvas: {
+          mode: 'grid',
+          width: 1920,
+          height: 1080,
+          responsive: false,
+        },
+        nodes: [],
+      },
+      config: { saveTarget: 'host' },
+    });
+
+    expect(processed?.canvas.responsive).toBe(false);
+  });
 });

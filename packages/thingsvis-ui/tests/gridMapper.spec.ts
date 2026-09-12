@@ -6,6 +6,7 @@ import {
   getEffectiveCols,
   gridToPixel,
   pixelToGrid,
+  scaleGridPositionForResponsive,
   snapToGrid,
 } from '../src/utils/grid-mapper';
 
@@ -88,5 +89,17 @@ describe('grid-mapper utilities', () => {
     );
 
     expect(cols).toBe(12);
+  });
+
+  it('keeps desktop positions and stacks items at the narrow mobile breakpoint', () => {
+    const authored = { x: 6, y: 2, w: 6, h: 2 };
+
+    expect(scaleGridPositionForResponsive(authored, 24, 24)).toEqual(authored);
+    expect(scaleGridPositionForResponsive(authored, 2, 24)).toEqual({
+      x: 0,
+      y: 2,
+      w: 2,
+      h: 2,
+    });
   });
 });
