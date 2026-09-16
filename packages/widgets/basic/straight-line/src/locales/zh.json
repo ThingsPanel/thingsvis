@@ -1,0 +1,18 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-straight-line": { "name": "直线" }
+    },
+    "controls": {
+      "basic-straight-line": {
+        "stroke": "颜色",
+        "strokeWidth": "线宽",
+        "strokeStyle": "线型",
+        "solid": "实线",
+        "dashed": "虚线",
+        "dotted": "点线",
+        "opacity": "透明度"
+      }
+    }
+  }
+}

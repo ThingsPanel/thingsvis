@@ -160,6 +160,7 @@ type EmbedMessage =
   | { type: 'UPDATE_VARIABLES'; payload: Record<string, any> }
   | { type: 'SET_TOKEN'; payload: string }
   | { type: 'READY' }
+  | { type: 'tv:render-ready' }
   | { type: 'ERROR'; payload: string }
   | { type: 'LOADED'; payload: { id?: string; name?: string } }
   | { type: 'tv:init'; payload: any }
@@ -387,6 +388,16 @@ export default function EmbedPage() {
       getToken: () => embedTokenRef.current,
     });
   }, []);
+
+  const handleRenderReady = useCallback(() => {
+    postToParent({ type: 'tv:render-ready' });
+  }, [postToParent]);
+  const handleRenderError = useCallback(
+    (nodeId: string) => {
+      postToParent({ type: 'ERROR', payload: `可视化组件加载失败：${nodeId}` });
+    },
+    [postToParent],
+  );
 
   // Resolve plugin for canvas
   const resolveWidget = useCallback(async (type: string) => {
@@ -1253,6 +1264,8 @@ export default function EmbedPage() {
             >
               <GridCanvas
                 store={store as any}
+                onRenderReady={handleRenderReady}
+                onRenderError={handleRenderError}
                 resolveWidget={resolveWidget as any}
                 locale={locale}
                 settings={{

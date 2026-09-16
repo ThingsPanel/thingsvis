@@ -62,4 +62,32 @@ describe('syncShapeStylePatch', () => {
       },
     });
   });
+
+  it('maps the common border style to the triangle SVG outline', () => {
+    const patch = syncShapeStylePatch(
+      'basic/triangle',
+      {
+        baseStyle: {
+          border: { width: 6, color: '#be2323', radius: 8 },
+        } as any,
+      },
+      {
+        fill: '#dbeafe',
+        stroke: 'transparent',
+        strokeWidth: 0,
+      },
+    );
+
+    expect(patch).toEqual({
+      baseStyle: {
+        border: { width: 6, color: '#be2323', radius: 8 },
+      },
+      props: {
+        fill: '#dbeafe',
+        stroke: '#be2323',
+        strokeWidth: 6,
+        cornerRadius: 8,
+      },
+    });
+  });
 });

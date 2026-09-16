@@ -27,6 +27,8 @@ export interface GridCanvasProps {
     settings?: GridSettings;
     /** Widget module resolver: type string → WidgetMainModule */
     resolveWidget?: (type: string) => Promise<WidgetMainModule>;
+    onRenderReady?: () => void;
+    onRenderError?: (nodeId: string) => void;
     /** Called when user drops a widget from the ComponentsList */
     onDropComponent?: (
         componentType: string,
@@ -148,6 +150,8 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     store,
     settings: settingsProp,
     resolveWidget,
+    onRenderReady,
+    onRenderError,
     onDropComponent,
     width,
     height,
@@ -169,6 +173,10 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const canvasRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
     const [containerWidth, setContainerWidth] = useState(0);
+    const [renderStates, setRenderStates] = useState<Record<string, string>>({});
+    const onNodeRenderState = useCallback((id: string, status: 'loading' | 'ready' | 'error') => {
+        setRenderStates(previous => previous[id] === status ? previous : { ...previous, [id]: status });
+    }, []);
 
     // ── Store subscription ────────────────────────────────────────────────────
 
@@ -508,6 +516,19 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     const fallbackTheme = (kernelState.page as any)?.config?.theme;
     const normalizedTheme = validateCanvasTheme(theme || fallbackTheme);
 
+    // Widget mounting and its scheduled chart resize must finish before a host reveals the frame.
+    useEffect(() => {
+        if (!onRenderReady || !nodes.length || containerWidth <= 0) return;
+        const failed = nodes.find(node => renderStates[node.id] === 'error');
+        if (failed) { onRenderError?.(failed.id); return; }
+        if (!nodes.every(node => renderStates[node.id] === 'ready')) return;
+        let secondFrame = 0;
+        const firstFrame = requestAnimationFrame(() => {
+            secondFrame = requestAnimationFrame(onRenderReady);
+        });
+        return () => { cancelAnimationFrame(firstFrame); cancelAnimationFrame(secondFrame); };
+    }, [nodes, renderStates, containerWidth, onRenderReady, onRenderError]);
+
     // ── Render ────────────────────────────────────────────────────────────────
 
     const canvasW = width ? `${width}px` : '100%';
@@ -636,6 +657,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
                         previewPixelRect={pushedRect}
                         store={store}
                         resolveWidget={resolveWidget}
+                        onRenderState={onRenderReady ? onNodeRenderState : undefined}
                         interactive={interactive}
                         isSelected={selectedIds.includes(node.id)}
                         theme={normalizedTheme}

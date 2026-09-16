@@ -1,0 +1,18 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-straight-line": { "name": "Straight Line" }
+    },
+    "controls": {
+      "basic-straight-line": {
+        "stroke": "Color",
+        "strokeWidth": "Width",
+        "strokeStyle": "Style",
+        "solid": "Solid",
+        "dashed": "Dashed",
+        "dotted": "Dotted",
+        "opacity": "Opacity"
+      }
+    }
+  }
+}
