@@ -28,9 +28,21 @@ function isWidgetStaticAssetUrl(source: string): boolean {
   }
 }
 
-/** 平台上传和组件静态资源直连，其他 HTTP(S) 资源统一经服务端代理。 */
+function isPublicSupabaseStorageUrl(source: string): boolean {
+  try {
+    const url = new URL(source);
+    return url.protocol === 'https:'
+      && /^[a-z0-9-]+\.supabase\.co$/.test(url.hostname)
+      && url.pathname.startsWith('/storage/v1/object/public/');
+  } catch {
+    return false;
+  }
+}
+
+/** 平台上传、组件静态资源和支持跨域的 Supabase 公开存储直连，其余 HTTP(S) 资源经代理。 */
 export function resolveModelRequestUrl(source: string, apiBaseUrl: string): string {
-  if (!isHttpUrl(source) || isManagedUploadUrl(source) || isWidgetStaticAssetUrl(source)) {
+  if (!isHttpUrl(source) || isManagedUploadUrl(source) || isWidgetStaticAssetUrl(source)
+    || isPublicSupabaseStorageUrl(source)) {
     return source;
   }
 
