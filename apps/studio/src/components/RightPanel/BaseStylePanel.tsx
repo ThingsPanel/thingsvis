@@ -8,9 +8,14 @@ import { applyCardStyleDefaults, removeCardStyleDefaults } from '@thingsvis/ui';
 type BaseStylePanelProps = {
   baseStyle: any;
   onChange: (baseStyle: any) => void;
+  hideBorderRadius?: boolean;
 };
 
-export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
+export function BaseStylePanel({
+  baseStyle,
+  onChange,
+  hideBorderRadius = false,
+}: BaseStylePanelProps) {
   const { t } = useTranslation('editor');
 
   const updateStyle = (key: string, subKey: string, value: any) => {
@@ -173,7 +178,7 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
           {t('propsPanel.baseStyle.border', '边框')}
         </h3>
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`grid ${hideBorderRadius ? 'grid-cols-1' : 'grid-cols-2'} gap-3`}>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-muted-foreground">
                 {t('propsPanel.baseStyle.borderWidth', '线宽')}
@@ -188,20 +193,22 @@ export function BaseStylePanel({ baseStyle, onChange }: BaseStylePanelProps) {
                 mode="int"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-muted-foreground">
-                {t('propsPanel.baseStyle.borderRadius', '圆角')}
-              </label>
-              <NumericInput
-                value={baseStyle.border?.radius}
-                onValueChange={(nextValue) => updateStyle('border', 'radius', nextValue)}
-                className="h-8 text-sm"
-                placeholder="0"
-                allowEmpty
-                min={0}
-                mode="int"
-              />
-            </div>
+            {!hideBorderRadius ? (
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-muted-foreground">
+                  {t('propsPanel.baseStyle.borderRadius', '圆角')}
+                </label>
+                <NumericInput
+                  value={baseStyle.border?.radius}
+                  onValueChange={(nextValue) => updateStyle('border', 'radius', nextValue)}
+                  className="h-8 text-sm"
+                  placeholder="0"
+                  allowEmpty
+                  min={0}
+                  mode="int"
+                />
+              </div>
+            ) : null}
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">

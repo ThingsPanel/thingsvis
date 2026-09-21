@@ -38,10 +38,7 @@ export async function GET(request: NextRequest) {
     project: { tenantId: user.tenantId },
     ...(projectId && { projectId }),
     ...(keyword && {
-      OR: [
-        { name: { contains: keyword, mode: 'insensitive' as const } },
-        { project: { name: { contains: keyword, mode: 'insensitive' as const } } },
-      ],
+      name: { contains: keyword, mode: 'insensitive' as const },
     }),
   };
 
@@ -61,7 +58,8 @@ export async function GET(request: NextRequest) {
         createdBy: { select: { id: true, name: true } },
         // thumbnail: true, // Excluded for performance (lazy loading)
       },
-      orderBy: { updatedAt: 'desc' },
+      // A unique tie-breaker prevents equal timestamps from skipping/repeating rows across pages.
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * limit,
       take: limit,
     }),

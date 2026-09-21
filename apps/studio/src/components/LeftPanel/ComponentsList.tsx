@@ -50,6 +50,7 @@ import {
   Maximize2,
   ScanLine,
   Cuboid,
+  Triangle,
 } from 'lucide-react';
 import {
   Accordion,
@@ -116,6 +117,7 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   Maximize2,
   ScanLine,
   Cuboid,
+  Triangle,
 };
 
 export const COMPONENT_CATEGORY_DEFS = [
@@ -130,6 +132,8 @@ export const COMPONENT_CATEGORY_DEFS = [
 export const COMPONENT_ORDER = [
   'basic/rectangle',
   'basic/circle',
+  'basic/straight-line',
+  'basic/triangle',
   'basic/card',
   'basic/badge',
   'basic/text',

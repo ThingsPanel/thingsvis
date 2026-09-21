@@ -27,6 +27,23 @@ describe('resolveModelRequestUrl', () => {
     );
   });
 
+  it.each([
+    'https://tgldkwcjkxicpdtakdnk.supabase.co/storage/v1/object/public/uploads/xBPr9uD8kzabGUFuZhRqV.glb',
+    'https://project-id.supabase.co/storage/v1/object/public/models/textures/albedo.png',
+  ])('直接加载 Supabase 公开模型及依赖：%s', (source) => {
+    expect(resolveModelRequestUrl(source, API_BASE_URL)).toBe(source);
+  });
+
+  it.each([
+    'https://project-id.supabase.co/storage/v1/object/sign/models/factory.glb?token=example',
+    'https://project-id.supabase.co.evil.example/storage/v1/object/public/models/factory.glb',
+    'http://project-id.supabase.co/storage/v1/object/public/models/factory.glb',
+  ])('非 HTTPS 公开存储地址仍使用代理：%s', (source) => {
+    expect(resolveModelRequestUrl(source, API_BASE_URL)).toBe(
+      `${API_BASE_URL}/public/assets/proxy?url=${encodeURIComponent(source)}`,
+    );
+  });
+
   it('通过服务端代理加载外部 GLTF 依赖资源', () => {
     const source = 'https://assets.example.com/models/textures/albedo.png';
 
