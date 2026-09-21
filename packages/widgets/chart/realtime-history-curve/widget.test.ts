@@ -87,6 +87,38 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('normalizes partially persisted nested config before rendering', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { time_series: [{ x: 1000000000000, y: 26.1 }] } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      props: {
+        config: {
+          data: {
+            deviceId: 'dev-1',
+            metricKeys: ['temperature'],
+            timeRange: 'last_1h',
+          },
+          series: {},
+          layout: {},
+          style: {},
+          xAxis: {},
+          yAxes: [{ id: 'y0' }],
+          analysis: {},
+        },
+      } as any,
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.yAxis).toHaveLength(1));
+    expect(chartMock.options.at(-1)?.series?.[0]?.data).toEqual([[1000000000000, 26.1]]);
+    harness.destroy();
+  });
+
   it('appends matching WebSocket telemetry without replacing HTTP history', async () => {
     vi.stubGlobal(
       'fetch',

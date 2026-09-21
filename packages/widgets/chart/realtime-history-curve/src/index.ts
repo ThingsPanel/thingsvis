@@ -449,7 +449,11 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     'position:absolute;right:74px;top:6px;z-index:5;height:26px;padding:0 10px;border:1px solid #d8d8df;border-radius:5px;background:rgba(255,255,255,.9);font:12px system-ui;cursor:pointer';
   element.appendChild(exportButton);
   const chart = echarts.init(chartHost);
-  let props = initialProps;
+  // Dashboard nodes may persist only the fields edited by the user.  The host
+  // merges widget defaults shallowly, so nested config objects such as
+  // `analysis` and `xAxis` can otherwise miss their array/enum defaults at
+  // runtime.  Parse here as the final boundary before rendering.
+  let props = PropsSchema.parse(initialProps);
   let ctx = initialCtx;
   let states: SeriesState[] = [];
   let controller: AbortController | null = null;
@@ -646,7 +650,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   refresh();
   return {
     update(nextProps: Props, nextCtx: WidgetOverlayContext) {
-      props = nextProps;
+      props = PropsSchema.parse(nextProps);
       ctx = nextCtx;
       refresh();
     },
