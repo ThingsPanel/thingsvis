@@ -44,7 +44,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
   root.style.padding = `${props.paddingSize}px`;
   root.style.borderRadius = `${props.cornerRadius}px`;
   root.style.border = `${props.borderWidth}px solid ${props.borderColor}`;
-  root.style.background = withAlpha(resolveColor(props.fillColor, colors.bg || '#ffffff'), props.fillOpacity);
+  root.style.background = withAlpha(resolveColor(props.fillColor, colors.surface || colors.bg || '#ffffff'), props.fillOpacity);
   root.style.boxShadow = props.shadowEnabled
     ? `0 ${props.shadowOffsetY}px ${props.shadowBlur}px ${props.shadowColor}`
     : 'none';

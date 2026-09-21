@@ -49,28 +49,11 @@ function escapeHtml(input: unknown): string {
     .replace(/'/g, "&#39;");
 }
 
-function isLightColor(color: string): boolean {
-  const normalized = color.trim();
-  const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
-  if (hexMatch) {
-    const raw = hexMatch[1] ?? "";
-    const full = raw.length === 3 ? raw.split("").map((item) => item + item).join("") : raw;
-    const int = Number.parseInt(full, 16);
-    const r = (int >> 16) & 255;
-    const g = (int >> 8) & 255;
-    const b = int & 255;
-    const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    return luminance > 0.72;
-  }
-  return false;
-}
-
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
-  const lightTheme = isLightColor(colors.bg);
   const statusColor = STATUS_COLORS[props.status] ?? colors.primary;
   const progressColor = props.progressColor || statusColor;
-  const surfaceBg = lightTheme ? withAlpha("#ffffff", 0.62) : withAlpha("#ffffff", 0.06);
-  const shadowColor = lightTheme ? withAlpha("#0f172a", 0.05) : withAlpha("#0f172a", 0.16);
+  const surfaceBg = colors.surface;
+  const shadowColor = colors.surfaceShadow;
   const titleColor = colors.fg;
   const metaColor = withAlpha(colors.fg, 0.62);
   const subtleColor = withAlpha(colors.fg, 0.48);
@@ -93,6 +76,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
       box-sizing:border-box;
       border-radius:18px;
       background:${surfaceBg};
+      border:1px solid ${colors.surfaceBorder};
       box-shadow:0 10px 26px ${shadowColor};
       padding:${compactPadding};
       display:flex;
@@ -191,7 +175,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
           width:100%;
           height:8px;
           border-radius:999px;
-          background:${withAlpha(colors.fg, lightTheme ? 0.08 : 0.12)};
+          background:${withAlpha(colors.fg, 0.12)};
           overflow:hidden;
         ">
           <div style="

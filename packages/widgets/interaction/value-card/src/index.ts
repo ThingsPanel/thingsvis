@@ -389,7 +389,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       color: ${valueColor};
       background: ${colors.surface};
       border: 1px solid ${colors.surfaceBorder};
-      border-radius: inherit;
+      border-radius: 12px;
       box-shadow: 0 8px 24px ${colors.surfaceShadow};
     ">
       ${hasSideIcon ? `

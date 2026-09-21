@@ -120,7 +120,10 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): v
       text-align: left;
       padding: ${CARD_PADDING}px;
       gap: 6px;
-      background: transparent;
+      background: ${colors.surface};
+      border: 1px solid ${colors.surfaceBorder};
+      border-radius: 12px;
+      box-shadow: 0 8px 24px ${colors.surfaceShadow};
     ">
       <div style="
         min-width: 0;

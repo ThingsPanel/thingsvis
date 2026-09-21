@@ -1,6 +1,10 @@
 /** Resolved color tokens from CSS custom properties */
 export type WidgetColors = {
     bg: string;
+    /** Elevated component surface, intentionally distinct from the canvas. */
+    surface: string;
+    surfaceBorder: string;
+    surfaceShadow: string;
     fg: string;
     axis: string;
     primary: string;
@@ -20,6 +24,9 @@ export type ResolveLayeredColorOptions = {
 /** Dawn fallbacks (used when CSS custom properties are not available) */
 const DAWN_FALLBACKS = {
     bg: 'transparent',
+    surface: '#ffffff',
+    surfaceBorder: 'rgba(31, 41, 55, 0.14)',
+    surfaceShadow: 'rgba(15, 23, 42, 0.08)',
     fg: '#1a1a2e',
     axis: 'rgba(0, 0, 0, 0.08)',
     primary: '#6965db',
@@ -96,6 +103,9 @@ export function resolveWidgetColors(element: HTMLElement): WidgetColors {
 
     return {
         bg:      getVar('--w-bg',       DAWN_FALLBACKS.bg),
+        surface: getVar('--w-surface',  DAWN_FALLBACKS.surface),
+        surfaceBorder: getVar('--w-surface-border', DAWN_FALLBACKS.surfaceBorder),
+        surfaceShadow: getVar('--w-surface-shadow', DAWN_FALLBACKS.surfaceShadow),
         fg:      getVar('--w-fg',       DAWN_FALLBACKS.fg),
         axis:    getVar('--w-axis',     DAWN_FALLBACKS.axis),
         primary: getVar('--w-primary',  DAWN_FALLBACKS.primary),
