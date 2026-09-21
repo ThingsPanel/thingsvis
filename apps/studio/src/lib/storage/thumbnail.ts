@@ -6,6 +6,7 @@
  */
 
 import { STORAGE_CONSTANTS } from './constants';
+import html2canvas from 'html2canvas';
 import { toJpeg } from 'html-to-image';
 
 // =============================================================================
@@ -61,24 +62,44 @@ export async function generateThumbnailFromElement(
       // falling back to the generic document placeholder.
       skipFonts: true,
       style: {
-        overflow: 'hidden',
+        overflow: 'visible',
         transform: 'none',
         transformOrigin: 'top left',
       },
     };
 
-    let rawThumbnail: string;
+    let rawThumbnail: string | undefined;
     try {
       // Keep the complete dashboard whenever the browser can serialize it.
       rawThumbnail = await toJpeg(element, captureOptions);
     } catch {
-      // Some dashboards contain native controls that make the generated SVG
-      // fail to load. They are not useful in a small cover image, so retry
-      // without them before falling back to the generic placeholder.
-      rawThumbnail = await toJpeg(element, {
-        ...captureOptions,
-        filter: (node) => !['SELECT', 'INPUT', 'TEXTAREA', 'BUTTON'].includes(node.nodeName),
+      // Some dashboards contain native controls or cross-origin resources that make
+      // the generated SVG fail to load. DOM rendering is more tolerant of complex
+      // widget trees, so use it as the fallback after excluding unsupported nodes.
+      const fallbackCanvas = await captureWithDomRenderer(element, {
+        backgroundColor,
+        width: sourceWidth,
+        height: sourceHeight,
+        windowWidth: sourceWidth,
+        windowHeight: sourceHeight,
+        scale: 1,
+        useCORS: false,
+        allowTaint: false,
+        imageTimeout: 1500,
+        logging: false,
+        ignoreElements: (node) => shouldSkipThumbnailNode(node as HTMLElement),
       });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      drawScaledImage(ctx, fallbackCanvas, width, height);
+      return encodeThumbnail(canvas, quality);
     }
 
     const sourceImage = await loadImage(rawThumbnail);
@@ -205,6 +226,98 @@ export function generatePlaceholderThumbnail(options: ThumbnailOptions = {}): st
 // =============================================================================
 // Helper Functions
 // =============================================================================
+
+const NATIVE_CONTROL_TAGS = new Set([
+  'SELECT',
+  'INPUT',
+  'TEXTAREA',
+  'BUTTON',
+  'VIDEO',
+  'VIDEO-RTC',
+  'STYLE',
+]);
+
+/**
+ * Exclude content that html-to-image cannot reliably inline into its SVG snapshot.
+ *
+ * The editor can contain third-party images loaded from object-storage domains. A
+ * single image without CORS support can make the complete thumbnail fail. The retry
+ * keeps same-origin assets and removes only the unsupported node, so the rest of the
+ * dashboard remains visible in the cover image.
+ */
+function shouldSkipThumbnailNode(node: HTMLElement): boolean {
+  if (NATIVE_CONTROL_TAGS.has(node.nodeName)) {
+    return true;
+  }
+
+  const resourceUrl =
+    node.getAttribute('src') || node.getAttribute('href') || node.getAttribute('xlink:href');
+
+  if (resourceUrl && isCrossOriginResource(resourceUrl)) {
+    return true;
+  }
+
+  try {
+    const style = window.getComputedStyle(node);
+    return [style.backgroundImage, style.maskImage, style.webkitMaskImage].some((value) =>
+      hasCrossOriginUrl(value),
+    );
+  } catch {
+    return false;
+  }
+}
+
+function hasCrossOriginUrl(value: string): boolean {
+  const urls = value.match(/url\(\s*["']?([^"')]+)["']?\s*\)/gi) || [];
+  return urls.some((url) => {
+    const match = url.match(/url\(\s*["']?([^"')]+)["']?\s*\)/i);
+    return Boolean(match?.[1] && isCrossOriginResource(match[1]));
+  });
+}
+
+function isCrossOriginResource(value: string): boolean {
+  if (/^(data|blob):/i.test(value)) {
+    return false;
+  }
+
+  try {
+    const url = new URL(value, window.location.href);
+    return (
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.origin !== window.location.origin
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Render the artboard without the editor viewport's zoom transform. */
+async function captureWithDomRenderer(
+  element: HTMLElement,
+  options: Parameters<typeof html2canvas>[1],
+): Promise<HTMLCanvasElement> {
+  const restores: Array<() => void> = [];
+  let ancestor: HTMLElement | null = element.parentElement;
+
+  while (ancestor && ancestor !== document.body) {
+    const computedTransform = window.getComputedStyle(ancestor).transform;
+    if (computedTransform !== 'none') {
+      const transformedAncestor = ancestor;
+      const previousTransform = transformedAncestor.style.transform;
+      transformedAncestor.style.transform = 'none';
+      restores.push(() => {
+        transformedAncestor.style.transform = previousTransform;
+      });
+    }
+    ancestor = ancestor.parentElement;
+  }
+
+  try {
+    return await html2canvas(element, options);
+  } finally {
+    restores.reverse().forEach((restore) => restore());
+  }
+}
 
 /**
  * Load an image from a URL.

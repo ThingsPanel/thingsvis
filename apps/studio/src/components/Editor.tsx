@@ -336,8 +336,17 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   const prepareProjectForSave = useCallback(async (project: ProjectFile) => {
     if (!shouldSaveToHost()) return project;
 
-    const canvasElement = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
-    if (!canvasElement) return project;
+    const canvasHost = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
+    if (!canvasHost) return project;
+
+    // Grid mode renders the real artboard inside an editor viewport that applies
+    // zoom, centering, scrollbars, and padding. Capture the deepest canvas-theme
+    // node so the cover represents the dashboard itself instead of the workspace
+    // shell around it. Legacy canvas modes have no nested node and keep using the
+    // host as the fallback target.
+    const canvasElement =
+      Array.from(canvasHost.querySelectorAll<HTMLElement>('[data-canvas-theme]')).at(-1) ??
+      canvasHost;
 
     try {
       const thumbnail = await generateThumbnailFromElement(canvasElement, {
