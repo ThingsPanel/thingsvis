@@ -112,6 +112,13 @@ async function main() {
   const start = Date.now();
 
   try {
+    console.log('[build:widgets:safe] Building @thingsvis/schema (widget dependency)...');
+    execSync('pnpm --filter @thingsvis/schema build', { cwd: ROOT, stdio: 'inherit' });
+  } catch (e) {
+    console.warn('[build:widgets:safe] schema build failed:', e.message);
+  }
+
+  try {
     console.log('[build:widgets:safe] Building @thingsvis/widget-sdk (widget dependency)...');
     execSync('pnpm --filter @thingsvis/widget-sdk build', { cwd: ROOT, stdio: 'inherit' });
   } catch (e) {
@@ -149,6 +156,15 @@ async function main() {
     execSync('node scripts/deploy-widgets.mjs', { cwd: ROOT, stdio: 'inherit' });
   } catch (e) {
     console.warn('[build:widgets:safe] deploy-widgets failed:', e.message);
+  }
+
+  // The Studio loads widget descriptors from registry.json. Keep this in the
+  // same startup build flow so a clean checkout cannot have built bundles but
+  // an empty component list.
+  try {
+    execSync('node scripts/generate-registry.js', { cwd: ROOT, stdio: 'inherit' });
+  } catch (e) {
+    console.warn('[build:widgets:safe] registry generation failed:', e.message);
   }
 
   // Always exit 0: failures are warnings, not blockers for dev server startup
