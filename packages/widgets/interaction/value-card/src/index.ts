@@ -99,6 +99,12 @@ function hasConfiguredBackground(ctx: WidgetOverlayContext): boolean {
 }
 
 function shouldCollapseDefaultPadding(ctx: WidgetOverlayContext): boolean {
+  // Theme-driven card shells own the outer surface. Keep the value-card's
+  // readable inset even when persistence normalizes the shell background to
+  // transparent; otherwise a freshly dropped card and the same card after
+  // save/reload render with different left spacing.
+  if (ctx.baseStyle?.card?.appearance === 'auto') return false;
+
   const background = ctx.baseStyle?.background;
   if (!background) return false;
   return !hasConfiguredBackground(ctx);

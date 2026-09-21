@@ -73,4 +73,26 @@ describe('interaction/value-card widget', () => {
 
     harness.destroy();
   });
+
+  it('keeps readable padding for an auto card even if persistence adds a transparent background', () => {
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: Main.schema.parse({}),
+      baseStyle: {
+        background: {
+          color: 'transparent',
+          opacity: 1,
+        },
+        card: {
+          enabled: true,
+          appearance: 'auto',
+        },
+      },
+    });
+
+    const cardRoot = getCardRoot(harness.element);
+    expect(cardRoot?.style.padding).toBe('16px');
+
+    harness.destroy();
+  });
 });
