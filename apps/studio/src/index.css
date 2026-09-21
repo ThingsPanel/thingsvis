@@ -479,6 +479,98 @@
   box-shadow: none !important;
 }
 
+/* ─── Canvas theme system v2 ───────────────────────────────────────────────
+ * Canvas themes use restrained surfaces and a stable chart palette. The studio
+ * chrome inherits these aliases only inside the canvas host.
+ */
+.theme-dawn {
+  --w-canvas-bg: 210 25% 95%; --w-canvas-dot: 210 20% 88%;
+  --background: 210 25% 95%; --foreground: 215 25% 20%;
+  --card: 0 0% 100%; --card-foreground: 215 25% 20%;
+  --popover: 0 0% 100%; --popover-foreground: 215 25% 20%;
+  --primary: 208 86% 40%; --primary-foreground: 0 0% 100%;
+  --secondary: 210 30% 96%; --secondary-foreground: 215 25% 20%;
+  --muted: 210 25% 94%; --muted-foreground: 215 12% 42%;
+  --accent: 210 25% 93%; --accent-foreground: 215 25% 20%;
+  --border: 210 20% 88%; --input: 210 20% 88%; --ring: 208 86% 40%;
+  --chart-1: 208 86% 40%; --chart-2: 120 77% 27%; --chart-3: 16 98% 43%;
+  --chart-4: 271 53% 37%; --chart-5: 308 55% 50%;
+}
+
+.theme-midnight {
+  --w-canvas-bg: 220 39% 11%; --w-canvas-dot: 217 33% 24%;
+  --background: 220 39% 11%; --foreground: 210 20% 98%;
+  --card: 217 33% 17%; --card-foreground: 210 20% 98%;
+  --popover: 217 33% 17%; --popover-foreground: 210 20% 98%;
+  --primary: 214 94% 69%; --primary-foreground: 220 39% 11%;
+  --secondary: 217 25% 22%; --secondary-foreground: 210 20% 98%;
+  --muted: 217 25% 20%; --muted-foreground: 215 20% 70%;
+  --accent: 217 25% 24%; --accent-foreground: 210 20% 98%;
+  --border: 217 25% 28%; --input: 217 25% 28%; --ring: 214 94% 69%;
+  --chart-1: 214 94% 69%; --chart-2: 142 71% 62%; --chart-3: 31 97% 72%;
+  --chart-4: 251 92% 83%; --chart-5: 303 81% 80%;
+}
+
+.theme-ocean {
+  --w-canvas-bg: 207 65% 12%; --w-canvas-dot: 205 55% 24%;
+  --background: 207 65% 12%; --foreground: 210 40% 96%;
+  --card: 207 55% 16%; --card-foreground: 210 40% 96%;
+  --popover: 207 55% 16%; --popover-foreground: 210 40% 96%;
+  --primary: 199 89% 60%; --primary-foreground: 207 65% 12%;
+  --secondary: 207 45% 21%; --secondary-foreground: 210 40% 96%;
+  --muted: 207 40% 19%; --muted-foreground: 205 25% 68%;
+  --accent: 207 45% 23%; --accent-foreground: 210 40% 96%;
+  --border: 205 38% 28%; --input: 205 38% 28%; --ring: 199 89% 60%;
+  --chart-1: 214 94% 69%; --chart-2: 166 84% 64%; --chart-3: 31 97% 72%;
+  --chart-4: 251 92% 83%; --chart-5: 303 81% 80%;
+}
+
+.theme-ember {
+  --w-canvas-bg: 34 25% 10%; --w-canvas-dot: 36 20% 24%;
+  --background: 34 25% 10%; --foreground: 40 27% 95%;
+  --card: 32 21% 14%; --card-foreground: 40 27% 95%;
+  --popover: 32 21% 14%; --popover-foreground: 40 27% 95%;
+  --primary: 38 92% 50%; --primary-foreground: 34 25% 10%;
+  --secondary: 32 19% 20%; --secondary-foreground: 40 27% 95%;
+  --muted: 32 17% 18%; --muted-foreground: 35 15% 68%;
+  --accent: 32 19% 22%; --accent-foreground: 40 27% 95%;
+  --border: 35 17% 27%; --input: 35 17% 27%; --ring: 38 92% 50%;
+  --chart-1: 214 94% 79%; --chart-2: 142 71% 72%; --chart-3: 43 96% 64%;
+  --chart-4: 251 92% 83%; --chart-5: 303 81% 80%;
+}
+
+/* Frost stays a premium dark theme, but a stable opaque canvas prevents its
+ * glass panels from changing contrast when users add maps, photos, or video. */
+.theme-frost {
+  --w-canvas-bg: 221 47% 8%; --w-canvas-dot: 217 33% 21%;
+  --background: 221 47% 8%; --foreground: 210 40% 96%;
+  --card: 217 34% 14%; --card-foreground: 210 40% 96%;
+  --popover: 217 34% 14%; --popover-foreground: 210 40% 96%;
+  --primary: 213 94% 78%; --primary-foreground: 221 47% 8%;
+  --secondary: 217 29% 18%; --secondary-foreground: 210 40% 96%;
+  --muted: 217 26% 16%; --muted-foreground: 215 20% 68%;
+  --accent: 217 29% 21%; --accent-foreground: 210 40% 96%;
+  --border: 214 28% 27%; --input: 214 28% 27%; --ring: 213 94% 78%;
+  --chart-1: 213 94% 78%; --chart-2: 166 84% 64%; --chart-3: 31 97% 72%;
+  --chart-4: 251 92% 83%; --chart-5: 303 81% 80%;
+}
+
+.theme-frost [data-overlay-node-id] {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.11), rgba(255, 255, 255, 0.045));
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border-color: rgba(191, 219, 254, 0.18);
+  border-top-color: rgba(219, 234, 254, 0.24);
+  border-left-color: rgba(191, 219, 254, 0.20);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.20);
+}
+
+.theme-frost [data-overlay-node-id]:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(191, 219, 254, 0.07));
+  border-color: rgba(191, 219, 254, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 28px rgba(0, 0, 0, 0.24);
+}
+
 /* Glassmorphism for dark canvas themes (Widget components can opt-in) */
 .theme-midnight .widget-glass,
 .theme-ocean .widget-glass,

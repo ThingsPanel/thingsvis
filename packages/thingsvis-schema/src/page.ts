@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { VisualComponentSchema } from './component';
 import { GridSettingsSchema } from './grid';
-import { CANVAS_THEME_IDS } from './theme-registry';
+import { CANVAS_THEME_IDS, validateCanvasTheme } from './theme-registry';
 
 /**
  * Layout mode enum - includes grid mode
@@ -96,7 +96,10 @@ export const PageConfigSchema = z.object({
   /**
    * Visual theme preference (derived from CANVAS_THEMES registry)
    */
-  theme: z.enum(CANVAS_THEME_IDS as [string, ...string[]]).default('dawn'),
+  // Normalize retired visual-only themes on read so older projects remain loadable.
+  theme: z
+    .preprocess(validateCanvasTheme, z.enum(CANVAS_THEME_IDS as [string, ...string[]]))
+    .default('dawn'),
 
   /**
    * Grid layout settings

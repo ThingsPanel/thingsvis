@@ -13,49 +13,35 @@ export const CANVAS_THEMES = {
     i18nKey: 'canvas.themeDawn',
     fallbackLabel: 'Dawn',
     group: 'light' as const,
-    swatch: ['#ffffff', '#1a1a2e', '#6965db', '#4ea8a6', '#e8945a'],
+    swatch: ['#f8fafc', '#ffffff', '#0f6cbd', '#107c10', '#5c2d91'],
   },
   midnight: {
     id: 'midnight',
     i18nKey: 'canvas.themeMidnight',
     fallbackLabel: 'Midnight',
     group: 'dark' as const,
-    swatch: ['#0f1729', '#c8d6f0', '#4e80ee', '#5b8def', '#3d6ad6'],
+    swatch: ['#111827', '#1f2937', '#60a5fa', '#4ade80', '#c4b5fd'],
   },
   ocean: {
     id: 'ocean',
     i18nKey: 'canvas.themeOcean',
     fallbackLabel: 'Ocean',
     group: 'dark' as const,
-    swatch: ['#0a192f', '#ccd6f6', '#64ffda', '#57cbff', '#ff6b9d'],
+    swatch: ['#0b1f33', '#102a43', '#38bdf8', '#2dd4bf', '#c4b5fd'],
   },
   ember: {
     id: 'ember',
     i18nKey: 'canvas.themeEmber',
-    fallbackLabel: 'Ember',
+    fallbackLabel: 'Amber',
     group: 'dark' as const,
-    swatch: ['#1a1020', '#f0e6ff', '#ff6b35', '#ffb366', '#ff4757'],
-  },
-  aurora: {
-    id: 'aurora',
-    i18nKey: 'canvas.themeAurora',
-    fallbackLabel: 'Aurora',
-    group: 'light' as const,
-    swatch: ['#fafbfc', '#24292e', '#2188ff', '#28a745', '#6f42c1'],
+    swatch: ['#201a13', '#2b241c', '#f59e0b', '#fdba74', '#c4b5fd'],
   },
   frost: {
     id: 'frost',
     i18nKey: 'canvas.themeFrost',
     fallbackLabel: 'Frost',
     group: 'dark' as const,
-    swatch: ['#0b0d20', '#e0e6f0', '#7c8cf8', '#64d8cb', '#a78bfa'],
-  },
-  frostLight: {
-    id: 'frostLight',
-    i18nKey: 'canvas.themeFrostLight',
-    fallbackLabel: 'Frost Light',
-    group: 'light' as const,
-    swatch: ['#f8fafc', '#1e293b', '#6366f1', '#14b8a6', '#8b5cf6'],
+    swatch: ['#0b1220', '#162033', '#93c5fd', '#5eead4', '#c4b5fd'],
   },
 } as const;
 
@@ -64,6 +50,12 @@ export type CanvasThemeId = keyof typeof CANVAS_THEMES;
 
 /** Theme group for categorizing themes in UI */
 export type CanvasThemeGroup = 'light' | 'dark';
+
+/** Themes removed from the picker map to their closest supported neutral theme. */
+const LEGACY_THEME_ALIASES: Record<string, CanvasThemeId> = {
+  aurora: 'dawn',
+  frostLight: 'dawn',
+};
 
 /** Default theme applied to new projects */
 export const DEFAULT_CANVAS_THEME: CanvasThemeId = 'dawn';
@@ -76,6 +68,9 @@ export const CANVAS_THEME_IDS = Object.keys(CANVAS_THEMES) as CanvasThemeId[];
  * Unknown values fall back to DEFAULT_CANVAS_THEME.
  */
 export function validateCanvasTheme(themeValue: unknown): CanvasThemeId {
+  if (typeof themeValue === 'string' && themeValue in LEGACY_THEME_ALIASES) {
+    return LEGACY_THEME_ALIASES[themeValue]!;
+  }
   if (typeof themeValue === 'string' && themeValue in CANVAS_THEMES) {
     return themeValue as CanvasThemeId;
   }

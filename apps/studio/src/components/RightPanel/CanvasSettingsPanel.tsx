@@ -132,32 +132,44 @@ export function CanvasSettingsPanel({
                     key={tOpt.id}
                     type="button"
                     onClick={() => onConfigChange({ ...canvasConfig, theme: tOpt.id })}
+                    aria-pressed={isSelected}
+                    aria-label={t(tOpt.i18nKey as any) || tOpt.fallbackLabel}
                     className={cn(
-                      'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center',
+                      'group relative flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0f6cbd] focus-visible:ring-offset-2',
                       isSelected
-                        ? 'border-[#6965db] bg-white shadow-sm'
+                        ? 'border-[#0f6cbd] bg-white shadow-sm'
                         : 'border-muted/30 bg-muted/20 hover:border-muted-foreground/30 hover:bg-muted/40',
                     )}
                   >
-                    <div className="flex w-full h-5 rounded-full overflow-hidden border border-black/5 p-[1px] bg-white/50">
-                      {tOpt.swatch.map((color, i) => (
+                    <div
+                      className="flex h-12 w-full items-end gap-1 rounded-lg border border-black/10 p-2"
+                      style={{ backgroundColor: tOpt.swatch[0] }}
+                    >
+                      <div
+                        className="h-full flex-1 rounded-sm opacity-95"
+                        style={{ backgroundColor: tOpt.swatch[1] }}
+                      />
+                      {[2, 3, 4].map((index, i) => (
                         <div
-                          key={i}
-                          className="flex-1 h-full first:rounded-l-full last:rounded-r-full"
-                          style={{ backgroundColor: color }}
+                          key={index}
+                          className="w-2 rounded-t-sm"
+                          style={{
+                            height: `${[48, 76, 62][i]}%`,
+                            backgroundColor: tOpt.swatch[index],
+                          }}
                         />
                       ))}
                     </div>
                     <span
                       className={cn(
                         'text-xs font-semibold transition-colors truncate w-full',
-                        isSelected ? 'text-[#6965db]' : 'text-muted-foreground',
+                        isSelected ? 'text-[#0f6cbd]' : 'text-muted-foreground',
                       )}
                     >
                       {t(tOpt.i18nKey as any) || tOpt.fallbackLabel}
                     </span>
                     {isSelected && (
-                      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#6965db] ring-2 ring-white" />
+                      <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#0f6cbd] ring-2 ring-white" />
                     )}
                   </button>
                 );
