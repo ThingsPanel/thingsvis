@@ -13,6 +13,7 @@ import {
 export type PreviewScaleMode = 'fit-min' | 'fit-width' | 'fit-height' | 'stretch' | 'original';
 
 const COLLAPSE_DELAY_MS = 500;
+const HIDE_DELAY_MS = 1800;
 
 interface PreviewToolbarProps {
   isFullscreen: boolean;
@@ -36,9 +37,12 @@ export function PreviewToolbar({
   onScaleModeChange,
 }: PreviewToolbarProps) {
   const { t } = useTranslation();
+  const [isVisible, setIsVisible] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isScaleMenuOpen, setIsScaleMenuOpen] = useState(false);
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const toolbarRef = useRef<HTMLDivElement | null>(null);
   const isPointerInsideRef = useRef(false);
   const isFocusInsideRef = useRef(false);
   const isScaleMenuOpenRef = useRef(false);
@@ -50,6 +54,29 @@ export function PreviewToolbar({
       collapseTimerRef.current = null;
     }
   }, []);
+
+  const cancelHide = useCallback(() => {
+    if (hideTimerRef.current) {
+      clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHide = useCallback(() => {
+    cancelHide();
+    hideTimerRef.current = setTimeout(() => {
+      if (!isPointerInsideRef.current && !isFocusInsideRef.current && !isScaleMenuOpenRef.current) {
+        setIsExpanded(false);
+        setIsVisible(false);
+      }
+    }, HIDE_DELAY_MS);
+  }, [cancelHide]);
+
+  const reveal = useCallback(() => {
+    cancelHide();
+    setIsVisible(true);
+    scheduleHide();
+  }, [cancelHide, scheduleHide]);
 
   const expand = useCallback(() => {
     cancelCollapse();
@@ -65,25 +92,64 @@ export function PreviewToolbar({
     }, COLLAPSE_DELAY_MS);
   }, [cancelCollapse]);
 
-  useEffect(() => cancelCollapse, [cancelCollapse]);
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      reveal();
+
+      // If the trigger is revealed directly under the pointer, pointerenter may
+      // not fire because the element was previously non-interactive.
+      const toolbar = toolbarRef.current;
+      if (!toolbar) return;
+
+      const rect = toolbar.getBoundingClientRect();
+      const isPointerOverToolbar =
+        rect.width > 0 &&
+        rect.height > 0 &&
+        event.clientX >= rect.left &&
+        event.clientX <= rect.right &&
+        event.clientY >= rect.top &&
+        event.clientY <= rect.bottom;
+
+      if (isPointerOverToolbar) expand();
+    };
+
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      cancelCollapse();
+      cancelHide();
+    };
+  }, [cancelCollapse, cancelHide, expand, reveal]);
 
   const handleScaleMenuOpenChange = (open: boolean) => {
     isScaleMenuOpenRef.current = open;
     setIsScaleMenuOpen(open);
-    if (open) expand();
-    else scheduleCollapse();
+    if (open) {
+      cancelHide();
+      setIsVisible(true);
+      expand();
+    } else {
+      scheduleCollapse();
+      scheduleHide();
+    }
   };
 
   return (
     <div
-      className="absolute top-4 right-4 z-50"
+      ref={toolbarRef}
+      className={`absolute top-4 right-4 z-50 transition-opacity duration-150 ${
+        isVisible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
       onPointerEnter={() => {
         isPointerInsideRef.current = true;
+        cancelHide();
+        setIsVisible(true);
         expand();
       }}
       onPointerLeave={() => {
         isPointerInsideRef.current = false;
         scheduleCollapse();
+        scheduleHide();
       }}
       onPointerDownCapture={() => {
         isPointerDownRef.current = true;
@@ -97,12 +163,15 @@ export function PreviewToolbar({
       }}
       onFocusCapture={() => {
         if (!isPointerDownRef.current) isFocusInsideRef.current = true;
+        cancelHide();
+        setIsVisible(true);
         expand();
       }}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
           isFocusInsideRef.current = false;
           scheduleCollapse();
+          scheduleHide();
         }
       }}
     >
@@ -189,6 +258,8 @@ export function PreviewToolbar({
           title={isExpanded ? 'Collapse preview controls' : 'Expand preview controls'}
           onClick={() => {
             cancelCollapse();
+            cancelHide();
+            setIsVisible(true);
             setIsExpanded((expanded) => !expanded);
           }}
         >
