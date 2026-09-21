@@ -99,11 +99,13 @@ function hasConfiguredBackground(ctx: WidgetOverlayContext): boolean {
 }
 
 function shouldCollapseDefaultPadding(ctx: WidgetOverlayContext): boolean {
-  // Theme-driven card shells own the outer surface. Keep the value-card's
-  // readable inset even when persistence normalizes the shell background to
-  // transparent; otherwise a freshly dropped card and the same card after
-  // save/reload render with different left spacing.
-  if (ctx.baseStyle?.card?.appearance === 'auto') return false;
+  // Card shells own the outer surface. Keep the value-card's readable inset
+  // when persistence normalizes the shell background to transparent. Older
+  // saved nodes may not have the appearance marker, so only an explicit
+  // manual card is allowed to opt into the legacy zero-inset behavior.
+  if (ctx.baseStyle?.card?.enabled && ctx.baseStyle.card.appearance !== 'manual') {
+    return false;
+  }
 
   const background = ctx.baseStyle?.background;
   if (!background) return false;

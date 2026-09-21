@@ -95,4 +95,20 @@ describe('interaction/value-card widget', () => {
 
     harness.destroy();
   });
+
+  it('keeps readable padding for legacy enabled cards without an appearance marker', () => {
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: Main.schema.parse({}),
+      baseStyle: {
+        background: { color: 'transparent', opacity: 1 },
+        card: { enabled: true },
+      },
+    });
+
+    const cardRoot = getCardRoot(harness.element);
+    expect(cardRoot?.style.padding).toBe('16px');
+
+    harness.destroy();
+  });
 });
