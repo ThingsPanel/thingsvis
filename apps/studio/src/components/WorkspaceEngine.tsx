@@ -21,6 +21,8 @@ export interface WorkspaceEngineProps {
   setActiveTool: (tool: Tool) => void;
   zoom: number;
   setZoom: (zoom: number) => void;
+  shouldAutoFit: boolean;
+  fitRequest: number;
   embedVisibility: any;
   showLeftPanel: boolean;
   showRightPanel: boolean;
@@ -36,6 +38,8 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
   setActiveTool,
   zoom,
   setZoom,
+  shouldAutoFit,
+  fitRequest,
   embedVisibility,
   showLeftPanel,
   showRightPanel,
@@ -110,7 +114,8 @@ export const WorkspaceEngine: React.FC<WorkspaceEngineProps> = ({
             locale={locale}
             activeTool={activeTool}
             resolveWidget={resolveWidget as any}
-            zoom={zoom / 100}
+            zoom={shouldAutoFit ? undefined : zoom / 100}
+            fitRequest={fitRequest}
             theme={canvasConfig.theme}
             onZoomChange={(newZoom) => setZoom(Math.round(newZoom * 100))}
             onUserEdit={markDirty}

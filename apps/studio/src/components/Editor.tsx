@@ -227,13 +227,13 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
   ]);
 
   const initialZoom = useMemo(() => {
-    const value = Number(
-      new URLSearchParams(window.location.hash.split('?')[1] || '').get('initialZoom'),
-    );
-    return Number.isFinite(value) && value >= 0.1 && value <= 0.8 ? Math.round(value * 100) : 80;
+    const value = Number(getMergedEditorUrlParams().get('initialZoom'));
+    return Number.isFinite(value) && value >= 0.1 && value <= 2 ? Math.round(value * 100) : null;
   }, []);
-  const [zoom, setZoom] = useState(initialZoom);
-  const [zoomInput, setZoomInput] = useState(initialZoom.toString());
+  const [zoom, setZoom] = useState(initialZoom ?? 80);
+  const [shouldAutoFit, setShouldAutoFit] = useState(initialZoom === null);
+  const [fitRequest, setFitRequest] = useState(0);
+  const [zoomInput, setZoomInput] = useState((initialZoom ?? 80).toString());
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showLeftPanel, setShowLeftPanel] = useState(() => {
     return embedVisibility.showLibrary;
@@ -243,11 +243,16 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     setZoomInput(zoom.toString());
   }, [zoom]);
 
+  const handleZoomChange = useCallback((nextZoom: number) => {
+    setShouldAutoFit(false);
+    setZoom(nextZoom);
+  }, []);
+
   const handleZoomInputBlur = () => {
     let value = parseInt(zoomInput.replace(/[^0-9]/g, ''), 10);
     if (isNaN(value)) value = 100;
     value = Math.max(10, Math.min(200, value));
-    setZoom(value);
+    handleZoomChange(value);
     setZoomInput(value.toString());
   };
 
@@ -581,7 +586,9 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             activeTool={activeTool}
             setActiveTool={handleToolChange}
             zoom={zoom}
-            setZoom={setZoom}
+            setZoom={handleZoomChange}
+            shouldAutoFit={shouldAutoFit}
+            fitRequest={fitRequest}
             embedVisibility={embedVisibility}
             showLeftPanel={showLeftPanel}
             showRightPanel={showRightPanel}
@@ -724,7 +731,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
           showRightPanel={showRightPanel}
           canvasWidth={canvasConfig.width}
           canvasHeight={canvasConfig.height}
-          onZoomChange={setZoom}
+          onZoomChange={handleZoomChange}
           onZoomInputChange={setZoomInput}
           onZoomInputBlur={handleZoomInputBlur}
           onZoomInputKeyDown={handleZoomInputKeyDown}
@@ -793,8 +800,10 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                   onMarkDirty={markDirty}
                   onZoomReset={() => {
                     setTimeout(() => {
-                      setZoom(initialZoom);
-                      setZoomInput(initialZoom.toString());
+                      setShouldAutoFit(initialZoom === null);
+                      setZoom(initialZoom ?? 80);
+                      setZoomInput((initialZoom ?? 80).toString());
+                      setFitRequest((request) => request + 1);
                     }, 50);
                   }}
                 />

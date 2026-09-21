@@ -123,6 +123,21 @@ function shouldAutoOpenLocalIconPicker(
   return !props?.localIconId && !props?.assetUrl && !props?.svgContent;
 }
 
+function calculateEditorFitZoom(
+  containerWidth: number,
+  containerHeight: number,
+  canvasWidth: number,
+  canvasHeight: number,
+  centerPadding?: { left?: number; right?: number; top?: number; bottom?: number },
+): number {
+  const availableWidth =
+    containerWidth - (centerPadding?.left ?? 0) - (centerPadding?.right ?? 0) - 80;
+  const availableHeight =
+    containerHeight - (centerPadding?.top ?? 0) - (centerPadding?.bottom ?? 0) - 80;
+  if (canvasWidth <= 0 || canvasHeight <= 0) return 1;
+  return Math.max(0.1, Math.min(1, availableWidth / canvasWidth, availableHeight / canvasHeight));
+}
+
 function isConnectorNodeType(type: string | undefined): boolean {
   return type === 'basic/line' || type === 'industrial/pipe';
 }
@@ -246,6 +261,7 @@ const CanvasView = forwardRef<
     lineToolProps?: Record<string, unknown>;
     lineContinuous?: boolean;
     zoom?: number;
+    fitRequest?: number;
     onZoomChange?: (zoom: number) => void;
     onUserEdit?: () => void;
     onResetTool?: () => void;
@@ -266,7 +282,8 @@ const CanvasView = forwardRef<
     resolveWidget,
     lineToolProps,
     lineContinuous = true,
-    zoom = 1,
+    zoom,
+    fitRequest = 0,
     onZoomChange,
     onUserEdit,
     onResetTool,
@@ -284,7 +301,7 @@ const CanvasView = forwardRef<
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inlineTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   // Use state for viewport so changes trigger re-render
-  const [vp, setVp] = useState({ width: 0, height: 0, zoom: zoom, offsetX: 0, offsetY: 0 });
+  const [vp, setVp] = useState({ width: 0, height: 0, zoom: zoom ?? 1, offsetX: 0, offsetY: 0 });
   const vpRef = useRef(vp);
   vpRef.current = vp; // Keep ref in sync for callbacks
   const [inlineTextEditor, setInlineTextEditor] = useState<{
@@ -300,7 +317,7 @@ const CanvasView = forwardRef<
   useEffect(() => {
     setVp((prev) => ({
       ...prev,
-      zoom: zoom,
+      zoom: zoom ?? prev.zoom,
     }));
   }, [zoom]);
   useEffect(() => {
@@ -309,6 +326,22 @@ const CanvasView = forwardRef<
   const [isPointerDown, setIsPointerDown] = useState(false);
   const proxyWrapperRef = useRef<HTMLDivElement | null>(null);
   const proxyLayerRef = useRef<HTMLDivElement | null>(null);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const rect = element.getBoundingClientRect();
+      setContainerSize({ width: rect.width, height: rect.height });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const getViewport = useCallback(() => vpRef.current, []);
 
@@ -457,6 +490,36 @@ const CanvasView = forwardRef<
   // Detect grid layout mode
   const isGridMode = state.canvas?.mode === 'grid';
   const showGridLines = state.gridState?.settings?.showGridLines ?? false;
+
+  useEffect(() => {
+    if (
+      !isGridMode ||
+      zoom !== undefined ||
+      containerSize.width <= 0 ||
+      containerSize.height <= 0
+    ) {
+      return;
+    }
+
+    onZoomChange?.(
+      calculateEditorFitZoom(
+        containerSize.width,
+        containerSize.height,
+        state.canvas.width,
+        state.canvas.height,
+        centerPadding,
+      ),
+    );
+  }, [
+    centerPadding,
+    containerSize,
+    fitRequest,
+    isGridMode,
+    onZoomChange,
+    state.canvas.height,
+    state.canvas.width,
+    zoom,
+  ]);
 
   // Grid layout hook (provides grid-aware drag/resize handlers)
   const gridLayout = useGridLayout({
@@ -836,14 +899,15 @@ const CanvasView = forwardRef<
         }}
       >
         <GridCanvas
+          key={`grid-${fitRequest}`}
           store={store}
           resolveWidget={resolveWidget}
           locale={locale}
           width={state.canvas.width}
           height={state.canvas.height}
           interactive={activeTool !== 'pan'}
-          zoom={zoom}
-          onZoomChange={onZoomChange}
+          zoom={zoom ?? 1}
+          onZoomChange={(zoomPercent) => onZoomChange?.(zoomPercent / 100)}
           theme={theme}
           centerPadding={centerPadding}
           widgetMode="edit"
@@ -881,6 +945,7 @@ const CanvasView = forwardRef<
       }}
     >
       <UI_CanvasView
+        key={`canvas-${fitRequest}`}
         store={store}
         resolveWidget={resolveWidget}
         locale={locale}
@@ -910,7 +975,17 @@ const CanvasView = forwardRef<
             vpRef.current = newVp;
             setVp(newVp);
           }
-          if (newVp.zoom !== zoom) {
+          const initialFitZoom = calculateEditorFitZoom(
+            containerSize.width,
+            containerSize.height,
+            state.canvas.width,
+            state.canvas.height,
+            centerPadding,
+          );
+          const isExpectedInitialFit =
+            zoom !== undefined ||
+            (containerSize.width > 0 && Math.abs(newVp.zoom - initialFitZoom) < 0.001);
+          if (newVp.zoom !== zoom && isExpectedInitialFit) {
             onZoomChange?.(newVp.zoom);
           }
         }}
