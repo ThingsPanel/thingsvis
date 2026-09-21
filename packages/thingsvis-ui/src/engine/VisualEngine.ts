@@ -15,7 +15,9 @@ import { WidgetErrorBoundary } from '../components/WidgetErrorBoundary';
 import { DomBridge } from '../components/DomBridge';
 import { syncWidgetThemeColorOverrides } from '../utils/widgetThemeColorOverrides';
 import {
+  AUTO_CARD_STYLE,
   createCardHeaderElement,
+  isAutoCardStyle,
   isCardModeEnabled,
   syncCardHeaderElement,
 } from '../utils/cardStyle';
@@ -1472,6 +1474,7 @@ export class VisualEngine {
 
   private syncOverlayCardShell(box: HTMLDivElement, node: NodeState): void {
     const cardEnabled = isCardModeEnabled(node.schemaRef?.baseStyle);
+    const autoCardStyle = isAutoCardStyle(node.schemaRef?.baseStyle);
     let widgetHost = box.querySelector<HTMLDivElement>('[data-overlay-widget-host]');
     if (!widgetHost) {
       const firstChild = box.firstElementChild;
@@ -1531,7 +1534,13 @@ export class VisualEngine {
     }
     widgetHost.style.cssText = 'width:100%;height:100%';
 
-    syncCardHeaderElement(headerEl, node.schemaRef?.baseStyle?.card, node.schemaRef?.name);
+    syncCardHeaderElement(
+      headerEl,
+      node.schemaRef?.baseStyle?.card,
+      node.schemaRef?.name,
+      autoCardStyle ? AUTO_CARD_STYLE.titleColor : undefined,
+      autoCardStyle ? AUTO_CARD_STYLE.subtitleColor : undefined,
+    );
   }
 
   private syncAutoHeightTextNode(node: NodeState, element: HTMLElement) {
@@ -1596,6 +1605,7 @@ export class VisualEngine {
 
     // Base Style Application
     const baseStyle = schema.baseStyle || {};
+    const autoCardStyle = isAutoCardStyle(baseStyle);
 
     // Background
     if (baseStyle.background) {
@@ -1607,7 +1617,7 @@ export class VisualEngine {
         box.style.backgroundImage = '';
       }
     } else {
-      box.style.backgroundColor = '';
+      box.style.backgroundColor = autoCardStyle ? AUTO_CARD_STYLE.background : '';
       box.style.backgroundImage = '';
     }
 
@@ -1620,10 +1630,10 @@ export class VisualEngine {
       box.style.borderRadius =
         baseStyle.border.radius !== undefined ? `${baseStyle.border.radius}px` : '';
     } else {
-      box.style.borderWidth = '';
-      box.style.borderColor = '';
-      box.style.borderStyle = '';
-      box.style.borderRadius = '';
+      box.style.borderWidth = autoCardStyle ? '1px' : '';
+      box.style.borderColor = autoCardStyle ? AUTO_CARD_STYLE.borderColor : '';
+      box.style.borderStyle = autoCardStyle ? 'solid' : '';
+      box.style.borderRadius = autoCardStyle ? '10px' : '';
     }
 
     // Shadow
@@ -1634,7 +1644,7 @@ export class VisualEngine {
       const color = baseStyle.shadow.color || 'rgba(0,0,0,0)';
       box.style.boxShadow = `${offsetX}px ${offsetY}px ${blur}px ${color}`;
     } else {
-      box.style.boxShadow = '';
+      box.style.boxShadow = autoCardStyle ? AUTO_CARD_STYLE.shadow : '';
     }
 
     // Padding
@@ -1642,8 +1652,8 @@ export class VisualEngine {
       box.style.padding = `${baseStyle.padding}px`;
       box.style.boxSizing = 'border-box';
     } else {
-      box.style.padding = '';
-      box.style.boxSizing = '';
+      box.style.padding = autoCardStyle ? 'var(--w-card-padding, 6px)' : '';
+      box.style.boxSizing = autoCardStyle ? 'border-box' : '';
     }
 
     // Opacity

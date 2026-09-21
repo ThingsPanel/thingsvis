@@ -168,3 +168,11 @@
       rgba(226, 232, 240, 0.98) 100%
     );
 }
+
+/* Shared semantic card tokens. They intentionally resolve through the active
+ * canvas theme instead of becoming persisted widget colors. */
+[data-canvas-theme] {
+  --w-card-padding: 6px;
+  --w-card-shadow: 0 2px 8px color-mix(in srgb, var(--w-fg) 12%, transparent);
+  --w-card-subtitle: color-mix(in srgb, var(--w-fg) 68%, transparent);
+}

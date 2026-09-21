@@ -12,7 +12,7 @@ export function createDefaultWidgetBaseStyle(): IBaseStyle {
   // when users toggle the mode, while the persisted flag controls the default UI state.
   return {
     opacity: 1,
-    card: { enabled: true, showSubtitle: false, titleFontSize: 16 },
+    card: { enabled: true, appearance: 'auto', showSubtitle: false, titleFontSize: 16 },
   };
 }
 

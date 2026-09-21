@@ -4,7 +4,7 @@ import { createDefaultWidgetBaseStyle, resolveInitialGridPosition } from './init
 describe('initial widget node defaults', () => {
   it('enables card mode for newly created library widgets', () => {
     expect(createDefaultWidgetBaseStyle()).toMatchObject({
-      card: { enabled: true },
+      card: { enabled: true, appearance: 'auto' },
     });
   });
 

@@ -13,7 +13,7 @@ import { PropertyResolver } from '../engine/PropertyResolver';
 import { buildEmit, type ActionRuntime } from '../engine/executeActions';
 import { WidgetErrorBoundary } from './WidgetErrorBoundary';
 import { createWidgetThemeColorOverrideStyle } from '../utils/widgetThemeColorOverrides';
-import { isCardModeEnabled } from '../utils/cardStyle';
+import { AUTO_CARD_STYLE, isAutoCardStyle, isCardModeEnabled } from '../utils/cardStyle';
 import { WidgetCardHeader } from './WidgetCardHeader';
 import type { IBaseStyle } from '@thingsvis/schema';
 
@@ -355,6 +355,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         nodeBaseStyle.background?.color,
     );
     const cardModeEnabled = isCardModeEnabled(nodeBaseStyle);
+    const autoCardStyle = isAutoCardStyle(nodeBaseStyle);
     const nodeName = nodeState?.schemaRef?.name;
     const [isInlineEditing, setIsInlineEditing] = React.useState(false);
     const [draftText, setDraftText] = React.useState(liveText);
@@ -570,7 +571,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     // Remove transition during active dragging/resizing for immediate response
                     transition: isInteracting ? 'none' : 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease',
                     // baseStyle — applied from user settings in BaseStylePanel
-                    backgroundColor: nodeBaseStyle.background?.color ?? undefined,
+                    backgroundColor: nodeBaseStyle.background?.color ?? (autoCardStyle ? AUTO_CARD_STYLE.background : undefined),
                     backgroundImage: nodeBaseStyle.background?.image
                         ? `url(${nodeBaseStyle.background.image})`
                         : undefined,
@@ -578,17 +579,17 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     backgroundRepeat: 'no-repeat',
                     borderWidth: nodeBaseStyle.border?.width != null
                         ? `${nodeBaseStyle.border.width}px`
-                        : undefined,
-                    borderColor: nodeBaseStyle.border?.color ?? undefined,
+                        : (autoCardStyle ? '1px' : undefined),
+                    borderColor: nodeBaseStyle.border?.color ?? (autoCardStyle ? AUTO_CARD_STYLE.borderColor : undefined),
                     borderStyle: nodeBaseStyle.border?.width != null
                         ? (nodeBaseStyle.border.style ?? 'solid')
-                        : undefined,
+                        : (autoCardStyle ? 'solid' : undefined),
                     borderRadius: outerBorderRadius > 0
                         ? `${outerBorderRadius}px`
-                        : undefined,
+                        : (autoCardStyle ? '10px' : undefined),
                     boxShadow: nodeBaseStyle.shadow?.blur != null
                         ? `${nodeBaseStyle.shadow.offsetX ?? 0}px ${nodeBaseStyle.shadow.offsetY ?? 0}px ${nodeBaseStyle.shadow.blur}px ${nodeBaseStyle.shadow.color ?? 'rgba(0,0,0,0.2)'}`
-                        : undefined,
+                        : (autoCardStyle ? AUTO_CARD_STYLE.shadow : undefined),
                     opacity: nodeBaseStyle.opacity != null ? nodeBaseStyle.opacity : undefined,
                     ...themeColorOverrides,
                 }}
@@ -602,7 +603,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                             ? `${innerClipRadius}px`
                             : undefined,
                         overflow: 'hidden',
-                        padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : undefined,
+                        padding: nodeBaseStyle.padding != null ? `${nodeBaseStyle.padding}px` : (autoCardStyle ? 'var(--w-card-padding, 6px)' : undefined),
                         display: cardModeEnabled ? 'flex' : undefined,
                         flexDirection: cardModeEnabled ? 'column' : undefined,
                     }}
@@ -611,6 +612,8 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                         <WidgetCardHeader
                             card={nodeBaseStyle.card}
                             nodeName={nodeName}
+                            titleColor={autoCardStyle ? AUTO_CARD_STYLE.titleColor : undefined}
+                            subtitleColor={autoCardStyle ? AUTO_CARD_STYLE.subtitleColor : undefined}
                         />
                     ) : null}
                     {/* Widget content mount point */}

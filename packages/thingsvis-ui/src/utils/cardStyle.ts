@@ -9,13 +9,30 @@ export const CARD_STYLE_DEFAULTS: Required<
   padding: 6,
 };
 
+/**
+ * Auto cards deliberately use semantic canvas tokens instead of persisted colors.
+ * The fallback is only for canvases that predate canvas-themes.css.
+ */
+export const AUTO_CARD_STYLE = {
+  background: 'var(--w-bg, transparent)',
+  borderColor: 'var(--w-border, transparent)',
+  shadow: 'var(--w-card-shadow, 0 2px 8px rgba(15, 23, 42, 0.08))',
+  titleColor: 'var(--w-fg, #0f172a)',
+  subtitleColor: 'var(--w-card-subtitle, var(--w-fg, #64748b))',
+} as const;
+
 export function isCardModeEnabled(baseStyle?: Partial<IBaseStyle> | null): boolean {
   return baseStyle?.card?.enabled === true;
+}
+
+export function isAutoCardStyle(baseStyle?: Partial<IBaseStyle> | null): boolean {
+  return baseStyle?.card?.enabled === true && baseStyle.card.appearance === 'auto';
 }
 
 export function resolveCardTitle(card: ICardStyle | undefined, nodeName?: string): string {
   const explicit = card?.title?.trim();
   if (explicit) return explicit;
+  if (card?.appearance === 'auto') return '';
   return nodeName?.trim() || '';
 }
 

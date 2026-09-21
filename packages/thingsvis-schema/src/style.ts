@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 export const CardStyleSchema = z.object({
   enabled: z.boolean().default(false),
+  /** Runtime-resolved appearance for newly inserted widgets; never stores colors. */
+  appearance: z.enum(['auto', 'manual']).optional(),
   title: z.string().optional(),
   subtitle: z.string().optional(),
   showSubtitle: z.boolean().default(false),
