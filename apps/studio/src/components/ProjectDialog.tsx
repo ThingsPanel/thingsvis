@@ -2,12 +2,11 @@
  * ProjectDialog Component
  *
  * Dialog for opening recent projects and managing project files.
- * Uses a tree-view grouped layout: projects as collapsible group headers,
- * dashboards as child items. All projects and dashboards are loaded at once.
+ * Shows dashboards directly across all backend projects. Project ownership stays internal.
  * Supports both local storage (unauthenticated) and cloud storage (authenticated).
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -27,34 +26,16 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  FileUp,
-  FileDown,
-  Plus,
-  Trash2,
-  Cloud,
-  HardDrive,
-  ChevronDown,
-  ChevronRight,
-  FolderOpen,
-  LayoutDashboard,
-} from 'lucide-react';
+import { FileUp, FileDown, Plus, Trash2, Cloud, HardDrive, LayoutDashboard } from 'lucide-react';
 import { useStorage } from '@/hooks/useStorage';
 import { useProject } from '@/contexts/ProjectContext';
-import { useAuth } from '@/lib/auth';
 import * as dashboardsApi from '@/lib/api/dashboards';
-import * as projectsApi from '@/lib/api/projects';
 import type { ProjectFile } from '../lib/storage/schemas';
 import type { StorageProjectMeta } from '@/lib/storage/adapter';
 
 // =============================================================================
 // Types
 // =============================================================================
-
-interface ProjectGroup {
-  project: projectsApi.ProjectListItem;
-  dashboards: StorageProjectMeta[];
-}
 
 interface ConfirmDialogState {
   open: boolean;
@@ -94,7 +75,6 @@ export function ProjectDialog({
   currentProject,
   language = 'en',
 }: ProjectDialogProps) {
-  const { isAuthenticated, storageMode } = useAuth();
   const { currentProject: cloudProject, switchProject } = useProject();
 
   // We still need useStorage for local mode and import/export
@@ -103,12 +83,13 @@ export function ProjectDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [projectName, setProjectName] = useState('');
+  const [search, setSearch] = useState('');
+  const [listLoading, setListLoading] = useState(false);
 
-  // Cloud mode: grouped data (projects + dashboards)
-  const [projectGroups, setProjectGroups] = useState<ProjectGroup[]>([]);
-  // Track which projects are expanded
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  // Backend ownership is retained for opening and saving existing dashboards.
+  const [cloudDashboards, setCloudDashboards] = useState<
+    (StorageProjectMeta & { projectId: string })[]
+  >([]);
 
   // Local mode: flat dashboard list
   const [localDashboards, setLocalDashboards] = useState<StorageProjectMeta[]>([]);
@@ -123,107 +104,55 @@ export function ProjectDialog({
 
   const t = language === 'zh' ? translations.zh : translations.en;
 
-  // Load all data when dialog opens
-  const lastLoadKey = useRef<string>('');
-
+  // Load every page, rather than truncating at a project or a fixed first page.
   useEffect(() => {
     if (!open) return;
-
-    const loadKey = `${open}-${refreshKey}`;
-    if (loadKey === lastLoadKey.current) return;
-    lastLoadKey.current = loadKey;
-
     let cancelled = false;
-
+    setListLoading(true);
+    setError(null);
+    setSearch('');
     const loadData = async () => {
-      if (storage.isCloud) {
-        try {
-          // 1. Load all projects
-          const projectsResponse = await projectsApi.listProjects({ page: 1, limit: 50 });
-          if (cancelled) return;
-          if (projectsResponse.error) return;
-
-          const projectsList = Array.isArray(projectsResponse.data)
-            ? projectsResponse.data
-            : projectsResponse.data?.data || [];
-
-          // 2. Load dashboards for ALL projects in parallel
-          const groups: ProjectGroup[] = await Promise.all(
-            projectsList.map(async (project: projectsApi.ProjectListItem) => {
-              try {
-                const response = await dashboardsApi.listDashboards({
-                  projectId: project.id,
-                  limit: 50,
-                });
-                const list = !response.error
-                  ? Array.isArray(response.data)
-                    ? response.data
-                    : response.data?.data || []
-                  : [];
-
-                return {
-                  project,
-                  dashboards: list.map((d: any) => ({
-                    id: d.id,
-                    name: d.name,
-                    createdAt: new Date(d.createdAt).getTime(),
-                    updatedAt: new Date(d.updatedAt).getTime(),
-                  })),
-                };
-              } catch {
-                return { project, dashboards: [] };
-              }
-            }),
-          );
-
-          if (!cancelled) {
-            setProjectGroups(groups);
-            // Auto-expand the current project, collapse others
-            const initialExpanded = new Set<string>();
-            if (cloudProject && cloudProject.id) {
-              initialExpanded.add(cloudProject.id);
-            } else if (
-              groups.length > 0 &&
-              groups[0] &&
-              groups[0].project &&
-              groups[0].project.id
-            ) {
-              initialExpanded.add(groups[0].project.id);
-            }
-            setExpandedProjects(initialExpanded);
+      try {
+        if (storage.isCloud) {
+          const rows: (StorageProjectMeta & { projectId: string })[] = [];
+          let page = 1;
+          while (!cancelled) {
+            const response = await dashboardsApi.listDashboards({ page, limit: 100 });
+            if (response.error || !response.data) throw new Error(response.error || t.loadError);
+            rows.push(
+              ...response.data.data.map((d) => ({
+                id: d.id,
+                name: d.name,
+                projectId: d.projectId,
+                createdAt: new Date(d.createdAt).getTime(),
+                updatedAt: new Date(d.updatedAt).getTime(),
+              })),
+            );
+            if (page >= response.data.meta.totalPages) break;
+            page++;
           }
-        } catch {
-          // ignore
+          if (!cancelled)
+            setCloudDashboards([...new Map(rows.map((row) => [row.id, row])).values()]);
+        } else {
+          const rows: StorageProjectMeta[] = [];
+          while (!cancelled) {
+            const result = await storage.list({ limit: 100, offset: rows.length });
+            rows.push(...result.data);
+            if (!result.hasMore || !result.data.length) break;
+          }
+          if (!cancelled) setLocalDashboards(rows);
         }
-      } else {
-        // Local storage: flat list
-        try {
-          const result = await storage.list({ limit: 50 });
-          if (!cancelled) setLocalDashboards(result.data);
-        } catch {
-          // ignore
-        }
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : t.loadError);
+      } finally {
+        if (!cancelled) setListLoading(false);
       }
     };
-
-    loadData();
+    void loadData();
     return () => {
       cancelled = true;
     };
   }, [open, refreshKey, storage.isCloud]);
-
-  // Toggle project expand/collapse
-  const toggleProject = useCallback((projectId: string) => {
-    setExpandedProjects((prev) => {
-      const next = new Set(prev);
-      if (next.has(projectId)) {
-        next.delete(projectId);
-      } else {
-        next.add(projectId);
-      }
-      return next;
-    });
-  }, []);
 
   // Handle opening a dashboard (cloud)
   const handleOpenCloudDashboard = useCallback(
@@ -254,6 +183,7 @@ export function ProjectDialog({
           canvas: dashboard.canvasConfig as any,
           nodes: (dashboard.nodes as any[]) || [],
           dataSources: (dashboard.dataSources as any[]) || [],
+          variables: dashboard.variables || [],
         };
 
         onProjectLoad(projectFile);
@@ -286,6 +216,7 @@ export function ProjectDialog({
             canvas: project.schema.canvas,
             nodes: project.schema.nodes,
             dataSources: project.schema.dataSources || [],
+            variables: project.schema.variables || [],
           };
           onProjectLoad(projectFile);
           onClose();
@@ -301,107 +232,47 @@ export function ProjectDialog({
     [storage, onProjectLoad, onClose, t],
   );
 
-  // Create new dashboard under a specific project (cloud)
-  const handleNewDashboard = useCallback(
-    async (projectId: string) => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await dashboardsApi.createDashboard({
-          name: t.newDashboard,
-          projectId,
-        });
-
-        if (response.error || !response.data) {
-          throw new Error(response.error || t.loadError);
-        }
-
-        const dashboard = response.data;
-        const projectFile: ProjectFile = {
-          meta: {
-            id: dashboard.id,
-            name: dashboard.name,
-            version: '1.0.0',
-            createdAt: new Date(dashboard.createdAt).getTime(),
-            updatedAt: new Date(dashboard.updatedAt).getTime(),
-          },
-          canvas: dashboard.canvasConfig as any,
-          nodes: (dashboard.nodes ?? []) as any,
-          dataSources: (dashboard.dataSources ?? []) as any,
-        };
-
-        if (projectId !== cloudProject?.id) {
-          await switchProject(projectId);
-        }
-
-        onProjectLoad(projectFile);
-        setRefreshKey((k) => k + 1);
-        onClose();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t.loadError);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [cloudProject?.id, switchProject, onProjectLoad, onClose, t],
-  );
-
-  // Create new project (cloud)
-  const handleCreateProject = useCallback(async () => {
-    if (!projectName.trim()) {
-      setError(t.projectNameRequired);
-      return;
-    }
-
+  // New dashboards use the server-managed default project.
+  const handleNewDashboard = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const createResponse = await projectsApi.createProject({
-        name: projectName.trim(),
+      const response = await dashboardsApi.createDashboard({
+        name: t.newDashboard,
       });
 
-      if (createResponse.error || !createResponse.data) {
-        throw new Error(createResponse.error || t.createProjectError);
+      if (response.error || !response.data) {
+        throw new Error(response.error || t.loadError);
       }
 
-      setProjectName('');
+      const dashboard = response.data;
+      const projectFile: ProjectFile = {
+        meta: {
+          id: dashboard.id,
+          name: dashboard.name,
+          version: '1.0.0',
+          createdAt: new Date(dashboard.createdAt).getTime(),
+          updatedAt: new Date(dashboard.updatedAt).getTime(),
+        },
+        canvas: dashboard.canvasConfig as any,
+        nodes: (dashboard.nodes ?? []) as any,
+        dataSources: (dashboard.dataSources ?? []) as any,
+        variables: dashboard.variables || [],
+      };
+
+      if (dashboard.projectId !== cloudProject?.id) {
+        await switchProject(dashboard.projectId);
+      }
+
+      onProjectLoad(projectFile);
       setRefreshKey((k) => k + 1);
-      // Auto-expand the new project
-      setExpandedProjects((prev) => new Set(prev).add(createResponse.data!.id));
+      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.createProjectError);
+      setError(err instanceof Error ? err.message : t.loadError);
     } finally {
       setIsLoading(false);
     }
-  }, [projectName, t]);
-
-  // Delete project (only when it has no dashboards)
-  const handleDeleteProject = useCallback(
-    (projectId: string) => {
-      setConfirmDialog({
-        open: true,
-        title: t.deleteProject,
-        description: t.confirmDeleteProject,
-        onConfirm: async () => {
-          setConfirmDialog((prev) => ({ ...prev, open: false }));
-          setIsLoading(true);
-          setError(null);
-          try {
-            const response = await projectsApi.deleteProject(projectId);
-            if (response.error) {
-              throw new Error(response.error);
-            }
-            setRefreshKey((k) => k + 1);
-          } catch (err) {
-            setError(err instanceof Error ? err.message : t.deleteProjectError);
-          } finally {
-            setIsLoading(false);
-          }
-        },
-      });
-    },
-    [t],
-  );
+  }, [cloudProject?.id, switchProject, onProjectLoad, onClose, t]);
 
   // Delete dashboard
   const handleDeleteDashboard = useCallback(
@@ -513,152 +384,75 @@ export function ProjectDialog({
           )}
 
           <div className="space-y-4">
-            {/* ============================================================= */}
-            {/* CLOUD MODE: Tree-view grouped by project                      */}
-            {/* ============================================================= */}
             {storage.isCloud && (
               <>
-                {/* Project tree */}
-                <div className="max-h-80 overflow-y-auto space-y-1 border rounded-lg p-2">
-                  {projectGroups.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">{t.noProjects}</p>
+                <Input
+                  placeholder={t.search}
+                  aria-label={t.search}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                <div
+                  className="max-h-80 overflow-y-auto space-y-1 border rounded-lg p-2"
+                  aria-busy={listLoading}
+                >
+                  {listLoading ? (
+                    <p className="p-4 text-sm text-muted-foreground">{t.loading}</p>
                   ) : (
-                    projectGroups.map(({ project, dashboards }) => {
-                      const isExpanded = expandedProjects.has(project.id);
-                      const isCurrent = project.id === cloudProject?.id;
-                      const hasDashboards = dashboards.length > 0;
-                      const canDelete = !hasDashboards && !isCurrent;
-
-                      return (
-                        <div key={project.id}>
-                          {/* Project group header */}
-                          <div
-                            className={`flex items-center gap-1 px-2 py-1.5 rounded-md cursor-pointer select-none group transition-colors
-                            ${
-                              isCurrent
-                                ? 'bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-                                : 'hover:bg-accent'
-                            }`}
-                            onClick={() => toggleProject(project.id)}
+                    cloudDashboards
+                      .filter((d) => d.name.toLowerCase().includes(search.trim().toLowerCase()))
+                      .map((dashboard) => (
+                        <div
+                          key={dashboard.id}
+                          className="flex items-center gap-2 rounded-md hover:bg-accent"
+                        >
+                          <button
+                            type="button"
+                            className="flex min-h-11 min-w-0 flex-1 items-center gap-2 px-2 py-2 text-left"
+                            disabled={isLoading}
+                            onClick={() => handleOpenCloudDashboard(dashboard, dashboard.projectId)}
                           >
-                            {/* Chevron */}
-                            {isExpanded ? (
-                              <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            )}
-                            {/* Folder icon */}
-                            <FolderOpen className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            {/* Project name */}
-                            <span className="text-sm font-medium truncate flex-1">
-                              {project.name}
+                            <LayoutDashboard className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            <span className="text-sm truncate flex-1">{dashboard.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(dashboard.updatedAt).toLocaleDateString(language)}
                             </span>
-                            {/* Current badge */}
-                            {isCurrent && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300 shrink-0">
-                                {t.currentProject}
-                              </span>
-                            )}
-                            {/* Dashboard count */}
-                            <span className="text-xs text-muted-foreground shrink-0">
-                              {dashboards.length}
-                            </span>
-                            {/* Action buttons (visible on hover) */}
-                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                              {/* New dashboard under this project */}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleNewDashboard(project.id);
-                                }}
-                                disabled={isLoading}
-                                title={t.newDashboard}
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </Button>
-                              {/* Delete project (only if empty and not current) */}
-                              {canDelete && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-destructive hover:text-destructive"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteProject(project.id);
-                                  }}
-                                  disabled={isLoading}
-                                  title={hasDashboards ? t.cannotDeleteProject : t.deleteProject}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Dashboard children (expanded) */}
-                          {isExpanded && (
-                            <div className="ml-5 mt-0.5 space-y-0.5">
-                              {dashboards.length === 0 ? (
-                                <p className="text-xs text-muted-foreground py-2 pl-5">
-                                  {t.noDashboards}
-                                </p>
-                              ) : (
-                                dashboards.map((dashboard) => (
-                                  <div
-                                    key={dashboard.id}
-                                    className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent cursor-pointer group/dash transition-colors"
-                                    onClick={() => handleOpenCloudDashboard(dashboard, project.id)}
-                                  >
-                                    <LayoutDashboard className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                    <span className="text-sm truncate flex-1">
-                                      {dashboard.name}
-                                    </span>
-                                    <span className="text-[11px] text-muted-foreground shrink-0">
-                                      {new Date(dashboard.updatedAt).toLocaleDateString(language)}
-                                    </span>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-6 w-6 opacity-0 group-hover/dash:opacity-100 transition-opacity text-destructive hover:text-destructive shrink-0"
-                                      onClick={(e) => handleDeleteDashboard(dashboard.id, e)}
-                                      disabled={isLoading}
-                                      title={t.deleteDashboard}
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          )}
+                          </button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="shrink-0 text-destructive"
+                            disabled={isLoading}
+                            aria-label={t.deleteDashboard}
+                            onClick={(e) => handleDeleteDashboard(dashboard.id, e)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                      );
-                    })
+                      ))
                   )}
+                  {!listLoading &&
+                    !error &&
+                    !cloudDashboards.some((d) =>
+                      d.name.toLowerCase().includes(search.trim().toLowerCase()),
+                    ) && (
+                      <p className="py-6 text-center text-sm text-muted-foreground">
+                        {search.trim() ? t.noMatches : t.noDashboards}
+                      </p>
+                    )}
                 </div>
-
-                {/* Create new project */}
-                <div className="flex gap-2">
-                  <Input
-                    placeholder={t.projectNamePlaceholder}
-                    value={projectName}
-                    onChange={(e) => setProjectName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateProject()}
-                    className="flex-1"
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateProject}
-                    disabled={isLoading || !projectName.trim()}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    {t.createProject}
+                <Button
+                  onClick={() => void handleNewDashboard()}
+                  disabled={isLoading || listLoading}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {t.newDashboard}
+                </Button>
+                {error && (
+                  <Button variant="outline" onClick={() => setRefreshKey((k) => k + 1)}>
+                    {t.retry}
                   </Button>
-                </div>
+                )}
               </>
             )}
 
@@ -805,16 +599,12 @@ export function ProjectDialog({
 const translations = {
   en: {
     title: 'Open Dashboard',
+    search: 'Search dashboards',
+    loading: 'Loading dashboards…',
+    noMatches: 'No matching dashboards',
+    retry: 'Retry',
     description: 'Create a new dashboard, open a recent one, or import from file.',
     newDashboard: 'New Dashboard',
-    projects: 'Projects',
-    noProjects: 'No projects yet. Create one below.',
-    projectNamePlaceholder: 'New project name...',
-    createProject: 'Create Project',
-    projectNameRequired: 'Project name is required.',
-    createProjectError: 'Failed to create project.',
-    defaultDashboardName: 'Default Dashboard',
-    currentProject: 'Current',
     import: 'Import',
     export: 'Export',
     recentProjects: 'Recent Dashboards',
@@ -825,10 +615,6 @@ const translations = {
     exportError: 'Failed to export dashboard.',
     cloudMode: 'Cloud Storage',
     localMode: 'Local Storage',
-    deleteProject: 'Delete project',
-    confirmDeleteProject: 'Are you sure you want to delete this empty project?',
-    deleteProjectError: 'Failed to delete project.',
-    cannotDeleteProject: 'Cannot delete project with dashboards. Delete all dashboards first.',
     deleteDashboard: 'Delete dashboard',
     confirmDeleteDashboard: 'Are you sure you want to delete this dashboard?',
     deleteDashboardError: 'Failed to delete dashboard.',
@@ -836,34 +622,26 @@ const translations = {
     confirm: 'Delete',
   },
   zh: {
-    title: '打开画布',
-    description: '创建新画布、打开最近画布或从文件导入。',
-    newDashboard: '新建画布',
-    projects: '项目',
-    noProjects: '还没有项目，请在下方创建。',
-    projectNamePlaceholder: '新项目名称...',
-    createProject: '创建项目',
-    projectNameRequired: '请输入项目名称。',
-    createProjectError: '创建项目失败。',
-    defaultDashboardName: '默认画布',
-    currentProject: '当前',
+    title: '打开看板',
+    search: '搜索看板名称',
+    loading: '加载看板中…',
+    noMatches: '没有匹配的看板',
+    retry: '重试',
+    description: '创建新看板、打开最近看板或从文件导入。',
+    newDashboard: '新建看板',
     import: '导入',
     export: '导出',
-    recentProjects: '最近画布',
-    noDashboards: '还没有画布',
-    projectNotFound: '未找到画布。',
-    loadError: '加载画布失败。',
+    recentProjects: '最近看板',
+    noDashboards: '还没有看板',
+    projectNotFound: '未找到看板。',
+    loadError: '加载看板失败。',
     importError: '导入文件失败。',
-    exportError: '导出画布失败。',
+    exportError: '导出看板失败。',
     cloudMode: '云端存储',
     localMode: '本地存储',
-    deleteProject: '删除项目',
-    confirmDeleteProject: '确定删除此空项目吗？',
-    deleteProjectError: '删除项目失败。',
-    cannotDeleteProject: '该项目下有画布，无法删除。请先删除所有画布。',
-    deleteDashboard: '删除画布',
-    confirmDeleteDashboard: '确定删除此画布吗？',
-    deleteDashboardError: '删除画布失败。',
+    deleteDashboard: '删除看板',
+    confirmDeleteDashboard: '确定删除此看板吗？',
+    deleteDashboardError: '删除看板失败。',
     cancel: '取消',
     confirm: '删除',
   },

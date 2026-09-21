@@ -54,7 +54,8 @@ export async function GET(request: NextRequest) {
         updatedAt: true,
         project: { select: { id: true, name: true } },
       },
-      orderBy: { updatedAt: 'desc' },
+      // A unique tie-breaker prevents equal timestamps from skipping/repeating rows across pages.
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       skip: (page - 1) * limit,
       take: limit,
     }),
