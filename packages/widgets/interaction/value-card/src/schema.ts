@@ -11,6 +11,9 @@ export const PropsSchema = z.object({
   prefix: z.string().default('').describe('props.prefix'),
   value: z.union([z.number().default(0), z.string(), z.null()]).default(0).describe('props.value'),
   suffix: z.string().default('元').describe('props.suffix'),
+  // Kept for compatibility with device-model presets created before `suffix`
+  // was hydrated from the model field. It is intentionally not an editor control.
+  unit: z.string().optional(),
   subtitle: z.string().default('').describe('props.subtitle'),
   trend: z.number().default(0).describe('props.trend'),
   precision: z.number().int().min(0).max(6).default(2).describe('props.precision'),

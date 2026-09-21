@@ -41,6 +41,21 @@ describe('interaction/value-card widget', () => {
     harness.destroy();
   });
 
+  it('uses a persisted device-model unit over the default suffix', () => {
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: Main.schema.parse({ title: 'illuminance', value: 178, suffix: '元', unit: 'lux' }),
+    });
+
+    const html = harness.element.innerHTML;
+    expect(html).toContain('illuminance');
+    expect(html).toContain('178.00');
+    expect(html).toContain('lux');
+    expect(html).not.toContain('元');
+
+    harness.destroy();
+  });
+
   it('collapses the default padding only for explicitly transparent backgrounds', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',

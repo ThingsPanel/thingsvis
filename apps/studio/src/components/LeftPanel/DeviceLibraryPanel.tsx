@@ -21,18 +21,46 @@ import { ICON_MAP } from './ComponentsList';
 
 const FIELD_BINDING_RE = /\{\{\s*ds\.[^.\s}]+\.data\.([^.[\]\s}]+)/;
 
-function resolvePresetField(
+/**
+ * Resolve the model field represented by a device preset.
+ *
+ * Current presets carry `fieldId` (or an existing expression). Older pre-installed
+ * template nodes only carry the field identifier in their visible title, such as
+ * `{ props: { title: 'temperature' } }`. Match that fallback against the actual
+ * device model rather than guessing from arbitrary display text.
+ */
+export function resolvePresetField(
   preset: PlatformDevicePreset,
   device: PlatformDevice,
-): { fieldId: string; fieldName: string } | null {
-  const serializedWidget = preset.widget ? JSON.stringify(preset.widget) : '';
+): { fieldId: string; fieldName: string; unit?: string } | null {
+  const widget = preset.widget ?? {};
+  const serializedWidget = JSON.stringify(widget);
   const fieldId = preset.fieldId?.trim() || FIELD_BINDING_RE.exec(serializedWidget)?.[1];
-  if (!fieldId) return null;
+  if (fieldId) {
+    const field = device.fields?.find((candidate) => candidate.id === fieldId);
+    return {
+      fieldId,
+      fieldName: preset.fieldName?.trim() || field?.name || field?.alias || fieldId,
+      ...(field ? { unit: field.unit ?? '' } : {}),
+    };
+  }
 
-  const field = device.fields?.find((candidate) => candidate.id === fieldId);
+  const props =
+    widget.props && typeof widget.props === 'object'
+      ? (widget.props as Record<string, unknown>)
+      : {};
+  const title = typeof props.title === 'string' ? props.title.trim() : '';
+  if (!title) return null;
+
+  const matchedField = device.fields?.find(
+    (candidate) => candidate.id === title || candidate.name === title || candidate.alias === title,
+  );
+  if (!matchedField) return null;
+
   return {
-    fieldId,
-    fieldName: preset.fieldName?.trim() || field?.name || field?.alias || fieldId,
+    fieldId: matchedField.id,
+    fieldName: matchedField.name || matchedField.alias || matchedField.id,
+    unit: matchedField.unit ?? '',
   };
 }
 
@@ -123,7 +151,7 @@ export default function DeviceLibraryPanel() {
           : hydrateDevicePresetWidget(
               (preset.widget ?? {}) as Record<string, unknown>,
               device.deviceId,
-              boundField?.fieldId,
+              boundField ?? undefined,
             );
 
       const resolvedStr = JSON.stringify(resolvedPayload);

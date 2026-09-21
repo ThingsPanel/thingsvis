@@ -84,6 +84,32 @@ describe('devicePresetHydration', () => {
     ]);
   });
 
+  it('uses the model field name and unit for a value-card display', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      { type: 'interaction/value-card', props: { title: 'illuminance', suffix: '元' } },
+      'dev-light',
+      { fieldId: 'illuminance', fieldName: 'Illuminance', unit: 'lux' },
+    );
+
+    expect(hydrated.props).toEqual({ title: 'Illuminance', suffix: 'lux' });
+    expect(hydrated.data).toEqual([
+      {
+        targetProp: 'value',
+        expression: `{{ ds.${getPlatformDeviceDataSourceId('dev-light')}.data.illuminance }}`,
+      },
+    ]);
+  });
+
+  it('clears a default value-card unit when the model field has no unit', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      { type: 'interaction/value-card', props: { title: 'count', suffix: '元' } },
+      'dev-count',
+      { fieldId: 'count', fieldName: 'Count', unit: '' },
+    );
+
+    expect(hydrated.props).toEqual({ title: 'Count', suffix: '' });
+  });
+
   it('adds the native value binding when other preset bindings already exist', () => {
     const hydrated = hydrateDevicePresetWidget(
       {

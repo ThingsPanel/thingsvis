@@ -11,6 +11,14 @@ export type DevicePresetSchema = {
   dataSources?: unknown[];
 };
 
+/** Model-field metadata used to hydrate a single pre-installed widget preset. */
+export type DevicePresetField = {
+  fieldId: string;
+  fieldName?: string;
+  /** An empty string is meaningful: it removes a widget's default display unit. */
+  unit?: string;
+};
+
 const GENERIC_PLATFORM_DATA_SOURCE_ID = '__device_platform_template__';
 const TEMPLATE_DEVICE_ID = '__template__';
 const TEMPLATE_PLATFORM_DATA_SOURCE_ID = getPlatformDeviceDataSourceId(TEMPLATE_DEVICE_ID);
@@ -328,7 +336,7 @@ function hydratePlatformDataSource(dataSource: DataSource, deviceId: string): Da
 export function hydrateDevicePresetWidget(
   widget: Record<string, unknown>,
   deviceId: string,
-  presetFieldId?: string,
+  presetField?: string | DevicePresetField,
 ): Record<string, unknown> {
   const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const clonedWidget = cloneValue(widget);
@@ -343,6 +351,7 @@ export function hydrateDevicePresetWidget(
     >;
     return normalizeEzuikitPlayerAutoWritePayloads(withEvents);
   }
+  const presetFieldId = typeof presetField === 'string' ? presetField : presetField?.fieldId;
   const fieldId = presetFieldId?.trim() || extractFirstBoundFieldId(clonedWidget.data);
   const existingBindings = Array.isArray(rewrittenWidget.data) ? rewrittenWidget.data : [];
   const hasValueBinding = existingBindings.some(
@@ -364,14 +373,27 @@ export function hydrateDevicePresetWidget(
           ],
         }
       : rewrittenWidget;
-  return normalizeAutoWritePayloads(withFieldBinding, fieldId);
+  const hasDisplayMetadata =
+    typeof presetField === 'object' &&
+    (typeof presetField.fieldName === 'string' || typeof presetField.unit === 'string');
+  const withModelDisplay =
+    rewrittenWidget.type === 'interaction/value-card' && hasDisplayMetadata
+      ? {
+          ...withFieldBinding,
+          props: {
+            ...((withFieldBinding.props as Record<string, unknown> | undefined) ?? {}),
+            ...(presetField.fieldName?.trim() ? { title: presetField.fieldName.trim() } : {}),
+            ...(typeof presetField.unit === 'string' ? { suffix: presetField.unit.trim() } : {}),
+          },
+        }
+      : withFieldBinding;
+  return normalizeAutoWritePayloads(withModelDisplay, fieldId);
 }
 
 export function hydrateDevicePresetSchema(
   schema: DevicePresetSchema,
   deviceId: string,
 ): DevicePresetSchema {
-  const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const clonedSchema = cloneValue(schema);
 
   return {

@@ -208,7 +208,7 @@ function renderTrendBadge(trend: number, fontSize: number, positiveColor: string
 // ============================================================================
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ctx: WidgetOverlayContext): Root | null {
   const {
-    title, prefix, value, suffix, subtitle, trend, precision,
+    title, prefix, value, suffix, unit, subtitle, trend, precision,
     icon, iconPosition, iconSize,
     titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
     titleColor: titleColorProp,
@@ -227,6 +227,10 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
   const titleSize = titleFontSize;
   const mainValueSize = valueFontSize;
   const unitSize = suffixFontSize;
+  // Older device-model presets persisted the model unit in `unit`, while the
+  // card renderer only displayed `suffix` (whose default is "元"). Prefer the
+  // model unit when present so existing cards stay truthful without migration.
+  const displaySuffix = unit?.trim() || suffix;
   const subTitleSize = subtitleFontSize;
   const contentGap = 8;
   const titleColor = resolveLayeredColor({
@@ -351,9 +355,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
         ${escapeHtml(displayValue)}
       </span>
-      ${suffix ? `
+      ${displaySuffix ? `
         <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
-          ${escapeHtml(suffix)}
+          ${escapeHtml(displaySuffix)}
         </span>
       ` : ''}
     </div>
@@ -409,7 +413,10 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       text-align: ${textAlign};
       padding: ${paddingY}px ${paddingX}px;
       color: ${valueColor};
-      background: transparent;
+      background: ${colors.surface};
+      border: 1px solid ${colors.surfaceBorder};
+      border-radius: inherit;
+      box-shadow: 0 8px 24px ${colors.surfaceShadow};
     ">
       ${hasSideIcon ? `
         <div style="
