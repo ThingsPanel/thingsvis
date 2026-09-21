@@ -18,6 +18,7 @@ export interface UseEditorSyncProps {
   canvasConfig: CanvasConfigSchema;
   canvasInitializedRef: React.MutableRefObject<boolean>;
   bootstrappingRef: React.MutableRefObject<boolean>;
+  prepareProjectForSave?: (project: ProjectFile) => ProjectFile | Promise<ProjectFile>;
 }
 
 export function useEditorSync({
@@ -31,6 +32,7 @@ export function useEditorSync({
   canvasConfig,
   canvasInitializedRef,
   bootstrappingRef,
+  prepareProjectForSave,
 }: UseEditorSyncProps) {
   const autoSaveEnabled = !isBootstrapping;
   const saveMode = isWidgetMode ? 'manual' : 'auto';
@@ -43,6 +45,7 @@ export function useEditorSync({
     getProjectState,
     enabled: autoSaveEnabled,
     saveMode,
+    prepareProjectForSave,
     onIdChange: (newId) => {
       setCanvasConfig((prev) => ({ ...prev, id: newId }));
       try {

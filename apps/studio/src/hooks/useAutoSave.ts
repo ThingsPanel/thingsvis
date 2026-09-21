@@ -10,11 +10,7 @@ import { projectStorage } from '../lib/storage/projectStorage';
 import type { ProjectFile } from '../lib/storage/schemas';
 import { useStorage } from './useStorage';
 import type { StorageProject } from '../lib/storage/adapter';
-import {
-  shouldSaveToHost,
-  getEffectiveProjectId,
-  useSaveStrategy,
-} from '../lib/storage/saveStrategy';
+import { shouldSaveToHost, getEffectiveProjectId } from '../lib/storage/saveStrategy';
 import { notifyChange, requestSave as sendToHost } from '../embed/message-router';
 import { setEmbedSessionSnapshot } from '../lib/embed/sessionSnapshot';
 import { buildHostSavePayload, prepareProjectForHostSave } from '../lib/storage/hostSavePayload';
@@ -34,6 +30,8 @@ export interface UseAutoSaveOptions {
   onIdChange?: (newId: string) => void;
   /** Callback for advancing a cloud dashboard revision after a successful save. */
   onRevisionChange?: (revision: number) => void;
+  /** Optional async preparation step for derived fields such as host thumbnails. */
+  prepareProjectForSave?: (project: ProjectFile) => ProjectFile | Promise<ProjectFile>;
 }
 
 /**
@@ -49,16 +47,19 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     saveMode = 'auto',
     onIdChange,
     onRevisionChange,
+    prepareProjectForSave,
   } = options;
   const storage = useStorage(cloudProjectId);
-  const saveStrategy = useSaveStrategy();
 
   const saveProject = useCallback(
     async (project: ProjectFile) => {
-      const projectForSave = prepareProjectForHostSave(project);
+      const preparedProject = prepareProjectForSave
+        ? await prepareProjectForSave(project)
+        : project;
+      const projectForSave = prepareProjectForHostSave(preparedProject);
 
       if (shouldSaveToHost()) {
-        const { projectForSave: hostProject, payload } = buildHostSavePayload(project);
+        const { projectForSave: hostProject, payload } = buildHostSavePayload(preparedProject);
         setEmbedSessionSnapshot(hostProject.meta.id, hostProject, 'host-save');
         sendToHost(payload);
         return;
@@ -95,7 +96,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
       await projectStorage.save(projectForSave);
     },
-    [storage, onIdChange, onRevisionChange, saveStrategy],
+    [onIdChange, onRevisionChange, prepareProjectForSave, storage],
   );
 
   const saveProjectRef = useRef(saveProject);

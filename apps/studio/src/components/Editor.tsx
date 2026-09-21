@@ -48,6 +48,7 @@ import { buildHashRoute, openDataSources as navigateToDataSources } from '../lib
 import { useEditorStartup } from '../hooks/useEditorStartup';
 import { useEditorSync } from '../hooks/useEditorSync';
 import { useEditorDragDrop } from '../hooks/useEditorDragDrop';
+import type { ProjectFile } from '../lib/storage/schemas';
 import { commandRegistry, useKeyboardShortcuts, registerDefaultCommands } from '../lib/commands';
 import { getResolvedWidget, loadWidget } from '../lib/registry/componentLoader';
 import { getWidgetControls } from '../lib/registry/getControls';
@@ -59,6 +60,8 @@ import {
 import { syncShapeStylePatch } from '../lib/shapeStyleSync';
 import { deriveCanvasBackgroundState } from '../lib/canvasBackground';
 import { nudgeSelection } from '../lib/canvas/nudgeSelection';
+import { generateThumbnailFromElement } from '../lib/storage/thumbnail';
+import { shouldSaveToHost } from '../lib/storage/saveStrategy';
 
 import {
   MousePointer2,
@@ -330,6 +333,34 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     props.isWidgetMode ??
     (embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-')));
 
+  const prepareProjectForSave = useCallback(async (project: ProjectFile) => {
+    if (!shouldSaveToHost()) return project;
+
+    const canvasElement = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
+    if (!canvasElement) return project;
+
+    try {
+      const thumbnail = await generateThumbnailFromElement(canvasElement, {
+        width: 800,
+        height: 450,
+        quality: 0.72,
+        backgroundColor: '#101828',
+      });
+
+      if (!thumbnail || thumbnail === project.meta.thumbnail) return project;
+      return {
+        ...project,
+        meta: {
+          ...project.meta,
+          thumbnail,
+        },
+      };
+    } catch (error) {
+      console.warn('[Editor] Failed to generate dashboard thumbnail:', error);
+      return project;
+    }
+  }, []);
+
   const { saveState, markDirty, saveNow } = useEditorSync({
     projectId,
     cloudProjectId: currentProject?.id ?? urlBackendProjectId,
@@ -341,6 +372,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     canvasConfig,
     canvasInitializedRef,
     bootstrappingRef,
+    prepareProjectForSave,
   });
 
   const { startup, isReady: isStartupReady } = useEditorStartup({
