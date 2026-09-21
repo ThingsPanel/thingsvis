@@ -22,4 +22,12 @@ describe('initial widget node defaults', () => {
       h: 1,
     });
   });
+
+  it('clamps the authored x coordinate to the actual widget width', () => {
+    const settings = { cols: 12, rowHeight: 50, gap: 10, containerWidth: 1200 };
+
+    expect(
+      resolveInitialGridPosition({ width: 500, height: 100 }, settings, { x: 11 }),
+    ).toMatchObject({ x: 7, w: 5 });
+  });
 });

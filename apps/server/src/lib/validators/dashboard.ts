@@ -67,6 +67,8 @@ export const CreateDashboardSchema = z.object({
 
 // Schema for updating a dashboard
 export const UpdateDashboardSchema = z.object({
+  /** Optimistic-concurrency token returned by GET/PUT. */
+  expectedVersion: z.number().int().positive().optional(),
   name: z
     .string()
     .min(1, 'Dashboard name is required')

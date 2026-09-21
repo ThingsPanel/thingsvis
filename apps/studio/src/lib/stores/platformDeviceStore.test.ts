@@ -86,4 +86,13 @@ describe('platformDeviceStore', () => {
 
     expect(platformDeviceStore.getDevices()).toBe(before);
   });
+
+  it('keeps the selected device outside the panel component lifecycle', () => {
+    platformDeviceStore.setDevices([{ deviceId: 'dev-1', deviceName: 'Device 1' }]);
+    platformDeviceStore.setSelectedDeviceId('dev-1');
+
+    expect(platformDeviceStore.getSelectedDeviceId()).toBe('dev-1');
+    platformDeviceStore.setDevices([{ deviceId: 'dev-1', deviceName: 'Device 1 updated' }]);
+    expect(platformDeviceStore.getSelectedDeviceId()).toBe('dev-1');
+  });
 });

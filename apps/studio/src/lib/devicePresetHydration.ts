@@ -328,6 +328,7 @@ function hydratePlatformDataSource(dataSource: DataSource, deviceId: string): Da
 export function hydrateDevicePresetWidget(
   widget: Record<string, unknown>,
   deviceId: string,
+  presetFieldId?: string,
 ): Record<string, unknown> {
   const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const clonedWidget = cloneValue(widget);
@@ -342,8 +343,28 @@ export function hydrateDevicePresetWidget(
     >;
     return normalizeEzuikitPlayerAutoWritePayloads(withEvents);
   }
-  const fieldId = extractFirstBoundFieldId(clonedWidget.data);
-  return normalizeAutoWritePayloads(rewrittenWidget, fieldId);
+  const fieldId = presetFieldId?.trim() || extractFirstBoundFieldId(clonedWidget.data);
+  const existingBindings = Array.isArray(rewrittenWidget.data) ? rewrittenWidget.data : [];
+  const hasValueBinding = existingBindings.some(
+    (binding) =>
+      binding &&
+      typeof binding === 'object' &&
+      (binding as Record<string, unknown>).targetProp === 'value',
+  );
+  const withFieldBinding =
+    fieldId && !hasValueBinding
+      ? {
+          ...rewrittenWidget,
+          data: [
+            ...existingBindings,
+            {
+              targetProp: 'value',
+              expression: `{{ ds.${targetDataSourceId}.data.${fieldId} }}`,
+            },
+          ],
+        }
+      : rewrittenWidget;
+  return normalizeAutoWritePayloads(withFieldBinding, fieldId);
 }
 
 export function hydrateDevicePresetSchema(

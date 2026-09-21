@@ -18,7 +18,8 @@ import * as dashboardsApi from '../../api/dashboards';
 async function updateDashboardSnapshot(
   dashboardId: string,
   project: Pick<StorageProject, 'meta' | 'schema'>,
-): Promise<void> {
+  expectedVersion?: number,
+): Promise<number | undefined> {
   const response = await dashboardsApi.updateDashboard(dashboardId, {
     name: project.meta.name,
     canvasConfig: project.schema.canvas,
@@ -26,11 +27,13 @@ async function updateDashboardSnapshot(
     dataSources: project.schema.dataSources,
     variables: project.schema.variables,
     thumbnail: project.meta.thumbnail,
+    ...(expectedVersion === undefined ? {} : { expectedVersion }),
   });
 
   if (response.error) {
     throw new Error(response.error);
   }
+  return response.data?.version;
 }
 
 function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): StorageProject {
@@ -51,6 +54,7 @@ function apiDashboardToStorageProject(dashboard: dashboardsApi.Dashboard): Stora
       thumbnail: dashboard.thumbnail,
       projectId: dashboard.projectId,
       projectName: dashboard.project?.name,
+      revision: dashboard.version,
       createdAt: new Date(dashboard.createdAt).getTime(),
       updatedAt: new Date(dashboard.updatedAt).getTime(),
     },
@@ -111,7 +115,7 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
       }
     },
 
-    async save(project: StorageProject): Promise<{ id: string }> {
+    async save(project: StorageProject): Promise<{ id: string; revision?: number }> {
       try {
         const canUpdate = !!project.meta.id;
 
@@ -123,10 +127,13 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
             dataSources: project.schema.dataSources,
             variables: project.schema.variables,
             thumbnail: project.meta.thumbnail,
+            ...(project.meta.revision === undefined
+              ? {}
+              : { expectedVersion: project.meta.revision }),
           });
 
           if (!response.error) {
-            return { id: project.meta.id };
+            return { id: project.meta.id, revision: response.data?.version };
           }
 
           // If the dashboard doesn't exist, fall through to create.
@@ -148,15 +155,19 @@ export function createCloudStorageAdapter(projectId?: string): StorageAdapter {
         }
 
         const createdId = createResponse.data.id;
-        await updateDashboardSnapshot(createdId, {
-          meta: {
-            ...project.meta,
-            id: createdId,
+        const revision = await updateDashboardSnapshot(
+          createdId,
+          {
+            meta: {
+              ...project.meta,
+              id: createdId,
+            },
+            schema: project.schema,
           },
-          schema: project.schema,
-        });
+          createResponse.data.version,
+        );
 
-        return { id: createdId };
+        return { id: createdId, revision: revision ?? createResponse.data.version };
       } catch (error) {
         throw error;
       }

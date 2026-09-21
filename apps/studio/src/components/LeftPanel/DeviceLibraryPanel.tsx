@@ -40,8 +40,6 @@ export default function DeviceLibraryPanel() {
   const { t, i18n } = useTranslation('editor');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const [selectedDeviceId, setSelectedDeviceId] = useState('');
-  const [selectedDevice, setSelectedDevice] = useState<PlatformDevice | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const groupsRequested = true;
   const registrySnapshot = useSyncExternalStore(
@@ -53,6 +51,7 @@ export default function DeviceLibraryPanel() {
   // Read the devices from the store
   const groups = usePlatformDeviceStore((state) => state.groups);
   const devices = usePlatformDeviceStore((state) => state.devices);
+  const selectedDeviceId = usePlatformDeviceStore((state) => state.selectedDeviceId);
 
   useEffect(() => {
     ensureRegistryLoaded().catch((error) => {
@@ -61,8 +60,8 @@ export default function DeviceLibraryPanel() {
   }, []);
 
   const selectedDeviceSource = useMemo(
-    () => devices.find((device) => device.deviceId === selectedDeviceId) ?? selectedDevice,
-    [devices, selectedDevice, selectedDeviceId],
+    () => devices.find((device) => device.deviceId === selectedDeviceId) ?? null,
+    [devices, selectedDeviceId],
   );
 
   const visiblePresets = useMemo(() => {
@@ -100,8 +99,7 @@ export default function DeviceLibraryPanel() {
   }, []);
 
   const handleDeviceSelect = React.useCallback((device: PlatformDevice) => {
-    setSelectedDevice(device);
-    setSelectedDeviceId(device.deviceId);
+    usePlatformDeviceStore.getState().setSelectedDeviceId(device.deviceId);
     setDeviceSelectorOpen(false);
     usePlatformDeviceStore.getState().setDevices([device]);
   }, []);
@@ -113,6 +111,7 @@ export default function DeviceLibraryPanel() {
     preset: PlatformDevicePreset,
   ) => {
     try {
+      const boundField = resolvePresetField(preset, device);
       const resolvedPayload =
         preset.schema && Array.isArray(preset.schema.nodes) && preset.schema.nodes.length > 0
           ? {
@@ -124,6 +123,7 @@ export default function DeviceLibraryPanel() {
           : hydrateDevicePresetWidget(
               (preset.widget ?? {}) as Record<string, unknown>,
               device.deviceId,
+              boundField?.fieldId,
             );
 
       const resolvedStr = JSON.stringify(resolvedPayload);

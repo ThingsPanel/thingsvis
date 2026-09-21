@@ -27,6 +27,8 @@ export const ProjectMetaSchema = z.object({
   projectId: z.string().optional(),
   /** Parent Project Name (Cloud mode) */
   projectName: z.string().optional(),
+  /** Server-side dashboard revision; absent for local/file projects. */
+  revision: z.number().int().positive().optional(),
 });
 
 // =============================================================================

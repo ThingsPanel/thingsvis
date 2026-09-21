@@ -5,6 +5,14 @@ import { UpdateDashboardSchema } from '@/lib/validators/dashboard';
 
 type Params = { params: Promise<{ id: string }> };
 
+class DashboardNotFoundError extends Error {}
+
+class DashboardVersionConflictError extends Error {
+  constructor(public readonly currentVersion: number) {
+    super('Dashboard version conflict');
+  }
+}
+
 // Helper to parse dashboard JSON fields for response
 function parseDashboard(dashboard: {
   canvasConfig: string;
@@ -64,76 +72,95 @@ export async function PUT(request: NextRequest, { params }: Params) {
     );
   }
 
-  const existing = await prisma.dashboard.findFirst({
-    where: { id, project: { tenantId: user.tenantId } },
-  });
-
-  if (!existing) {
-    return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
-  }
-
-  // Save version history before updating.
-  // Under rapid auto-save, concurrent requests may snapshot the same old version.
-  // Use skipDuplicates to avoid expected unique-constraint noise in Prisma logs.
-  await prisma.dashboardVersion.createMany({
-    data: [
-      {
-        dashboardId: existing.id,
-        version: existing.version,
-        canvasConfig: existing.canvasConfig,
-        nodes: existing.nodes,
-        dataSources: existing.dataSources,
-        variables: existing.variables,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  const { expectedVersion, ...updateInput } = result.data;
 
   // Prepare update data - only include fields that are provided
   const updateData: Record<string, unknown> = {
     version: { increment: 1 },
   };
 
-  if (result.data.name !== undefined) {
-    updateData.name = result.data.name;
+  if (updateInput.name !== undefined) {
+    updateData.name = updateInput.name;
   }
-  if (result.data.canvasConfig !== undefined) {
-    updateData.canvasConfig = JSON.stringify(result.data.canvasConfig);
+  if (updateInput.canvasConfig !== undefined) {
+    updateData.canvasConfig = JSON.stringify(updateInput.canvasConfig);
 
     // Sync homeFlag from canvasConfig to Dashboard field
-    if (typeof result.data.canvasConfig.homeFlag === 'boolean') {
-      if (result.data.canvasConfig.homeFlag) {
-        // Community edition allows one homepage per tenant, not one per project.
-        await prisma.dashboard.updateMany({
-          where: {
-            project: { tenantId: user.tenantId },
-            id: { not: id },
+    if (typeof updateInput.canvasConfig.homeFlag === 'boolean') {
+      updateData.homeFlag = updateInput.canvasConfig.homeFlag;
+    }
+  }
+  if (updateInput.nodes !== undefined) {
+    updateData.nodes = JSON.stringify(updateInput.nodes);
+  }
+  if (updateInput.dataSources !== undefined) {
+    updateData.dataSources = JSON.stringify(updateInput.dataSources);
+  }
+  if (updateInput.variables !== undefined) {
+    updateData.variables = JSON.stringify(updateInput.variables);
+  }
+  if (updateInput.thumbnail !== undefined) {
+    updateData.thumbnail = updateInput.thumbnail;
+  }
+
+  try {
+    const dashboard = await prisma.$transaction(async (tx) => {
+      const existing = await tx.dashboard.findFirst({
+        where: { id, project: { tenantId: user.tenantId } },
+      });
+      if (!existing) throw new DashboardNotFoundError();
+
+      await tx.dashboardVersion.createMany({
+        data: [
+          {
+            dashboardId: existing.id,
+            version: existing.version,
+            canvasConfig: existing.canvasConfig,
+            nodes: existing.nodes,
+            dataSources: existing.dataSources,
+            variables: existing.variables,
           },
+        ],
+        skipDuplicates: true,
+      });
+
+      if (updateInput.canvasConfig?.homeFlag === true) {
+        // Community edition allows one homepage per tenant, not one per project.
+        await tx.dashboard.updateMany({
+          where: { project: { tenantId: user.tenantId }, id: { not: id } },
           data: { homeFlag: false },
         });
       }
-      updateData.homeFlag = result.data.canvasConfig.homeFlag;
+
+      const updated = await tx.dashboard.updateMany({
+        where: {
+          id,
+          ...(expectedVersion === undefined ? {} : { version: expectedVersion }),
+        },
+        data: updateData,
+      });
+      if (updated.count !== 1) throw new DashboardVersionConflictError(existing.version);
+
+      return tx.dashboard.findUniqueOrThrow({ where: { id } });
+    });
+
+    return NextResponse.json(parseDashboard(dashboard));
+  } catch (error) {
+    if (error instanceof DashboardNotFoundError) {
+      return NextResponse.json({ error: 'Dashboard not found' }, { status: 404 });
     }
+    if (error instanceof DashboardVersionConflictError) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          code: 'DASHBOARD_VERSION_CONFLICT',
+          currentVersion: error.currentVersion,
+        },
+        { status: 409 },
+      );
+    }
+    throw error;
   }
-  if (result.data.nodes !== undefined) {
-    updateData.nodes = JSON.stringify(result.data.nodes);
-  }
-  if (result.data.dataSources !== undefined) {
-    updateData.dataSources = JSON.stringify(result.data.dataSources);
-  }
-  if (result.data.variables !== undefined) {
-    updateData.variables = JSON.stringify(result.data.variables);
-  }
-  if (result.data.thumbnail !== undefined) {
-    updateData.thumbnail = result.data.thumbnail;
-  }
-
-  const dashboard = await prisma.dashboard.update({
-    where: { id },
-    data: updateData,
-  });
-
-  return NextResponse.json(parseDashboard(dashboard));
 }
 
 // DELETE /api/v1/dashboards/:id - Delete dashboard (cascades to versions)

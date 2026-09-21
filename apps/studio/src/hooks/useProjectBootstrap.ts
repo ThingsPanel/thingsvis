@@ -102,6 +102,7 @@ export type CanvasConfigSchema = {
   id: string;
   projectId: string;
   version: string;
+  revision?: number;
   name: string;
   description: string;
   thumbnail: string;
@@ -366,6 +367,7 @@ export function useProjectBootstrap({
         thumbnail: loaded.meta.thumbnail || '',
         projectId: loaded.meta.projectId || prev.projectId,
         projectName: loaded.meta.projectName,
+        revision: loaded.meta.revision,
         createdAt: loaded.meta.createdAt,
         mode: normalizeCanvasMode(loaded.canvas.mode),
         width: loaded.canvas.width,
@@ -440,6 +442,7 @@ export function useProjectBootstrap({
     return {
       meta: {
         version: '1.0.0',
+        revision: currentCanvasConfig.revision,
         id: currentCanvasConfig.id,
         name: currentCanvasConfig.name,
         thumbnail: currentCanvasConfig.thumbnail,
@@ -531,6 +534,7 @@ export function useProjectBootstrap({
                   thumbnail: cloudProject.meta.thumbnail,
                   projectId: cloudProject.meta.projectId,
                   projectName: cloudProject.meta.projectName,
+                  revision: cloudProject.meta.revision,
                   createdAt: cloudProject.meta.createdAt,
                   updatedAt: cloudProject.meta.updatedAt,
                 },
@@ -728,6 +732,7 @@ export function useProjectBootstrap({
       setCanvasConfig((prev) => ({
         ...prev,
         id: processed.projectId,
+        revision: loadedMeta?.revision,
         name: loadedMeta?.name || processed.projectName,
         mode: resolvedCanvasMode,
         width: resolvedCanvas?.width || 1920,
@@ -835,6 +840,7 @@ export function useProjectBootstrap({
           meta: {
             version: '1.0.0',
             id: processed.projectId,
+            revision: loadedMeta?.revision,
             name: loadedMeta?.name || processed.projectName,
             thumbnail: loadedMeta?.thumbnail || processed.thumbnail,
             createdAt: loadedMeta?.createdAt || Date.now(),

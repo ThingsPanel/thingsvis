@@ -45,8 +45,10 @@ export function resolveInitialGridPosition(
     ? Math.max(1, Math.round((size!.height + gap) / rowStep))
     : Math.max(1, Math.trunc(fallback.h ?? 2));
 
+  const x = Math.max(0, Math.min(cols - w, Math.trunc(position.x ?? 0)));
+
   return {
-    x: Math.max(0, Math.trunc(position.x ?? 0)),
+    x,
     y: Math.max(0, Math.trunc(position.y ?? 0)),
     w,
     h,

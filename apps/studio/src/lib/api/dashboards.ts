@@ -70,6 +70,7 @@ export interface CreateDashboardData {
 }
 
 export interface UpdateDashboardData {
+  expectedVersion?: number;
   name?: string;
   canvasConfig?: DashboardCanvasConfig;
   nodes?: unknown[];

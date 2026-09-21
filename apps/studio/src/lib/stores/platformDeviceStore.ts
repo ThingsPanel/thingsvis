@@ -65,11 +65,16 @@ interface PlatformDeviceState {
   /** List of devices and their presets provided by the host */
   devices: PlatformDevice[];
 
+  /** Device selected in the device library; survives left-panel tab remounts. */
+  selectedDeviceId: string;
+
   /** Completely replace the group definitions */
   setGroups: (groups: PlatformDeviceGroup[]) => void;
 
   /** Completely replace the device definitions */
   setDevices: (devices: PlatformDevice[]) => void;
+
+  setSelectedDeviceId: (deviceId: string) => void;
 
   /** Replace devices belonging to one group and mark the group as loaded */
   setDevicesForGroup: (groupId: string, devices: PlatformDevice[]) => void;
@@ -177,6 +182,7 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
   groups: [],
   loadedGroupIds: [],
   devices: [],
+  selectedDeviceId: '',
 
   setGroups: (groups) =>
     set((state) => {
@@ -210,6 +216,9 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
       };
     });
   },
+
+  setSelectedDeviceId: (deviceId) =>
+    set((state) => (state.selectedDeviceId === deviceId ? state : { selectedDeviceId: deviceId })),
 
   setDevicesForGroup: (groupId, devices) => {
     const normalizedGroupId = normalizeGroupId(groupId);
@@ -265,7 +274,7 @@ export const usePlatformDeviceStore = create<PlatformDeviceState>((set) => ({
       return { devices };
     }),
 
-  clearDevices: () => set({ groups: [], loadedGroupIds: [], devices: [] }),
+  clearDevices: () => set({ groups: [], loadedGroupIds: [], devices: [], selectedDeviceId: '' }),
 }));
 
 /**
@@ -276,7 +285,10 @@ export const platformDeviceStore = {
   setGroups: (groups: PlatformDeviceGroup[]) => usePlatformDeviceStore.getState().setGroups(groups),
   getLoadedGroupIds: () => usePlatformDeviceStore.getState().loadedGroupIds,
   getDevices: () => usePlatformDeviceStore.getState().devices,
+  getSelectedDeviceId: () => usePlatformDeviceStore.getState().selectedDeviceId,
   setDevices: (devices: PlatformDevice[]) => usePlatformDeviceStore.getState().setDevices(devices),
+  setSelectedDeviceId: (deviceId: string) =>
+    usePlatformDeviceStore.getState().setSelectedDeviceId(deviceId),
   setDevicesForGroup: (groupId: string, devices: PlatformDevice[]) =>
     usePlatformDeviceStore.getState().setDevicesForGroup(groupId, devices),
   updateDeviceFields: (deviceId: string, fields: PlatformDeviceField[]) =>

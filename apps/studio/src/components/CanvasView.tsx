@@ -31,6 +31,7 @@ import {
   createDefaultWidgetBaseStyle,
   resolveInitialGridPosition,
 } from '../lib/registry/initialNodeDefaults';
+import { clampDropPointToCanvas, clampNodePositionToCanvas } from './dropGeometry';
 
 function generateId(prefix = 'node') {
   try {
@@ -624,7 +625,14 @@ const CanvasView = forwardRef<
       Array.isArray(entry.schema?.nodes) &&
       entry.schema.nodes.length > 0
     ) {
-      const droppedNodes = buildDroppedPresetNodes(entry.schema.nodes, { x: worldX, y: worldY });
+      const dropPoint =
+        state.canvas.mode === 'fixed'
+          ? clampDropPointToCanvas({ x: worldX, y: worldY }, entry.schema.nodes, {
+              width: state.canvas.width,
+              height: state.canvas.height,
+            })
+          : { x: worldX, y: worldY };
+      const droppedNodes = buildDroppedPresetNodes(entry.schema.nodes, dropPoint);
       try {
         if (store.getState().addNodes) {
           store.getState().addNodes(droppedNodes as any);
@@ -697,10 +705,19 @@ const CanvasView = forwardRef<
       initialSize = size;
     }
 
+    const nodePosition =
+      state.canvas.mode === 'fixed'
+        ? clampNodePositionToCanvas(
+            { x: worldX, y: worldY },
+            initialSize ?? snippetEntry?.size ?? {},
+            { width: state.canvas.width, height: state.canvas.height },
+          )
+        : { x: worldX, y: worldY };
+
     const node: any = {
       id: nodeId,
       type: entry.type,
-      position: { x: worldX, y: worldY },
+      position: nodePosition,
       // 只有可调整尺寸的组件才设置 size
       ...(initialSize ? { size: initialSize } : {}),
       props: {

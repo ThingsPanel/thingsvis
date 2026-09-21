@@ -1,6 +1,6 @@
 /**
  * Storage Adapter Interface
- * 
+ *
  * Abstraction layer for switching between local (IndexedDB) and cloud (API) storage.
  * This allows the application to seamlessly work in standalone, cloud, or embed modes.
  */
@@ -18,6 +18,8 @@ export interface StorageProjectMeta {
   thumbnail?: string;
   projectId?: string;
   projectName?: string;
+  /** Server-side dashboard revision used for optimistic concurrency. */
+  revision?: number;
   createdAt: number;
   updatedAt: number;
 }
@@ -55,7 +57,7 @@ export interface StorageAdapter {
   // Project/Dashboard CRUD
   list: (options?: ListOptions) => Promise<ListResult<StorageProjectMeta>>;
   get: (id: string) => Promise<StorageProject | null>;
-  save: (project: StorageProject) => Promise<{ id: string }>;
+  save: (project: StorageProject) => Promise<{ id: string; revision?: number }>;
   delete: (id: string) => Promise<boolean>;
 
   // Additional operations

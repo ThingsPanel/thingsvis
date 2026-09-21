@@ -69,6 +69,41 @@ describe('devicePresetHydration', () => {
     );
   });
 
+  it('creates the native value binding when the preset carries field metadata', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      { type: 'interaction/value-card', props: { title: 'Temperature' } },
+      'dev-value',
+      'temperature',
+    );
+
+    expect(hydrated.data).toEqual([
+      {
+        targetProp: 'value',
+        expression: `{{ ds.${getPlatformDeviceDataSourceId('dev-value')}.data.temperature }}`,
+      },
+    ]);
+  });
+
+  it('adds the native value binding when other preset bindings already exist', () => {
+    const hydrated = hydrateDevicePresetWidget(
+      {
+        type: 'interaction/value-card',
+        props: { title: 'Temperature' },
+        data: [{ targetProp: 'color', expression: '"#fff"' }],
+      },
+      'dev-value-2',
+      'temperature',
+    );
+
+    expect(hydrated.data).toEqual([
+      { targetProp: 'color', expression: '"#fff"' },
+      {
+        targetProp: 'value',
+        expression: `{{ ds.${getPlatformDeviceDataSourceId('dev-value-2')}.data.temperature }}`,
+      },
+    ]);
+  });
+
   it('normalizes auto-write payload keys from expression bindings', () => {
     const hydrated = hydrateDevicePresetWidget(
       {

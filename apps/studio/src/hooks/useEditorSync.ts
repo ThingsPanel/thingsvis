@@ -49,6 +49,9 @@ export function useEditorSync({
         localStorage.setItem(STORAGE_CONSTANTS.CURRENT_PROJECT_ID_KEY, newId);
       } catch {}
     },
+    onRevisionChange: (revision) => {
+      setCanvasConfig((prev) => ({ ...prev, revision }));
+    },
   });
 
   const markDirtyWhenArmed = useCallback(

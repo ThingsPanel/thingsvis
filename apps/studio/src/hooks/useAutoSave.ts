@@ -32,6 +32,8 @@ export interface UseAutoSaveOptions {
   saveMode?: 'auto' | 'manual';
   /** Callback when a new storage ID is assigned */
   onIdChange?: (newId: string) => void;
+  /** Callback for advancing a cloud dashboard revision after a successful save. */
+  onRevisionChange?: (revision: number) => void;
 }
 
 /**
@@ -46,6 +48,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
     enabled = true,
     saveMode = 'auto',
     onIdChange,
+    onRevisionChange,
   } = options;
   const storage = useStorage(cloudProjectId);
   const saveStrategy = useSaveStrategy();
@@ -69,6 +72,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
             id: effectiveId,
             name: projectForSave.meta.name,
             thumbnail: projectForSave.meta.thumbnail,
+            revision: projectForSave.meta.revision,
             createdAt: projectForSave.meta.createdAt,
             updatedAt: projectForSave.meta.updatedAt,
           },
@@ -80,6 +84,9 @@ export function useAutoSave(options: UseAutoSaveOptions) {
           },
         };
         const result = await storage.save(storageProject);
+        if (typeof result?.revision === 'number') {
+          onRevisionChange?.(result.revision);
+        }
         if (result?.id && result.id !== projectForSave.meta.id) {
           onIdChange?.(result.id);
         }
@@ -88,7 +95,7 @@ export function useAutoSave(options: UseAutoSaveOptions) {
 
       await projectStorage.save(projectForSave);
     },
-    [storage, onIdChange, saveStrategy],
+    [storage, onIdChange, onRevisionChange, saveStrategy],
   );
 
   const saveProjectRef = useRef(saveProject);
