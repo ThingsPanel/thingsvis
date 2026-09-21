@@ -24,6 +24,52 @@ export interface ThumbnailOptions {
   backgroundColor?: string;
 }
 
+/**
+ * Resolve the background used by the rendered artboard instead of the editor
+ * workspace. Theme backgrounds are often painted by a dedicated aria-hidden
+ * layer while the canvas root itself remains transparent.
+ */
+export function resolveThumbnailBackgroundColor(
+  element: HTMLElement,
+  fallback = '#ffffff',
+): string {
+  try {
+    const backgroundLayer = element.querySelector<HTMLElement>('[aria-hidden="true"]');
+    const candidates = backgroundLayer ? [backgroundLayer, element] : [element];
+
+    for (const candidate of candidates) {
+      const style = window.getComputedStyle(candidate);
+      if (isOpaqueColor(style.backgroundColor)) {
+        return style.backgroundColor;
+      }
+
+      const themeBackground = style.getPropertyValue('--w-bg').trim();
+      if (themeBackground && isOpaqueColor(themeBackground)) {
+        return themeBackground;
+      }
+
+      const canvasBackground = style.getPropertyValue('--w-canvas-bg').trim();
+      if (canvasBackground) {
+        return `hsl(${canvasBackground})`;
+      }
+    }
+  } catch {
+    // Use the safe fallback when the DOM is unavailable during teardown.
+  }
+
+  return fallback;
+}
+
+function isOpaqueColor(value: string): boolean {
+  const normalized = value.replace(/\s+/g, '').toLowerCase();
+  if (!normalized || normalized === 'transparent' || normalized === 'rgba(0,0,0,0)') {
+    return false;
+  }
+
+  const alphaMatch = normalized.match(/^rgba\([^,]+,[^,]+,[^,]+,([^)]*)\)$/);
+  return !alphaMatch || Number.parseFloat(alphaMatch[1]) > 0;
+}
+
 // =============================================================================
 // Thumbnail Generation
 // =============================================================================

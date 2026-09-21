@@ -60,7 +60,10 @@ import {
 import { syncShapeStylePatch } from '../lib/shapeStyleSync';
 import { deriveCanvasBackgroundState } from '../lib/canvasBackground';
 import { nudgeSelection } from '../lib/canvas/nudgeSelection';
-import { generateThumbnailFromElement } from '../lib/storage/thumbnail';
+import {
+  generateThumbnailFromElement,
+  resolveThumbnailBackgroundColor,
+} from '../lib/storage/thumbnail';
 import { shouldSaveToHost } from '../lib/storage/saveStrategy';
 
 import {
@@ -349,11 +352,12 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
       canvasHost;
 
     try {
+      const backgroundColor = resolveThumbnailBackgroundColor(canvasElement);
       const thumbnail = await generateThumbnailFromElement(canvasElement, {
         width: 800,
         height: 450,
         quality: 0.72,
-        backgroundColor: '#101828',
+        backgroundColor,
       });
 
       if (!thumbnail || thumbnail === project.meta.thumbnail) return project;
