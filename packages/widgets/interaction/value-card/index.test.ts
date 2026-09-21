@@ -18,7 +18,7 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.style.padding).toBe('16px');
+    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
 
     harness.destroy();
   });
@@ -56,7 +56,7 @@ describe('interaction/value-card widget', () => {
     harness.destroy();
   });
 
-  it('collapses the default padding only for explicitly transparent backgrounds', () => {
+  it('keeps readable padding when persistence supplies a transparent background', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
@@ -69,7 +69,7 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.style.padding).toBe('0px');
+    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
 
     harness.destroy();
   });
@@ -91,7 +91,7 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.style.padding).toBe('16px');
+    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
 
     harness.destroy();
   });
@@ -107,7 +107,7 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.style.padding).toBe('16px');
+    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
 
     harness.destroy();
   });

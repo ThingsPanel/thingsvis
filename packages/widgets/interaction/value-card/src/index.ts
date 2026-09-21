@@ -77,41 +77,6 @@ function withAlpha(color: string, alpha: number): string {
   return normalized;
 }
 
-function isTransparentColor(color: string | undefined): boolean {
-  const normalized = String(color ?? '').trim().toLowerCase();
-  if (!normalized || normalized === 'transparent') return true;
-
-  const rgbaMatch = normalized.match(/^rgba?\(([^)]+)\)$/);
-  if (!rgbaMatch?.[1]) return false;
-
-  const parts = rgbaMatch[1].split(',').map(part => part.trim());
-  if (parts.length < 4) return false;
-
-  const alpha = Number(parts[3]);
-  return Number.isFinite(alpha) && alpha <= 0;
-}
-
-function hasConfiguredBackground(ctx: WidgetOverlayContext): boolean {
-  const background = ctx.baseStyle?.background;
-  if (!background) return false;
-  if (background.opacity === 0) return false;
-  return !isTransparentColor(background.color) || !!String(background.image ?? '').trim();
-}
-
-function shouldCollapseDefaultPadding(ctx: WidgetOverlayContext): boolean {
-  // Card shells own the outer surface. Keep the value-card's readable inset
-  // when persistence normalizes the shell background to transparent. Older
-  // saved nodes may not have the appearance marker, so only an explicit
-  // manual card is allowed to opt into the legacy zero-inset behavior.
-  if (ctx.baseStyle?.card?.enabled && ctx.baseStyle.card.appearance !== 'manual') {
-    return false;
-  }
-
-  const background = ctx.baseStyle?.background;
-  if (!background) return false;
-  return !hasConfiguredBackground(ctx);
-}
-
 function iconComponentNameFromValue(icon: string): string {
   const trimmed = icon.trim();
   if (!trimmed) return '';
@@ -229,9 +194,10 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     align
   } = props;
 
-  const collapseDefaultPadding = shouldCollapseDefaultPadding(ctx);
-  const paddingX = collapseDefaultPadding ? 0 : DEFAULT_CARD_PADDING_X;
-  const paddingY = collapseDefaultPadding ? 0 : DEFAULT_CARD_PADDING_Y;
+  // The widget owns its content surface, so persisted canvas background/card
+  // styles must never remove the readable inset from the widget itself.
+  const paddingX = DEFAULT_CARD_PADDING_X;
+  const paddingY = DEFAULT_CARD_PADDING_Y;
   const titleSize = titleFontSize;
   const mainValueSize = valueFontSize;
   const unitSize = suffixFontSize;
