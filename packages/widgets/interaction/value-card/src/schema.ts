@@ -9,7 +9,10 @@ export const PropsSchema = z.object({
   // Data Settings
   title: z.string().default('总览数值').describe('props.title'),
   prefix: z.string().default('').describe('props.prefix'),
-  value: z.union([z.number().default(0), z.string(), z.null()]).default(0).describe('props.value'),
+  value: z
+    .union([z.number().default(0), z.string(), z.null()])
+    .default(0)
+    .describe('props.value'),
   suffix: z.string().default('元').describe('props.suffix'),
   // Kept for compatibility with device-model presets created before `suffix`
   // was hydrated from the model field. It is intentionally not an editor control.
@@ -20,14 +23,38 @@ export const PropsSchema = z.object({
 
   // Icon Settings
   icon: z.string().default('i-lucide:activity').describe('props.icon'),
-  iconPosition: z.enum(['top', 'left', 'right']).default('top').describe('props.iconPosition'),
+  iconPosition: z.enum(['top', 'left', 'right']).default('right').describe('props.iconPosition'),
   iconSize: z.number().int().min(12).max(100).default(24).describe('props.iconSize'),
 
   // Typography Settings
-  titleFontSize: z.number().int().min(10).max(100).default(DEFAULT_TITLE_FONT_SIZE).describe('props.titleFontSize'),
-  valueFontSize: z.number().int().min(12).max(200).default(DEFAULT_VALUE_FONT_SIZE).describe('props.valueFontSize'),
-  suffixFontSize: z.number().int().min(10).max(100).default(DEFAULT_SUFFIX_FONT_SIZE).describe('props.suffixFontSize'),
-  subtitleFontSize: z.number().int().min(10).max(100).default(DEFAULT_SUBTITLE_FONT_SIZE).describe('props.subtitleFontSize'),
+  titleFontSize: z
+    .number()
+    .int()
+    .min(10)
+    .max(100)
+    .default(DEFAULT_TITLE_FONT_SIZE)
+    .describe('props.titleFontSize'),
+  valueFontSize: z
+    .number()
+    .int()
+    .min(12)
+    .max(200)
+    .default(DEFAULT_VALUE_FONT_SIZE)
+    .describe('props.valueFontSize'),
+  suffixFontSize: z
+    .number()
+    .int()
+    .min(10)
+    .max(100)
+    .default(DEFAULT_SUFFIX_FONT_SIZE)
+    .describe('props.suffixFontSize'),
+  subtitleFontSize: z
+    .number()
+    .int()
+    .min(10)
+    .max(100)
+    .default(DEFAULT_SUBTITLE_FONT_SIZE)
+    .describe('props.subtitleFontSize'),
 
   // Color Settings
   titleColor: z.string().default('').describe('props.titleColor'),

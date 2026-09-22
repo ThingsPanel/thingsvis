@@ -146,6 +146,28 @@ function renderIconBadgeFrame(contentHtml: string, badgeSize: number): string {
   `;
 }
 
+function renderLineIconFrame(contentHtml: string, iconSize: number, iconColor: string): string {
+  return `
+    <div
+      data-value-card-icon-style="line"
+      aria-hidden="true"
+      style="
+        width: ${iconSize}px;
+        height: ${iconSize}px;
+        min-width: ${iconSize}px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: ${iconColor};
+        overflow: hidden;
+      "
+    >
+      ${contentHtml}
+    </div>
+  `;
+}
+
 // ============================================================================
 // Render helpers
 // ============================================================================
@@ -243,13 +265,13 @@ function renderCard(
   });
   const iconColor = resolveLayeredColor({
     instance: iconColorProp,
-    theme: colors.textPrimary,
-    fallback: colors.textPrimary,
+    theme: colors.primary,
+    fallback: colors.primary,
   });
   const iconBackgroundColor = resolveLayeredColor({
     instance: iconBackgroundColorProp,
-    theme: colors.fg,
-    fallback: colors.fg,
+    theme: withAlpha(colors.primary, 0.14),
+    fallback: withAlpha(colors.primary, 0.14),
   });
   const trendUpColor = resolveLayeredColor({
     instance: trendUpColorProp,
@@ -279,28 +301,32 @@ function renderCard(
   let iconHtml = '';
   let iconComponent: LucideIcons.LucideIcon | null = null;
   let iconGlyphSize = 0;
+  const hasSideIconPosition = iconPosition === 'left' || iconPosition === 'right';
   if (icon) {
-    const badgeSize = Math.max(iconSize, MIN_ICON_BADGE_SIZE);
-    iconGlyphSize = Math.max(MIN_ICON_GLYPH_SIZE, Math.round(badgeSize * 0.58));
+    const resolvedIconSize = Math.max(iconSize, MIN_ICON_BADGE_SIZE);
+    iconGlyphSize = Math.max(
+      MIN_ICON_GLYPH_SIZE,
+      Math.round(resolvedIconSize * (hasSideIconPosition ? 0.72 : 0.58)),
+    );
     iconComponent = resolveIconComponent(icon);
 
     if (iconComponent) {
-      iconHtml = renderIconBadgeFrame(
-        `<div data-value-card-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:${iconColor};"></div>`,
-        badgeSize,
-      )
-        .replace('color: currentColor;', `color: ${iconColor};`)
-        .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
+      const iconSlotHtml = `<div data-value-card-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:${iconColor};"></div>`;
+      iconHtml = hasSideIconPosition
+        ? renderLineIconFrame(iconSlotHtml, resolvedIconSize, iconColor)
+        : renderIconBadgeFrame(iconSlotHtml, resolvedIconSize)
+            .replace('color: currentColor;', `color: ${iconColor};`)
+            .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
     } else {
       const iconLabel = iconLabelFromValue(icon);
       if (iconLabel) {
-        const fontSize = Math.max(MIN_ICON_FONT_SIZE, Math.round(badgeSize * 0.42));
-        iconHtml = renderIconBadgeFrame(
-          `<span style="font-size:${fontSize}px;font-weight:700;letter-spacing:0.04em;color:${iconColor};">${escapeHtml(iconLabel)}</span>`,
-          badgeSize,
-        )
-          .replace('color: currentColor;', `color: ${iconColor};`)
-          .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
+        const fontSize = Math.max(MIN_ICON_FONT_SIZE, Math.round(resolvedIconSize * 0.42));
+        const iconLabelHtml = `<span style="font-size:${fontSize}px;font-weight:700;letter-spacing:0.04em;color:${iconColor};">${escapeHtml(iconLabel)}</span>`;
+        iconHtml = hasSideIconPosition
+          ? renderLineIconFrame(iconLabelHtml, resolvedIconSize, iconColor)
+          : renderIconBadgeFrame(iconLabelHtml, resolvedIconSize)
+              .replace('color: currentColor;', `color: ${iconColor};`)
+              .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
       }
     }
   }
@@ -320,9 +346,10 @@ function renderCard(
   const trendHtml = renderTrendBadge(trend, subtitleFontSize, trendUpColor, trendDownColor);
   const hasSideIcon = !!iconHtml && (iconPosition === 'left' || iconPosition === 'right');
   const titleHtml = `
-    <div style="
+    <div data-value-card-title="true" style="
       font-size: ${titleSize}px;
       color: ${titleColor};
+      line-height: 1.25;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -332,7 +359,7 @@ function renderCard(
     </div>
   `;
   const valueHtml = `
-    <div style="
+    <div data-value-card-value="true" style="
       display: flex;
       align-items: baseline;
       gap: 4px;
@@ -342,6 +369,7 @@ function renderCard(
       overflow: hidden;
       text-overflow: ellipsis;
       width: 100%;
+      min-width: 0;
       justify-content: ${align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'};
     ">
       ${
@@ -353,7 +381,7 @@ function renderCard(
       `
           : ''
       }
-      <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
+      <span style="min-width:0; overflow:hidden; text-overflow:ellipsis; font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
         ${escapeHtml(displayValue)}
       </span>
       ${
@@ -369,9 +397,10 @@ function renderCard(
   `;
   const subtitleHtml = subtitle
     ? `
-    <div style="
+    <div data-value-card-subtitle="true" style="
       font-size: ${subTitleSize}px;
       color: ${subtitleColor};
+      line-height: 1.25;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -382,27 +411,19 @@ function renderCard(
   `
     : '';
   const textContentHtml = `
-    <div style="
+    <div data-value-card-content="true" style="
       min-width: 0;
       flex: 1 1 auto;
       display: flex;
       flex-direction: column;
-      gap: ${contentGap}px;
+      gap: ${Math.max(4, Math.min(contentGap, Math.round(mainValueSize * 0.28)))}px;
       align-items: ${alignItems};
       text-align: ${textAlign};
       width: 100%;
     ">
-      ${
-        hasSideIcon && trendHtml
-          ? `
-        <div style="display:flex;justify-content:${align === 'right' ? 'flex-end' : 'flex-start'};width:100%;">
-          ${trendHtml}
-        </div>
-      `
-          : ''
-      }
       ${titleHtml}
       ${valueHtml}
+      ${hasSideIcon && trendHtml ? trendHtml : ''}
       ${subtitleHtml}
     </div>
   `;
@@ -412,7 +433,7 @@ function renderCard(
 
   // HTML Structure — 4-row layout per spec v2
   element.innerHTML = `
-    <div style="
+    <div data-value-card-layout="${hasSideIcon ? 'side' : 'stacked'}" style="
       width: 100%;
       height: 100%;
       box-sizing: border-box;
@@ -423,15 +444,16 @@ function renderCard(
       align-items: ${alignItems};
       text-align: ${textAlign};
       color: ${valueColor};
+      min-width: 0;
     ">
       ${
         hasSideIcon
           ? `
-        <div style="
+        <div data-value-card-side-row="true" style="
           display: flex;
           align-items: center;
           justify-content: ${align === 'right' ? 'flex-end' : align === 'center' ? 'center' : 'flex-start'};
-          gap: 14px;
+          gap: clamp(12px, 4%, 24px);
           width: 100%;
           min-width: 0;
         ">
