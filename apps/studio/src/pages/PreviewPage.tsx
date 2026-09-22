@@ -329,12 +329,10 @@ export default function PreviewPage() {
     <div
       className={`theme-${pageTheme} relative w-full h-screen`}
       style={{
-        backgroundColor: (pageBackground as any)?.color || 'hsl(var(--background))',
-        backgroundImage: (pageBackground as any)?.image
-          ? `url(${(pageBackground as any).image})`
-          : undefined,
-        backgroundSize: (pageBackground as any)?.size || 'cover',
-        backgroundRepeat: (pageBackground as any)?.repeat || 'no-repeat',
+        // The canvas renderer owns the configured page background. Keeping the
+        // viewport host transparent prevents a second opaque layer around it.
+        backgroundColor: 'transparent',
+        backgroundImage: 'none',
         overflow: canvasMode === 'grid' ? 'auto' : 'hidden',
       }}
     >

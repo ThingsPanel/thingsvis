@@ -11,7 +11,7 @@ describe('canvasBackgroundStyle', () => {
         color: 'transparent',
       }),
     ).toMatchObject({
-      backgroundColor: 'var(--w-bg, hsl(var(--w-canvas-bg, 0 0% 100%)))',
+      backgroundColor: 'var(--w-bg, transparent)',
       backgroundImage: 'var(--w-artboard-gradient, none)',
       backgroundSize: 'cover',
       backgroundRepeat: 'no-repeat',

@@ -13,7 +13,7 @@ import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useSyncExternalStore } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { PreviewCanvas, GridCanvas, resolveCanvasBackgroundStyle } from '@thingsvis/ui';
+import { PreviewCanvas, GridCanvas } from '@thingsvis/ui';
 import type { KernelState } from '@thingsvis/kernel';
 import type { PageSchemaType, DataSource } from '@thingsvis/schema';
 import { DEFAULT_CANVAS_THEME } from '@thingsvis/schema';
@@ -288,22 +288,10 @@ export default function EmbedPage() {
     isHostManagedEmbed && isGridLayout && searchParams.get('embedSizing') === 'content';
   const shouldKeepLoadingOnError = isHostManagedEmbed && !state.schema;
 
-  const pageBackground = useMemo(() => {
-    const page = kernelState?.page as any;
-    return (
-      (page?.config?.background as Record<string, string> | undefined) || { color: 'transparent' }
-    );
-  }, [kernelState]);
-
   const pageTheme = useMemo(() => {
     const page = kernelState?.page as any;
     return (page?.config?.theme as string) ?? DEFAULT_CANVAS_THEME;
   }, [kernelState]);
-
-  const scaleScreenBackgroundStyle = useMemo(
-    () => resolveCanvasBackgroundStyle(pageBackground),
-    [pageBackground],
-  );
 
   useEffect(() => {
     const targets = [
@@ -1277,7 +1265,16 @@ export default function EmbedPage() {
                       transform: `scale(${appScale})`,
                       transformOrigin: 'top left',
                     }
-                  : undefined
+                  : !isHostContentSizedEmbed
+                    ? {
+                        // Keep the grid renderer's theme/background viewport-sized.
+                        // Without an explicit height here this intermediate wrapper
+                        // collapses to the occupied grid rows, exposing the host
+                        // page's default background below the last widget.
+                        height: '100%',
+                        minHeight: '100%',
+                      }
+                    : undefined
               }
             >
               <GridCanvas
@@ -1314,7 +1311,6 @@ export default function EmbedPage() {
             height={canvasHeight}
             mode={scaleMode}
             alignY={previewAlignY}
-            contentStyle={scaleScreenBackgroundStyle}
           >
             {(engineZoom) => (
               <PreviewCanvas
