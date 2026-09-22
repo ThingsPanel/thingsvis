@@ -20,6 +20,7 @@ import {
   isAutoCardStyle,
   isCardModeEnabled,
   syncCardHeaderElement,
+  withColorOpacity,
 } from '../utils/cardStyle';
 
 function isLineNodeType(type: string | undefined): boolean {
@@ -1612,7 +1613,10 @@ export class VisualEngine {
 
     // Background
     if (baseStyle.background) {
-      box.style.backgroundColor = baseStyle.background.color || '';
+      box.style.backgroundColor = withColorOpacity(
+        baseStyle.background.color,
+        baseStyle.background.opacity,
+      ) || '';
       if (baseStyle.background.image) {
         box.style.backgroundImage = `url(${baseStyle.background.image})`;
         box.style.backgroundSize = '100% 100%';

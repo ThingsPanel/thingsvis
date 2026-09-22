@@ -24,6 +24,34 @@ export const AUTO_CARD_STYLE = {
   subtitleColor: 'var(--w-card-subtitle, var(--w-fg, #64748b))',
 } as const;
 
+/** Apply a background opacity without affecting the widget content. */
+export function withColorOpacity(color: string | undefined, opacity: number | undefined): string | undefined {
+  if (!color) return color;
+  if (opacity == null || opacity >= 1) return color;
+  if (opacity <= 0 || color.trim().toLowerCase() === 'transparent') return 'transparent';
+
+  const normalized = color.trim();
+  const hexMatch = normalized.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+  if (hexMatch) {
+    const raw = hexMatch[1]!;
+    const full = raw.length === 3 ? raw.split('').map((part) => part + part).join('') : raw;
+    const number = Number.parseInt(full, 16);
+    return `rgba(${(number >> 16) & 255}, ${(number >> 8) & 255}, ${number & 255}, ${opacity})`;
+  }
+
+  const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbMatch) {
+    const parts = rgbMatch[1]!.split(',').map((part) => part.trim());
+    if (parts.length >= 3) {
+      const currentAlpha = parts[3] == null ? 1 : Number.parseFloat(parts[3]);
+      const alpha = Number.isFinite(currentAlpha) ? Math.max(0, Math.min(1, currentAlpha * opacity)) : opacity;
+      return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+    }
+  }
+
+  return `color-mix(in srgb, ${normalized} ${Math.round(opacity * 100)}%, transparent)`;
+}
+
 export function isCardModeEnabled(baseStyle?: Partial<IBaseStyle> | null): boolean {
   return baseStyle?.card?.enabled === true;
 }

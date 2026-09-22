@@ -182,12 +182,13 @@ export function CanvasSettingsPanel({
                 );
               })}
             </div>
-            <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3 space-y-3">
-              <div>
+            <details open className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
+              <summary className="cursor-pointer list-none text-sm font-medium">
                 <div className="text-sm font-medium">{t('canvas.themeOverrides')}</div>
                 <div className="mt-1 text-[11px] leading-4 text-muted-foreground">{t('canvas.themeOverridesHint')}</div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
+              </summary>
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                 {([
                   ['surface', 'themeSurface'],
                   ['textPrimary', 'themeTextPrimary'],
@@ -205,17 +206,18 @@ export function CanvasSettingsPanel({
                     />
                   </div>
                 ))}
+                </div>
+                {Object.keys(themeOverrides).length > 0 && (
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                    onClick={() => onConfigChange({ ...canvasConfig, themeOverrides: undefined })}
+                  >
+                    {t('canvas.themeReset')}
+                  </button>
+                )}
               </div>
-              {Object.keys(themeOverrides).length > 0 && (
-                <button
-                  type="button"
-                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                  onClick={() => onConfigChange({ ...canvasConfig, themeOverrides: undefined })}
-                >
-                  {t('canvas.themeReset')}
-                </button>
-              )}
-            </div>
+            </details>
           </div>
 
           <div className="space-y-2 order-1">

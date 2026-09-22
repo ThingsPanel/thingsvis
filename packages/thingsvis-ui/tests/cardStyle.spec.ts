@@ -5,6 +5,7 @@ import {
   isAutoCardStyle,
   resolveCardTitle,
   removeCardStyleDefaults,
+  withColorOpacity,
 } from '../src/utils/cardStyle';
 
 describe('card style helpers', () => {
@@ -55,5 +56,11 @@ describe('card style helpers', () => {
 
   it('does not treat disabled auto cards as automatic', () => {
     expect(isAutoCardStyle({ card: { enabled: false, appearance: 'auto' } })).toBe(false);
+  });
+
+  it('applies background opacity without changing the widget content opacity', () => {
+    expect(withColorOpacity('#102a43', 0.42)).toBe('rgba(16, 42, 67, 0.42)');
+    expect(withColorOpacity('rgba(16, 42, 67, 0.8)', 0.5)).toBe('rgba(16, 42, 67, 0.4)');
+    expect(withColorOpacity('#102a43', 0)).toBe('transparent');
   });
 });

@@ -162,6 +162,19 @@ export function BaseStylePanel({
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium text-muted-foreground">
+              {t('propsPanel.baseStyle.backgroundOpacity', '背景透明度')}
+            </label>
+            <NumericInput
+              value={baseStyle.background?.opacity ?? 1}
+              onValueChange={(nextValue) => updateStyle('background', 'opacity', nextValue ?? 1)}
+              className="h-8 text-sm"
+              min={0}
+              max={1}
+              step={0.05}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">
               {t('propsPanel.baseStyle.image', '背景图')}
             </label>
             <ImageSourceInput

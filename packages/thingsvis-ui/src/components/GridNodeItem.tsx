@@ -13,7 +13,7 @@ import { PropertyResolver } from '../engine/PropertyResolver';
 import { buildEmit, type ActionRuntime } from '../engine/executeActions';
 import { WidgetErrorBoundary } from './WidgetErrorBoundary';
 import { createWidgetThemeColorOverrideStyle } from '../utils/widgetThemeColorOverrides';
-import { AUTO_CARD_STYLE, isAutoCardStyle, isCardModeEnabled } from '../utils/cardStyle';
+import { AUTO_CARD_STYLE, isAutoCardStyle, isCardModeEnabled, withColorOpacity } from '../utils/cardStyle';
 import { WidgetCardHeader } from './WidgetCardHeader';
 import type { IBaseStyle } from '@thingsvis/schema';
 
@@ -583,7 +583,9 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     // Remove transition during active dragging/resizing for immediate response
                     transition: isInteracting ? 'none' : 'left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease',
                     // baseStyle — applied from user settings in BaseStylePanel
-                    backgroundColor: nodeBaseStyle.background?.color ?? (autoCardStyle ? AUTO_CARD_STYLE.background : undefined),
+                    backgroundColor: nodeBaseStyle.background?.color
+                        ? withColorOpacity(nodeBaseStyle.background.color, nodeBaseStyle.background.opacity)
+                        : (autoCardStyle ? AUTO_CARD_STYLE.background : undefined),
                     backgroundImage: nodeBaseStyle.background?.image
                         ? `url(${nodeBaseStyle.background.image})`
                         : undefined,
