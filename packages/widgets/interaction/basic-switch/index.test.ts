@@ -56,6 +56,21 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('keeps the switch on the right in the default layout', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { label: 'Bedroom light', offLabel: 'Off' },
+    });
+
+    const layout = harness.element.firstElementChild as HTMLElement | null;
+    expect(layout?.style.flexDirection).toBe('row');
+    expect(layout?.firstElementChild?.getAttribute('data-tv-switch-content')).toBe('');
+    expect(layout?.lastElementChild?.id).toBe('track');
+
+    harness.destroy();
+  });
+
   it('renders a configurable Lucide icon without owning a glass surface', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
