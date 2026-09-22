@@ -21,7 +21,7 @@ export const controls = createControlPanel()
         { label: `${W}.iconPositionRight`, value: 'right' },
       ],
     });
-    b.addSlider('iconSize', { label: `${W}.iconSize`, min: 12, max: 100, step: 1, default: 24 });
+    b.addSlider('iconSize', { label: `${W}.iconSize`, min: 12, max: 100, step: 1, default: 50 });
   }, { label: `${W}.groupData` })
 
   // Typography Group
