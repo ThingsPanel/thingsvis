@@ -119,6 +119,58 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('renders bound platform history without calling the legacy history endpoint', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        data: [
+          { timestamp: 1000000000000, value: 20 },
+          { timestamp: 1000000001000, value: 21 },
+        ],
+        config: defaults.config,
+      },
+    });
+
+    await vi.waitFor(() =>
+      expect(chartMock.options.at(-1)?.series?.[0]?.data).toEqual([
+        [1000000000000, 20],
+        [1000000001000, 21],
+      ]),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+    harness.destroy();
+  });
+
+  it('appends platform realtime data to a single bound history series', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        data: [{ timestamp: 1000000000000, value: 20 }],
+        config: defaults.config,
+      },
+    });
+
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.series?.[0]?.data).toHaveLength(1));
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        data: {
+          type: 'tv:platform-data',
+          payload: { fieldId: 'temperature', value: 21, timestamp: 1000000001000 },
+        },
+      }),
+    );
+    expect(chartMock.options.at(-1)?.series?.[0]?.data).toEqual([
+      [1000000000000, 20],
+      [1000000001000, 21],
+    ]);
+    harness.destroy();
+  });
+
   it('appends matching WebSocket telemetry without replacing HTTP history', async () => {
     vi.stubGlobal(
       'fetch',
