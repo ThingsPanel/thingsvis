@@ -5,7 +5,7 @@ name: Deploy to E
 # =============================================================================
 # 1. DATABASE_URL_E        — 数据库连接地址，格式如 mysql://user:password@host:3306/dbname
 # 2. AUTH_SECRET         — 认证加密密钥，用于 session / JWT 签名，建议 32+ 位随机字符串
-# 3. DEPLOY_HOST_E         — 目标服务器 IP 或域名（如 192.168.1.100 或 test.example.com）
+# 3. DEPLOY_HOST_E         — 旧公网地址已停用；部署通过 Tailscale 私网地址访问
 # 4. DEPLOY_USER_E         — SSH 登录用户名（需对该服务器 /var/www 和 /opt/thingsvis 有写权限）
 # 5. DEPLOY_SSH_KEY_E      — SSH 私钥（建议为部署专用用户生成独立 key pair，仅允许 key 登录）
 # =============================================================================
@@ -26,6 +26,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci-deploy
+          ping: 100.105.12.123
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -179,7 +187,7 @@ jobs:
       - name: Upload to server
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.DEPLOY_HOST_E }}
+          host: 100.105.12.123
           username: ${{ secrets.DEPLOY_USER_E }}
           key: ${{ secrets.DEPLOY_SSH_KEY_E }}
           port: 22
@@ -190,7 +198,7 @@ jobs:
       - name: Deploy and restart services
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.DEPLOY_HOST_E }}
+          host: 100.105.12.123
           username: ${{ secrets.DEPLOY_USER_E }}
           key: ${{ secrets.DEPLOY_SSH_KEY_E }}
           port: 22
@@ -260,4 +268,4 @@ jobs:
             echo "=== Deployment complete ==="
             pm2 list
             echo ""
-            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST_E }}:7050/"
+            echo "🔗 Studio:  http://100.105.12.123:7050/"
