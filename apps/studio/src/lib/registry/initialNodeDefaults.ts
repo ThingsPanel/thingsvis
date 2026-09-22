@@ -7,12 +7,21 @@ export type InitialGridSettings = Pick<GridSettings, 'cols' | 'rowHeight' | 'gap
 };
 
 /** Defaults owned by the editor for a newly inserted library widget. */
-export function createDefaultWidgetBaseStyle(): IBaseStyle {
+export function createDefaultWidgetBaseStyle(widgetType?: string): IBaseStyle {
+  const isValueCard = widgetType === 'interaction/value-card';
+  const isHistoryCurve = widgetType === 'chart/realtime-history-curve';
+
   // Keep the generator dependency-free. BaseStylePanel applies visual defaults
   // when users toggle the mode, while the persisted flag controls the default UI state.
   return {
     opacity: 1,
-    card: { enabled: true, appearance: 'auto', showSubtitle: false, titleFontSize: 16 },
+    ...(isValueCard ? { padding: 16 } : {}),
+    card: {
+      enabled: !isValueCard && !isHistoryCurve,
+      appearance: 'auto',
+      showSubtitle: false,
+      titleFontSize: 16,
+    },
   };
 }
 

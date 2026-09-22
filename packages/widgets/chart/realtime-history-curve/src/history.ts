@@ -45,7 +45,15 @@ export const WINDOW_MS: Record<string, number> = {
   '1mo': 2592000000,
 };
 
-const WINDOWS = Object.keys(WINDOW_MS);
+/**
+ * The platform API accepts `no_aggregate` only as a special raw-data mode.
+ * A history query is always sent through the aggregate endpoint, so the
+ * smallest legal window is 30 seconds. Keeping `no_aggregate` in WINDOW_MS
+ * preserves old saved configurations while preventing them from leaking into
+ * new requests.
+ */
+const WINDOWS = Object.keys(WINDOW_MS).filter((window) => window !== 'no_aggregate');
+const MINIMUM_AGGREGATION_WINDOW = '30s';
 
 export function getTimeBounds(data: RealtimeHistoryConfig['data'], now = Date.now()) {
   if (data.timeRange === 'custom') return { start: data.startTime, end: data.endTime };
@@ -53,7 +61,9 @@ export function getTimeBounds(data: RealtimeHistoryConfig['data'], now = Date.no
 }
 
 export function minimumWindowForSpan(spanMs: number): string {
-  if (spanMs < 3 * 3600000) return 'no_aggregate';
+  // Even a short selected time range must use the API's aggregation path.
+  // This also normalizes legacy `raw`/`no_aggregate` widget settings.
+  if (spanMs < 3 * 3600000) return MINIMUM_AGGREGATION_WINDOW;
   if (spanMs < 6 * 3600000) return '30s';
   if (spanMs < 12 * 3600000) return '1m';
   if (spanMs < 24 * 3600000) return '2m';
@@ -75,7 +85,7 @@ export function minimumWindowForData(
   const bounds = getTimeBounds(data, now);
   const minimum = minimumWindowForSpan(Math.max(1, bounds.end - bounds.start));
   // The API documents a stricter boundary for manually selected ranges:
-  // custom ranges >= 3h cannot use either raw or 30-second aggregation.
+  // custom ranges >= 3h cannot use 30-second aggregation.
   return data.timeRange === 'custom' &&
     bounds.end - bounds.start >= 3 * 3600000 &&
     minimum === '30s'
@@ -94,22 +104,54 @@ export function resolveAggregation(
   if (data.timeRange === 'custom' && span >= 3 * 3600000 && minimum === '30s') minimum = '1m';
   if (data.aggregationMode === 'raw') {
     return {
-      window: minimum === 'no_aggregate' ? 'no_aggregate' : minimum,
-      // Once the API forces an aggregate window, aggregate_function is mandatory.
-      fn: minimum === 'no_aggregate' ? undefined : data.aggregationFunction,
+      // `raw` is retained as a backwards-compatible config value, but the
+      // history API must still receive an aggregate window for every range.
+      window: minimum,
+      fn: data.aggregationFunction,
     };
   }
   if (data.aggregationMode === 'custom') {
     const requestedMs = WINDOW_MS[data.aggregationWindow] ?? 0;
     const minimumMs = WINDOW_MS[minimum] ?? 0;
-    const window = requestedMs >= minimumMs ? data.aggregationWindow : minimum;
-    return { window, fn: window === 'no_aggregate' ? undefined : data.aggregationFunction };
+    const window =
+      requestedMs >= minimumMs && data.aggregationWindow !== 'no_aggregate'
+        ? data.aggregationWindow
+        : minimum;
+    return { window, fn: data.aggregationFunction };
   }
   const targetMs = span / Math.max(100, data.maxDataPoints);
   const minimumMs = WINDOW_MS[minimum] ?? 0;
   const window =
     WINDOWS.find((item) => (WINDOW_MS[item] ?? 0) >= Math.max(targetMs, minimumMs)) ?? '1mo';
-  return { window, fn: window === 'no_aggregate' ? undefined : data.aggregationFunction };
+  return { window, fn: data.aggregationFunction };
+}
+
+export function parseApiErrorCode(payload: unknown): number | undefined {
+  if (!payload || typeof payload !== 'object') return undefined;
+  const code = (payload as Record<string, unknown>).code;
+  return typeof code === 'number' ? code : undefined;
+}
+
+function findText(payload: unknown): string {
+  if (typeof payload === 'string') return payload;
+  if (!payload || typeof payload !== 'object') return '';
+  const record = payload as Record<string, unknown>;
+  return [record.message, record.msg, record.error, record.detail]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ');
+}
+
+/**
+ * Backend 207004 may be returned by a newer server with a stricter threshold
+ * than this widget knows about. Prefer the server's advertised minimum when
+ * it is present, then fall back to the locally maintained contract.
+ */
+export function aggregationWindowFromApiError(payload: unknown): string | undefined {
+  const code = parseApiErrorCode(payload);
+  if (code !== 207001 && code !== 207004) return undefined;
+  const text = findText(payload);
+  const match = text.match(/(?:30s|1m|2m|5m|10m|30m|1h|3h|6h|1d|7d|1mo)/);
+  return match?.[0];
 }
 
 function parseTime(value: unknown): number | null {
@@ -206,7 +248,7 @@ export function buildHistoryUrl(
   baseUrl: string,
   data: RealtimeHistoryConfig['data'],
   key: string,
-  options?: { export?: boolean; start?: number; end?: number },
+  options?: { export?: boolean; start?: number; end?: number; aggregationWindow?: string },
 ) {
   const cleanBase = (baseUrl || '/proxy-default').replace(/\/$/, '');
   const endpoint = `${cleanBase}/telemetry/datas/statistic`;
@@ -224,10 +266,11 @@ export function buildHistoryUrl(
       ? { ...data, timeRange: 'custom' as const, startTime: options.start, endTime: options.end }
       : data;
   const aggregation = resolveAggregation(aggregationData, options?.end, explicitBounds);
+  const window = options?.aggregationWindow ?? aggregation.window;
   const params = new URLSearchParams({
     device_id: data.deviceId,
     key,
-    aggregate_window: aggregation.window,
+    aggregate_window: window,
   });
   if (options?.start != null && options?.end != null) {
     params.set('time_range', 'custom');
@@ -240,7 +283,7 @@ export function buildHistoryUrl(
       params.set('end_time', String(data.endTime));
     }
   }
-  if (aggregation.fn) params.set('aggregate_function', aggregation.fn);
+  if (window !== 'no_aggregate') params.set('aggregate_function', aggregation.fn ?? 'avg');
   if (options?.export) params.set('is_export', 'true');
   return `${endpoint}?${params.toString()}`;
 }

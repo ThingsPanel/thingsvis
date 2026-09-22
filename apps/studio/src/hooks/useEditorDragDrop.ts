@@ -92,7 +92,7 @@ export function useEditorDragDrop(markDirty: () => void) {
           position: { x: 100, y: 100 },
           ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
-          baseStyle: createDefaultWidgetBaseStyle(),
+          baseStyle: createDefaultWidgetBaseStyle(componentType),
           grid: resolveInitialGridPosition(
             initialSize,
             {
@@ -138,7 +138,7 @@ export function useEditorDragDrop(markDirty: () => void) {
           position: { x: 0, y: 0 },
           ...(initialSize ? { size: initialSize } : {}),
           props: defaultProps,
-          baseStyle: createDefaultWidgetBaseStyle(),
+          baseStyle: createDefaultWidgetBaseStyle(componentType),
           grid: resolveInitialGridPosition(
             initialSize,
             {

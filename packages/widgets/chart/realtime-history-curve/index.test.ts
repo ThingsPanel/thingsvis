@@ -4,6 +4,7 @@ import { controls } from './src/controls';
 import {
   appendRealtime,
   buildHistoryUrl,
+  aggregationWindowFromApiError,
   limitPoints,
   minimumWindowForData,
   normalizeHistoryResponse,
@@ -13,13 +14,14 @@ import {
 } from './src/history';
 
 describe('chart/realtime-history-curve history contract', () => {
-  it('exposes the standard data binding control without the legacy device picker', () => {
+  it('keeps the standard data binding control and the full history config editor', () => {
     const fields = controls.groups.flatMap((group) => group.fields);
-    expect(fields.map((field) => field.path)).toEqual(['data']);
-    expect(fields[0]?.binding).toEqual({
+    expect(fields.map((field) => field.path)).toEqual(['data', 'config']);
+    expect(fields.find((field) => field.path === 'data')?.binding).toEqual({
       enabled: true,
       modes: ['static', 'field', 'expr'],
     });
+    expect(fields.find((field) => field.path === 'config')?.kind).toBe('timeSeriesConfig');
   });
 
   it('normalizes a platform history field into one chart series', () => {
@@ -55,6 +57,8 @@ describe('chart/realtime-history-curve history contract', () => {
   });
 
   it.each([
+    ['last_5m', '30s'],
+    ['last_1h', '30s'],
     ['last_3h', '30s'],
     ['last_6h', '1m'],
     ['last_12h', '2m'],
@@ -72,7 +76,7 @@ describe('chart/realtime-history-curve history contract', () => {
     expect(resolveAggregation(data).window).toBe(expectedWindow);
   });
 
-  it('uses the ThingsPanel telemetry statistic endpoint and one metric key', () => {
+  it('uses an aggregate window even for legacy raw settings', () => {
     const data = {
       ...getDefaultProps().config.data,
       deviceId: 'dev-1',
@@ -85,8 +89,8 @@ describe('chart/realtime-history-curve history contract', () => {
     expect(url.searchParams.get('device_id')).toBe('dev-1');
     expect(url.searchParams.get('key')).toBe('temperature');
     expect(url.searchParams.get('time_range')).toBe('last_1h');
-    expect(url.searchParams.get('aggregate_window')).toBe('no_aggregate');
-    expect(url.searchParams.has('aggregate_function')).toBe(false);
+    expect(url.searchParams.get('aggregate_window')).toBe('30s');
+    expect(url.searchParams.get('aggregate_function')).toBe('avg');
   });
 
   it('forces a legal aggregation window for ranges that cannot use raw data', () => {
@@ -219,6 +223,19 @@ describe('chart/realtime-history-curve history contract', () => {
     expect(() => buildHistoryUrl('/proxy-default', data, 'temperature')).toThrow(
       '结束时间必须晚于开始时间',
     );
+  });
+
+  it('recognizes server aggregation errors and extracts the advertised minimum', () => {
+    expect(
+      aggregationWindowFromApiError({
+        code: 207004,
+        message: '查询时间范围超过30天，聚合间隔不能小于1h，当前配置为30m',
+      }),
+    ).toBe('1h');
+    expect(aggregationWindowFromApiError({ code: 207001, message: '超过一天' })).toBeUndefined();
+    expect(
+      aggregationWindowFromApiError({ code: 207002, message: '时间范围无效' }),
+    ).toBeUndefined();
   });
 
   it('normalizes real-time timestamps expressed in seconds or milliseconds', () => {

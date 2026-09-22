@@ -9,12 +9,15 @@ import { metadata } from './metadata';
 import { controls } from './controls';
 import { PropsSchema, type Props, type RealtimeHistoryConfig, type SeriesConfig } from './schema';
 import {
+  aggregationWindowFromApiError,
   appendRealtime,
   buildHistoryUrl,
   comparisonOffset,
   getTimeBounds,
   limitPoints,
+  minimumWindowForData,
   normalizeHistoryResponse,
+  parseApiErrorCode,
   normalizeBoundHistorySeries,
   normalizeTimestamp,
   resolveAggregation,
@@ -33,7 +36,23 @@ type SeriesState = {
   error?: string;
   comparisonError?: string;
 };
+const PREVIEW_SERIES_KEY = '__thingsvis_preview__';
 const SERIES_COLORS = ['#6965db', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272'];
+
+function createPreviewState(now = Date.now()): SeriesState {
+  const pointCount = 36;
+  const step = 2 * 60 * 1000;
+  return {
+    key: PREVIEW_SERIES_KEY,
+    points: Array.from({ length: pointCount }, (_, index) => ({
+      time: now - (pointCount - 1 - index) * step,
+      value: Number(
+        (52 + Math.sin(index / 3.2) * 8 + Math.cos(index / 7) * 4 + (index % 9 === 0 ? 3 : 0)).toFixed(2),
+      ),
+    })),
+    comparison: [],
+  };
+}
 
 function resolveSeriesStyle(
   config: RealtimeHistoryConfig,
@@ -57,6 +76,17 @@ function resolveSeriesStyle(
       hidden: false,
     }
   );
+}
+
+function seriesLabel(style: SeriesConfig, key: string): string {
+  if (key === PREVIEW_SERIES_KEY) return '示例曲线';
+  const label = String(style.name || key).trim() || key;
+  return label.toLowerCase() === 'bound' ? '历史数据' : label;
+}
+
+function legendLabel(style: SeriesConfig, key: string): string {
+  const label = seriesLabel(style, key);
+  return style.unit ? `${label}（${style.unit}）` : label;
 }
 
 function runtimeText(locale?: string): Record<string, string> {
@@ -166,6 +196,15 @@ export function buildChartOption(
   const seriesStyles = new Map(
     config.data.metricKeys.map((key, index) => [key, resolveSeriesStyle(config, key, index)]),
   );
+  const legendKeys = config.data.metricKeys.length
+    ? config.data.metricKeys
+    : states.map((state) => state.key);
+  const inferredAxisUnits = new Map<string, string>();
+  states.forEach((state, stateIndex) => {
+    const style = seriesStyles.get(state.key) ?? resolveSeriesStyle(config, state.key, stateIndex);
+    if (style.unit && !inferredAxisUnits.has(style.yAxisId))
+      inferredAxisUnits.set(style.yAxisId, style.unit);
+  });
   const series: any[] = [];
   const visualMap: any[] = [];
   states.forEach((state, stateIndex) => {
@@ -187,7 +226,7 @@ export function buildChartOption(
     const curve = style.curve;
     series.push({
       id: state.key,
-      name: style.name || state.key,
+      name: seriesLabel(style, state.key),
       type: 'line',
       yAxisIndex,
       data: lineData,
@@ -233,7 +272,7 @@ export function buildChartOption(
     if (state.comparison.length)
       series.push({
         id: `${state.key}:comparison`,
-        name: `${style.name || state.key}（同期）`,
+        name: `${seriesLabel(style, state.key)}（同期）`,
         type: 'line',
         yAxisIndex,
         data: state.comparison.map((point) => [
@@ -331,12 +370,25 @@ export function buildChartOption(
       orient: legendPosition === 'left' || legendPosition === 'right' ? 'vertical' : 'horizontal',
       textStyle: { color: legendColor, fontSize: styleConfig.legendFontSize },
       selected: Object.fromEntries(
-        config.data.metricKeys.map((key) => {
-          const style = seriesStyles.get(key)!;
-          return [style.name || key, !style.hidden];
+        legendKeys.map((key, index) => {
+          const style = seriesStyles.get(key) ?? resolveSeriesStyle(config, key, index);
+          return [seriesLabel(style, key), !style.hidden];
         }),
       ),
-      formatter: (name: string) => name,
+      formatter: (name: string) => {
+        const entry = legendKeys.find(
+          (key) =>
+            seriesLabel(
+              seriesStyles.get(key) ?? resolveSeriesStyle(config, key, legendKeys.indexOf(key)),
+              key,
+            ) === name,
+        );
+        if (!entry) return name === 'bound' ? '历史数据' : name;
+        return legendLabel(
+          seriesStyles.get(entry) ?? resolveSeriesStyle(config, entry, legendKeys.indexOf(entry)),
+          entry,
+        );
+      },
     },
     tooltip: {
       show: config.analysis.tooltip.show,
@@ -363,7 +415,8 @@ export function buildChartOption(
           const numeric = Number(item.value?.[1] ?? item.value);
           const value = Number.isFinite(numeric) ? numeric.toFixed(style?.decimals ?? 2) : '-';
           const unit = config.analysis.tooltip.showUnit && style?.unit ? ` ${style.unit}` : '';
-          return `${item.marker || ''}${item.seriesName}: ${value}${unit}`;
+          const label = style ? seriesLabel(style, key) : item.seriesName || key;
+          return `${item.marker || ''}${label}: ${value}${unit}`;
         });
         if (config.analysis.tooltip.showTime && Number.isFinite(timestamp))
           rows.unshift(formatDate(timestamp, config.xAxis.timeFormat, span));
@@ -404,31 +457,35 @@ export function buildChartOption(
       axisLine: { show: config.xAxis.showAxisLine, lineStyle: { color: axisLineColor } },
       splitLine: { show: config.xAxis.showGrid, lineStyle: { color: gridLineColor } },
     },
-    yAxis: config.yAxes.map((axis, index) => ({
-      id: axis.id,
-      type: 'value',
-      name: axis.title || axis.unit,
-      nameTextStyle: {
-        color: axisTitleColor,
-        fontSize: styleConfig.axisTitleFontSize,
-      },
-      position: axis.position,
-      offset:
-        config.yAxes.slice(0, index).filter((item) => item.position === axis.position).length * 48,
-      min: axis.minMode === 'fixed' ? axis.min : undefined,
-      max: axis.maxMode === 'fixed' ? axis.max : undefined,
-      splitNumber: axis.tickMode === 'split' ? axis.splitNumber : undefined,
-      interval: axis.tickMode === 'interval' ? axis.interval : undefined,
-      axisLabel: {
-        color: axisLabelColor,
-        fontSize: styleConfig.yAxisFontSize,
-        formatter: (value: number) =>
-          `${value.toFixed(axis.decimals)}${axis.unit ? ` ${axis.unit}` : ''}`,
-      },
-      axisTick: { show: axis.showTicks, lineStyle: { color: axisLineColor } },
-      axisLine: { show: axis.showAxisLine, lineStyle: { color: axisLineColor } },
-      splitLine: { show: axis.showGrid, lineStyle: { color: gridLineColor } },
-    })),
+    yAxis: config.yAxes.map((axis, index) => {
+      const axisUnit = axis.unit || inferredAxisUnits.get(axis.id) || '';
+      return {
+        id: axis.id,
+        type: 'value',
+        name: axis.title || axisUnit,
+        nameTextStyle: {
+          color: axisTitleColor,
+          fontSize: styleConfig.axisTitleFontSize,
+        },
+        position: axis.position,
+        offset:
+          config.yAxes.slice(0, index).filter((item) => item.position === axis.position).length *
+          48,
+        min: axis.minMode === 'fixed' ? axis.min : undefined,
+        max: axis.maxMode === 'fixed' ? axis.max : undefined,
+        splitNumber: axis.tickMode === 'split' ? axis.splitNumber : undefined,
+        interval: axis.tickMode === 'interval' ? axis.interval : undefined,
+        axisLabel: {
+          color: axisLabelColor,
+          fontSize: styleConfig.yAxisFontSize,
+          formatter: (value: number) =>
+            `${value.toFixed(axis.decimals)}${axisUnit ? ` ${axisUnit}` : ''}`,
+        },
+        axisTick: { show: axis.showTicks, lineStyle: { color: axisLineColor } },
+        axisLine: { show: axis.showAxisLine, lineStyle: { color: axisLineColor } },
+        splitLine: { show: axis.showGrid, lineStyle: { color: gridLineColor } },
+      };
+    }),
     visualMap,
     series,
   };
@@ -442,7 +499,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   element.appendChild(chartHost);
   const status = document.createElement('div');
   status.style.cssText =
-    'position:absolute;left:12px;top:10px;z-index:4;font:12px system-ui;color:#888;pointer-events:none';
+    'position:absolute;left:12px;top:10px;z-index:4;max-width:calc(100% - 24px);max-height:2.8em;overflow:hidden;overflow-wrap:anywhere;font:12px/1.4 system-ui;color:#888;pointer-events:none';
   element.appendChild(status);
   const exportButton = document.createElement('button');
   exportButton.type = 'button';
@@ -479,26 +536,44 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     useLoadSignal = true,
   ) => {
     const runtime = getRuntime();
-    const response = await fetch(
-      buildHistoryUrl(runtime.base, props.config.data, key, { start, end, export: exportFile }),
-      {
-        signal: useLoadSignal ? controller?.signal : undefined,
-        headers: runtime.token ? { 'x-token': runtime.token } : {},
-      },
-    );
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const payload = await response.json();
-    if (
-      payload &&
-      typeof payload === 'object' &&
-      typeof payload.code === 'number' &&
-      payload.code !== 200
-    ) {
-      throw new Error(
-        typeof payload.message === 'string' ? payload.message : `API ${payload.code}`,
+    let aggregationWindow: string | undefined;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const response = await fetch(
+        buildHistoryUrl(runtime.base, props.config.data, key, {
+          start,
+          end,
+          export: exportFile,
+          aggregationWindow,
+        }),
+        {
+          signal: useLoadSignal ? controller?.signal : undefined,
+          headers: runtime.token ? { 'x-token': runtime.token } : {},
+        },
       );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const payload = await response.json();
+      const code = parseApiErrorCode(payload);
+      if (!code || code === 200) return normalizeHistoryResponse(payload);
+
+      const serverWindow =
+        aggregationWindowFromApiError(payload) ??
+        (code === 207001 ? minimumWindowForData(props.config.data) : undefined);
+      if (
+        (code === 207001 || code === 207004) &&
+        serverWindow &&
+        serverWindow !== aggregationWindow
+      ) {
+        aggregationWindow = serverWindow;
+        continue;
+      }
+
+      const message =
+        typeof (payload as Record<string, unknown>)?.message === 'string'
+          ? (payload as Record<string, string>).message
+          : `API ${code}`;
+      throw new Error(message);
     }
-    return normalizeHistoryResponse(payload);
+    throw new Error('历史数据查询失败：聚合窗口无法满足后端限制');
   };
 
   const load = async () => {
@@ -522,8 +597,9 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       return;
     }
     if (!config.data.deviceId || !config.data.metricKeys.length) {
-      states = [];
-      status.textContent = text.empty || '请选择设备和指标字段';
+      states =
+        !config.data.deviceId && config.data.metricKeys.length === 0 ? [createPreviewState()] : [];
+      status.textContent = states.length > 0 ? '' : text.empty || '请选择设备和指标字段';
       draw();
       return;
     }

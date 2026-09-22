@@ -30,6 +30,10 @@ const AGGREGATION_WINDOWS = [
   '1mo',
 ] as const;
 const RANGE_MINIMUM_WINDOW: Record<string, (typeof AGGREGATION_WINDOWS)[number]> = {
+  last_5m: '30s',
+  last_15m: '30s',
+  last_30m: '30s',
+  last_1h: '30s',
   last_3h: '30s',
   last_6h: '1m',
   last_12h: '2m',
@@ -73,9 +77,9 @@ export function toDatetimeLocalValue(timestamp: number): string {
 export function getMinimumAggregationWindow(
   data: Record<string, any>,
 ): (typeof AGGREGATION_WINDOWS)[number] {
-  if (data.timeRange !== 'custom') return RANGE_MINIMUM_WINDOW[data.timeRange] ?? 'no_aggregate';
+  if (data.timeRange !== 'custom') return RANGE_MINIMUM_WINDOW[data.timeRange] ?? '30s';
   const span = Math.max(0, Number(data.endTime) - Number(data.startTime));
-  if (span < 3 * 3600000) return 'no_aggregate';
+  if (span < 3 * 3600000) return '30s';
   if (span < 6 * 3600000) return '1m';
   if (span < 12 * 3600000) return '2m';
   if (span < 24 * 3600000) return '5m';

@@ -32,6 +32,8 @@ export type FieldPickerValue = {
   dataSourceId: string;
   fieldPath: string;
   fieldType?: FieldPathInfo['type'];
+  fieldName?: string;
+  unit?: string;
   transform?: string;
   historyConfig?: {
     timeRange: string;
@@ -45,11 +47,22 @@ const ALL_DEVICE_GROUP_ID = '__all__';
 
 const HISTORY_FIELD_SUFFIX = '__history';
 const HISTORY_AGGREGATE_WINDOW: Record<string, string> = {
-  last_15m: 'no_aggregate',
+  last_5m: '30s',
+  last_15m: '30s',
+  last_30m: '30s',
   last_1h: '30s',
+  last_3h: '30s',
+  last_6h: '1m',
+  last_12h: '2m',
   last_24h: '5m',
+  last_3d: '10m',
   last_7d: '30m',
+  last_15d: '1h',
   last_30d: '3h',
+  last_60d: '6h',
+  last_90d: '1d',
+  last_6m: '7d',
+  last_1y: '1mo',
 };
 const DEVICE_ALARM_STATUS_FIELD_IDS = new Set([
   'device_alarm_active',
@@ -71,6 +84,7 @@ type PlatformStatField = {
   id: string;
   name: string;
   type: FieldPathInfo['type'];
+  unit?: string;
 };
 
 type PlatformStatSource = {
@@ -964,6 +978,8 @@ export function FieldPicker({
           id: `${fieldId}${HISTORY_FIELD_SUFFIX}`,
           name: `${rawLabel} ${t('binding.historySeriesSuffix', '历史趋势')}`,
           type: 'array' as FieldPathInfo['type'],
+          label: rawLabel,
+          unit: typeof field?.unit === 'string' ? field.unit : undefined,
         };
       });
   }, [deviceBindingKind, runtimeDeviceFieldIds, selectedDeviceBaseFields, selectedGroup, t]);
@@ -1116,6 +1132,8 @@ export function FieldPicker({
               : e.type === 'object'
                 ? 'object'
                 : 'string') as FieldPathInfo['type'],
+        label: typeof e.label === 'string' ? e.label : undefined,
+        unit: typeof e.unit === 'string' ? e.unit : undefined,
       }));
       return finalize(infos);
     }
@@ -1129,6 +1147,8 @@ export function FieldPicker({
         staticInfos.push({
           path: f.id,
           type: (f.type ?? 'string') as FieldPathInfo['type'],
+          label: f.alias || f.name || f.id,
+          unit: typeof f.unit === 'string' ? f.unit : undefined,
         });
         if (f.jsonSchema) {
           Object.entries(f.jsonSchema).forEach(([subPath, subType]) => {
@@ -1153,6 +1173,8 @@ export function FieldPicker({
       const staticInfos: FieldPathInfo[] = selectedDeviceStatusFields.map((field: any) => ({
         path: field.id,
         type: (field.type ?? 'string') as FieldPathInfo['type'],
+        label: field.alias || field.name || field.id,
+        unit: typeof field.unit === 'string' ? field.unit : undefined,
       }));
       return finalize(staticInfos);
     }
@@ -1164,6 +1186,8 @@ export function FieldPicker({
       const staticInfos: FieldPathInfo[] = selectedDeviceHistoryFields.map((field) => ({
         path: field.id,
         type: field.type,
+        label: field.label,
+        unit: field.unit,
       }));
       return finalize(staticInfos);
     }
@@ -1175,6 +1199,8 @@ export function FieldPicker({
       const staticInfos: FieldPathInfo[] = selectedDeviceAlarmStatusFields.map((field: any) => ({
         path: field.id,
         type: (field.type ?? 'string') as FieldPathInfo['type'],
+        label: field.alias || field.name || field.id,
+        unit: typeof field.unit === 'string' ? field.unit : undefined,
       }));
       return finalize(staticInfos);
     }
@@ -1182,6 +1208,8 @@ export function FieldPicker({
       const staticInfos: FieldPathInfo[] = selectedPlatformFields.map((field) => ({
         path: field.id,
         type: field.type as FieldPathInfo['type'],
+        label: field.name || field.id,
+        unit: typeof field.unit === 'string' ? field.unit : undefined,
       }));
       return finalize(staticInfos);
     }
@@ -1280,8 +1308,7 @@ export function FieldPicker({
               '',
             );
             const token = String(variables.platformToken || '');
-            const aggregateWindow =
-              HISTORY_AGGREGATE_WINDOW[historyConfig.timeRange] ?? 'no_aggregate';
+            const aggregateWindow = HISTORY_AGGREGATE_WINDOW[historyConfig.timeRange] ?? '30s';
             const params = new URLSearchParams({
               device_id: deviceId,
               key: metricKey,
@@ -1659,6 +1686,7 @@ export function FieldPicker({
               deviceBindingKind === 'history'
                 ? normalizeHistoryFieldPath(e.target.value)
                 : e.target.value;
+            const selectedInfo = pathInfos.find((info) => info.path === nextPath);
             if (isDeviceScopedGroup && selectedDeviceSource?.deviceId && nextPath) {
               ensurePlatformDeviceDataSource({
                 deviceId: selectedDeviceSource.deviceId,
@@ -1683,6 +1711,8 @@ export function FieldPicker({
                     dataSourceId: effectiveDataSourceId,
                     fieldPath: nextPath,
                     fieldType: pathInfos.find((info) => info.path === nextPath)?.type,
+                    ...(selectedInfo?.label ? { fieldName: selectedInfo.label } : {}),
+                    ...(selectedInfo?.unit ? { unit: selectedInfo.unit } : {}),
                     transform: selectedTransform || undefined,
                     ...(deviceBindingKind === 'history'
                       ? {

@@ -231,6 +231,88 @@ function getRootFieldPath(fieldPath: string): string | null {
   return fieldPath;
 }
 
+const HISTORY_FIELD_SUFFIX = '__history';
+
+function displayMetricName(fieldId: string, fieldName: string | undefined): string {
+  const knownNames: Record<string, string> = {
+    illuminance: '光照强度',
+    light: '光照强度',
+    light_intensity: '光照强度',
+  };
+  const normalizedId = fieldId.trim().toLowerCase();
+  const normalizedName = fieldName?.trim();
+  if (
+    knownNames[normalizedId] &&
+    (!normalizedName || normalizedName.toLowerCase() === normalizedId)
+  ) {
+    return knownNames[normalizedId];
+  }
+  return normalizedName || fieldId;
+}
+
+function historyCurvePropsForFieldSelection(
+  kernelStore: KernelStore,
+  nodeId: string,
+  componentType: string | undefined,
+  targetProp: string,
+  selection: FieldPickerValue | null,
+): Record<string, unknown> | undefined {
+  if (componentType !== 'chart/realtime-history-curve' || targetProp !== 'data') return undefined;
+  const fieldId = getRootFieldPath(selection?.fieldPath ?? '')?.replace(
+    new RegExp(`${HISTORY_FIELD_SUFFIX}$`),
+    '',
+  );
+  if (!fieldId) return undefined;
+
+  const node = (kernelStore.getState() as KernelState).nodesById[nodeId] as
+    | { schemaRef?: { props?: Record<string, unknown> } }
+    | undefined;
+  const props = node?.schemaRef?.props ?? {};
+  const sourceConfig =
+    props.config && typeof props.config === 'object' && !Array.isArray(props.config)
+      ? (props.config as Record<string, unknown>)
+      : {};
+  const sourceData =
+    sourceConfig.data && typeof sourceConfig.data === 'object' && !Array.isArray(sourceConfig.data)
+      ? (sourceConfig.data as Record<string, unknown>)
+      : {};
+  const sourceSeries =
+    sourceConfig.series &&
+    typeof sourceConfig.series === 'object' &&
+    !Array.isArray(sourceConfig.series)
+      ? (sourceConfig.series as Record<string, unknown>)
+      : {};
+  const currentSeries =
+    sourceSeries[fieldId] &&
+    typeof sourceSeries[fieldId] === 'object' &&
+    !Array.isArray(sourceSeries[fieldId])
+      ? (sourceSeries[fieldId] as Record<string, unknown>)
+      : {};
+  const fieldName = displayMetricName(fieldId, selection?.fieldName);
+  const unit = selection?.unit?.trim();
+  const nextSeries = {
+    ...currentSeries,
+    name: fieldName || currentSeries.name || fieldId,
+    unit: unit ?? (typeof currentSeries.unit === 'string' ? currentSeries.unit : ''),
+  };
+  const yAxes = Array.isArray(sourceConfig.yAxes)
+    ? sourceConfig.yAxes.map((axis) => {
+        if (!axis || typeof axis !== 'object' || Array.isArray(axis)) return axis;
+        const nextAxis = axis as Record<string, unknown>;
+        return unit && !String(nextAxis.unit || '').trim() ? { ...nextAxis, unit } : nextAxis;
+      })
+    : sourceConfig.yAxes;
+
+  return {
+    config: {
+      ...sourceConfig,
+      data: { ...sourceData, metricKeys: [fieldId] },
+      series: { ...sourceSeries, [fieldId]: nextSeries },
+      ...(yAxes ? { yAxes } : {}),
+    },
+  };
+}
+
 function selectOptionCaption(
   opt: ControlOption,
   showOptionValues: boolean | undefined,
@@ -914,6 +996,13 @@ export function ControlFieldRow({
                 const expression = makeFieldBindingExpression(next);
                 const selection = parseFieldBindingExpression(expression);
                 const dataSourcePath = selection ? `ds.${selection.dataSourceId}.data` : undefined;
+                const historyCurveProps = historyCurvePropsForFieldSelection(
+                  kernelStore,
+                  nodeId,
+                  componentType,
+                  field.path,
+                  next,
+                );
                 updateNode({
                   data: upsertBinding(bindings, {
                     targetProp: field.path,
@@ -923,6 +1012,7 @@ export function ControlFieldRow({
                     ...(next.historyConfig ? { historyConfig: next.historyConfig } : {}),
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   } as any),
+                  ...(historyCurveProps ? { props: historyCurveProps } : {}),
                   ...(nextEvents ? { events: nextEvents } : {}),
                 });
                 return;

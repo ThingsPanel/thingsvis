@@ -9,6 +9,7 @@ import {
 
 describe('RealtimeHistoryConfigEditor helpers', () => {
   it('matches API minimum aggregation windows for presets and custom ranges', () => {
+    expect(getMinimumAggregationWindow({ timeRange: 'last_1h' })).toBe('30s');
     expect(getMinimumAggregationWindow({ timeRange: 'last_3h' })).toBe('30s');
     expect(getMinimumAggregationWindow({ timeRange: 'last_24h' })).toBe('5m');
     expect(getMinimumAggregationWindow({ timeRange: 'last_1y' })).toBe('1mo');

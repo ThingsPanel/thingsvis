@@ -87,6 +87,45 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('retries with the backend-advertised aggregation window for 207004', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          code: 207004,
+          message: '查询时间范围超过30天，聚合间隔不能小于1h，当前配置为30m',
+        }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ data: { time_series: [{ x: 1000000000000, y: 12.3 }] } }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        config: {
+          ...defaults.config,
+          data: {
+            ...defaults.config.data,
+            deviceId: 'dev-1',
+            metricKeys: ['temperature'],
+            timeRange: 'last_30d',
+            aggregationMode: 'raw',
+          },
+        },
+      },
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('aggregate_window=3h');
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('aggregate_window=1h');
+    harness.destroy();
+  });
+
   it('normalizes partially persisted nested config before rendering', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -141,6 +180,52 @@ describe('chart/realtime-history-curve widget runtime', () => {
       ]),
     );
     expect(fetchMock).not.toHaveBeenCalled();
+    harness.destroy();
+  });
+
+  it('shows a recognizable example curve before a device or metric is bound', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, { props: { config: getDefaultProps().config } });
+
+    await vi.waitFor(() =>
+      expect(chartMock.options.at(-1)?.series?.[0]?.data?.length).toBeGreaterThanOrEqual(36),
+    );
+    expect(chartMock.options.at(-1)?.series?.[0]?.name).toBe('示例曲线');
+    expect(chartMock.options.at(-1)?.legend?.formatter('示例曲线')).toBe('示例曲线');
+    expect(fetchMock).not.toHaveBeenCalled();
+    harness.destroy();
+  });
+
+  it('uses the selected field name and unit instead of the internal bound label', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        data: [{ timestamp: 1000000000000, value: 625.28 }],
+        config: {
+          ...defaults.config,
+          data: { ...defaults.config.data, metricKeys: ['illuminance'] },
+          series: { illuminance: { name: '光照强度', unit: 'lux' } },
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.series?.[0]?.name).toBe('光照强度'));
+    const option = chartMock.options.at(-1) as any;
+    expect(option.legend.formatter('光照强度')).toBe('光照强度（lux）');
+    expect(option.yAxis[0].name).toBe('lux');
+    expect(
+      option.tooltip.formatter([
+        {
+          seriesId: 'illuminance',
+          seriesName: '光照强度',
+          value: [1000000000000, 625.28],
+        },
+      ]),
+    ).toContain('625.28 lux');
     harness.destroy();
   });
 

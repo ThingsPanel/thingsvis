@@ -220,6 +220,63 @@ describe('FieldPicker device fields', () => {
     );
   });
 
+  it('returns the selected history field label and unit for chart metadata', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { time_series: [] } }) }),
+    );
+    platformDeviceStore.setDevices([
+      {
+        deviceId: 'metadata-device',
+        deviceName: 'Metadata device',
+        groupId: 'group-1',
+        fields: [
+          {
+            id: 'illuminance',
+            name: 'Illuminance',
+            alias: '光照强度',
+            unit: 'lux',
+            type: 'number',
+            dataType: 'telemetry',
+          },
+        ],
+      },
+    ]);
+    const onChange = vi.fn();
+
+    await renderPicker(
+      { dataSourceId: '__platform_metadata-device__', fieldPath: '' },
+      'json',
+      onChange,
+    );
+    const dataTypeSelect = Array.from(container.querySelectorAll('select')).find((select) =>
+      select.querySelector('option[value="history"]'),
+    );
+    expect(dataTypeSelect).toBeDefined();
+
+    await act(async () => {
+      if (!dataTypeSelect) return;
+      dataTypeSelect.value = 'history';
+      dataTypeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    const fieldSelect = Array.from(container.querySelectorAll('select')).at(-1);
+    expect(fieldSelect).toBeDefined();
+    await act(async () => {
+      if (!fieldSelect) return;
+      fieldSelect.value = 'illuminance__history';
+      fieldSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    expect(onChange).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        fieldPath: 'illuminance__history',
+        fieldName: '光照强度',
+        unit: 'lux',
+      }),
+    );
+  });
+
   it('queries telemetry history again when the history time range changes', async () => {
     platformDeviceStore.setDevices([
       {

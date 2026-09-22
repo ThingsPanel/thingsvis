@@ -738,7 +738,7 @@ const CanvasView = forwardRef<
           ? snippetEntry.props
           : {}),
       },
-      ...(!snippetEntry ? { baseStyle: createDefaultWidgetBaseStyle() } : {}),
+      ...(!snippetEntry ? { baseStyle: createDefaultWidgetBaseStyle(entry.type) } : {}),
     };
 
     if (snippetEntry) {
@@ -879,7 +879,7 @@ const CanvasView = forwardRef<
           sampleData: moduleDefs?.sampleData,
           fallbackDefaults: moduleDefs?.defaultProps,
         }),
-        baseStyle: createDefaultWidgetBaseStyle(),
+        baseStyle: createDefaultWidgetBaseStyle(componentType),
         grid: resolveInitialGridPosition(
           initialSize,
           { cols, rowHeight, gap, containerWidth },

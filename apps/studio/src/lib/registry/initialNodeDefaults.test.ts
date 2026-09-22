@@ -2,9 +2,22 @@ import { describe, expect, it } from 'vitest';
 import { createDefaultWidgetBaseStyle, resolveInitialGridPosition } from './initialNodeDefaults';
 
 describe('initial widget node defaults', () => {
-  it('enables card mode for newly created library widgets', () => {
+  it('enables card mode for newly created non-value widgets', () => {
     expect(createDefaultWidgetBaseStyle()).toMatchObject({
       card: { enabled: true, appearance: 'auto' },
+    });
+  });
+
+  it('leaves value cards out of card mode and exposes padding to the editor', () => {
+    expect(createDefaultWidgetBaseStyle('interaction/value-card')).toMatchObject({
+      padding: 16,
+      card: { enabled: false, appearance: 'auto' },
+    });
+  });
+
+  it('leaves history curves out of card mode so the line is the first visual', () => {
+    expect(createDefaultWidgetBaseStyle('chart/realtime-history-curve')).toMatchObject({
+      card: { enabled: false, appearance: 'auto' },
     });
   });
 
