@@ -59,6 +59,7 @@ export interface GridNodeItemProps {
     pixelRect: PixelRect;
     store: KernelStore;
     resolveWidget?: (type: string) => Promise<WidgetMainModule>;
+    onRenderState?: (nodeId: string, status: 'loading' | 'ready' | 'error') => void;
     interactive: boolean;
     isSelected: boolean;
     theme?: string;
@@ -201,6 +202,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
     pixelRect,
     store,
     resolveWidget,
+    onRenderState,
     interactive,
     isSelected,
     theme,
@@ -240,6 +242,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         const widgetType = schema.type as string;
 
         let cancelled = false;
+        onRenderState?.(nodeId, 'loading');
 
         const loadAndMount = async () => {
             let module = widgetModuleCache.get(widgetType);
@@ -294,9 +297,12 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
             }
         };
 
-        loadAndMount().catch((err) => {
+        loadAndMount().then(() => {
+            if (!cancelled) onRenderState?.(nodeId, 'ready');
+        }).catch((err) => {
             console.error(`[GridNodeItem] Failed to load widget (node=${nodeId}):`, err);
-            if (!contentRef.current) return;
+            if (cancelled || !contentRef.current) return;
+            onRenderState?.(nodeId, 'error');
             const message = err instanceof Error ? err.message : String(err);
             contentRef.current.innerHTML = `
               <div style="padding:8px;color:#c53030;font-size:12px;background:#fff5f5;border:1px solid #feb2b2;border-radius:4px;height:100%;display:flex;align-items:center;justify-content:center;text-align:center">
@@ -311,7 +317,7 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         };
         // Re-mount only when widget type or node changes identity; prop changes go through update effect
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [actionRuntime, locale, nodeId, resolveWidget, store, theme, widgetMode]);
+    }, [actionRuntime, locale, nodeId, resolveWidget, store, theme, widgetMode, onRenderState]);
 
     // ── Widget update (props / data / pixelRect / dataSources change) ─────────
 
@@ -337,7 +343,13 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
         getRuntimeSnapshot,
     );
     const nodeState = runtimeSnapshot.nodeState;
-    const nodeBaseStyle = (nodeState?.schemaRef?.baseStyle ?? {}) as NodeBaseStyle;
+    const usesIntrinsicShapeStyle =
+        nodeState?.schemaRef?.type === 'basic/straight-line' ||
+        nodeState?.schemaRef?.type === 'basic/triangle';
+    const nodeBaseStyle = (
+        usesIntrinsicShapeStyle ? {} : (nodeState?.schemaRef?.baseStyle ?? {})
+    ) as NodeBaseStyle;
+    const isCircle = nodeState?.schemaRef?.type === 'basic/circle';
     const isInlineEditableText = interactive && isBasicTextNode(nodeState);
     const isPreviewClickable = !interactive && isBasicNode(nodeState) && hasClickActions(nodeState);
     const liveText = typeof (nodeState?.schemaRef as any)?.props?.text === 'string'
@@ -584,7 +596,9 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                     borderStyle: nodeBaseStyle.border?.width != null
                         ? (nodeBaseStyle.border.style ?? 'solid')
                         : (autoCardStyle ? 'solid' : undefined),
-                    borderRadius: outerBorderRadius > 0
+                    borderRadius: isCircle
+                        ? '50%'
+                        : outerBorderRadius > 0
                         ? `${outerBorderRadius}px`
                         : (autoCardStyle ? '10px' : undefined),
                     boxShadow: nodeBaseStyle.shadow?.blur != null
@@ -599,7 +613,9 @@ export const GridNodeItem: React.FC<GridNodeItemProps> = ({
                         position: 'absolute',
                         inset: 0,
                         boxSizing: 'border-box',
-                        borderRadius: innerClipRadius > 0
+                        borderRadius: isCircle
+                            ? '50%'
+                            : innerClipRadius > 0
                             ? `${innerClipRadius}px`
                             : undefined,
                         overflow: 'hidden',

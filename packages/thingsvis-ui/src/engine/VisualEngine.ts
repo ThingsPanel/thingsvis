@@ -1604,8 +1604,11 @@ export class VisualEngine {
     }
 
     // Base Style Application
-    const baseStyle = schema.baseStyle || {};
+    const usesIntrinsicShapeStyle =
+      schema.type === 'basic/straight-line' || schema.type === 'basic/triangle';
+    const baseStyle = usesIntrinsicShapeStyle ? {} : schema.baseStyle || {};
     const autoCardStyle = isAutoCardStyle(baseStyle);
+    const isCircle = schema.type === 'basic/circle';
 
     // Background
     if (baseStyle.background) {
@@ -1627,13 +1630,16 @@ export class VisualEngine {
         baseStyle.border.width !== undefined ? `${baseStyle.border.width}px` : '';
       box.style.borderColor = baseStyle.border.color || '';
       box.style.borderStyle = baseStyle.border.style || 'solid';
-      box.style.borderRadius =
-        baseStyle.border.radius !== undefined ? `${baseStyle.border.radius}px` : '';
+      box.style.borderRadius = isCircle
+        ? '50%'
+        : baseStyle.border.radius !== undefined
+          ? `${baseStyle.border.radius}px`
+          : '';
     } else {
       box.style.borderWidth = autoCardStyle ? '1px' : '';
       box.style.borderColor = autoCardStyle ? AUTO_CARD_STYLE.borderColor : '';
       box.style.borderStyle = autoCardStyle ? 'solid' : '';
-      box.style.borderRadius = autoCardStyle ? '10px' : '';
+      box.style.borderRadius = isCircle ? '50%' : autoCardStyle ? '10px' : '';
     }
 
     // Shadow

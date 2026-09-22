@@ -1,6 +1,6 @@
 {
     "menu": {
-        "openProject": "打开项目",
+        "openProject": "打开看板",
         "save": "保存",
         "dataSources": "数据源管理",
         "variables": "全局变量",
@@ -59,7 +59,7 @@
         "showLibrary": "显示组件库",
         "fullscreen": "全屏",
         "exitFullscreen": "退出全屏",
-        "untitledProject": "未命名项目",
+        "untitledProject": "未命名看板",
         "variables": "全局变量"
     },
     "shareDialog": {
@@ -193,7 +193,7 @@
         "fullWidthPreview": "预览撑满宽度",
         "homeFlag": "设为首页",
         "basicInfo": "基础信息",
-        "projectName": "项目名称",
+        "projectName": "看板名称",
         "pageName": "页面名称",
         "pageId": "页面ID",
         "thumbnail": "缩略图",
@@ -201,7 +201,7 @@
         "thumbnailFailed": "缩略图处理失败",
         "gridSnapTip": "栅格布局模式下，组件自动吸附到网格",
         "fullWidthTip": "勾选后预览页面画布撑满容器宽度，无背景阴影",
-        "untitledProject": "未命名项目",
+        "untitledProject": "未命名看板",
         "globalBackground": "全局背景",
         "backgroundColor": "背景颜色",
         "backgroundImage": "背景图片 URL",
@@ -223,8 +223,8 @@
     "shortcuts": {
         "title": "快捷键",
         "close": "关闭",
-        "open": "打开项目",
-        "save": "保存项目",
+        "open": "打开看板",
+        "save": "保存看板",
         "undo": "撤销",
         "redo": "重做",
         "selectTool": "选择工具",
@@ -238,13 +238,13 @@
     },
     "project": {
         "openCanvas": "打开画布",
-        "newProject": "新建项目",
+        "newProject": "新建看板",
         "newCanvas": "新建画布",
-        "noProjects": "还没有项目",
+        "noProjects": "还没有看板",
         "noCanvas": "还没有画布",
-        "projectName": "项目名称",
-        "inputProjectName": "输入项目名称",
-        "createProject": "创建项目",
+        "projectName": "看板名称",
+        "inputProjectName": "输入看板名称",
+        "createProject": "创建看板",
         "deleteConfirm": "确定要删除吗？",
         "recent": "最近打开"
     },

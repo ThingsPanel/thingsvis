@@ -116,6 +116,7 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
   const schema = node?.schemaRef as any;
   const bindings = schema?.data || [];
   const componentType = (schema?.type ?? '') as string;
+  const hideBaseStylePanel = componentType === 'basic/straight-line';
 
   const [widgetEntry, setWidgetEntry] = useState<WidgetMainModule | null>(null);
   const [widgetError, setWidgetError] = useState<string | null>(null);
@@ -524,10 +525,13 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
         <TabsContent value="style" className="space-y-4">
           {renderGeometry()}
 
-          <BaseStylePanel
-            baseStyle={schema.baseStyle || {}}
-            onChange={(baseStyle) => updateNode({ baseStyle })}
-          />
+          {!hideBaseStylePanel ? (
+            <BaseStylePanel
+              baseStyle={schema.baseStyle || {}}
+              onChange={(baseStyle) => updateNode({ baseStyle })}
+              hideBorderRadius={componentType === 'basic/circle'}
+            />
+          ) : null}
 
           <div className="w-full space-y-4 pb-4">
             {controls.groups.map((group) => {
@@ -647,10 +651,13 @@ export default function PropsPanel({ nodeId, kernelStore, onUserEdit }: Props) {
           ) : null}
           {renderGeometry()}
 
-          <BaseStylePanel
-            baseStyle={schema.baseStyle || {}}
-            onChange={(baseStyle) => updateNode({ baseStyle })}
-          />
+          {!hideBaseStylePanel ? (
+            <BaseStylePanel
+              baseStyle={schema.baseStyle || {}}
+              onChange={(baseStyle) => updateNode({ baseStyle })}
+              hideBorderRadius={componentType === 'basic/circle'}
+            />
+          ) : null}
 
           {/* Basic Props */}
           <div className="space-y-3 pt-4 border-t border-border px-1">

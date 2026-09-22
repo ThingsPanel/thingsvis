@@ -1,6 +1,6 @@
 {
     "menu": {
-        "openProject": "Open Project",
+        "openProject": "Open Dashboard",
         "save": "Save",
         "dataSources": "Data Sources",
         "variables": "Variables",
@@ -18,7 +18,7 @@
         "undo": "Undo",
         "redo": "Redo",
         "copyPaste": "Copy / Paste",
-        "save": "Save Project",
+        "save": "Save Dashboard",
         "delete": "Delete Component",
         "pan": "Pan Canvas",
         "panKey": "Space + Drag",
@@ -59,7 +59,7 @@
         "showLibrary": "Show Library",
         "fullscreen": "Fullscreen",
         "exitFullscreen": "Exit Fullscreen",
-        "untitledProject": "Untitled Project",
+        "untitledProject": "Untitled Dashboard",
         "variables": "Variables"
     },
     "shareDialog": {
@@ -200,7 +200,7 @@
         "fullWidthPreview": "Full Width Preview",
         "homeFlag": "Set as Home",
         "basicInfo": "Basic Info",
-        "projectName": "Project Name",
+        "projectName": "Dashboard Name",
         "pageName": "Page Name",
         "pageId": "Page ID",
         "thumbnail": "Thumbnail",
@@ -208,7 +208,7 @@
         "thumbnailFailed": "Failed to process thumbnail",
         "gridSnapTip": "In grid layout mode, widgets snap to grid",
         "fullWidthTip": "When checked, preview canvas fills container width without shadow",
-        "untitledProject": "Untitled Project",
+        "untitledProject": "Untitled Dashboard",
         "globalBackground": "Global Background",
         "backgroundColor": "Background Color",
         "backgroundImage": "Background Image URL",
@@ -230,8 +230,8 @@
     "shortcuts": {
         "title": "Keyboard Shortcuts",
         "close": "Close",
-        "open": "Open Project",
-        "save": "Save Project",
+        "open": "Open Dashboard",
+        "save": "Save Dashboard",
         "undo": "Undo",
         "redo": "Redo",
         "selectTool": "Select Tool",
@@ -245,13 +245,13 @@
     },
     "project": {
         "openCanvas": "Open Canvas",
-        "newProject": "New Project",
+        "newProject": "New Dashboard",
         "newCanvas": "New Canvas",
-        "noProjects": "No projects yet",
+        "noProjects": "No dashboards yet",
         "noCanvas": "No canvas yet",
-        "projectName": "Project Name",
-        "inputProjectName": "Enter project name",
-        "createProject": "Create Project",
+        "projectName": "Dashboard Name",
+        "inputProjectName": "Enter dashboard name",
+        "createProject": "Create Dashboard",
         "deleteConfirm": "Are you sure you want to delete?",
         "recent": "Recent"
     },

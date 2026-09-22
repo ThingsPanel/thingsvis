@@ -1,0 +1,15 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-triangle": { "name": "三角形" }
+    },
+    "controls": {
+      "basic-triangle": {
+        "fill": "填充颜色",
+        "stroke": "描边颜色",
+        "strokeWidth": "描边宽度",
+        "opacity": "透明度"
+      }
+    }
+  }
+}

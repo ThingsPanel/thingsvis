@@ -1,0 +1,15 @@
+{
+  "editor": {
+    "widgets": {
+      "thingsvis-widget-basic-triangle": { "name": "Triangle" }
+    },
+    "controls": {
+      "basic-triangle": {
+        "fill": "Fill",
+        "stroke": "Stroke",
+        "strokeWidth": "Stroke width",
+        "opacity": "Opacity"
+      }
+    }
+  }
+}

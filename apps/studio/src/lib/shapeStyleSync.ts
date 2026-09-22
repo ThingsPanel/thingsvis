@@ -38,5 +38,16 @@ export function syncShapeStylePatch(
     };
   }
 
+  if (componentType === 'basic/triangle') {
+    nextProps.stroke = patch.baseStyle.border?.color ?? nextProps.stroke ?? 'transparent';
+    nextProps.strokeWidth = patch.baseStyle.border?.width ?? nextProps.strokeWidth ?? 0;
+    nextProps.cornerRadius = patch.baseStyle.border?.radius ?? nextProps.cornerRadius ?? 0;
+
+    return {
+      ...patch,
+      props: nextProps,
+    };
+  }
+
   return patch;
 }
