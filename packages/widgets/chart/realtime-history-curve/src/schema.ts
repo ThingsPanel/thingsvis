@@ -179,6 +179,11 @@ export const RealtimeHistoryConfigSchema = z.object({
 });
 
 export const PropsSchema = z.object({
+  /**
+   * Optional platform-bound history data. When present, the widget consumes
+   * the resolved series instead of querying the legacy device configuration.
+   */
+  data: z.array(z.any()).optional().describe('props.data'),
   config: RealtimeHistoryConfigSchema.default({}),
 });
 

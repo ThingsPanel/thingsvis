@@ -636,6 +636,12 @@ const CanvasView = forwardRef<
       try {
         if (store.getState().addNodes) {
           store.getState().addNodes(droppedNodes as any);
+          if (isGridMode) {
+            // Device-library preset drops use the outer canvas drop handler.
+            // Normalize their grid positions immediately so repeated drops do
+            // not leave every preset at the same top-left cell.
+            store.getState().compactGrid?.();
+          }
         } else {
           droppedNodes.forEach((node) => kernelAction.addNode(pageId, node as any));
         }
@@ -767,6 +773,12 @@ const CanvasView = forwardRef<
     try {
       if (store.getState().addNodes) {
         store.getState().addNodes([node as any]);
+        if (isGridMode) {
+          // Snippets from the bound-device library are handled here rather
+          // than by GridCanvas, so apply the same collision-free placement as
+          // regular widget-library drops.
+          store.getState().compactGrid?.();
+        }
       } else {
         kernelAction.addNode(pageId, node as any);
       }

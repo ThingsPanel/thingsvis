@@ -75,7 +75,7 @@ export function resolveCanvasBackgroundStyle(
       ? 'transparent'
       : hasExplicitColor
         ? color
-        : 'var(--w-bg, hsl(var(--w-canvas-bg, 0 0% 100%)))',
+        : 'var(--w-bg, transparent)',
     backgroundImage: hasExplicitImage
       ? `url(${imageUrl})`
       : hasExplicitColor

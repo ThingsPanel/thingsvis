@@ -1,6 +1,7 @@
 import type { RealtimeHistoryConfig } from './schema';
 
 export type TimePoint = { time: number; value: number | null };
+export type BoundHistorySeries = { key: string; points: TimePoint[] };
 export type HistoryResult = {
   points: TimePoint[];
   start: number;
@@ -130,9 +131,11 @@ export function normalizeHistoryResponse(payload: unknown): HistoryResult {
   const rows = Array.isArray(data.time_series) ? data.time_series : Array.isArray(data) ? data : [];
   const deduped = new Map<number, number | null>();
   rows.forEach((row: unknown) => {
-    const record = row && typeof row === 'object' ? (row as Record<string, unknown>) : {};
-    const time = parseTime(record.x ?? record.ts ?? record.time ?? record.timestamp);
-    const raw = record.y ?? record.value;
+    const record =
+      row && typeof row === 'object' && !Array.isArray(row) ? (row as Record<string, unknown>) : {};
+    const tuple = Array.isArray(row) ? row : undefined;
+    const time = parseTime(tuple?.[0] ?? record.x ?? record.ts ?? record.time ?? record.timestamp);
+    const raw = tuple?.[1] ?? record.y ?? record.value;
     const value = raw == null ? null : Number(raw);
     if (time !== null && (value === null || Number.isFinite(value))) deduped.set(time, value);
   });
@@ -150,6 +153,53 @@ export function normalizeHistoryResponse(payload: unknown): HistoryResult {
     fileName: typeof data.file_name === 'string' ? data.file_name : undefined,
     filePath: typeof data.file_path === 'string' ? data.file_path : undefined,
   };
+}
+
+function normalizeBoundSeriesPoints(value: unknown): TimePoint[] {
+  return normalizeHistoryResponse(value).points;
+}
+
+/**
+ * Normalizes the platform's `{field}__history` value into the series shape
+ * consumed by the chart. Both one field and the common multi-series shape are
+ * supported so saved dashboards can evolve without changing the widget API.
+ */
+export function normalizeBoundHistorySeries(
+  value: unknown,
+  fallbackKeys: string[] = [],
+): BoundHistorySeries[] {
+  if (!Array.isArray(value)) return [];
+
+  const seriesRecords = value.filter((entry): entry is Record<string, unknown> => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return false;
+    return (
+      Array.isArray((entry as Record<string, unknown>).data) ||
+      Array.isArray((entry as Record<string, unknown>).values) ||
+      Array.isArray((entry as Record<string, unknown>).points) ||
+      Array.isArray((entry as Record<string, unknown>).time_series)
+    );
+  });
+
+  if (seriesRecords.length > 0) {
+    return seriesRecords.slice(0, 10).map((record, index) => ({
+      key: String(
+        record.key ??
+          record.id ??
+          record.name ??
+          record.label ??
+          fallbackKeys[index] ??
+          `series-${index + 1}`,
+      ),
+      points: normalizeBoundSeriesPoints(
+        record.data ?? record.values ?? record.points ?? record.time_series,
+      ),
+    }));
+  }
+
+  const points = normalizeBoundSeriesPoints(value);
+  return points.length > 0 || value.length === 0
+    ? [{ key: fallbackKeys[0] ?? 'bound', points }]
+    : [];
 }
 
 export function buildHistoryUrl(

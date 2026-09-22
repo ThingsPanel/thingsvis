@@ -1,16 +1,59 @@
 import { describe, expect, it } from 'vitest';
 import { getDefaultProps } from './src/schema';
+import { controls } from './src/controls';
 import {
   appendRealtime,
   buildHistoryUrl,
   limitPoints,
   minimumWindowForData,
   normalizeHistoryResponse,
+  normalizeBoundHistorySeries,
   normalizeTimestamp,
   resolveAggregation,
 } from './src/history';
 
 describe('chart/realtime-history-curve history contract', () => {
+  it('exposes the standard data binding control without the legacy device picker', () => {
+    const fields = controls.groups.flatMap((group) => group.fields);
+    expect(fields.map((field) => field.path)).toEqual(['data']);
+    expect(fields[0]?.binding).toEqual({
+      enabled: true,
+      modes: ['static', 'field', 'expr'],
+    });
+  });
+
+  it('normalizes a platform history field into one chart series', () => {
+    expect(
+      normalizeBoundHistorySeries(
+        [
+          { timestamp: '2026-01-01T00:00:00Z', value: 12 },
+          { timestamp: '2026-01-01T00:01:00Z', value: 13 },
+        ],
+        ['temperature'],
+      ),
+    ).toEqual([
+      {
+        key: 'temperature',
+        points: [
+          { time: Date.parse('2026-01-01T00:00:00Z'), value: 12 },
+          { time: Date.parse('2026-01-01T00:01:00Z'), value: 13 },
+        ],
+      },
+    ]);
+  });
+
+  it('accepts tuple points and multi-series platform data', () => {
+    expect(
+      normalizeBoundHistorySeries([
+        { key: 'temperature', data: [[1000, 20]] },
+        { name: 'pressure', values: [{ x: 2000, y: 101 }] },
+      ]),
+    ).toEqual([
+      { key: 'temperature', points: [{ time: 1000000, value: 20 }] },
+      { key: 'pressure', points: [{ time: 2000000, value: 101 }] },
+    ]);
+  });
+
   it.each([
     ['last_3h', '30s'],
     ['last_6h', '1m'],

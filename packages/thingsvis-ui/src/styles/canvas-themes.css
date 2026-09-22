@@ -14,7 +14,10 @@
 
 /* ─── Theme: dawn (light default) ─────────────────────────────────────────── */
 [data-canvas-theme="dawn"] {
-  --w-bg:       #eef2f7;
+  /* Dawn leaves the page/artboard transparent unless a page background is set.
+   * The editor workspace or embedding host owns the surrounding UI surface. */
+  --w-bg:       transparent;
+  --w-artboard-gradient: none;
   --w-surface:  #ffffff;
   --w-surface-border: rgba(31, 41, 55, 0.14);
   --w-surface-shadow: rgba(15, 23, 42, 0.08);

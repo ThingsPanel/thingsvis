@@ -13,7 +13,7 @@ export const CANVAS_THEMES = {
     i18nKey: 'canvas.themeDawn',
     fallbackLabel: 'Dawn',
     group: 'light' as const,
-    swatch: ['#f8fafc', '#ffffff', '#0f6cbd', '#107c10', '#5c2d91'],
+    swatch: ['transparent', '#ffffff', '#0f6cbd', '#107c10', '#5c2d91'],
   },
   midnight: {
     id: 'midnight',

@@ -15,6 +15,7 @@ import {
   getTimeBounds,
   limitPoints,
   normalizeHistoryResponse,
+  normalizeBoundHistorySeries,
   normalizeTimestamp,
   resolveAggregation,
   WINDOW_MS,
@@ -168,7 +169,7 @@ export function buildChartOption(
   const series: any[] = [];
   const visualMap: any[] = [];
   states.forEach((state, stateIndex) => {
-    const style = seriesStyles.get(state.key)!;
+    const style = seriesStyles.get(state.key) ?? resolveSeriesStyle(config, state.key, stateIndex);
     const yAxisIndex = axisIndex.get(style.yAxisId) ?? 0;
     const thresholds = config.analysis.thresholds.filter((item) => item.yAxisId === style.yAxisId);
     const lineData = processNulls(state.points, config);
@@ -506,6 +507,20 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     const runtime = getRuntime();
     exportButton.textContent = text.export || '导出 CSV';
     exportButton.style.display = 'none';
+    if (props.data !== undefined) {
+      controller?.abort();
+      states = normalizeBoundHistorySeries(props.data, config.data.metricKeys).map((series) => ({
+        key: series.key,
+        points: limitPoints(series.points, config.data.maxDataPoints),
+        statPoints: series.points,
+        comparison: [],
+      }));
+      status.textContent = states.some((item) => item.points.length > 0)
+        ? ''
+        : text.noData || '当前时间范围内没有数据';
+      draw();
+      return;
+    }
     if (!config.data.deviceId || !config.data.metricKeys.length) {
       states = [];
       status.textContent = text.empty || '请选择设备和指标字段';
@@ -574,6 +589,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
 
   const refresh = () => {
     const nextKey = JSON.stringify({
+      boundData: props.data,
       data: props.config.data,
       comparison: props.config.analysis.comparison,
       offset: props.config.analysis.comparisonOffsetMs,
@@ -603,7 +619,11 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       );
     let changed = false;
     updates.forEach((update) => {
-      const state = states.find((item) => item.key === update.key);
+      const state =
+        states.find((item) => item.key === update.key) ??
+        (props.data !== undefined && states.length === 1 && !props.config.data.metricKeys.length
+          ? states[0]
+          : undefined);
       const value = Number(update.value);
       const time = normalizeTimestamp(update.time);
       if (!state || !Number.isFinite(value)) return;

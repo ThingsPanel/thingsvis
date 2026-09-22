@@ -14,7 +14,10 @@ export const CARD_STYLE_DEFAULTS: Required<
  * The fallback is only for canvases that predate canvas-themes.css.
  */
 export const AUTO_CARD_STYLE = {
-  background: 'var(--w-bg, transparent)',
+  // A transparent page should not make auto-card surfaces disappear. Prefer
+  // the theme surface token, with the canvas background only as a legacy
+  // fallback for themes that do not define one.
+  background: 'var(--w-surface, var(--w-bg, transparent))',
   borderColor: 'var(--w-border, transparent)',
   shadow: 'var(--w-card-shadow, 0 2px 8px rgba(15, 23, 42, 0.08))',
   titleColor: 'var(--w-fg, #0f172a)',
