@@ -104,7 +104,7 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
-  it('scales the track with the widget bounds and keeps label font size configurable', async () => {
+  it('keeps the default track size stable when the widget card grows', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
       mode: 'view',
@@ -115,11 +115,19 @@ describe('interaction/basic-switch widget', () => {
 
     harness.update({ props: { label: 'Switch', labelFontSize: 24 } });
 
-    const trackWidth = Number.parseFloat(
-      harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style')?.match(/width:\s*(\d+)px/)?.[1] ?? '0',
-    );
-    expect(trackWidth).toBeGreaterThan(44);
+    const trackStyle = harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style') ?? '';
+    const trackWidth = Number.parseFloat(trackStyle.match(/width:\s*(\d+)px/)?.[1] ?? '0');
+    const trackHeight = Number.parseFloat(trackStyle.match(/height:\s*(\d+)px/)?.[1] ?? '0');
+
+    expect(trackWidth).toBe(44);
+    expect(trackHeight).toBe(24);
     expect(harness.element.innerHTML).toContain('font-size: 24px');
+
+    harness.update({ props: { label: 'Switch', size: 'small' } });
+    const compactTrackStyle = harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style') ?? '';
+    expect(compactTrackStyle).toContain('width: 28px');
+    expect(compactTrackStyle).toContain('height: 16px');
+
     harness.destroy();
   });
 });

@@ -3,8 +3,10 @@ export const metadata = {
   name: 'Switch',
   category: 'interaction',
   icon: 'ToggleLeft',
-  version: '2.0.0',
-  defaultSize: { width: 100, height: 36 },
+  version: '2.1.0',
+  // Match the default footprint of interaction/value-card-simple. The
+  // switch control remains fixed-size inside this resizable card.
+  defaultSize: { width: 160, height: 80 },
   resizable: true,
-  constraints: { minWidth: 40, minHeight: 20 },
+  constraints: { minWidth: 120, minHeight: 70 },
 } as const;

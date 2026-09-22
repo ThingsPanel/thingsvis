@@ -87,18 +87,14 @@ function renderSwitch(
   onToggle: () => void,
 ): void {
   const t = SIZE_TOKENS[props.size] ?? SIZE_TOKENS['default'];
-  const elementWidth = element.clientWidth || 100;
-  const elementHeight = element.clientHeight || 36;
-  const heightScale = Math.max(0.5, elementHeight / 36);
-  const widthBudget = coerceBoolean(props.showLabel, true)
-    ? Math.max(t.trackWidth, elementWidth * 0.62)
-    : Math.max(t.trackWidth, elementWidth - 16);
-  const scale = Math.min(heightScale, widthBudget / t.trackWidth, 4);
-  const trackWidth = Math.round(t.trackWidth * scale);
-  const trackHeight = Math.round(t.trackHeight * scale);
-  const thumbSize = Math.round(t.thumbSize * scale);
-  const thumbOffset = Math.max(1, Math.round(t.thumbOffset * scale));
-  const innerFontSize = Math.max(8, Math.round(t.innerFontSize * scale));
+  // The card is resizable, but the switch itself uses stable design-token
+  // dimensions. This keeps switches visually consistent with other dashboard
+  // controls instead of making them grow with large widget containers.
+  const trackWidth = t.trackWidth;
+  const trackHeight = t.trackHeight;
+  const thumbSize = t.thumbSize;
+  const thumbOffset = t.thumbOffset;
+  const innerFontSize = t.innerFontSize;
   const thumbPos = internalChecked ? trackWidth - thumbSize - thumbOffset : thumbOffset;
   const onTextCenter = thumbPos / 2;
   const offTextCenter = thumbPos + thumbSize + (trackWidth - thumbPos - thumbSize) / 2;
