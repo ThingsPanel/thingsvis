@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { NumericInput } from '@/components/ui/NumericInput';
 import { ColorInput } from '@/components/ui/color-input';
 import { ImageSourceInput } from './ImageSourceInput';
-import { applyCardStyleDefaults, removeCardStyleDefaults } from '@thingsvis/ui';
+import { removeCardStyleDefaults } from '@thingsvis/ui';
 
 type BaseStylePanelProps = {
   baseStyle: any;
@@ -60,15 +60,17 @@ export function BaseStylePanel({
       return;
     }
 
-    onChange(
-      applyCardStyleDefaults({
-        ...baseStyle,
-        card: {
-          ...(baseStyle.card || {}),
-          enabled: true,
-        },
-      }),
-    );
+    // The default card is theme-owned. Do not persist white/gray visual
+    // values here: explicit baseStyle values remain user overrides, while a
+    // newly enabled card follows the active canvas theme.
+    onChange({
+      ...baseStyle,
+      card: {
+        ...(baseStyle.card || {}),
+        enabled: true,
+        appearance: baseStyle.card?.appearance ?? 'auto',
+      },
+    });
   };
 
   return (

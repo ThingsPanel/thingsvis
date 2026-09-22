@@ -6,18 +6,53 @@ export type InitialGridSettings = Pick<GridSettings, 'cols' | 'rowHeight' | 'gap
   containerWidth: number;
 };
 
+/**
+ * A node must have exactly one visual surface owner. Host-owned widgets receive
+ * the canvas card surface; controls and decorative/media widgets render their
+ * own surface (or none) and must not acquire a second outer frame by default.
+ */
+export const HOST_SURFACE_WIDGET_TYPES = new Set([
+  // Data cards render content only; the host supplies their themed surface.
+  'interaction/value-card',
+  'interaction/value-card-simple',
+  // Charts share the host surface so theme, spacing and hierarchy are consistent.
+  'chart/echarts-bar',
+  'chart/echarts-gauge',
+  'chart/echarts-line',
+  'chart/echarts-pie',
+  'chart/uplot-line',
+  'chart/realtime-history-curve',
+]);
+
+/** Controls already own focus, border and state affordances. */
+export const SELF_SURFACE_WIDGET_TYPES = new Set([
+  'interaction/basic-button',
+  'interaction/basic-input',
+  'interaction/basic-progress',
+  'interaction/basic-select',
+  'interaction/basic-slider',
+  'interaction/basic-switch',
+  'interaction/date-range-picker',
+  'interaction/quick-entry-list',
+  'interaction/toggle-button',
+]);
+
+export type WidgetSurfaceOwner = 'host' | 'self' | 'none';
+
+export function resolveWidgetSurfaceOwner(widgetType?: string): WidgetSurfaceOwner {
+  if (widgetType && HOST_SURFACE_WIDGET_TYPES.has(widgetType)) return 'host';
+  if (widgetType && SELF_SURFACE_WIDGET_TYPES.has(widgetType)) return 'self';
+  return 'none';
+}
+
 /** Defaults owned by the editor for a newly inserted library widget. */
 export function createDefaultWidgetBaseStyle(widgetType?: string): IBaseStyle {
-  const isValueCard = widgetType === 'interaction/value-card';
-  const isHistoryCurve = widgetType === 'chart/realtime-history-curve';
+  const surfaceOwner = resolveWidgetSurfaceOwner(widgetType);
 
-  // Keep the generator dependency-free. BaseStylePanel applies visual defaults
-  // when users toggle the mode, while the persisted flag controls the default UI state.
   return {
     opacity: 1,
-    ...(isValueCard ? { padding: 16 } : {}),
     card: {
-      enabled: !isValueCard && !isHistoryCurve,
+      enabled: surfaceOwner === 'host',
       appearance: 'auto',
       showSubtitle: false,
       titleFontSize: 16,

@@ -1,24 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { createDefaultWidgetBaseStyle, resolveInitialGridPosition } from './initialNodeDefaults';
+import {
+  createDefaultWidgetBaseStyle,
+  resolveInitialGridPosition,
+  resolveWidgetSurfaceOwner,
+} from './initialNodeDefaults';
 
 describe('initial widget node defaults', () => {
-  it('enables card mode for newly created non-value widgets', () => {
-    expect(createDefaultWidgetBaseStyle()).toMatchObject({
+  it('enables the theme card only for host-surface data and chart widgets', () => {
+    expect(createDefaultWidgetBaseStyle('interaction/value-card')).toMatchObject({
+      card: { enabled: true, appearance: 'auto' },
+    });
+    expect(createDefaultWidgetBaseStyle('chart/echarts-line')).toMatchObject({
       card: { enabled: true, appearance: 'auto' },
     });
   });
 
-  it('leaves value cards out of card mode and exposes padding to the editor', () => {
-    expect(createDefaultWidgetBaseStyle('interaction/value-card')).toMatchObject({
-      padding: 16,
+  it('does not wrap self-surface controls or unrelated widgets in a second card', () => {
+    expect(createDefaultWidgetBaseStyle('interaction/basic-switch')).toMatchObject({
+      card: { enabled: false, appearance: 'auto' },
+    });
+    expect(createDefaultWidgetBaseStyle('basic/text')).toMatchObject({
       card: { enabled: false, appearance: 'auto' },
     });
   });
 
-  it('leaves history curves out of card mode so the line is the first visual', () => {
-    expect(createDefaultWidgetBaseStyle('chart/realtime-history-curve')).toMatchObject({
-      card: { enabled: false, appearance: 'auto' },
-    });
+  it('declares one surface owner for every initial widget category', () => {
+    expect(resolveWidgetSurfaceOwner('interaction/value-card')).toBe('host');
+    expect(resolveWidgetSurfaceOwner('chart/realtime-history-curve')).toBe('host');
+    expect(resolveWidgetSurfaceOwner('interaction/basic-button')).toBe('self');
+    expect(resolveWidgetSurfaceOwner('media/image')).toBe('none');
   });
 
   it('derives compact grid dimensions from the widget pixel size', () => {
