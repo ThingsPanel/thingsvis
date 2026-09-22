@@ -422,6 +422,23 @@ function getStaticFieldType(field: unknown): FieldPathInfo['type'] {
     : 'string';
 }
 
+function getStaticFieldWritable(field: unknown): boolean | undefined {
+  if (!field || typeof field !== 'object') return undefined;
+  const record = field as Record<string, unknown>;
+  if (typeof record.writable === 'boolean') return record.writable;
+  if (record.dataType === 'command') return true;
+
+  const access = record.access ?? record.accessMode ?? record.readWriteFlag;
+  if (typeof access === 'string') {
+    const normalized = access.trim().toLowerCase();
+    if (normalized.includes('rw') || normalized.includes('write') || normalized.includes('w')) {
+      return true;
+    }
+    if (normalized.includes('ro') || normalized.includes('read')) return false;
+  }
+  return undefined;
+}
+
 function ensurePlatformDeviceDataSource(device: { deviceId: string; deviceName?: string }): void {
   const dataSourceId = getDeviceDataSourceId(device.deviceId);
   const existing = dataSourceManager.getAllConfigs().find((config) => config.id === dataSourceId);
@@ -1134,6 +1151,7 @@ export function FieldPicker({
                 : 'string') as FieldPathInfo['type'],
         label: typeof e.label === 'string' ? e.label : undefined,
         unit: typeof e.unit === 'string' ? e.unit : undefined,
+        ...(typeof e.writable === 'boolean' ? { writable: e.writable } : {}),
       }));
       return finalize(infos);
     }
@@ -1149,12 +1167,14 @@ export function FieldPicker({
           type: (f.type ?? 'string') as FieldPathInfo['type'],
           label: f.alias || f.name || f.id,
           unit: typeof f.unit === 'string' ? f.unit : undefined,
+          writable: getStaticFieldWritable(f),
         });
         if (f.jsonSchema) {
           Object.entries(f.jsonSchema).forEach(([subPath, subType]) => {
             staticInfos.push({
               path: `${f.id}.${subPath}`,
               type: subType as FieldPathInfo['type'],
+              writable: getStaticFieldWritable(f),
             });
           });
         }
@@ -1175,6 +1195,7 @@ export function FieldPicker({
         type: (field.type ?? 'string') as FieldPathInfo['type'],
         label: field.alias || field.name || field.id,
         unit: typeof field.unit === 'string' ? field.unit : undefined,
+        writable: getStaticFieldWritable(field),
       }));
       return finalize(staticInfos);
     }
@@ -1201,6 +1222,7 @@ export function FieldPicker({
         type: (field.type ?? 'string') as FieldPathInfo['type'],
         label: field.alias || field.name || field.id,
         unit: typeof field.unit === 'string' ? field.unit : undefined,
+        writable: getStaticFieldWritable(field),
       }));
       return finalize(staticInfos);
     }
@@ -1281,6 +1303,11 @@ export function FieldPicker({
     if (!selectedFieldPathForPicker) return undefined;
     return pathInfos.find((info) => info.path === selectedFieldPathForPicker)?.type;
   }, [pathInfos, selectedFieldPathForPicker]);
+
+  const selectedFieldInfo = useMemo(
+    () => pathInfos.find((info) => info.path === selectedFieldPathForPicker),
+    [pathInfos, selectedFieldPathForPicker],
+  );
 
   const requestFieldPreview = useCallback(
     (
@@ -1752,6 +1779,48 @@ export function FieldPicker({
             );
           })}
         </select>
+
+        {writableOnly && (
+          <div
+            className={[
+              'rounded-md border px-2.5 py-2 text-xs leading-relaxed',
+              selectedFieldInfo?.writable === false
+                ? 'border-amber-300/70 bg-amber-50/70 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/20 dark:text-amber-200'
+                : 'border-emerald-300/60 bg-emerald-50/70 text-emerald-800 dark:border-emerald-700/60 dark:bg-emerald-950/20 dark:text-emerald-200',
+            ].join(' ')}
+          >
+            {selectedFieldInfo?.writable === false ? (
+              <>
+                <div className="font-medium">字段只读，不能控制设备</div>
+                <div className="mt-0.5 opacity-80">
+                  请在物模型中给这个字段开启写入权限；只绑定当前值时，开关只能显示状态。
+                </div>
+              </>
+            ) : !selectedFieldPathForPicker ? (
+              <>
+                <div className="font-medium">选择字段后自动启用双向控制</div>
+                <div className="mt-0.5 opacity-80">
+                  不需要再配置事件；布尔字段会直接下发 true / false。
+                </div>
+              </>
+            ) : selectedFieldType === 'boolean' ? (
+              <>
+                <div className="font-medium">已启用双向控制</div>
+                <div className="mt-0.5 opacity-80">开启 → true · 关闭 → false</div>
+              </>
+            ) : selectedFieldType === 'number' ? (
+              <>
+                <div className="font-medium">已启用双向控制</div>
+                <div className="mt-0.5 opacity-80">开启 → 1 · 关闭 → 0</div>
+              </>
+            ) : (
+              <>
+                <div className="font-medium">已启用双向控制</div>
+                <div className="mt-0.5 opacity-80">点击控件时会自动写入当前值。</div>
+              </>
+            )}
+          </div>
+        )}
 
         {dsStatus === 'loading' && !fieldSchema && !hasStaticFieldOptions && (
           <p className="text-xs text-muted-foreground">

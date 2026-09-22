@@ -330,6 +330,9 @@ function createDefaultWritePayload(
   fieldId: string,
   fieldType: FieldPickerValue['fieldType'] | undefined,
 ): string {
+  if (componentType === 'interaction/basic-switch' && fieldType === 'boolean') {
+    return `({ ${JSON.stringify(fieldId)}: payload === true || payload === 1 || payload === '1' || payload === 'true' })`;
+  }
   if (componentType === 'interaction/basic-switch' && fieldType === 'number') {
     return `({ ${JSON.stringify(fieldId)}: payload ? 1 : 0 })`;
   }

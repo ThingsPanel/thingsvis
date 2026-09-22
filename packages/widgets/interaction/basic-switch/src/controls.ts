@@ -4,7 +4,11 @@ const W = 'widgets.thingsvis-widget-interaction-basic-switch';
 
 export const controls = createControlPanel()
   .addGroup('Content', (b) => {
-    b.addSwitch('value', { label: `${W}.value`, binding: true });
+    b.addSwitch('value', {
+      label: `${W}.value`,
+      description: `${W}.valueDescription`,
+      binding: true,
+    });
     b.addTextInput('label', { label: `${W}.label`, binding: true });
     b.addTextInput('icon', { label: `${W}.icon` });
     b.addSwitch('showLabel', { label: `${W}.showLabel`, default: true });

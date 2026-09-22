@@ -9,6 +9,11 @@ export type FieldPathOptions = {
 export type FieldPathInfo = {
   path: string;
   type: 'object' | 'array' | 'string' | 'number' | 'boolean' | 'null' | 'unknown';
+  /** Optional catalog metadata used by widgets that display field labels/units. */
+  label?: string;
+  unit?: string;
+  /** Optional platform metadata. When present, this is the model's write permission. */
+  writable?: boolean;
 };
 
 export type FieldPathListResult = {
@@ -174,6 +179,7 @@ export function resolveFieldPath(data: unknown, path: string): unknown {
   while (i < segments.length) {
     if (current === null || current === undefined) return undefined;
     const seg = segments[i];
+    if (seg === undefined) return undefined;
 
     if (seg === '[]') {
       // Descend into first array element as representative
@@ -188,7 +194,11 @@ export function resolveFieldPath(data: unknown, path: string): unknown {
 
     if (Array.isArray(current)) {
       // Implicit array lookup — take first element
-      current = (current[0] as Record<string, unknown>)?.[seg];
+      const first = current[0];
+      current =
+        first && typeof first === 'object' && !Array.isArray(first)
+          ? (first as Record<string, unknown>)[seg]
+          : undefined;
       i += 1;
       continue;
     }
