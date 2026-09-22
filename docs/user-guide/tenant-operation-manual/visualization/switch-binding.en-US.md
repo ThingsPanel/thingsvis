@@ -36,6 +36,10 @@ This tutorial shows how to add a ThingsVis switch and bind it to a Boolean field
 
 ![Bind the ha_state Boolean field in the visualization editor](./images/switch-binding-field.png)
 
+The following example shows the actual configuration screen. The Properties panel shows `ha_state [boolean]` and **Two-way control enabled**; the device name, icon, and state are on the left, while the switch control is on the right.
+
+![Actual switch binding configuration](./images/switch-binding-user-config.jpg)
+
 You do not need to configure a manual `change` event or build a request body. The saved configuration is a field binding; the host runtime routes a matching writable field to the device command automatically.
 
 ## Adjust the switch appearance
