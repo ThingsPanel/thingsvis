@@ -159,7 +159,7 @@ type EmbedMessage =
   | { type: 'LOAD_DASHBOARD'; payload: any }
   | { type: 'UPDATE_VARIABLES'; payload: Record<string, any> }
   | { type: 'SET_TOKEN'; payload: string }
-  | { type: 'READY' }
+  | { type: 'READY'; payload?: { renderReadyModes: string[] } }
   | { type: 'tv:render-ready' }
   | { type: 'ERROR'; payload: string }
   | { type: 'LOADED'; payload: { id?: string; name?: string } }
@@ -1140,12 +1140,14 @@ export default function EmbedPage() {
       if (!isHostManagedEmbed) {
         setState((s) => ({ ...s, isLoading: false }));
       }
-      postToParent({ type: 'READY' });
+      postToParent({ type: 'READY', payload: { renderReadyModes: ['grid'] } });
     }
   }, [searchParams, loadFromApi, loadFromApiWithShareToken, postToParent, setEmbedApiToken]);
 
   // Render
   if (state.isLoading || shouldKeepLoadingOnError) {
+    // The host keeps its loading surface until the canvas is ready.
+    if (isHostManagedEmbed && searchParams.get('hostLoading') === '1') return null;
     return (
       <LoadingScreen
         progress={shouldKeepLoadingOnError ? 28 : 36}
