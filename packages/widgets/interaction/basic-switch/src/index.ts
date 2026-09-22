@@ -1,5 +1,5 @@
 import { metadata } from './metadata';
-import { PropsSchema, getDefaultProps, type Props } from './schema';
+import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
 import {
   defineWidget,
@@ -14,20 +14,18 @@ import en from './locales/en.json';
 
 const SIZE_TOKENS = {
   default: {
-    trackWidth: 44,
+    trackWidth: 52,
+    trackHeight: 30,
+    thumbSize: 24,
+    thumbOffset: 3,
+    iconMinSize: 40,
+  },
+  small: {
+    trackWidth: 42,
     trackHeight: 24,
     thumbSize: 18,
     thumbOffset: 3,
-    innerFontSize: 10,
-    labelFontSize: 14,
-  },
-  small: {
-    trackWidth: 28,
-    trackHeight: 16,
-    thumbSize: 12,
-    thumbOffset: 2,
-    innerFontSize: 8,
-    labelFontSize: 12,
+    iconMinSize: 34,
   },
 } as const;
 
@@ -78,6 +76,19 @@ function toSwitchEventPayload(checked: boolean, sourceValue: unknown): boolean |
   return shouldEmitNumericPayload(sourceValue) ? (checked ? 1 : 0) : checked;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
 function renderSwitch(
   element: HTMLElement,
   props: Props,
@@ -87,17 +98,17 @@ function renderSwitch(
   onToggle: () => void,
 ): void {
   const t = SIZE_TOKENS[props.size] ?? SIZE_TOKENS['default'];
-  // The card is resizable, but the switch itself uses stable design-token
-  // dimensions. This keeps switches visually consistent with other dashboard
-  // controls instead of making them grow with large widget containers.
   const trackWidth = t.trackWidth;
   const trackHeight = t.trackHeight;
   const thumbSize = t.thumbSize;
   const thumbOffset = t.thumbOffset;
-  const innerFontSize = t.innerFontSize;
   const thumbPos = internalChecked ? trackWidth - thumbSize - thumbOffset : thumbOffset;
-  const onTextCenter = thumbPos / 2;
-  const offTextCenter = thumbPos + thumbSize + (trackWidth - thumbPos - thumbSize) / 2;
+  const elementWidth = element.clientWidth || 160;
+  const elementHeight = element.clientHeight || 80;
+  const iconSize = Math.round(
+    clamp(Math.min(elementHeight * 0.72, elementWidth * 0.28), t.iconMinSize, 56),
+  );
+  const horizontalPadding = clamp(Math.round(elementWidth * 0.05), 8, 16);
 
   const onColor = resolveLayeredColor({
     instance: props.onColor,
@@ -112,6 +123,8 @@ function renderSwitch(
   const trackColor = internalChecked ? onColor : offColor;
   const showLabel = coerceBoolean(props.showLabel, true);
   const disabled = coerceBoolean(props.disabled, false);
+  const statusLabel = internalChecked ? props.onLabel : props.offLabel;
+  const iconColor = internalChecked ? onColor : colors.fg;
 
   element.style.cssText = `
     width: 100%;
@@ -120,18 +133,74 @@ function renderSwitch(
     overflow: hidden;
     border-radius: inherit;
     font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   `;
 
-  const labelHtml = showLabel
+  const textHtml = showLabel
     ? `
-    <span style="
-      font-size: ${props.labelFontSize}px;
-      color: ${colors.fg};
-      white-space: nowrap;
-      user-select: none;
-    ">${props.label}</span>
+    <div data-tv-switch-text style="
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 2px;
+    ">
+      <span data-tv-switch-title style="
+        display: block;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: ${props.labelFontSize}px;
+        line-height: 1.15;
+        font-weight: 600;
+        color: ${colors.fg};
+        user-select: none;
+      ">${escapeHtml(props.label)}</span>
+      ${statusLabel
+        ? `<span data-tv-switch-status style="
+          display: block;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          font-size: ${Math.max(11, Math.round(props.labelFontSize * 0.82))}px;
+          line-height: 1.1;
+          color: ${colors.textSecondary};
+          user-select: none;
+        ">${escapeHtml(statusLabel)}</span>`
+        : ''}
+    </div>
   `
     : '';
+
+  const iconHtml = `
+    <div data-tv-switch-icon style="
+      width: ${iconSize}px;
+      height: ${iconSize}px;
+      min-width: ${iconSize}px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      color: ${iconColor};
+      background: ${colors.axis};
+      border: 1px solid ${colors.surfaceBorder};
+      transition: color 0.2s, background 0.2s;
+      opacity: ${disabled ? 0.55 : 1};
+    " aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="${Math.round(iconSize * 0.5)}" height="${Math.round(iconSize * 0.5)}" fill="none" stroke="${escapeHtml(iconColor)}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18h6" />
+        <path d="M10 22h4" />
+        <path d="M8.2 14.8c-1.2-1-2.2-2.7-2.2-4.8a6 6 0 1 1 12 0c0 2.1-1 3.8-2.2 4.8-.7.6-1 1.3-1 2.2H9.2c0-.9-.3-1.6-1-2.2Z" />
+      </svg>
+    </div>
+  `;
 
   const spinnerSize = Math.round(thumbSize * 0.55);
   const spinnerHtml = isLoading
@@ -148,44 +217,6 @@ function renderSwitch(
   `
     : '';
 
-  const onTextHtml = props.onLabel
-    ? `
-    <span style="
-      position: absolute;
-      top: 50%;
-      left: ${onTextCenter}px;
-      transform: translate(-50%, -50%);
-      font-size: ${innerFontSize}px;
-      color: #fff;
-      font-weight: 600;
-      line-height: 1;
-      pointer-events: none;
-      white-space: nowrap;
-      opacity: ${internalChecked ? 1 : 0};
-      transition: opacity 0.15s;
-    ">${props.onLabel}</span>
-  `
-    : '';
-
-  const offTextHtml = props.offLabel
-    ? `
-    <span style="
-      position: absolute;
-      top: 50%;
-      left: ${offTextCenter}px;
-      transform: translate(-50%, -50%);
-      font-size: ${innerFontSize}px;
-      color: #fff;
-      font-weight: 600;
-      line-height: 1;
-      pointer-events: none;
-      white-space: nowrap;
-      opacity: ${!internalChecked ? 1 : 0};
-      transition: opacity 0.15s;
-    ">${props.offLabel}</span>
-  `
-    : '';
-
   const trackHtml = `
     <div id="track" style="
       position: relative;
@@ -197,9 +228,9 @@ function renderSwitch(
       flex-shrink: 0;
       overflow: hidden;
       cursor: ${disabled || isLoading ? 'not-allowed' : 'pointer'};
-    ">
-      ${onTextHtml}
-      ${offTextHtml}
+      opacity: ${disabled ? 0.55 : 1};
+      outline: none;
+    " role="switch" aria-label="${escapeHtml(props.label)}" aria-checked="${internalChecked}" aria-disabled="${disabled || isLoading}" aria-busy="${isLoading}" tabindex="${disabled ? -1 : 0}">
       <div style="
         position: absolute;
         top: ${thumbOffset}px;
@@ -226,22 +257,39 @@ function renderSwitch(
       gap: 10px;
       width: 100%;
       height: 100%;
-      padding: 0 8px;
+      min-width: 0;
+      padding: 0 ${horizontalPadding}px;
       box-sizing: border-box;
       user-select: none;
       flex-direction: ${props.labelPosition === 'left' ? 'row' : 'row-reverse'};
       justify-content: ${props.labelPosition === 'left' ? 'flex-start' : 'flex-end'};
     ">
-      ${labelHtml}
+      <div data-tv-switch-content style="
+        min-width: 0;
+        flex: 1 1 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+      ">
+        ${iconHtml}
+        ${textHtml}
+      </div>
       ${trackHtml}
     </div>
   `;
 
-  const track = element.querySelector('#track');
+  const track = element.querySelector<HTMLElement>('#track');
   if (track) {
     track.addEventListener('click', () => {
       if (!disabled && !isLoading) {
         onToggle();
+      }
+    });
+    track.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        if (!disabled && !isLoading) onToggle();
       }
     });
   }

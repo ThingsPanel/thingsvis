@@ -33,6 +33,47 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('renders a compact control layout with semantic state text', async () => {
+    const { default: Main } = await import('./src/index');
+    const { getDefaultProps } = await import('./src/schema');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      size: { width: 120, height: 320 },
+      props: { label: 'Bedroom light', value: false, offLabel: 'Off', onLabel: 'On' },
+    });
+
+    expect(getDefaultProps().value).toBe(false);
+    expect(harness.element.querySelector('[data-tv-switch-icon]')).not.toBeNull();
+    expect(harness.element.querySelector('[data-tv-switch-title]')?.textContent).toBe('Bedroom light');
+    expect(harness.element.querySelector('[data-tv-switch-status]')?.textContent).toBe('Off');
+    expect(harness.element.innerHTML).not.toContain('backdrop-filter');
+    expect(harness.element.style.background).toBe('');
+
+    const trackStyle = harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style') ?? '';
+    expect(trackStyle).toContain('width: 52px');
+    expect(trackStyle).toContain('height: 30px');
+
+    harness.destroy();
+  });
+
+  it('toggles from keyboard activation as well as click', async () => {
+    const { default: Main } = await import('./src/index');
+    const emit = vi.fn();
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { value: false, showLabel: false },
+      emit,
+    });
+
+    harness.element.querySelector<HTMLElement>('#track')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true }),
+    );
+
+    expect(emit).toHaveBeenCalledWith('change', true);
+
+    harness.destroy();
+  });
+
   it('emits numeric 0/1 payloads when the current value is numeric', async () => {
     const { default: Main } = await import('./src/index');
     const emit = vi.fn();
@@ -119,14 +160,14 @@ describe('interaction/basic-switch widget', () => {
     const trackWidth = Number.parseFloat(trackStyle.match(/width:\s*(\d+)px/)?.[1] ?? '0');
     const trackHeight = Number.parseFloat(trackStyle.match(/height:\s*(\d+)px/)?.[1] ?? '0');
 
-    expect(trackWidth).toBe(44);
-    expect(trackHeight).toBe(24);
+    expect(trackWidth).toBe(52);
+    expect(trackHeight).toBe(30);
     expect(harness.element.innerHTML).toContain('font-size: 24px');
 
     harness.update({ props: { label: 'Switch', size: 'small' } });
     const compactTrackStyle = harness.element.querySelector<HTMLElement>('#track')?.getAttribute('style') ?? '';
-    expect(compactTrackStyle).toContain('width: 28px');
-    expect(compactTrackStyle).toContain('height: 16px');
+    expect(compactTrackStyle).toContain('width: 42px');
+    expect(compactTrackStyle).toContain('height: 24px');
 
     harness.destroy();
   });
