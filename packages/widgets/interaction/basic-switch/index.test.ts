@@ -71,6 +71,16 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('defaults the show-label control to enabled', async () => {
+    const { default: Main } = await import('./src/index');
+    const showLabelField = Main.controls?.groups
+      .flatMap((group) => group.fields)
+      .find((field) => field.path === 'showLabel');
+
+    expect(Main.defaultProps?.showLabel).toBe(true);
+    expect(showLabelField?.default).toBe(true);
+  });
+
   it('renders a configurable Lucide icon without owning a glass surface', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
