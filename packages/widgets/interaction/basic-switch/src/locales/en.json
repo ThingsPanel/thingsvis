@@ -8,6 +8,7 @@
                 "groupBehavior": "Behavior",
                 "value": "Switch Status",
                 "label": "Label",
+                "icon": "Icon (Lucide name)",
                 "showLabel": "Show Label",
                 "labelFontSize": "Label Font Size",
                 "labelPosition": "Label Position",

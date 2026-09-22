@@ -1,6 +1,9 @@
 import { metadata } from './metadata';
 import { PropsSchema, type Props } from './schema';
 import { controls } from './controls';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import * as LucideIcons from 'lucide-react';
 import {
   defineWidget,
   type WidgetOverlayContext,
@@ -87,6 +90,45 @@ function escapeHtml(value: unknown): string {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
+}
+
+function iconComponentNameFromValue(icon: string): string {
+  const trimmed = icon.trim();
+  if (!trimmed) return '';
+
+  const raw = trimmed.startsWith('i-lucide:') ? trimmed.slice('i-lucide:'.length) : trimmed;
+  return raw
+    .split(/[-_:]/g)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+}
+
+function resolveIconComponent(icon: string): LucideIcons.LucideIcon | null {
+  const iconName = iconComponentNameFromValue(icon);
+  if (!iconName) return null;
+
+  const iconRegistry = LucideIcons as unknown as Record<
+    string,
+    LucideIcons.LucideIcon | undefined
+  >;
+  return iconRegistry[iconName] ?? null;
+}
+
+function renderIconMarkup(icon: string, size: number, color: string): string {
+  const iconComponent = resolveIconComponent(icon);
+  if (!iconComponent) return '';
+
+  return renderToStaticMarkup(
+    createElement(iconComponent, {
+      width: size,
+      height: size,
+      color,
+      strokeWidth: 1.8,
+      'aria-hidden': true,
+    }),
+  );
 }
 
 function renderSwitch(
@@ -178,7 +220,9 @@ function renderSwitch(
   `
     : '';
 
-  const iconHtml = `
+  const iconMarkup = renderIconMarkup(props.icon, Math.round(iconSize * 0.5), iconColor);
+  const iconHtml = iconMarkup
+    ? `
     <div data-tv-switch-icon style="
       width: ${iconSize}px;
       height: ${iconSize}px;
@@ -194,13 +238,10 @@ function renderSwitch(
       transition: color 0.2s, background 0.2s;
       opacity: ${disabled ? 0.55 : 1};
     " aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="${Math.round(iconSize * 0.5)}" height="${Math.round(iconSize * 0.5)}" fill="none" stroke="${escapeHtml(iconColor)}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 18h6" />
-        <path d="M10 22h4" />
-        <path d="M8.2 14.8c-1.2-1-2.2-2.7-2.2-4.8a6 6 0 1 1 12 0c0 2.1-1 3.8-2.2 4.8-.7.6-1 1.3-1 2.2H9.2c0-.9-.3-1.6-1-2.2Z" />
-      </svg>
+      ${iconMarkup}
     </div>
-  `;
+  `
+    : '';
 
   const spinnerSize = Math.round(thumbSize * 0.55);
   const spinnerHtml = isLoading

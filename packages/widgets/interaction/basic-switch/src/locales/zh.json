@@ -8,6 +8,7 @@
                 "groupBehavior": "行为",
                 "value": "开关状态",
                 "label": "标签文字",
+                "icon": "图标（Lucide 名称）",
                 "showLabel": "显示标签",
                 "labelFontSize": "标签字号",
                 "labelPosition": "标签位置",

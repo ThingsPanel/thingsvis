@@ -56,6 +56,20 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('renders a configurable Lucide icon without owning a glass surface', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { icon: 'Power', showLabel: false },
+    });
+
+    expect(harness.element.querySelector('svg.lucide-power')).not.toBeNull();
+    expect(harness.element.innerHTML).not.toContain('backdrop-filter');
+    expect(harness.element.style.background).toBe('');
+
+    harness.destroy();
+  });
+
   it('toggles from keyboard activation as well as click', async () => {
     const { default: Main } = await import('./src/index');
     const emit = vi.fn();

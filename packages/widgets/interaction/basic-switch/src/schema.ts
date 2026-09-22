@@ -4,6 +4,7 @@ export const PropsSchema = z.object({
   // ── Content ────────────────────────────────────
   value: z.boolean().default(false).describe('props.switchStatus'),
   label: z.string().default('开关').describe('props.label'),
+  icon: z.string().default('Lightbulb').describe('props.icon'),
   showLabel: z.boolean().default(true).describe('props.showLabel'),
   labelPosition: z.enum(['left', 'right']).default('right').describe('props.labelPosition'),
   labelFontSize: z.number().min(8).max(72).default(14).describe('props.labelFontSize'),
