@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { getDefaultProps } from './src/schema';
+import { controls } from './src/controls';
 import {
   appendRealtime,
   buildHistoryUrl,
@@ -12,6 +13,15 @@ import {
 } from './src/history';
 
 describe('chart/realtime-history-curve history contract', () => {
+  it('exposes the standard data binding control without the legacy device picker', () => {
+    const fields = controls.groups.flatMap((group) => group.fields);
+    expect(fields.map((field) => field.path)).toEqual(['data']);
+    expect(fields[0]?.binding).toEqual({
+      enabled: true,
+      modes: ['static', 'field', 'expr'],
+    });
+  });
+
   it('normalizes a platform history field into one chart series', () => {
     expect(
       normalizeBoundHistorySeries(

@@ -13,11 +13,6 @@ export const controls: WidgetControls = {
           kind: 'json',
           binding: { enabled: true, modes: ['static', 'field', 'expr'] },
         },
-        {
-          path: 'config',
-          label: { zh: '数据设置', en: 'Data settings' },
-          kind: 'timeSeriesConfig',
-        },
       ],
     },
   ],
