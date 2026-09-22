@@ -85,6 +85,30 @@ describe('interaction/basic-switch widget', () => {
     harness.destroy();
   });
 
+  it('dims the title and status while off and brightens them when on', async () => {
+    const { default: Main } = await import('./src/index');
+    const harness = mountWidget(Main, {
+      mode: 'view',
+      props: { value: false, label: 'Bedroom light', offLabel: 'Off', onLabel: 'On' },
+    });
+
+    const title = harness.element.querySelector<HTMLElement>('[data-tv-switch-title]');
+    const status = harness.element.querySelector<HTMLElement>('[data-tv-switch-status]');
+    expect(title?.style.color).toBe('rgba(26, 26, 46, 0.55)');
+    expect(status?.style.color).toBe('rgba(26, 26, 46, 0.55)');
+
+    harness.update({
+      props: { value: true, label: 'Bedroom light', offLabel: 'Off', onLabel: 'On' },
+    });
+
+    const activeTitle = harness.element.querySelector<HTMLElement>('[data-tv-switch-title]');
+    const activeStatus = harness.element.querySelector<HTMLElement>('[data-tv-switch-status]');
+    expect(activeTitle?.style.color).toBe('rgb(26, 26, 46)');
+    expect(activeStatus?.style.color).toBe('rgba(26, 26, 46, 0.72)');
+
+    harness.destroy();
+  });
+
   it('toggles from keyboard activation as well as click', async () => {
     const { default: Main } = await import('./src/index');
     const emit = vi.fn();

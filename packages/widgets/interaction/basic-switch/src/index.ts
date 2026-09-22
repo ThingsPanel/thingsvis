@@ -167,6 +167,8 @@ function renderSwitch(
   const disabled = coerceBoolean(props.disabled, false);
   const statusLabel = internalChecked ? props.onLabel : props.offLabel;
   const iconColor = internalChecked ? onColor : colors.fg;
+  const titleColor = internalChecked ? colors.textPrimary : colors.textMuted;
+  const statusColor = internalChecked ? colors.textSecondary : colors.textMuted;
 
   element.style.cssText = `
     width: 100%;
@@ -200,7 +202,8 @@ function renderSwitch(
         font-size: ${props.labelFontSize}px;
         line-height: 1.15;
         font-weight: 600;
-        color: ${colors.fg};
+        color: ${titleColor};
+        transition: color 0.2s;
         user-select: none;
       ">${escapeHtml(props.label)}</span>
       ${statusLabel
@@ -212,7 +215,8 @@ function renderSwitch(
           white-space: nowrap;
           font-size: ${Math.max(11, Math.round(props.labelFontSize * 0.82))}px;
           line-height: 1.1;
-          color: ${colors.textSecondary};
+          color: ${statusColor};
+          transition: color 0.2s;
           user-select: none;
         ">${escapeHtml(statusLabel)}</span>`
         : ''}
