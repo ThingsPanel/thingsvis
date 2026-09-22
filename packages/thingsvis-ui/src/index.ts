@@ -27,3 +27,7 @@ export type { GridCanvasProps } from "./components/GridCanvas";
 export { WidgetErrorBoundary } from "./components/WidgetErrorBoundary";
 export * from "./utils/cardStyle";
 export { resolveCanvasBackgroundStyle } from "./utils/canvasBackgroundStyle";
+export {
+  createCanvasThemeOverrideStyle,
+  normalizeCanvasThemeOverrides,
+} from "./utils/canvasThemeOverrides";

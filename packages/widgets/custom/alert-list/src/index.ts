@@ -44,9 +44,10 @@ function escapeHtml(input: unknown): string {
 
 function getLevelColor(level: unknown, colors: WidgetColors): string {
   const normalized = String(level ?? "info").toLowerCase() as AlertLevel;
-  if (normalized === "critical") return "#ef4444";
-  if (normalized === "warning") return "#f59e0b";
-  if (normalized === "success") return "#10b981";
+  if (normalized === "critical") return colors.statusCritical;
+  if (normalized === "warning") return colors.statusWarning;
+  if (normalized === "success") return colors.statusSuccess;
+  if (normalized === "info") return colors.statusInfo;
   return colors.primary;
 }
 
@@ -68,9 +69,9 @@ const SCROLL_SPEED_MAP: Record<string, number> = {
 
 function renderList(element: HTMLElement, props: Props, colors: WidgetColors): (() => void) | null {
   const items = Array.isArray(props.items) ? props.items.slice(0, props.maxItems) : [];
-  const titleColor = colors.fg;
-  const detailColor = withAlpha(colors.fg, 0.72);
-  const metaColor = withAlpha(colors.fg, 0.45);
+  const titleColor = colors.textPrimary;
+  const detailColor = colors.textSecondary;
+  const metaColor = colors.textMuted;
   const rowBg = withAlpha(colors.fg, 0.025);
   const rowBorder = withAlpha(colors.fg, 0.06);
   const compactPadding = "12px 14px";

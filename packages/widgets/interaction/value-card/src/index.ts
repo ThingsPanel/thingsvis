@@ -18,12 +18,6 @@ import en from './locales/en.json';
 // ============================================================================
 // Constants
 // ============================================================================
-const DEFAULT_CARD_WIDTH = 160;
-const DEFAULT_CARD_HEIGHT = 80;
-const DEFAULT_CARD_PADDING_X = 16;
-const DEFAULT_CARD_PADDING_Y = 16;
-const TREND_COLOR_POSITIVE = '#22c55e';
-const TREND_COLOR_NEGATIVE = '#ef4444';
 const MIN_ICON_BADGE_SIZE = 16;
 const MIN_ICON_FONT_SIZE = 10;
 const MIN_ICON_GLYPH_SIZE = 12;
@@ -60,7 +54,13 @@ function withAlpha(color: string, alpha: number): string {
   const hexMatch = normalized.match(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
   if (hexMatch?.[1]) {
     const hex = hexMatch[1];
-    const fullHex = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+    const fullHex =
+      hex.length === 3
+        ? hex
+            .split('')
+            .map((c) => c + c)
+            .join('')
+        : hex;
     const num = Number.parseInt(fullHex, 16);
     const r = (num >> 16) & 255;
     const g = (num >> 8) & 255;
@@ -69,7 +69,7 @@ function withAlpha(color: string, alpha: number): string {
   }
   const rgbMatch = normalized.match(/^rgba?\(([^)]+)\)$/i);
   if (rgbMatch?.[1]) {
-    const parts = rgbMatch[1].split(',').map(p => p.trim());
+    const parts = rgbMatch[1].split(',').map((p) => p.trim());
     if (parts.length >= 3) {
       return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${clamped})`;
     }
@@ -84,9 +84,9 @@ function iconComponentNameFromValue(icon: string): string {
   const raw = trimmed.startsWith('i-lucide:') ? trimmed.slice('i-lucide:'.length) : trimmed;
   return raw
     .split(/[-_:]/g)
-    .map(part => part.trim())
+    .map((part) => part.trim())
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join('');
 }
 
@@ -106,21 +106,22 @@ function iconLabelFromValue(icon: string): string {
   const raw = trimmed.startsWith('i-lucide:') ? trimmed.slice('i-lucide:'.length) : trimmed;
   const words = raw
     .split(/[-_:]/g)
-    .map(part => part.trim())
+    .map((part) => part.trim())
     .filter(Boolean);
 
   if (words.length === 0) return '';
 
   // Multi-word: take first letter of first 2 words (e.g. "bar-chart" → "BC")
   if (words.length >= 2) {
-    return words.slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+    return words
+      .slice(0, 2)
+      .map((w) => w.charAt(0).toUpperCase())
+      .join('');
   }
 
   // Single-word: take first 2 characters (e.g. "box" → "BO")
   const word = words[0] ?? '';
-  return word.length >= 2
-    ? word.substring(0, 2).toUpperCase()
-    : word.charAt(0).toUpperCase();
+  return word.length >= 2 ? word.substring(0, 2).toUpperCase() : word.charAt(0).toUpperCase();
 }
 
 function renderIconBadgeFrame(contentHtml: string, badgeSize: number): string {
@@ -148,7 +149,12 @@ function renderIconBadgeFrame(contentHtml: string, badgeSize: number): string {
 // ============================================================================
 // Render helpers
 // ============================================================================
-function renderTrendBadge(trend: number, fontSize: number, positiveColor: string, negativeColor: string): string {
+function renderTrendBadge(
+  trend: number,
+  fontSize: number,
+  positiveColor: string,
+  negativeColor: string,
+): string {
   if (trend === 0) return '';
   const isPositive = trend > 0;
   const color = isPositive ? positiveColor : negativeColor;
@@ -179,11 +185,28 @@ function renderTrendBadge(trend: number, fontSize: number, positiveColor: string
 // ============================================================================
 // Render
 // ============================================================================
-function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ctx: WidgetOverlayContext): Root | null {
+function renderCard(
+  element: HTMLElement,
+  props: Props,
+  colors: WidgetColors,
+  ctx: WidgetOverlayContext,
+): Root | null {
   const {
-    title, prefix, value, suffix, unit, subtitle, trend, precision,
-    icon, iconPosition, iconSize,
-    titleFontSize, valueFontSize, suffixFontSize, subtitleFontSize,
+    title,
+    prefix,
+    value,
+    suffix,
+    unit,
+    subtitle,
+    trend,
+    precision,
+    icon,
+    iconPosition,
+    iconSize,
+    titleFontSize,
+    valueFontSize,
+    suffixFontSize,
+    subtitleFontSize,
     titleColor: titleColorProp,
     valueColor: valueColorProp,
     subtitleColor: subtitleColorProp,
@@ -191,13 +214,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     iconBackgroundColor: iconBackgroundColorProp,
     trendUpColor: trendUpColorProp,
     trendDownColor: trendDownColorProp,
-    align
+    align,
   } = props;
 
-  // The widget owns its content surface, so persisted canvas background/card
-  // styles must never remove the readable inset from the widget itself.
-  const paddingX = DEFAULT_CARD_PADDING_X;
-  const paddingY = DEFAULT_CARD_PADDING_Y;
   const titleSize = titleFontSize;
   const mainValueSize = valueFontSize;
   const unitSize = suffixFontSize;
@@ -209,23 +228,23 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
   const contentGap = 8;
   const titleColor = resolveLayeredColor({
     instance: titleColorProp,
-    theme: withAlpha(colors.fg, 0.72),
-    fallback: withAlpha(colors.fg, 0.72),
+    theme: colors.textSecondary,
+    fallback: colors.textSecondary,
   });
   const valueColor = resolveLayeredColor({
     instance: valueColorProp,
-    theme: colors.fg,
-    fallback: colors.fg,
+    theme: colors.textPrimary,
+    fallback: colors.textPrimary,
   });
   const subtitleColor = resolveLayeredColor({
     instance: subtitleColorProp,
-    theme: withAlpha(colors.fg, 0.55),
-    fallback: withAlpha(colors.fg, 0.55),
+    theme: colors.textMuted,
+    fallback: colors.textMuted,
   });
   const iconColor = resolveLayeredColor({
     instance: iconColorProp,
-    theme: colors.bg,
-    fallback: colors.bg,
+    theme: colors.textPrimary,
+    fallback: colors.textPrimary,
   });
   const iconBackgroundColor = resolveLayeredColor({
     instance: iconBackgroundColorProp,
@@ -234,13 +253,13 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
   });
   const trendUpColor = resolveLayeredColor({
     instance: trendUpColorProp,
-    component: TREND_COLOR_POSITIVE,
-    fallback: TREND_COLOR_POSITIVE,
+    theme: colors.primary,
+    fallback: colors.primary,
   });
   const trendDownColor = resolveLayeredColor({
     instance: trendDownColorProp,
-    component: TREND_COLOR_NEGATIVE,
-    fallback: TREND_COLOR_NEGATIVE,
+    theme: colors.textSecondary,
+    fallback: colors.textSecondary,
   });
 
   // Formatting value (always useGrouping internally as per spec)
@@ -269,7 +288,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       iconHtml = renderIconBadgeFrame(
         `<div data-value-card-icon-slot="true" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:${iconColor};"></div>`,
         badgeSize,
-      ).replace('color: currentColor;', `color: ${iconColor};`).replace('background: currentColor;', `background: ${iconBackgroundColor};`);
+      )
+        .replace('color: currentColor;', `color: ${iconColor};`)
+        .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
     } else {
       const iconLabel = iconLabelFromValue(icon);
       if (iconLabel) {
@@ -277,7 +298,9 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
         iconHtml = renderIconBadgeFrame(
           `<span style="font-size:${fontSize}px;font-weight:700;letter-spacing:0.04em;color:${iconColor};">${escapeHtml(iconLabel)}</span>`,
           badgeSize,
-        ).replace('color: currentColor;', `color: ${iconColor};`).replace('background: currentColor;', `background: ${iconBackgroundColor};`);
+        )
+          .replace('color: currentColor;', `color: ${iconColor};`)
+          .replace('background: currentColor;', `background: ${iconBackgroundColor};`);
       }
     }
   }
@@ -288,7 +311,7 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     box-sizing: border-box;
     overflow: hidden;
     border-radius: inherit;
-    font-family: Inter, Noto Sans SC, Noto Sans, sans-serif;
+    font-family: inherit;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   `;
@@ -321,22 +344,31 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       width: 100%;
       justify-content: ${align === 'center' ? 'center' : align === 'right' ? 'flex-end' : 'flex-start'};
     ">
-      ${prefix ? `
+      ${
+        prefix
+          ? `
         <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
           ${escapeHtml(prefix)}
         </span>
-      ` : ''}
+      `
+          : ''
+      }
       <span style="font-size: ${mainValueSize}px; font-weight: 600; color: ${valueColor};">
         ${escapeHtml(displayValue)}
       </span>
-      ${displaySuffix ? `
+      ${
+        displaySuffix
+          ? `
         <span style="font-size: ${unitSize}px; color: ${valueColor}; opacity: 0.8;">
           ${escapeHtml(displaySuffix)}
         </span>
-      ` : ''}
+      `
+          : ''
+      }
     </div>
   `;
-  const subtitleHtml = subtitle ? `
+  const subtitleHtml = subtitle
+    ? `
     <div style="
       font-size: ${subTitleSize}px;
       color: ${subtitleColor};
@@ -347,7 +379,8 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     ">
       ${escapeHtml(subtitle)}
     </div>
-  ` : '';
+  `
+    : '';
   const textContentHtml = `
     <div style="
       min-width: 0;
@@ -359,11 +392,15 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       text-align: ${textAlign};
       width: 100%;
     ">
-      ${hasSideIcon && trendHtml ? `
+      ${
+        hasSideIcon && trendHtml
+          ? `
         <div style="display:flex;justify-content:${align === 'right' ? 'flex-end' : 'flex-start'};width:100%;">
           ${trendHtml}
         </div>
-      ` : ''}
+      `
+          : ''
+      }
       ${titleHtml}
       ${valueHtml}
       ${subtitleHtml}
@@ -385,14 +422,11 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
       gap: ${contentGap}px;
       align-items: ${alignItems};
       text-align: ${textAlign};
-      padding: ${paddingY}px ${paddingX}px;
       color: ${valueColor};
-      background: ${colors.surface};
-      border: 1px solid ${colors.surfaceBorder};
-      border-radius: 12px;
-      box-shadow: 0 8px 24px ${colors.surfaceShadow};
     ">
-      ${hasSideIcon ? `
+      ${
+        hasSideIcon
+          ? `
         <div style="
           display: flex;
           align-items: center;
@@ -405,10 +439,16 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
           ${textContentHtml}
           ${iconPosition === 'right' ? iconHtml : ''}
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
-      ${!hasSideIcon ? `
-      ${hasRow1 ? `
+      ${
+        !hasSideIcon
+          ? `
+      ${
+        hasRow1
+          ? `
         <div style="
           display: flex;
           justify-content: space-between;
@@ -418,12 +458,16 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
           ${iconHtml}
           ${trendHtml}
         </div>
-      ` : ''}
+      `
+          : ''
+      }
 
       ${titleHtml}
       ${valueHtml}
       ${subtitleHtml}
-      ` : ''}
+      `
+          : ''
+      }
     </div>
   `;
 
@@ -431,11 +475,13 @@ function renderCard(element: HTMLElement, props: Props, colors: WidgetColors, ct
     const iconSlot = element.querySelector(ICON_SLOT_SELECTOR);
     if (iconSlot instanceof HTMLElement) {
       const iconRoot = createRoot(iconSlot);
-      iconRoot.render(createElement(iconComponent, {
-        size: iconGlyphSize,
-        color: iconColor,
-        strokeWidth: DEFAULT_ICON_STROKE_WIDTH,
-      }));
+      iconRoot.render(
+        createElement(iconComponent, {
+          size: iconGlyphSize,
+          color: iconColor,
+          strokeWidth: DEFAULT_ICON_STROKE_WIDTH,
+        }),
+      );
       return iconRoot;
     }
   }
@@ -458,7 +504,7 @@ export const Main = defineWidget({
   locales: { zh, en },
   schema: PropsSchema,
   controls,
-  
+
   render: (element: HTMLElement, props: Props, ctx: WidgetOverlayContext) => {
     let currentProps = props;
     let currentCtx = ctx;
@@ -497,9 +543,9 @@ export const Main = defineWidget({
       scheduleIconRootUnmount(previousIconRoot);
       iconRoot = renderCard(element, currentProps, colors, currentCtx);
     };
-    
+
     renderWidget();
-    
+
     let ro: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
@@ -515,9 +561,12 @@ export const Main = defineWidget({
         colors = resolveWidgetColors(element);
         renderWidget();
       });
-      themeObserver.observe(themeTarget, { attributes: true, attributeFilter: ['data-canvas-theme'] });
+      themeObserver.observe(themeTarget, {
+        attributes: true,
+        attributeFilter: ['data-canvas-theme'],
+      });
     }
-    
+
     return {
       update: (newProps: Props, newCtx: WidgetOverlayContext) => {
         currentProps = newProps;
@@ -532,9 +581,9 @@ export const Main = defineWidget({
         ro?.disconnect();
         themeObserver?.disconnect();
         element.innerHTML = '';
-      }
+      },
     };
-  }
+  },
 });
 
 export default Main;

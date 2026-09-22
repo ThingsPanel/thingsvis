@@ -60,6 +60,13 @@ export function CanvasSettingsPanel({
     typeof canvasConfig.background === 'object' && canvasConfig.background !== null
       ? (canvasConfig.background as Record<string, string>)
       : {};
+  const themeOverrides = (canvasConfig.themeOverrides ?? {}) as Record<string, string>;
+  const updateThemeOverride = (key: string, value: string) => {
+    const next = { ...themeOverrides };
+    if (value.trim()) next[key] = value.trim();
+    else delete next[key];
+    onConfigChange({ ...canvasConfig, themeOverrides: Object.keys(next).length ? next : undefined });
+  };
 
   return (
     <div className="w-full space-y-4 pb-4">
@@ -174,6 +181,40 @@ export function CanvasSettingsPanel({
                   </button>
                 );
               })}
+            </div>
+            <div className="mt-4 rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+              <div>
+                <div className="text-sm font-medium">{t('canvas.themeOverrides')}</div>
+                <div className="mt-1 text-[11px] leading-4 text-muted-foreground">{t('canvas.themeOverridesHint')}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {([
+                  ['surface', 'themeSurface'],
+                  ['textPrimary', 'themeTextPrimary'],
+                  ['textSecondary', 'themeTextSecondary'],
+                  ['textMuted', 'themeTextMuted'],
+                  ['primary', 'themePrimary'],
+                  ['border', 'themeBorder'],
+                  ['statusWarning', 'themeStatusWarning'],
+                ] as const).map(([key, labelKey]) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs text-muted-foreground">{t(`canvas.${labelKey}`)}</label>
+                    <ColorInput
+                      value={themeOverrides[key] ?? ''}
+                      onChange={(value) => updateThemeOverride(key, value)}
+                    />
+                  </div>
+                ))}
+              </div>
+              {Object.keys(themeOverrides).length > 0 && (
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                  onClick={() => onConfigChange({ ...canvasConfig, themeOverrides: undefined })}
+                >
+                  {t('canvas.themeReset')}
+                </button>
+              )}
             </div>
           </div>
 

@@ -5,15 +5,6 @@ import { PropsSchema, type Props } from "./schema";
 import zh from "./locales/zh.json";
 import en from "./locales/en.json";
 
-type StatusName = Props["status"];
-
-const STATUS_COLORS: Record<StatusName, string> = {
-  online: "#10b981",
-  warning: "#f59e0b",
-  offline: "#94a3b8",
-  maintenance: "#7c5cfc"
-};
-
 function withAlpha(color: string, alpha: number): string {
   const normalized = color.trim();
   const clamped = Math.max(0, Math.min(1, alpha));
@@ -50,13 +41,18 @@ function escapeHtml(input: unknown): string {
 }
 
 function renderCard(element: HTMLElement, props: Props, colors: WidgetColors): void {
-  const statusColor = STATUS_COLORS[props.status] ?? colors.primary;
+  const statusColor = {
+    online: colors.statusOnline,
+    warning: colors.statusWarning,
+    offline: colors.statusOffline,
+    maintenance: colors.statusMaintenance,
+  }[props.status] ?? colors.primary;
   const progressColor = props.progressColor || statusColor;
   const surfaceBg = colors.surface;
   const shadowColor = colors.surfaceShadow;
-  const titleColor = colors.fg;
-  const metaColor = withAlpha(colors.fg, 0.62);
-  const subtleColor = withAlpha(colors.fg, 0.48);
+  const titleColor = colors.textPrimary;
+  const metaColor = colors.textSecondary;
+  const subtleColor = colors.textMuted;
   const compactPadding = props.compact ? "14px 16px" : "18px 18px";
   const gap = props.compact ? 10 : 14;
 

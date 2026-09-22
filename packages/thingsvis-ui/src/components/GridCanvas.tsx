@@ -18,6 +18,7 @@ import {
     scaleGridPositionForResponsive,
 } from '../utils/grid-mapper';
 import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
+import { createCanvasThemeOverrideStyle } from '../utils/canvasThemeOverrides';
 import { GridCanvasBackground } from './GridCanvasBackground';
 import { GridDropTarget } from './GridDropTarget';
 import { GridNodeItem, type ResizeHandle } from './GridNodeItem';
@@ -501,6 +502,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
 
     const fallbackTheme = (kernelState.page as any)?.config?.theme;
     const normalizedTheme = validateCanvasTheme(theme || fallbackTheme);
+    const themeOverrideStyle = createCanvasThemeOverrideStyle(pageConfig?.themeOverrides);
 
     // Widget mounting and its scheduled chart resize must finish before a host reveals the frame.
     useEffect(() => {
@@ -687,6 +689,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
             onMouseDown={handleMouseDown}
             onWheel={handleWheel}
             style={{
+                ...themeOverrideStyle,
                 width: '100%',
                 // In fullWidth (preview/embed) mode, allow content to grow beyond viewport
                 // so the parent container can scroll. In editor mode, clip to viewport area.

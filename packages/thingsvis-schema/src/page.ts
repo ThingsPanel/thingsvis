@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { VisualComponentSchema } from './component';
 import { GridSettingsSchema } from './grid';
-import { CANVAS_THEME_IDS, validateCanvasTheme } from './theme-registry';
+import {
+  CANVAS_THEME_IDS,
+  CanvasThemeOverridesSchema,
+  validateCanvasTheme,
+} from './theme-registry';
 
 /**
  * Layout mode enum - includes grid mode
@@ -100,6 +104,9 @@ export const PageConfigSchema = z.object({
   theme: z
     .preprocess(validateCanvasTheme, z.enum(CANVAS_THEME_IDS as [string, ...string[]]))
     .default('dawn'),
+
+  /** Optional page-level semantic token overrides for the selected theme. */
+  themeOverrides: CanvasThemeOverridesSchema.optional(),
 
   /**
    * Grid layout settings

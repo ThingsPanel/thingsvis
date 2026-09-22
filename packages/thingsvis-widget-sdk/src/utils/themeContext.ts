@@ -6,11 +6,21 @@ export type WidgetColors = {
     surfaceBorder: string;
     surfaceShadow: string;
     fg: string;
+    textPrimary: string;
+    textSecondary: string;
+    textMuted: string;
     axis: string;
     primary: string;
     border: string;
     /** 6-color data series palette for charts (ECharts option.color) */
     series: [string, string, string, string, string, string];
+    statusOnline: string;
+    statusWarning: string;
+    statusOffline: string;
+    statusMaintenance: string;
+    statusCritical: string;
+    statusInfo: string;
+    statusSuccess: string;
 };
 
 export type ResolveLayeredColorOptions = {
@@ -28,10 +38,20 @@ const DAWN_FALLBACKS = {
     surfaceBorder: 'rgba(31, 41, 55, 0.14)',
     surfaceShadow: 'rgba(15, 23, 42, 0.08)',
     fg: '#1a1a2e',
+    textPrimary: '#1a1a2e',
+    textSecondary: 'rgba(26, 26, 46, 0.72)',
+    textMuted: 'rgba(26, 26, 46, 0.55)',
     axis: 'rgba(0, 0, 0, 0.08)',
     primary: '#6965db',
     border: 'rgba(0, 0, 0, 0.06)',
     series: ['#6965db', '#4ea8a6', '#e8945a', '#e05d6f', '#8b5cf6', '#0ea5e9'],
+    statusOnline: '#107c10',
+    statusWarning: '#d83b01',
+    statusOffline: '#64748b',
+    statusMaintenance: '#5c2d91',
+    statusCritical: '#d83b01',
+    statusInfo: '#0f6cbd',
+    statusSuccess: '#107c10',
 } as const;
 
 const DEFAULT_INHERIT_TOKENS = ['auto', 'theme', 'inherit'];
@@ -107,6 +127,9 @@ export function resolveWidgetColors(element: HTMLElement): WidgetColors {
         surfaceBorder: getVar('--w-surface-border', DAWN_FALLBACKS.surfaceBorder),
         surfaceShadow: getVar('--w-surface-shadow', DAWN_FALLBACKS.surfaceShadow),
         fg:      getVar('--w-fg',       DAWN_FALLBACKS.fg),
+        textPrimary: getVar('--w-text-primary', DAWN_FALLBACKS.fg),
+        textSecondary: getVar('--w-text-secondary', 'rgba(26, 26, 46, 0.72)'),
+        textMuted: getVar('--w-text-muted', 'rgba(26, 26, 46, 0.55)'),
         axis:    getVar('--w-axis',     DAWN_FALLBACKS.axis),
         primary: getVar('--w-primary',  DAWN_FALLBACKS.primary),
         border:  getVar('--w-border',   DAWN_FALLBACKS.border),
@@ -118,5 +141,12 @@ export function resolveWidgetColors(element: HTMLElement): WidgetColors {
             getVar('--w-series-5', DAWN_FALLBACKS.series[4]),
             getVar('--w-series-6', DAWN_FALLBACKS.series[5]),
         ],
+        statusOnline: getVar('--w-status-online', DAWN_FALLBACKS.statusOnline),
+        statusWarning: getVar('--w-status-warning', DAWN_FALLBACKS.statusWarning),
+        statusOffline: getVar('--w-status-offline', DAWN_FALLBACKS.statusOffline),
+        statusMaintenance: getVar('--w-status-maintenance', DAWN_FALLBACKS.statusMaintenance),
+        statusCritical: getVar('--w-status-critical', DAWN_FALLBACKS.statusCritical),
+        statusInfo: getVar('--w-status-info', DAWN_FALLBACKS.statusInfo),
+        statusSuccess: getVar('--w-status-success', DAWN_FALLBACKS.statusSuccess),
     };
 }

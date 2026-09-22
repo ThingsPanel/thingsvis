@@ -238,6 +238,7 @@ export default function PreviewPage() {
       (page as any).config = {
         background: normalizedBg,
         theme: (project.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
+        themeOverrides: (project.canvas as any)?.themeOverrides,
         scaleMode: (project.canvas as any)?.scaleMode,
         previewAlignY: normalizePreviewAlignY((project.canvas as any)?.previewAlignY),
         responsive: (project.canvas as any)?.responsive !== false,

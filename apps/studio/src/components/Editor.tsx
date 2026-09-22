@@ -833,6 +833,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
                             width: canvasConfig.width,
                             height: canvasConfig.height,
                             theme: canvasConfig.theme as any,
+                            themeOverrides: canvasConfig.themeOverrides,
                           },
                         });
                         setCanvasConfig((prev) => ({ ...prev, mode: newMode }));
@@ -932,6 +933,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
               width: project.canvas.width,
               height: project.canvas.height,
               theme: loadedTheme,
+              themeOverrides: (project.canvas as any).themeOverrides,
               scaleMode: (project.canvas as any).scaleMode,
               previewAlignY: loadedPreviewAlignY,
               layerOrder: (project.canvas as any).layerOrder,
@@ -965,6 +967,7 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
             width: project.canvas.width,
             height: project.canvas.height,
             theme: loadedTheme,
+            themeOverrides: (project.canvas as any).themeOverrides,
             scaleMode: (project.canvas as any).scaleMode,
             previewAlignY: loadedPreviewAlignY,
             bgType: backgroundState.bgType,

@@ -50,6 +50,8 @@ export const CanvasConfigSchema = z.object({
   background: z.any().optional(),
   /** Canvas theme */
   theme: z.string().optional(),
+  /** Page-level semantic theme token overrides */
+  themeOverrides: z.record(z.string(), z.string()).optional(),
   /** Grid column count (grid layout only) */
   gridCols: z.number().int().min(1).max(48).optional(),
   /** Grid row height in pixels (grid layout only) */

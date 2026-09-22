@@ -243,6 +243,7 @@ export interface EmbedInitPayload {
       width?: number;
       height?: number;
       theme?: string;
+      themeOverrides?: Record<string, string>;
       scaleMode?: string;
       previewAlignY?: string;
       /** May be a CSS string or a PageBackground object { color, image, ... }. */
@@ -278,6 +279,7 @@ export interface ProcessedEmbedData {
     width: number;
     height: number;
     theme?: string;
+    themeOverrides?: Record<string, string>;
     scaleMode: PreviewScaleMode;
     previewAlignY: PreviewAlignY;
     /** Explicit background only. When omitted, rendering falls back locally. */
@@ -363,6 +365,10 @@ export function processEmbedInitPayload(
     width: data.canvas?.width || 1920,
     height: data.canvas?.height || 1080,
     theme: typeof data.canvas?.theme === 'string' ? data.canvas.theme : undefined,
+    themeOverrides:
+      data.canvas?.themeOverrides && typeof data.canvas.themeOverrides === 'object'
+        ? data.canvas.themeOverrides
+        : undefined,
     scaleMode: normalizeEmbedCanvasScaleMode(data.canvas?.scaleMode),
     previewAlignY: normalizeEmbedPreviewAlignY(data.canvas?.previewAlignY),
     background: normalizeCanvasBackground(data.canvas?.background),

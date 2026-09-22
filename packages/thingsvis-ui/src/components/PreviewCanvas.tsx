@@ -5,6 +5,7 @@ import { validateCanvasTheme } from '@thingsvis/schema';
 import type { ActionRuntime } from '../engine/executeActions';
 import { VisualEngine } from '../engine/VisualEngine';
 import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
+import { createCanvasThemeOverrideStyle } from '../utils/canvasThemeOverrides';
 
 
 interface PreviewCanvasProps {
@@ -51,6 +52,10 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
         () => resolveCanvasBackgroundStyle(pageConfig.background),
         [pageConfig.background]
     );
+    const themeOverrideStyle = useMemo(
+        () => createCanvasThemeOverrideStyle(pageConfig.themeOverrides),
+        [pageConfig.themeOverrides]
+    );
 
     // Mount VisualEngine once on store/resolveWidget change
     useEffect(() => {
@@ -85,6 +90,7 @@ export const PreviewCanvas: React.FC<PreviewCanvasProps> = ({
             ref={containerRef}
             data-canvas-theme={normalizedTheme}
             style={{
+                ...themeOverrideStyle,
                 width: '100%',
                 height: '100%',
                 position: 'relative',

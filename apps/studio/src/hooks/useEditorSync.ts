@@ -140,6 +140,11 @@ export function useEditorSync({
 
   useEffect(() => {
     if (isBootstrapping || bootstrappingRef.current) return;
+    store.getState().updatePageConfig({ themeOverrides: canvasConfig.themeOverrides } as any);
+  }, [canvasConfig.themeOverrides, isBootstrapping, bootstrappingRef]);
+
+  useEffect(() => {
+    if (isBootstrapping || bootstrappingRef.current) return;
     if (!canvasConfig.scaleMode) return;
     store.getState().updatePageConfig({ scaleMode: canvasConfig.scaleMode } as any);
   }, [canvasConfig.scaleMode, isBootstrapping, bootstrappingRef]);

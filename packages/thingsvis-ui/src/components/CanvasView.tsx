@@ -8,6 +8,7 @@ import { snapPointToGrid } from '../utils/snapping';
 import type { Point } from '../utils/coords';
 import { calculateScaleToFit } from '../modes/mode-controller';
 import { resolveCanvasBackgroundStyle } from '../utils/canvasBackgroundStyle';
+import { createCanvasThemeOverrideStyle } from '../utils/canvasThemeOverrides';
 
 type Mode = 'fixed' | 'infinite' | 'grid';
 
@@ -74,6 +75,7 @@ export const CanvasView: React.FC<Props> = ({
   const pageConfig = (kernelState.page as any)?.config || {};
   const background = pageConfig.background || {};
   const normalizedTheme = validateCanvasTheme(pageConfig.theme);
+  const themeOverrideStyle = createCanvasThemeOverrideStyle(pageConfig.themeOverrides);
   const backgroundStyle = resolveCanvasBackgroundStyle(background);
 
   const [internalZoom, setInternalZoom] = useState(1);
@@ -403,6 +405,7 @@ export const CanvasView: React.FC<Props> = ({
       ref={containerRef}
       data-canvas-theme={normalizedTheme}
       style={{
+        ...themeOverrideStyle,
         width: '100%',
         height: '100%',
         position: 'relative',

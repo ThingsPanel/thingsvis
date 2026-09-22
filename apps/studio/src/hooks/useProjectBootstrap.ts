@@ -123,6 +123,7 @@ export type CanvasConfigSchema = {
   padding?: number;
   homeFlag?: boolean; // 是否设为首页
   theme: 'dawn' | 'midnight' | string;
+  themeOverrides?: Record<string, string>;
   scaleMode: PreviewScaleMode;
   previewAlignY: PreviewAlignY;
   gridSize: number;
@@ -292,6 +293,7 @@ export function useProjectBootstrap({
       responsive: true,
       padding: 0,
       theme: DEFAULT_CANVAS_THEME as CanvasThemeId,
+      themeOverrides: undefined,
       scaleMode: 'fit-min' as PreviewScaleMode,
       previewAlignY: 'center' as PreviewAlignY,
       gridSize: 20,
@@ -350,6 +352,7 @@ export function useProjectBootstrap({
           width: loaded.canvas.width,
           height: loaded.canvas.height,
           theme: validateCanvasTheme((loaded.canvas as any).theme),
+          themeOverrides: (loaded.canvas as any).themeOverrides,
           scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
           previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
           layerOrder: (loaded.canvas as any).layerOrder,
@@ -373,6 +376,7 @@ export function useProjectBootstrap({
         width: loaded.canvas.width,
         height: loaded.canvas.height,
         theme: validateCanvasTheme((loaded.canvas as any).theme),
+        themeOverrides: (loaded.canvas as any).themeOverrides,
         scaleMode: normalizeCanvasScaleMode((loaded.canvas as any).scaleMode),
         previewAlignY: normalizePreviewAlignY((loaded.canvas as any).previewAlignY),
         bgType: backgroundState.bgType,
@@ -455,6 +459,7 @@ export function useProjectBootstrap({
         height: currentCanvasConfig.height,
         background: normalizeCanvasBackground(currentCanvasConfig.background),
         theme: currentCanvasConfig.theme,
+        themeOverrides: currentCanvasConfig.themeOverrides,
         scaleMode: currentCanvasConfig.scaleMode,
         previewAlignY: currentCanvasConfig.previewAlignY,
         gridCols: currentCanvasConfig.gridCols,
@@ -576,6 +581,7 @@ export function useProjectBootstrap({
               width: canvasConfig.width,
               height: canvasConfig.height,
               theme: canvasConfig.theme as any,
+              themeOverrides: canvasConfig.themeOverrides,
               scaleMode: canvasConfig.scaleMode,
               previewAlignY: canvasConfig.previewAlignY,
             },
@@ -629,6 +635,7 @@ export function useProjectBootstrap({
           width: processed.canvas.width,
           height: processed.canvas.height,
           theme: processed.canvas.theme,
+          themeOverrides: processed.canvas.themeOverrides,
           background: processed.canvas.background,
           scaleMode: processed.canvas.scaleMode,
           previewAlignY: processed.canvas.previewAlignY,
@@ -738,6 +745,7 @@ export function useProjectBootstrap({
         width: resolvedCanvas?.width || 1920,
         height: resolvedCanvas?.height || 1080,
         theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+        themeOverrides: (resolvedCanvas as any)?.themeOverrides ?? processed.canvas.themeOverrides,
         scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
         previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
         bgType: backgroundState.bgType,
@@ -766,6 +774,7 @@ export function useProjectBootstrap({
           width: resolvedCanvas?.width || 1920,
           height: resolvedCanvas?.height || 1080,
           theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+          themeOverrides: (resolvedCanvas as any)?.themeOverrides ?? processed.canvas.themeOverrides,
           scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
           previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
           layerOrder: (resolvedCanvas as any)?.layerOrder,
@@ -852,6 +861,7 @@ export function useProjectBootstrap({
             height: resolvedCanvas?.height || 1080,
             background: bgObj,
             theme: validateCanvasTheme((resolvedCanvas as any)?.theme ?? DEFAULT_CANVAS_THEME),
+            themeOverrides: (resolvedCanvas as any)?.themeOverrides ?? processed.canvas.themeOverrides,
             scaleMode: normalizeCanvasScaleMode((resolvedCanvas as any)?.scaleMode),
             previewAlignY: normalizePreviewAlignY((resolvedCanvas as any)?.previewAlignY),
             gridCols: resolvedCanvas?.gridCols || processed.canvas.gridCols,

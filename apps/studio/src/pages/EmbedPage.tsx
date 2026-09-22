@@ -487,6 +487,7 @@ export default function EmbedPage() {
         (page as any).config = {
           background: normalizeCanvasBackground((dashboard.canvasConfig as any)?.background),
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          themeOverrides: (dashboard.canvasConfig as any)?.themeOverrides,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
           responsive: (dashboard.canvasConfig as any)?.responsive !== false,
@@ -586,6 +587,7 @@ export default function EmbedPage() {
         (page as any).config = {
           background: normalizeCanvasBackground((dashboard.canvasConfig as any)?.background),
           theme: (dashboard.canvasConfig as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          themeOverrides: (dashboard.canvasConfig as any)?.themeOverrides,
           scaleMode: (dashboard.canvasConfig as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((dashboard.canvasConfig as any)?.previewAlignY),
           responsive: (dashboard.canvasConfig as any)?.responsive !== false,
@@ -718,6 +720,7 @@ export default function EmbedPage() {
         (page as any).config = {
           background: normalizeCanvasBackground(schema.canvas?.background),
           theme: (schema.canvas as any)?.theme ?? DEFAULT_CANVAS_THEME,
+          themeOverrides: (schema.canvas as any)?.themeOverrides,
           scaleMode: (schema.canvas as any)?.scaleMode,
           previewAlignY: normalizePreviewAlignY((schema.canvas as any)?.previewAlignY),
           padding: (schema.canvas as any)?.padding ?? 0,

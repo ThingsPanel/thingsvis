@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * Canvas theme preset registry.
  * To add a new theme:
@@ -62,6 +64,42 @@ export const DEFAULT_CANVAS_THEME: CanvasThemeId = 'dawn';
 
 /** Ordered list of theme IDs (for UI rendering) */
 export const CANVAS_THEME_IDS = Object.keys(CANVAS_THEMES) as CanvasThemeId[];
+
+/**
+ * Page-level semantic token overrides.  These are intentionally role-based:
+ * users can tune a dashboard's visual language without reaching into widget
+ * implementation details or persisting arbitrary CSS declarations.
+ */
+export const CanvasThemeOverridesSchema = z
+  .object({
+    bg: z.string().min(1).optional(),
+    surface: z.string().min(1).optional(),
+    surfaceBorder: z.string().min(1).optional(),
+    surfaceShadow: z.string().min(1).optional(),
+    fg: z.string().min(1).optional(),
+    textPrimary: z.string().min(1).optional(),
+    textSecondary: z.string().min(1).optional(),
+    textMuted: z.string().min(1).optional(),
+    axis: z.string().min(1).optional(),
+    primary: z.string().min(1).optional(),
+    border: z.string().min(1).optional(),
+    series1: z.string().min(1).optional(),
+    series2: z.string().min(1).optional(),
+    series3: z.string().min(1).optional(),
+    series4: z.string().min(1).optional(),
+    series5: z.string().min(1).optional(),
+    series6: z.string().min(1).optional(),
+    statusOnline: z.string().min(1).optional(),
+    statusWarning: z.string().min(1).optional(),
+    statusOffline: z.string().min(1).optional(),
+    statusMaintenance: z.string().min(1).optional(),
+    statusCritical: z.string().min(1).optional(),
+    statusInfo: z.string().min(1).optional(),
+    statusSuccess: z.string().min(1).optional(),
+  })
+  .partial();
+
+export type CanvasThemeOverrides = z.infer<typeof CanvasThemeOverridesSchema>;
 
 /**
  * Validate and safely resolve a theme ID.
