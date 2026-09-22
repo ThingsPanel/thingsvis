@@ -1,13 +1,8 @@
 name: Deploy to CLOUD
 
 # =============================================================================
-# 所需 Secrets 清单（请在 GitHub 仓库 Settings → Secrets and variables → Actions 中配置）
-# =============================================================================
-# 1. DATABASE_URL_CLOUD        — 数据库连接地址（如 postgresql://user:pass@host:5432/dbname）
-# 2. AUTH_SECRET              — 认证加密密钥，用于 session / JWT 签名，建议 32+ 位随机字符串
-# 3. DEPLOY_HOST_CLOUD        — 旧公网地址已停用；部署通过 Tailscale 私网地址访问
-# 4. DEPLOY_USER_CLOUD        — SSH 登录用户名（需对该服务器 /var/www 和 /opt/thingsvis 有写权限）
-# 5. DEPLOY_SSH_KEY_CLOUD     — SSH 私钥（建议为部署专用用户生成独立 key pair，仅允许 key 登录）
+# Cloud deploy: GitHub Actions joins the tailnet and uses Tailscale SSH.
+# Public SSH port 22 is not required.
 # =============================================================================
 
 on:
@@ -34,7 +29,6 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci-deploy
-          
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
@@ -50,9 +44,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-# ========================================
-      # Build all packages via turbo
-      # ========================================
       - name: Generate Prisma Client
         working-directory: apps/server
         env:
@@ -65,7 +56,6 @@ jobs:
           AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
         run: pnpm turbo run build --filter=@thingsvis/server --filter=studio
 
-
       - name: Build Widgets
         run: pnpm run build:widgets
 
@@ -75,14 +65,10 @@ jobs:
       - name: Validate widget release artifacts
         run: node scripts/validate-widget-release.js apps/studio/dist/registry.json
 
-      # ========================================
-      # Package artifacts
-      # ========================================
       - name: Package artifacts
         run: |
           mkdir -p deploy/server deploy/studio deploy/widgets
 
-          # --- Server: Next.js standalone ---
           if [ -d "apps/server/.next/standalone" ]; then
             cp -r apps/server/.next/standalone/. deploy/server/
             mkdir -p deploy/server/apps/server/.next/static
@@ -90,19 +76,15 @@ jobs:
             if [ -d "apps/server/public" ]; then
               cp -r apps/server/public deploy/server/apps/server/public
             fi
-
-            # Copy prisma directory for migrations
             if [ -d "apps/server/prisma" ]; then
               cp -r apps/server/prisma deploy/server/apps/server/prisma
             fi
-
             echo "✅ Server packaged"
           else
             echo "❌ No standalone build found!"
             exit 1
           fi
 
-          # --- Studio: static SPA ---
           if [ -d "apps/studio/dist" ]; then
             cp -r apps/studio/dist/. deploy/studio/
             echo "✅ Studio packaged"
@@ -111,7 +93,6 @@ jobs:
             exit 1
           fi
 
-          # --- Widgets (two-level: packages/widgets/category/name/dist) ---
           for dir in packages/widgets/*/*/; do
             if [ -d "${dir}dist" ]; then
               rel_path="${dir#packages/widgets/}"
@@ -122,7 +103,6 @@ jobs:
           done
           echo "✅ Widgets packaged"
 
-          # --- Config ---
           cat > deploy/thingsvis.conf <<'EOF'
           server {
               listen 7050;
@@ -147,7 +127,6 @@ jobs:
 
               location ^~ /uploads/ {
                   proxy_pass http://127.0.0.1:8000;
-                  proxy_http_version 1.1;
                   proxy_set_header Host $host;
                   proxy_set_header X-Real-IP $remote_addr;
                   proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -169,106 +148,80 @@ jobs:
           }
           EOF
 
-          # Create tarball
           cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
-      # ========================================
-      # Deploy to server via SSH key
-      # ========================================
-      - name: Upload to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: 100.126.67.60
-          username: ${{ secrets.DEPLOY_USER_CLOUD }}
-          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
-          port: 22
-          source: "thingsvis-deploy.tar.gz"
-          target: "/tmp"
+      - name: Upload to server via Tailscale SSH
+        run: |
+          tailscale ssh "root@100.126.67.60" 'cat > /tmp/thingsvis-deploy.tar.gz' < thingsvis-deploy.tar.gz
 
-      - name: Deploy and restart services
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 100.126.67.60
-          username: ${{ secrets.DEPLOY_USER_CLOUD }}
-          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
-          port: 22
-          script: |
-            set -e
+      - name: Deploy and restart services via Tailscale SSH
+        run: |
+          tailscale ssh "root@100.126.67.60" 'bash -s' <<'REMOTE_SCRIPT'
+          set -e
 
-            export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
+          export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
 
-            echo "=== Deploying ThingsVis ==="
+          echo "=== Deploying ThingsVis ==="
 
-            # Ensure directories exist
-            mkdir -p /opt/thingsvis/server
-            mkdir -p /var/www/thingsvis-studio
+          mkdir -p /opt/thingsvis/server
+          mkdir -p /var/www/thingsvis-studio
+          mkdir -p /var/www/thingsvis-plugins
+
+          mkdir -p /tmp/thingsvis-deploy
+          tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+
+          cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
+
+          echo ">>> Deploying Server..."
+          pm2 stop thingsvis-server 2>/dev/null || true
+          sleep 1
+          rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+          cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+          cd /opt/thingsvis/server
+
+          if [ -f /opt/thingsvis/server/apps/server/.env ]; then
+            set -a
+            . /opt/thingsvis/server/apps/server/.env
+            set +a
+          elif [ -f /opt/thingsvis/server/.env ]; then
+            set -a
+            . /opt/thingsvis/server/.env
+            set +a
+          fi
+
+          : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
+          : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
+
+          cd apps/server
+          npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
+          cd ../..
+
+          NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+          DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+          pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+          NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+          DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+          pm2 restart thingsvis-server --update-env
+          pm2 save
+
+          echo ">>> Deploying Studio..."
+          rm -rf /var/www/thingsvis-studio/*
+          cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+
+          echo ">>> Deploying Widgets..."
+          if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
             mkdir -p /var/www/thingsvis-plugins
+            cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
+          fi
 
-            # Extract
-            mkdir -p /tmp/thingsvis-deploy
-            tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+          nginx -t && systemctl reload nginx
+          rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
 
-            # --- Deploy Nginx Config ---
-            cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
-
-            # --- Deploy Server ---
-            echo ">>> Deploying Server..."
-            pm2 stop thingsvis-server 2>/dev/null || true
-            sleep 1
-            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
-            cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
-            cd /opt/thingsvis/server
-
-            # Source server env from the packaged app directory when available.
-            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
-              set -a
-              . /opt/thingsvis/server/apps/server/.env
-              set +a
-            elif [ -f /opt/thingsvis/server/.env ]; then
-              set -a
-              . /opt/thingsvis/server/.env
-              set +a
-            fi
-
-            # Fail fast when required secrets are missing to avoid PM2 persisting empty env.
-            : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
-            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
-
-            # Apply database migrations
-            cd apps/server
-            npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
-            cd ../..
-
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
-            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
-            pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
-            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
-            pm2 restart thingsvis-server --update-env
-            pm2 save
-
-            # --- Deploy Studio ---
-            echo ">>> Deploying Studio..."
-            rm -rf /var/www/thingsvis-studio/*
-            cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
-
-            # --- Deploy Widgets ---
-            echo ">>> Deploying Widgets..."
-            if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
-              mkdir -p /var/www/thingsvis-plugins
-              cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
-            fi
-
-            # Reload nginx
-            nginx -t && systemctl reload nginx
-
-            # Cleanup
-            rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
-
-            echo ""
-            echo "=== Deployment complete ==="
-            pm2 list
-            echo ""
-            echo "🔗 Studio:  http://100.126.67.60:7050/"
+          echo ""
+          echo "=== Deployment complete ==="
+          pm2 list
+          echo ""
+          echo "🔗 Studio:  http://100.126.67.60:7050/"
+          REMOTE_SCRIPT
