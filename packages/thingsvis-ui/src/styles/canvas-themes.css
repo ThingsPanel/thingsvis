@@ -148,7 +148,7 @@
  */
 [data-canvas-theme="frost"] {
   --w-bg:       #0b1220;
-  --w-surface:  #162033;
+  --w-surface:  rgba(22, 32, 51, var(--w-glass-opacity));
   --w-surface-border: rgba(191, 219, 254, 0.24);
   --w-surface-shadow: rgba(0, 0, 0, 0.28);
   --w-fg:       #f1f5f9;
@@ -173,7 +173,7 @@
   --w-status-success: #5eead4;
   
   /* Crystal glass variables */
-  --w-glass-opacity: 0.12;
+  --w-glass-opacity: 0.72;
   --w-glass-blur: 16px;
   --w-glass-saturate: 120%;
   --w-edge-glow: rgba(191, 219, 254, 0.20);
