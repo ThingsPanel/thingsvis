@@ -140,6 +140,28 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('lightens only the frosted range pill and keeps the arrow inset', async () => {
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    document.body.setAttribute('data-canvas-theme', 'frost');
+    try {
+      const harness = mountWidget(Main, { props: { config: defaults.config } });
+      const select = harness.element.querySelector('select') as HTMLSelectElement;
+      const arrow = harness.element.querySelector('span[aria-hidden="true"]') as HTMLElement;
+      expect(select.matches('[data-canvas-theme="frost"] .tv-history-range')).toBe(true);
+      expect(harness.element.querySelector('style')?.textContent).toContain('rgba(255,255,255,.16)');
+      expect(select.style.paddingRight).toBe('38px');
+      expect(arrow.style.right).toBe('28px');
+      harness.destroy();
+    } finally {
+      document.body.removeAttribute('data-canvas-theme');
+    }
+    const plain = mountWidget(Main, { props: { config: defaults.config } });
+    expect(plain.element.querySelector('select')?.matches('[data-canvas-theme="frost"] .tv-history-range')).toBe(false);
+    expect((plain.element.querySelector('select') as HTMLSelectElement).style.background).toContain('var(--w-surface');
+    plain.destroy();
+  });
+
   it('centers only the no-data message and resets its position while loading', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { time_series: [] } }) });
     vi.stubGlobal('fetch', fetchMock);

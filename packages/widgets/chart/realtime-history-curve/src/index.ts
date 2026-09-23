@@ -507,9 +507,18 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     'position:absolute;left:12px;top:10px;z-index:4;max-width:calc(100% - 24px);max-height:2.8em;overflow:hidden;overflow-wrap:anywhere;font:12px/1.4 system-ui;color:#888;pointer-events:none';
   element.appendChild(status);
   const rangeSelect = document.createElement('select');
+  rangeSelect.className = 'tv-history-range';
   rangeSelect.setAttribute('aria-label', '历史曲线时间范围');
-  rangeSelect.style.cssText =
-    'position:absolute;right:12px;top:6px;z-index:5;max-width:128px;height:30px;padding:0 12px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:18px;background:var(--w-surface,rgba(255,255,255,.12));backdrop-filter:blur(12px);color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;cursor:pointer';
+  Object.assign(rangeSelect.style, {
+    position: 'absolute', right: '12px', top: '6px', zIndex: '5',
+    width: '148px', maxWidth: 'calc(100% - 24px)', height: '30px',
+    boxSizing: 'border-box', paddingTop: '0', paddingBottom: '0',
+    paddingLeft: '16px', paddingRight: '38px', appearance: 'none',
+    border: '1px solid var(--w-surface-border,rgba(130,145,165,.35))',
+    borderRadius: '18px', background: 'var(--w-surface,rgba(255,255,255,.12))',
+    backdropFilter: 'blur(12px)', color: 'var(--w-text-primary,var(--w-fg,#263345))',
+    font: '12px system-ui', cursor: 'pointer',
+  });
   const rangeLabels: Array<[RealtimeHistoryConfig['data']['timeRange'], string, string]> = [
     ['last_5m', '最近 5 分钟', 'Last 5 minutes'],
     ['last_15m', '最近 15 分钟', 'Last 15 minutes'],
@@ -530,6 +539,15 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     ['custom', '自定义', 'Custom'],
   ];
   element.appendChild(rangeSelect);
+  const rangeThemeStyle = document.createElement('style');
+  rangeThemeStyle.textContent =
+    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}';
+  element.appendChild(rangeThemeStyle);
+  const rangeArrow = document.createElement('span');
+  rangeArrow.setAttribute('aria-hidden', 'true');
+  rangeArrow.style.cssText =
+    'position:absolute;right:28px;top:16px;z-index:6;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);pointer-events:none;color:var(--w-text-primary,var(--w-fg,#263345))';
+  element.appendChild(rangeArrow);
   const customPanel = document.createElement('div');
   customPanel.style.cssText =
     'position:absolute;right:10px;top:36px;z-index:6;display:none;width:min(260px,calc(100% - 20px));padding:10px;box-sizing:border-box;border:1px solid var(--w-surface-border,#cbd3df);border-radius:8px;background:var(--w-surface,#fff);color:var(--w-text-primary,var(--w-fg,#263345));box-shadow:0 4px 16px rgba(0,0,0,.18);font:12px system-ui';
@@ -602,6 +620,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       rangeSelect.add(new Option(english ? enLabel : zhLabel, value));
     rangeSelect.value = configured;
     rangeSelect.style.display = props.data === undefined ? '' : 'none';
+    rangeArrow.style.display = props.data === undefined ? '' : 'none';
     customPanel.style.display = 'none';
     startLabel.replaceChildren(document.createTextNode(english ? 'Start' : '开始时间'), startInput);
     endLabel.replaceChildren(document.createTextNode(english ? 'End' : '结束时间'), endInput);
