@@ -15,11 +15,11 @@ This tutorial shows how to define a readable and writable Boolean state field fo
 
 - Sign in with a tenant administrator account.
 - Open **Device Access → Thing Models**.
-- Have an existing device template, or create a new thing model.
+- Create a new thing model; this tutorial starts from the no-model creation flow.
 
 ## Configure the Boolean state field
 
-1. Create a thing model, or open the model that you want to configure.
+1. Click **Create Thing Model** and fill in the name, author, version, and other basic information.
 2. Click **Next** to open **Thing Model Definition**.
 3. Select the **Telemetry** tab and click **Add**.
 4. Use the following values:
@@ -36,6 +36,28 @@ This tutorial shows how to define a readable and writable Boolean state field fo
 
 ![Boolean switch field in the thing model](./images/switch-model-boolean-field.png)
 
+## Bind the switch in the model's Web chart configuration
+
+After defining the field, bind the component in the Web chart configuration of the same model. Do not replace this step by opening an existing dashboard outside the model wizard.
+
+1. Click **Next** on **Thing Model Definition** to open **Web Chart Configuration**.
+2. Click **New Configuration** to enter **Edit Web Chart Configuration**. Confirm that the embedded editor uses Chinese labels such as **组件库**, **控件**, and **属性** when the tenant UI is Chinese.
+3. Expand **控件** in the left component library and drag **开关** onto the canvas.
+4. Select the switch and configure **内容 → 设备状态与控制** in the Properties panel:
+
+   | Setting | Value |
+   | --- | --- |
+   | Binding mode | Field |
+   | Data scope | Device data |
+   | Data type | Current value |
+   | Field | `ha_state [boolean]` |
+
+5. Confirm that the panel shows **已启用双向控制** and **开启 → `true` · 关闭 → `false`**, then click **保存配置**.
+
+![Switch binding in the model Web chart configuration](./images/switch-web-chart-config.jpg)
+
+This saves the model's own Web chart configuration so the same switch semantics can be reused by device templates and visualization dashboards.
+
 If your platform exposes control capabilities in a separate **Commands** tab, use the same identifier, `ha_state`, for the matching command. The runtime can then use telemetry for state readback and the same-named command for control writes.
 
 :::tip
@@ -46,7 +68,7 @@ Using one identifier for the state and its matching command is the recommended p
 
 ## Publish and bind the device template
 
-1. Complete the Web chart, App chart, and publish steps.
+1. Complete the App chart and publish steps after saving the Web chart configuration; you can also validate the Web configuration in a test device template before publishing.
 2. Bind the thing model to the device template.
 3. Confirm that the target device uses the updated template.
 
@@ -76,4 +98,4 @@ Command success means that the platform accepted and sent the command. The devic
 
 ## Recording actions
 
-The reusable Playwright CLI actions for this tutorial are `model.open-switch-model` and `model.show-switch-boolean-field` in `thingspanel-test-automation/playwright-cli-actions/model/`.
+The reusable Playwright CLI actions for this tutorial are `model.open-new-switch-web-editor` and `model.configure-new-switch-web-binding` in `thingspanel-test-automation/playwright-cli-actions/model/`.
