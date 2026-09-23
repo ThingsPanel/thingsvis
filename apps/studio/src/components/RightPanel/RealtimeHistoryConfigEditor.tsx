@@ -407,6 +407,18 @@ export function updateMetricColor(
   };
 }
 
+export function updateAreaFill(config: Record<string, any>, enabled: boolean): Record<string, any> {
+  const series = { ...asRecord(config.series) };
+  for (const key of config.data.metricKeys as string[]) {
+    const current = asRecord(series[key]);
+    series[key] = {
+      ...current,
+      areaFill: enabled ? (current.areaFill === 'gradient' ? 'gradient' : 'solid') : 'none',
+    };
+  }
+  return { ...config, series };
+}
+
 export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
   const config = useMemo(() => normalize(value), [value]);
   const groups = usePlatformDeviceStore((state) => state.groups);
@@ -793,6 +805,16 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
         />
         {config.data.metricKeys.length > 0 && (
           <div className="space-y-3 border-t border-border pt-3">
+            <label className={checkClass}>
+              <input
+                type="checkbox"
+                checked={config.data.metricKeys.some((key: string) =>
+                  ['solid', 'gradient'].includes(String(asRecord(config.series[key]).areaFill)),
+                )}
+                onChange={(event) => onChange(updateAreaFill(config, event.target.checked))}
+              />
+              显示面积填充
+            </label>
             <p className={labelClass}>指标曲线颜色</p>
             {config.data.metricKeys.map((metricKey: string, index: number) => (
               <ColorField

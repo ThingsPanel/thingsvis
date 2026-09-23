@@ -77,4 +77,30 @@ describe('RealtimeHistoryConfigEditor in a device template', () => {
     expect(container.querySelector('button:not(:disabled)')?.textContent).toContain('设备一');
     expect(onChange).not.toHaveBeenCalled();
   });
+
+  it('shows an area fill toggle for a selected metric', async () => {
+    window.location.hash = '#/editor/host-1?mode=embedded&context=dashboard';
+    const onChange = vi.fn();
+    await act(async () => {
+      root.render(
+        <RealtimeHistoryConfigEditor
+          value={{ data: { deviceId: 'dev-1', metricKeys: ['temperature'] } }}
+          onChange={onChange}
+        />,
+      );
+    });
+
+    const toggle = Array.from(container.querySelectorAll('label'))
+      .find((label) => label.textContent?.includes('显示面积填充'))
+      ?.querySelector('input[type="checkbox"]') as HTMLInputElement | undefined;
+    expect(toggle?.checked).toBe(false);
+    await act(async () => toggle?.click());
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({
+        series: expect.objectContaining({
+          temperature: expect.objectContaining({ areaFill: 'solid' }),
+        }),
+      }),
+    );
+  });
 });
