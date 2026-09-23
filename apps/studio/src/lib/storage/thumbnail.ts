@@ -92,6 +92,7 @@ export async function generateThumbnailFromElement(
     quality = 0.7,
     backgroundColor = '#ffffff',
   } = options;
+  const restoreCaptureStyles = prepareThumbnailCaptureStyles(element);
 
   try {
     const rect = element.getBoundingClientRect();
@@ -166,6 +167,8 @@ export async function generateThumbnailFromElement(
         : `type=${error?.constructor?.name || 'unknown'} event=${error instanceof Event ? error.type : 'n/a'}`;
     console.warn(`[Thumbnail] Failed to capture element, using placeholder: ${details}`);
     return generatePlaceholderThumbnail(options);
+  } finally {
+    restoreCaptureStyles();
   }
 }
 
@@ -335,6 +338,68 @@ function isCrossOriginResource(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+const CSS_COLOR_FUNCTION_RE =
+  /color\(\s*srgb\s+([+-]?(?:\d*\.?)\d+)\s+([+-]?(?:\d*\.?)\d+)\s+([+-]?(?:\d*\.?)\d+)(?:\s*\/\s*([^)]*))?\s*\)/gi;
+
+/**
+ * Chromium serializes some ordinary CSS colors as CSS Color 4 `color(srgb ...)`
+ * values. The thumbnail renderers used here do not understand that syntax, so
+ * normalize it only for the duration of capture and restore the editor styles.
+ */
+function prepareThumbnailCaptureStyles(element: HTMLElement): () => void {
+  const restores: Array<() => void> = [];
+  const candidates = [element, ...Array.from(element.querySelectorAll<HTMLElement>('*'))];
+
+  for (const candidate of candidates) {
+    let computed: CSSStyleDeclaration;
+    try {
+      computed = window.getComputedStyle(candidate);
+    } catch {
+      continue;
+    }
+
+    for (let index = 0; index < computed.length; index += 1) {
+      const property = computed[index];
+      const value = computed.getPropertyValue(property);
+      if (!value || !/color\(/i.test(value)) continue;
+
+      const normalizedValue = normalizeCssColorFunctions(value);
+      if (normalizedValue === value || /color\(/i.test(normalizedValue)) continue;
+
+      const previousValue = candidate.style.getPropertyValue(property);
+      const previousPriority = candidate.style.getPropertyPriority(property);
+      candidate.style.setProperty(property, normalizedValue, 'important');
+      restores.push(() => {
+        if (previousValue) {
+          candidate.style.setProperty(property, previousValue, previousPriority);
+        } else {
+          candidate.style.removeProperty(property);
+        }
+      });
+    }
+  }
+
+  return () => {
+    restores.reverse().forEach((restore) => restore());
+  };
+}
+
+function normalizeCssColorFunctions(value: string): string {
+  return value.replace(
+    CSS_COLOR_FUNCTION_RE,
+    (_match, red: string, green: string, blue: string, alpha?: string) => {
+      const channels = [red, green, blue].map((channel) =>
+        Math.round(Math.min(Math.max(Number.parseFloat(channel), 0), 1) * 255),
+      );
+      const normalizedAlpha = alpha?.trim().endsWith('%')
+        ? Number.parseFloat(alpha) / 100
+        : Number.parseFloat(alpha ?? '1');
+
+      return `rgba(${channels.join(', ')}, ${Math.min(Math.max(normalizedAlpha, 0), 1)})`;
+    },
+  );
 }
 
 /** Render the artboard without the editor viewport's zoom transform. */

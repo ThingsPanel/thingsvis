@@ -64,7 +64,6 @@ import {
   generateThumbnailFromElement,
   resolveThumbnailBackgroundColor,
 } from '../lib/storage/thumbnail';
-import { shouldSaveToHost } from '../lib/storage/saveStrategy';
 
 import {
   MousePointer2,
@@ -337,8 +336,6 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     (embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-')));
 
   const prepareProjectForSave = useCallback(async (project: ProjectFile) => {
-    if (!shouldSaveToHost()) return project;
-
     const canvasHost = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
     if (!canvasHost) return project;
 
