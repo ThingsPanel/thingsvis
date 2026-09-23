@@ -11,6 +11,10 @@ on:
       - master
   workflow_dispatch:
 
+concurrency:
+  group: thingsvis-deploy-cloud
+  cancel-in-progress: false
+
 env:
   NODE_VERSION: '20'
   PNPM_VERSION: '9'
@@ -153,13 +157,27 @@ jobs:
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
       - name: Upload to server via Tailscale SSH
+        env:
+          REMOTE_PACKAGE: /tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz
         run: |
-          tailscale ssh "root@100.126.67.60" 'cat > /tmp/thingsvis-deploy.tar.gz' < thingsvis-deploy.tar.gz
+          set -euo pipefail
+          remote_part="${REMOTE_PACKAGE}.part"
+          tailscale ssh "root@100.126.67.60" \
+            "cat > '$remote_part' && mv '$remote_part' '$REMOTE_PACKAGE'" \
+            < thingsvis-deploy.tar.gz
+
+          expected_sha="$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)"
+          actual_sha="$(tailscale ssh "root@100.126.67.60" \
+            "sha256sum '$REMOTE_PACKAGE' | cut -d' ' -f1")"
+          test "$actual_sha" = "$expected_sha"
 
       - name: Deploy and restart services via Tailscale SSH
         run: |
           tailscale ssh "root@100.126.67.60" 'bash -s' <<'REMOTE_SCRIPT'
-          set -e
+          set -euo pipefail
+
+          remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
 
           export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
 
@@ -169,16 +187,17 @@ jobs:
           mkdir -p /var/www/thingsvis-studio
           mkdir -p /var/www/thingsvis-plugins
 
-          mkdir -p /tmp/thingsvis-deploy
-          tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+          rm -rf "$remote_dir"
+          mkdir -p "$remote_dir"
+          tar -xzf "$remote_package" -C "$remote_dir"
 
-          cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
+          cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
 
           echo ">>> Deploying Server..."
           pm2 stop thingsvis-server 2>/dev/null || true
           sleep 1
           rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
-          cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+          cp -rf "$remote_dir/server/." /opt/thingsvis/server/
           cd /opt/thingsvis/server
 
           if [ -f /opt/thingsvis/server/apps/server/.env ]; then
@@ -208,16 +227,30 @@ jobs:
 
           echo ">>> Deploying Studio..."
           rm -rf /var/www/thingsvis-studio/*
-          cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+          cp -rf "$remote_dir/studio/." /var/www/thingsvis-studio/
 
           echo ">>> Deploying Widgets..."
-          if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
+          if [ -d "$remote_dir/widgets" ] && [ "$(ls -A "$remote_dir/widgets" 2>/dev/null)" ]; then
             mkdir -p /var/www/thingsvis-plugins
-            cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
+            cp -rf "$remote_dir/widgets/." /var/www/thingsvis-plugins/
           fi
 
           nginx -t && systemctl reload nginx
-          rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
+
+          for attempt in $(seq 1 30); do
+            if curl -fsS --max-time 5 http://127.0.0.1:8000/api/v1/health >/dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "ThingsVis server health check failed" >&2
+              pm2 describe thingsvis-server >&2 || true
+              exit 1
+            fi
+            sleep 2
+          done
+          curl -fsS --max-time 5 http://127.0.0.1:7050/ >/dev/null
+
+          rm -rf "$remote_dir" "$remote_package"
 
           echo ""
           echo "=== Deployment complete ==="
