@@ -4,6 +4,7 @@ import {
   assignMetricToYAxis,
   getMinimumAggregationWindow,
   toDatetimeLocalValue,
+  updateAreaFill,
   updateMetricColor,
 } from './RealtimeHistoryConfigEditor';
 
@@ -51,5 +52,26 @@ describe('RealtimeHistoryConfigEditor helpers', () => {
       color: '#ee6666',
       yAxisId: 'y1',
     });
+  });
+
+  it('toggles area fill for selected metrics without changing other series settings', () => {
+    const config = {
+      data: { metricKeys: ['pm25', 'pm10'] },
+      series: {
+        pm25: { color: '#123456', areaFill: 'none', areaOpacity: 0.3 },
+        pm10: { color: '#654321', areaFill: 'gradient', areaOpacity: 0.4 },
+      },
+    };
+    const enabled = updateAreaFill(config, true);
+    expect(enabled.series.pm25).toEqual({ color: '#123456', areaFill: 'solid', areaOpacity: 0.3 });
+    expect(enabled.series.pm10).toEqual({
+      color: '#654321',
+      areaFill: 'gradient',
+      areaOpacity: 0.4,
+    });
+    const disabled = updateAreaFill(enabled, false);
+    expect(disabled.series.pm25.areaFill).toBe('none');
+    expect(disabled.series.pm10.areaFill).toBe('none');
+    expect(config.series.pm25.areaFill).toBe('none');
   });
 });

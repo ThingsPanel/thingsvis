@@ -8,6 +8,9 @@ import {
   type PlatformDeviceField,
   usePlatformDeviceStore,
 } from '@/lib/stores/platformDeviceStore';
+import { usePlatformFieldStore } from '@/lib/stores/platformFieldStore';
+import { resolveEditorServiceConfig } from '@/lib/embedded/service-config';
+import { TEMPLATE_DEVICE_ID } from '@/lib/embedded/hostDataSourcePolicy';
 
 import { DeviceSelectorModal } from './DeviceSelectorModal';
 
@@ -404,13 +407,37 @@ export function updateMetricColor(
   };
 }
 
+export function updateAreaFill(config: Record<string, any>, enabled: boolean): Record<string, any> {
+  const series = { ...asRecord(config.series) };
+  for (const key of config.data.metricKeys as string[]) {
+    const current = asRecord(series[key]);
+    series[key] = {
+      ...current,
+      areaFill: enabled ? (current.areaFill === 'gradient' ? 'gradient' : 'solid') : 'none',
+    };
+  }
+  return { ...config, series };
+}
+
 export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
   const config = useMemo(() => normalize(value), [value]);
   const groups = usePlatformDeviceStore((state) => state.groups);
   const devices = usePlatformDeviceStore((state) => state.devices);
+  const platformFields = usePlatformFieldStore((state) => state.fields);
+  const isDeviceTemplate = resolveEditorServiceConfig().context === 'device-template';
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState('');
-  const selectedDevice = devices.find((item) => item.deviceId === config.data.deviceId);
+  const selectedDevice: PlatformDevice | undefined = useMemo(
+    () =>
+      isDeviceTemplate
+        ? {
+            deviceId: TEMPLATE_DEVICE_ID,
+            deviceName: '物模型字段',
+            fields: platformFields,
+          }
+        : devices.find((item) => item.deviceId === config.data.deviceId),
+    [config.data.deviceId, devices, isDeviceTemplate, platformFields],
+  );
   const minimumAggregationWindow = getMinimumAggregationWindow(config.data);
   const minimumAggregationIndex = AGGREGATION_WINDOWS.indexOf(minimumAggregationWindow);
   const customRangeInvalid =
@@ -441,12 +468,19 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
   }, [config, onChange, value]);
 
   useEffect(() => {
+    if (isDeviceTemplate && config.data.deviceId !== TEMPLATE_DEVICE_ID) {
+      onChange({ ...config, data: { ...config.data, deviceId: TEMPLATE_DEVICE_ID } });
+    }
+  }, [config, isDeviceTemplate, onChange]);
+
+  useEffect(() => {
+    if (isDeviceTemplate) return;
     if (config.data.deviceId && !selectedDevice) requestDeviceById(config.data.deviceId);
     if (selectedDevice?.groupId) setSelectedGroupId(selectedDevice.groupId);
     if (selectedDevice && (!selectedDevice.fields || selectedDevice.fields.length === 0)) {
       void requestDeviceFields(selectedDevice);
     }
-  }, [config.data.deviceId, selectedDevice]);
+  }, [config.data.deviceId, isDeviceTemplate, selectedDevice]);
 
   const fields = (selectedDevice?.fields ?? []).filter((field) => {
     const dataType = String(field.dataType || 'telemetry').toLowerCase();
@@ -537,6 +571,7 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
             type="button"
             variant="outline"
             className="h-8 w-full justify-between overflow-hidden px-3 font-normal"
+            disabled={isDeviceTemplate}
             onClick={() => setDeviceSelectorOpen(true)}
           >
             <span className="truncate">
@@ -547,7 +582,7 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
             </span>
           </Button>
           <DeviceSelectorModal
-            open={deviceSelectorOpen}
+            open={!isDeviceTemplate && deviceSelectorOpen}
             onOpenChange={setDeviceSelectorOpen}
             groups={groups}
             selectedGroupId={selectedGroupId}
@@ -770,6 +805,16 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
         />
         {config.data.metricKeys.length > 0 && (
           <div className="space-y-3 border-t border-border pt-3">
+            <label className={checkClass}>
+              <input
+                type="checkbox"
+                checked={config.data.metricKeys.some((key: string) =>
+                  ['solid', 'gradient'].includes(String(asRecord(config.series[key]).areaFill)),
+                )}
+                onChange={(event) => onChange(updateAreaFill(config, event.target.checked))}
+              />
+              显示面积填充
+            </label>
             <p className={labelClass}>指标曲线颜色</p>
             {config.data.metricKeys.map((metricKey: string, index: number) => (
               <ColorField

@@ -196,9 +196,11 @@ export function buildChartOption(
   const seriesStyles = new Map(
     config.data.metricKeys.map((key, index) => [key, resolveSeriesStyle(config, key, index)]),
   );
-  const legendKeys = config.data.metricKeys.length
-    ? config.data.metricKeys
-    : states.map((state) => state.key);
+  const legendKeys = states.some((state) => state.key === PREVIEW_SERIES_KEY)
+    ? [PREVIEW_SERIES_KEY]
+    : config.data.metricKeys.length
+      ? config.data.metricKeys
+      : states.map((state) => state.key);
   const inferredAxisUnits = new Map<string, string>();
   states.forEach((state, stateIndex) => {
     const style = seriesStyles.get(state.key) ?? resolveSeriesStyle(config, state.key, stateIndex);
@@ -593,6 +595,13 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       status.textContent = states.some((item) => item.points.length > 0)
         ? ''
         : text.noData || '当前时间范围内没有数据';
+      draw();
+      return;
+    }
+    if (config.data.deviceId === '__template__') {
+      controller?.abort();
+      states = [createPreviewState()];
+      status.textContent = '';
       draw();
       return;
     }

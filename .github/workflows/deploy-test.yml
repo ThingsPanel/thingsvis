@@ -5,25 +5,26 @@ on:
     branches: [master]
   workflow_dispatch:
 
+concurrency:
+  group: thingsvis-deploy-test
+  cancel-in-progress: false
+
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9'
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
@@ -159,6 +160,12 @@ jobs:
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
+      - name: Record package checksum
+        id: package
+        run: |
+          echo "sha256=$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+          cp thingsvis-deploy.tar.gz "thingsvis-deploy-${{ github.run_id }}.tar.gz"
+
       # ========================================
       # Deploy to server via SSH key
       # ========================================
@@ -169,7 +176,7 @@ jobs:
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
-          source: "thingsvis-deploy.tar.gz"
+          source: "thingsvis-deploy-${{ github.run_id }}.tar.gz"
           target: "/tmp"
 
       - name: Deploy and restart services
@@ -180,7 +187,14 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
           script: |
-            set -e
+            set -euo pipefail
+
+            remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
+            remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
+            expected_sha="${{ steps.package.outputs.sha256 }}"
+            test -s "$remote_package"
+            actual_sha="$(sha256sum "$remote_package" | cut -d' ' -f1)"
+            test "$actual_sha" = "$expected_sha"
             echo "=== Deploying ThingsVis ==="
 
             # Ensure directories exist
@@ -190,11 +204,12 @@ jobs:
             mkdir -p /var/www/thingsvis-plugins
 
             # Extract
-            mkdir -p /tmp/thingsvis-deploy
-            tar -xzf /tmp/thingsvis-deploy.tar.gz -C /tmp/thingsvis-deploy
+            rm -rf "$remote_dir"
+            mkdir -p "$remote_dir"
+            tar -xzf "$remote_package" -C "$remote_dir"
 
             # --- Deploy Nginx Config ---
-            cp /tmp/thingsvis-deploy/thingsvis.conf /etc/nginx/conf.d/thingsvis.conf
+            cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
             
             # --- Deploy Server ---
             echo ">>> Deploying Server..."
@@ -202,7 +217,7 @@ jobs:
             sleep 1
             # Remove stale build artifacts only; keep .env and public/uploads (same as deploy-cloud/e).
             rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
-            cp -rf /tmp/thingsvis-deploy/server/. /opt/thingsvis/server/
+            cp -rf "$remote_dir/server/." /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
             # pino resolves transport targets at runtime and Next standalone may not trace pino-pretty.
@@ -249,17 +264,17 @@ jobs:
             # --- Deploy Studio ---
             echo ">>> Deploying Studio..."
             rm -rf /var/www/thingsvis-studio/*
-            cp -rf /tmp/thingsvis-deploy/studio/. /var/www/thingsvis-studio/
+            cp -rf "$remote_dir/studio/." /var/www/thingsvis-studio/
 
 
 
             # --- Deploy Widgets ---
             echo ">>> Deploying Widgets..."
-            if [ -d "/tmp/thingsvis-deploy/widgets" ] && [ "$(ls -A /tmp/thingsvis-deploy/widgets 2>/dev/null)" ]; then
-              test -f /tmp/thingsvis-deploy/widgets/chart/echarts-gauge/dist/remoteEntry.js
+            if [ -d "$remote_dir/widgets" ] && [ "$(ls -A "$remote_dir/widgets" 2>/dev/null)" ]; then
+              test -f "$remote_dir/widgets/chart/echarts-gauge/dist/remoteEntry.js"
               rm -rf /var/www/thingsvis-plugins
               mkdir -p /var/www/thingsvis-plugins
-              cp -rf /tmp/thingsvis-deploy/widgets/. /var/www/thingsvis-plugins/
+              cp -rf "$remote_dir/widgets/." /var/www/thingsvis-plugins/
               test -f /var/www/thingsvis-plugins/chart/echarts-gauge/dist/remoteEntry.js
               echo ">>> Widgets deployed from current build"
             else
@@ -270,8 +285,21 @@ jobs:
             # Reload nginx
             nginx -t && systemctl reload nginx
 
+            for attempt in $(seq 1 30); do
+              if curl -fsS --max-time 5 http://127.0.0.1:8000/api/v1/health >/dev/null; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "ThingsVis server health check failed" >&2
+                pm2 describe thingsvis-server >&2 || true
+                exit 1
+              fi
+              sleep 2
+            done
+            curl -fsS --max-time 5 http://127.0.0.1:7050/ >/dev/null
+
             # Cleanup
-            rm -rf /tmp/thingsvis-deploy /tmp/thingsvis-deploy.tar.gz
+            rm -rf "$remote_dir" "$remote_package"
 
             echo ""
             echo "=== Deployment complete ==="

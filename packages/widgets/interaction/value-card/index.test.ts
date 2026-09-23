@@ -11,14 +11,15 @@ describe('interaction/value-card widget', () => {
     document.body.innerHTML = '';
   });
 
-  it('keeps the default padding when no background is configured', () => {
+  it('leaves the content inset to the host card', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
+    expect(cardRoot?.style.padding).toBe('');
+    expect(cardRoot?.style.boxSizing).toBe('border-box');
 
     harness.destroy();
   });
@@ -56,7 +57,7 @@ describe('interaction/value-card widget', () => {
     harness.destroy();
   });
 
-  it('keeps readable padding when persistence supplies a transparent background', () => {
+  it('does not add a second inset when persistence supplies a transparent background', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
@@ -69,12 +70,12 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
+    expect(cardRoot?.style.padding).toBe('');
 
     harness.destroy();
   });
 
-  it('keeps readable padding for an auto card even if persistence adds a transparent background', () => {
+  it('leaves padding to the host for an auto card with a transparent background', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
@@ -91,12 +92,12 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
+    expect(cardRoot?.style.padding).toBe('');
 
     harness.destroy();
   });
 
-  it('keeps readable padding for legacy enabled cards without an appearance marker', () => {
+  it('leaves padding to the host for legacy enabled cards', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
@@ -107,7 +108,7 @@ describe('interaction/value-card widget', () => {
     });
 
     const cardRoot = getCardRoot(harness.element);
-    expect(cardRoot?.getAttribute('style')).toContain('padding: 16px 16px;');
+    expect(cardRoot?.style.padding).toBe('');
 
     harness.destroy();
   });

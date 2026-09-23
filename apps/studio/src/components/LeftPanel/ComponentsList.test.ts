@@ -66,6 +66,6 @@ describe('ComponentsList category mapping', () => {
       'basic/table',
       'basic/placeholder',
     ]);
-    expect(COMPONENT_ORDER).toHaveLength(50);
+    expect(new Set(COMPONENT_ORDER).size).toBe(COMPONENT_ORDER.length);
   });
 });
