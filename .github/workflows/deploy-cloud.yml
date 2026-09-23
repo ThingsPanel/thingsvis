@@ -17,7 +17,6 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9'
 
 jobs:
   build-and-deploy:
@@ -25,7 +24,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
@@ -35,12 +34,10 @@ jobs:
           tags: tag:ci-deploy
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: ${{ env.PNPM_VERSION }}
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
