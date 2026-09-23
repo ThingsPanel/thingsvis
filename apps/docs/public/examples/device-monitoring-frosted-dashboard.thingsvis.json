@@ -197,7 +197,7 @@
     {
       "id": "kpi-card-1",
       "name": "Total Devices",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 82, "y": 218 },
       "size": { "width": 376, "height": 72 },
       "props": {
@@ -216,7 +216,7 @@
     {
       "id": "kpi-card-2",
       "name": "Online Devices",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 522, "y": 218 },
       "size": { "width": 376, "height": 72 },
       "props": {
@@ -235,7 +235,7 @@
     {
       "id": "kpi-card-3",
       "name": "Alarm Devices",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 962, "y": 218 },
       "size": { "width": 376, "height": 72 },
       "props": {
@@ -254,7 +254,7 @@
     {
       "id": "kpi-card-4",
       "name": "Active Rate",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 1402, "y": 218 },
       "size": { "width": 436, "height": 72 },
       "props": {

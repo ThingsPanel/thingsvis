@@ -23,38 +23,6 @@ vi.mock('echarts', () => ({
   },
 }));
 
-const uPlotSetSize = vi.fn();
-const uPlotDestroy = vi.fn();
-
-class UPlotMock {
-  static paths = {
-    spline: () => undefined,
-  };
-
-  root: HTMLDivElement;
-
-  constructor(_opts: unknown, _data: unknown, target: HTMLElement) {
-    this.root = document.createElement('div');
-    this.root.className = 'uplot';
-    target.appendChild(this.root);
-  }
-
-  setSize(size: unknown) {
-    uPlotSetSize(size);
-  }
-
-  destroy() {
-    uPlotDestroy();
-    this.root.remove();
-  }
-}
-
-vi.mock('uplot', () => ({
-  default: UPlotMock,
-}));
-
-vi.mock('uplot/dist/uPlot.min.css', () => ({}));
-
 class ResizeObserverMock {
   observe() {}
   unobserve() {}
@@ -179,7 +147,6 @@ const expectedWidgetModulePaths = [
   '../chart/echarts-line/src/index.ts',
   '../chart/echarts-pie/src/index.ts',
   '../chart/realtime-history-curve/src/index.ts',
-  '../chart/uplot-line/src/index.ts',
   '../custom/alert-list/src/index.ts',
   '../custom/device-status-card/src/index.ts',
   '../custom/guidance-steps/src/index.ts',
@@ -207,7 +174,6 @@ const expectedWidgetModulePaths = [
   '../interaction/quick-entry-list/src/index.ts',
   '../interaction/toggle-button/src/index.ts',
   '../interaction/value-card/src/index.ts',
-  '../interaction/value-card-simple/src/index.ts',
   '../interaction/date-range-picker/src/index.ts',
   '../media/camera-control/src/index.ts',
   '../media/ezuikit-player/src/index.ts',
@@ -229,7 +195,6 @@ const dataPreviewModulePaths = [
   '../chart/echarts-gauge/src/index.ts',
   '../chart/echarts-line/src/index.ts',
   '../chart/echarts-pie/src/index.ts',
-  '../chart/uplot-line/src/index.ts',
 ];
 
 describe('widget runtime contracts', () => {
@@ -240,8 +205,6 @@ describe('widget runtime contracts', () => {
     echartsResize.mockClear();
     echartsDispose.mockClear();
     echartsIsDisposed.mockClear();
-    uPlotSetSize.mockClear();
-    uPlotDestroy.mockClear();
   });
 
   it('discovers every widget package', () => {
@@ -255,7 +218,6 @@ describe('widget runtime contracts', () => {
       '../chart/echarts-line/src/index.ts',
       '../chart/echarts-pie/src/index.ts',
       '../chart/realtime-history-curve/src/index.ts',
-      '../chart/uplot-line/src/index.ts',
       '../media/ezuikit-player/src/index.ts',
       '../media/video-player/src/index.ts',
       '../resources/model-3d/src/index.ts',

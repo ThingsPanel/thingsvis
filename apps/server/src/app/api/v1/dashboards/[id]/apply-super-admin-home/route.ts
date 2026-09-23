@@ -63,7 +63,7 @@ function lineChart(
 ) {
   return {
     id,
-    type: 'chart/uplot-line',
+    type: 'chart/echarts-line',
     props: {
       primaryColor: color,
       showLegend: false,

@@ -42,6 +42,46 @@ describe('KernelStore', () => {
             expect(state.layerOrder).toEqual(['node-1', 'node-2']);
         });
 
+        it('migrates the removed uPlot time-series widget to the generic line chart', () => {
+            const mockPage = {
+                config: {},
+                nodes: [
+                    {
+                        id: 'legacy-chart',
+                        type: 'chart/uplot-line',
+                        props: { showArea: true },
+                    },
+                ],
+            } as any;
+
+            useStore.getState().loadPage(mockPage);
+
+            expect(useStore.getState().nodesById['legacy-chart'].schemaRef.type).toBe(
+                'chart/echarts-line',
+            );
+            expect((useStore.getState().page as any).nodes[0].type).toBe('chart/echarts-line');
+        });
+
+        it('migrates the removed lite value card to the full value card', () => {
+            const mockPage = {
+                config: {},
+                nodes: [
+                    {
+                        id: 'legacy-value-card',
+                        type: 'interaction/value-card-simple',
+                        props: { title: '设备总数', value: 12, unit: '个', showUnit: true },
+                    },
+                ],
+            } as any;
+
+            useStore.getState().loadPage(mockPage);
+
+            expect(useStore.getState().nodesById['legacy-value-card'].schemaRef.type).toBe(
+                'interaction/value-card',
+            );
+            expect((useStore.getState().page as any).nodes[0].type).toBe('interaction/value-card');
+        });
+
         it('should restore persisted layer order and groups', () => {
             const mockPage = {
                 config: {

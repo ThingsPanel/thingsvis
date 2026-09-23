@@ -387,7 +387,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
       },
       {
         id: 'sa-memory-trend',
-        type: 'chart/uplot-line',
+        type: 'chart/echarts-line',
         props: {
           primaryColor: '#7c3aed',
           showLegend: true,
@@ -446,7 +446,7 @@ export const DEFAULT_DASHBOARD_CONFIGS: Record<DefaultDashboardRole, DefaultDash
       },
       {
         id: 'sa-disk-trend',
-        type: 'chart/uplot-line',
+        type: 'chart/echarts-line',
         props: {
           primaryColor: '#f59e0b',
           showLegend: false,

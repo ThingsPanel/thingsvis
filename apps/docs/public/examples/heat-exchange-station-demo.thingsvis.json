@@ -453,7 +453,7 @@
     {
       "id": "report-chart",
       "name": "Report Chart",
-      "type": "chart/uplot-line",
+      "type": "chart/echarts-line",
       "position": {
         "x": 96,
         "y": 884

@@ -29,7 +29,7 @@ describe('devicePresetHydration', () => {
         nodes: [
           {
             id: 'node-1',
-            type: 'chart/uplot-line',
+            type: 'chart/echarts-line',
             position: { x: 0, y: 0 },
             size: { width: 320, height: 180 },
             props: { data: [] },
@@ -258,7 +258,7 @@ describe('devicePresetHydration', () => {
         nodes: [
           {
             id: 'node-1',
-            type: 'chart/uplot-line',
+            type: 'chart/echarts-line',
             position: { x: 0, y: 0 },
             size: { width: 320, height: 180 },
             props: {

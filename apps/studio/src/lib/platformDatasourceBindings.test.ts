@@ -25,7 +25,7 @@ describe('platformDatasourceBindings', () => {
   it('collects requested platform fields and history requirements from node bindings', () => {
     const requirements = collectPlatformBindingRequirements([
       {
-        type: 'chart/uplot-line',
+        type: 'chart/echarts-line',
         data: [
           {
             targetProp: 'data',
@@ -53,7 +53,7 @@ describe('platformDatasourceBindings', () => {
       [createPlatformDataSource('__platform_dev-1__', { deviceId: 'dev-1' })],
       [
         {
-          type: 'chart/uplot-line',
+          type: 'chart/echarts-line',
           data: [
             {
               targetProp: 'data',
@@ -73,7 +73,7 @@ describe('platformDatasourceBindings', () => {
       [createPlatformDataSource('__platform_dev-2__', { deviceId: 'dev-2', bufferSize: 24 })],
       [
         {
-          type: 'chart/uplot-line',
+          type: 'chart/echarts-line',
           data: [
             {
               targetProp: 'data',
@@ -96,7 +96,7 @@ describe('platformDatasourceBindings', () => {
       ],
       [
         {
-          type: 'interaction/value-card-simple',
+          type: 'interaction/value-card',
           data: [
             {
               targetProp: 'value',
@@ -116,7 +116,7 @@ describe('platformDatasourceBindings', () => {
       [],
       [
         {
-          type: 'chart/uplot-line',
+          type: 'chart/echarts-line',
           data: [
             {
               targetProp: 'data',

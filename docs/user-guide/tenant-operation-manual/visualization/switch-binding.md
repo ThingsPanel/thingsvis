@@ -36,6 +36,10 @@ description: 在 ThingsVis 可视化编辑器中绑定设备的布尔开关状�
 
 ![在可视化编辑器中绑定 ha_state 布尔字段](./images/switch-binding-field.png)
 
+下面是实际配置界面的示例。右侧属性面板显示 `ha_state [boolean]` 和“已启用双向控制”，画布中的设备名称、图标和状态位于左侧，开关控件位于右侧。
+
+![开关组件实际绑定配置示例](./images/switch-binding-user-config.jpg)
+
 不需要再手工配置 `change` 事件或拼接请求体。编辑器保存的是字段绑定，宿主运行时会自动把同名可控字段路由到设备命令。
 
 ## 调整开关的显示

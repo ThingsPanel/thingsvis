@@ -144,7 +144,6 @@ export const COMPONENT_ORDER = [
   'basic/placeholder',
   'basic/glass-panel',
   'interaction/value-card',
-  'interaction/value-card-simple',
   'basic/digital-clock',
   'custom/device-status-card',
   'interaction/basic-progress',
@@ -152,7 +151,6 @@ export const COMPONENT_ORDER = [
   'chart/echarts-bar',
   'chart/echarts-line',
   'chart/echarts-pie',
-  'chart/uplot-line',
   'chart/realtime-history-curve',
   'chart/echarts-gauge',
   'media/image',
@@ -209,7 +207,6 @@ export function resolveComponentCategory(
     Record<(typeof COMPONENT_ORDER)[number], ComponentCategoryKey>
   > = {
     'interaction/value-card': 'dataDisplay',
-    'interaction/value-card-simple': 'dataDisplay',
     'basic/digital-clock': 'dataDisplay',
     'custom/device-status-card': 'dataDisplay',
     'interaction/basic-progress': 'dataDisplay',
