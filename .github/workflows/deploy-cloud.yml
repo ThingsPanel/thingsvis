@@ -142,7 +142,7 @@ jobs:
           }
           EOF
 
-          cd deploy && tar -czf ../thingsvis-deploy.tar.gz .
+          cd deploy && tar --exclude='*.map' --exclude='**/*.map' -czf ../thingsvis-deploy.tar.gz .
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
@@ -153,29 +153,32 @@ jobs:
           cp thingsvis-deploy.tar.gz "$package"
           echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      - name: Upload to server via public SSH
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
-          username: ${{ secrets.DEPLOY_USER_CLOUD }}
-          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
-          port: 22
-          source: "thingsvis-deploy-${{ github.run_id }}.tar.gz"
-          target: "/tmp"
+      - name: Stream package and deploy over one SSH connection
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER_CLOUD }}
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
+        run: |
+          set -euo pipefail
 
-      - name: Deploy and restart services via public SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
-          username: ${{ secrets.DEPLOY_USER_CLOUD }}
-          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
-          port: 22
-          script: |
+          package="thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          package_size="$(wc -c < "$package" | tr -d ' ')"
+          expected_sha="${{ steps.package.outputs.sha256 }}"
+          remote_package="/tmp/$package"
+          remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
+          key_file="$RUNNER_TEMP/thingsvis-cloud-deploy-key"
+          printf '%s\n' "$DEPLOY_KEY" > "$key_file"
+          chmod 600 "$key_file"
+
+          remote_command="$(cat <<'REMOTE_SCRIPT'
             set -euo pipefail
 
-            remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
-            remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
-            expected_sha="${{ steps.package.outputs.sha256 }}"
+            remote_package="__REMOTE_PACKAGE__"
+            remote_dir="__REMOTE_DIR__"
+            package_size="__PACKAGE_SIZE__"
+            expected_sha="__EXPECTED_SHA__"
+            mkdir -p "$remote_dir"
+            head -c "$package_size" > "$remote_package"
             test -s "$remote_package"
             actual_sha="$(sha256sum "$remote_package" | cut -d' ' -f1)"
             test "$actual_sha" = "$expected_sha"
@@ -257,4 +260,22 @@ jobs:
             echo "=== Deployment complete ==="
             pm2 list
             echo ""
-            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST_CLOUD }}:7050/"
+            echo "🔗 Studio:  http://__DEPLOY_HOST__:7050/"
+          REMOTE_SCRIPT
+          )"
+          remote_command="${remote_command//__REMOTE_PACKAGE__/$remote_package}"
+          remote_command="${remote_command//__REMOTE_DIR__/$remote_dir}"
+          remote_command="${remote_command//__PACKAGE_SIZE__/$package_size}"
+          remote_command="${remote_command//__EXPECTED_SHA__/$expected_sha}"
+          remote_command="${remote_command//__DEPLOY_HOST__/$DEPLOY_HOST}"
+
+          echo "📦 Streaming $package ($(du -h "$package" | cut -f1)) over one SSH connection"
+          cat "$package" | ssh \
+            -i "$key_file" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            -o ConnectTimeout=30 \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=10 \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "$remote_command"
