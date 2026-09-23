@@ -1,8 +1,8 @@
 name: Deploy to CLOUD
 
 # =============================================================================
-# Cloud deploy: GitHub Actions joins the tailnet and uses Tailscale SSH.
-# Public SSH port 22 is not required.
+# Cloud deploy uses the historical public SSH deployment path.
+# Keep the host, user, and key in GitHub Actions secrets.
 # =============================================================================
 
 on:
@@ -25,13 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci-deploy
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -153,105 +146,115 @@ jobs:
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
-      - name: Upload to server via Tailscale SSH
-        env:
-          REMOTE_PACKAGE: /tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz
+      - name: Prepare deployment package
+        id: package
         run: |
-          set -euo pipefail
-          remote_part="${REMOTE_PACKAGE}.part"
-          tailscale ssh "root@100.126.67.60" \
-            "cat > '$remote_part' && mv '$remote_part' '$REMOTE_PACKAGE'" \
-            < thingsvis-deploy.tar.gz
+          package="thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          cp thingsvis-deploy.tar.gz "$package"
+          echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-          expected_sha="$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)"
-          actual_sha="$(tailscale ssh "root@100.126.67.60" \
-            "sha256sum '$REMOTE_PACKAGE' | cut -d' ' -f1")"
-          test "$actual_sha" = "$expected_sha"
+      - name: Upload to server via public SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          username: ${{ secrets.DEPLOY_USER_CLOUD }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
+          port: 22
+          source: "thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          target: "/tmp"
 
-      - name: Deploy and restart services via Tailscale SSH
-        run: |
-          tailscale ssh "root@100.126.67.60" 'bash -s' <<'REMOTE_SCRIPT'
-          set -euo pipefail
+      - name: Deploy and restart services via public SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          username: ${{ secrets.DEPLOY_USER_CLOUD }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
+          port: 22
+          script: |
+            set -euo pipefail
 
-          remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
-          remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
+            remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
+            remote_dir="/tmp/thingsvis-deploy-${{ github.run_id }}"
+            expected_sha="${{ steps.package.outputs.sha256 }}"
+            test -s "$remote_package"
+            actual_sha="$(sha256sum "$remote_package" | cut -d' ' -f1)"
+            test "$actual_sha" = "$expected_sha"
 
-          export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
+            export PATH="/usr/local/lib/nodejs/node-v20.19.0-linux-x64/bin:$PATH"
 
-          echo "=== Deploying ThingsVis ==="
+            echo "=== Deploying ThingsVis ==="
 
-          mkdir -p /opt/thingsvis/server
-          mkdir -p /var/www/thingsvis-studio
-          mkdir -p /var/www/thingsvis-plugins
-
-          rm -rf "$remote_dir"
-          mkdir -p "$remote_dir"
-          tar -xzf "$remote_package" -C "$remote_dir"
-
-          cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
-
-          echo ">>> Deploying Server..."
-          pm2 stop thingsvis-server 2>/dev/null || true
-          sleep 1
-          rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
-          cp -rf "$remote_dir/server/." /opt/thingsvis/server/
-          cd /opt/thingsvis/server
-
-          if [ -f /opt/thingsvis/server/apps/server/.env ]; then
-            set -a
-            . /opt/thingsvis/server/apps/server/.env
-            set +a
-          elif [ -f /opt/thingsvis/server/.env ]; then
-            set -a
-            . /opt/thingsvis/server/.env
-            set +a
-          fi
-
-          : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
-          : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
-
-          cd apps/server
-          npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
-          cd ../..
-
-          NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
-          DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
-          pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-          NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
-          DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
-          pm2 restart thingsvis-server --update-env
-          pm2 save
-
-          echo ">>> Deploying Studio..."
-          rm -rf /var/www/thingsvis-studio/*
-          cp -rf "$remote_dir/studio/." /var/www/thingsvis-studio/
-
-          echo ">>> Deploying Widgets..."
-          if [ -d "$remote_dir/widgets" ] && [ "$(ls -A "$remote_dir/widgets" 2>/dev/null)" ]; then
+            mkdir -p /opt/thingsvis/server
+            mkdir -p /var/www/thingsvis-studio
             mkdir -p /var/www/thingsvis-plugins
-            cp -rf "$remote_dir/widgets/." /var/www/thingsvis-plugins/
-          fi
 
-          nginx -t && systemctl reload nginx
+            rm -rf "$remote_dir"
+            mkdir -p "$remote_dir"
+            tar -xzf "$remote_package" -C "$remote_dir"
 
-          for attempt in $(seq 1 30); do
-            if curl -fsS --max-time 5 http://127.0.0.1:8000/api/v1/health >/dev/null; then
-              break
+            cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
+
+            echo ">>> Deploying Server..."
+            pm2 stop thingsvis-server 2>/dev/null || true
+            sleep 1
+            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+            cp -rf "$remote_dir/server/." /opt/thingsvis/server/
+            cd /opt/thingsvis/server
+
+            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/apps/server/.env
+              set +a
+            elif [ -f /opt/thingsvis/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/.env
+              set +a
             fi
-            if [ "$attempt" -eq 30 ]; then
-              echo "ThingsVis server health check failed" >&2
-              pm2 describe thingsvis-server >&2 || true
-              exit 1
+
+            : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
+            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
+
+            cd apps/server
+            npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
+            cd ../..
+
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 restart thingsvis-server --update-env
+            pm2 save
+
+            echo ">>> Deploying Studio..."
+            rm -rf /var/www/thingsvis-studio/*
+            cp -rf "$remote_dir/studio/." /var/www/thingsvis-studio/
+
+            echo ">>> Deploying Widgets..."
+            if [ -d "$remote_dir/widgets" ] && [ "$(ls -A "$remote_dir/widgets" 2>/dev/null)" ]; then
+              mkdir -p /var/www/thingsvis-plugins
+              cp -rf "$remote_dir/widgets/." /var/www/thingsvis-plugins/
             fi
-            sleep 2
-          done
-          curl -fsS --max-time 5 http://127.0.0.1:7050/ >/dev/null
 
-          rm -rf "$remote_dir" "$remote_package"
+            nginx -t && systemctl reload nginx
 
-          echo ""
-          echo "=== Deployment complete ==="
-          pm2 list
-          echo ""
-          echo "🔗 Studio:  http://100.126.67.60:7050/"
-          REMOTE_SCRIPT
+            for attempt in $(seq 1 30); do
+              if curl -fsS --max-time 5 http://127.0.0.1:8000/api/v1/health >/dev/null; then
+                break
+              fi
+              if [ "$attempt" -eq 30 ]; then
+                echo "ThingsVis server health check failed" >&2
+                pm2 describe thingsvis-server >&2 || true
+                exit 1
+              fi
+              sleep 2
+            done
+            curl -fsS --max-time 5 http://127.0.0.1:7050/ >/dev/null
+
+            rm -rf "$remote_dir" "$remote_package"
+
+            echo ""
+            echo "=== Deployment complete ==="
+            pm2 list
+            echo ""
+            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST_CLOUD }}:7050/"

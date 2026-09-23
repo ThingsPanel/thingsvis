@@ -5,8 +5,9 @@ name: Deploy to E
 # =============================================================================
 # 1. DATABASE_URL_E        — 数据库连接地址，格式如 mysql://user:password@host:3306/dbname
 # 2. AUTH_SECRET         — 认证加密密钥，用于 session / JWT 签名，建议 32+ 位随机字符串
-# 3. TS_OAUTH_CLIENT_ID    — Tailscale GitHub OIDC client id
-# 4. TS_OAUTH_SECRET       — Tailscale GitHub OIDC secret
+# 3. DEPLOY_HOST_E         — 公网 SSH 目标服务器 IP 或域名
+# 4. DEPLOY_USER_E         — SSH 登录用户名
+# 5. DEPLOY_SSH_KEY_E      — SSH 私钥
 # =============================================================================
 
 on:
@@ -28,14 +29,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-
-      - name: Connect to Tailscale
-        uses: tailscale/github-action@v4
-        with:
-          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-          tags: tag:ci-deploy
-          ping: 100.105.12.123
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -180,26 +173,29 @@ jobs:
 
       - name: Record package checksum
         id: package
-        run: echo "sha256=$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
-
-      - name: Upload to server via Tailscale SSH
-        env:
-          REMOTE_PACKAGE: /tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz
         run: |
-          set -euo pipefail
-          remote_part="${REMOTE_PACKAGE}.part"
-          tailscale ssh "root@100.105.12.123" \
-            "cat > '$remote_part' && mv '$remote_part' '$REMOTE_PACKAGE'" \
-            < thingsvis-deploy.tar.gz
+          package="thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          cp thingsvis-deploy.tar.gz "$package"
+          echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-          expected_sha="$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)"
-          actual_sha="$(tailscale ssh "root@100.105.12.123" \
-            "sha256sum '$REMOTE_PACKAGE' | cut -d' ' -f1")"
-          test "$actual_sha" = "$expected_sha"
+      - name: Upload to server via public SSH
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST_E }}
+          username: ${{ secrets.DEPLOY_USER_E }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_E }}
+          port: 22
+          source: "thingsvis-deploy-${{ github.run_id }}.tar.gz"
+          target: "/tmp"
 
-      - name: Deploy and restart services via Tailscale SSH
-        run: |
-          tailscale ssh "root@100.105.12.123" 'bash -s' <<'REMOTE_SCRIPT'
+      - name: Deploy and restart services via public SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST_E }}
+          username: ${{ secrets.DEPLOY_USER_E }}
+          key: ${{ secrets.DEPLOY_SSH_KEY_E }}
+          port: 22
+          script: |
             set -euo pipefail
 
             remote_package="/tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz"
@@ -213,21 +209,16 @@ jobs:
 
             echo "=== Deploying ThingsVis ==="
 
-            # Ensure directories exist
             mkdir -p /opt/thingsvis/server
             mkdir -p /var/www/thingsvis-studio
-
             mkdir -p /var/www/thingsvis-plugins
 
-            # Extract
             rm -rf "$remote_dir"
             mkdir -p "$remote_dir"
             tar -xzf "$remote_package" -C "$remote_dir"
 
-            # --- Deploy Nginx Config ---
             cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
-            
-            # --- Deploy Server ---
+
             echo ">>> Deploying Server..."
             pm2 stop thingsvis-server 2>/dev/null || true
             sleep 1
@@ -235,35 +226,45 @@ jobs:
             cp -rf "$remote_dir/server/." /opt/thingsvis/server/
             cd /opt/thingsvis/server
 
-            # Source .env if exists
-            if [ -f /opt/thingsvis/server/.env ]; then
-              export $(grep -v '^#' /opt/thingsvis/server/.env | xargs)
+            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/apps/server/.env
+              set +a
+            elif [ -f /opt/thingsvis/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/.env
+              set +a
             fi
 
-            # Apply database migrations
+            : "${DATABASE_URL:?DATABASE_URL is required for deploy-e}"
+            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-e}"
+
             cd apps/server
             npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate
             cd ../..
 
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
-            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 pm2 restart thingsvis-server --update-env
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 start apps/server/server.js --name thingsvis-server --update-env 2>/dev/null || \
+            NODE_ENV=production HOSTNAME=127.0.0.1 AUTH_TRUST_HOST=true PORT=8000 \
+            DATABASE_URL="$DATABASE_URL" AUTH_SECRET="$AUTH_SECRET" AUTH_URL="${AUTH_URL:-http://127.0.0.1:8000}" \
+            pm2 restart thingsvis-server --update-env
             pm2 save
 
-            # --- Deploy Studio ---
             echo ">>> Deploying Studio..."
             rm -rf /var/www/thingsvis-studio/*
             cp -rf "$remote_dir/studio/." /var/www/thingsvis-studio/
 
-
-
-            # --- Deploy Widgets ---
             echo ">>> Deploying Widgets..."
             if [ -d "$remote_dir/widgets" ] && [ "$(ls -A "$remote_dir/widgets" 2>/dev/null)" ]; then
+              rm -rf /var/www/thingsvis-plugins
               mkdir -p /var/www/thingsvis-plugins
               cp -rf "$remote_dir/widgets/." /var/www/thingsvis-plugins/
+            else
+              echo "Widget artifacts are missing or empty"
+              exit 1
             fi
 
-            # Reload nginx
             nginx -t && systemctl reload nginx
 
             for attempt in $(seq 1 30); do
@@ -279,12 +280,10 @@ jobs:
             done
             curl -fsS --max-time 5 http://127.0.0.1:7050/ >/dev/null
 
-            # Cleanup
             rm -rf "$remote_dir" "$remote_package"
 
             echo ""
             echo "=== Deployment complete ==="
             pm2 list
             echo ""
-            echo "🔗 Studio:  http://100.105.12.123:7050/"
-          REMOTE_SCRIPT
+            echo "🔗 Studio:  http://${{ secrets.DEPLOY_HOST_E }}:7050/"
