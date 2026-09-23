@@ -198,6 +198,26 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('previews a template metric without querying the placeholder device', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        config: {
+          ...defaults.config,
+          data: { ...defaults.config.data, deviceId: '__template__', metricKeys: ['temperature'] },
+        },
+      },
+    });
+
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.series?.[0]?.name).toBe('示例曲线'));
+    expect(chartMock.options.at(-1)?.legend?.selected).toHaveProperty('示例曲线', true);
+    expect(fetchMock).not.toHaveBeenCalled();
+    harness.destroy();
+  });
+
   it('uses the selected field name and unit instead of the internal bound label', async () => {
     vi.stubGlobal('fetch', vi.fn());
     const { default: Main } = await import('./src/index');

@@ -4,6 +4,25 @@ import { getPlatformDeviceDataSourceId } from '@/embed/platformDeviceCompat';
 import { hydrateDevicePresetSchema, hydrateDevicePresetWidget } from './devicePresetHydration';
 
 describe('devicePresetHydration', () => {
+  it('uses the current device for a history curve configured in a model template', () => {
+    const widget = {
+      id: 'history-1',
+      type: 'chart/realtime-history-curve',
+      props: {
+        config: {
+          data: { deviceId: '__template__', metricKeys: ['temperature'], timeRange: 'last_1h' },
+          series: { temperature: { name: '温度' } },
+        },
+      },
+    };
+    const hydrated = hydrateDevicePresetWidget(widget, 'dev-100');
+    expect((hydrated.props as any).config).toEqual({
+      data: { deviceId: 'dev-100', metricKeys: ['temperature'], timeRange: 'last_1h' },
+      series: { temperature: { name: '温度' } },
+    });
+    expect((widget.props.config.data as any).deviceId).toBe('__template__');
+  });
+
   it('rewrites generic platform bindings and datasource ids for schema presets', () => {
     const hydrated = hydrateDevicePresetSchema(
       {

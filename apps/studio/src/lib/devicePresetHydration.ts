@@ -341,6 +341,15 @@ export function hydrateDevicePresetWidget(
   const targetDataSourceId = getPlatformDeviceDataSourceId(deviceId);
   const clonedWidget = cloneValue(widget);
   const rewrittenWidget = rewriteGenericPlatformBindings(clonedWidget, targetDataSourceId);
+  if (rewrittenWidget.type === 'chart/realtime-history-curve') {
+    const props = (rewrittenWidget.props ?? {}) as Record<string, unknown>;
+    const config = (props.config ?? {}) as Record<string, unknown>;
+    const data = (config.data ?? {}) as Record<string, unknown>;
+    return {
+      ...rewrittenWidget,
+      props: { ...props, config: { ...config, data: { ...data, deviceId } } },
+    };
+  }
   if (rewrittenWidget.type === 'media/camera-control') {
     return normalizeCameraControlAutoWritePayloads(rewrittenWidget);
   }
