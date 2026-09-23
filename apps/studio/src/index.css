@@ -571,6 +571,17 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 28px rgba(0, 0, 0, 0.24);
 }
 
+/* Standalone icons do not need the frost theme's automatic glass surface.
+ * Keep this non-important so explicit node styles can still take precedence. */
+.theme-frost [data-overlay-node-id]:has(.thingsvis-basic-icon-shell),
+.theme-frost [data-overlay-node-id]:has(.thingsvis-basic-icon-shell):hover {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 /* Glassmorphism for dark canvas themes (Widget components can opt-in) */
 .theme-midnight .widget-glass,
 .theme-ocean .widget-glass,
