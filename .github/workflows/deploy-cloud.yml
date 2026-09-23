@@ -153,9 +153,18 @@ jobs:
           cp thingsvis-deploy.tar.gz "$package"
           echo "sha256=$(sha256sum "$package" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      - name: Stream package and deploy over one SSH connection
+      - name: Connect to Tailscale for Cloud SSH fallback
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci-deploy
+          ping: 100.126.67.60
+
+      - name: Stream package and deploy over one SSH connection (public, then Tailscale fallback)
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          DEPLOY_PUBLIC_HOST: ${{ secrets.DEPLOY_HOST_CLOUD }}
+          DEPLOY_TAILSCALE_HOST: 100.126.67.60
           DEPLOY_USER: ${{ secrets.DEPLOY_USER_CLOUD }}
           DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY_CLOUD }}
         run: |
@@ -267,15 +276,23 @@ jobs:
           remote_command="${remote_command//__REMOTE_DIR__/$remote_dir}"
           remote_command="${remote_command//__PACKAGE_SIZE__/$package_size}"
           remote_command="${remote_command//__EXPECTED_SHA__/$expected_sha}"
-          remote_command="${remote_command//__DEPLOY_HOST__/$DEPLOY_HOST}"
+          remote_command="${remote_command//__DEPLOY_HOST__/$DEPLOY_PUBLIC_HOST}"
 
-          echo "📦 Streaming $package ($(du -h "$package" | cut -f1)) over one SSH connection"
-          cat "$package" | ssh \
+          ssh_options=(
             -i "$key_file" \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
-            -o ConnectTimeout=30 \
+            -o ConnectTimeout=10 \
             -o ServerAliveInterval=30 \
-            -o ServerAliveCountMax=10 \
-            "$DEPLOY_USER@$DEPLOY_HOST" \
-            "$remote_command"
+            -o ServerAliveCountMax=10
+          )
+
+          echo "📦 Streaming $package ($(du -h "$package" | cut -f1)) over one SSH connection"
+          if ! cat "$package" | ssh "${ssh_options[@]}" \
+            "$DEPLOY_USER@$DEPLOY_PUBLIC_HOST" \
+            "$remote_command"; then
+            echo "⚠️ Public SSH unavailable; retrying the same deployment over Tailscale"
+            cat "$package" | ssh "${ssh_options[@]}" \
+              "$DEPLOY_USER@$DEPLOY_TAILSCALE_HOST" \
+              "$remote_command"
+          fi
