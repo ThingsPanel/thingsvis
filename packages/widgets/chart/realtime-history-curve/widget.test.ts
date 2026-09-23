@@ -264,6 +264,40 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('resolves a template curve to the runtime device in a device detail viewer', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { time_series: [{ x: 1000000000000, y: 35 }] } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        config: {
+          ...defaults.config,
+          data: {
+            ...defaults.config.data,
+            deviceId: '__template__',
+            metricKeys: ['pm25'],
+            timeRange: 'last_12h',
+          },
+        },
+      },
+      variables: {
+        deviceId: 'real-device-1',
+        platformApiBaseUrl: '/proxy-default',
+        platformToken: 'token-1',
+      },
+    });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('device_id=real-device-1');
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain('time_range=last_12h');
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.series?.[0]?.name).not.toBe('示例曲线'));
+    expect(defaults.config.data.deviceId).toBe('');
+    harness.destroy();
+  });
+
   it('uses the selected field name and unit instead of the internal bound label', async () => {
     vi.stubGlobal('fetch', vi.fn());
     const { default: Main } = await import('./src/index');

@@ -557,9 +557,19 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   let queryKey = '';
   let destroyed = false;
   let rangeOverride: RealtimeHistoryConfig['data'] | null = null;
-  const activeConfig = (): RealtimeHistoryConfig => rangeOverride
-    ? { ...props.config, data: { ...props.config.data, ...rangeOverride } }
-    : props.config;
+  const activeConfig = (): RealtimeHistoryConfig => {
+    const data = { ...props.config.data, ...rangeOverride };
+    const runtimeDeviceId = ctx.variables?.deviceId;
+    if (
+      data.deviceId === '__template__' &&
+      typeof runtimeDeviceId === 'string' &&
+      runtimeDeviceId.trim() &&
+      runtimeDeviceId !== '__template__'
+    ) {
+      data.deviceId = runtimeDeviceId;
+    }
+    return { ...props.config, data };
+  };
   const syncRangeControl = () => {
     const english = String(ctx.locale).toLowerCase().startsWith('en');
     rangeSelect.replaceChildren();
