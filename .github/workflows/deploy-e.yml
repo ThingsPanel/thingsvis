@@ -181,6 +181,10 @@ jobs:
           test -f ../thingsvis-deploy.tar.gz
           echo "📦 Tarball size: $(du -h ../thingsvis-deploy.tar.gz | cut -f1)"
 
+      - name: Record package checksum
+        id: package
+        run: echo "sha256=$(sha256sum thingsvis-deploy.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
       - name: Upload to server via Tailscale SSH
         env:
           REMOTE_PACKAGE: /tmp/thingsvis-deploy-${{ github.run_id }}.tar.gz
