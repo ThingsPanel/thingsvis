@@ -14,13 +14,9 @@ import {
 } from './src/history';
 
 describe('chart/realtime-history-curve history contract', () => {
-  it('keeps the standard data binding control and the full history config editor', () => {
+  it('exposes only the original full history config editor', () => {
     const fields = controls.groups.flatMap((group) => group.fields);
-    expect(fields.map((field) => field.path)).toEqual(['data', 'config']);
-    expect(fields.find((field) => field.path === 'data')?.binding).toEqual({
-      enabled: true,
-      modes: ['static', 'field', 'expr'],
-    });
+    expect(fields.map((field) => field.path)).toEqual(['config']);
     expect(fields.find((field) => field.path === 'config')?.kind).toBe('timeSeriesConfig');
   });
 
