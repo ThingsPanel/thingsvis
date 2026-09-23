@@ -29,7 +29,7 @@
     "vis-cli": "pnpm --filter vis-cli build && node tools/cli/dist/index.js",
     "create:widget": "pnpm run vis-cli create",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage && vitest run --coverage --config vitest.server.config.mts",
     "prepare": "husky"
   },
   "devDependencies": {

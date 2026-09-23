@@ -6,7 +6,12 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./vitest.setup.ts'],
-    exclude: [...configDefaults.exclude, 'apps/studio/tests/e2e/**'],
+    exclude: [
+      ...configDefaults.exclude,
+      'apps/studio/tests/e2e/**',
+      // Server tests use the server-side `@` alias and run with their own config.
+      'apps/server/src/**/*.test.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
