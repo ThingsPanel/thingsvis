@@ -145,11 +145,16 @@ describe('chart/realtime-history-curve widget runtime', () => {
     const defaults = getDefaultProps();
     document.body.setAttribute('data-canvas-theme', 'frost');
     try {
-      const harness = mountWidget(Main, { props: { config: defaults.config } });
+      const harness = mountWidget(Main, {
+        props: { config: { ...defaults.config, data: { ...defaults.config.data, timeRange: 'last_7d' } } },
+      });
       const select = harness.element.querySelector('select') as HTMLSelectElement;
       const arrow = harness.element.querySelector('span[aria-hidden="true"]') as HTMLElement;
       expect(select.matches('[data-canvas-theme="frost"] .tv-history-range')).toBe(true);
       expect(harness.element.querySelector('style')?.textContent).toContain('rgba(255,255,255,.16)');
+      expect(select.options[0]?.style.color).toBe('rgb(31, 41, 55)');
+      expect(select.options[0]?.style.backgroundColor).toBe('rgb(255, 255, 255)');
+      expect(Number.parseInt(select.style.width, 10)).toBeLessThan(148);
       expect(select.style.paddingRight).toBe('38px');
       expect(arrow.style.right).toBe('28px');
       harness.destroy();

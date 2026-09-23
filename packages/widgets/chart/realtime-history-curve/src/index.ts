@@ -511,7 +511,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   rangeSelect.setAttribute('aria-label', '历史曲线时间范围');
   Object.assign(rangeSelect.style, {
     position: 'absolute', right: '12px', top: '6px', zIndex: '5',
-    width: '148px', maxWidth: 'calc(100% - 24px)', height: '30px',
+    width: '120px', maxWidth: 'calc(100% - 24px)', height: '30px',
     boxSizing: 'border-box', paddingTop: '0', paddingBottom: '0',
     paddingLeft: '16px', paddingRight: '38px', appearance: 'none',
     border: '1px solid var(--w-surface-border,rgba(130,145,165,.35))',
@@ -541,7 +541,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   element.appendChild(rangeSelect);
   const rangeThemeStyle = document.createElement('style');
   rangeThemeStyle.textContent =
-    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}';
+    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}.tv-history-range option{color:#1f2937;background:#fff}';
   element.appendChild(rangeThemeStyle);
   const rangeArrow = document.createElement('span');
   rangeArrow.setAttribute('aria-hidden', 'true');
@@ -608,17 +608,33 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     }
     return { ...props.config, data };
   };
+  const sizeRangeControl = () => {
+    const label = rangeSelect.selectedOptions[0]?.textContent ?? '';
+    const textWidth = Array.from(label).reduce(
+      (width, character) => width + (character.charCodeAt(0) > 255 ? 12 : 6), 0,
+    );
+    const width = Math.max(98, Math.min(144, textWidth + 52));
+    rangeSelect.style.width = `${width}px`;
+    title.style.right = props.data === undefined ? `${width + 24}px` : '12px';
+  };
   const syncRangeControl = () => {
     const english = String(ctx.locale).toLowerCase().startsWith('en');
     rangeSelect.replaceChildren();
     const configured = activeConfig().data.timeRange;
     if (!rangeLabels.some(([value]) => value === configured)) {
       const option = new Option(english ? 'Configured range' : '当前配置时间', configured);
+      option.style.color = '#1f2937';
+      option.style.backgroundColor = '#fff';
       rangeSelect.add(option);
     }
-    for (const [value, zhLabel, enLabel] of rangeLabels)
-      rangeSelect.add(new Option(english ? enLabel : zhLabel, value));
+    for (const [value, zhLabel, enLabel] of rangeLabels) {
+      const option = new Option(english ? enLabel : zhLabel, value);
+      option.style.color = '#1f2937';
+      option.style.backgroundColor = '#fff';
+      rangeSelect.add(option);
+    }
     rangeSelect.value = configured;
+    sizeRangeControl();
     rangeSelect.style.display = props.data === undefined ? '' : 'none';
     rangeArrow.style.display = props.data === undefined ? '' : 'none';
     customPanel.style.display = 'none';
@@ -815,6 +831,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       : '';
   };
   rangeSelect.onchange = () => {
+    sizeRangeControl();
     if (rangeSelect.value === 'custom') {
       const current = activeConfig().data;
       const bounds = getTimeBounds(current);
@@ -839,12 +856,14 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     }
     rangeOverride = { ...props.config.data, timeRange: 'custom', startTime: start, endTime: end };
     customPanel.style.display = 'none';
+    sizeRangeControl();
     refresh();
   };
   customPanel.onkeydown = (event) => {
     if (event.key === 'Escape') {
       customPanel.style.display = 'none';
       rangeSelect.value = activeConfig().data.timeRange;
+      sizeRangeControl();
       rangeSelect.focus();
     }
   };
