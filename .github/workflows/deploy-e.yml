@@ -202,6 +202,7 @@ jobs:
             remote_dir="__REMOTE_DIR__"
             package_size="__PACKAGE_SIZE__"
             expected_sha="__EXPECTED_SHA__"
+            find /tmp -depth -mindepth 1 -path '/tmp/thingsvis-deploy-*' -delete
             mkdir -p "$remote_dir"
             head -c "$package_size" > "$remote_package"
             test -s "$remote_package"
