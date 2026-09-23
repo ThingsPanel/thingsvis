@@ -7,7 +7,7 @@
   "scripts": {
     "build": "rspack build && tsc --emitDeclarationOnly",
     "dev": "rspack build --watch",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "zod": "^3.22.4"
