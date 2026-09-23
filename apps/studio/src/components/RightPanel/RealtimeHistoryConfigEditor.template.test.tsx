@@ -103,4 +103,24 @@ describe('RealtimeHistoryConfigEditor in a device template', () => {
       }),
     );
   });
+
+  it('places editable title visibility and size before the data controls', async () => {
+    const onChange = vi.fn();
+    await act(async () => {
+      root.render(<RealtimeHistoryConfigEditor value={{}} onChange={onChange} />);
+    });
+    const sections = Array.from(container.querySelectorAll('h3')).map(
+      (heading) => heading.textContent,
+    );
+    expect(sections[0]).toBe('标题');
+    const toggle = Array.from(container.querySelectorAll('label'))
+      .find((label) => label.textContent?.includes('显示标题'))
+      ?.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(toggle.checked).toBe(true);
+    expect(container.querySelector('input[value="历史曲线"]')).not.toBeNull();
+    await act(async () => toggle.click());
+    expect(onChange).toHaveBeenCalledWith(
+      expect.objectContaining({ header: expect.objectContaining({ show: false, fontSize: 16 }) }),
+    );
+  });
 });

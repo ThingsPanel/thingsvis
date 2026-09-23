@@ -75,6 +75,12 @@ const LayoutConfigSchema = z.object({
   left: z.number().min(0).max(200).default(16),
 });
 
+const HeaderConfigSchema = z.object({
+  show: z.boolean().default(true),
+  title: z.string().default('历史曲线'),
+  fontSize: z.number().int().min(12).max(32).default(16),
+});
+
 const ChartStyleConfigSchema = z.object({
   axisLabelColor: z.string().default(''),
   xAxisFontSize: z.number().min(10).max(32).default(12),
@@ -166,6 +172,7 @@ const AnalysisConfigSchema = z.object({
 
 export const RealtimeHistoryConfigSchema = z.object({
   data: DataConfigSchema.default({}),
+  header: HeaderConfigSchema.default({}),
   series: z.record(z.string(), SeriesConfigSchema).default({}),
   layout: LayoutConfigSchema.default({}),
   style: ChartStyleConfigSchema.default({}),

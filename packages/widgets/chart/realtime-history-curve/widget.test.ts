@@ -96,6 +96,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
     const { default: Main } = await import('./src/index');
     const defaults = getDefaultProps();
     const harness = mountWidget(Main, {
+      locale: 'zh',
       props: {
         config: {
           ...defaults.config,
@@ -115,6 +116,29 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('shows a configurable title and a compact configured-range label', async () => {
+    vi.stubGlobal('fetch', vi.fn());
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: {
+        config: {
+          ...defaults.config,
+          header: { show: true, title: '深圳龙华 PM2.5', fontSize: 20 },
+          data: { ...defaults.config.data, timeRange: 'last_12h' },
+        },
+      },
+    });
+    const title = harness.element.children[1] as HTMLElement;
+    expect(title.textContent).toBe('深圳龙华 PM2.5');
+    expect(title.style.font).toContain('20px');
+    const select = harness.element.querySelector('select') as HTMLSelectElement;
+    expect(select.selectedOptions[0]?.textContent).toBe('最近 12 小时');
+    expect(chartMock.options.at(-1)?.grid?.top).toBeGreaterThan(70);
+    harness.destroy();
+  });
+
   it('centers only the no-data message and resets its position while loading', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { time_series: [] } }) });
     vi.stubGlobal('fetch', fetchMock);
@@ -124,12 +148,12 @@ describe('chart/realtime-history-curve widget runtime', () => {
       props: { config: { ...defaults.config, data: { ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['temperature'] } } },
       variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
     });
-    const status = harness.element.children[1] as HTMLElement;
+    const status = harness.element.children[2] as HTMLElement;
     await vi.waitFor(() => expect(status.textContent).toBe('No data in the selected time range'));
     expect(status.style.top).toBe('50%');
     expect(status.style.transform).toBe('translate(-50%, -50%)');
     harness.update({ variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-2' } });
-    expect(status.style.top).toBe('10px');
+    expect(status.style.top).toBe('72px');
     harness.destroy();
   });
 
@@ -568,7 +592,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
       { fg: '#eef2ff', axis: '#334155', series: ['#91cc75'] } as any,
     ) as any;
 
-    expect(option.grid).toMatchObject({ top: 40, right: 16, bottom: 8, left: 16 });
+    expect(option.grid).toMatchObject({ top: 74, right: 16, bottom: 8, left: 16 });
     expect(option.xAxis.axisLabel).toMatchObject({ color: '#eef2ff', fontSize: 12 });
     expect(option.xAxis.splitLine.lineStyle.color).toBe('#334155');
     expect(option.series[0].lineStyle.color).toBe('#6965db');

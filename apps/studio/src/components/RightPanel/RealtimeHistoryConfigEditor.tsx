@@ -97,6 +97,7 @@ export function getMinimumAggregationWindow(
 }
 
 export const DEFAULT_REALTIME_HISTORY_CONFIG = {
+  header: { show: true, title: '历史曲线', fontSize: 16 },
   data: {
     deviceId: '',
     metricKeys: [] as string[],
@@ -193,6 +194,7 @@ function normalize(value: unknown) {
   return {
     ...DEFAULT_REALTIME_HISTORY_CONFIG,
     ...source,
+    header: { ...DEFAULT_REALTIME_HISTORY_CONFIG.header, ...asRecord(source.header) },
     data: { ...DEFAULT_REALTIME_HISTORY_CONFIG.data, ...asRecord(source.data) },
     series: { ...DEFAULT_REALTIME_HISTORY_CONFIG.series, ...asRecord(source.series) },
     layout: { ...DEFAULT_REALTIME_HISTORY_CONFIG.layout, ...asRecord(source.layout) },
@@ -564,6 +566,34 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
 
   return (
     <div className="space-y-4">
+      <Section title="标题">
+        <label className={checkClass}>
+          <input
+            type="checkbox"
+            checked={config.header.show}
+            onChange={(event) => patch('header', { show: event.target.checked })}
+          />
+          显示标题
+        </label>
+        {config.header.show && (
+          <>
+            <label className={labelClass}>
+              标题文字
+              <input
+                type="text"
+                className={`${inputClass} mt-1.5`}
+                value={config.header.title}
+                onChange={(event) => patch('header', { title: event.target.value })}
+              />
+            </label>
+            <FontSizeField
+              label="标题字号"
+              value={config.header.fontSize}
+              onChange={(fontSize) => patch('header', { fontSize })}
+            />
+          </>
+        )}
+      </Section>
       <div className="space-y-3">
         <div className="space-y-1.5">
           <label className={labelClass}>设备</label>

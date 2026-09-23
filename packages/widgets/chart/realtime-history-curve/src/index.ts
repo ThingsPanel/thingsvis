@@ -295,6 +295,7 @@ export function buildChartOption(
     void stateIndex;
   });
   const legendPosition = config.analysis.legend.position;
+  const headerHeight = config.header.show ? Math.max(30, Math.ceil(config.header.fontSize * 1.35) + 12) : 0;
   const storedLayout = (config as unknown as { layout?: Partial<RealtimeHistoryConfig['layout']> })
     .layout;
   const storedStyle = (config as unknown as { style?: Partial<RealtimeHistoryConfig['style']> })
@@ -342,7 +343,8 @@ export function buildChartOption(
   const automaticGrid = {
     left: 16 + Math.max(0, leftAxisCount - 1) * 48 + (legendPosition === 'left' ? 72 : 0),
     right: 16 + Math.max(0, rightAxisCount - 1) * 48 + (legendPosition === 'right' ? 72 : 0),
-    top: legendPosition === 'top' && config.analysis.legend.show ? 40 : 16,
+    top: headerHeight +
+      (legendPosition === 'top' && config.analysis.legend.show ? 40 : 16),
     bottom: 8 + xAxisTitleReserve + rotatedLabelReserve + bottomLegendReserve,
   };
   const gridMargins =
@@ -365,7 +367,7 @@ export function buildChartOption(
     legend: {
       show: config.analysis.legend.show,
       selectedMode: config.analysis.legend.filterable,
-      top: legendPosition === 'top' ? 6 : undefined,
+      top: legendPosition === 'top' ? headerHeight + 1 : undefined,
       bottom: legendPosition === 'bottom' ? 4 : undefined,
       left: legendPosition === 'left' ? 4 : legendPosition === 'right' ? undefined : 'center',
       right: legendPosition === 'right' ? 4 : undefined,
@@ -498,6 +500,10 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const chartHost = document.createElement('div');
   chartHost.style.cssText = 'width:100%;height:100%';
   element.appendChild(chartHost);
+  const title = document.createElement('div');
+  title.style.cssText =
+    'position:absolute;left:12px;top:8px;right:128px;z-index:4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none';
+  element.appendChild(title);
   const status = document.createElement('div');
   status.style.cssText =
     'position:absolute;left:12px;top:10px;z-index:4;max-width:calc(100% - 24px);max-height:2.8em;overflow:hidden;overflow-wrap:anywhere;font:12px/1.4 system-ui;color:#888;pointer-events:none';
@@ -505,22 +511,35 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const rangeSelect = document.createElement('select');
   rangeSelect.setAttribute('aria-label', '历史曲线时间范围');
   rangeSelect.style.cssText =
-    'position:absolute;right:8px;top:6px;z-index:5;max-width:112px;height:28px;padding:0 6px;border:1px solid rgba(150,160,175,.5);border-radius:5px;background:#f8f9fc;color:#263345;font:12px system-ui;cursor:pointer';
+    'position:absolute;right:10px;top:8px;z-index:5;max-width:112px;height:24px;padding:0 6px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:6px;background:var(--w-surface,rgba(255,255,255,.12));color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;cursor:pointer';
   const rangeLabels: Array<[RealtimeHistoryConfig['data']['timeRange'], string, string]> = [
+    ['last_5m', '最近 5 分钟', 'Last 5 minutes'],
+    ['last_15m', '最近 15 分钟', 'Last 15 minutes'],
+    ['last_30m', '最近 30 分钟', 'Last 30 minutes'],
     ['last_1h', '最近 1 小时', 'Last 1 hour'],
+    ['last_3h', '最近 3 小时', 'Last 3 hours'],
+    ['last_6h', '最近 6 小时', 'Last 6 hours'],
+    ['last_12h', '最近 12 小时', 'Last 12 hours'],
     ['last_24h', '最近 24 小时', 'Last 24 hours'],
+    ['last_3d', '最近 3 天', 'Last 3 days'],
     ['last_7d', '最近 7 天', 'Last 7 days'],
-    ['custom', '自定义时间', 'Custom range'],
+    ['last_15d', '最近 15 天', 'Last 15 days'],
+    ['last_30d', '最近 30 天', 'Last 30 days'],
+    ['last_60d', '最近 60 天', 'Last 60 days'],
+    ['last_90d', '最近 90 天', 'Last 90 days'],
+    ['last_6m', '最近 6 个月', 'Last 6 months'],
+    ['last_1y', '最近 1 年', 'Last 1 year'],
+    ['custom', '自定义', 'Custom'],
   ];
   element.appendChild(rangeSelect);
   const customPanel = document.createElement('div');
   customPanel.style.cssText =
-    'position:absolute;right:8px;top:38px;z-index:6;display:none;width:min(260px,calc(100% - 16px));padding:10px;box-sizing:border-box;border:1px solid #cbd3df;border-radius:6px;background:#fff;color:#263345;box-shadow:0 4px 16px rgba(0,0,0,.18);font:12px system-ui';
+    'position:absolute;right:10px;top:36px;z-index:6;display:none;width:min(260px,calc(100% - 20px));padding:10px;box-sizing:border-box;border:1px solid var(--w-surface-border,#cbd3df);border-radius:8px;background:var(--w-surface,#fff);color:var(--w-text-primary,var(--w-fg,#263345));box-shadow:0 4px 16px rgba(0,0,0,.18);font:12px system-ui';
   const startInput = document.createElement('input');
   const endInput = document.createElement('input');
   for (const input of [startInput, endInput]) {
     input.type = 'datetime-local';
-    input.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin:4px 0 8px;padding:4px;border:1px solid #cbd3df;border-radius:4px';
+    input.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin:4px 0 8px;padding:4px;border:1px solid var(--w-surface-border,#cbd3df);border-radius:4px;background:var(--w-surface,#fff);color:var(--w-text-primary,var(--w-fg,#263345))';
   }
   const startLabel = document.createElement('label');
   const endLabel = document.createElement('label');
@@ -535,7 +554,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const setStatus = (message: string, noData = false) => {
     status.textContent = message;
     status.style.left = noData ? '50%' : '12px';
-    status.style.top = noData ? '50%' : '10px';
+    status.style.top = noData ? '50%' : `${props.config.header.show ? 72 : 10}px`;
     status.style.transform = noData ? 'translate(-50%, -50%)' : '';
     status.style.textAlign = noData ? 'center' : '';
   };
@@ -589,10 +608,16 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   };
 
   const draw = () => {
-    if (!destroyed)
+    if (!destroyed) {
+      const colors = resolveWidgetColors(element);
+      title.textContent = props.config.header.title.trim() || (String(ctx.locale).toLowerCase().startsWith('en') ? 'History curve' : '历史曲线');
+      title.style.display = props.config.header.show ? '' : 'none';
+      title.style.color = colors.textPrimary;
+      title.style.font = `600 ${props.config.header.fontSize}px/1.35 system-ui`;
       chart.setOption(buildChartOption(activeConfig(), states, resolveWidgetColors(element)), {
         notMerge: true,
       });
+    }
   };
   const getRuntime = () => ({
     base: String(ctx.variables?.platformApiBaseUrl || '/proxy-default'),
