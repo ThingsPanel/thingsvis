@@ -135,7 +135,8 @@ describe('chart/realtime-history-curve widget runtime', () => {
     expect(title.style.font).toContain('20px');
     const select = harness.element.querySelector('select') as HTMLSelectElement;
     expect(select.selectedOptions[0]?.textContent).toBe('最近 12 小时');
-    expect(chartMock.options.at(-1)?.grid?.top).toBeGreaterThan(70);
+    expect((harness.element.children[0] as HTMLElement).style.top).toBe('40px');
+    expect(chartMock.options.at(-1)?.grid?.top).toBe(40);
     harness.destroy();
   });
 
@@ -150,7 +151,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
     });
     const status = harness.element.children[2] as HTMLElement;
     await vi.waitFor(() => expect(status.textContent).toBe('No data in the selected time range'));
-    expect(status.style.top).toBe('50%');
+    expect(status.style.top).toBe('calc(50% + 20px)');
     expect(status.style.transform).toBe('translate(-50%, -50%)');
     harness.update({ variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-2' } });
     expect(status.style.top).toBe('72px');
@@ -545,7 +546,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
     expect(option.xAxis.interval).toBe(3600000);
     expect(option.yAxis.map((axis: any) => axis.offset)).toEqual([0, 48, 0]);
     expect(option.legend.formatter('temperature')).toBe('temperature');
-    expect(option.grid).toMatchObject({ top: 21, right: 22, bottom: 23, left: 24 });
+    expect(option.grid).toMatchObject({ top: 40, right: 22, bottom: 23, left: 24 });
     expect(option.tooltip.axisPointer).toMatchObject({ type: 'cross', label: { show: false } });
     expect(option.legend.textStyle).toMatchObject({ color: '#334455', fontSize: 18 });
     expect(option.xAxis.axisLabel).toMatchObject({ color: '#112233', fontSize: 15 });
@@ -592,7 +593,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
       { fg: '#eef2ff', axis: '#334155', series: ['#91cc75'] } as any,
     ) as any;
 
-    expect(option.grid).toMatchObject({ top: 74, right: 16, bottom: 8, left: 16 });
+    expect(option.grid).toMatchObject({ top: 40, right: 16, bottom: 8, left: 16 });
     expect(option.xAxis.axisLabel).toMatchObject({ color: '#eef2ff', fontSize: 12 });
     expect(option.xAxis.splitLine.lineStyle.color).toBe('#334155');
     expect(option.series[0].lineStyle.color).toBe('#6965db');

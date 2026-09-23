@@ -295,7 +295,6 @@ export function buildChartOption(
     void stateIndex;
   });
   const legendPosition = config.analysis.legend.position;
-  const headerHeight = config.header.show ? Math.max(30, Math.ceil(config.header.fontSize * 1.35) + 12) : 0;
   const storedLayout = (config as unknown as { layout?: Partial<RealtimeHistoryConfig['layout']> })
     .layout;
   const storedStyle = (config as unknown as { style?: Partial<RealtimeHistoryConfig['style']> })
@@ -343,14 +342,13 @@ export function buildChartOption(
   const automaticGrid = {
     left: 16 + Math.max(0, leftAxisCount - 1) * 48 + (legendPosition === 'left' ? 72 : 0),
     right: 16 + Math.max(0, rightAxisCount - 1) * 48 + (legendPosition === 'right' ? 72 : 0),
-    top: headerHeight +
-      (legendPosition === 'top' && config.analysis.legend.show ? 40 : 16),
+    top: legendPosition === 'top' && config.analysis.legend.show ? 40 : 16,
     bottom: 8 + xAxisTitleReserve + rotatedLabelReserve + bottomLegendReserve,
   };
   const gridMargins =
     layoutConfig.marginMode === 'custom'
       ? {
-          top: layoutConfig.top,
+          top: Math.max(layoutConfig.top, automaticGrid.top),
           right: layoutConfig.right,
           bottom: layoutConfig.bottom,
           left: layoutConfig.left,
@@ -367,7 +365,7 @@ export function buildChartOption(
     legend: {
       show: config.analysis.legend.show,
       selectedMode: config.analysis.legend.filterable,
-      top: legendPosition === 'top' ? headerHeight + 1 : undefined,
+      top: legendPosition === 'top' ? 6 : undefined,
       bottom: legendPosition === 'bottom' ? 4 : undefined,
       left: legendPosition === 'left' ? 4 : legendPosition === 'right' ? undefined : 'center',
       right: legendPosition === 'right' ? 4 : undefined,
@@ -498,7 +496,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   element.style.cssText =
     'width:100%;height:100%;position:relative;overflow:hidden;pointer-events:auto';
   const chartHost = document.createElement('div');
-  chartHost.style.cssText = 'width:100%;height:100%';
+  chartHost.style.cssText = 'position:absolute;inset:0';
   element.appendChild(chartHost);
   const title = document.createElement('div');
   title.style.cssText =
@@ -511,7 +509,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const rangeSelect = document.createElement('select');
   rangeSelect.setAttribute('aria-label', '历史曲线时间范围');
   rangeSelect.style.cssText =
-    'position:absolute;right:10px;top:8px;z-index:5;max-width:112px;height:24px;padding:0 6px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:6px;background:var(--w-surface,rgba(255,255,255,.12));color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;cursor:pointer';
+    'position:absolute;right:12px;top:6px;z-index:5;max-width:128px;height:30px;padding:0 12px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:18px;background:var(--w-surface,rgba(255,255,255,.12));backdrop-filter:blur(12px);color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;cursor:pointer';
   const rangeLabels: Array<[RealtimeHistoryConfig['data']['timeRange'], string, string]> = [
     ['last_5m', '最近 5 分钟', 'Last 5 minutes'],
     ['last_15m', '最近 15 分钟', 'Last 15 minutes'],
@@ -554,7 +552,10 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const setStatus = (message: string, noData = false) => {
     status.textContent = message;
     status.style.left = noData ? '50%' : '12px';
-    status.style.top = noData ? '50%' : `${props.config.header.show ? 72 : 10}px`;
+    const headerHeight = props.config.header.show
+      ? Math.max(40, Math.ceil(props.config.header.fontSize * 1.35) + 12)
+      : props.data === undefined ? 40 : 0;
+    status.style.top = noData ? `calc(50% + ${headerHeight / 2}px)` : `${headerHeight + 32}px`;
     status.style.transform = noData ? 'translate(-50%, -50%)' : '';
     status.style.textAlign = noData ? 'center' : '';
   };
@@ -614,6 +615,11 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       title.style.display = props.config.header.show ? '' : 'none';
       title.style.color = colors.textPrimary;
       title.style.font = `600 ${props.config.header.fontSize}px/1.35 system-ui`;
+      const headerHeight = props.config.header.show
+        ? Math.max(40, Math.ceil(props.config.header.fontSize * 1.35) + 12)
+        : props.data === undefined ? 40 : 0;
+      chartHost.style.top = `${headerHeight}px`;
+      chart.resize();
       chart.setOption(buildChartOption(activeConfig(), states, resolveWidgetColors(element)), {
         notMerge: true,
       });
