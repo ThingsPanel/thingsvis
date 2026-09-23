@@ -87,6 +87,52 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('switches the visible time range without changing the saved widget config', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { time_series: [] } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: {
+        config: {
+          ...defaults.config,
+          data: { ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['temperature'] },
+        },
+      },
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const select = harness.element.querySelector('select') as HTMLSelectElement;
+    expect(select.value).toBe('last_1h');
+    select.value = 'last_24h';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('time_range=last_24h');
+    expect(defaults.config.data.timeRange).toBe('last_1h');
+    harness.destroy();
+  });
+
+  it('centers only the no-data message and resets its position while loading', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: { time_series: [] } }) });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: { config: { ...defaults.config, data: { ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['temperature'] } } },
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+    const status = harness.element.children[1] as HTMLElement;
+    await vi.waitFor(() => expect(status.textContent).toBe('No data in the selected time range'));
+    expect(status.style.top).toBe('50%');
+    expect(status.style.transform).toBe('translate(-50%, -50%)');
+    harness.update({ variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-2' } });
+    expect(status.style.top).toBe('10px');
+    harness.destroy();
+  });
+
   it('retries with the backend-advertised aggregation window for 207004', async () => {
     const fetchMock = vi
       .fn()
@@ -449,6 +495,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
     expect(option.xAxis.axisLine.lineStyle.color).toBe('#445566');
     expect(option.xAxis.splitLine.lineStyle.color).toBe('#556677');
     expect(option.yAxis[0].axisLabel).toMatchObject({ color: '#112233', fontSize: 16 });
+    expect(option.yAxis[0].axisLabel.formatter(40)).toBe('40.00');
   });
 
   it('does not call the protected history endpoint without a platform token', async () => {
@@ -607,5 +654,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
       },
     ]);
     expect(tooltip).toContain('81.3 ℃');
+    expect(option.yAxis[1].name).toBe('℃');
+    expect(option.yAxis[1].axisLabel.formatter(40)).toBe('40.00');
   });
 });

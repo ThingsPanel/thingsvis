@@ -480,8 +480,7 @@ export function buildChartOption(
         axisLabel: {
           color: axisLabelColor,
           fontSize: styleConfig.yAxisFontSize,
-          formatter: (value: number) =>
-            `${value.toFixed(axis.decimals)}${axisUnit ? ` ${axisUnit}` : ''}`,
+          formatter: (value: number) => value.toFixed(axis.decimals),
         },
         axisTick: { show: axis.showTicks, lineStyle: { color: axisLineColor } },
         axisLine: { show: axis.showAxisLine, lineStyle: { color: axisLineColor } },
@@ -503,11 +502,49 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   status.style.cssText =
     'position:absolute;left:12px;top:10px;z-index:4;max-width:calc(100% - 24px);max-height:2.8em;overflow:hidden;overflow-wrap:anywhere;font:12px/1.4 system-ui;color:#888;pointer-events:none';
   element.appendChild(status);
+  const rangeSelect = document.createElement('select');
+  rangeSelect.setAttribute('aria-label', '历史曲线时间范围');
+  rangeSelect.style.cssText =
+    'position:absolute;right:8px;top:6px;z-index:5;max-width:112px;height:28px;padding:0 6px;border:1px solid rgba(150,160,175,.5);border-radius:5px;background:#f8f9fc;color:#263345;font:12px system-ui;cursor:pointer';
+  const rangeLabels: Array<[RealtimeHistoryConfig['data']['timeRange'], string, string]> = [
+    ['last_1h', '最近 1 小时', 'Last 1 hour'],
+    ['last_24h', '最近 24 小时', 'Last 24 hours'],
+    ['last_7d', '最近 7 天', 'Last 7 days'],
+    ['custom', '自定义时间', 'Custom range'],
+  ];
+  element.appendChild(rangeSelect);
+  const customPanel = document.createElement('div');
+  customPanel.style.cssText =
+    'position:absolute;right:8px;top:38px;z-index:6;display:none;width:min(260px,calc(100% - 16px));padding:10px;box-sizing:border-box;border:1px solid #cbd3df;border-radius:6px;background:#fff;color:#263345;box-shadow:0 4px 16px rgba(0,0,0,.18);font:12px system-ui';
+  const startInput = document.createElement('input');
+  const endInput = document.createElement('input');
+  for (const input of [startInput, endInput]) {
+    input.type = 'datetime-local';
+    input.style.cssText = 'display:block;width:100%;box-sizing:border-box;margin:4px 0 8px;padding:4px;border:1px solid #cbd3df;border-radius:4px';
+  }
+  const startLabel = document.createElement('label');
+  const endLabel = document.createElement('label');
+  startLabel.appendChild(startInput);
+  endLabel.appendChild(endInput);
+  const customError = document.createElement('div');
+  customError.style.cssText = 'color:#bd3030;min-height:16px';
+  const applyButton = document.createElement('button');
+  applyButton.type = 'button';
+  applyButton.style.cssText = 'padding:4px 10px;border:0;border-radius:4px;background:#4f63d9;color:#fff;cursor:pointer';
+  customPanel.append(startLabel, endLabel, customError, applyButton);
+  const setStatus = (message: string, noData = false) => {
+    status.textContent = message;
+    status.style.left = noData ? '50%' : '12px';
+    status.style.top = noData ? '50%' : '10px';
+    status.style.transform = noData ? 'translate(-50%, -50%)' : '';
+    status.style.textAlign = noData ? 'center' : '';
+  };
   const exportButton = document.createElement('button');
   exportButton.type = 'button';
   exportButton.style.cssText =
     'position:absolute;right:74px;top:6px;z-index:5;height:26px;padding:0 10px;border:1px solid #d8d8df;border-radius:5px;background:rgba(255,255,255,.9);font:12px system-ui;cursor:pointer';
   element.appendChild(exportButton);
+  element.appendChild(customPanel);
   const chart = echarts.init(chartHost);
   // Dashboard nodes may persist only the fields edited by the user.  The host
   // merges widget defaults shallowly, so nested config objects such as
@@ -519,10 +556,31 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   let controller: AbortController | null = null;
   let queryKey = '';
   let destroyed = false;
+  let rangeOverride: RealtimeHistoryConfig['data'] | null = null;
+  const activeConfig = (): RealtimeHistoryConfig => rangeOverride
+    ? { ...props.config, data: { ...props.config.data, ...rangeOverride } }
+    : props.config;
+  const syncRangeControl = () => {
+    const english = String(ctx.locale).toLowerCase().startsWith('en');
+    rangeSelect.replaceChildren();
+    const configured = activeConfig().data.timeRange;
+    if (!rangeLabels.some(([value]) => value === configured)) {
+      const option = new Option(english ? 'Configured range' : '当前配置时间', configured);
+      rangeSelect.add(option);
+    }
+    for (const [value, zhLabel, enLabel] of rangeLabels)
+      rangeSelect.add(new Option(english ? enLabel : zhLabel, value));
+    rangeSelect.value = configured;
+    rangeSelect.style.display = props.data === undefined ? '' : 'none';
+    customPanel.style.display = 'none';
+    startLabel.replaceChildren(document.createTextNode(english ? 'Start' : '开始时间'), startInput);
+    endLabel.replaceChildren(document.createTextNode(english ? 'End' : '结束时间'), endInput);
+    applyButton.textContent = english ? 'Apply' : '应用';
+  };
 
   const draw = () => {
     if (!destroyed)
-      chart.setOption(buildChartOption(props.config, states, resolveWidgetColors(element)), {
+      chart.setOption(buildChartOption(activeConfig(), states, resolveWidgetColors(element)), {
         notMerge: true,
       });
   };
@@ -541,7 +599,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     let aggregationWindow: string | undefined;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       const response = await fetch(
-        buildHistoryUrl(runtime.base, props.config.data, key, {
+        buildHistoryUrl(runtime.base, activeConfig().data, key, {
           start,
           end,
           export: exportFile,
@@ -559,7 +617,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
 
       const serverWindow =
         aggregationWindowFromApiError(payload) ??
-        (code === 207001 ? minimumWindowForData(props.config.data) : undefined);
+        (code === 207001 ? minimumWindowForData(activeConfig().data) : undefined);
       if (
         (code === 207001 || code === 207004) &&
         serverWindow &&
@@ -580,7 +638,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
 
   const load = async () => {
     const text = runtimeText(ctx.locale);
-    const config = props.config;
+    const config = activeConfig();
     const runtime = getRuntime();
     exportButton.textContent = text.export || '导出 CSV';
     exportButton.style.display = 'none';
@@ -592,33 +650,32 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
         statPoints: series.points,
         comparison: [],
       }));
-      status.textContent = states.some((item) => item.points.length > 0)
-        ? ''
-        : text.noData || '当前时间范围内没有数据';
+      const hasData = states.some((item) => item.points.length > 0);
+      setStatus(hasData ? '' : text.noData || '当前时间范围内没有数据', !hasData);
       draw();
       return;
     }
     if (config.data.deviceId === '__template__') {
       controller?.abort();
       states = [createPreviewState()];
-      status.textContent = '';
+      setStatus('');
       draw();
       return;
     }
     if (!config.data.deviceId || !config.data.metricKeys.length) {
       states =
         !config.data.deviceId && config.data.metricKeys.length === 0 ? [createPreviewState()] : [];
-      status.textContent = states.length > 0 ? '' : text.empty || '请选择设备和指标字段';
+      setStatus(states.length > 0 ? '' : text.empty || '请选择设备和指标字段');
       draw();
       return;
     }
     if (!runtime.base || !runtime.token) {
-      status.textContent = text.noVariables || '平台 API 地址或令牌不可用';
+      setStatus(text.noVariables || '平台 API 地址或令牌不可用');
       return;
     }
     controller?.abort();
     controller = new AbortController();
-    status.textContent = text.loading || '正在查询历史数据…';
+    setStatus(text.loading || '正在查询历史数据…');
     const bounds = getTimeBounds(config.data);
     const offset = comparisonOffset(
       config.analysis.comparison,
@@ -660,7 +717,9 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       }),
     );
     states = results;
-    status.textContent = results.every((item) => item.error)
+    const noData = results.every((item) => item.points.length === 0) &&
+      !results.some((item) => item.error || item.comparisonError);
+    setStatus(results.every((item) => item.error)
       ? `${text.error || '查询失败'}：${results[0]?.error}`
       : results.some((item) => item.error)
         ? '部分指标查询失败'
@@ -668,14 +727,14 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
           ? '当前数据已加载，部分同期数据查询失败'
           : results.every((item) => item.points.length === 0)
             ? text.noData || '当前时间范围内没有数据'
-            : '';
+            : '', noData);
     draw();
   };
 
   const refresh = () => {
     const nextKey = JSON.stringify({
       boundData: props.data,
-      data: props.config.data,
+      data: activeConfig().data,
       comparison: props.config.analysis.comparison,
       offset: props.config.analysis.comparisonOffsetMs,
       variables: getRuntime(),
@@ -684,13 +743,54 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       queryKey = nextKey;
       void load().catch((error) => {
         if ((error as Error).name !== 'AbortError')
-          status.textContent = `${runtimeText(ctx.locale).error || '查询失败'}：${error instanceof Error ? error.message : String(error)}`;
+          setStatus(`${runtimeText(ctx.locale).error || '查询失败'}：${error instanceof Error ? error.message : String(error)}`);
       });
     } else draw();
   };
 
+  const toLocalInput = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return Number.isFinite(date.getTime())
+      ? new Date(timestamp - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+      : '';
+  };
+  rangeSelect.onchange = () => {
+    if (rangeSelect.value === 'custom') {
+      const current = activeConfig().data;
+      const bounds = getTimeBounds(current);
+      startInput.value = toLocalInput(bounds.start);
+      endInput.value = toLocalInput(bounds.end);
+      customError.textContent = '';
+      customPanel.style.display = 'block';
+      return;
+    }
+    customPanel.style.display = 'none';
+    rangeOverride = { ...props.config.data, timeRange: rangeSelect.value as RealtimeHistoryConfig['data']['timeRange'] };
+    refresh();
+  };
+  applyButton.onclick = () => {
+    const start = new Date(startInput.value).getTime();
+    const end = new Date(endInput.value).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+      customError.textContent = String(ctx.locale).toLowerCase().startsWith('en')
+        ? 'End must be after start'
+        : '结束时间必须晚于开始时间';
+      return;
+    }
+    rangeOverride = { ...props.config.data, timeRange: 'custom', startTime: start, endTime: end };
+    customPanel.style.display = 'none';
+    refresh();
+  };
+  customPanel.onkeydown = (event) => {
+    if (event.key === 'Escape') {
+      customPanel.style.display = 'none';
+      rangeSelect.value = activeConfig().data.timeRange;
+      rangeSelect.focus();
+    }
+  };
+
   const onMessage = (event: MessageEvent) => {
-    if (!props.config.data.realtimeAppend || props.config.data.timeRange === 'custom') return;
+    if (!props.config.data.realtimeAppend || activeConfig().data.timeRange === 'custom') return;
     const message = event.data as { type?: string; payload?: Record<string, any> };
     if (!['tv:platform-data', 'thingsvis:platform-data'].includes(message?.type || '')) return;
     const payload = message.payload ?? {};
@@ -744,7 +844,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
         anchor.click();
       });
     } catch (error) {
-      status.textContent = `导出失败：${error instanceof Error ? error.message : String(error)}`;
+      setStatus(`导出失败：${error instanceof Error ? error.message : String(error)}`);
     } finally {
       exportButton.disabled = false;
     }
@@ -752,11 +852,15 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   const resizeObserver =
     typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => chart.resize()) : null;
   resizeObserver?.observe(element);
+  syncRangeControl();
   refresh();
   return {
     update(nextProps: Props, nextCtx: WidgetOverlayContext) {
+      const previousData = props.config.data;
       props = PropsSchema.parse(nextProps);
       ctx = nextCtx;
+      if (JSON.stringify(props.config.data) !== JSON.stringify(previousData)) rangeOverride = null;
+      syncRangeControl();
       refresh();
     },
     destroy() {
