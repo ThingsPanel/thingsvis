@@ -28,6 +28,40 @@ function extractNodes(page: IPage | Record<string, unknown>): NodeSchemaType[] {
   return [];
 }
 
+const LEGACY_WIDGET_TYPE_ALIASES: Record<string, string> = {
+  // The standalone uPlot time-series widget was folded into the generic ECharts line chart.
+  'chart/uplot-line': 'chart/echarts-line',
+  // The lite value card was folded into the full value card so persisted pages keep rendering.
+  'interaction/value-card-simple': 'interaction/value-card',
+};
+
+function migrateLegacyWidgetTypes(page: IPage | Record<string, unknown>) {
+  const source = page as Record<string, unknown>;
+  const migrateNodes = (value: unknown) =>
+    Array.isArray(value)
+      ? value.map((rawNode) => {
+          if (!rawNode || typeof rawNode !== 'object' || Array.isArray(rawNode)) return rawNode;
+          const node = rawNode as Record<string, unknown>;
+          const nextType =
+            typeof node.type === 'string' ? LEGACY_WIDGET_TYPE_ALIASES[node.type] : undefined;
+          return nextType ? { ...node, type: nextType } : node;
+        })
+      : value;
+
+  if (Array.isArray(source.nodes)) {
+    return { ...source, nodes: migrateNodes(source.nodes) };
+  }
+
+  if (source.content && typeof source.content === 'object' && !Array.isArray(source.content)) {
+    const content = source.content as Record<string, unknown>;
+    if (Array.isArray(content.nodes)) {
+      return { ...source, content: { ...content, nodes: migrateNodes(content.nodes) } };
+    }
+  }
+
+  return page;
+}
+
 /**
  * Extract config object from a page payload.
  */
@@ -93,10 +127,11 @@ export const createPageSlice: StateCreator<
   page: undefined,
 
   loadPage: (page) => {
+    const migratedPage = migrateLegacyWidgetTypes(page as IPage | Record<string, unknown>);
     // ── Validate with Zod (canonical IPage schema) ──
-    const parsed = PageSchema.safeParse(page);
+    const parsed = PageSchema.safeParse(migratedPage);
 
-    const validPage = parsed.success ? parsed.data : page;
+    const validPage = parsed.success ? parsed.data : migratedPage;
     const nodes = extractNodes(validPage as IPage | Record<string, unknown>);
     const config = extractConfig(validPage as IPage | Record<string, unknown>);
     const parsedGridSettings = GridSettingsSchema.safeParse(config.gridSettings);

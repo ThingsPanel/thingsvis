@@ -145,7 +145,7 @@
     {
       "id": "metric-flow",
       "name": "Metric Flow",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 1376, "y": 78 },
       "size": { "width": 150, "height": 82 },
       "props": {
@@ -163,7 +163,7 @@
     {
       "id": "metric-pressure",
       "name": "Metric Pressure",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 1540, "y": 78 },
       "size": { "width": 150, "height": 82 },
       "props": {
@@ -181,7 +181,7 @@
     {
       "id": "metric-level",
       "name": "Metric Level",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "position": { "x": 1704, "y": 78 },
       "size": { "width": 150, "height": 82 },
       "props": {

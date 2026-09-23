@@ -219,42 +219,42 @@ async function ensureDefaultDashboardForUser(userId, tenantId, role) {
   "nodes": [
     {
       "id": "device-total",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "props": { "title": "总设备数", "value": 0, "unit": "个", "showUnit": true },
       "data": [{ "targetProp": "value", "expression": "{{ ds.__platform__.data.device_total }}" }],
       "grid": { "x": 0, "y": 0, "w": 6, "h": 3 }
     },
     {
       "id": "device-online",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "props": { "title": "在线设备", "value": 0, "unit": "个", "showUnit": true },
       "data": [{ "targetProp": "value", "expression": "{{ ds.__platform__.data.device_online }}" }],
       "grid": { "x": 6, "y": 0, "w": 6, "h": 3 }
     },
     {
       "id": "device-offline",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "props": { "title": "离线设备", "value": 0, "unit": "个", "showUnit": true },
       "data": [{ "targetProp": "value", "expression": "{{ ds.__platform__.data.device_offline }}" }],
       "grid": { "x": 12, "y": 0, "w": 6, "h": 3 }
     },
     {
       "id": "alarm-device",
-      "type": "interaction/value-card-simple",
+      "type": "interaction/value-card",
       "props": { "title": "告警设备", "value": 0, "unit": "个", "showUnit": true },
       "data": [{ "targetProp": "value", "expression": "{{ ds.__platform__.data.alarm_device_total }}" }],
       "grid": { "x": 18, "y": 0, "w": 6, "h": 3 }
     },
     {
       "id": "disk-chart",
-      "type": "chart/uplot-line",
+      "type": "chart/echarts-line",
       "props": { "title": "磁盘占用", "primaryColor": "#6965db", "showLegend": true },
       "data": [{ "targetProp": "data", "expression": "{{ ds.__platform__.data.disk_usage__history }}" }],
       "grid": { "x": 0, "y": 3, "w": 12, "h": 7 }
     },
     {
       "id": "memory-chart",
-      "type": "chart/uplot-line",
+      "type": "chart/echarts-line",
       "props": { "title": "内存占用", "primaryColor": "#6965db", "showLegend": true },
       "data": [{ "targetProp": "data", "expression": "{{ ds.__platform__.data.memory_usage__history }}" }],
       "grid": { "x": 12, "y": 3, "w": 12, "h": 7 }

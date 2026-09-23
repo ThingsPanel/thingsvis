@@ -456,7 +456,7 @@
     {
       "id": "chart-runtime-main",
       "name": "Runtime Trend",
-      "type": "chart/uplot-line",
+      "type": "chart/echarts-line",
       "position": { "x": 530, "y": 325 },
       "size": { "width": 850, "height": 580 },
       "props": {

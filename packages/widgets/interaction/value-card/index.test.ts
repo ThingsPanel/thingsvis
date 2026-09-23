@@ -11,7 +11,7 @@ describe('interaction/value-card widget', () => {
     document.body.innerHTML = '';
   });
 
-  it('leaves the content inset to the host card', () => {
+  it('leaves the content inset to the host card and does not render a plugin-owned card surface', () => {
     const harness = mountWidget(Main, {
       locale: 'zh',
       props: Main.schema.parse({}),
@@ -20,6 +20,10 @@ describe('interaction/value-card widget', () => {
     const cardRoot = getCardRoot(harness.element);
     expect(cardRoot?.style.padding).toBe('');
     expect(cardRoot?.style.boxSizing).toBe('border-box');
+    const style = cardRoot?.getAttribute('style') ?? '';
+    expect(style).not.toContain('background:');
+    expect(style).not.toContain('box-shadow:');
+    expect(style).not.toContain('border:');
 
     harness.destroy();
   });

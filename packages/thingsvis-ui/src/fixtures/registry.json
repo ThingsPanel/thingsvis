@@ -517,31 +517,6 @@
         "minHeight": 220
       }
     },
-    "chart/uplot-line": {
-      "remoteName": "thingsvis_widget_chart_uplot_line",
-      "remoteEntryUrl": "http://localhost:3209/remoteEntry.js",
-      "staticEntryUrl": "/widgets/chart/uplot-line/dist/remoteEntry.js",
-      "debugSource": "static",
-      "exposedModule": "./Main",
-      "version": "1.0.1",
-      "icon": "Activity",
-      "name": "Time Series",
-      "i18n": {
-        "zh": "时序图",
-        "en": "Time Series"
-      },
-      "category": "charts",
-      "displayCategory": "charts",
-      "description": "uPlot time series chart",
-      "defaultSize": {
-        "width": 600,
-        "height": 220
-      },
-      "constraints": {
-        "minWidth": 100,
-        "minHeight": 80
-      }
-    },
     "custom/alert-list": {
       "remoteName": "thingsvis_widget_custom_alert_list",
       "remoteEntryUrl": "http://localhost:3224/remoteEntry.js",
@@ -1187,30 +1162,6 @@
       "defaultSize": {
         "width": 320,
         "height": 160
-      },
-      "constraints": {
-        "minWidth": 120,
-        "minHeight": 70
-      }
-    },
-    "interaction/value-card-simple": {
-      "remoteName": "thingsvis_widget_interaction_value_card_simple",
-      "remoteEntryUrl": "http://localhost:3221/remoteEntry.js",
-      "staticEntryUrl": "/widgets/interaction/value-card-simple/dist/remoteEntry.js",
-      "debugSource": "static",
-      "exposedModule": "./Main",
-      "version": "1.0.1",
-      "icon": "Activity",
-      "name": "Value Lite",
-      "i18n": {
-        "zh": "数值-简",
-        "en": "Value Lite"
-      },
-      "category": "basic",
-      "displayCategory": "indicator",
-      "defaultSize": {
-        "width": 160,
-        "height": 80
       },
       "constraints": {
         "minWidth": 120,

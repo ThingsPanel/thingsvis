@@ -90,7 +90,7 @@ export function resolveLayeredColor({
 
 /**
  * Extracts CSS custom property values to build a chart color palette.
- * Canvas charts (ECharts, uPlot) typically cannot consume CSS Variables
+ * Canvas charts (such as ECharts) typically cannot consume CSS Variables
  * directly — this utility reads computed styles at mount/update time
  * to enable zero-JS theme switching.
  *

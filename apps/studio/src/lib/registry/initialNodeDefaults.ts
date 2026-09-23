@@ -14,13 +14,11 @@ export type InitialGridSettings = Pick<GridSettings, 'cols' | 'rowHeight' | 'gap
 export const HOST_SURFACE_WIDGET_TYPES = new Set([
   // Data cards render content only; the host supplies their themed surface.
   'interaction/value-card',
-  'interaction/value-card-simple',
   // Charts share the host surface so theme, spacing and hierarchy are consistent.
   'chart/echarts-bar',
   'chart/echarts-gauge',
   'chart/echarts-line',
   'chart/echarts-pie',
-  'chart/uplot-line',
   'chart/realtime-history-curve',
 ]);
 

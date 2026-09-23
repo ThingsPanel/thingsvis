@@ -8,7 +8,7 @@
 - 画布：`1920 × 1080`
 - 模式：`fixed`
 - 数据：全部使用内嵌模拟数据
-- 组件：`value-card`、`text`、`table`、`echarts-bar`、`echarts-line`、`echarts-pie`、`echarts-gauge`、`uplot-line`
+- 组件：`value-card`、`text`、`table`、`echarts-bar`、`echarts-line`、`echarts-pie`、`echarts-gauge`
 
 ## 下载示例工程
 

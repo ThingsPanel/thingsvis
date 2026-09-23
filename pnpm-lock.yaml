@@ -1092,7 +1092,44 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/widgets/basic/triangle:
+  packages/widgets/basic/table:
+    dependencies:
+      '@thingsvis/widget-sdk':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-sdk
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.3.1(react@18.3.1)
+      zod:
+        specifier: ^3.22.4
+        version: 3.25.76
+    devDependencies:
+      '@rspack/cli':
+        specifier: ^1.0.0
+        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
+      '@rspack/core':
+        specifier: ^1.0.0
+        version: 1.6.7(@swc/helpers@0.5.15)
+      '@thingsvis/widget-config':
+        specifier: workspace:*
+        version: link:../../../thingsvis-widget-config
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.27
+      '@types/react-dom':
+        specifier: ^18.2.0
+        version: 18.3.7(@types/react@18.3.27)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.9.3
+
+  packages/widgets/basic/text:
     dependencies:
       '@thingsvis/widget-sdk':
         specifier: workspace:*
@@ -1132,44 +1169,7 @@ importers:
         specifier: ^5.3.3
         version: 5.9.3
 
-  packages/widgets/basic/table:
-    dependencies:
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/basic/text:
+  packages/widgets/basic/triangle:
     dependencies:
       '@thingsvis/widget-sdk':
         specifier: workspace:*
@@ -1383,46 +1383,6 @@ importers:
       react-dom:
         specifier: ^18.2.0
         version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/chart/uplot-line:
-    dependencies:
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      uplot:
-        specifier: ^1.6.30
-        version: 1.6.32
       zod:
         specifier: ^3.22.4
         version: 3.25.76
@@ -2518,52 +2478,6 @@ importers:
         version: 5.9.3
 
   packages/widgets/interaction/value-card:
-    dependencies:
-      '@thingsvis/schema':
-        specifier: workspace:*
-        version: link:../../../thingsvis-schema
-      '@thingsvis/widget-sdk':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-sdk
-      leafer-ui:
-        specifier: ^1.0.0
-        version: 1.12.0
-      lucide-react:
-        specifier: ^0.454.0
-        version: 0.454.0(react@18.3.1)
-      react:
-        specifier: ^18.2.0
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.2.0
-        version: 18.3.1(react@18.3.1)
-      zod:
-        specifier: ^3.22.4
-        version: 3.25.76
-    devDependencies:
-      '@rspack/cli':
-        specifier: ^1.0.0
-        version: 1.6.7(@rspack/core@1.6.7(@swc/helpers@0.5.15))(@types/express@4.17.25)(webpack@5.105.4)
-      '@rspack/core':
-        specifier: ^1.0.0
-        version: 1.6.7(@swc/helpers@0.5.15)
-      '@thingsvis/widget-config':
-        specifier: workspace:*
-        version: link:../../../thingsvis-widget-config
-      '@types/react':
-        specifier: ^18.2.0
-        version: 18.3.27
-      '@types/react-dom':
-        specifier: ^18.2.0
-        version: 18.3.7(@types/react@18.3.27)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.4(typescript@5.9.3)(webpack@5.105.4)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
-  packages/widgets/interaction/value-card-simple:
     dependencies:
       '@thingsvis/schema':
         specifier: workspace:*
@@ -8738,9 +8652,6 @@ packages:
     hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
-
-  uplot@1.6.32:
-    resolution: {integrity: sha512-KIMVnG68zvu5XXUbC4LQEPnhwOxBuLyW1AHtpm6IKTXImkbLgkMy+jabjLgSLMasNuGGzQm/ep3tOkyTxpiQIw==}
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
@@ -15561,8 +15472,6 @@ snapshots:
       browserslist: 4.28.1
       escalade: 3.2.0
       picocolors: 1.1.1
-
-  uplot@1.6.32: {}
 
   uri-js@4.4.1:
     dependencies:
