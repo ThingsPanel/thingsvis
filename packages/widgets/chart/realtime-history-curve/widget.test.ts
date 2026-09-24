@@ -78,6 +78,8 @@ describe('chart/realtime-history-curve widget runtime', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(String(url)).toContain('/proxy-default/telemetry/datas/statistic');
     expect(String(url)).toContain('key=temperature');
+    expect(String(url)).toContain('aggregate_window=no_aggregate');
+    expect(String(url)).not.toContain('aggregate_function=');
     expect(init.headers).toEqual({ 'x-token': 'token-1' });
     await vi.waitFor(() =>
       expect(chartMock.options.at(-1)?.series?.[0]?.data).toEqual([
@@ -409,11 +411,12 @@ describe('chart/realtime-history-curve widget runtime', () => {
   });
 
   it('appends matching WebSocket telemetry without replacing HTTP history', async () => {
+    const now = Date.now();
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        json: async () => ({ data: { time_series: [{ x: 1000000000000, y: 1 }] } }),
+        json: async () => ({ data: { time_series: [{ x: now - 1000, y: 1 }] } }),
       }),
     );
     const { default: Main } = await import('./src/index');
@@ -457,16 +460,83 @@ describe('chart/realtime-history-curve widget runtime', () => {
             deviceId: 'dev-1',
             fieldId: 'temperature',
             value: 2,
-            timestamp: 1000000001000,
+            timestamp: now,
           },
         },
       }),
     );
     expect(chartMock.options.at(-1).series[0].data).toEqual([
-      [1000000000000, 1],
-      [1000000001000, 2],
+      [now - 1000, 1],
+      [now, 2],
     ]);
     harness.destroy();
+  });
+
+  it('keeps the requested time axis and older history while live points exceed the render limit', async () => {
+    const now = Date.now();
+    const oldPoint = now - 11 * 3600000;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ x: oldPoint, y: 20 }, { x: now - 60000, y: 25 }] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      props: { config: { ...defaults.config, data: {
+        ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['pm25'],
+        timeRange: 'last_12h', maxDataPoints: 100,
+      } } },
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+    await vi.waitFor(() => expect(chartMock.options.at(-1)?.series?.[0]?.data?.[0]?.[0]).toBe(oldPoint));
+    for (let i = 0; i < 150; i += 1) {
+      window.dispatchEvent(new MessageEvent('message', { data: {
+        type: 'tv:platform-data', payload: {
+          deviceId: 'dev-1', fieldId: 'pm25', value: 25 + i % 3,
+          timestamp: now - 59000 + i * 300,
+        },
+      } }));
+    }
+    const option = chartMock.options.at(-1);
+    expect(option.series[0].data.filter((point: [number, number | null]) => point[1] !== null))
+      .toHaveLength(100);
+    expect(option.series[0].data[0][0]).toBe(oldPoint);
+    expect(option.xAxis.min).toBeLessThanOrEqual(now - 12 * 3600000 + 10000);
+    expect(option.xAxis.max).toBeGreaterThanOrEqual(now);
+    harness.destroy();
+  });
+
+  it('refreshes rolling history each minute only when realtime append is enabled', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) });
+      vi.stubGlobal('fetch', fetchMock);
+      const { default: Main } = await import('./src/index');
+      const defaults = getDefaultProps();
+      const config = { ...defaults.config, data: {
+        ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['pm25'],
+      } };
+      const enabled = mountWidget(Main, {
+        props: { config },
+        variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      enabled.destroy();
+
+      const disabled = mountWidget(Main, {
+        props: { config: { ...config, data: { ...config.data, realtimeAppend: false } } },
+        variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      await vi.advanceTimersByTimeAsync(60000);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      disabled.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('requests each selected metric separately and exports through the same API', async () => {

@@ -123,4 +123,32 @@ describe('RealtimeHistoryConfigEditor in a device template', () => {
       expect.objectContaining({ header: expect.objectContaining({ show: false, fontSize: 16 }) }),
     );
   });
+
+  it('disables raw queries beyond 24 hours and displays legacy mix as minimum', async () => {
+    window.location.hash = '#/editor/host-1?mode=embedded&context=dashboard';
+    await act(async () => {
+      root.render(
+        <RealtimeHistoryConfigEditor
+          value={{
+            data: {
+              timeRange: 'last_3d',
+              aggregationMode: 'custom',
+              aggregationFunction: 'mix',
+            },
+          }}
+          onChange={vi.fn()}
+        />,
+      );
+    });
+    const mode = Array.from(container.querySelectorAll('label'))
+      .find((label) => label.textContent?.includes('聚合模式'))
+      ?.querySelector('select');
+    expect((mode?.querySelector('option[value="raw"]') as HTMLOptionElement | null)?.disabled).toBe(
+      true,
+    );
+    const fn = Array.from(container.querySelectorAll('label'))
+      .find((label) => label.textContent?.includes('聚合函数'))
+      ?.querySelector('select');
+    expect(fn?.value).toBe('min');
+  });
 });

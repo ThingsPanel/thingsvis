@@ -83,17 +83,34 @@ export function getMinimumAggregationWindow(
   if (data.timeRange !== 'custom') return RANGE_MINIMUM_WINDOW[data.timeRange] ?? '30s';
   const span = Math.max(0, Number(data.endTime) - Number(data.startTime));
   if (span < 3 * 3600000) return '30s';
-  if (span < 6 * 3600000) return '1m';
-  if (span < 12 * 3600000) return '2m';
-  if (span < 24 * 3600000) return '5m';
-  if (span < 3 * 86400000) return '10m';
-  if (span < 7 * 86400000) return '30m';
-  if (span < 15 * 86400000) return '1h';
-  if (span < 30 * 86400000) return '3h';
-  if (span < 60 * 86400000) return '6h';
-  if (span < 90 * 86400000) return '1d';
+  if (span < 12 * 3600000) return '1m';
+  if (span < 24 * 3600000) return '2m';
+  if (span < 3 * 86400000) return '5m';
+  if (span < 7 * 86400000) return '10m';
+  if (span < 15 * 86400000) return '30m';
+  if (span < 30 * 86400000) return '1h';
+  if (span < 60 * 86400000) return '3h';
+  if (span < 90 * 86400000) return '6h';
+  if (span < 180 * 86400000) return '1d';
   if (span < 365 * 86400000) return '7d';
   return '1mo';
+}
+
+function supportsRawHistory(data: Record<string, any>): boolean {
+  if (data.timeRange === 'custom') {
+    const span = Number(data.endTime) - Number(data.startTime);
+    return span > 0 && span <= 86400000;
+  }
+  return ![
+    'last_3d',
+    'last_7d',
+    'last_15d',
+    'last_30d',
+    'last_60d',
+    'last_90d',
+    'last_6m',
+    'last_1y',
+  ].includes(data.timeRange);
 }
 
 export const DEFAULT_REALTIME_HISTORY_CONFIG = {
@@ -195,7 +212,15 @@ function normalize(value: unknown) {
     ...DEFAULT_REALTIME_HISTORY_CONFIG,
     ...source,
     header: { ...DEFAULT_REALTIME_HISTORY_CONFIG.header, ...asRecord(source.header) },
-    data: { ...DEFAULT_REALTIME_HISTORY_CONFIG.data, ...asRecord(source.data) },
+    data: {
+      ...DEFAULT_REALTIME_HISTORY_CONFIG.data,
+      ...asRecord(source.data),
+      aggregationFunction:
+        source.data?.aggregationFunction === 'mix'
+          ? 'min'
+          : (source.data?.aggregationFunction ??
+            DEFAULT_REALTIME_HISTORY_CONFIG.data.aggregationFunction),
+    },
     series: { ...DEFAULT_REALTIME_HISTORY_CONFIG.series, ...asRecord(source.series) },
     layout: { ...DEFAULT_REALTIME_HISTORY_CONFIG.layout, ...asRecord(source.layout) },
     style: { ...DEFAULT_REALTIME_HISTORY_CONFIG.style, ...asRecord(source.style) },
@@ -497,6 +522,9 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
     onChange({ ...config, [section]: { ...asRecord((config as any)[section]), ...next } });
   const patchData = (next: Record<string, unknown>) => {
     const data = { ...config.data, ...next };
+    if (data.aggregationMode === 'raw' && !supportsRawHistory(data)) {
+      data.aggregationMode = 'auto';
+    }
     if (data.aggregationMode === 'custom') {
       const minimum = getMinimumAggregationWindow(data);
       if (
@@ -704,7 +732,9 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
             onChange={(event) => patchData({ aggregationMode: event.target.value })}
           >
             <option value="auto">自动</option>
-            <option value="raw">原始数据</option>
+            <option value="raw" disabled={!supportsRawHistory(config.data)}>
+              原始数据（最多 24 小时）
+            </option>
             <option value="custom">自定义</option>
           </select>
         </label>
@@ -734,7 +764,7 @@ export function RealtimeHistoryConfigEditor({ value, onChange }: Props) {
               >
                 <option value="avg">平均值</option>
                 <option value="max">最大值</option>
-                <option value="mix">最小值</option>
+                <option value="min">最小值</option>
                 <option value="sum">求和</option>
                 <option value="diff">极差</option>
               </select>

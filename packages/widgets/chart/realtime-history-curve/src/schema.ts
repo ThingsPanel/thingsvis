@@ -44,7 +44,7 @@ const DataConfigSchema = z.object({
       '1mo',
     ])
     .default('no_aggregate'),
-  aggregationFunction: z.enum(['avg', 'max', 'mix', 'sum', 'diff']).default('avg'),
+  aggregationFunction: z.enum(['avg', 'max', 'min', 'mix', 'sum', 'diff']).default('avg'),
   maxDataPoints: z.number().int().min(100).max(10000).default(1000),
   realtimeAppend: z.boolean().default(true),
 });

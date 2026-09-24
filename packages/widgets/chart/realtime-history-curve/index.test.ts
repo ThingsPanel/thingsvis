@@ -68,11 +68,11 @@ describe('chart/realtime-history-curve history contract', () => {
     ['last_6m', '7d'],
     ['last_1y', '1mo'],
   ] as const)('enforces the API minimum window for %s', (timeRange, expectedWindow) => {
-    const data = { ...getDefaultProps().config.data, timeRange, aggregationMode: 'raw' as const };
+    const data = { ...getDefaultProps().config.data, timeRange, aggregationMode: 'custom' as const };
     expect(resolveAggregation(data).window).toBe(expectedWindow);
   });
 
-  it('uses an aggregate window even for legacy raw settings', () => {
+  it('requests actual raw data for ranges of at most 24 hours', () => {
     const data = {
       ...getDefaultProps().config.data,
       deviceId: 'dev-1',
@@ -85,18 +85,27 @@ describe('chart/realtime-history-curve history contract', () => {
     expect(url.searchParams.get('device_id')).toBe('dev-1');
     expect(url.searchParams.get('key')).toBe('temperature');
     expect(url.searchParams.get('time_range')).toBe('last_1h');
-    expect(url.searchParams.get('aggregate_window')).toBe('30s');
-    expect(url.searchParams.get('aggregate_function')).toBe('avg');
+    expect(url.searchParams.get('aggregate_window')).toBe('no_aggregate');
+    expect(url.searchParams.has('aggregate_function')).toBe(false);
   });
 
-  it('forces a legal aggregation window for ranges that cannot use raw data', () => {
+  it('keeps legacy raw settings longer than one day queryable with aggregation', () => {
     const data = {
       ...getDefaultProps().config.data,
-      timeRange: 'last_24h' as const,
+      timeRange: 'last_3d' as const,
       aggregationMode: 'raw' as const,
     };
-    expect(resolveAggregation(data).window).toBe('5m');
+    expect(resolveAggregation(data).window).toBe('10m');
     expect(resolveAggregation(data).fn).toBe('avg');
+  });
+
+  it('uses average in automatic mode and maps legacy mix to minimum', () => {
+    const defaults = getDefaultProps().config.data;
+    expect(resolveAggregation({ ...defaults, aggregationFunction: 'max' }).fn).toBe('avg');
+    const legacy = { ...defaults, aggregationMode: 'custom' as const, aggregationFunction: 'mix' as const };
+    expect(resolveAggregation(legacy).fn).toBe('min');
+    expect(new URL(buildHistoryUrl('/proxy-default', legacy, 'pm25'), 'http://localhost')
+      .searchParams.get('aggregate_function')).toBe('min');
   });
 
   it('applies the stricter three-hour boundary to custom ranges', () => {

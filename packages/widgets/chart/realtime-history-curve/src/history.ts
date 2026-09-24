@@ -45,13 +45,7 @@ export const WINDOW_MS: Record<string, number> = {
   '1mo': 2592000000,
 };
 
-/**
- * The platform API accepts `no_aggregate` only as a special raw-data mode.
- * A history query is always sent through the aggregate endpoint, so the
- * smallest legal window is 30 seconds. Keeping `no_aggregate` in WINDOW_MS
- * preserves old saved configurations while preventing them from leaking into
- * new requests.
- */
+/** The platform API uses `no_aggregate` for raw history queries. */
 const WINDOWS = Object.keys(WINDOW_MS).filter((window) => window !== 'no_aggregate');
 const MINIMUM_AGGREGATION_WINDOW = '30s';
 
@@ -61,8 +55,7 @@ export function getTimeBounds(data: RealtimeHistoryConfig['data'], now = Date.no
 }
 
 export function minimumWindowForSpan(spanMs: number): string {
-  // Even a short selected time range must use the API's aggregation path.
-  // This also normalizes legacy `raw`/`no_aggregate` widget settings.
+  // Minimum window when an aggregated query is required.
   if (spanMs < 3 * 3600000) return MINIMUM_AGGREGATION_WINDOW;
   if (spanMs < 6 * 3600000) return '30s';
   if (spanMs < 12 * 3600000) return '1m';
@@ -104,10 +97,10 @@ export function resolveAggregation(
   if (data.timeRange === 'custom' && span >= 3 * 3600000 && minimum === '30s') minimum = '1m';
   if (data.aggregationMode === 'raw') {
     return {
-      // `raw` is retained as a backwards-compatible config value, but the
-      // history API must still receive an aggregate window for every range.
-      window: minimum,
-      fn: data.aggregationFunction,
+      // The API accepts raw queries only for ranges of at most 24 hours.
+      // Keep older, longer saved ranges working through automatic aggregation.
+      window: span <= 86400000 ? 'no_aggregate' : minimum,
+      fn: 'avg',
     };
   }
   if (data.aggregationMode === 'custom') {
@@ -117,13 +110,13 @@ export function resolveAggregation(
       requestedMs >= minimumMs && data.aggregationWindow !== 'no_aggregate'
         ? data.aggregationWindow
         : minimum;
-    return { window, fn: data.aggregationFunction };
+    return { window, fn: data.aggregationFunction === 'mix' ? 'min' : data.aggregationFunction };
   }
   const targetMs = span / Math.max(100, data.maxDataPoints);
   const minimumMs = WINDOW_MS[minimum] ?? 0;
   const window =
     WINDOWS.find((item) => (WINDOW_MS[item] ?? 0) >= Math.max(targetMs, minimumMs)) ?? '1mo';
-  return { window, fn: data.aggregationFunction };
+  return { window, fn: 'avg' };
 }
 
 export function parseApiErrorCode(payload: unknown): number | undefined {

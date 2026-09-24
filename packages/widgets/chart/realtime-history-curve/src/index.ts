@@ -189,6 +189,7 @@ export function buildChartOption(
   config: RealtimeHistoryConfig,
   states: SeriesState[],
   colors: ReturnType<typeof resolveWidgetColors>,
+  fixedTimeBounds = true,
 ): echarts.EChartsOption {
   const bounds = getTimeBounds(config.data);
   const span = Math.max(1, bounds.end - bounds.start);
@@ -431,6 +432,8 @@ export function buildChartOption(
       : [],
     xAxis: {
       type: 'time',
+      min: fixedTimeBounds ? bounds.start : undefined,
+      max: fixedTimeBounds ? bounds.end : undefined,
       show: config.xAxis.show,
       name: config.xAxis.title,
       nameLocation: 'middle',
@@ -655,7 +658,10 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
         : props.data === undefined ? 40 : 0;
       chartHost.style.top = `${headerHeight}px`;
       chart.resize();
-      chart.setOption(buildChartOption(activeConfig(), states, resolveWidgetColors(element)), {
+      chart.setOption(buildChartOption(
+        activeConfig(), states, resolveWidgetColors(element),
+        props.data === undefined && activeConfig().data.deviceId !== '__template__',
+      ), {
         notMerge: true,
       });
     }
@@ -712,7 +718,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     throw new Error('历史数据查询失败：聚合窗口无法满足后端限制');
   };
 
-  const load = async () => {
+  const load = async (showLoading = true) => {
     const text = runtimeText(ctx.locale);
     const config = activeConfig();
     const runtime = getRuntime();
@@ -751,7 +757,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     }
     controller?.abort();
     controller = new AbortController();
-    setStatus(text.loading || '正在查询历史数据…');
+    if (showLoading) setStatus(text.loading || '正在查询历史数据…');
     const bounds = getTimeBounds(config.data);
     const offset = comparisonOffset(
       config.analysis.comparison,
@@ -873,7 +879,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     const message = event.data as { type?: string; payload?: Record<string, any> };
     if (!['tv:platform-data', 'thingsvis:platform-data'].includes(message?.type || '')) return;
     const payload = message.payload ?? {};
-    if (payload.deviceId && payload.deviceId !== props.config.data.deviceId) return;
+    if (payload.deviceId && payload.deviceId !== activeConfig().data.deviceId) return;
     const updates: Array<{ key: string; value: unknown; time: unknown }> = [];
     if (payload.fieldId)
       updates.push({ key: payload.fieldId, value: payload.value, time: payload.timestamp });
@@ -891,16 +897,25 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       const value = Number(update.value);
       const time = normalizeTimestamp(update.time);
       if (!state || !Number.isFinite(value)) return;
-      state.points = appendRealtime(state.points, { time, value }, props.config.data.maxDataPoints);
-      const statLimit = Math.max(props.config.data.maxDataPoints, state.statPoints?.length ?? 0);
-      state.statPoints = appendRealtime(
-        state.statPoints ?? state.points,
-        { time, value },
-        statLimit,
-      );
+      if (props.data !== undefined) {
+        state.points = appendRealtime(state.points, { time, value }, props.config.data.maxDataPoints);
+      } else {
+        state.statPoints = appendRealtime(state.statPoints ?? state.points,
+          { time, value }, Number.MAX_SAFE_INTEGER);
+      }
       changed = true;
     });
-    if (changed) draw();
+    if (changed) {
+      if (props.data === undefined) {
+        const { start, end } = getTimeBounds(activeConfig().data);
+        states.forEach((state) => {
+          state.statPoints = (state.statPoints ?? state.points)
+            .filter((point) => point.time >= start && point.time <= end);
+          state.points = limitPoints(state.statPoints, props.config.data.maxDataPoints);
+        });
+      }
+      draw();
+    }
   };
   window.addEventListener('message', onMessage);
 
@@ -933,6 +948,16 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   resizeObserver?.observe(element);
   syncRangeControl();
   refresh();
+  const refreshTimer = window.setInterval(() => {
+    const config = activeConfig();
+    if (destroyed || props.data !== undefined || !config.data.realtimeAppend ||
+      config.data.timeRange === 'custom' ||
+      !config.data.deviceId || !config.data.metricKeys.length || !getRuntime().token) return;
+    void load(false).catch((error) => {
+      if ((error as Error).name !== 'AbortError')
+        setStatus(`${runtimeText(ctx.locale).error || '查询失败'}：${error instanceof Error ? error.message : String(error)}`);
+    });
+  }, 60000);
   return {
     update(nextProps: Props, nextCtx: WidgetOverlayContext) {
       const previousData = props.config.data;
@@ -944,6 +969,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     },
     destroy() {
       destroyed = true;
+      window.clearInterval(refreshTimer);
       controller?.abort();
       resizeObserver?.disconnect();
       window.removeEventListener('message', onMessage);

@@ -18,6 +18,12 @@ describe('RealtimeHistoryConfigEditor helpers', () => {
       getMinimumAggregationWindow({ timeRange: 'custom', startTime: 0, endTime: 3 * 3600000 }),
     ).toBe('1m');
     expect(
+      getMinimumAggregationWindow({ timeRange: 'custom', startTime: 0, endTime: 6 * 3600000 }),
+    ).toBe('1m');
+    expect(
+      getMinimumAggregationWindow({ timeRange: 'custom', startTime: 0, endTime: 12 * 3600000 }),
+    ).toBe('2m');
+    expect(
       getMinimumAggregationWindow({ timeRange: 'custom', startTime: 0, endTime: 180 * 86400000 }),
     ).toBe('7d');
   });
