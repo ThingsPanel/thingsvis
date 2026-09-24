@@ -193,10 +193,12 @@ describe('chart/realtime-history-curve widget runtime', () => {
         props: { config: { ...defaults.config, data: { ...defaults.config.data, timeRange: 'last_7d' } } },
       });
       const select = harness.element.querySelector('select') as HTMLSelectElement;
+      const mobileTrigger = harness.element.querySelector('.tv-history-mobile-trigger') as HTMLButtonElement;
       const arrow = harness.element.querySelector('span[aria-hidden="true"]') as HTMLElement;
       expect(select.matches('[data-canvas-theme="frost"] .tv-history-range')).toBe(true);
-      expect(harness.element.querySelector('style')?.textContent).toContain('rgba(255,255,255,.16)');
-      expect(harness.element.querySelector('style')?.textContent).toContain('[data-canvas-theme="frost"] .tv-history-mobile-trigger');
+      expect(mobileTrigger.matches('[data-canvas-theme="frost"] .tv-history-mobile-trigger')).toBe(true);
+      expect(getComputedStyle(mobileTrigger).backgroundColor).toBe(getComputedStyle(select).backgroundColor);
+      expect(getComputedStyle(mobileTrigger).borderColor).toBe('rgba(255, 255, 255, 0.17)');
       expect(select.options[0]?.style.color).toBe('rgb(31, 41, 55)');
       expect(select.options[0]?.style.backgroundColor).toBe('rgb(255, 255, 255)');
       expect(Number.parseInt(select.style.width, 10)).toBeLessThan(148);
