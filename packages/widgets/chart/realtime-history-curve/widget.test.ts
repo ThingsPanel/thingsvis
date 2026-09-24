@@ -141,14 +141,14 @@ describe('chart/realtime-history-curve widget runtime', () => {
     const overlay = document.body.querySelector('.tv-history-mobile-overlay') as HTMLElement;
     expect(overlay.style.display).toBe('flex');
     const choice = Array.from(overlay.querySelectorAll('button'))
-      .find((button) => button.textContent === '最近 12 小时') as HTMLButtonElement;
+      .find((button) => button.getAttribute('aria-label') === '最近 12 小时') as HTMLButtonElement;
     choice.click();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(String(fetchMock.mock.calls[1]?.[0])).toContain('time_range=last_12h');
     expect(overlay.style.display).toBe('none');
     (harness.element.querySelector('.tv-history-mobile-trigger') as HTMLButtonElement).click();
     (Array.from(overlay.querySelectorAll('button'))
-      .find((button) => button.textContent === '自定义') as HTMLButtonElement).click();
+      .find((button) => button.getAttribute('aria-label') === '自定义') as HTMLButtonElement).click();
     expect(overlay.querySelectorAll('input[type="datetime-local"]')).toHaveLength(2);
     (overlay.querySelectorAll('input')[0] as HTMLInputElement).value = '2026-01-01T00:00';
     (overlay.querySelectorAll('input')[1] as HTMLInputElement).value = '2026-01-01T01:00';
@@ -196,6 +196,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
       const arrow = harness.element.querySelector('span[aria-hidden="true"]') as HTMLElement;
       expect(select.matches('[data-canvas-theme="frost"] .tv-history-range')).toBe(true);
       expect(harness.element.querySelector('style')?.textContent).toContain('rgba(255,255,255,.16)');
+      expect(harness.element.querySelector('style')?.textContent).toContain('[data-canvas-theme="frost"] .tv-history-mobile-trigger');
       expect(select.options[0]?.style.color).toBe('rgb(31, 41, 55)');
       expect(select.options[0]?.style.backgroundColor).toBe('rgb(255, 255, 255)');
       expect(Number.parseInt(select.style.width, 10)).toBeLessThan(148);

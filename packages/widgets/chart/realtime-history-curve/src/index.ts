@@ -544,7 +544,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   element.appendChild(rangeSelect);
   const rangeThemeStyle = document.createElement('style');
   rangeThemeStyle.textContent =
-    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}.tv-history-range option{color:#1f2937;background:#fff}.tv-history-mobile-trigger{display:none}@media (max-width:768px) and (pointer:coarse){.tv-history-range,.tv-history-range-arrow{display:none!important}.tv-history-mobile-trigger{display:block}}';
+    '[data-canvas-theme="frost"] .tv-history-range,[data-canvas-theme="frost"] .tv-history-mobile-trigger{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}.tv-history-range option{color:#1f2937;background:#fff}.tv-history-mobile-trigger{display:none}@media (max-width:768px) and (pointer:coarse){.tv-history-range,.tv-history-range-arrow{display:none!important}.tv-history-mobile-trigger{display:block}}';
   element.appendChild(rangeThemeStyle);
   const rangeArrow = document.createElement('span');
   rangeArrow.setAttribute('aria-hidden', 'true');
@@ -557,7 +557,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   mobileTrigger.className = 'tv-history-mobile-trigger';
   mobileTrigger.setAttribute('aria-haspopup', 'dialog');
   mobileTrigger.style.cssText =
-    'position:absolute;right:12px;top:6px;z-index:7;max-width:calc(100% - 24px);height:30px;padding:0 12px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:18px;background:var(--w-surface,rgba(255,255,255,.12));color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    'position:absolute;right:12px;top:6px;z-index:7;max-width:calc(100% - 24px);height:30px;padding:0 12px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:18px;background:var(--w-surface,rgba(255,255,255,.12));backdrop-filter:blur(12px);color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
   element.appendChild(mobileTrigger);
   const mobileOverlay = document.createElement('div');
   mobileOverlay.className = 'tv-history-mobile-overlay';
@@ -567,9 +567,9 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   mobileOverlay.setAttribute('aria-modal', 'true');
   const mobileSheet = document.createElement('div');
   mobileSheet.style.cssText =
-    'width:100%;max-width:520px;max-height:min(76dvh,720px);overflow:auto;box-sizing:border-box;padding:18px 16px max(20px,env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:#fff;box-shadow:0 -8px 32px rgba(0,0,0,.18)';
+    'width:100%;max-width:520px;max-height:min(76dvh,720px);overflow:auto;box-sizing:border-box;padding:10px 16px max(20px,env(safe-area-inset-bottom));border-radius:20px 20px 0 0;background:#f2f2f7;box-shadow:0 -8px 32px rgba(0,0,0,.18)';
   const mobileHeading = document.createElement('div');
-  mobileHeading.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font:600 17px system-ui';
+  mobileHeading.style.cssText = 'display:flex;align-items:center;justify-content:space-between;min-height:48px;margin-bottom:12px;font:600 17px -apple-system,BlinkMacSystemFont,system-ui';
   const mobileHeadingText = document.createElement('span');
   const mobileClose = document.createElement('button');
   mobileClose.type = 'button';
@@ -578,7 +578,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   mobileClose.style.cssText = 'border:0;background:transparent;color:#667085;font:28px/1 system-ui;padding:0 4px;cursor:pointer';
   mobileHeading.append(mobileHeadingText, mobileClose);
   const mobileChoices = document.createElement('div');
-  mobileChoices.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px';
+  mobileChoices.style.cssText = 'display:flex;flex-direction:column;overflow:hidden;border-radius:12px;background:#fff';
   mobileSheet.append(mobileHeading, mobileChoices);
   mobileOverlay.appendChild(mobileSheet);
   const customPanel = document.createElement('div');
@@ -902,15 +902,19 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     for (const [value, zhLabel, enLabel] of rangeLabels) {
       const choice = document.createElement('button');
       choice.type = 'button';
-      choice.textContent = english ? enLabel : zhLabel;
+      const label = english ? enLabel : zhLabel;
+      choice.setAttribute('aria-label', label);
+      choice.setAttribute('aria-pressed', String(value === rangeSelect.value));
+      const choiceLabel = document.createElement('span');
+      choiceLabel.textContent = label;
+      const checkmark = document.createElement('span');
+      checkmark.setAttribute('aria-hidden', 'true');
+      checkmark.textContent = value === rangeSelect.value ? '✓' : '';
+      checkmark.style.cssText = 'color:#007aff;font:600 20px system-ui';
+      choice.append(choiceLabel, checkmark);
       choice.style.cssText =
-        'min-height:44px;padding:8px 10px;border:1px solid #e3e8ef;border-radius:10px;background:#f8fafc;color:#344054;text-align:center;font:14px system-ui;cursor:pointer';
-      if (value === rangeSelect.value) {
-        choice.style.borderColor = '#0f8b83';
-        choice.style.background = '#e8f7f4';
-        choice.style.color = '#08766e';
-        choice.style.fontWeight = '600';
-      }
+        'display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 16px;border:0;border-bottom:1px solid #e5e5ea;background:#fff;color:#1c1c1e;text-align:left;font:15px -apple-system,BlinkMacSystemFont,system-ui;cursor:pointer';
+      if (value === 'custom') choice.style.borderBottom = '0';
       choice.onclick = () => {
         rangeSelect.value = value;
         rangeSelect.onchange?.call(rangeSelect, new Event('change'));
