@@ -544,13 +544,43 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   element.appendChild(rangeSelect);
   const rangeThemeStyle = document.createElement('style');
   rangeThemeStyle.textContent =
-    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}.tv-history-range option{color:#1f2937;background:#fff}';
+    '[data-canvas-theme="frost"] .tv-history-range{background:rgba(255,255,255,.16)!important;border-color:rgba(255,255,255,.17)!important}.tv-history-range option{color:#1f2937;background:#fff}.tv-history-mobile-trigger{display:none}@media (max-width:768px) and (pointer:coarse){.tv-history-range,.tv-history-range-arrow{display:none!important}.tv-history-mobile-trigger{display:block}}';
   element.appendChild(rangeThemeStyle);
   const rangeArrow = document.createElement('span');
   rangeArrow.setAttribute('aria-hidden', 'true');
   rangeArrow.style.cssText =
     'position:absolute;right:28px;top:16px;z-index:6;width:7px;height:7px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);pointer-events:none;color:var(--w-text-primary,var(--w-fg,#263345))';
+  rangeArrow.className = 'tv-history-range-arrow';
   element.appendChild(rangeArrow);
+  const mobileTrigger = document.createElement('button');
+  mobileTrigger.type = 'button';
+  mobileTrigger.className = 'tv-history-mobile-trigger';
+  mobileTrigger.setAttribute('aria-haspopup', 'dialog');
+  mobileTrigger.style.cssText =
+    'position:absolute;right:12px;top:6px;z-index:7;max-width:calc(100% - 24px);height:30px;padding:0 12px;border:1px solid var(--w-surface-border,rgba(130,145,165,.35));border-radius:18px;background:var(--w-surface,rgba(255,255,255,.12));color:var(--w-text-primary,var(--w-fg,#263345));font:12px system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  element.appendChild(mobileTrigger);
+  const mobileOverlay = document.createElement('div');
+  mobileOverlay.className = 'tv-history-mobile-overlay';
+  mobileOverlay.style.cssText =
+    'position:fixed;inset:0;z-index:2147483647;display:none;align-items:flex-end;justify-content:center;background:rgba(15,23,42,.54);font:14px system-ui;color:#182330';
+  mobileOverlay.setAttribute('role', 'dialog');
+  mobileOverlay.setAttribute('aria-modal', 'true');
+  const mobileSheet = document.createElement('div');
+  mobileSheet.style.cssText =
+    'width:100%;max-width:520px;max-height:min(76dvh,720px);overflow:auto;box-sizing:border-box;padding:18px 16px max(20px,env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:#fff;box-shadow:0 -8px 32px rgba(0,0,0,.18)';
+  const mobileHeading = document.createElement('div');
+  mobileHeading.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;font:600 17px system-ui';
+  const mobileHeadingText = document.createElement('span');
+  const mobileClose = document.createElement('button');
+  mobileClose.type = 'button';
+  mobileClose.setAttribute('aria-label', '关闭');
+  mobileClose.textContent = '×';
+  mobileClose.style.cssText = 'border:0;background:transparent;color:#667085;font:28px/1 system-ui;padding:0 4px;cursor:pointer';
+  mobileHeading.append(mobileHeadingText, mobileClose);
+  const mobileChoices = document.createElement('div');
+  mobileChoices.style.cssText = 'display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px';
+  mobileSheet.append(mobileHeading, mobileChoices);
+  mobileOverlay.appendChild(mobileSheet);
   const customPanel = document.createElement('div');
   customPanel.style.cssText =
     'position:absolute;right:10px;top:36px;z-index:6;display:none;width:min(260px,calc(100% - 20px));padding:10px;box-sizing:border-box;border:1px solid var(--w-surface-border,#cbd3df);border-radius:8px;background:var(--w-surface,#fff);color:var(--w-text-primary,var(--w-fg,#263345));box-shadow:0 4px 16px rgba(0,0,0,.18);font:12px system-ui';
@@ -582,6 +612,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
   };
   const exportButton = document.createElement('button');
   exportButton.type = 'button';
+  exportButton.className = 'tv-history-export';
   exportButton.style.cssText =
     'position:absolute;right:74px;top:6px;z-index:5;height:26px;padding:0 10px;border:1px solid #d8d8df;border-radius:5px;background:rgba(255,255,255,.9);font:12px system-ui;cursor:pointer';
   element.appendChild(exportButton);
@@ -618,6 +649,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     );
     const width = Math.max(98, Math.min(144, textWidth + 52));
     rangeSelect.style.width = `${width}px`;
+    mobileTrigger.textContent = `${label}  ▾`;
     title.style.right = props.data === undefined ? `${width + 24}px` : '12px';
   };
   const syncRangeControl = () => {
@@ -639,6 +671,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     rangeSelect.value = configured;
     sizeRangeControl();
     rangeSelect.style.display = props.data === undefined ? '' : 'none';
+    mobileTrigger.style.visibility = props.data === undefined ? 'visible' : 'hidden';
     rangeArrow.style.display = props.data === undefined ? '' : 'none';
     customPanel.style.display = 'none';
     startLabel.replaceChildren(document.createTextNode(english ? 'Start' : '开始时间'), startInput);
@@ -851,6 +884,58 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     rangeOverride = { ...props.config.data, timeRange: rangeSelect.value as RealtimeHistoryConfig['data']['timeRange'] };
     refresh();
   };
+  const closeMobileRange = () => {
+    mobileOverlay.style.display = 'none';
+    rangeSelect.value = activeConfig().data.timeRange;
+    sizeRangeControl();
+    if (customPanel.parentElement === mobileSheet) {
+      element.appendChild(customPanel);
+      customPanel.style.position = 'absolute';
+      customPanel.style.display = 'none';
+    }
+    mobileTrigger.focus();
+  };
+  mobileTrigger.onclick = () => {
+    const english = String(ctx.locale).toLowerCase().startsWith('en');
+    mobileHeadingText.textContent = english ? 'Time range' : '选择时间范围';
+    mobileChoices.replaceChildren();
+    for (const [value, zhLabel, enLabel] of rangeLabels) {
+      const choice = document.createElement('button');
+      choice.type = 'button';
+      choice.textContent = english ? enLabel : zhLabel;
+      choice.style.cssText =
+        'min-height:44px;padding:8px 10px;border:1px solid #e3e8ef;border-radius:10px;background:#f8fafc;color:#344054;text-align:center;font:14px system-ui;cursor:pointer';
+      if (value === rangeSelect.value) {
+        choice.style.borderColor = '#0f8b83';
+        choice.style.background = '#e8f7f4';
+        choice.style.color = '#08766e';
+        choice.style.fontWeight = '600';
+      }
+      choice.onclick = () => {
+        rangeSelect.value = value;
+        rangeSelect.onchange?.call(rangeSelect, new Event('change'));
+        if (value === 'custom') {
+          customPanel.style.position = 'static';
+          customPanel.style.width = '100%';
+          customPanel.style.marginTop = '12px';
+          mobileSheet.appendChild(customPanel);
+          customPanel.style.display = 'block';
+          customPanel.scrollIntoView?.({ block: 'nearest' });
+        } else closeMobileRange();
+      };
+      mobileChoices.appendChild(choice);
+    }
+    document.body.appendChild(mobileOverlay);
+    mobileOverlay.style.display = 'flex';
+    mobileClose.focus();
+  };
+  mobileClose.onclick = closeMobileRange;
+  mobileOverlay.onclick = (event) => {
+    if (event.target === mobileOverlay) closeMobileRange();
+  };
+  mobileOverlay.onkeydown = (event) => {
+    if (event.key === 'Escape') closeMobileRange();
+  };
   applyButton.onclick = () => {
     const start = new Date(startInput.value).getTime();
     const end = new Date(endInput.value).getTime();
@@ -862,6 +947,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
     }
     rangeOverride = { ...props.config.data, timeRange: 'custom', startTime: start, endTime: end };
     customPanel.style.display = 'none';
+    if (mobileOverlay.style.display === 'flex') closeMobileRange();
     sizeRangeControl();
     refresh();
   };
@@ -974,6 +1060,7 @@ function render(element: HTMLElement, initialProps: Props, initialCtx: WidgetOve
       resizeObserver?.disconnect();
       window.removeEventListener('message', onMessage);
       chart.dispose();
+      mobileOverlay.remove();
       element.replaceChildren();
     },
   };

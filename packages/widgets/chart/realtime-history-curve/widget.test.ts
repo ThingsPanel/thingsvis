@@ -118,6 +118,48 @@ describe('chart/realtime-history-curve widget runtime', () => {
     harness.destroy();
   });
 
+  it('uses a compact mobile range sheet and removes it on destroy', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: { time_series: [] } }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { default: Main } = await import('./src/index');
+    const defaults = getDefaultProps();
+    const harness = mountWidget(Main, {
+      locale: 'zh',
+      props: {
+        config: {
+          ...defaults.config,
+          data: { ...defaults.config.data, deviceId: 'dev-1', metricKeys: ['temperature'] },
+        },
+      },
+      variables: { platformApiBaseUrl: '/proxy-default', platformToken: 'token-1' },
+    });
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    (harness.element.querySelector('.tv-history-mobile-trigger') as HTMLButtonElement).click();
+    const overlay = document.body.querySelector('.tv-history-mobile-overlay') as HTMLElement;
+    expect(overlay.style.display).toBe('flex');
+    const choice = Array.from(overlay.querySelectorAll('button'))
+      .find((button) => button.textContent === '最近 12 小时') as HTMLButtonElement;
+    choice.click();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('time_range=last_12h');
+    expect(overlay.style.display).toBe('none');
+    (harness.element.querySelector('.tv-history-mobile-trigger') as HTMLButtonElement).click();
+    (Array.from(overlay.querySelectorAll('button'))
+      .find((button) => button.textContent === '自定义') as HTMLButtonElement).click();
+    expect(overlay.querySelectorAll('input[type="datetime-local"]')).toHaveLength(2);
+    (overlay.querySelectorAll('input')[0] as HTMLInputElement).value = '2026-01-01T00:00';
+    (overlay.querySelectorAll('input')[1] as HTMLInputElement).value = '2026-01-01T01:00';
+    (Array.from(overlay.querySelectorAll('button'))
+      .find((button) => button.textContent === '应用') as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(overlay.style.display).toBe('none');
+    harness.destroy();
+    expect(document.body.querySelector('.tv-history-mobile-overlay')).toBeNull();
+  });
+
   it('shows a configurable title and a compact configured-range label', async () => {
     vi.stubGlobal('fetch', vi.fn());
     const { default: Main } = await import('./src/index');
@@ -561,7 +603,7 @@ describe('chart/realtime-history-curve widget runtime', () => {
         .map(([url]) => new URL(String(url), 'http://localhost').searchParams.get('key'))
         .sort(),
     ).toEqual(['pressure', 'temperature']);
-    const exportButton = harness.element.querySelector('button') as HTMLButtonElement;
+    const exportButton = harness.element.querySelector('.tv-history-export') as HTMLButtonElement;
     exportButton.click();
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
     expect(
