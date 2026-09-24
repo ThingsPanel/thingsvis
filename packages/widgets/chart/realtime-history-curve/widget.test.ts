@@ -14,14 +14,21 @@ const chartMock = {
   },
 };
 
-vi.mock('echarts', () => ({
+vi.mock('echarts/core', () => ({
   init: () => chartMock,
+  use: () => {},
   graphic: {
     LinearGradient: class {
       constructor(..._args: unknown[]) {}
     },
   },
 }));
+vi.mock('echarts/charts', () => ({ LineChart: {} }));
+vi.mock('echarts/components', () => ({
+  DataZoomInsideComponent: {}, GridComponent: {}, LegendComponent: {},
+  MarkLineComponent: {}, TooltipComponent: {}, VisualMapPiecewiseComponent: {},
+}));
+vi.mock('echarts/renderers', () => ({ CanvasRenderer: {} }));
 
 describe('chart/realtime-history-curve widget runtime', () => {
   beforeEach(() => {

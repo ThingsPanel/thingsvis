@@ -1,4 +1,14 @@
-import * as echarts from 'echarts';
+import * as echarts from 'echarts/core';
+import { LineChart } from 'echarts/charts';
+import {
+  DataZoomInsideComponent,
+  GridComponent,
+  LegendComponent,
+  MarkLineComponent,
+  TooltipComponent,
+  VisualMapPiecewiseComponent,
+} from 'echarts/components';
+import { CanvasRenderer } from 'echarts/renderers';
 import {
   defineWidget,
   resolveLocaleRecord,
@@ -28,6 +38,16 @@ import zh from './locales/zh.json';
 import en from './locales/en.json';
 
 type RuntimeText = { runtime?: Record<string, string> };
+echarts.use([
+  LineChart,
+  GridComponent,
+  LegendComponent,
+  TooltipComponent,
+  DataZoomInsideComponent,
+  MarkLineComponent,
+  VisualMapPiecewiseComponent,
+  CanvasRenderer,
+]);
 type SeriesState = {
   key: string;
   points: TimePoint[];
@@ -190,7 +210,7 @@ export function buildChartOption(
   states: SeriesState[],
   colors: ReturnType<typeof resolveWidgetColors>,
   fixedTimeBounds = true,
-): echarts.EChartsOption {
+): echarts.EChartsCoreOption {
   const bounds = getTimeBounds(config.data);
   const span = Math.max(1, bounds.end - bounds.start);
   const axisIndex = new Map(config.yAxes.map((axis, index) => [axis.id, index]));
