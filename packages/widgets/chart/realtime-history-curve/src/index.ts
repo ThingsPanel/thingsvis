@@ -126,7 +126,7 @@ function formatDate(value: number, format: string, span: number) {
   };
   const pattern =
     format === 'auto'
-      ? span <= 86400000
+      ? span < 86400000
         ? 'HH:mm'
         : span <= 2592000000
           ? 'MM-dd HH:mm'
