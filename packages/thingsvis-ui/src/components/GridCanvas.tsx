@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import { useSyncExternalStore } from 'react';
 import type { KernelStore, KernelState, NodeState } from '@thingsvis/kernel';
-import { GridSystem } from '@thingsvis/kernel';
 import type { GridSettings, WidgetMainModule, WidgetOverlayContext } from '@thingsvis/schema';
 import { validateCanvasTheme } from '@thingsvis/schema';
 import type { ActionRuntime } from '../engine/executeActions';
@@ -446,8 +445,7 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
     // ── Responsive display map: scale + compact to prevent overlaps ───────────
     // When effectiveCols < maxCols (a breakpoint fired), we:
     //   1. Proportionally scale each item's x/w from maxCols → effectiveCols
-    //   2. Run GridSystem.compact() to resolve any resulting overlaps by
-    //      pushing colliding items down — producing true responsive reflow.
+    //   2. Preserve authored rows and push only colliding items down.
     // At the design-time column count, items render at their authored positions.
 
     const maxCols = effectiveSettings.cols; // design-time column count (e.g. 24)
@@ -479,8 +477,26 @@ export const GridCanvas: React.FC<GridCanvasProps> = ({
             return { id: node.id, x: s.x, y: s.y, w: s.w, h: s.h };
         });
 
-        const result = GridSystem.compact(scaledItems, effectiveCols);
-        return Object.fromEntries(result.items.map((item) => [item.id, item]));
+        const orderedItems = [...scaledItems].sort((a, b) => a.y - b.y || a.x - b.x);
+        const compactedItems: typeof scaledItems = [];
+
+        for (const item of orderedItems) {
+            let y = item.y;
+            while (
+                compactedItems.some(
+                    (placed) =>
+                        item.x < placed.x + placed.w &&
+                        placed.x < item.x + item.w &&
+                        y < placed.y + placed.h &&
+                        placed.y < y + item.h,
+                )
+            ) {
+                y++;
+            }
+            compactedItems.push({ ...item, y });
+        }
+
+        return Object.fromEntries(compactedItems.map((item) => [item.id, item]));
     }, [effectiveCols, maxCols, nodes]);
 
     /** Total canvas rows after responsive reflow (used for canvasMinH). */
