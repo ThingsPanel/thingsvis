@@ -60,7 +60,7 @@ pnpm dev:app
 
 `pnpm dev:app` starts Studio, Kernel, and Server together, but it does not create the first administrator in your local PostgreSQL database. Before first use, complete the following steps:
 
-1. Copy `apps/server/.env.example` to `apps/server/.env`, then fill in required variables such as `DATABASE_URL` and `AUTH_SECRET`.
+1. Copy `apps/server/.env.example` to `apps/server/.env`, then fill in required variables such as `DATABASE_URL` and `AUTH_SECRET`. To enable ThingsPanel SSO, set `THINGSPANEL_API_BASE_URL` to the backend origin. ThingsVis verifies the received JWT with ThingsPanel before issuing a token.
 2. Make sure PostgreSQL is running locally and that `DATABASE_URL` points to a writable database.
 3. Run the schema push and seed scripts in `apps/server`:
 

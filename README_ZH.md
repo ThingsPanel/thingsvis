@@ -60,7 +60,7 @@ pnpm dev:app
 
 `pnpm dev:app` 会同时启动 Studio、Kernel 和 Server，但不会替你创建本地 PostgreSQL 数据库里的首个管理员用户。首次使用前，请先完成以下初始化：
 
-1. 复制 `apps/server/.env.example` 为 `apps/server/.env`，并填好 `DATABASE_URL`、`AUTH_SECRET` 等必要环境变量。
+1. 复制 `apps/server/.env.example` 为 `apps/server/.env`，并填好 `DATABASE_URL`、`AUTH_SECRET` 等必要环境变量。启用 ThingsPanel SSO 时，将 `THINGSPANEL_API_BASE_URL` 配置为后端地址；ThingsVis 会用收到的 JWT 向 ThingsPanel 核验身份后才签发令牌。
 2. 确保本地 PostgreSQL 已启动，并且 `DATABASE_URL` 指向可写库。
 3. 在 `apps/server` 目录执行数据库建表与种子脚本：
 

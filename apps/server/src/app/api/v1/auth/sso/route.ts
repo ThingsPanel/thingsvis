@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { EMBED_SSO_LOGIN_SOURCE, SSO_AUTH_TYPE, SSOExchangeSchema } from '@/lib/validators/auth';
 import { ensureDefaultDashboardForUser } from '@/lib/dashboard-helpers';
+import { verifyThingsPanelSession } from '@/lib/thingspanel-sso';
 
 const ACCESS_TOKEN_EXPIRY = 2 * 60 * 60;
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
@@ -58,7 +59,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { platform, userInfo, role } = result.data;
+    if (result.data.platform !== 'thingspanel') {
+      return addCorsHeaders(NextResponse.json({ error: 'Unsupported SSO platform' }, { status: 400 }));
+    }
+
+    const verification = await verifyThingsPanelSession(result.data.platformToken);
+    if (!verification.ok) {
+      const message = verification.status === 503
+        ? 'ThingsPanel SSO verification is not configured'
+        : 'ThingsPanel token is invalid';
+      return addCorsHeaders(NextResponse.json({ error: message }, { status: verification.status }));
+    }
+
+    // The submitted userInfo and role are never used to create or authorize a ThingsVis account.
+    const platform = 'thingspanel';
+    const userInfo = {
+      id: verification.user.id,
+      email: verification.user.email,
+      name: verification.user.name,
+      tenantId: verification.user.tenantId,
+    };
+    const role = verification.user.role;
 
     let tenant = await prisma.tenant.findUnique({
       where: { slug: `${platform}-${userInfo.tenantId}` },
@@ -108,6 +129,7 @@ export async function POST(request: NextRequest) {
           displayEmail: userInfo.email,
           tenantId: tenant.id,
           name: userInfo.name || user.name,
+          role,
           authType: SSO_AUTH_TYPE,
           lastLoginAt: new Date(),
         },
