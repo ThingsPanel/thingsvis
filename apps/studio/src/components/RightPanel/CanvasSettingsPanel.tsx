@@ -65,7 +65,10 @@ export function CanvasSettingsPanel({
     const next = { ...themeOverrides };
     if (value.trim()) next[key] = value.trim();
     else delete next[key];
-    onConfigChange({ ...canvasConfig, themeOverrides: Object.keys(next).length ? next : undefined });
+    onConfigChange({
+      ...canvasConfig,
+      themeOverrides: Object.keys(next).length ? next : undefined,
+    });
   };
 
   return (
@@ -90,7 +93,10 @@ export function CanvasSettingsPanel({
                   className="w-full h-20 object-cover rounded-md border border-border"
                 />
                 <button
-                  onClick={() => onConfigChange({ ...canvasConfig, thumbnail: '' })}
+                  onClick={() => {
+                    onConfigChange({ ...canvasConfig, thumbnail: '' });
+                    onMarkDirty();
+                  }}
                   className="absolute top-1 right-1 w-5 h-5 rounded-full bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
                 >
                   ×
@@ -185,27 +191,33 @@ export function CanvasSettingsPanel({
             <details open className="mt-4 rounded-lg border border-border bg-muted/20 p-3">
               <summary className="cursor-pointer list-none text-sm font-medium">
                 <div className="text-sm font-medium">{t('canvas.themeOverrides')}</div>
-                <div className="mt-1 text-[11px] leading-4 text-muted-foreground">{t('canvas.themeOverridesHint')}</div>
+                <div className="mt-1 text-[11px] leading-4 text-muted-foreground">
+                  {t('canvas.themeOverridesHint')}
+                </div>
               </summary>
               <div className="mt-3 space-y-3">
                 <div className="grid grid-cols-2 gap-3">
-                {([
-                  ['surface', 'themeSurface'],
-                  ['textPrimary', 'themeTextPrimary'],
-                  ['textSecondary', 'themeTextSecondary'],
-                  ['textMuted', 'themeTextMuted'],
-                  ['primary', 'themePrimary'],
-                  ['border', 'themeBorder'],
-                  ['statusWarning', 'themeStatusWarning'],
-                ] as const).map(([key, labelKey]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-xs text-muted-foreground">{t(`canvas.${labelKey}`)}</label>
-                    <ColorInput
-                      value={themeOverrides[key] ?? ''}
-                      onChange={(value) => updateThemeOverride(key, value)}
-                    />
-                  </div>
-                ))}
+                  {(
+                    [
+                      ['surface', 'themeSurface'],
+                      ['textPrimary', 'themeTextPrimary'],
+                      ['textSecondary', 'themeTextSecondary'],
+                      ['textMuted', 'themeTextMuted'],
+                      ['primary', 'themePrimary'],
+                      ['border', 'themeBorder'],
+                      ['statusWarning', 'themeStatusWarning'],
+                    ] as const
+                  ).map(([key, labelKey]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        {t(`canvas.${labelKey}`)}
+                      </label>
+                      <ColorInput
+                        value={themeOverrides[key] ?? ''}
+                        onChange={(value) => updateThemeOverride(key, value)}
+                      />
+                    </div>
+                  ))}
                 </div>
                 {Object.keys(themeOverrides).length > 0 && (
                   <button

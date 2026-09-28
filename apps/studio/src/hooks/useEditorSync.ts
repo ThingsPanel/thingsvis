@@ -107,7 +107,6 @@ export function useEditorSync({
     canvasConfig.bgValue,
     canvasConfig.gridEnabled,
     canvasConfig.gridSize,
-    canvasConfig.thumbnail,
     canvasConfig.background,
     canvasConfig.bgType,
     canvasConfig.bgColor,

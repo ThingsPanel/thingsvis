@@ -335,47 +335,56 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
     props.isWidgetMode ??
     (embedVisibility.isEmbedded && (projectId === 'widget' || projectId.startsWith('embed-')));
 
-  const prepareProjectForSave = useCallback(async (project: ProjectFile) => {
-    const canvasHost = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
-    if (!canvasHost) return project;
+  const prepareProjectForSave = useCallback(
+    async (project: ProjectFile) => {
+      const canvasHost = document.querySelector<HTMLElement>('[data-testid="studio-canvas"]');
+      if (!canvasHost) return project;
 
-    // Grid mode renders the real artboard inside an editor viewport that applies
-    // zoom, centering, scrollbars, and padding. Capture the deepest canvas-theme
-    // node so the cover represents the dashboard itself instead of the workspace
-    // shell around it. Legacy canvas modes have no nested node and keep using the
-    // host as the fallback target.
-    const canvasElement =
-      Array.from(canvasHost.querySelectorAll<HTMLElement>('[data-canvas-theme]')).at(-1) ??
-      canvasHost;
+      // Grid mode renders the real artboard inside an editor viewport that applies
+      // zoom, centering, scrollbars, and padding. Capture the deepest canvas-theme
+      // node so the cover represents the dashboard itself instead of the workspace
+      // shell around it. Legacy canvas modes have no nested node and keep using the
+      // host as the fallback target.
+      const canvasElement =
+        Array.from(canvasHost.querySelectorAll<HTMLElement>('[data-canvas-theme]')).at(-1) ??
+        canvasHost;
 
-    try {
-      const backgroundColor = resolveThumbnailBackgroundColor(canvasElement);
-      const thumbnail = await generateThumbnailFromElement(canvasElement, {
-        width: 800,
-        height: 450,
-        quality: 0.72,
-        backgroundColor,
-        sourceWidth: project.canvas.mode === 'grid' ? undefined : project.canvas.width,
-        sourceHeight: project.canvas.mode === 'grid' ? undefined : project.canvas.height,
-        // Fixed/infinite canvases paint the artboard behind the widget layer.
-        // The widget layer is captured at its natural size, so composite the
-        // configured background into the thumbnail separately.
-        background: project.canvas.mode === 'grid' ? undefined : (project.canvas.background ?? {}),
-      });
+      try {
+        const backgroundColor = resolveThumbnailBackgroundColor(canvasElement);
+        const thumbnail = await generateThumbnailFromElement(canvasElement, {
+          width: 800,
+          height: 450,
+          quality: 0.72,
+          backgroundColor,
+          sourceWidth: project.canvas.mode === 'grid' ? undefined : project.canvas.width,
+          sourceHeight: project.canvas.mode === 'grid' ? undefined : project.canvas.height,
+          // Fixed/infinite canvases paint the artboard behind the widget layer.
+          // The widget layer is captured at its natural size, so composite the
+          // configured background into the thumbnail separately.
+          background:
+            project.canvas.mode === 'grid' ? undefined : (project.canvas.background ?? {}),
+        });
 
-      if (!thumbnail || thumbnail === project.meta.thumbnail) return project;
-      return {
-        ...project,
-        meta: {
-          ...project.meta,
-          thumbnail,
-        },
-      };
-    } catch (error) {
-      console.warn('[Editor] Failed to generate dashboard thumbnail:', error);
-      return project;
-    }
-  }, []);
+        if (!thumbnail || thumbnail === project.meta.thumbnail) return project;
+        // Keep the settings preview in sync with the image sent to the host.
+        // This derived update must not mark the project dirty again.
+        setCanvasConfig((current) =>
+          current.id === project.meta.id ? { ...current, thumbnail } : current,
+        );
+        return {
+          ...project,
+          meta: {
+            ...project.meta,
+            thumbnail,
+          },
+        };
+      } catch (error) {
+        console.warn('[Editor] Failed to generate dashboard thumbnail:', error);
+        return project;
+      }
+    },
+    [setCanvasConfig],
+  );
 
   const { saveState, markDirty, saveNow } = useEditorSync({
     projectId,
