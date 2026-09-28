@@ -355,6 +355,12 @@ const Editor = React.forwardRef<EditorHandle, EditorProps>(function Editor(props
         height: 450,
         quality: 0.72,
         backgroundColor,
+        sourceWidth: project.canvas.mode === 'grid' ? undefined : project.canvas.width,
+        sourceHeight: project.canvas.mode === 'grid' ? undefined : project.canvas.height,
+        // Fixed/infinite canvases paint the artboard behind the widget layer.
+        // The widget layer is captured at its natural size, so composite the
+        // configured background into the thumbnail separately.
+        background: project.canvas.mode === 'grid' ? undefined : (project.canvas.background ?? {}),
       });
 
       if (!thumbnail || thumbnail === project.meta.thumbnail) return project;

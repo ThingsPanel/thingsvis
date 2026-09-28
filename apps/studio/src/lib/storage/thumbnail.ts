@@ -7,7 +7,7 @@
 
 import { STORAGE_CONSTANTS } from './constants';
 import html2canvas from 'html2canvas';
-import { toJpeg } from 'html-to-image';
+import { toJpeg, toPng } from 'html-to-image';
 
 // =============================================================================
 // Types
@@ -22,6 +22,11 @@ export interface ThumbnailOptions {
   quality?: number;
   /** Background color (default: #ffffff) */
   backgroundColor?: string;
+  /** Artboard background, which can be outside the captured widget layer. */
+  background?: { color?: string; image?: string; size?: string; repeat?: string };
+  /** Natural artboard size when the editor viewport scales the widget layer. */
+  sourceWidth?: number;
+  sourceHeight?: number;
 }
 
 /**
@@ -91,15 +96,26 @@ export async function generateThumbnailFromElement(
     height = STORAGE_CONSTANTS.THUMBNAIL_HEIGHT,
     quality = 0.7,
     backgroundColor = '#ffffff',
+    background,
+    sourceWidth: requestedSourceWidth,
+    sourceHeight: requestedSourceHeight,
   } = options;
   const restoreCaptureStyles = prepareThumbnailCaptureStyles(element);
 
   try {
     const rect = element.getBoundingClientRect();
-    const sourceWidth = Math.max(element.scrollWidth, Math.ceil(rect.width), 1);
-    const sourceHeight = Math.max(element.scrollHeight, Math.ceil(rect.height), 1);
+    const sourceWidth = Math.max(
+      requestedSourceWidth ?? element.scrollWidth,
+      Math.ceil(rect.width),
+      1,
+    );
+    const sourceHeight = Math.max(
+      requestedSourceHeight ?? element.scrollHeight,
+      Math.ceil(rect.height),
+      1,
+    );
     const captureOptions = {
-      backgroundColor,
+      backgroundColor: background ? 'transparent' : backgroundColor,
       width: sourceWidth,
       height: sourceHeight,
       pixelRatio: 1,
@@ -118,19 +134,21 @@ export async function generateThumbnailFromElement(
     let rawThumbnail: string | undefined;
     try {
       // Keep the complete dashboard whenever the browser can serialize it.
-      rawThumbnail = await toJpeg(element, captureOptions);
+      rawThumbnail = background
+        ? await toPng(element, captureOptions)
+        : await toJpeg(element, captureOptions);
     } catch {
       // Some dashboards contain native controls or cross-origin resources that make
       // the generated SVG fail to load. DOM rendering is more tolerant of complex
       // widget trees, so use it as the fallback after excluding unsupported nodes.
       const fallbackCanvas = await captureWithDomRenderer(element, {
-        backgroundColor,
+        backgroundColor: background ? null : backgroundColor,
         width: sourceWidth,
         height: sourceHeight,
         windowWidth: sourceWidth,
         windowHeight: sourceHeight,
         scale: 1,
-        useCORS: false,
+        useCORS: true,
         allowTaint: false,
         imageTimeout: 1500,
         logging: false,
@@ -143,9 +161,16 @@ export async function generateThumbnailFromElement(
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error('Could not get canvas context');
 
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, width, height);
-      drawScaledImage(ctx, fallbackCanvas, width, height);
+      await drawThumbnailContent(
+        ctx,
+        fallbackCanvas,
+        width,
+        height,
+        backgroundColor,
+        background,
+        sourceWidth,
+        sourceHeight,
+      );
       return encodeThumbnail(canvas, quality);
     }
 
@@ -156,9 +181,16 @@ export async function generateThumbnailFromElement(
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Could not get canvas context');
 
-    ctx.fillStyle = backgroundColor;
-    ctx.fillRect(0, 0, width, height);
-    drawScaledImage(ctx, sourceImage, width, height);
+    await drawThumbnailContent(
+      ctx,
+      sourceImage,
+      width,
+      height,
+      backgroundColor,
+      background,
+      sourceWidth,
+      sourceHeight,
+    );
     return encodeThumbnail(canvas, quality);
   } catch (error) {
     const details =
@@ -445,6 +477,71 @@ function loadImage(src: string): Promise<HTMLImageElement> {
       reject(new Error('Failed to load image'));
     };
     img.src = src;
+  });
+}
+
+async function drawThumbnailContent(
+  ctx: CanvasRenderingContext2D,
+  source: HTMLImageElement | HTMLCanvasElement,
+  targetWidth: number,
+  targetHeight: number,
+  fallbackColor: string,
+  background: ThumbnailOptions['background'],
+  sourceWidth: number,
+  sourceHeight: number,
+): Promise<void> {
+  if (!background) {
+    ctx.fillStyle = fallbackColor;
+    ctx.fillRect(0, 0, targetWidth, targetHeight);
+    drawScaledImage(ctx, source, targetWidth, targetHeight);
+    return;
+  }
+
+  const artboard = document.createElement('canvas');
+  artboard.width = sourceWidth;
+  artboard.height = sourceHeight;
+  const artboardCtx = artboard.getContext('2d');
+  if (!artboardCtx) throw new Error('Could not get artboard canvas context');
+
+  artboardCtx.fillStyle =
+    background.color && isOpaqueColor(background.color) ? background.color : fallbackColor;
+  artboardCtx.fillRect(0, 0, sourceWidth, sourceHeight);
+
+  if (background.image) {
+    try {
+      const image = await loadBackgroundImage(background.image);
+      const imageWidth = image.naturalWidth;
+      const imageHeight = image.naturalHeight;
+      const size = background.size ?? 'cover';
+      const scale =
+        size === 'contain'
+          ? Math.min(sourceWidth / imageWidth, sourceHeight / imageHeight)
+          : size === 'auto'
+            ? 1
+            : Math.max(sourceWidth / imageWidth, sourceHeight / imageHeight);
+      const drawWidth = size === '100% 100%' ? sourceWidth : imageWidth * scale;
+      const drawHeight = size === '100% 100%' ? sourceHeight : imageHeight * scale;
+      const x = (sourceWidth - drawWidth) / 2;
+      const y = (sourceHeight - drawHeight) / 2;
+      artboardCtx.drawImage(image, x, y, drawWidth, drawHeight);
+    } catch (error) {
+      console.warn('[Thumbnail] Could not capture artboard background image:', error);
+    }
+  }
+
+  artboardCtx.drawImage(source, 0, 0, sourceWidth, sourceHeight);
+  ctx.fillStyle = fallbackColor;
+  ctx.fillRect(0, 0, targetWidth, targetHeight);
+  drawScaledImage(ctx, artboard, targetWidth, targetHeight);
+}
+
+function loadBackgroundImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error(`Failed to load background image: ${src}`));
+    image.src = src;
   });
 }
 
