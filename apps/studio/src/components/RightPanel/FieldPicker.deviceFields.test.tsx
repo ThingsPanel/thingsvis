@@ -107,7 +107,7 @@ describe('FieldPicker device fields', () => {
     expect(fieldOptionValues()).not.toEqual(expect.arrayContaining(['legacy', 'restart', 'alarm']));
   });
 
-  it('shows only the host catalog for a device with a thing model', async () => {
+  it('combines model names with reported fields for a device with a thing model', async () => {
     registry.states = {
       '__platform_modeled-device__': {
         status: 'connected',
@@ -121,7 +121,7 @@ describe('FieldPicker device fields', () => {
         groupId: 'group-1',
         templateId: 'template-1',
         fields: [
-          { id: 'temperature', name: 'Temperature', type: 'number', dataType: 'telemetry' },
+          { id: 'temperature', name: '温度', type: 'number', dataType: 'telemetry' },
           { id: 'location', name: 'Location', type: 'string', dataType: 'attribute' },
           { id: 'restart', name: 'Restart', type: 'boolean', dataType: 'command' },
           { id: 'alarm', name: 'Alarm', type: 'string', dataType: 'event' },
@@ -131,14 +131,19 @@ describe('FieldPicker device fields', () => {
 
     await renderPicker({ dataSourceId: '__platform_modeled-device__', fieldPath: '' });
 
-    expect(postMessage).not.toHaveBeenCalledWith(
+    expect(postMessage).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'thingsvis:requestDeviceFields' }),
       '*',
     );
+    await dispatchDeviceFields('modeled-device', [
+      { id: 'temperature', name: '温度', type: 'number', dataType: 'telemetry' },
+      { id: 'runtimeExtraKey', name: 'runtimeExtraKey', type: 'number', dataType: 'telemetry' },
+      { id: 'location', name: 'Location', type: 'string', dataType: 'attribute' },
+    ]);
     expect(fieldOptionValues()).toEqual(expect.arrayContaining(['temperature', 'location']));
-    expect(fieldOptionValues()).not.toEqual(
-      expect.arrayContaining(['restart', 'alarm', 'runtimeExtraKey']),
-    );
+    expect(fieldOptionValues()).toEqual(expect.arrayContaining(['runtimeExtraKey']));
+    expect(container.textContent).toContain('温度');
+    expect(fieldOptionValues()).not.toEqual(expect.arrayContaining(['restart', 'alarm']));
   });
 
   it('does not fall back to runtime snapshot fields when the host catalog is empty', async () => {

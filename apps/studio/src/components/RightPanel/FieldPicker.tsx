@@ -607,6 +607,7 @@ export function FieldPicker({
   const [draftCode, setDraftCode] = useState('');
   const transformTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const historyPreviewRequestRef = useRef<AbortController | null>(null);
+  const requestedDeviceFieldsRef = useRef(new Set<string>());
   const invalidHistoryResetKeyRef = useRef<string | null>(null);
   const [deviceSelectorOpen, setDeviceSelectorOpen] = useState(false);
   const [selectedPlatformGroupId, setSelectedPlatformGroupId] = useState('');
@@ -1436,21 +1437,33 @@ export function FieldPicker({
     [safeOnChange],
   );
 
+  const selectedDeviceFieldRequestKey = selectedDeviceSource
+    ? [
+        selectedDeviceSource.deviceId,
+        selectedDeviceSource.templateId ?? '',
+        selectedDeviceSource.deviceConfigId ?? '',
+      ].join(':')
+    : '';
+
   useEffect(() => {
     if (!isDeviceScopedGroup) return;
     if (!selectedDeviceSource?.deviceId) return;
-    if ((selectedDeviceSource.fields?.length ?? 0) > 0) return;
     if (window.parent === window) return;
+    if (requestedDeviceFieldsRef.current.has(selectedDeviceFieldRequestKey)) return;
+    requestedDeviceFieldsRef.current.add(selectedDeviceFieldRequestKey);
 
     let active = true;
     void requestEmbeddedDeviceFieldsOnce(selectedDeviceSource).then((fields) => {
-      if (!active) return;
+      if (!active) {
+        requestedDeviceFieldsRef.current.delete(selectedDeviceFieldRequestKey);
+        return;
+      }
       usePlatformDeviceStore.getState().updateDeviceFields(selectedDeviceSource.deviceId, fields);
     });
     return () => {
       active = false;
     };
-  }, [isDeviceScopedGroup, selectedDeviceSource]);
+  }, [isDeviceScopedGroup, selectedDeviceFieldRequestKey]);
 
   const handleTransformChange = (code: string) => {
     if (!effectiveDataSourceId || !selectedFieldPathForPicker) return;
