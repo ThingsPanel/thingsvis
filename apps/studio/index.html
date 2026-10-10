@@ -4,6 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ThingsVis — Industrial-grade Visualization Platform</title>
+    <script>
+      // Set the mini-program viewer title before the web-view reads the document title.
+      // Other embed consumers retain the studio's default title.
+      (function () {
+        var hash = window.location.hash;
+        if (hash.indexOf('#/embed?') !== 0) return;
+        var params = new URLSearchParams(hash.slice(hash.indexOf('?') + 1));
+        if (params.get('mpViewer') !== '1') return;
+        document.title = (params.get('title') || '').trim().slice(0, 120) || '看板';
+      })();
+    </script>
     <meta name="description" content="ThingsVis is an open-source, low-code visualization platform for building interactive IoT dashboards with a drag-and-drop canvas editor." />
 
     <!-- Open Graph / Social Preview -->
