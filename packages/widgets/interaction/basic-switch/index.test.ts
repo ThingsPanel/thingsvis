@@ -81,6 +81,13 @@ describe('interaction/basic-switch widget', () => {
     expect(showLabelField?.default).toBe(true);
   });
 
+  it('uses a readable default width for the horizontal switch card', async () => {
+    const { default: Main } = await import('./src/index');
+
+    expect(Main.defaultSize).toEqual({ width: 260, height: 80 });
+    expect(Main.resizable).toBe(true);
+  });
+
   it('renders a configurable Lucide icon without owning a glass surface', async () => {
     const { default: Main } = await import('./src/index');
     const harness = mountWidget(Main, {
