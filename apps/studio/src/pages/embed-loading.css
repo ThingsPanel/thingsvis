@@ -1,0 +1,28 @@
+.embed-loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: transparent;
+}
+
+.embed-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(128, 128, 128, 0.2);
+  border-top-color: #8e8e93;
+  border-radius: 50%;
+  animation: embed-loading-spin 0.8s linear infinite;
+}
+
+@keyframes embed-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .embed-loading-spinner {
+    animation: none;
+  }
+}

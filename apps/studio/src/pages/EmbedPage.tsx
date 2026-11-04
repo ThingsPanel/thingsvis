@@ -45,7 +45,7 @@ import { buildEmbeddedProviderDataSources } from '@/lib/embedded/embedded-data-s
 import { sanitizeDataSourcesForHostSave } from '@/lib/embedded/hostDataSourcePolicy';
 import { ScaleScreen } from '@/components/ScaleScreen';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import LoadingScreen from '@/components/LoadingScreen';
+import './embed-loading.css';
 import { PreviewToolbar, type PreviewScaleMode } from '@/components/PreviewToolbar';
 import type { PreviewAlignY } from './PreviewPage';
 import * as previewSession from '@/lib/storage/previewSession';
@@ -1127,7 +1127,7 @@ export default function EmbedPage() {
     } else {
       // Host-managed embed waits for tv:init via postMessage.
       // Keep the built-in loading state alive so the viewer only shows one
-      // continuous ThingsVis loading animation instead of loading -> ready -> loading.
+      // continuous loading state instead of loading -> ready -> loading.
       if (!isHostManagedEmbed) {
         setState((s) => ({ ...s, isLoading: false }));
       }
@@ -1140,10 +1140,9 @@ export default function EmbedPage() {
     // The host keeps its loading surface until the canvas is ready.
     if (isHostManagedEmbed && searchParams.get('hostLoading') === '1') return null;
     return (
-      <LoadingScreen
-        progress={shouldKeepLoadingOnError ? 28 : 36}
-        statusText={shouldKeepLoadingOnError ? '初始化可视化引擎...' : '加载仪表板中...'}
-      />
+      <div className="embed-loading" role="status" aria-label="加载中">
+        <span className="embed-loading-spinner" aria-hidden="true" />
+      </div>
     );
   }
 
