@@ -43,7 +43,8 @@ export default defineConfig({
   plugins: [pluginReact()],
   source: {
     entry: {
-      index: './src/main.tsx'
+      index: './src/main.tsx',
+      miniViewer: './src/miniViewer.tsx'
     },
     alias: {
       '@': './src',
@@ -74,7 +75,7 @@ export default defineConfig({
   },
   html: {
     title: 'ThingsVis 编辑器',
-    template: path.resolve(__dirname, './index.html'),
+    template: ({ entryName }) => path.resolve(__dirname, entryName === 'miniViewer' ? './mini-viewer.html' : './index.html'),
   },
   dev: {
     setupMiddlewares: [
