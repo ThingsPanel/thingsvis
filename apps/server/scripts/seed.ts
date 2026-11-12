@@ -27,16 +27,10 @@ async function main() {
     // Hash password
     const passwordHash = await hash(password, 12)
 
-    // Upsert admin user
+    // Only initialize a missing admin; preserve existing credentials and permissions.
     const user = await prisma.user.upsert({
         where: { email },
-        update: {
-            passwordHash,
-            name,
-            role: 'OWNER',
-            authType: LOCAL_AUTH_TYPE,
-            displayEmail: email,
-        },
+        update: {},
         create: {
             email,
             displayEmail: email,
@@ -50,7 +44,6 @@ async function main() {
     console.log(`✅ Admin user: ${user.email} (${user.id})`)
     console.log(`\n🎉 Seed complete! Login with:`)
     console.log(`   Email:    ${email}`)
-    console.log(`   Password: ${password}`)
 }
 
 main()

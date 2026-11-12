@@ -1,136 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { existsSync } from 'fs';
-import { extname, join } from 'path';
-import { jwtVerify } from 'jose';
+import { join } from 'path';
 import { nanoid } from 'nanoid';
-
-const IMAGE_MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MODEL_MAX_FILE_SIZE = 1000 * 1024 * 1024;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
-const ALLOWED_MODEL_TYPES = [
-  'model/gltf-binary',
-  'model/gltf+json',
-  'application/octet-stream',
-  'application/json',
-];
-const ALLOWED_MODEL_EXTENSIONS = new Set(['.glb', '.gltf']);
-
-// Upload directory (relative to project root)
-const UPLOAD_DIR = 'uploads';
-const MODEL_UPLOAD_SUBDIR = 'models';
-
-function resolveUploadTarget(file: File) {
-  const extension = extname(file.name).toLowerCase();
-  const isModelFile =
-    ALLOWED_MODEL_EXTENSIONS.has(extension) &&
-    (!file.type || ALLOWED_MODEL_TYPES.includes(file.type));
-
-  if (isModelFile) {
-    return {
-      maxFileSize: MODEL_MAX_FILE_SIZE,
-      uploadPath: join(process.cwd(), 'public', UPLOAD_DIR, MODEL_UPLOAD_SUBDIR),
-      url: `/${UPLOAD_DIR}/${MODEL_UPLOAD_SUBDIR}`,
-    };
-  }
-
-  if (ALLOWED_TYPES.includes(file.type)) {
-    return {
-      maxFileSize: IMAGE_MAX_FILE_SIZE,
-      uploadPath: join(process.cwd(), 'public', UPLOAD_DIR),
-      url: `/${UPLOAD_DIR}`,
-    };
-  }
-
-  return null;
-}
-
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return null;
-  }
-
-  const token = authHeader.slice(7);
-  const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
-
-  try {
-    const { payload } = await jwtVerify(token, secret);
-    return payload.sub as string;
-  } catch {
-    return null;
-  }
-}
+import { getSessionUser } from '@/lib/auth-helpers';
+import {
+  checkUploadRate,
+  readUploadForm,
+  validateUpload,
+  storeUpload,
+  UploadError,
+} from '@/lib/upload-security';
 
 export async function POST(request: NextRequest) {
   try {
-    // Optional authentication - allow anonymous uploads for local mode
-    const userId = await getUserIdFromToken(request);
-
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-    }
-
-    const target = resolveUploadTarget(file);
-    if (!target) {
-      return NextResponse.json(
-        { error: 'Invalid file type. Allowed types: JPEG, PNG, GIF, WebP, SVG, GLB, GLTF' },
-        { status: 400 },
-      );
-    }
-
-    // Validate file size
-    if (file.size > target.maxFileSize) {
-      const maxSizeMb = Math.round(target.maxFileSize / 1024 / 1024);
-      return NextResponse.json(
-        { error: `File too large. Maximum size is ${maxSizeMb}MB` },
-        { status: 400 },
-      );
-    }
-
-    // Create upload directory if it doesn't exist
-    if (!existsSync(target.uploadPath)) {
-      await mkdir(target.uploadPath, { recursive: true });
-    }
-
-    // Generate unique filename
-    const ext = file.name.split('.').pop() || 'png';
-    const filename = `${nanoid()}.${ext}`;
-    const filePath = join(target.uploadPath, filename);
-
-    // Write file
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
-
-    // Return URL
-    const url = `${target.url}/${filename}`;
-
+    const user = await getSessionUser(request);
+    if (!user?.id) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    await checkUploadRate(user.id);
+    const form = await readUploadForm(request);
+    const file = form.get('file');
+    if (!file || typeof file === 'string') throw new UploadError(400, 'No file provided');
+    const bytes = Buffer.from(await file.arrayBuffer());
+    const target = validateUpload(file, bytes);
+    const filename = `${nanoid()}${target.extension}`;
+    const root = join(process.cwd(), 'public', 'uploads');
+    const relative = target.model ? `models/${filename}` : filename;
+    await storeUpload(root, join(root, relative), bytes);
     return NextResponse.json({
-      url,
+      url: `/uploads/${relative}`,
       filename,
-      size: file.size,
-      type: file.type,
+      size: bytes.length,
+      type: target.type,
       uploadedAt: new Date().toISOString(),
-      uploadedBy: userId || 'anonymous',
+      uploadedBy: user.id,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof UploadError)
+      return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
-  // List uploaded files (optional, for admin purposes)
-  const userId = await getUserIdFromToken(request);
-
-  if (!userId) {
-    return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
-  }
-
-  // This is a placeholder - in production, you might want to
-  // store file metadata in the database and query it here
+  const user = await getSessionUser(request);
+  if (!user?.id) return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
   return NextResponse.json({
     message: 'File listing not implemented',
     hint: 'Files are stored in /public/uploads/',

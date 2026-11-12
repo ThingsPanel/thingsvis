@@ -137,3 +137,6 @@ test_*.js
 .nyc_output/
 package-lock.json
 yarn.lock
+
+# Persistent upload rate-limit state (not public assets)
+**/.upload-limits/

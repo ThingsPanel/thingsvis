@@ -43,6 +43,9 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
     }
 
+    if (extname(safeSegments[safeSegments.length - 1]).toLowerCase() === '.svg') {
+      return NextResponse.json({ error: 'SVG files are no longer served' }, { status: 403 });
+    }
     const filePath = join(process.cwd(), 'public', 'uploads', ...safeSegments);
     if (!existsSync(filePath)) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
@@ -56,6 +59,8 @@ export async function GET(
       status: 200,
       headers: {
         'Content-Type': contentType,
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "sandbox; default-src 'none'",
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });

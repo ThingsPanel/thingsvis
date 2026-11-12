@@ -1,3 +1,4 @@
+import { fetchPublicAsset, UnsafeAssetUrl } from '@/lib/public-asset-fetch';
 import { existsSync } from 'fs';
 import { mkdir, writeFile } from 'fs/promises';
 import { join } from 'path';
@@ -9,7 +10,6 @@ import {
   inferModelFileExtension,
   isSupportedModelContentType,
   parseRemoteHttpUrl,
-  readUpstreamError,
 } from '../shared';
 
 const MAX_IMPORT_SIZE = 1000 * 1024 * 1024;
@@ -34,22 +34,22 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const upstream = await fetch(targetUrl, {
-      method: 'GET',
-      redirect: 'follow',
-      cache: 'no-store',
+    const upstream = await fetchPublicAsset(targetUrl, {
+      signal: request.signal,
+      selfHostname: request.nextUrl.hostname,
     });
 
     if (!upstream.ok) {
+      await upstream.body?.cancel();
       return buildError(
         `Upstream request failed with ${upstream.status} ${upstream.statusText}`.trim(),
         upstream.status,
-        await readUpstreamError(upstream),
       );
     }
 
     const contentLength = Number(upstream.headers.get('content-length') ?? '');
     if (Number.isFinite(contentLength) && contentLength > MAX_IMPORT_SIZE) {
+      await upstream.body?.cancel();
       return buildError(
         `Remote model is too large. Maximum size is ${Math.round(MAX_IMPORT_SIZE / 1024 / 1024)}MB`,
         413,
@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
     const contentType = upstream.headers.get('content-type');
     const extension = inferModelFileExtension(targetUrl, contentType);
     if (!extension || (contentType && !isSupportedModelContentType(contentType))) {
+      await upstream.body?.cancel();
       return buildError('Only GLB and GLTF model files are supported', 400, contentType ?? '');
     }
 
@@ -87,10 +88,6 @@ export async function POST(request: NextRequest) {
       importedAt: new Date().toISOString(),
     });
   } catch (error) {
-    return buildError(
-      'Failed to import remote model',
-      502,
-      error instanceof Error ? error.message : undefined,
-    );
+    return buildError('Failed to import remote model', error instanceof UnsafeAssetUrl ? 400 : 502);
   }
 }

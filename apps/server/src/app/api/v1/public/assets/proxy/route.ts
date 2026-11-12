@@ -1,5 +1,6 @@
+import { fetchPublicAsset, UnsafeAssetUrl } from '@/lib/public-asset-fetch';
 import { NextRequest, NextResponse } from 'next/server';
-import { buildError, getTargetUrl, readUpstreamError } from '../shared';
+import { buildError, getTargetUrl } from '../shared';
 
 export async function GET(request: NextRequest) {
   const targetUrl = getTargetUrl(request);
@@ -8,30 +9,26 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const upstreamHeaders = new Headers();
     const range = request.headers.get('range');
-    if (range) {
-      upstreamHeaders.set('range', range);
-    }
 
-    const upstream = await fetch(targetUrl, {
-      method: 'GET',
-      headers: upstreamHeaders,
-      redirect: 'follow',
-      cache: 'no-store',
+    const upstream = await fetchPublicAsset(targetUrl, {
+      range: range || undefined,
+      signal: request.signal,
+      selfHostname: request.nextUrl.hostname,
     });
 
     if (!upstream.ok) {
+      await upstream.body?.cancel();
       return buildError(
         `Upstream request failed with ${upstream.status} ${upstream.statusText}`.trim(),
         upstream.status,
-        await readUpstreamError(upstream),
       );
     }
 
     const headers = new Headers();
     for (const headerName of [
       'content-type',
+      'content-encoding',
       'content-length',
       'content-range',
       'accept-ranges',
@@ -53,7 +50,9 @@ export async function GET(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    const details = error instanceof Error ? error.message : undefined;
-    return buildError('Failed to fetch remote asset', 502, details);
+    return buildError(
+      error instanceof UnsafeAssetUrl ? error.message : 'Failed to fetch remote asset',
+      error instanceof UnsafeAssetUrl ? 400 : 502,
+    );
   }
 }

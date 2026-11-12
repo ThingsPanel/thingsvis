@@ -1,16 +1,6 @@
+import { validatePublicAssetUrl } from '@/lib/public-asset-fetch';
 import { basename, extname } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
-
-const BLOCKED_HOSTNAMES = new Set(['localhost', '0.0.0.0', '::1', 'metadata.google.internal']);
-
-const PRIVATE_IPV4_RANGES = [
-  { a: 10 },
-  { a: 127 },
-  { a: 0 },
-  { a: 169, b: 254 },
-  { a: 172, bMin: 16, bMax: 31 },
-  { a: 192, b: 168 },
-];
 
 const FALLBACK_EXTENSION_BY_TYPE: Record<string, '.glb' | '.gltf'> = {
   'model/gltf-binary': '.glb',
@@ -31,40 +21,13 @@ export function buildError(message: string, status: number, details?: string) {
 }
 
 export function isBlockedHostname(hostname: string): boolean {
-  const normalized = hostname.trim().toLowerCase();
-  if (!normalized) {
-    return true;
-  }
-
-  if (
-    BLOCKED_HOSTNAMES.has(normalized) ||
-    normalized.endsWith('.localhost') ||
-    normalized.startsWith('fe80:') ||
-    normalized.startsWith('fc') ||
-    normalized.startsWith('fd')
-  ) {
-    return true;
-  }
-
-  const ipv4Match = normalized.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (!ipv4Match) {
+  try {
+    const host = hostname.includes(':') && !hostname.startsWith('[') ? `[${hostname}]` : hostname;
+    validatePublicAssetUrl(new URL(`http://${host}/`));
     return false;
-  }
-
-  const octets = ipv4Match.slice(1).map(Number);
-  if (octets.some((part) => Number.isNaN(part) || part < 0 || part > 255)) {
+  } catch {
     return true;
   }
-
-  const [a, b] = octets;
-  return PRIVATE_IPV4_RANGES.some((range) => {
-    if (range.a !== a) return false;
-    if (typeof range.b === 'number') return range.b === b;
-    if (typeof range.bMin === 'number' && typeof range.bMax === 'number') {
-      return b >= range.bMin && b <= range.bMax;
-    }
-    return true;
-  });
 }
 
 export function getTargetUrl(request: NextRequest, paramName = 'url'): URL | null {
@@ -82,7 +45,7 @@ export function parseRemoteHttpUrl(source: string | null | undefined): URL | nul
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       return null;
     }
-    if (isBlockedHostname(url.hostname)) {
+    if (url.username || url.password || isBlockedHostname(url.hostname)) {
       return null;
     }
     return url;
