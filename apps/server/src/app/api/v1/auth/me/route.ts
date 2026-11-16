@@ -1,3 +1,4 @@
+import { authSecret } from '@/lib/auth-secret';
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { prisma } from '@/lib/db';
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     const token = authHeader.slice(7);
 
     // Verify token
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
+    const secret = new TextEncoder().encode(authSecret());
 
     try {
       const { payload } = await jwtVerify(token, secret);

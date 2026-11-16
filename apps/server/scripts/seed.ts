@@ -1,54 +1,11 @@
-import { PrismaClient } from '@prisma/client'
-import { hash } from 'bcryptjs'
-
-const LOCAL_AUTH_TYPE = 'LOCAL'
-
-const prisma = new PrismaClient()
-
-async function main() {
-    const email = process.env.SEED_ADMIN_EMAIL || 'admin@thingsvis.io'
-    const password = process.env.SEED_ADMIN_PASSWORD || 'admin123'
-    const name = process.env.SEED_ADMIN_NAME || 'Admin'
-
-    console.log(`🌱 Seeding database...`)
-
-    // Upsert default tenant
-    const tenant = await prisma.tenant.upsert({
-        where: { slug: 'default' },
-        update: {},
-        create: {
-            name: 'Default Tenant',
-            slug: 'default',
-            plan: 'FREE',
-        },
-    })
-    console.log(`✅ Tenant: ${tenant.name} (${tenant.id})`)
-
-    // Hash password
-    const passwordHash = await hash(password, 12)
-
-    // Only initialize a missing admin; preserve existing credentials and permissions.
-    const user = await prisma.user.upsert({
-        where: { email },
-        update: {},
-        create: {
-            email,
-            displayEmail: email,
-            name,
-            passwordHash,
-            role: 'OWNER',
-            authType: LOCAL_AUTH_TYPE,
-            tenantId: tenant.id,
-        },
-    })
-    console.log(`✅ Admin user: ${user.email} (${user.id})`)
-    console.log(`\n🎉 Seed complete! Login with:`)
-    console.log(`   Email:    ${email}`)
-}
-
-main()
-    .catch((e) => {
-        console.error('❌ Seed failed:', e)
-        process.exit(1)
-    })
-    .finally(() => prisma.$disconnect())
+import { PrismaClient } from '@prisma/client';
+import { hash } from 'bcryptjs';
+import { seedAdmin } from './seed-admin';
+const prisma = new PrismaClient();
+seedAdmin(prisma, hash)
+  .then(() => console.log('Seed complete'))
+  .catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

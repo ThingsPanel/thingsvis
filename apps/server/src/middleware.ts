@@ -1,3 +1,4 @@
+import { authSecret } from '@/lib/auth-secret';
 import NextAuth from 'next-auth';
 import authConfig from '@/lib/auth.config';
 import { NextResponse } from 'next/server';
@@ -48,7 +49,7 @@ async function hasValidBearerToken(req: NextRequest): Promise<boolean> {
 
   const token = authHeader.substring(7);
   // Keep JWT verification behavior consistent with login route and auth helpers.
-  const secret = process.env.AUTH_SECRET || 'thingsvis-dev-secret-key';
+  const secret = authSecret();
 
   const encodedSecret = new TextEncoder().encode(secret);
 
@@ -61,6 +62,11 @@ async function hasValidBearerToken(req: NextRequest): Promise<boolean> {
 }
 
 export default auth(async (req) => {
+  try {
+    authSecret();
+  } catch {
+    return NextResponse.json({ error: 'Authentication is not configured' }, { status: 503 });
+  }
   // Handle CORS preflight
   const corsResponse = corsMiddleware(req);
   if (corsResponse && corsResponse instanceof NextResponse) return corsResponse;

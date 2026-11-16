@@ -1,3 +1,4 @@
+import { authSecret } from '@/lib/auth-secret';
 import { auth } from './auth';
 import { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
@@ -7,6 +8,7 @@ import { jwtVerify } from 'jose';
  * Supports both NextAuth (for server-side rendering) and JWT Bearer tokens (for API)
  */
 export async function getSessionUser(request?: NextRequest) {
+  authSecret();
   // Try NextAuth session first
   const session = await auth();
   if (session?.user) {
@@ -25,7 +27,7 @@ export async function getSessionUser(request?: NextRequest) {
 
     const token = authHeader.substring(7);
 
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
+    const secret = new TextEncoder().encode(authSecret());
 
     const { payload } = await jwtVerify(token, secret);
 

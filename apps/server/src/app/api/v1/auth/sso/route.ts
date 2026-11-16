@@ -1,3 +1,5 @@
+import { authSecret } from '@/lib/auth-secret';
+import { verifyPlatformIdentity, PlatformIdentityError } from '@/lib/platform-identity';
 import { NextRequest, NextResponse } from 'next/server';
 import { SignJWT } from 'jose';
 import { prisma } from '@/lib/db';
@@ -9,7 +11,7 @@ const ACCESS_TOKEN_EXPIRY = 2 * 60 * 60;
 const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60;
 
 function addCorsHeaders(response: NextResponse): NextResponse {
-  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Cache-Control', 'no-store');
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   response.headers.set('Access-Control-Max-Age', '86400');
@@ -26,7 +28,11 @@ export async function POST(request: NextRequest) {
     let body: unknown;
 
     try {
+      if (Number(request.headers.get('content-length')) > 16384)
+        return NextResponse.json({ error: 'Request too large' }, { status: 413 });
       const text = await request.text();
+      if (text.length > 16384)
+        return NextResponse.json({ error: 'Request too large' }, { status: 413 });
       if (!text || text.trim().length === 0) {
         return addCorsHeaders(
           NextResponse.json({ error: 'Request body is required' }, { status: 400 }),
@@ -58,7 +64,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { platform, userInfo, role } = result.data;
+    const secret = new TextEncoder().encode(authSecret());
+    const { platform, platformToken } = result.data;
+    const identity = await verifyPlatformIdentity(platform, platformToken);
+    const { role, ...userInfo } = identity;
 
     let tenant = await prisma.tenant.findUnique({
       where: { slug: `${platform}-${userInfo.tenantId}` },
@@ -105,6 +114,7 @@ export async function POST(request: NextRequest) {
       user = await prisma.user.update({
         where: { id: user.id },
         data: {
+          role,
           displayEmail: userInfo.email,
           tenantId: tenant.id,
           name: userInfo.name || user.name,
@@ -121,8 +131,6 @@ export async function POST(request: NextRequest) {
     if (role === 'SUPER_ADMIN' || role === 'TENANT_ADMIN') {
       await ensureDefaultDashboardForUser(user.id, tenant.id, role);
     }
-
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
 
     const accessToken = await new SignJWT({
       sub: user.id,
@@ -173,6 +181,8 @@ export async function POST(request: NextRequest) {
       }),
     );
   } catch (error) {
+    if (error instanceof PlatformIdentityError)
+      return addCorsHeaders(NextResponse.json({ error: error.message }, { status: error.status }));
     logger.error({ err: error, path: '/api/v1/auth/sso' }, 'SSO token exchange error');
     return addCorsHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }));
   }

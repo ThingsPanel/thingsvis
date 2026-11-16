@@ -1,3 +1,4 @@
+import { authSecret } from './auth-secret';
 import type { NextAuthConfig } from 'next-auth';
 
 /**
@@ -14,6 +15,7 @@ export default {
   providers: [], // Providers with DB access are added in auth.ts
   callbacks: {
     async jwt({ token, user }) {
+      authSecret();
       if (user) {
         token.id = user.id as string;
         token.role = user.role as string;
@@ -24,6 +26,7 @@ export default {
       return token;
     },
     async session({ session, token }) {
+      authSecret();
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;

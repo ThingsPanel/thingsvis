@@ -1,3 +1,4 @@
+import { authSecret } from '@/lib/auth-secret';
 import { NextRequest, NextResponse } from 'next/server';
 import { compare } from 'bcryptjs';
 import { SignJWT } from 'jose';
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create JWT token
-    const secret = new TextEncoder().encode(process.env.AUTH_SECRET || 'thingsvis-dev-secret-key');
+    const secret = new TextEncoder().encode(authSecret());
 
     const expiresAt = Date.now() + TOKEN_EXPIRY * 1000;
 
