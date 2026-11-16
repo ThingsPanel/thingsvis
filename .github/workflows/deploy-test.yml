@@ -252,6 +252,9 @@ jobs:
             # Fail fast when required secrets are missing to avoid PM2 persisting empty env.
             : "${DATABASE_URL:?DATABASE_URL is required for deploy-test}"
             : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-test}"
+            # This test host runs ThingsPanel locally. Preserve an explicit operator
+            # endpoint; persist the default across future PM2 redeployments.
+            export THINGSPANEL_API_URL="${THINGSPANEL_API_URL:-http://127.0.0.1:9999}"
 
             # Apply database migrations
             cd apps/server
