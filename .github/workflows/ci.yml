@@ -45,6 +45,11 @@ jobs:
       - name: Unit Tests
         run: pnpm test:coverage
 
+      - name: Server SSO and deployment preflight tests
+        run: |
+          pnpm exec vitest run --config apps/server/vitest.security.config.ts
+          node --test apps/server/scripts/check-platform-sso.test.mjs
+
   release-build:
     name: Release Build
     runs-on: ubuntu-latest

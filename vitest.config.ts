@@ -11,6 +11,8 @@ export default defineConfig({
       'apps/studio/tests/e2e/**',
       // Server tests use the server-side `@` alias and run with their own config.
       'apps/server/src/**/*.test.ts',
+      // Deployment preflight uses Node's test runner in its own CI step.
+      'apps/server/scripts/*.test.mjs',
     ],
     coverage: {
       provider: 'v8',
