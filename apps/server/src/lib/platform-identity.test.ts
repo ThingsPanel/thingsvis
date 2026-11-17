@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { verifyPlatformIdentity } from './platform-identity';
+import { verifyPlatformIdentity, platformIdentityURL } from './platform-identity';
 const identity = { id: 'u1', email: 'user@example.com', tenantId: 't1', role: 'EDITOR' };
 beforeEach(() => vi.stubEnv('THINGSPANEL_API_URL', 'http://backend:9999'));
 afterEach(() => {
@@ -39,4 +39,20 @@ it('fails closed for unknown platforms, missing configuration, network and malfo
       ),
   );
   await expect(verifyPlatformIdentity('thingspanel', 'x')).rejects.toThrow();
+});
+
+it.each([
+  'http://backend:9999',
+  'http://backend:9999/',
+  'http://backend:9999/api/v1',
+  'http://backend:9999/api/v1/',
+])('normalizes configured backend base %s', (base) => {
+  expect(platformIdentityURL(base).href).toBe('http://backend:9999/api/v1/auth/sso/identity');
+});
+it('distinguishes a missing backend endpoint from rejected credentials', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 404 })));
+  await expect(verifyPlatformIdentity('thingspanel', 'token')).rejects.toMatchObject({
+    status: 503,
+    reason: 'PLATFORM_ENDPOINT_MISSING',
+  });
 });

@@ -63,6 +63,8 @@ jobs:
       - name: Package artifacts
         run: |
           mkdir -p deploy/server deploy/studio deploy/widgets
+          mkdir -p deploy/server/scripts
+          cp apps/server/scripts/check-platform-sso.mjs deploy/server/scripts/
 
           # --- Server: Next.js standalone ---
           if [ -d "apps/server/.next/standalone" ]; then
@@ -218,6 +220,23 @@ jobs:
             
             # --- Deploy Server ---
             echo ">>> Deploying Server..."
+            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/apps/server/.env
+              set +a
+            elif [ -f /opt/thingsvis/server/.env ]; then
+              set -a
+              . /opt/thingsvis/server/.env
+              set +a
+            fi
+
+            # Fail fast when required secrets are missing to avoid PM2 persisting empty env.
+            : "${DATABASE_URL:?DATABASE_URL is required for deploy-test}"
+            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-test}"
+            # Explicit .env overrides are preserved; these PM2 deployments use the local backend by default.
+            export THINGSPANEL_API_URL="${THINGSPANEL_API_URL:-http://127.0.0.1:9999}"
+            node "$remote_dir/server/scripts/check-platform-sso.mjs"
+
             pm2 stop thingsvis-server 2>/dev/null || true
             sleep 1
             # Remove stale build artifacts only; keep .env and public/uploads (same as deploy-cloud/e).
@@ -237,24 +256,6 @@ jobs:
             rm -rf /opt/thingsvis/server/apps/server/node_modules/pino-pretty
             ln -s /opt/thingsvis/pino-hotfix/node_modules/pino-pretty /opt/thingsvis/server/apps/server/node_modules/pino-pretty
             cd /opt/thingsvis/server
-
-            # Source server env from the packaged app directory when available.
-            if [ -f /opt/thingsvis/server/apps/server/.env ]; then
-              set -a
-              . /opt/thingsvis/server/apps/server/.env
-              set +a
-            elif [ -f /opt/thingsvis/server/.env ]; then
-              set -a
-              . /opt/thingsvis/server/.env
-              set +a
-            fi
-
-            # Fail fast when required secrets are missing to avoid PM2 persisting empty env.
-            : "${DATABASE_URL:?DATABASE_URL is required for deploy-test}"
-            : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-test}"
-            # This test host runs ThingsPanel locally. Preserve an explicit operator
-            # endpoint; persist the default across future PM2 redeployments.
-            export THINGSPANEL_API_URL="${THINGSPANEL_API_URL:-http://127.0.0.1:9999}"
 
             # Apply database migrations
             cd apps/server

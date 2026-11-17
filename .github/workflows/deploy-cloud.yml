@@ -62,6 +62,8 @@ jobs:
       - name: Package artifacts
         run: |
           mkdir -p deploy/server deploy/studio deploy/widgets
+          mkdir -p deploy/server/scripts
+          cp apps/server/scripts/check-platform-sso.mjs deploy/server/scripts/
 
           if [ -d "apps/server/.next/standalone" ]; then
             cp -r apps/server/.next/standalone/. deploy/server/
@@ -208,12 +210,6 @@ jobs:
             cp "$remote_dir/thingsvis.conf" /etc/nginx/conf.d/thingsvis.conf
 
             echo ">>> Deploying Server..."
-            pm2 stop thingsvis-server 2>/dev/null || true
-            sleep 1
-            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
-            cp -rf "$remote_dir/server/." /opt/thingsvis/server/
-            cd /opt/thingsvis/server
-
             if [ -f /opt/thingsvis/server/apps/server/.env ]; then
               set -a
               . /opt/thingsvis/server/apps/server/.env
@@ -226,6 +222,16 @@ jobs:
 
             : "${DATABASE_URL:?DATABASE_URL is required for deploy-cloud}"
             : "${AUTH_SECRET:?AUTH_SECRET is required for deploy-cloud}"
+
+            # Explicit .env overrides are preserved; these PM2 deployments use the local backend by default.
+            export THINGSPANEL_API_URL="${THINGSPANEL_API_URL:-http://127.0.0.1:9999}"
+            node "$remote_dir/server/scripts/check-platform-sso.mjs"
+
+            pm2 stop thingsvis-server 2>/dev/null || true
+            sleep 1
+            rm -rf /opt/thingsvis/server/.next /opt/thingsvis/server/node_modules
+            cp -rf "$remote_dir/server/." /opt/thingsvis/server/
+            cd /opt/thingsvis/server
 
             cd apps/server
             npx --yes --package=prisma@5.22.0 -- prisma db push --schema ./prisma/schema.prisma --accept-data-loss --skip-generate

@@ -182,7 +182,9 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     if (error instanceof PlatformIdentityError)
-      return addCorsHeaders(NextResponse.json({ error: error.message }, { status: error.status }));
+      return addCorsHeaders(
+        NextResponse.json({ error: error.message, code: error.reason }, { status: error.status }),
+      );
     logger.error({ err: error, path: '/api/v1/auth/sso' }, 'SSO token exchange error');
     return addCorsHeaders(NextResponse.json({ error: 'Internal server error' }, { status: 500 }));
   }

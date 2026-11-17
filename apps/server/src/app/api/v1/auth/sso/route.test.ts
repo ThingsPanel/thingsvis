@@ -68,3 +68,22 @@ it('replaces a previously elevated role with current trusted role', async () => 
   expect((await POST(request())).status).toBe(200);
   expect(mocks.user.update.mock.calls[0][0].data.role).toBe('VIEWER');
 });
+
+it('reuses the historical administrator space after server verification', async () => {
+  mocks.verify.mockResolvedValue({
+    id: 'u1',
+    email: 'admin@example.com',
+    tenantId: 'thingspanel-sys-admin',
+    role: 'SUPER_ADMIN',
+  });
+  mocks.tenant.findUnique.mockResolvedValue({ id: 'historical-space' });
+  mocks.user.findFirst.mockResolvedValue({ id: 'existing-admin', name: 'Admin' });
+  mocks.user.update.mockImplementation(async ({ data }) => ({ ...data, id: 'existing-admin' }));
+  expect((await POST(request())).status).toBe(200);
+  expect(mocks.tenant.findUnique).toHaveBeenCalledWith({
+    where: { slug: 'thingspanel-thingspanel-sys-admin' },
+  });
+  expect(mocks.tenant.create).not.toHaveBeenCalled();
+  expect(mocks.user.update.mock.calls[0][0].data.tenantId).toBe('historical-space');
+  expect(mocks.dashboard).toHaveBeenCalledWith('existing-admin', 'historical-space', 'SUPER_ADMIN');
+});
