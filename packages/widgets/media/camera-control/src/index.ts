@@ -7,7 +7,7 @@ import {
   resolveWidgetColors,
   type WidgetOverlayContext,
 } from '@thingsvis/widget-sdk';
-import './lib/video-rtc.js';
+import { CAMERA_VIDEO_TAG } from './lib/video-rtc.js';
 import { mountPlaybackModal, buildPlaybackIso } from './playback-modal';
 import { mountPlaybackChrome, PLAYBACK_SPEEDS } from './playback-chrome';
 
@@ -316,7 +316,7 @@ export const Main = defineWidget({
     `;
     shell.appendChild(videoStage);
 
-    const videoEl: any = document.createElement('video-rtc');
+    const videoEl: any = document.createElement(CAMERA_VIDEO_TAG);
     videoEl.style.cssText =
       'position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;z-index:1;';
     videoStage.appendChild(videoEl);
@@ -1029,7 +1029,7 @@ export const Main = defineWidget({
           flex: 1 1 auto;
           min-width: 4px;
         }
-        [data-thingsvis-overlay="media-camera-control"] video-rtc {
+        [data-thingsvis-overlay="media-camera-control"] ${CAMERA_VIDEO_TAG} {
           position: absolute !important;
           inset: 0 !important;
           display: block !important;
@@ -1037,7 +1037,7 @@ export const Main = defineWidget({
           height: 100% !important;
           overflow: hidden !important;
         }
-        [data-thingsvis-overlay="media-camera-control"] video-rtc video {
+        [data-thingsvis-overlay="media-camera-control"] ${CAMERA_VIDEO_TAG} video {
           position: absolute !important;
           inset: 0 !important;
           display: block !important;
@@ -1048,7 +1048,7 @@ export const Main = defineWidget({
           object-fit: ${resolvedObjectFit} !important;
           object-position: ${resolvedObjectPosition} !important;
         }
-        [data-thingsvis-overlay="media-camera-control"] video-rtc video::-webkit-media-controls {
+        [data-thingsvis-overlay="media-camera-control"] ${CAMERA_VIDEO_TAG} video::-webkit-media-controls {
           display: none !important;
         }
         [data-thingsvis-overlay="media-camera-control"] .tv-camera-playback-chrome {

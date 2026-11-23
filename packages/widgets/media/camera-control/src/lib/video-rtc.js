@@ -947,4 +947,9 @@ export class VideoRTC extends HTMLElement {
   }
 }
 
-customElements.define('video-rtc', VideoRTC);
+// Camera playback has its own transport implementation. Do not share the
+// ordinary video player's tag: both widgets can be loaded in the same document.
+export const CAMERA_VIDEO_TAG = 'thingsvis-camera-video';
+if (!customElements.get(CAMERA_VIDEO_TAG)) {
+  customElements.define(CAMERA_VIDEO_TAG, VideoRTC);
+}

@@ -265,7 +265,7 @@ describe('media/camera-control widget', () => {
 
     const topBar = harness.element.querySelector('.tv-camera-topbar') as HTMLElement;
     const videoStage = harness.element.querySelector('.tv-camera-video-stage') as HTMLElement;
-    const videoRtc = harness.element.querySelector('video-rtc') as HTMLElement;
+    const videoRtc = harness.element.querySelector('thingsvis-camera-video') as HTMLElement;
 
     expect(topBar.style.display).not.toBe('none');
     expect(harness.element.textContent).toContain('回放');
